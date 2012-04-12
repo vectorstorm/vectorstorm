@@ -1,0 +1,23 @@
+VectorStorm is intended to be a professional-grade game engine for
+two purposes.
+
+First, to serve as an educational jumping off point for programmers
+who are comfortable writing console applications, and are ready to
+start thinking about graphical ideas, but not yet ready to create
+an entire game engine.
+
+Second, to serve as a rapid gameplay prototyping platform for
+myself and for others.
+
+Historically, VectorStorm was designed to solely support 2D
+vector graphic games, but today it supports 3D, textured polygons,
+and simple shaders.
+
+
+VectorStorm is distributed under the GPLv3 license, but please
+feel free to contact me if you'd like to discuss alternate
+licensing arrangements.
+
+
+- Trevor Powell
+trevor -at- vectorstorm -dot- org

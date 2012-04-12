@@ -1,0 +1,133 @@
+/*
+ *  VS_Box.h
+ *  Lord
+ *
+ *  Created by Trevor Powell on 9/02/09.
+ *  Copyright 2009 Trevor Powell. All rights reserved.
+ *
+ */
+
+#ifndef VS_BOX_H
+#define VS_BOX_H
+
+#include "VS/Math/VS_Vector.h"
+
+class vsDisplayList;
+
+class vsBox2D
+{
+	bool		set;
+
+	vsVector2D min;
+	vsVector2D max;
+
+public:
+
+	vsBox2D() { min = max = vsVector2D::Zero; set = false; }
+	vsBox2D(const vsBox2D &o) { *this = o; }
+	vsBox2D(const vsVector2D &min_in, const vsVector2D &max_in) { Set(min_in,max_in); }
+
+	const vsVector2D &	GetMin() const { return min; }
+	const vsVector2D &	GetMax() const { return max; }
+
+	float		Width() const { return max.x - min.x; }
+	float		Height() const { return max.y - min.y; }
+	vsVector2D	Middle() const { return (min + max) * 0.5f; }
+
+	vsVector2D	TopLeft() const { return min; }
+	vsVector2D	TopRight() const { return vsVector2D(max.x, min.y); }
+	vsVector2D	BottomLeft() const { return vsVector2D(min.x, max.y); }
+	vsVector2D	BottomRight() const { return max; }
+	void		Expand( float amt ) { min += -amt * vsVector2D::One; max += amt * vsVector2D::One; }
+	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.
+
+	void Set(const vsVector2D &min_in, const vsVector2D &max_in) { min = min_in; max = max_in; set = true; }
+
+	bool ContainsPoint(const vsVector2D &pos) const;	// 'pos' must be in local coordinates!
+	bool Intersects(const vsBox2D &other) const;
+
+	void ExpandToInclude( const vsVector2D &pos );
+	void ExpandToInclude( const vsBox2D &box );
+
+	bool operator==(const vsBox2D &b) const { return( min==b.min && max==b.max ); }
+	bool operator!=(const vsBox2D &b) const { return( min!=b.min || max!=b.max ); }
+	vsBox2D operator+(const vsVector2D &v) const { return vsBox2D(min+v, max+v); }
+	vsBox2D operator-(const vsVector2D &v) const { return vsBox2D(min-v, max-v); }
+
+	vsBox2D& operator+=(const vsVector2D &v) { min+=v; max+=v; return *this; }
+	vsBox2D& operator-=(const vsVector2D &v) { min-=v; max-=v; return *this; }
+};
+
+vsBox2D vsInterpolate( float alpha, const vsBox2D& a, const vsBox2D& b );
+
+class vsBox3D
+{
+	bool		set;
+
+	vsVector3D	min;
+	vsVector3D	max;
+
+public:
+
+				vsBox3D() { min = max = vsVector2D::Zero; set = false; }
+				vsBox3D(const vsBox3D &o) { *this = o; set = true; }
+				vsBox3D(const vsVector3D &min_in, const vsVector3D &max_in) { Set(min_in,max_in); set = true; }
+
+	void Clear() { set = false; min = max = vsVector3D::Zero; }
+
+	const vsVector3D &	GetMin() const { return min; }
+	const vsVector3D &	GetMax() const { return max; }
+
+	void		DrawOutline( vsDisplayList *list );
+
+	void		Set(const vsVector3D &min_in, const vsVector3D &max_in) { min = min_in; max = max_in; set = true; }
+	void		Set(vsVector3D *pointArray, int pointCount);
+
+	bool		ContainsPoint(const vsVector3D &pos) const;
+	bool		ContainsPointXZ(const vsVector3D &pos) const;	// only tests x and z components.
+	bool		ContainsRay(const vsVector3D &pos, const vsVector3D &dir) const;	// returns true if any portion of the passed ray is included inside this bounding box
+	bool		Intersects(const vsBox3D &other) const;
+	bool		IntersectsXZ(const vsBox3D &other) const;
+	bool		IntersectsSphere(const vsVector3D &center, float radius) const;
+
+	bool		EncompassesBox(const vsBox3D &box) const;
+
+	bool		CollideRay(vsVector3D *position, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+
+	void		ExpandToInclude( const vsVector3D &pos );
+	void		ExpandToInclude( const vsBox3D &box );
+
+	float		DistanceFrom( const vsVector3D &pos ) const;
+	float		SqDistanceFrom( const vsVector3D &pos ) const;
+	vsVector3D	OffsetFrom( const vsVector3D &pos ) const;
+
+	float		Width() const { return max.x - min.x; }
+	float		Height() const { return max.y - min.y; }
+	float		Depth() const { return max.z - min.z; }
+	vsVector3D	Middle() const { return (min + max) * 0.5f; }
+	vsVector3D	Extents() const { return max - min; }
+
+	vsVector3D	Corner(int i) const;
+
+	void		Expand( float amt ) { min += -amt * vsVector3D::One; max += amt * vsVector3D::One; }
+	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.
+
+	bool		operator==(const vsBox3D &b) const { return( min==b.min && max==b.max ); }
+	bool		operator!=(const vsBox3D &b) const { return( min!=b.min || max!=b.max ); }
+
+	vsBox3D		operator+(const vsVector3D &b) const { return vsBox3D(min+b, max+b); }
+	vsBox3D &	operator+=(const vsVector3D &b) { min += b; max += b; return *this; }
+
+	vsBox3D		operator-(const vsVector3D &b) const { return vsBox3D(min-b, max-b); }
+	vsBox3D &	operator-=(const vsVector3D &b) { min -= b; max -= b; return *this; }
+
+	vsBox3D		operator*(const float b) const { return vsBox3D(min*b, max*b); }
+	vsBox3D &	operator*=(const float b) { min *= b; max *= b; return *this; }
+};
+
+vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b );
+
+
+
+#endif // VS_BOX_H
+

@@ -1,0 +1,17 @@
+VectorStorm still needs a whole lot of documenting, but here's a quick framework to get people started:
+
+VectorStorm is a framework inside which one can quickly prototype games.  An arbitrary number of games are all compiled together, with an automatically generated menu allowing users to select which game to play.
+
+Each game gets its own data directory inside the 'Data' directory (each game is only allowed to load files located inside a folder inside 'Data' bearing the game's unique name).  If you want to use data files from the other samples in a game you create yourself, you'll need to create your own directory inside 'Data', and copy the files into your own folder.  (TODO:  Should have a 'Common' directory containing data files which any game can access)
+
+The VectorStorm graphic engine consists of a vsScreen, which is made up of one or more vsLayers.  Each layer can contain an arbitrary number of renderable objects (vsEntitys), the most common type of which is a vsSprite.  vsSprites may be moved, rotated, and scaled.  The data format for sprites is undocumented right now, but it's not at all difficult to figure out;  just look at the .vec files in the Asteroids data directory for samples.  
+
+Each VectorStorm layer also references a vsCamera, which games can move, rotate, and/or zoom, as required.  A common approach for games to take is to have two layers;  one of which displays the game and has a camera which follows the player, and the other of which displays the player's HUD, and has a static camera.
+
+(Trivia:  The 'Layers' concept is actually a leftover from an earlier bitmap sprite-based graphic engine, where it was primarily used for enforcing particular sprites to draw in front of other sprites.  This doesn't apply to vector graphic games, and so the only real reason to think about layers is if you need different camera behaviours on the different layers)
+
+Additionally, games have access to a 'Debug' layer which only exists in debug builds of the game.  This is a great place to render debug information, and not have to worry about it showing up in a final build of the game.
+
+
+- Trevor Powell
+trevor@gridbug.org

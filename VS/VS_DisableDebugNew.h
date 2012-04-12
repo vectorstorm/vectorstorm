@@ -1,0 +1,2 @@
+#undef new
+#undef delete

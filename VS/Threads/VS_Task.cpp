@@ -1,0 +1,66 @@
+//
+//  VS_Task.cpp
+//  VectorStorm
+//
+//  Created by Trevor Powell on 29/03/11.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#include "VS_Task.h"
+
+#ifdef UNIX
+void *vsTask::DoStartThread(void* arg)
+#else
+DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
+#endif
+{
+    vsTask *task = (vsTask*)arg;
+
+    task->m_done = false;
+    int result = task->Run();
+    task->m_done = true;
+	task->m_thread = 0L;
+
+#ifdef UNIX
+    return (void*)result;
+#else
+    return result;
+#endif
+}
+
+vsTask::vsTask():
+    m_thread(0),
+    m_done(false)
+{
+}
+
+vsTask::~vsTask()
+{
+    if ( !m_done && m_thread != 0 )
+    {
+#ifdef UNIX
+		//		pthread_kill( m_thread, SIGKILL );
+#else
+		CloseHandle(m_thread);
+#endif
+        m_thread = 0;
+	}
+}
+
+void
+vsTask::Start()
+{
+#ifdef UNIX
+	pthread_create( &m_thread, NULL, &vsTask::DoStartThread, (void*)this );
+#else
+	m_thread = CreateThread(
+            NULL,                   // default security attributes
+            0,                      // use default stack size
+            &vsTask::DoStartThread, // thread function name
+            (void*)this,			// argument to thread function
+            0,                      // use default creation flags
+            NULL);					// returns the thread identifier
+
+
+#endif
+}
