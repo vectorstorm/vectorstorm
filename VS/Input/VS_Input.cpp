@@ -422,18 +422,22 @@ vsInput::Update(float timeStep)
 							core::SetExit();
 							break;
 						case SDLK_w:
+						case SDLK_UP:
 							m_keyControlState[CID_Up] = 1.0f;
 							m_keyControlState[CID_LUp] = 1.0f;
 							break;
 						case SDLK_s:
+						case SDLK_DOWN:
 							m_keyControlState[CID_Down] = 1.0f;
 							m_keyControlState[CID_LDown] = 1.0f;
 							break;
 						case SDLK_a:
+						case SDLK_LEFT:
 							m_keyControlState[CID_Left] = 1.0f;
 							m_keyControlState[CID_LLeft] = 1.0f;
 							break;
 						case SDLK_d:
+						case SDLK_RIGHT:
 							m_keyControlState[CID_Right] = 1.0f;
 							m_keyControlState[CID_LRight] = 1.0f;
 							break;
@@ -460,18 +464,22 @@ vsInput::Update(float timeStep)
 				{
 					switch( event.key.keysym.sym ){
 						case SDLK_w:
+						case SDLK_UP:
 							m_keyControlState[CID_Up] = 0.0f;
 							m_keyControlState[CID_LUp] = 0.0f;
 							break;
 						case SDLK_s:
+						case SDLK_DOWN:
 							m_keyControlState[CID_Down] = 0.0f;
 							m_keyControlState[CID_LDown] = 0.0f;
 							break;
 						case SDLK_a:
+						case SDLK_LEFT:
 							m_keyControlState[CID_Left] = 0.0f;
 							m_keyControlState[CID_LLeft] = 0.0f;
 							break;
 						case SDLK_d:
+						case SDLK_RIGHT:
 							m_keyControlState[CID_Right] = 0.0f;
 							m_keyControlState[CID_LRight] = 0.0f;
 							break;
