@@ -213,12 +213,12 @@ public:
 		return count;
 	}
 	
-	vsListStoreIterator<T>	Begin()
+	vsListStoreIterator<T>	Begin() const
 	{
 		return 		++vsListStoreIterator<T>(m_listEntry);
 	}
 
-	vsListStoreIterator<T>	End()
+	vsListStoreIterator<T>	End() const
 	{
 		return 		vsListStoreIterator<T>(m_tail);
 	}

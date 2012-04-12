@@ -210,12 +210,12 @@ public:
 		return count;
 	}
 	
-	vsListIterator<T>	Begin()
+	vsListIterator<T>	Begin() const
 	{
 		return 		++vsListIterator<T>(m_listEntry);
 	}
 	
-	vsListIterator<T>	End()
+	vsListIterator<T>	End() const
 	{
 		return 		vsListIterator<T>(m_tail);
 	}
