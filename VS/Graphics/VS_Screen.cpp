@@ -25,7 +25,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_sceneCount(0),
 	m_width(width),
 	m_height(height),
-	m_depth(depth)
+	m_depth(depth),
+	m_currentRenderTarget(NULL)
 {
 	vsRendererSimple *bootstrap = new vsRendererSimple;
 	bootstrap->Init(width, height, depth, fullscreen);
@@ -153,7 +154,36 @@ vsScreen::Draw()
 	}
 
 	m_renderer->PostRender();
+}
 
+bool
+vsScreen::DrawSceneToTarget( int scene, vsRenderTarget *target )
+{
+	return DrawSceneRangeToTarget( scene, scene, target );
+}
+
+bool
+vsScreen::DrawSceneRangeToTarget( int firstScene, int lastScene, vsRenderTarget *target )
+{
+	bool rendered = false;
+	if ( m_scene )
+	{
+		m_fifo->Clear();
+
+		m_currentRenderTarget = target;
+		if ( m_renderer->PreRenderTarget( target ) )
+		{
+			for ( int i = firstScene; i <= lastScene; i++ )
+			{
+				m_scene[i]->Draw( m_fifo );
+				m_renderer->RenderDisplayList( m_fifo );
+			}
+			m_renderer->PostRenderTarget( target );
+			rendered = true;
+		}
+		m_currentRenderTarget = NULL;
+	}
+	return rendered;
 }
 
 vsScene *
@@ -170,6 +200,17 @@ vsScreen::GetScene(int i)
 		return m_scene[i];
 	}
 	return NULL;
+}
+
+float
+vsScreen::GetTrueAspectRatio()
+{
+	if ( m_currentRenderTarget )
+	{
+		return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
+	}
+
+	return m_aspectRatio;
 }
 
 int

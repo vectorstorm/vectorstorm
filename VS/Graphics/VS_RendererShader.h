@@ -17,7 +17,7 @@
 class vsRendererShader : public vsRendererBloom, public vsSingleton<vsRendererShader>
 {
 	typedef vsRendererBloom Parent;
-	
+
 	static GLuint			s_addProg;
 	static GLuint			s_normalProg;
 	static GLuint			s_litProg;
@@ -25,16 +25,18 @@ class vsRendererShader : public vsRendererBloom, public vsSingleton<vsRendererSh
 	static GLuint			s_litTexProg;
 
 	static bool				s_shadersBuilt;
-	
+
+	vsRenderTarget *		m_shadow;
+
 	virtual void			SetMaterial(vsMaterialInternal *material);
 
 public:
 					vsRendererShader();
 	virtual			~vsRendererShader();
-	
+
 	virtual void	InitPhaseTwo(int width, int height, int depth, bool fullscreen);
 	virtual void	Deinit();
-		
+
 	static bool		Supported(bool experimental = false);
 };
 

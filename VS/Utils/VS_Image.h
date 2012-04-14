@@ -33,6 +33,7 @@ public:
 
 	vsImage( unsigned int width, unsigned int height );
     vsImage( const vsString &filename_in );
+    vsImage( vsTexture *texture );
 	~vsImage();
 
 	int				GetWidth() { return m_width; }

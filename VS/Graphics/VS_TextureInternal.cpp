@@ -154,6 +154,10 @@ m_premultipliedAlpha(false)
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface ):
 vsResource(name),
 m_texture(surface->m_texture),
+m_glTextureWidth(surface->m_width),
+m_glTextureHeight(surface->m_height),
+m_width(surface->m_width),
+m_height(surface->m_height),
 m_refCount(0),
 m_premultipliedAlpha(true)
 {

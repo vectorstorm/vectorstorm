@@ -19,6 +19,7 @@
 class vsDisplayList;
 class vsScene;
 class vsRenderer;
+class vsRenderTarget;
 class vsImage;
 
 
@@ -36,6 +37,8 @@ class vsScreen
 	int					m_depth;
 	float				m_aspectRatio;
 
+	vsRenderTarget *	m_currentRenderTarget;
+
 public:
 
 	vsScreen(int width, int height, int depth, bool fullscreen);
@@ -45,7 +48,7 @@ public:
 
 	int				GetTrueWidth() { return m_width; }
 	int				GetTrueHeight() { return m_height; }
-	float			GetTrueAspectRatio() { return m_aspectRatio; }
+	float			GetTrueAspectRatio();
 
 	int				GetWidth();
 	int				GetHeight();
@@ -60,6 +63,8 @@ public:
 
 	void			Update( float timeStep );
 	void			Draw();
+	bool			DrawSceneToTarget( int scene, vsRenderTarget *target );
+	bool			DrawSceneRangeToTarget( int firstScene, int lastScene, vsRenderTarget *target );
 
 	void			SetOpaqueRendering();
 

@@ -18,7 +18,7 @@ vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
 	m_type(t)
 {
 	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
-		
+
 	if ( t == Type_Window )
 	{
 		m_textureSurface = new vsSurface( settings.width, settings.height );
@@ -36,15 +36,15 @@ vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
 		m_texWidth = settings.width / (float)vsNextPowerOfTwo(settings.width);
 		m_texHeight = settings.height / (float)vsNextPowerOfTwo(settings.height);
 	}
-	
+
 	m_viewportWidth = settings.width;
 	m_viewportHeight = settings.height;
-	
+
 	vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface);
 	vsTextureManager::Instance()->Add(ti);
 	m_texture = new vsTexture(name);
 	m_ortho = settings.ortho;
-	
+
 	Clear();
 }
 
@@ -69,9 +69,9 @@ vsRenderTarget::Resolve()
 			//Let's say I only want to copy the color buffer only
 			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimensions
 			glBlitFramebufferEXT(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-			
+
 			//Consider:  Re-generate mipmaps on the texture now?
-			
+
 			return GetTexture();
 		}
 		else
@@ -80,7 +80,11 @@ vsRenderTarget::Resolve()
 			assert(0);
 		}
 	}
-	
+	else if ( m_textureSurface )	// don't need to do anything special;  just give them our texture.  We were rendering straight into it anyway.
+	{
+		return m_texture;
+	}
+
 	return NULL;
 }
 
@@ -181,13 +185,13 @@ static void CheckFBO()
     GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
     if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
         return;
-	
+
     status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
     vsAssert(status == GL_FRAMEBUFFER_COMPLETE_EXT,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
 }
 
 
-vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withMipMaps, bool withMultisample ):
+vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withMipMaps, bool withMultisample, bool depthOnly ):
 	m_width(width),
 	m_height(height),
 	m_texture(0),
@@ -197,19 +201,26 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 
 {
     GLenum internalFormat = GL_RGBA8;
+	GLenum pixelFormat = GL_RGBA;
     GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
     GLenum filter = linear ? GL_LINEAR : GL_NEAREST;
-	
+
 	vsAssert( !( withMultisample && withMipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
-	
+
+	if ( depthOnly )
+	{
+		internalFormat = GL_DEPTH_COMPONENT;
+		pixelFormat = GL_DEPTH_COMPONENT;
+	}
+
     // create a color texture
 	if ( withMultisample )
 	{
 		glGenRenderbuffersEXT(1, &m_texture);
 		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_texture );
-		glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_RGBA, m_width, m_height );
+		glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, pixelFormat, m_width, m_height );
 		m_isRenderbuffer = true;
 	}
 	else
@@ -218,22 +229,22 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glEnable(GL_TEXTURE_2D);
 		m_isRenderbuffer = false;
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, GL_RGBA, type, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
 	}
 	if ( withMipMaps )
 	{
 		int wid = m_width;
 		int hei = m_height;
 		int mapMapId = 1;
-		
+
 		while ( wid > 32 || hei > 32 )
 		{
 			wid = wid >> 1;
 			hei = hei >> 1;
-			glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, GL_RGBA, type, 0);
+			glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
 		}
 	}
-	
+
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glEnable(GL_TEXTURE_2D);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
@@ -242,9 +253,9 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
     glBindTexture(GL_TEXTURE_2D, 0);
-	
+
 	//CheckGLError("Creation of the color texture for the FBO");
-	
+
     // create depth renderbuffer
     if (depth)
     {
@@ -260,7 +271,7 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 		}
         //CheckGLError("Creation of the depth renderbuffer for the FBO");
     }
-	
+
     // create FBO itself
     glGenFramebuffersEXT(1, &m_fbo);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
@@ -278,7 +289,7 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 	}
 	CheckFBO();
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-	
+
     //CheckGLError("Creation of the FBO itself");
 }
 

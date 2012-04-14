@@ -29,13 +29,13 @@ struct vsBloomSurface
     GLsizei height;
 	vsViewport	viewport;
 	GLfloat	texWidth;	// 0..1  viewport.width/width
-	GLfloat	texHeight;	// 0..1  
+	GLfloat	texHeight;	// 0..1
     GLfloat modelview[16];
     GLfloat projection[16];
     GLuint texture;
     GLuint depth;
     GLuint fbo;
-	
+
 	bool	isRenderbuffer;
 };*/
 
@@ -44,44 +44,47 @@ struct vsBloomSurface
 class vsRendererBloom : public vsRendererSimple
 {
 	typedef vsRendererSimple Parent;
-	
+
 	static GLuint			s_combineProg;
 	static GLuint			s_filterProg;
 	static GLuint			s_overlayProg;
 	static GLuint			s_hipassProg;
 	static bool				s_shadersBuilt;
-	
+
 	bool			m_antialias;
-	
+
 	vsRenderTarget	*m_window;
 	vsRenderTarget	*m_scene;
 	vsRenderTarget	*m_pass[FILTER_COUNT];
 	vsRenderTarget	*m_pass2[FILTER_COUNT];
-	
+
 	typedef enum {HORIZONTAL, VERTICAL} Direction;
-	
+
 
 	void			Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir);
 	void			ClearSurface();
 
 protected:
 	GLuint			Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
-	
+
 public:
 	vsRendererBloom();
 	virtual			~vsRendererBloom();
-	
+
 	virtual void	InitPhaseTwo(int width, int height, int depth, bool fullscreen);
 	virtual void	Deinit();
-	
+
 #if defined(OVERLAYS_IN_SHADER)
 	virtual void	SetOverlay( const vsOverlay &o );
 #endif // OVERLAYS_IN_SHADER
-	
+
 	virtual void	PreRender();
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
-	
+
+	virtual bool	PreRenderTarget( vsRenderTarget *target );
+	virtual bool	PostRenderTarget( vsRenderTarget *target );
+
 	virtual vsImage*	Screenshot();
 	virtual vsImage*	ScreenshotDepth();
 	virtual vsImage*	ScreenshotAlpha();
@@ -89,7 +92,7 @@ public:
 	void			CheckFBO();
 
 	static bool		Supported(bool experimental = false);
-	
+
 	friend class vsShader;
 };
 

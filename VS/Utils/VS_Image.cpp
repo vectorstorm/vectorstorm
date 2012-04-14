@@ -25,6 +25,7 @@
 #include "SDL_image.h"
 #include <png.h>
 #endif
+#include "VS_OpenGL.h"
 
 #ifndef _WIN32
 #include <zlib.h>
@@ -173,6 +174,52 @@ vsImage::vsImage( const vsString &filename_in )
 	SDL_FreeSurface(loadedImage);
 #endif
 #endif
+}
+
+vsImage::vsImage( vsTexture * texture )
+{
+    m_width = texture->GetResource()->GetWidth();
+    m_height = texture->GetResource()->GetHeight();
+
+    m_pixelCount = m_width * m_height;
+    m_pixel = new vsColor[m_pixelCount];
+    
+	const size_t bytesPerPixel = 3;	// RGB
+	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
+
+	uint8* pixels = new uint8[imageSizeInBytes];
+
+	// glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
+	// have allocated the exact size needed for the image so we have to use 1-byte alignment
+	// (otherwise glReadPixels would write out of bounds)
+    glActiveTexture( GL_TEXTURE0 );
+    glEnable( GL_TEXTURE_2D );
+	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	glBindTexture( GL_TEXTURE_2D, 0 );
+    GLenum errcode = glGetError();
+	vsAssert(errcode == GL_NO_ERROR, "Error converting texture to image");
+
+	for ( unsigned int y = 0; y < m_height; y++ )
+	{
+		int rowStart = y * m_width * bytesPerPixel;
+
+		for ( unsigned int x = 0; x < m_width; x++ )
+		{
+			int rInd = rowStart + (x*bytesPerPixel);
+			int gInd = rInd+1;
+			int bInd = rInd+2;
+
+			int rVal = pixels[rInd];
+			int gVal = pixels[gInd];
+			int bVal = pixels[bInd];
+
+			Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, 1.0f );
+		}
+	}
+
+	vsDeleteArray( pixels );
 }
 
 vsImage::~vsImage()
