@@ -51,10 +51,9 @@ m_premultipliedAlpha(true)
 {
 }
 
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface ):
+vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
 vsResource(name),
-m_texture(surface->m_texture),
+m_texture( (depth) ? surface->m_depth : surface->m_texture ),
 m_refCount(0),
 m_premultipliedAlpha(true)
 {
@@ -90,6 +89,7 @@ static int power_of_two(int input)
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 vsResource(filename_in),
 m_texture(0),
+m_depth(false),
 m_refCount(0),
 m_premultipliedAlpha(false)
 {
@@ -104,6 +104,7 @@ m_premultipliedAlpha(false)
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 vsResource(name),
 m_texture(0),
+m_depth(false),
 m_refCount(0),
 m_premultipliedAlpha(false)
 {
@@ -151,13 +152,14 @@ m_premultipliedAlpha(false)
 	SDL_FreeSurface(surface);
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface ):
+vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
 vsResource(name),
-m_texture(surface->m_texture),
+m_texture((depth) ? surface->m_depth : surface->m_texture),
 m_glTextureWidth(surface->m_width),
 m_glTextureHeight(surface->m_height),
 m_width(surface->m_width),
 m_height(surface->m_height),
+m_depth(depth),
 m_refCount(0),
 m_premultipliedAlpha(true)
 {

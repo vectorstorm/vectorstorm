@@ -32,7 +32,7 @@ vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
 		{
 			m_renderBufferSurface = new vsSurface( vsNextPowerOfTwo(settings.width), vsNextPowerOfTwo(settings.height), settings.depth, settings.linear, false, true );
 		}
-		m_textureSurface = new vsSurface( vsNextPowerOfTwo(settings.width), vsNextPowerOfTwo(settings.height), settings.depth, settings.linear, settings.mipMaps, false );
+		m_textureSurface = new vsSurface( vsNextPowerOfTwo(settings.width), vsNextPowerOfTwo(settings.height), settings.depth, settings.linear, settings.mipMaps, false, (t == Type_Depth) );
 		m_texWidth = settings.width / (float)vsNextPowerOfTwo(settings.width);
 		m_texHeight = settings.height / (float)vsNextPowerOfTwo(settings.height);
 	}
@@ -40,7 +40,7 @@ vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
 	m_viewportWidth = settings.width;
 	m_viewportHeight = settings.height;
 
-	vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface);
+	vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, (t == Type_Depth));
 	vsTextureManager::Instance()->Add(ti);
 	m_texture = new vsTexture(name);
 	m_ortho = settings.ortho;
@@ -209,65 +209,70 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
 
-	if ( depthOnly )
-	{
-		internalFormat = GL_DEPTH_COMPONENT;
-		pixelFormat = GL_DEPTH_COMPONENT;
-	}
+    if ( !depthOnly )
+    {
+        // create a color texture
+        if ( withMultisample )
+        {
+            glGenRenderbuffersEXT(1, &m_texture);
+            glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_texture );
+            glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, pixelFormat, m_width, m_height );
+            m_isRenderbuffer = true;
+        }
+        else
+        {
+            glGenTextures(1, &m_texture);
+            glBindTexture(GL_TEXTURE_2D, m_texture);
+            glEnable(GL_TEXTURE_2D);
+            m_isRenderbuffer = false;
+            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
+        }
+        if ( withMipMaps )
+        {
+            int wid = m_width;
+            int hei = m_height;
+            int mapMapId = 1;
 
-    // create a color texture
-	if ( withMultisample )
-	{
-		glGenRenderbuffersEXT(1, &m_texture);
-		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_texture );
-		glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, pixelFormat, m_width, m_height );
-		m_isRenderbuffer = true;
-	}
-	else
-	{
-		glGenTextures(1, &m_texture);
-		glBindTexture(GL_TEXTURE_2D, m_texture);
-		glEnable(GL_TEXTURE_2D);
-		m_isRenderbuffer = false;
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
-	}
-	if ( withMipMaps )
-	{
-		int wid = m_width;
-		int hei = m_height;
-		int mapMapId = 1;
+            while ( wid > 32 || hei > 32 )
+            {
+                wid = wid >> 1;
+                hei = hei >> 1;
+                glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
+            }
+        }
+        glBindTexture(GL_TEXTURE_2D, m_texture);
+        glEnable(GL_TEXTURE_2D);
+        glGenerateMipmapEXT(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-		while ( wid > 32 || hei > 32 )
-		{
-			wid = wid >> 1;
-			hei = hei >> 1;
-			glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
-		}
-	}
-
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glEnable(GL_TEXTURE_2D);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-    glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
 	//CheckGLError("Creation of the color texture for the FBO");
 
-    // create depth renderbuffer
-    if (depth)
+    // create depth
+    if (depth || depthOnly)
     {
-        glGenRenderbuffersEXT(1, &m_depth);
-        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_depth);
 		if ( withMultisample )
 		{
+            glGenRenderbuffersEXT(1, &m_depth);
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_depth);
 			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH_COMPONENT24, m_width, m_height );
 		}
 		else
 		{
-			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, m_width, m_height);
+            glGenTextures(1, &m_depth);
+            glBindTexture(GL_TEXTURE_2D, m_depth);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+            
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
 		}
         //CheckGLError("Creation of the depth renderbuffer for the FBO");
     }
@@ -275,18 +280,37 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
     // create FBO itself
     glGenFramebuffersEXT(1, &m_fbo);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
-	if (withMultisample)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, m_texture);
-	}
-	else
-	{
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
-	}
-    if (depth)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depth);
-	}
+    
+    if ( depthOnly )
+    {
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+    }
+    else
+    {
+        if (withMultisample)
+        {
+            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, m_texture);
+        }
+        else
+        {
+            glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
+        }
+    }
+    
+    if (depth || depthOnly)
+    {
+		if ( withMultisample )
+		{
+            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depth);
+		}
+		else
+		{
+            glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, m_depth, 0);
+		}
+        //CheckGLError("Creation of the depth renderbuffer for the FBO");
+    }
+
 	CheckFBO();
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 

@@ -183,11 +183,8 @@ vsImage::vsImage( vsTexture * texture )
 
     m_pixelCount = m_width * m_height;
     m_pixel = new vsColor[m_pixelCount];
-    
-	const size_t bytesPerPixel = 3;	// RGB
-	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
 
-	uint8* pixels = new uint8[imageSizeInBytes];
+    bool depthTexture = texture->GetResource()->IsDepth();
 
 	// glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
@@ -196,30 +193,61 @@ vsImage::vsImage( vsTexture * texture )
     glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	glBindTexture( GL_TEXTURE_2D, 0 );
-    GLenum errcode = glGetError();
-	vsAssert(errcode == GL_NO_ERROR, "Error converting texture to image");
 
-	for ( unsigned int y = 0; y < m_height; y++ )
-	{
-		int rowStart = y * m_width * bytesPerPixel;
 
-		for ( unsigned int x = 0; x < m_width; x++ )
-		{
-			int rInd = rowStart + (x*bytesPerPixel);
-			int gInd = rInd+1;
-			int bInd = rInd+2;
+    if ( depthTexture )
+    {
+        size_t imageSizeInFloats = size_t(m_width) * size_t(m_height);
 
-			int rVal = pixels[rInd];
-			int gVal = pixels[gInd];
-			int bVal = pixels[bInd];
+        float* pixels = new float[imageSizeInFloats];
 
-			Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, 1.0f );
-		}
-	}
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+        glBindTexture( GL_TEXTURE_2D, 0 );
 
-	vsDeleteArray( pixels );
+        for ( unsigned int y = 0; y < m_height; y++ )
+        {
+            int rowStart = y * m_width;
+
+            for ( unsigned int x = 0; x < m_width; x++ )
+            {
+                int rInd = rowStart + (x);
+                float rVal = pixels[rInd];
+
+                Pixel(x,y).Set( rVal, rVal, rVal, 1.0f );
+            }
+        }
+        vsDeleteArray( pixels );
+    }
+    else
+    {
+        size_t bytesPerPixel = 3;	// RGB
+        size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
+
+        uint8* pixels = new uint8[imageSizeInBytes];
+
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glBindTexture( GL_TEXTURE_2D, 0 );
+
+        for ( unsigned int y = 0; y < m_height; y++ )
+        {
+            int rowStart = y * m_width * bytesPerPixel;
+
+            for ( unsigned int x = 0; x < m_width; x++ )
+            {
+                int rInd = rowStart + (x*bytesPerPixel);
+                int gInd = rInd+1;
+                int bInd = rInd+2;
+
+                int rVal = pixels[rInd];
+                int gVal = pixels[gInd];
+                int bVal = pixels[bInd];
+
+                Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, 1.0f );
+            }
+        }
+        vsDeleteArray( pixels );
+    }
+
 }
 
 vsImage::~vsImage()

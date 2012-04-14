@@ -27,6 +27,7 @@ class vsTextureInternal : public vsResource
 
 	float		m_width;
 	float		m_height;
+    bool        m_depth;
 
 	int			m_refCount;
 
@@ -39,7 +40,7 @@ public:
 
 	vsTextureInternal( const vsString &string );
 	vsTextureInternal( const vsString &name, vsImage *image );
-	vsTextureInternal( const vsString &name, vsSurface *surface );
+	vsTextureInternal( const vsString &name, vsSurface *surface, bool depth=false );
 	~vsTextureInternal();
 
 	uint32		GetTexture() { return m_texture; }
@@ -50,6 +51,7 @@ public:
 
 	float		GetWidth() { return m_width; }
 	float		GetHeight() { return m_height; }
+    bool        IsDepth() { return m_depth; }
 
 	float		GetGLWidth() { return m_glTextureWidth; }
 	float		GetGLHeight() { return m_glTextureHeight; }
