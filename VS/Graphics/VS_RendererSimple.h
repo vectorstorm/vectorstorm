@@ -25,6 +25,7 @@ class vsMaterialInternal;
 class vsTransform2D;
 class vsVector2D;
 class vsRenderBuffer;
+class vsShader;
 struct SDL_Surface;
 
 //#define CHECK_GL_ERRORS
@@ -49,6 +50,8 @@ protected:
 	vsVector3D *		m_currentNormalArray;
 	vsVector2D *		m_currentTexelArray;
 	vsColor *			m_currentColorArray;
+    
+    vsShader *          m_currentShader;
 
 	vsRenderBuffer *	m_currentVertexBuffer;
 	vsRenderBuffer *	m_currentNormalBuffer;

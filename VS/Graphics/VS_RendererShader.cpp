@@ -300,11 +300,13 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
     {
         m_state.SetBool( vsRendererState::Bool_DepthMask, false );
     }
+    m_currentShader = NULL;
 
 	if ( material->m_shader )
 	{
 		glUseProgram( material->m_shader->GetShaderId() );
 		material->m_shader->Prepare();
+        m_currentShader = material->m_shader;
 	}
 	else
 	{
@@ -319,6 +321,8 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					{
 						glUseProgram( m_currentSettings.normalTexShader->GetShaderId() );
 						m_currentSettings.normalTexShader->Prepare();
+                        m_currentShader = m_currentSettings.normalTexShader;
+                        m_currentShader->SetAlphaRef( material->m_alphaRef );
 					}
 					else
 					{
@@ -332,6 +336,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					{
 						glUseProgram( m_currentSettings.normalShader->GetShaderId() );
 						m_currentSettings.normalShader->Prepare();
+                        m_currentShader = m_currentSettings.normalShader;
 					}
 					else
 					{
@@ -347,6 +352,8 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					{
 						glUseProgram( m_currentSettings.litTexShader->GetShaderId() );
 						m_currentSettings.litTexShader->Prepare();
+                        m_currentShader = m_currentSettings.litTexShader;
+                        m_currentShader->SetAlphaRef( material->m_alphaRef );
 					}
 					else
 					{
@@ -360,6 +367,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					{
 						glUseProgram( m_currentSettings.litShader->GetShaderId() );
 						m_currentSettings.litShader->Prepare();
+                        m_currentShader = m_currentSettings.litShader;
 					}
 					else
 					{

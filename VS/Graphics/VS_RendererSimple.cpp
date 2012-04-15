@@ -42,6 +42,7 @@
 vsRendererSimple::vsRendererSimple()
 {
 	m_currentTexture = NULL;
+    m_currentShader = NULL;
 	m_shaderList = new vsDisplayList(200 * 1024);
 
 /*	if ( glGenBuffersARB )
@@ -346,6 +347,7 @@ vsRendererSimple::PreRender(const Settings &s)
     Parent::PreRender(s);
 	CheckGLError("PreRender");
 
+    m_currentShader = NULL;
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);

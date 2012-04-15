@@ -646,12 +646,12 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 void
 vsRendererBloom::PreRender(const Settings &s)
 {
+	m_scene->Bind();
     Parent::PreRender(s);
     //int p;
     //GLint loc;
 
     // Draw 3D scene.
-	m_scene->Bind();
 	if ( m_antialias )
 	{
 		m_state.SetBool( vsRendererState::Bool_PolygonSmooth, true );

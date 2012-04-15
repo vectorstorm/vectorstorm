@@ -32,6 +32,8 @@ public:
 		vsShader *litShader;
 		vsShader *normalTexShader;
 		vsShader *litTexShader;
+        float aspectRatio;
+        bool useCustomAspectRatio;
 		bool writeColor;
 		bool writeDepth;
         

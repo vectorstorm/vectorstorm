@@ -266,12 +266,15 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
 		{
             glGenTextures(1, &m_depth);
             glBindTexture(GL_TEXTURE_2D, m_depth);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-            
-            glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
             glBindTexture(GL_TEXTURE_2D, 0);
 		}
         //CheckGLError("Creation of the depth renderbuffer for the FBO");
@@ -280,7 +283,7 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
     // create FBO itself
     glGenFramebuffersEXT(1, &m_fbo);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
-    
+
     if ( depthOnly )
     {
         glDrawBuffer(GL_NONE);
@@ -297,7 +300,7 @@ vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withM
             glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
         }
     }
-    
+
     if (depth || depthOnly)
     {
 		if ( withMultisample )

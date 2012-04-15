@@ -18,6 +18,8 @@ class vsDisplayList;
 class vsShader
 {
 	uint32 m_shader;
+    
+    int m_alphaRef;
 
 public:
 
@@ -25,6 +27,8 @@ public:
 	virtual ~vsShader();
 
 	uint32 GetShaderId() { return m_shader; }
+    
+    void SetAlphaRef( float aref );
 
 	virtual void Prepare() {}	// called before we start rendering something with this shader
 };

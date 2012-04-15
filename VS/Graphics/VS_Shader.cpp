@@ -30,11 +30,14 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 		vShader.Store( vStore );
 		fShader.Store( fStore );
+        
 
 #if !TARGET_OS_IPHONE
 		m_shader = vsRendererShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize );
 #endif // TARGET_OS_IPHONE
 
+        m_alphaRef = glGetUniformLocation(m_shader, "alphaRef");
+        
 		delete vStore;
 		delete fStore;
 	}
@@ -42,5 +45,14 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
+}
+
+void 
+vsShader::SetAlphaRef( float aref )
+{
+    if ( m_alphaRef >= 0 )
+    {
+        glUniform1f( m_alphaRef, aref );
+    }
 }
 

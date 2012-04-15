@@ -14,6 +14,8 @@ vsRenderer::Settings::Settings():
 	litShader(NULL),
 	normalTexShader(NULL),
 	litTexShader(NULL),
+    aspectRatio(1.f),
+    useCustomAspectRatio(false),
 	writeColor(true),
 	writeDepth(true)
 {

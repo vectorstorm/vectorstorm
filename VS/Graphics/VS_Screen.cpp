@@ -26,7 +26,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_width(width),
 	m_height(height),
 	m_depth(depth),
-	m_currentRenderTarget(NULL)
+	m_currentRenderTarget(NULL),
+    m_currentSettings(NULL)
 {
 	vsRendererSimple *bootstrap = new vsRendererSimple;
 	bootstrap->Init(width, height, depth, fullscreen);
@@ -137,10 +138,17 @@ static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us ab
 void
 vsScreen::Draw()
 {
+    DrawWithSettings( m_defaultRenderSettings );
+}
+
+void
+vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
+{
+    m_currentSettings = &s;
 	if ( m_scene == NULL )
 		return;
 
-	m_renderer->PreRender(m_defaultRenderSettings);
+	m_renderer->PreRender(s);
 
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
@@ -156,6 +164,7 @@ vsScreen::Draw()
 	}
 
 	m_renderer->PostRender();
+    m_currentSettings = NULL;
 }
 
 bool
@@ -167,6 +176,7 @@ vsScreen::DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderT
 bool
 vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target )
 {
+    m_currentSettings = &s;
 	bool rendered = false;
 	if ( m_scene )
 	{
@@ -185,6 +195,7 @@ vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene,
 		}
 		m_currentRenderTarget = NULL;
 	}
+    m_currentSettings = NULL;
 	return rendered;
 }
 
@@ -209,7 +220,14 @@ vsScreen::GetTrueAspectRatio()
 {
 	if ( m_currentRenderTarget )
 	{
-		return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
+        if ( m_currentSettings && m_currentSettings->useCustomAspectRatio )
+        {
+            return m_currentSettings->aspectRatio;
+        }
+        else
+        {
+            return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
+        }
 	}
 
 	return m_aspectRatio;
