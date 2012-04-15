@@ -70,6 +70,7 @@ public:
 	void					Go();
 
 	virtual void			Update( float timeStep ) {UNUSED(timeStep);}
+    virtual void            DrawFrame();
 
 	void					SetExit() { m_exit = true; }
 	void					SetTimeStep(float timeStep) { m_timeStep = timeStep; }

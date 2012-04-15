@@ -341,8 +341,9 @@ vsRendererSimple::SetCameraProjection( const vsMatrix4x4 &m )
 }
 
 void
-vsRendererSimple::PreRender()
+vsRendererSimple::PreRender(const Settings &s)
 {
+    Parent::PreRender(s);
 	CheckGLError("PreRender");
 
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );

@@ -18,13 +18,15 @@ class vsDisplayList;
 class vsShader
 {
 	uint32 m_shader;
-	
+
 public:
-	
+
 	vsShader( const vsString &vertexShader, const vsString &fragmentShader );
 	virtual ~vsShader();
-	
+
 	uint32 GetShaderId() { return m_shader; }
+
+	virtual void Prepare() {}	// called before we start rendering something with this shader
 };
 
 

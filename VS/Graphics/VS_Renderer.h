@@ -14,6 +14,7 @@
 
 class vsDisplayList;
 class vsCamera2D;
+class vsShader;
 
 enum RenderMode
 {
@@ -23,12 +24,28 @@ enum RenderMode
 
 class vsRenderer
 {
+public:
+    
+	struct Settings
+	{
+		vsShader *normalShader;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
+		vsShader *litShader;
+		vsShader *normalTexShader;
+		vsShader *litTexShader;
+		bool writeColor;
+		bool writeDepth;
+        
+		Settings();
+	};
+    
 protected:
+	Settings			m_currentSettings;
 	RenderMode			m_defaultRenderMode;
 
 	int					m_width;
 	int					m_height;
 public:
+
 	vsRenderer() {m_defaultRenderMode = RenderMode_Additive;}
 	virtual ~vsRenderer() {Deinit();}
 
@@ -36,12 +53,12 @@ public:
 	virtual void		InitPhaseTwo(int width, int height, int depth, bool fullscreen) {m_width = width; m_height = height; UNUSED(depth); UNUSED(fullscreen);}
 	virtual void		Deinit() {}
 
-	virtual void		PreRender() {}
+	virtual void		PreRender( const Settings &s ) { m_currentSettings = s; }
 	virtual void		RenderDisplayList( vsDisplayList *list ) = 0;
 	virtual void		RawRenderDisplayList( vsDisplayList *list ) = 0;
 	virtual void		PostRender() {}
 
-	virtual bool		PreRenderTarget( vsRenderTarget *target ) { return false; }
+	virtual bool		PreRenderTarget( const Settings &s, vsRenderTarget *target ) { return false; }
 	virtual bool		PostRenderTarget( vsRenderTarget *target ) { return false; }
 
 	virtual vsImage*	Screenshot() = 0;

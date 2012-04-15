@@ -49,6 +49,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
 
 	m_fifo = new vsDisplayList(c_fifoSize);
+	m_subfifo = new vsDisplayList(c_fifoSize);
 }
 
 vsScreen::~vsScreen()
@@ -56,6 +57,7 @@ vsScreen::~vsScreen()
 	m_renderer->Deinit();
 
 	delete m_fifo;
+	delete m_subfifo;
 	delete m_renderer;
 }
 
@@ -138,7 +140,7 @@ vsScreen::Draw()
 	if ( m_scene == NULL )
 		return;
 
-	m_renderer->PreRender();
+	m_renderer->PreRender(m_defaultRenderSettings);
 
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
@@ -157,26 +159,26 @@ vsScreen::Draw()
 }
 
 bool
-vsScreen::DrawSceneToTarget( int scene, vsRenderTarget *target )
+vsScreen::DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target )
 {
-	return DrawSceneRangeToTarget( scene, scene, target );
+	return DrawSceneRangeToTarget( s, scene, scene, target );
 }
 
 bool
-vsScreen::DrawSceneRangeToTarget( int firstScene, int lastScene, vsRenderTarget *target )
+vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target )
 {
 	bool rendered = false;
 	if ( m_scene )
 	{
-		m_fifo->Clear();
+		m_subfifo->Clear();
 
 		m_currentRenderTarget = target;
-		if ( m_renderer->PreRenderTarget( target ) )
+		if ( m_renderer->PreRenderTarget( s, target ) )
 		{
 			for ( int i = firstScene; i <= lastScene; i++ )
 			{
-				m_scene[i]->Draw( m_fifo );
-				m_renderer->RenderDisplayList( m_fifo );
+				m_scene[i]->Draw( m_subfifo );
+				m_renderer->RenderDisplayList( m_subfifo );
 			}
 			m_renderer->PostRenderTarget( target );
 			rendered = true;

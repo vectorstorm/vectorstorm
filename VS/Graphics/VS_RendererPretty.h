@@ -18,7 +18,7 @@ public:
 					vsRendererPretty();
 	virtual			~vsRendererPretty();
 	
-	virtual void	PreRender();
+	virtual void	PreRender( const Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
 };

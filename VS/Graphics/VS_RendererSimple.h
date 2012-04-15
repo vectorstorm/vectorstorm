@@ -31,6 +31,7 @@ struct SDL_Surface;
 
 class vsRendererSimple : public vsRenderer
 {
+    typedef vsRenderer Parent;
 #define MAX_VERTS_IN_ARRAY (100)
 #define MAX_STACK_LEVEL (30)
 
@@ -86,7 +87,7 @@ public:
 
 	virtual void	SetOverlay( const vsOverlay & ) {}
 
-	virtual void	PreRender();
+	virtual void	PreRender( const Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	RawRenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();

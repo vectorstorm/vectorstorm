@@ -14,11 +14,11 @@
 #define DEBUG_SCENE
 #endif // _DEBUG
 
+#include "Graphics/VS_Renderer.h"
 #include "Utils/VS_Singleton.h"
 
 class vsDisplayList;
 class vsScene;
-class vsRenderer;
 class vsRenderTarget;
 class vsImage;
 
@@ -27,10 +27,12 @@ class vsScreen
 {
 	vsRenderer *		m_renderer;		// our renderer
 	vsScene **			m_scene;		// our draw scenes
+    vsRenderer::Settings    m_defaultRenderSettings;
 
 	int					m_sceneCount;	// how many layers we have
 
 	vsDisplayList *		m_fifo;			// our FIFO display list, for rendering
+	vsDisplayList *		m_subfifo;			// our FIFO display list, for rendering
 
 	int					m_width;
 	int					m_height;
@@ -63,8 +65,8 @@ public:
 
 	void			Update( float timeStep );
 	void			Draw();
-	bool			DrawSceneToTarget( int scene, vsRenderTarget *target );
-	bool			DrawSceneRangeToTarget( int firstScene, int lastScene, vsRenderTarget *target );
+	bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
+	bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
 
 	void			SetOpaqueRendering();
 

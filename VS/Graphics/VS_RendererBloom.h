@@ -78,11 +78,11 @@ public:
 	virtual void	SetOverlay( const vsOverlay &o );
 #endif // OVERLAYS_IN_SHADER
 
-	virtual void	PreRender();
+	virtual void	PreRender( const Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
 
-	virtual bool	PreRenderTarget( vsRenderTarget *target );
+	virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target );
 	virtual bool	PostRenderTarget( vsRenderTarget *target );
 
 	virtual vsImage*	Screenshot();

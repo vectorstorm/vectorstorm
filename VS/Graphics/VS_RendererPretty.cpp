@@ -41,9 +41,9 @@ vsRendererPretty::~vsRendererPretty()
 }
 
 void
-vsRendererPretty::PreRender()
+vsRendererPretty::PreRender(const Settings &s)
 {
-	Parent::PreRender();
+	Parent::PreRender(s);
 	// give us thicker lines
 	glLineWidth( 2.0f );
 }

@@ -284,11 +284,27 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 
 	Parent::SetMaterial( material );
 
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
+    if ( m_currentSettings.writeColor )
+    {
+        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
+    }
+    else
+    {
+        glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+    }
+    if ( m_currentSettings.writeDepth )
+    {
+        m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+    }
+    else
+    {
+        m_state.SetBool( vsRendererState::Bool_DepthMask, false );
+    }
 
 	if ( material->m_shader )
 	{
 		glUseProgram( material->m_shader->GetShaderId() );
+		material->m_shader->Prepare();
 	}
 	else
 	{
@@ -299,33 +315,64 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 			case DrawMode_Normal:
 				if ( material->m_texture )
 				{
-					glUseProgram( s_normalTexProg );
-					glUniform1f( s_texfAlphaRef, material->m_alphaRef );
-
-					//				glUseProgram(0);
+					if ( m_currentSettings.normalTexShader )
+					{
+						glUseProgram( m_currentSettings.normalTexShader->GetShaderId() );
+						m_currentSettings.normalTexShader->Prepare();
+					}
+					else
+					{
+						glUseProgram( s_normalTexProg );
+						glUniform1f( s_texfAlphaRef, material->m_alphaRef );
+					}
 				}
 				else
 				{
-					glUseProgram( s_normalProg );
-					//glUseProgram(0);
+					if ( m_currentSettings.normalShader )
+					{
+						glUseProgram( m_currentSettings.normalShader->GetShaderId() );
+						m_currentSettings.normalShader->Prepare();
+					}
+					else
+					{
+						glUseProgram( s_normalProg );
+					}
 				}
 				break;
 			case DrawMode_Lit:
 
 				if ( material->m_texture )
 				{
-					glUseProgram( s_litTexProg );
-					glUniform1f( s_litTexfAlphaRef, material->m_alphaRef );
+					if ( m_currentSettings.litTexShader )
+					{
+						glUseProgram( m_currentSettings.litTexShader->GetShaderId() );
+						m_currentSettings.litTexShader->Prepare();
+					}
+					else
+					{
+						glUseProgram( s_litTexProg );
+						glUniform1f( s_litTexfAlphaRef, material->m_alphaRef );
+					}
 				}
 				else
 				{
-					glUseProgram( s_litProg );
+					if ( m_currentSettings.litShader )
+					{
+						glUseProgram( m_currentSettings.litShader->GetShaderId() );
+						m_currentSettings.litShader->Prepare();
+					}
+					else
+					{
+						glUseProgram( s_litProg );
+					}
 				}
 				break;
 			default:
 				vsAssert(0,"Unknown drawmode??");
 		}
 	}
+
+    m_state.Flush();
 }
 
 bool

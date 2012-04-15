@@ -163,7 +163,13 @@ coreGame::Go()
 		if ( m_system[i]->IsActive() )
 			m_system[i]->PostUpdate( m_timeStep );
 
-	vsSystem::GetScreen()->Draw();
+	DrawFrame();
+}
+
+void
+coreGame::DrawFrame()
+{
+    vsSystem::GetScreen()->Draw();
 }
 
 vsInput *

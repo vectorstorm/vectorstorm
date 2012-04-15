@@ -108,7 +108,7 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderQueue.h
 	VS/Graphics/VS_RenderTarget.cpp
 	VS/Graphics/VS_RenderTarget.h
-	#VS/Graphics/VS_Renderer.cpp
+	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
 	VS/Graphics/VS_RendererBloom.cpp
 	VS/Graphics/VS_RendererBloom.h

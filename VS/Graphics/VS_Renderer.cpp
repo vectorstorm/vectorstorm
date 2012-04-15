@@ -9,3 +9,12 @@
 
 #include "VS_Renderer.h"
 
+vsRenderer::Settings::Settings():
+	normalShader(NULL),
+	litShader(NULL),
+	normalTexShader(NULL),
+	litTexShader(NULL),
+	writeColor(true),
+	writeDepth(true)
+{
+}

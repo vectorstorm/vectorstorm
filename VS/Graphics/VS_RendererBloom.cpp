@@ -644,8 +644,9 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 
 
 void
-vsRendererBloom::PreRender()
+vsRendererBloom::PreRender(const Settings &s)
 {
+    Parent::PreRender(s);
     //int p;
     //GLint loc;
 
@@ -905,8 +906,10 @@ vsRendererBloom::PostRender()
 }
 
 bool
-vsRendererBloom::PreRenderTarget( vsRenderTarget *target )
+vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
+    m_currentSettings = s;
+    
 	target->Bind();
 	if ( m_antialias )
 	{
