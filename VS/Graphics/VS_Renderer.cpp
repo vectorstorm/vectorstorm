@@ -17,6 +17,7 @@ vsRenderer::Settings::Settings():
     aspectRatio(1.f),
     useCustomAspectRatio(false),
 	writeColor(true),
-	writeDepth(true)
+	writeDepth(true),
+	invertCull(false)
 {
 }

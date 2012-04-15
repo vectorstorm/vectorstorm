@@ -25,7 +25,7 @@ enum RenderMode
 class vsRenderer
 {
 public:
-    
+
 	struct Settings
 	{
 		vsShader *normalShader;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
@@ -36,10 +36,11 @@ public:
         bool useCustomAspectRatio;
 		bool writeColor;
 		bool writeDepth;
-        
+		bool invertCull;
+
 		Settings();
 	};
-    
+
 protected:
 	Settings			m_currentSettings;
 	RenderMode			m_defaultRenderMode;

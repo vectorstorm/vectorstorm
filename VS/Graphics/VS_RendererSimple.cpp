@@ -994,7 +994,7 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	{
 		m_state.SetBool( vsRendererState::Bool_CullFace, true );
 
-		if ( material->m_cullingType == Cull_Back )
+		if ( (material->m_cullingType == Cull_Back) ^ m_currentSettings.invertCull)
 		{
 			m_state.SetInt( vsRendererState::Int_CullFace, GL_BACK );
 		}
