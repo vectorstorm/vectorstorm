@@ -32,14 +32,12 @@ void
 vsSemaphore::Wait()
 {
 	pthread_mutex_lock(&m_semaphore.mutex);
-	m_value--;
-	if ( m_value >= 0 )	// signals were backed up, so no need to wait.
+	while ( m_value == 0 )
 	{
-		pthread_mutex_unlock(&m_semaphore.mutex);
-		return;
+		pthread_cond_wait( &m_semaphore.cond, &m_semaphore.mutex );
 	}
-		
-	pthread_cond_wait( &m_semaphore.cond, &m_semaphore.mutex );
+	m_value--;
+
 	pthread_mutex_unlock(&m_semaphore.mutex);
 }
 
