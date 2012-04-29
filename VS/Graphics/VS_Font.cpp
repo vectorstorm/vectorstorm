@@ -313,8 +313,8 @@ vsBuiltInFont::BuildDisplayListFromString( vsDisplayList *list, const char *stri
 
 			offset.x += c_kerningFactor * thisSize;
 
-			t.m_position = offset-(thisSize*baseline);
-			t.m_scale.Set(thisSize,thisSize);
+			t.SetTranslation( offset-(thisSize*baseline) );
+			t.SetScale( vsVector2D(thisSize,thisSize) );
 
 			list->PushTransform(t);
 			list->LineListBuffer( &s_I[index] );
@@ -1032,7 +1032,7 @@ vsFont::BuildDisplayListFromString( FontContext context, vsDisplayList * list, c
 	{
 		ysize *= -1.f;	// upside down, in 3D context!
 	}
-	transform.m_scale.Set(size,ysize);
+	transform.SetScale( vsVector2D(size,ysize) );
 	list->PushTransform(transform);
 
 #if defined(USE_EXPLICIT_ARRAY)

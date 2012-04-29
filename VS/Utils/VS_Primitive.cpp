@@ -141,6 +141,404 @@ vsGem::vsGem( float radius, int resolution, const vsString &materialName )
 }
 
 
+vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsVector3D va[4] =
+	{
+		box.GetMin(),
+		vsVector2D(box.GetMax().x,box.GetMin().y),
+		vsVector2D(box.GetMin().x,box.GetMax().y),
+		box.GetMax()
+	};
+/*	vsVector2D tex[4] =
+	{
+		vsVector2D( 0.f, 0.f),
+		vsVector2D( 1.f, 0.f),
+		vsVector2D( 0.f, 1.f),
+		vsVector2D( 1.f, 1.f)
+	};*/
+	int ts[4] =
+	{
+		0,2,1,3
+	};
+
+	vsDisplayList *list = new vsDisplayList(128);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,4);
+//	list->TexelArray(tex,4);
+	list->TriangleStrip(ts,4);
+	list->ClearVertexArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsVector3D va[4] =
+	{
+		box.GetMin(),
+		vsVector2D(box.GetMax().x,box.GetMin().y),
+		vsVector2D(box.GetMin().x,box.GetMax().y),
+		box.GetMax()
+	};
+	vsVector2D tex[4] =
+	{
+		vsVector2D( 0.f, 0.f),
+		vsVector2D( 1.f, 0.f),
+		vsVector2D( 0.f, 1.f),
+		vsVector2D( 1.f, 1.f)
+	};
+	int ts[4] =
+	{
+		0,2,1,3
+	};
+
+	vsDisplayList *list = new vsDisplayList(128);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,4);
+	list->TexelArray(tex,4);
+	list->TriangleStrip(ts,4);
+	list->ClearVertexArray();
+	list->ClearTexelArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material, float tileSize, const vsAngle &angle, vsColor *colorOverride )
+{
+	vsVector3D va[4] =
+	{
+		box.GetMin(),
+		vsVector2D(box.GetMax().x,box.GetMin().y),
+		vsVector2D(box.GetMin().x,box.GetMax().y),
+		box.GetMax()
+	};
+	vsVector2D tex[4] =
+	{
+		angle.ApplyRotationTo(vsVector2D( box.GetMin().x, box.GetMin().y) * (1.f / tileSize)),
+		angle.ApplyRotationTo(vsVector2D( box.GetMax().x, box.GetMin().y) * (1.f / tileSize)),
+		angle.ApplyRotationTo(vsVector2D( box.GetMin().x, box.GetMax().y) * (1.f / tileSize)),
+		angle.ApplyRotationTo(vsVector2D( box.GetMax().x, box.GetMax().y) * (1.f / tileSize))
+	};
+	int ts[4] =
+	{
+		0,2,1,3
+	};
+
+	vsDisplayList *list = new vsDisplayList(128);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,4);
+	list->TexelArray(tex,4);
+	list->TriangleStrip(ts,4);
+	list->ClearVertexArray();
+	list->ClearTexelArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
+vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsVector3D va[4] =
+	{
+		box.GetMin(),
+		vsVector2D(box.GetMax().x,box.GetMin().y),
+		vsVector2D(box.GetMin().x,box.GetMax().y),
+		box.GetMax()
+	};
+	int ls[5] =
+	{
+		0,1,3,2,0
+	};
+
+	vsDisplayList *list = new vsDisplayList(128);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,4);
+	list->LineStrip(ls,5);
+	list->ClearVertexArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
+
+vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsRenderBuffer *buffer = new vsRenderBuffer;
+
+	int arraySize = 24;
+	vsRenderBuffer::PN *array = new vsRenderBuffer::PN[arraySize];
+
+	vsVector3D normalVector[3] =
+	{
+		vsVector3D::XAxis,
+		vsVector3D::YAxis,
+		vsVector3D::ZAxis
+	};
+
+	vsVector3D dimVector[3] =
+	{
+		vsVector3D( box.Width() * 0.5f, 0.f, 0.f ),
+		vsVector3D( 0.f, box.Height() * 0.5f, 0.f ),
+		vsVector3D( 0.f, 0.f, box.Depth() * 0.5f ),
+	};
+	int triList[36];
+	int tId = 0;
+
+	for ( int dim = 0; dim < 3; dim++ )	// each dimension
+	{
+		int uDim = dim+1;
+		if ( uDim >= 3 )
+			uDim = 0;
+		int vDim = uDim+1;
+		if ( vDim >= 3 )
+			vDim = 0;
+
+		vsVector3D main = dimVector[dim];
+		vsVector3D u = dimVector[uDim];
+		vsVector3D v = dimVector[vDim];
+
+		int vId = dim * 8;
+		//		for ( int vert = 0; vert < 4; vert++ )
+		{
+			array[vId+0].position = box.Middle() + main - u - v;
+			array[vId+1].position = box.Middle() + main + u - v;
+			array[vId+2].position = box.Middle() + main + u + v;
+			array[vId+3].position = box.Middle() + main - u + v;
+
+			array[vId+4].position = box.Middle() - main - u - v;
+			array[vId+5].position = box.Middle() - main + u - v;
+			array[vId+6].position = box.Middle() - main + u + v;
+			array[vId+7].position = box.Middle() - main - u + v;
+
+			for ( int i = 0; i < 4; i++ )
+			{
+				array[vId+i].normal = normalVector[dim];
+				array[vId+i+4].normal = -normalVector[dim];
+			}
+
+			triList[tId++] = vId+2;
+			triList[tId++] = vId+1;
+			triList[tId++] = vId+0;
+			triList[tId++] = vId+0;
+			triList[tId++] = vId+3;
+			triList[tId++] = vId+2;
+
+			triList[tId++] = vId+4;
+			triList[tId++] = vId+5;
+			triList[tId++] = vId+6;
+			triList[tId++] = vId+6;
+			triList[tId++] = vId+7;
+			triList[tId++] = vId+4;
+		}
+	}
+
+	buffer->SetArray( array, arraySize );
+	vsDeleteArray( array );
+
+	vsDisplayList *list = new vsDisplayList(512);
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->BindBuffer(buffer);
+	list->TriangleList(triList,36);
+	list->ClearArrays();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->AddBuffer(buffer);
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
+vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsRenderBuffer *buffer = new vsRenderBuffer;
+
+	int arraySize = 24;
+	vsRenderBuffer::PNT *array = new vsRenderBuffer::PNT[arraySize];
+
+	vsVector3D normalVector[3] =
+	{
+		vsVector3D::XAxis,
+		vsVector3D::YAxis,
+		vsVector3D::ZAxis
+	};
+
+	vsVector3D dimVector[3] =
+	{
+		vsVector3D( box.Width() * 0.5f, 0.f, 0.f ),
+		vsVector3D( 0.f, box.Height() * 0.5f, 0.f ),
+		vsVector3D( 0.f, 0.f, box.Depth() * 0.5f ),
+	};
+	int triList[36];
+	int tId = 0;
+
+	for ( int dim = 0; dim < 3; dim++ )	// each dimension
+	{
+		int uDim = dim+1;
+		if ( uDim >= 3 )
+			uDim = 0;
+		int vDim = uDim+1;
+		if ( vDim >= 3 )
+			vDim = 0;
+
+		vsVector3D main = dimVector[dim];
+		vsVector3D u = dimVector[uDim];
+		vsVector3D v = dimVector[vDim];
+
+		int vId = dim * 8;
+		//		for ( int vert = 0; vert < 4; vert++ )
+		{
+			array[vId+0].position = box.Middle() + main - u - v;
+			array[vId+1].position = box.Middle() + main + u - v;
+			array[vId+2].position = box.Middle() + main + u + v;
+			array[vId+3].position = box.Middle() + main - u + v;
+
+			array[vId+4].position = box.Middle() - main - u - v;
+			array[vId+5].position = box.Middle() - main + u - v;
+			array[vId+6].position = box.Middle() - main + u + v;
+			array[vId+7].position = box.Middle() - main - u + v;
+
+			array[vId+0].texel = vsVector2D(0.f,0.f);
+			array[vId+1].texel = vsVector2D(1.f,0.f);
+			array[vId+2].texel = vsVector2D(1.f,1.f);
+			array[vId+3].texel = vsVector2D(0.f,1.f);
+
+			array[vId+4].texel = vsVector2D(1.f,0.f);
+			array[vId+5].texel = vsVector2D(0.f,0.f);
+			array[vId+6].texel = vsVector2D(0.f,1.f);
+			array[vId+7].texel = vsVector2D(1.f,1.f);
+
+			for ( int i = 0; i < 4; i++ )
+			{
+				array[vId+i].normal = normalVector[dim];
+				array[vId+i+4].normal = -normalVector[dim];
+			}
+
+
+			triList[tId++] = vId+2;
+			triList[tId++] = vId+1;
+			triList[tId++] = vId+0;
+			triList[tId++] = vId+0;
+			triList[tId++] = vId+3;
+			triList[tId++] = vId+2;
+
+			triList[tId++] = vId+4;
+			triList[tId++] = vId+5;
+			triList[tId++] = vId+6;
+			triList[tId++] = vId+6;
+			triList[tId++] = vId+7;
+			triList[tId++] = vId+4;
+		}
+	}
+
+	buffer->SetArray( array, arraySize );
+	vsDeleteArray( array );
+
+	vsDisplayList *list = new vsDisplayList(512);
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->BindBuffer(buffer);
+	list->TriangleList(triList,36);
+	list->ClearArrays();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->AddBuffer(buffer);
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
+
+vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+{
+	vsVector3D va[8];
+	float dx = box.Width() * 0.5f;
+	float dy = box.Height() * 0.5f;
+	float dz = box.Depth() * 0.5f;
+
+	vsVector3D delta[8] =
+	{
+		vsVector2D(-dx,-dy),
+		vsVector2D( dx,-dy),
+		vsVector2D( dx, dy),
+		vsVector2D(-dx, dy)
+	};
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		va[i] = va[i+4] = box.Middle() + delta[i];
+		va[i].z -= dz;
+		va[i+4].z += dz;
+	}
+	int ll[24] =
+	{
+		0,1,
+		1,2,
+		2,3,
+		3,0,
+		4,5,
+		5,6,
+		6,7,
+		7,4,
+		0,4,
+		1,5,
+		2,6,
+		3,7
+	};
+
+	vsDisplayList *list = new vsDisplayList(512);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,8);
+	list->LineList(ll,24);
+	list->ClearArrays();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
 vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
 {
 	vsVector3D va[4] =
@@ -538,4 +936,3 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, v
 
 	return fragment;
 }
-

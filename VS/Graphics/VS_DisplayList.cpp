@@ -867,6 +867,7 @@ vsDisplayList::PushTransform( const vsTransform2D &t )
 {
 	m_fifo->WriteUint8( OpCode_PushTransform );
 	m_fifo->WriteTransform2D( t );
+//    PushMatrix4x4( t.GetMatrix() );
 }
 
 void
@@ -1661,7 +1662,7 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 			else if ( o->type == OpCode_PushTranslation )
 			{
 				vsTransform2D transform;
-				transform.m_position = o->data.GetVector3D();
+				transform.SetTranslation( o->data.GetVector3D() );
 				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * transform;
 				transformStackLevel++;
 			}

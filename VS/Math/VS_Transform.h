@@ -20,18 +20,26 @@ class vsTransform2D
 	mutable bool			m_dirty;
 	mutable vsMatrix4x4		m_matrix;
 	
-public:
-	
-	static vsTransform2D	Zero;
-	
 	vsVector2D		m_position;
 	vsAngle			m_angle;
 	vsVector2D		m_scale;
 	
+public:
+	
+	static vsTransform2D	Zero;
+	
 	vsTransform2D();
 	vsTransform2D(const vsVector2D &pos, const vsAngle &angle);
 	vsTransform2D(const vsVector2D &pos, const vsAngle &angle, const vsVector2D &scale);
+    
+    void            SetTranslation( const vsVector2D &translation );
+    void            SetAngle( const vsAngle &angle );
+    void            SetScale( const vsVector2D &scale );
 	
+    const vsVector2D& GetTranslation() const    { return m_position; }
+    const vsAngle&  GetAngle() const            { return m_angle; }
+    const vsVector2D& GetScale() const          { return m_scale; }
+    
 	vsVector2D		ApplyTo( const vsVector2D &v );
 	vsVector2D		ApplyInverseTo( const vsVector2D &v );
 	

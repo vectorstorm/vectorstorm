@@ -123,7 +123,7 @@ vsSprite::GetWorldPosition()
 bool
 vsSprite::OnScreen( const vsTransform2D & cameraTrans )
 {
-	if ( !m_visible )
+	/*if ( !m_visible )
 		return false;
 
 	vsVector2D deltaToCamera = cameraTrans.m_position - m_transform.m_position;
@@ -139,7 +139,7 @@ vsSprite::OnScreen( const vsTransform2D & cameraTrans )
 //	sqVisionRadius *= sqVisionRadius;
 
 	if ( sqDistanceToCamera > sqVisionRadius )
-		return false;
+		return false;*/
 
 	return true;
 }
@@ -152,8 +152,6 @@ vsSprite::Draw( vsRenderQueue *queue )
 		vsDisplayList *list = queue->GetGenericList();
 		vsTransform2D oldCameraTransform = g_drawingCameraTransform;
 
-		if ( m_overlay )
-			list->SetOverlay( *m_overlay );
 		if ( m_useColor )
 			list->SetColor( m_color );
 
@@ -163,7 +161,7 @@ vsSprite::Draw( vsRenderQueue *queue )
 		}
 
 		list->PushTransform( m_transform );
-		queue->PushMatrix( m_transform.GetMatrix() );
+		queue->PushTransform2D( m_transform );
 
 		if ( m_child )
 		{
@@ -184,18 +182,13 @@ vsSprite::Draw( vsRenderQueue *queue )
 		{
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
-				// TODO:  Fragments should draw via the batching system,
-				// not by putting themselves straight into the display list.
 				vsFragment *fragment = *iter;
-				fragment->Draw( list );
+				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetDisplayList() );
 			}
 		}
 
 //		Parent::Draw(list);
 		DrawChildren(queue);
-
-		if ( m_overlay )
-			list->SetOverlay( vsOverlay::Zero );
 
 		list->PopTransform();
 		queue->PopMatrix();
@@ -314,4 +307,10 @@ vsSprite::FindEntityAtPosition(const vsVector2D &pos)
 	return result;
 }
 
-
+void
+vsSprite::Rotate(float angle)
+{
+    vsAngle a = m_transform.GetAngle();
+    a.Rotate(angle);
+    m_transform.SetAngle( a ); 
+}

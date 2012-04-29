@@ -278,8 +278,8 @@ vsScene::GetCorner(bool bottom, bool right)
 	// to do this, we take the world-to-camera transform off the camera, and then apply its inverse to our position.
 	
 	vsTransform2D worldToCamera;
-	worldToCamera.m_position = m_camera->GetPosition();
-	worldToCamera.m_angle = m_camera->GetAngle();
+	worldToCamera.SetTranslation( m_camera->GetPosition() );
+	worldToCamera.SetAngle( m_camera->GetAngle() );
 		
 	pos = worldToCamera.ApplyTo(pos);
 	

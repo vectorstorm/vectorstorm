@@ -102,6 +102,7 @@ public:
 	void			EndRender();
 
 	vsMatrix4x4		PushMatrix( const vsMatrix4x4 &matrix );
+    vsMatrix4x4     PushTransform2D( const vsTransform2D &transform );
 	vsMatrix4x4		PushTranslation( const vsVector3D &vector );
 
 	void			PopMatrix();

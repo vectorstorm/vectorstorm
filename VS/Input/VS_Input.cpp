@@ -860,8 +860,10 @@ vsInput::GetMousePosition(int scene)
 	vsCamera2D *c = s->GetCamera();
 
 	vsTransform2D t = c->GetCameraTransform();
-	t.m_scale.y *= 0.5f;
-	t.m_scale.x = t.m_scale.y * vsSystem::GetScreen()->GetAspectRatio();
+    vsVector2D scale = t.GetScale();
+	scale.y *= 0.5f;
+	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
+    t.SetScale(scale);
 	vsVector2D mousePos = t.ApplyTo( m_mousePos );
 
 	return mousePos;
@@ -879,8 +881,10 @@ vsInput::GetMouseMotion(int scene)
 	vsCamera2D *c = s->GetCamera();
 
 	vsTransform2D t = c->GetCameraTransform();
-	t.m_scale.y *= 0.5f;
-	t.m_scale.x = t.m_scale.y * vsSystem::GetScreen()->GetAspectRatio();
+    vsVector2D scale = t.GetScale();
+	scale.y *= 0.5f;
+	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
+    t.SetScale(scale);
 	vsVector2D mousePos = t.ApplyTo( m_mouseMotion );
 
 	return mousePos;

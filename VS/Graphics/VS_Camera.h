@@ -29,13 +29,13 @@ public:
 	
 	virtual void		Update( float /*timeStep*/ ) {}
 	
-	const vsVector2D &	GetPosition() { return m_transform.m_position; }
-	const vsAngle &		GetAngle() { return m_transform.m_angle; }
-	float				GetFOV() { return m_transform.m_scale.y; }
+	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
+	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
+	float				GetFOV() { return m_transform.GetScale().y; }
 	
-	void				SetPosition( const vsVector2D &pos ) { m_transform.m_position = pos; }
-	void				SetAngle( const vsAngle &ang ) { m_transform.m_angle = ang; }
-	void				SetFOV( float fov ) { m_transform.m_scale.x = m_transform.m_scale.y = fov; }
+	void				SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
+	void				SetAngle( const vsAngle &ang ) { m_transform.SetAngle( ang ); }
+	void				SetFOV( float fov ) { m_transform.SetScale( vsVector2D( fov, fov ) ); }
 	
 		// this "GetCameraTransform()" function is giving an incorrect 'scale' value.  Need to fix it!
 	const vsTransform2D &		GetCameraTransform() { return m_transform; }

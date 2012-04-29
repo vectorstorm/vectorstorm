@@ -245,11 +245,11 @@ vsRenderQueue::StartRender(vsScene *parent)
 void
 vsRenderQueue::Draw( vsDisplayList *list )
 {
-	list->Append(*m_genericList);
 	for ( int i = 0; i < m_layerCount; i++ )
 	{
 		m_layer[i].Draw(list);
 	}
+	list->Append(*m_genericList);
 
 	DeinitialiseTransformStack();
 	vsAssert( m_transformStackLevel == 0, "Unbalanced push/pop of transforms?");
@@ -402,6 +402,23 @@ vsRenderQueue::PushMatrix( const vsMatrix4x4 &matrix )
 		m_transformStackLevel++;
 	}
 
+	return m_transformStack[ m_transformStackLevel-1 ];
+}
+
+vsMatrix4x4
+vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
+{
+	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
+	vsAssert( m_transformStackLevel > 0, "Uninitialised transform stack??" )
+    
+	if ( m_transformStackLevel < MAX_SCENE_STACK )
+	{
+        vsMatrix4x4 matrix = transform.GetMatrix();
+        matrix.SetTranslation( -1.f * matrix.w );
+		m_transformStack[m_transformStackLevel] = m_transformStack[m_transformStackLevel-1] * matrix;
+		m_transformStackLevel++;
+	}
+    
 	return m_transformStack[ m_transformStackLevel-1 ];
 }
 

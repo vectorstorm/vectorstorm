@@ -59,13 +59,13 @@ public:
 	void				SetMaterial( const vsString &name ) { vsDelete( m_material ); m_material = new vsMaterial(name); }
 	void				SetMaterial( vsMaterial *mat ) { vsDelete( m_material ); m_material = mat; }
 
-	virtual void		SetPosition( const vsVector2D &pos ) { m_transform.m_position = pos; }
-	const vsVector2D &	GetPosition() { return m_transform.m_position; }
-	virtual void		SetAngle( const vsAngle &angle ) { m_transform.m_angle = angle; }
-	const vsAngle &		GetAngle() { return m_transform.m_angle; }
-	void				SetScale( float scale ) { m_transform.m_scale = vsVector2D(scale,scale); }
-	void				SetScale( const vsVector2D &scale ) { m_transform.m_scale = scale; }
-	const vsVector2D &	GetScale() { return m_transform.m_scale; }
+	virtual void		SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
+	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
+	virtual void		SetAngle( const vsAngle &angle ) { m_transform.SetAngle( angle ); }
+	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
+	void				SetScale( float scale ) { m_transform.SetScale( vsVector2D(scale,scale) ); }
+	void				SetScale( const vsVector2D &scale ) { m_transform.SetScale( scale ); }
+	const vsVector2D &	GetScale() { return m_transform.GetScale(); }
 
 	vsVector2D			GetWorldPosition();	// try to get our world position.  Note that this will only work if all of our parents only adjust the draw transformation using vsSprite built-in transforms!
 
@@ -82,7 +82,7 @@ public:
 	virtual vsEntity *	FindEntityAtPosition(const vsVector2D &pos);	// 'pos' is in parent coordinates!  Returns true if we swallowed the 'click' action.
 	virtual bool		ContainsLocalPoint(const vsVector2D &pos);
 
-	void				Rotate( float angle ) { m_transform.m_angle.Rotate(angle); }
+	void				Rotate( float angle );
 
 	virtual bool		OnScreen(const vsTransform2D & cameraTrans);
 

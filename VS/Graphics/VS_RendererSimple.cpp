@@ -202,7 +202,7 @@ void
 vsRendererSimple::SetCameraTransform( const vsTransform2D &t )
 {
 	vsScreen *s = vsSystem::GetScreen();
-	float hei = t.m_scale.x;
+	float hei = t.GetScale().x;
 	float wid = s->GetAspectRatio() * hei;
 	float hw = wid * 0.5f;
 	float hh = hei * 0.5f;
@@ -243,8 +243,8 @@ vsRendererSimple::SetCameraTransform( const vsTransform2D &t )
 
 
 
-	glRotatef( -t.m_angle.GetDegrees(), 0.0f, 0.0f, 1.0f );
-	glTranslatef( -t.m_position.x, -t.m_position.y, 0.0f );
+	glRotatef( -t.GetAngle().GetDegrees(), 0.0f, 0.0f, 1.0f );
+	glTranslatef( -t.GetTranslation().x, -t.GetTranslation().y, 0.0f );
 
 	m_state.SetBool( vsRendererState::Bool_DepthTest, false );
 	m_state.SetBool( vsRendererState::Bool_CullFace, false );
@@ -381,9 +381,9 @@ void
 vsRendererSimple::RenderDisplayList( vsDisplayList *list )
 {
 	vsTransform2D defCamera;
-	defCamera.m_position = vsVector2D::Zero;
-	defCamera.m_angle = vsAngle::Zero;
-	defCamera.m_scale = vsVector2D(1000.0f,1000.0f);
+	defCamera.SetTranslation( vsVector2D::Zero );
+	defCamera.SetAngle( vsAngle::Zero );
+	defCamera.SetScale( vsVector2D(1000.0f,1000.0f) );
 	SetCameraTransform(defCamera);
 
 	glMatrixMode( GL_MODELVIEW );
@@ -517,16 +517,16 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 				vsTransform2D localToWorld = m_transformStack[m_currentTransformStackLevel] * t;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
-				bool translation = (t.m_position != vsVector2D::Zero);
-				bool rotation = (t.m_angle != vsAngle::Zero);
-				bool scale = (t.m_scale != vsVector2D::One);
+				bool translation = (t.GetTranslation() != vsVector2D::Zero);
+				bool rotation = (t.GetAngle() != vsAngle::Zero);
+				bool scale = (t.GetScale() != vsVector2D::One);
 				glPushMatrix();
 				if ( translation )
-					glTranslatef( t.m_position.x, t.m_position.y, 0.0f );
+					glTranslatef( t.GetTranslation().x, t.GetTranslation().y, 0.0f );
 				if ( rotation )
-					glRotatef( t.m_angle.GetDegrees(), 0.0f, 0.0f, 1.0f );
+					glRotatef( t.GetAngle().GetDegrees(), 0.0f, 0.0f, 1.0f );
 				if ( scale )
-					glScalef( t.m_scale.x, t.m_scale.y, 1.0f );
+					glScalef( t.GetScale().x, t.GetScale().y, 1.0f );
 				break;
 			}
 			case vsDisplayList::OpCode_PushTranslation:

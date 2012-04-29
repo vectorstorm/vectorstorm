@@ -35,14 +35,36 @@ vsTransform2D::vsTransform2D( const vsVector2D &pos, const vsAngle &angle, const
 {
 }
 
+void
+vsTransform2D::SetTranslation( const vsVector2D &translation )
+{
+	m_position = translation;
+	m_dirty = true;
+}
+
+void
+vsTransform2D::SetAngle( const vsAngle &angle )
+{
+	m_angle = angle;
+	m_dirty = true;
+}
+
+void
+vsTransform2D::SetScale( const vsVector2D &scale )
+{
+	m_scale = scale;
+	m_dirty = true;
+}
+
+
 vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransform2D &b )
 {
 	vsTransform2D result;
-	
-	result.m_position = vsInterpolate( alpha, a.m_position, b.m_position );
-	result.m_angle = vsInterpolate( alpha, a.m_angle, b.m_angle );
-	result.m_scale = vsInterpolate( alpha, a.m_scale, b.m_scale );
-	
+
+	result.SetTranslation( vsInterpolate( alpha, a.GetTranslation(), b.GetTranslation() ) );
+	result.SetAngle( vsInterpolate( alpha, a.GetAngle(), b.GetAngle() ) );
+	result.SetScale( vsInterpolate( alpha, a.GetScale(), b.GetScale() ) );
+
 	return result;
 }
 
@@ -53,7 +75,7 @@ vsTransform2D::ApplyTo( const vsVector2D &v )
 	result.x *= m_scale.x;
 	result.y *= m_scale.y;
 	result += m_position;
-	
+
 	return result;
 }
 
@@ -62,12 +84,12 @@ vsTransform2D::ApplyInverseTo( const vsVector2D &v )
 {
 	vsVector2D result = v;
 	vsAngle inverseAngle = -m_angle;
-	
+
 	result -= m_position;
 	result.x /= m_scale.x;
 	result.y /= m_scale.y;
 	result = inverseAngle.ApplyRotationTo(result);
-	
+
 	return result;
 }
 
@@ -75,13 +97,13 @@ vsTransform2D
 vsTransform2D::operator*( const vsTransform2D &o )
 {
 	vsTransform2D result;
-	
+
 //	result = o;
-	
+
 	result.m_position = ApplyTo(o.m_position);
 	result.m_angle = m_angle + o.m_angle;
 	result.m_scale.Set( m_scale.x * o.m_scale.x, m_scale.y * o.m_scale.y );
-	
+
 	return result;
 }
 
@@ -89,13 +111,13 @@ vsTransform2D
 vsTransform2D::ApplyInverseTo( const vsTransform2D &o )
 {
 	vsTransform2D result;
-	
+
 	//	result = o;
-	
+
 	result.m_position = ApplyInverseTo(o.m_position);
 	result.m_angle = o.m_angle - m_angle;
 	result.m_scale.Set( o.m_scale.x / m_scale.x, o.m_scale.y / m_scale.y );
-	
+
 	return result;
 }
 
@@ -106,15 +128,15 @@ vsTransform2D::GetMatrix() const
 	if ( m_dirty )
 	{
 		m_dirty = false;
-		
+
 		vsMatrix3x3 m;
 		m.Set( vsQuaternion( vsVector3D::ZAxis, m_angle.Get() ) );
-		
+
 		m_matrix.SetRotationMatrix( m );
-		m_matrix.SetTranslation( m_position );
-		m_matrix.Scale( m_scale );
+		m_matrix.SetTranslation( -m_position );
+		m_matrix.Scale( vsVector3D(m_scale.x, m_scale.y, 1.f) );
 	}
-	
+
 	return m_matrix;
 }
 
@@ -139,15 +161,15 @@ vsTransform3D::GetMatrix() const
 	if ( m_dirty )
 	{
 		m_dirty = false;
-		
+
 		vsMatrix3x3 m;
 		m.Set(m_quaternion);
-		
+
 		m_matrix.SetRotationMatrix( m );
 		m_matrix.SetTranslation( m_translation );
 		m_matrix.Scale( m_scale );
 	}
-	
+
 	return m_matrix;
 }
 
@@ -155,11 +177,11 @@ vsTransform3D::GetMatrix() const
 vsTransform3D vsInterpolate( float alpha, const vsTransform3D &a, const vsTransform3D &b )
 {
 	vsTransform3D result;
-	
+
 	result.SetTranslation( vsInterpolate( alpha, a.GetTranslation(), b.GetTranslation() ) );
 	result.SetRotation( vsQuaternionSlerp( alpha, a.GetRotation(), b.GetRotation() ) );
 	result.SetScale( vsInterpolate( alpha, a.GetScale(), b.GetScale() ) );
-	
+
 	return result;
 }
 
@@ -169,7 +191,7 @@ vsTransform3D::ApplyTo( const vsVector3D &other ) const
 {
 	vsVector3D result = m_matrix.ApplyTo(other);
 	result += m_translation;
-	
+
 	return result;
 }*/
 
@@ -177,20 +199,20 @@ vsTransform3D::ApplyTo( const vsVector3D &other ) const
 vsTransform3D::vsTransform3D( const vsVector3D &forward, const vsVector3D &up )
 {
 	vsVector3D f,u,r;
-	
+
 	f = forward;
 	u = up;
-	
+
 	f.Normalise();
 	u.Normalise();
-	
+
 	r = f.Cross(u);
 	u = r.Cross(f);
-	
+
 	x = r;
 	y = u;
 	z = f;
-	
+
 	// done!
 }
 
@@ -240,12 +262,12 @@ vsTransform3D
 vsTransform3D::Inverse() const
 {
 	vsTransform3D result;
-	
+
 	result.x.Set(x.x, y.x, z.x, 0.f);
 	result.y.Set(x.y, y.y, z.y, 0.f);
 	result.z.Set(x.z, y.z, z.z, 0.f);
 	result.t.Set(x.Dot(t), y.Dot(t), z.Dot(t), 1.f);
-	
+
 	return result;
 }*/
 

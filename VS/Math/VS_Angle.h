@@ -55,8 +55,8 @@ public:
 	vsAngle		operator+=(const vsAngle &b) { Set( Get() + b.Get() );  return *this; }
 	vsAngle		operator-=(const vsAngle &b) { Set( Get() - b.Get() );  return *this; }
 	vsAngle		operator*=(float s) { Set( Get() * s );  return *this; }
-	bool		operator==(const vsAngle &b) { return m_angle == b.m_angle; }
-	bool		operator!=(const vsAngle &b) { return m_angle != b.m_angle; }
+	bool		operator==(const vsAngle &b) const { return m_angle == b.m_angle; }
+	bool		operator!=(const vsAngle &b) const { return m_angle != b.m_angle; }
 };
 
 vsAngle operator-(const vsAngle &ang);

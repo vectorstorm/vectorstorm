@@ -569,17 +569,24 @@ vsStore::ReadOverlay(vsOverlay *o)
 void
 vsStore::WriteTransform2D(const vsTransform2D &v)
 {
-	WriteVector2D( v.m_position );
-	WriteFloat( v.m_angle.Get() );
-	WriteVector2D( v.m_scale );
+	WriteVector2D( v.GetTranslation() );
+	WriteFloat( v.GetAngle().Get() );
+	WriteVector2D( v.GetScale() );
 }
 
 void
 vsStore::ReadTransform2D(vsTransform2D *t)
 {
-	ReadVector2D(&t->m_position);
-	t->m_angle.Set( ReadFloat() );
-	ReadVector2D(&t->m_scale);
+    vsVector2D pos, scale;
+    float angle;
+    
+	ReadVector2D(&pos);
+	angle = ReadFloat();
+	ReadVector2D(&scale);
+    
+    t->SetTranslation(pos);
+    t->SetAngle(angle);
+    t->SetScale(scale);
 }
 
 void
