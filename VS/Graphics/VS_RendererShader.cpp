@@ -294,7 +294,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
     }
     if ( m_currentSettings.writeDepth )
     {
-        m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+        m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
     }
     else
     {
