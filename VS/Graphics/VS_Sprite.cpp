@@ -123,15 +123,15 @@ vsSprite::GetWorldPosition()
 bool
 vsSprite::OnScreen( const vsTransform2D & cameraTrans )
 {
-	/*if ( !m_visible )
+	if ( !m_visible )
 		return false;
 
-	vsVector2D deltaToCamera = cameraTrans.m_position - m_transform.m_position;
+	vsVector2D deltaToCamera = cameraTrans.GetTranslation() - m_transform.GetTranslation();
 	float sqDistanceToCamera = deltaToCamera.SqLength();
 
 	float ebrsq = (m_boundingRadius);
 	ebrsq = ebrsq * ebrsq;
-	float fovsq = cameraTrans.m_scale.x;
+	float fovsq = cameraTrans.GetScale().x;
 	vsTuneable float s_factor = (16.f/9.f);	// assume worst-case aspect ratio
 	fovsq *= s_factor;
 	fovsq = fovsq * fovsq;
@@ -139,7 +139,7 @@ vsSprite::OnScreen( const vsTransform2D & cameraTrans )
 //	sqVisionRadius *= sqVisionRadius;
 
 	if ( sqDistanceToCamera > sqVisionRadius )
-		return false;*/
+		return false;
 
 	return true;
 }
@@ -312,5 +312,5 @@ vsSprite::Rotate(float angle)
 {
     vsAngle a = m_transform.GetAngle();
     a.Rotate(angle);
-    m_transform.SetAngle( a ); 
+    m_transform.SetAngle( a );
 }
