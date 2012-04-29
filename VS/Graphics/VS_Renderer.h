@@ -33,6 +33,7 @@ public:
 		vsShader *normalTexShader;
 		vsShader *litTexShader;
         float aspectRatio;
+		float polygonOffsetUnits;
         bool useCustomAspectRatio;
 		bool writeColor;
 		bool writeDepth;

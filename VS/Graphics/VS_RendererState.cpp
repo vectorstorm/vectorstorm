@@ -18,7 +18,7 @@ public:
 		m_type(type)
 	{
 	}
-	
+
 	virtual void DoFlush()
 	{
 		if ( m_value )
@@ -41,7 +41,7 @@ public:
 		m_type(type)
 	{
 	}
-	
+
 	virtual void DoFlush()
 	{
 		if ( m_value )
@@ -63,7 +63,7 @@ public:
 	StateSetter<bool>( initialValue )
 	{
 	}
-	
+
 	virtual void DoFlush()
 	{
 		glDepthMask( m_value ) ;
@@ -77,10 +77,24 @@ public:
 		StateSetter<float>( initialValue )
 	{
 	}
-	
+
 	virtual void DoFlush()
 	{
 		glAlphaFunc( GL_GREATER, m_value ) ;
+	}
+};
+
+class glPolygonOffsetUnitsSetter : public StateSetter<float>
+{
+public:
+	glPolygonOffsetUnitsSetter( const float &initialValue ):
+		StateSetter<float>( initialValue )
+	{
+	}
+
+	virtual void DoFlush()
+	{
+		glPolygonOffset( 0.f, m_value ) ;
 	}
 };
 
@@ -91,7 +105,7 @@ public:
 	StateSetter<int>( initialValue )
 	{
 	}
-	
+
 	virtual void DoFlush()
 	{
 		glCullFace( m_value ) ;
@@ -112,18 +126,20 @@ vsRendererState::vsRendererState()
 #if !TARGET_OS_IPHONE
 	m_boolState[Bool_PolygonSmooth] =	new glEnableSetter( GL_POLYGON_SMOOTH, false );
 #endif
+	m_boolState[Bool_PolygonOffsetFill] = new glEnableSetter( GL_POLYGON_OFFSET_FILL, false );
 	//m_boolState[Bool_Smooth] =			new glEnableSetter( GL_SMOOTH, false );
 	//m_boolState[Bool_Texture2D] =		new glEnableSetter( GL_TEXTURE_2D, false );
-	
+
 	m_boolState[Bool_DepthMask] =		new glDepthMaskSetter( false );
-	
+
 	m_boolState[ClientBool_VertexArray] =				new glClientStateSetter( GL_VERTEX_ARRAY, false );
 	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( GL_NORMAL_ARRAY, false );
 	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( GL_COLOR_ARRAY, false );
 	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( GL_TEXTURE_COORD_ARRAY, false );
-	
+
 	m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
-	
+	m_floatState[Float_PolygonOffsetUnits] = new glPolygonOffsetUnitsSetter( 0.f );
+
 	m_intState[Int_CullFace] = new glCullFaceSetter(0);
 }
 
@@ -133,6 +149,10 @@ vsRendererState::~vsRendererState()
 	{
 		delete m_boolState[i];
 	}
+    for ( int i = 0; i < INT_COUNT; i++ )
+    {
+        delete m_intState[i];
+    }
 	for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		delete m_floatState[i];
@@ -143,7 +163,7 @@ void
 vsRendererState::SetBool( vsRendererState::Bool key, bool value )
 {
 	m_boolState[key]->Set(value);
-	
+
 	//Flush();
 }
 
@@ -151,7 +171,7 @@ void
 vsRendererState::SetFloat( vsRendererState::Float key, float value )
 {
 	m_floatState[key]->Set(value);
-	
+
 	//Flush();
 }
 
@@ -159,7 +179,7 @@ void
 vsRendererState::SetInt( vsRendererState::Int key, int value )
 {
 	m_intState[key]->Set(value);
-	
+
 	//Flush();
 }
 
@@ -170,6 +190,10 @@ vsRendererState::Flush()
 	{
 		m_boolState[i]->Flush();
 	}
+    for ( int i = 0; i < INT_COUNT; i++ )
+    {
+        m_intState[i]->Flush();
+    }
 	for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		m_floatState[i]->Flush();
@@ -184,6 +208,10 @@ vsRendererState::Force()
 	{
 		m_boolState[i]->Force();
 	}
+    for ( int i = 0; i < INT_COUNT; i++ )
+    {
+        m_intState[i]->Force();
+    }
 	for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		m_floatState[i]->Force();

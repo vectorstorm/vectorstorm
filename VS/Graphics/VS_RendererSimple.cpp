@@ -978,13 +978,12 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 		glDepthFunc( GL_LEQUAL );
 	}
 
-	glPolygonOffset( material->m_depthBiasConstant, material->m_depthBiasFactor );
+	//glPolygonOffset( material->m_depthBiasConstant, material->m_depthBiasFactor );
 
 	m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, material->m_zRead );
 	m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
 	m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
-	m_state.Flush();
 
 	if ( material->m_cullingType == Cull_None )
 	{
@@ -994,7 +993,13 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	{
 		m_state.SetBool( vsRendererState::Bool_CullFace, true );
 
-		if ( (material->m_cullingType == Cull_Back) ^ m_currentSettings.invertCull)
+		bool cullingBack = (material->m_cullingType == Cull_Back);
+		if ( m_currentSettings.invertCull )
+		{
+			cullingBack = !cullingBack;
+		}
+
+		if ( cullingBack )
 		{
 			m_state.SetInt( vsRendererState::Int_CullFace, GL_BACK );
 		}
@@ -1077,6 +1082,7 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 			glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
 		}
 	}
+	m_state.Flush();
 }
 
 vsImage *

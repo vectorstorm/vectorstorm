@@ -63,6 +63,7 @@ public:
 		Bool_Lighting,
 		Bool_LineSmooth,
 		Bool_Multisample,
+		Bool_PolygonOffsetFill,
 #if !TARGET_OS_IPHONE
 		Bool_PolygonSmooth,
 #endif
@@ -78,6 +79,7 @@ public:
 	enum Float
 	{
 		Float_AlphaThreshhold,
+		Float_PolygonOffsetUnits,
 		FLOAT_COUNT
 	};
 	enum Int
