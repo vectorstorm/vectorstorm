@@ -63,6 +63,13 @@ void vsVector3D::Normalise()
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN!" );
 }
 
+void vsVector3D::Floor()
+{
+    x = vsFloor(x);
+    y = vsFloor(y);
+    z = vsFloor(z);
+}
+
 float vsVector3D::operator[](int n) const
 {
 	if ( n == 0 )

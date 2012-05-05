@@ -99,6 +99,8 @@ public:
 										   z*b.z ); }
 	
 	void	Set(float x_in, float y_in, float z_in) {x=x_in; y=y_in;z=z_in;}
+    
+    void    Floor();
 };
 
 class vsPosition3D
