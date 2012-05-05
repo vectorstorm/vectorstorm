@@ -559,7 +559,7 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetMatrix4x4:
 			{
 				glPushMatrix();
-				vsMatrix4x4 m = op->data.GetMatrix4x4();
+				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				glLoadMatrixf((float *)&m);
 				m_currentTransformStackLevel++;
 				break;
@@ -585,6 +585,32 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 				float farPlane = op->data.farPlane;
 
 				Set3DProjection(fov, nearPlane, farPlane);
+				break;
+			}
+			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
+			{
+				glMatrixMode( GL_PROJECTION );
+				vsMatrix4x4 &m = op->data.GetMatrix4x4();
+				glLoadMatrixf((float *)&m);
+				glMatrixMode( GL_MODELVIEW );
+				glLoadIdentity();
+
+				switch( vsSystem::Instance()->GetOrientation() )
+				{
+					case Orientation_Normal:
+						break;
+					case Orientation_Six:
+						glRotatef(180.f, 0.f, 0.f, 1.f);
+						break;
+					case Orientation_Three:
+						glRotatef(270.f, 0.f, 0.f, 1.f);
+						break;
+					case Orientation_Nine:
+						glRotatef(90.f, 0.f, 0.f, 1.f);
+						break;
+				}
+
+				glScalef(-1.f, 1.f, 1.f);
 				break;
 			}
 			case vsDisplayList::OpCode_SetCameraProjection:

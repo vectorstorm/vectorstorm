@@ -19,13 +19,13 @@ class vsFrustum
 {
 	vsVector3D		m_planePoint[6];
 	vsVector3D		m_planeNormal[6];
-	
+
 public:
-	
+
 	vsFrustum();
-	
+
 	void	Set( vsCamera3D *camera );
-	
+
 	bool	IsPointInside( const vsVector3D &position, float radius=0.f ) const;
 	bool	IsBox3DInside( const vsBox3D &box ) const;
 };

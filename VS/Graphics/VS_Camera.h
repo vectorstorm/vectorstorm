@@ -21,25 +21,25 @@ class vsCamera2D
 {
 protected:
 	vsTransform2D	m_transform;
-	
+
 public:
-	
+
 				vsCamera2D();
 	virtual		~vsCamera2D();
-	
+
 	virtual void		Update( float /*timeStep*/ ) {}
-	
+
 	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
 	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
 	float				GetFOV() { return m_transform.GetScale().y; }
-	
+
 	void				SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
 	void				SetAngle( const vsAngle &ang ) { m_transform.SetAngle( ang ); }
 	void				SetFOV( float fov ) { m_transform.SetScale( vsVector2D( fov, fov ) ); }
-	
+
 		// this "GetCameraTransform()" function is giving an incorrect 'scale' value.  Need to fix it!
 	const vsTransform2D &		GetCameraTransform() { return m_transform; }
-	
+
 	bool				IsPositionVisible( const vsVector2D &pos, float r=0.f );
 	bool				WrapAround( vsVector2D &pos, float r=0.f );
 };
@@ -47,35 +47,52 @@ public:
 
 class vsCamera3D
 {
+public:
+	enum ProjectionType
+	{
+		PT_Perspective,
+		PT_Orthographic
+	};
 protected:
+
 	vsTransform3D	m_transform;
 	vsFrustum		m_frustum;
 	float			m_fov;		// vertical FOV, in radians
 	float			m_nearPlane;
 	float			m_farPlane;
-	
+	float			m_aspectRatio;
+	ProjectionType	m_type;
+
 	void			UpdateFrustum();
 
 public:
-	
-	vsCamera3D();
+
+	vsCamera3D( ProjectionType t = PT_Perspective );
 	virtual		~vsCamera3D();
-	
+
 	virtual void		Update( float /*timeStep*/ ) { UpdateFrustum(); }
-	
+
 	const vsVector3D &		GetPosition() const { return m_transform.GetTranslation(); }
 	const vsQuaternion &	GetOrientation() const { return m_transform.GetRotation(); }
 	const vsTransform3D &	GetTransform() const { return m_transform; }
 	float					GetFOV() const { return m_fov; }
 	float					GetNearPlane() const { return m_nearPlane; }
 	float					GetFarPlane() const { return m_farPlane; }
-	
+	float				GetAspectRatio() const { return m_aspectRatio; }
+
+	void				SetProjectionType( ProjectionType t ) { m_type = t; }
+	ProjectionType		GetProjectionType() const { return m_type; }
+
+	vsMatrix4x4			GetProjectionMatrix( float aspectRatio );
+
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; UpdateFrustum();}
 	void				SetPosition( const vsVector4D &pos ) { m_transform.SetTranslation( pos ); UpdateFrustum();}
 	void				SetOrientation( const vsQuaternion &quat ) { m_transform.SetRotation( quat ); UpdateFrustum();}
 	void				SetFOV( float fov ) { m_fov = fov; UpdateFrustum();}
 	void				SetNearPlane( float np ) { m_nearPlane = np; UpdateFrustum();}
 	void				SetFarPlane( float fp ) { m_farPlane = fp; UpdateFrustum();}
+	void				SetAspectRatio( float ar ) { m_aspectRatio = ar; UpdateFrustum(); }
+
 
 	bool				IsPositionVisible( const vsVector3D &pos, float r=0.f ) const;
 	bool				IsBox3DVisible( const vsBox3D &box ) const;

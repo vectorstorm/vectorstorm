@@ -50,6 +50,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PopTransform",
 	"CameraTransform",
 	"3DProjection",
+	"SetProjectionMatrix4x4",
 	"CameraProjection",
 
 	"VertexArray",
@@ -921,6 +922,14 @@ vsDisplayList::Set3DProjection( float fov, float nearPlane, float farPlane )
 }
 
 void
+vsDisplayList::SetProjectionMatrix4x4( const vsMatrix4x4 &m )
+{
+	m_fifo->WriteUint8( OpCode_SetProjectionMatrix4x4 );
+	m_fifo->WriteMatrix4x4( m );
+}
+
+
+void
 vsDisplayList::SetCameraProjection( const vsTransform3D &t )
 {
 	SetCameraProjection(t.GetMatrix());
@@ -1405,6 +1414,9 @@ vsDisplayList::PopOp()
 				m_currentOp.data.nearPlane = m_fifo->ReadFloat();
 				m_currentOp.data.farPlane = m_fifo->ReadFloat();
 				break;
+			case OpCode_SetProjectionMatrix4x4:
+				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
+				break;
 			case OpCode_SetCameraProjection:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
@@ -1547,6 +1559,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_Set3DProjection:
 			Set3DProjection( o->data.fov, o->data.nearPlane, o->data.farPlane );
+			break;
+		case OpCode_SetProjectionMatrix4x4:
+			SetProjectionMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_SetCameraProjection:
 			SetCameraProjection( o->data.GetMatrix4x4() );

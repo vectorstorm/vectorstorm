@@ -30,18 +30,18 @@ vsScene::vsScene():
 	//	m_displayList = new vsDisplayList(40000);
 	m_defaultCamera = new vsCamera2D;
 	m_camera = m_defaultCamera;
-	
+
 	m_defaultCamera3D = new vsCamera3D;
 	m_camera3D = m_defaultCamera3D;
-	
+
 	m_fog = NULL;
 	m_flatShading = false;
-	
+
 	for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 	{
 		m_light[i] = NULL;
 	}
-	
+
 	m_is3d = false;
 }
 
@@ -61,7 +61,7 @@ vsScene::SetCamera2D( vsCamera2D *camera, bool reference )
 		m_camera = camera;
 	else
 		m_camera = m_defaultCamera;
-	
+
 	m_cameraIsReference = reference;
 }
 
@@ -73,7 +73,7 @@ vsScene::SetCamera3D( vsCamera3D *camera, bool reference )
 		m_camera3D = camera;
 	else
 		m_camera3D = m_defaultCamera3D;
-	
+
 	m_cameraIsReference = reference;
 }
 
@@ -87,21 +87,21 @@ void
 vsScene::Update( float timeStep )
 {
 	s_current = this;
-	
+
 	vsEntity *entity = m_entityList->GetNext();
 	vsEntity *next;
 	while ( entity != m_entityList )
 	{
 		next = entity->GetNext();		// entities might remove themselves during their Update, so pre-cache the next entity
-		
+
 		entity->Update( timeStep );
-		
+
 		if ( entity->GetNext() == entity )
 			entity = next;
 		else
 			entity = entity->GetNext();
 	}
-	
+
 	if ( m_camera && !m_cameraIsReference )
 	{
 		m_camera->Update( timeStep );
@@ -110,7 +110,7 @@ vsScene::Update( float timeStep )
 	{
 		m_camera3D->Update( timeStep );
 	}
-	
+
 	s_current = NULL;
 }
 
@@ -118,9 +118,9 @@ void
 vsScene::Draw( vsDisplayList *list )
 {
 	s_current = this;
-	
+
 	//	m_displayList->Clear();
-	
+
 	if ( m_flatShading )
 	{
 		list->FlatShading();
@@ -129,12 +129,13 @@ vsScene::Draw( vsDisplayList *list )
 	{
 		list->SmoothShading();
 	}
-	
+
 	if ( m_is3d )
 	{
-		list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
+		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix( vsSystem::GetScreen()->GetAspectRatio() ) );
+		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
 		list->SetCameraProjection( m_camera3D->GetTransform() );
-		
+
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
 			if ( m_light[i] != NULL )
@@ -142,21 +143,22 @@ vsScene::Draw( vsDisplayList *list )
 				list->Light( *m_light[i] );
 			}
 		}
-		
+
 		if ( m_fog )
 		{
 			list->Fog( *m_fog );
 		}
-		
+
 	}
 	else
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
+		//list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
 		list->SetCameraTransform( m_camera->GetCameraTransform() );
 	}
-	
+
 	m_queue->StartRender(this);
-	
+
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
 	{
@@ -166,15 +168,15 @@ vsScene::Draw( vsDisplayList *list )
 		}
 		entity = entity->GetNext();
 	}
-	
+
 	m_queue->Draw(list);
-	
+
 	m_queue->EndRender();
-	
+
 	list->ClearLights();
 	list->ClearFog();
 	list->SetMaterial(vsMaterial::White);
-	
+
 	s_current = NULL;
 }
 
@@ -222,13 +224,13 @@ vsScene::RemoveLight( vsLight *light )
  vsScene::CalculateLightOnNormal( const vsVector3D &normal )
  {
  vsColor result(0.0f,0.0f,0.0f,1.f);
- 
+
  for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
  {
  if ( m_light[i] )
  {
  float luminance = normal.Dot(m_light[i]->m_position);
- 
+
  result += m_light[i]
  }
  }
@@ -238,15 +240,15 @@ vsEntity *
 vsScene::FindEntityAtPosition( const vsVector2D &pos )
 {
 	vsEntity *result = NULL;
-	
+
 	vsEntity *entity = m_entityList->GetPrev();
 	while ( !result && entity != m_entityList )
 	{
 		result = entity->FindEntityAtPosition(pos);
-		
+
 		entity = entity->GetPrev();
 	}
-	
+
 	return result;
 }
 
@@ -256,33 +258,33 @@ vsScene::GetCorner(bool bottom, bool right)
 	vsVector2D pos = vsVector2D::Zero;
 	// okay.  First, let's start by grabbing the coordinate of our requested corner,
 	// as though we had no camera.  Later on, we'll correct for the camera.
-	
+
 	float fov = GetFOV();			// fov is measured VERTICALLY.  So our height is FOV.
 	float halfFov = 0.5f * fov;		// since we assume that '0,0' is in the middle, our coords vertically are [-halfFov .. halfFov]
-	
+
 	if ( bottom )
 		pos.y = halfFov;
 	else	// top
 		pos.y = -halfFov;
-	
+
 	// now, to figure out where the edge is, we need to know our screen aspect ratio, which is the ratio of horizontal pixels to vertical pixels.
 	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
-	
+
 	if ( right )
 		pos.x = halfFov * aspectRatio;
 	else	// left
 		pos.x = -halfFov * aspectRatio;
-	
-	
+
+
 	// Okay!  Now we have the corner of our screen.  Now we just need to figure out where this camera-relative coordinate sits in world-space
 	// to do this, we take the world-to-camera transform off the camera, and then apply its inverse to our position.
-	
+
 	vsTransform2D worldToCamera;
 	worldToCamera.SetTranslation( m_camera->GetPosition() );
 	worldToCamera.SetAngle( m_camera->GetAngle() );
-		
+
 	pos = worldToCamera.ApplyTo(pos);
-	
+
 	return pos;
 }
 
@@ -294,7 +296,7 @@ public:
 	vsDebugCamera() : vsCamera2D()
 	{
 	}
-	
+
 	void				Init()
 	{
 		SetFOV( 1.0f );
