@@ -132,7 +132,7 @@ vsScene::Draw( vsDisplayList *list )
 
 	if ( m_is3d )
 	{
-		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix( vsSystem::GetScreen()->GetAspectRatio() ) );
+		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
 		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
 		list->SetCameraProjection( m_camera3D->GetTransform() );
 

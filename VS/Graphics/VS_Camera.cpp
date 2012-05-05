@@ -135,12 +135,12 @@ vsCamera3D::~vsCamera3D()
 }
 
 vsMatrix4x4
-vsCamera3D::GetProjectionMatrix(float aspectRatio)
+vsCamera3D::GetProjectionMatrix()
 {
 	if ( m_type == PT_Perspective )
 	{
 		float hh = vsTan(m_fov * .5f) * m_nearPlane;
-		float hw = hh * aspectRatio;
+		float hw = hh * m_aspectRatio;
 
 		/*vsMatrix4x4 m(
 				vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
@@ -160,7 +160,7 @@ vsCamera3D::GetProjectionMatrix(float aspectRatio)
 	else if ( m_type == PT_Orthographic )
 	{
 		float height = m_fov;
-		float width = height * aspectRatio;
+		float width = height * m_aspectRatio;
 		vsMatrix4x4 m(
 				vsVector4D( 2.f / width, 0.f, 0.f, 0.f ),
 				vsVector4D( 0.f, 2.f / height, 0.f, 0.f ),

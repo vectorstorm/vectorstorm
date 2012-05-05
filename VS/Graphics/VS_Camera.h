@@ -83,7 +83,7 @@ public:
 	void				SetProjectionType( ProjectionType t ) { m_type = t; }
 	ProjectionType		GetProjectionType() const { return m_type; }
 
-	vsMatrix4x4			GetProjectionMatrix( float aspectRatio );
+	vsMatrix4x4			GetProjectionMatrix();
 
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; UpdateFrustum();}
 	void				SetPosition( const vsVector4D &pos ) { m_transform.SetTranslation( pos ); UpdateFrustum();}
