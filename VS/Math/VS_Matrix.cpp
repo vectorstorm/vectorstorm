@@ -109,6 +109,32 @@ vsMatrix3x3::operator[](int n) const
 	return vsVector3D::Zero;
 }
 
+vsMatrix3x3 vsMatrix3x3::Inverse() const
+{
+    // just a transpose
+    vsMatrix3x3 result;
+    
+    result.x.x = x.x;
+    result.x.y = y.x;
+    result.x.z = z.x;
+
+    result.y.x = x.y;
+    result.y.y = y.y;
+    result.y.z = z.y;
+    
+    result.z.x = x.z;
+    result.z.y = y.z;
+    result.z.z = z.z;
+
+    return result;
+}
+
+void vsMatrix3x3::Invert()
+{
+    *this = Inverse();
+}
+
+
 vsMatrix4x4::vsMatrix4x4():
 x(1.f,0.f,0.f,0.f),
 y(0.f,1.f,0.f,0.f),

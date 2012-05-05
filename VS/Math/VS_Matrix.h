@@ -30,6 +30,9 @@ public:
 	
 	void Set( const vsQuaternion &quat );
 	const vsVector3D &	operator[](int n) const;
+    
+    vsMatrix3x3 Inverse() const;
+    void Invert();
 
 	vsVector3D		ApplyTo( const vsVector3D &v ) const;
 };
