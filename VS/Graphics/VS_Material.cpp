@@ -35,7 +35,7 @@ vsMaterial::vsMaterial( const vsString & textureName, vsDrawMode mode ):
 	vsCacheReference<vsMaterialInternal>(vsFormatString("CodeMaterial%02d", c_codeMaterialCount++))
 {
 	// I believe that this is only being used by the font system right now.
-	
+
 	vsMaterialInternal *mi = reinterpret_cast<vsMaterialInternal *>(m_resource);
 	mi->m_texture = new vsTexture(textureName);
 	mi->m_drawMode = mode;
@@ -63,6 +63,11 @@ vsCacheReference<vsMaterialInternal>(vsFormatString("CodeMaterial%02d", c_codeMa
 	mi->m_drawMode = mode;
 	mi->m_color = c;
 	mi->m_specularColor = sc;
+	if ( mi->m_drawMode != DrawMode_Lit )
+	{
+		mi->m_zRead = false;
+		mi->m_zWrite = false;
+	}
 	mi->Compile();
 }
 
