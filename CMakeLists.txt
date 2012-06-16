@@ -335,6 +335,7 @@ include_directories(
 		${PLATFORM_SOURCES}
 		)
 
+	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3
 
 	source_group("VectorStorm" FILES ${SOURCES} )
 	source_group("Core" FILES ${CORE_SOURCES} )
