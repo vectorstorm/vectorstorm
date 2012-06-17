@@ -85,6 +85,7 @@ vsSprite::vsSprite( vsDisplayList *list ) :
 	m_overlay(NULL),
 	m_material(NULL),
 	m_useColor(false),
+	m_boundingBoxLocked(false),
 	m_transform()
 {
 	m_displayList = list;
@@ -224,6 +225,9 @@ vsSprite::ClearFragments()
 void
 vsSprite::BuildBoundingBox()
 {
+	if ( m_boundingBoxLocked )
+		return;
+	
 	vsBox2D boundingBox;
 	vsVector2D tl, br;
 	if ( m_displayList )

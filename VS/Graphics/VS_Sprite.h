@@ -43,6 +43,7 @@ protected:
 	vsMaterial *		m_material;
 
 	bool				m_useColor;
+	bool				m_boundingBoxLocked;
 
 public:
 	vsTransform2D		m_transform;
