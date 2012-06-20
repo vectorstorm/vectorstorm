@@ -15,6 +15,7 @@
 class vsDisplayList;
 class vsCamera2D;
 class vsShader;
+class vsShaderSuite;
 
 enum RenderMode
 {
@@ -28,10 +29,7 @@ public:
 
 	struct Settings
 	{
-		vsShader *normalShader;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
-		vsShader *litShader;
-		vsShader *normalTexShader;
-		vsShader *litTexShader;
+		vsShaderSuite *shaderSuite;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
         float aspectRatio;
 		float polygonOffsetUnits;
         bool useCustomAspectRatio;
