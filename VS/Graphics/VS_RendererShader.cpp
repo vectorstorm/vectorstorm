@@ -256,21 +256,11 @@ vsRendererShader::InitPhaseTwo(int width, int height, int depth, bool fullscreen
 
 	s_litTexfAlphaRef = glGetUniformLocation(s_litTexProg, "alphaRef");
 	s_texfAlphaRef = glGetUniformLocation(s_normalTexProg, "alphaRef");
-
-	vsRenderTarget::Settings depthSettings;
-	depthSettings.width = width;
-	depthSettings.height = height;
-	depthSettings.linear = true;
-	depthSettings.depth = false;
-	depthSettings.mipMaps = false;
-	depthSettings.ortho = true;
-	m_shadow = new vsRenderTarget( vsRenderTarget::Type_Depth, depthSettings );
 }
 
 void
 vsRendererShader::Deinit()
 {
-	vsDelete( m_shadow );
 	Parent::Deinit();
 }
 

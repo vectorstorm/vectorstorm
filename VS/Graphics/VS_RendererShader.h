@@ -26,8 +26,6 @@ class vsRendererShader : public vsRendererBloom, public vsSingleton<vsRendererSh
 
 	static bool				s_shadersBuilt;
 
-	vsRenderTarget *		m_shadow;
-
 	virtual void			SetMaterial(vsMaterialInternal *material);
 
 public:
