@@ -14,6 +14,7 @@
 #include "VS_MaterialInternal.h"
 
 #include "VS_Shader.h"
+#include "VS_ShaderSuite.h"
 
 GLuint			vsRendererShader::s_normalProg = -1;
 GLuint			vsRendererShader::s_litProg = -1;
@@ -316,11 +317,11 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 			case DrawMode_Normal:
 				if ( material->m_texture )
 				{
-					if ( m_currentSettings.normalTexShader )
+					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
 					{
-						glUseProgram( m_currentSettings.normalTexShader->GetShaderId() );
-						m_currentSettings.normalTexShader->Prepare();
-                        m_currentShader = m_currentSettings.normalTexShader;
+                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
+						glUseProgram(m_currentShader->GetShaderId());
+						m_currentShader->Prepare();
                         m_currentShader->SetAlphaRef( material->m_alphaRef );
 					}
 					else
@@ -331,11 +332,11 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 				}
 				else
 				{
-					if ( m_currentSettings.normalShader )
+					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
 					{
-						glUseProgram( m_currentSettings.normalShader->GetShaderId() );
-						m_currentSettings.normalShader->Prepare();
-                        m_currentShader = m_currentSettings.normalShader;
+                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
+						glUseProgram(m_currentShader->GetShaderId());
+						m_currentShader->Prepare();
 					}
 					else
 					{
@@ -347,11 +348,11 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 
 				if ( material->m_texture )
 				{
-					if ( m_currentSettings.litTexShader )
+					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
 					{
-						glUseProgram( m_currentSettings.litTexShader->GetShaderId() );
-						m_currentSettings.litTexShader->Prepare();
-                        m_currentShader = m_currentSettings.litTexShader;
+                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
+						glUseProgram(m_currentShader->GetShaderId());
+						m_currentShader->Prepare();
                         m_currentShader->SetAlphaRef( material->m_alphaRef );
 					}
 					else
@@ -362,11 +363,11 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 				}
 				else
 				{
-					if ( m_currentSettings.litShader )
+					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
 					{
-						glUseProgram( m_currentSettings.litShader->GetShaderId() );
-						m_currentSettings.litShader->Prepare();
-                        m_currentShader = m_currentSettings.litShader;
+                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
+						glUseProgram(m_currentShader->GetShaderId());
+						m_currentShader->Prepare();
 					}
 					else
 					{

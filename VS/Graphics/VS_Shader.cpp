@@ -14,7 +14,7 @@
 #include "VS_File.h"
 #include "VS_Store.h"
 
-vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader ):
+vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
 	if ( vsRendererShader::Exists() )
@@ -30,14 +30,28 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 		vShader.Store( vStore );
 		fShader.Store( fStore );
-        
+		vsString vString( vStore->GetReadHead(), vSize );
+		vsString fString( fStore->GetReadHead(), fSize );
+
+		if ( lit )
+		{
+			vString = "#define LIT 1\n" + vString;
+			fString = "#define LIT 1\n" + fString;
+		}
+		if ( texture )
+		{
+			vString = "#define TEXTURE 1\n" + vString;
+			fString = "#define TEXTURE 1\n" + fString;
+		}
+
 
 #if !TARGET_OS_IPHONE
-		m_shader = vsRendererShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize );
+		m_shader = vsRendererShader::Instance()->Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+		//m_shader = vsRendererShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
         m_alphaRef = glGetUniformLocation(m_shader, "alphaRef");
-        
+
 		delete vStore;
 		delete fStore;
 	}
@@ -47,7 +61,7 @@ vsShader::~vsShader()
 {
 }
 
-void 
+void
 vsShader::SetAlphaRef( float aref )
 {
     if ( m_alphaRef >= 0 )

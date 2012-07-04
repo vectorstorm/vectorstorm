@@ -10,10 +10,7 @@
 #include "VS_Renderer.h"
 
 vsRenderer::Settings::Settings():
-	normalShader(NULL),
-	litShader(NULL),
-	normalTexShader(NULL),
-	litTexShader(NULL),
+	shaderSuite(NULL),
     aspectRatio(1.f),
 	polygonOffsetUnits(0.f),
     useCustomAspectRatio(false),

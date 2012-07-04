@@ -18,16 +18,16 @@ class vsDisplayList;
 class vsShader
 {
 	uint32 m_shader;
-    
+
     int m_alphaRef;
 
 public:
 
-	vsShader( const vsString &vertexShader, const vsString &fragmentShader );
+	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 	virtual ~vsShader();
 
 	uint32 GetShaderId() { return m_shader; }
-    
+
     void SetAlphaRef( float aref );
 
 	virtual void Prepare() {}	// called before we start rendering something with this shader
