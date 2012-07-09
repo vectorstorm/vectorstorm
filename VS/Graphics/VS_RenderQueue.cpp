@@ -16,31 +16,49 @@
 #include "VS_MaterialInternal.h"
 
 
-vsRenderQueueLayer::Batch::Batch():
+vsRenderQueueLayer::MaterialBatch::MaterialBatch():
 	material("White"),
+	vertexBufferBatchList(NULL),
+	next(NULL)
+{
+}
+
+vsRenderQueueLayer::MaterialBatch::~MaterialBatch()
+{
+}
+
+vsRenderQueueLayer::VertexBufferBatch::VertexBufferBatch():
+	vertexBuffer(NULL),
 	elementList(NULL),
 	next(NULL)
 {
 }
 
-vsRenderQueueLayer::Batch::~Batch()
+vsRenderQueueLayer::VertexBufferBatch::~VertexBufferBatch()
 {
 }
 
 vsRenderQueueLayer::vsRenderQueueLayer():
 	m_batch(NULL),
 	m_batchCount(0),
-	m_batchPool(NULL),
+	m_materialBatchPool(NULL),
+	m_vertexBufferBatchPool(NULL),
 	m_batchElementPool(NULL)
 {
 }
 
 vsRenderQueueLayer::~vsRenderQueueLayer()
 {
-	while( m_batchPool )
+	while( m_materialBatchPool )
 	{
-		Batch *b = m_batchPool;
-		m_batchPool = m_batchPool->next;
+		MaterialBatch *b = m_materialBatchPool;
+		m_materialBatchPool = m_materialBatchPool->next;
+		vsDelete(b);
+	}
+	while( m_vertexBufferBatchPool )
+	{
+		VertexBufferBatch *b = m_vertexBufferBatchPool;
+		m_vertexBufferBatchPool = m_vertexBufferBatchPool->next;
 		vsDelete(b);
 	}
 	while( m_batchElementPool )
@@ -51,63 +69,97 @@ vsRenderQueueLayer::~vsRenderQueueLayer()
 	}
 }
 
-vsRenderQueueLayer::Batch *
-vsRenderQueueLayer::FindBatch( vsMaterial *material )
+vsRenderQueueLayer::VertexBufferBatch *
+vsRenderQueueLayer::FindBatch( vsMaterial *material, vsRenderBuffer *vertexBuffer )
 {
-	for (Batch *batch = m_batch; batch; batch = batch->next)
+	VertexBufferBatch *vbatch = NULL;
+	MaterialBatch *mbatch = NULL;
+
+	// TODO:  Hash map would be faster.
+	for (MaterialBatch *i = m_batch; i; i = i->next)
 	{
-		if ( batch->material == material )
+		if ( i->material == material )
 		{
-			return batch;
+			mbatch = i;
+			break;
 		}
 	}
-
-	if ( !m_batchPool )
+	// if we didn't find a material batch, make one.
+	if ( !mbatch )
 	{
-		m_batchPool = new Batch;
-	}
-	Batch *batch = m_batchPool;
-	m_batchPool = batch->next;
-	batch->next = NULL;
-	batch->material = *material;
-
-	// insert this batch into our batch list, SORTED.
-	bool inserted = false;
-
-	if ( m_batch == NULL )
-	{
-		m_batch = batch;
-	}
-	else
-	{
-		Batch *lb;
-		for(lb = m_batch; lb->next; lb = lb->next)
+		if ( !m_materialBatchPool )
 		{
-			if ( lb->next->material.GetResource()->m_layer > material->GetResource()->m_layer )
+			m_materialBatchPool = new MaterialBatch;
+		}
+		MaterialBatch *batch = m_materialBatchPool;
+		m_materialBatchPool = batch->next;
+		batch->next = NULL;
+		batch->material = *material;
+		mbatch = batch;
+		// insert this batch into our batch list, SORTED.
+		bool inserted = false;
+
+		if ( m_batch == NULL )
+		{
+			m_batch = batch;
+		}
+		else
+		{
+			MaterialBatch *lb;
+			for(lb = m_batch; lb->next; lb = lb->next)
 			{
-				batch->next = lb->next;
+				if ( lb->next->material.GetResource()->m_layer > material->GetResource()->m_layer )
+				{
+					batch->next = lb->next;
+					lb->next = batch;
+					inserted = true;
+					break;
+				}
+			}
+
+			if ( !inserted )
+			{
 				lb->next = batch;
-				inserted = true;
-				break;
 			}
 		}
+		m_batchCount++;
+	}
 
-		if ( !inserted )
+	// now I Have a MaterialBatch.  I need to find a VertexBufferBatch.
+	for (VertexBufferBatch *i = mbatch->vertexBufferBatchList; i; i = i->next)
+	{
+		if ( i->vertexBuffer == vertexBuffer )
 		{
-			lb->next = batch;
+			vbatch = i;
+			break;
 		}
 	}
-	m_batchCount++;
 
-	return batch;
+	if ( !vbatch )
+	{
+		if ( !m_vertexBufferBatchPool )
+		{
+			m_vertexBufferBatchPool = new VertexBufferBatch;
+		}
+		vbatch = m_vertexBufferBatchPool;
+		m_vertexBufferBatchPool = vbatch->next;
+		vbatch->next = NULL;
+		vbatch->vertexBuffer = vertexBuffer;
+
+		// insert this vbatch into our material batch's list.
+		vbatch->next = mbatch->vertexBufferBatchList;
+		mbatch->vertexBufferBatchList = vbatch;
+	}
+
+	return vbatch;
 }
 
 
 void
-vsRenderQueueLayer::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
+vsRenderQueueLayer::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vertexBuffer, vsDisplayList *batchList )
 {
-	Batch *batch = FindBatch(material);
-	
+	VertexBufferBatch *batch = FindBatch(material, vertexBuffer);
+
 	if ( !m_batchElementPool )
 	{
 		m_batchElementPool = new BatchElement;
@@ -127,7 +179,7 @@ vsRenderQueueLayer::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 vsDisplayList *
 vsRenderQueueLayer::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size )
 {
-	Batch *batch = FindBatch(material);
+	VertexBufferBatch *batch = FindBatch(material, NULL);
 
 	if ( m_batchElementPool == NULL )
 	{
@@ -161,24 +213,35 @@ vsRenderQueueLayer::StartRender()
 void
 vsRenderQueueLayer::Draw( vsDisplayList *list )
 {
-	for (Batch *b = m_batch; b; b = b->next)
+	for (MaterialBatch *b = m_batch; b; b = b->next)
 	{
 		list->SetMaterial( &b->material );
 
-		for (BatchElement *e = b->elementList; e; e = e->next)
+		for (VertexBufferBatch *vb = b->vertexBufferBatchList; vb; vb = vb->next)
 		{
-			bool hasTransform = true;//e->matrix != vsMatrix4x4::Identity;
-
-			if ( hasTransform )
+			if ( vb->vertexBuffer )
 			{
-				list->SetMatrix4x4( e->matrix );
+				list->BindBuffer( vb->vertexBuffer );
 			}
-
-			list->Append( *e->list );
-
-			if ( hasTransform )
+			for (BatchElement *e = vb->elementList; e; e = e->next)
 			{
-				list->PopTransform();
+				bool hasTransform = true;//e->matrix != vsMatrix4x4::Identity;
+
+				if ( hasTransform )
+				{
+					list->SetMatrix4x4( e->matrix );
+				}
+
+				list->Append( *e->list );
+
+				if ( hasTransform )
+				{
+					list->PopTransform();
+				}
+			}
+			if ( vb->vertexBuffer )
+			{
+				list->ClearArrays();
 			}
 		}
 	}
@@ -187,24 +250,46 @@ vsRenderQueueLayer::Draw( vsDisplayList *list )
 void
 vsRenderQueueLayer::EndRender()
 {
+	// strategy:  Find the last element of each list, and tack the pools onto
+	// the end.  TODO:  Consider whether this would be faster (and simpler!) if
+	// we found the end of each pool and tacked the lists on there.
+	//
+	// Answer:  No.  We have to iterate across all elements in our list anyway,
+	// freeing their contents.  So iterating across the pools wouldn't be an
+	// improvement.
+
 	m_batchCount = 0;
-	Batch *last = NULL;
-	for (Batch *b = m_batch; b; b = b->next)
+	MaterialBatch *last = NULL;
+	VertexBufferBatch *vlast = NULL;
+	for (MaterialBatch *b = m_batch; b; b = b->next)
 	{
 		last = b;
-		BatchElement *lastElement = b->elementList;
-		while ( lastElement->next )
+
+		for (VertexBufferBatch *vb = b->vertexBufferBatchList; vb; vb = vb->next)
 		{
-			lastElement = lastElement->next;
+			vlast = vb;
+
+			BatchElement *lastElement = vb->elementList;
+			while ( lastElement && lastElement->next )
+			{
+				lastElement = lastElement->next;
+			}
+			lastElement->next = m_batchElementPool;
+			m_batchElementPool = vb->elementList;
+			vb->elementList = NULL;
+			vb->vertexBuffer = NULL;
 		}
-		lastElement->next = m_batchElementPool;
-		m_batchElementPool = b->elementList;
-		b->elementList = NULL;
+		if ( vlast )
+		{
+			vlast->next = m_vertexBufferBatchPool;
+			m_vertexBufferBatchPool = b->vertexBufferBatchList;
+			b->vertexBufferBatchList = NULL;
+		}
 	}
 	if ( last )
 	{
-		last->next = m_batchPool;
-		m_batchPool = m_batch;
+		last->next = m_materialBatchPool;
+		m_materialBatchPool = m_batch;
 	}
 	m_batch = NULL;
 
@@ -353,11 +438,11 @@ vsRenderQueue::DeinitialiseTransformStack()
 }
 
 void
-vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch )
+vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vertexBuffer, vsDisplayList *batch )
 {
 	int layerId = PickLayerForMaterial( material );
 
-	m_layer[layerId].AddBatch( material, matrix, batch );
+	m_layer[layerId].AddBatch( material, matrix, vertexBuffer, batch );
 }
 
 vsDisplayList *
@@ -410,7 +495,7 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 {
 	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
 	vsAssert( m_transformStackLevel > 0, "Uninitialised transform stack??" )
-    
+
 	if ( m_transformStackLevel < MAX_SCENE_STACK )
 	{
         vsMatrix4x4 matrix = transform.GetMatrix();
@@ -418,7 +503,7 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 		m_transformStack[m_transformStackLevel] = m_transformStack[m_transformStackLevel-1] * matrix;
 		m_transformStackLevel++;
 	}
-    
+
 	return m_transformStack[ m_transformStackLevel-1 ];
 }
 

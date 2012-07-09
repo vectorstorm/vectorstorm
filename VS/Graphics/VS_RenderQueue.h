@@ -34,25 +34,35 @@ class vsRenderQueueLayer
 		vsDisplayList *	list;
 		BatchElement *	next;
 	};
-	struct Batch
+	struct VertexBufferBatch
+	{
+		vsRenderBuffer *	vertexBuffer;
+		BatchElement*		elementList;
+		VertexBufferBatch *	next;
+
+		VertexBufferBatch();
+		~VertexBufferBatch();
+	};
+	struct MaterialBatch
 	{
 		vsMaterial		material;
-		BatchElement*	elementList;
-		Batch*			next;
+		VertexBufferBatch * vertexBufferBatchList;
+		MaterialBatch *	next;
 
-		Batch();
-		~Batch();
+		MaterialBatch();
+		~MaterialBatch();
 	};
 
-	Batch*				m_batch;
+	MaterialBatch*		m_batch;
 	int					m_batchCount;
 
-	Batch *				m_batchPool;
+	MaterialBatch *		m_materialBatchPool;
+	VertexBufferBatch *	m_vertexBufferBatchPool;
 	BatchElement * 		m_batchElementPool;
 
 	vsLinkedListStore<vsDisplayList>	m_temporaryLists;
 
-	Batch *			FindBatch( vsMaterial *material );
+	VertexBufferBatch *			FindBatch( vsMaterial *material, vsRenderBuffer *vertexBuffer );
 
 
 public:
@@ -68,7 +78,7 @@ public:
 //	void			AddBatch( vsMaterial *material, vsDisplayList *batch ) { AddBatch( material, vsMatrix4x4::Identity, batch ); }
 
 	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
-	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vertexBuffer, vsDisplayList *batch );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
@@ -112,10 +122,10 @@ public:
 	vsScene *		GetScene() { return m_parent; }
 
 	// usual way to add a batch
-	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
+	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, NULL, batch ); }
 
-	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
-	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	// convenience for fragments, so they don't need to stuff the matrix, and optionally the vertex buffer into the display list -- we'll do it for them.
+	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vertexBuffer, vsDisplayList *batch );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );

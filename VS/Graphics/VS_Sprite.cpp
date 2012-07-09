@@ -184,7 +184,7 @@ vsSprite::Draw( vsRenderQueue *queue )
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
 				vsFragment *fragment = *iter;
-				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetDisplayList() );
+				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetSoleVertexBuffer(), fragment->GetDisplayList() );
 			}
 		}
 
@@ -227,7 +227,7 @@ vsSprite::BuildBoundingBox()
 {
 	if ( m_boundingBoxLocked )
 		return;
-	
+
 	vsBox2D boundingBox;
 	vsVector2D tl, br;
 	if ( m_displayList )

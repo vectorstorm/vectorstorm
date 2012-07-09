@@ -185,7 +185,7 @@ vsModel::Draw( vsRenderQueue *queue )
 				vsFragment *fragment = *iter;
 				//fragment->Draw( list );
 
-				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetDisplayList() );
+				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetSoleVertexBuffer(), fragment->GetDisplayList() );
 			}
 		}
 

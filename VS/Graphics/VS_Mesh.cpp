@@ -343,11 +343,9 @@ vsMesh::MakeFragment(int listId)
 	vsAssert( m_triangleListMaterial[listId], "No material set?" );
 
 	vsDisplayList *list = new vsDisplayList(36);
-
-	list->BindBuffer( buffer );
 	list->TriangleListBuffer( indexBuffer );
-	list->ClearArrays();
 
+	fragment->SetSoleVertexBuffer(buffer);
 	fragment->SetDisplayList( list );
 
 	return fragment;

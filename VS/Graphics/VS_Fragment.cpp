@@ -15,7 +15,8 @@
 
 vsFragment::vsFragment():
 	m_material(NULL),
-	m_displayList(NULL)
+	m_displayList(NULL),
+	m_soleVertexBuffer(NULL)
 {
 }
 
@@ -23,6 +24,8 @@ vsFragment::~vsFragment()
 {
 	vsDelete( m_material );
 	vsDelete( m_displayList );
+	// don't need to delete m_soleVertexBuffer, as it's in our list of owned buffers, and so
+	// will be automatically cleaned up.
 }
 
 vsFragment *
@@ -129,6 +132,12 @@ void
 vsFragment::AddBuffer( vsRenderBuffer *buffer )
 {
 	m_bufferList.AddItem( buffer );
+}
+
+void
+vsFragment::SetSoleVertexBuffer( vsRenderBuffer *buffer )
+{
+	m_soleVertexBuffer = buffer;
 }
 
 void
