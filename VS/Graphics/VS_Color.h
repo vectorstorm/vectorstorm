@@ -10,6 +10,7 @@
 #ifndef VS_COLOR_H
 #define VS_COLOR_H
 
+class vsPackedColor;
 class vsColor
 {
 public:
@@ -31,6 +32,7 @@ public:
 	static vsColor Clear;
 
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
+	vsColor(const vsPackedColor& other);
 
 	static vsColor FromHSV(float hue, float saturation, float value);
 	float GetHue() const;
@@ -51,6 +53,16 @@ public:
 	float	Magnitude() { return vsSqrt( r*r + g*g + b*b + a*a ); }
 
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
+};
+
+class vsPackedColor
+{
+public:
+	uint8_t r, g, b, a;
+
+	vsPackedColor();
+	vsPackedColor(const vsColor& other);
+	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { *this = vsColor(red,green,blue,alpha); };
 };
 
 vsColor  operator*( float scalar, const vsColor &color );

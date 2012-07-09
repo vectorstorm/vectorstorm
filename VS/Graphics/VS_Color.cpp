@@ -24,6 +24,14 @@ vsColor vsColor::Purple(1.0f,0.2f,1.0f,1.0f);
 vsColor vsColor::Black(0.0f,0.0f,0.0f,1.0f);
 vsColor vsColor::Clear(0.0f,0.0f,0.0f,0.0f);
 
+vsColor::vsColor(const vsPackedColor& other)
+{
+	a = other.a / 255.f;
+	r = other.r / 255.f;
+	g = other.g / 255.f;
+	b = other.b / 255.f;
+}
+
 vsColor
 vsColor::FromHSV(float hue, float saturation, float value)
 {
@@ -116,5 +124,18 @@ vsColor  operator*( float scalar, const vsColor &color ) {return color * scalar;
 vsColor vsInterpolate( float alpha, const vsColor &a, const vsColor &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
+}
+
+vsPackedColor::vsPackedColor()
+{
+	a = r = g = b = 255;
+}
+
+vsPackedColor::vsPackedColor(const vsColor& other)
+{
+	a = (uint8_t)vsMin(255.f, (other.a * 255.f));
+	r = (uint8_t)vsMin(255.f, (other.r * 255.f));
+	g = (uint8_t)vsMin(255.f, (other.g * 255.f));
+	b = (uint8_t)vsMin(255.f, (other.b * 255.f));
 }
 

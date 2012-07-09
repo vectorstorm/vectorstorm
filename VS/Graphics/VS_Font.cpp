@@ -648,7 +648,6 @@ vsFont::vsFont( const vsString &filename ):
 				pt[i].position = g->vertex[i];
 				pt[i].texel = g->texel[i];
 			}
-			vsAssert(sizeof(pt) == 128,"Something's gone wrong??");
 			g->ptBuffer.SetArray(pt,4);
 		}
 	}
