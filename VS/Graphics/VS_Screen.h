@@ -56,8 +56,7 @@ public:
 	int				GetWidth();
 	int				GetHeight();
 	float			GetAspectRatio();
-
-
+	bool			SupportsShaders();	// returns true if we are using a renderer that supports shaders
 
 	void			RenderDisplayList( vsDisplayList *list );	// used to pipe our display list to the renderer, for creating compiled display lists.
 

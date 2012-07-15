@@ -82,6 +82,8 @@ public:
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
 
+	virtual bool	SupportsShaders() { return true; }
+
 	virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target );
 	virtual bool	PostRenderTarget( vsRenderTarget *target );
 

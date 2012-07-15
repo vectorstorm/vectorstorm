@@ -278,6 +278,12 @@ vsScreen::GetAspectRatio()
 	return GetTrueAspectRatio();
 }
 
+bool
+vsScreen::SupportsShaders()
+{
+	return m_renderer->SupportsShaders();
+}
+
 
 void
 vsScreen::RenderDisplayList( vsDisplayList *list )

@@ -55,6 +55,8 @@ public:
 	virtual void		InitPhaseTwo(int width, int height, int depth, bool fullscreen) {m_width = width; m_height = height; UNUSED(depth); UNUSED(fullscreen);}
 	virtual void		Deinit() {}
 
+	virtual bool		SupportsShaders() { return false; }
+
 	virtual void		PreRender( const Settings &s ) { m_currentSettings = s; }
 	virtual void		RenderDisplayList( vsDisplayList *list ) = 0;
 	virtual void		RawRenderDisplayList( vsDisplayList *list ) = 0;
