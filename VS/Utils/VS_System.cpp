@@ -428,7 +428,7 @@ vsSystemPreferences::CheckResolutions()
 
 	for ( int j = 0; j < modeCount; j++ )
 	{
-		if ( selectedResolution == modeCount-1 && m_supportedResolution[j].width <= desiredWidth )
+		if ( m_supportedResolution[j].width <= desiredWidth )
 		{
 			selectedResolution = j;
 		}
