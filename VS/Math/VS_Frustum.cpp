@@ -39,15 +39,15 @@ vsFrustum::Set( vsCamera3D *camera )
 
 		m_planeNormal[0] = mat.z;	// near plane normal (pointing inward)
 
-		vsVector3D nearCenter = camera->GetPosition() + m_planeNormal[0] * camera->GetNearPlane();
+		//vsVector3D nearCenter = camera->GetPosition() + m_planeNormal[0] * camera->GetNearPlane();
 		vsVector3D farCenter = camera->GetPosition() + m_planeNormal[0] * camera->GetFarPlane();
 
 		float hh = vsTan(camera->GetFOV() * .5f) * camera->GetFarPlane();
 		float hw = hh * aspectRatio;
 
 		vsVector3D farTopLeft = farCenter - (mat.x * hw) + (mat.y * hh);
-		vsVector3D farTopRight = farCenter + (mat.x * hw) + (mat.y * hh);
-		vsVector3D farBottomLeft = farCenter - (mat.x * hw) - (mat.y * hh);
+		//vsVector3D farTopRight = farCenter + (mat.x * hw) + (mat.y * hh);
+		//vsVector3D farBottomLeft = farCenter - (mat.x * hw) - (mat.y * hh);
 		vsVector3D farBottomRight = farCenter + (mat.x * hw) - (mat.y * hh);
 
 		m_planePoint[0] = camera->GetPosition() + m_planeNormal[0] * camera->GetNearPlane();

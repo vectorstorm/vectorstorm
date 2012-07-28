@@ -308,7 +308,7 @@ vsRendererSimple::SetCameraProjection( const vsMatrix4x4 &m )
 {
 	m_currentCameraPosition = m.w;
 
-	vsVector3D p = vsVector3D::Zero;
+	//vsVector3D p = vsVector3D::Zero;
 	vsVector3D forward = /*m.t + */m.z;
 	vsVector3D up = m.y;
 	vsVector3D side = forward.Cross(up);
