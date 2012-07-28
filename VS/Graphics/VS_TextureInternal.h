@@ -29,8 +29,6 @@ class vsTextureInternal : public vsResource
 	float		m_height;
     bool        m_depth;
 
-	int			m_refCount;
-
 	bool		m_premultipliedAlpha;
 
 	void		ProcessSurface( SDL_Surface *surface );
@@ -44,10 +42,6 @@ public:
 	~vsTextureInternal();
 
 	uint32		GetTexture() { return m_texture; }
-
-	void		AddReference() { m_refCount++; }
-	void		RemoveReference() { m_refCount--; }
-	int			GetReferenceCount() { return m_refCount; }
 
 	float		GetWidth() { return m_width; }
 	float		GetHeight() { return m_height; }
