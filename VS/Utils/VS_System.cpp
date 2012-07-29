@@ -227,6 +227,13 @@ vsSystem::ShowCursor(bool show)
 void
 vsSystem::UpdateVideoMode()
 {
+	Resolution *res = m_preferences->GetResolution();
+	UpdateVideoMode(res->width, res->height);
+}
+
+void
+vsSystem::UpdateVideoMode(int width, int height)
+{
 	// this function is called when we change video mode while the game is running, post-initialisation.
 	// Since we're going to be restarting our OpenGL context, we need to recompile all of our compiled display lists!
 	// So before we tear down OpenGL, let's uncompile them all.
@@ -242,9 +249,7 @@ vsSystem::UpdateVideoMode()
 
 	vsHeap::Push(g_globalHeap);
 
-	Resolution *res = m_preferences->GetResolution();
-
-	vsLog("Initialising [%dx%d] resolution...\n", res->width, res->height);
+	vsLog("Initialising [%dx%d] resolution...\n", width, height);
 
 	if ( !m_showCursorOverridden )
 	{
@@ -253,7 +258,7 @@ vsSystem::UpdateVideoMode()
 #if !TARGET_OS_IPHONE
 	SDL_ShowCursor( m_showCursor );
 #endif
-	GetScreen()->UpdateVideoMode( res->width, res->height, 32, m_preferences->GetFullscreen() );
+	GetScreen()->UpdateVideoMode( width, height, 32, m_preferences->GetFullscreen() );
     //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
 	// Set GL context attributes

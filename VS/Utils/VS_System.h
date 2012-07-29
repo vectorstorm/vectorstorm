@@ -87,6 +87,7 @@ public:
 	vsString	MakeTimeString(uint32 time);
 
 	void UpdateVideoMode();
+	void UpdateVideoMode(int width, int height);
 
 	void	ShowCursor(bool show);
 	void	HideCursor() { ShowCursor(false); }

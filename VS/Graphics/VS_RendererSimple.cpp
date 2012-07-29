@@ -86,6 +86,8 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 
 	if ( fullscreen )
 		videoFlags |= SDL_FULLSCREEN;
+	//else
+		//videoFlags |= SDL_VIDEORESIZE;
 
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );

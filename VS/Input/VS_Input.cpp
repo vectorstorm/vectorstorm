@@ -502,6 +502,9 @@ vsInput::Update(float timeStep)
 					}
 					break;
 				}
+				case SDL_VIDEORESIZE:
+					vsSystem::Instance()->UpdateVideoMode(event.resize.w, event.resize.h);
+					break;
 				case SDL_QUIT:
 					core::SetExit();
 					break;
