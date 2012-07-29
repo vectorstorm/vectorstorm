@@ -234,6 +234,8 @@ vsSystem::UpdateVideoMode()
 	vsDisplayList::UncompileAll();
 	vsRenderBuffer::UnmapAll();
 
+	vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
+
 	// Since this function is being called post-initialisation, we need to switch back to our system heap.
 	// (So that potentially changing video mode doesn't get charged to the currently active game,
 	// and then treated as a memory leak)
@@ -252,6 +254,7 @@ vsSystem::UpdateVideoMode()
 	SDL_ShowCursor( m_showCursor );
 #endif
 	GetScreen()->UpdateVideoMode( res->width, res->height, 32, m_preferences->GetFullscreen() );
+    //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
 	// Set GL context attributes
 	initAttributes ();

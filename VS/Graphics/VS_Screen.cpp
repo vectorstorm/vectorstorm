@@ -15,6 +15,7 @@
 #include "VS_RendererBloom.h"
 #include "VS_RendererShader.h"
 #include "VS_System.h"
+#include "VS_TextureManager.h"
 
 #include "VS_TimerSystem.h"
 
@@ -71,6 +72,8 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 
 	m_renderer->Deinit();
 	delete m_renderer;
+
+    vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
 #if TARGET_OS_IPHONE
 	m_renderer = new vsRendererPretty();
 #else
