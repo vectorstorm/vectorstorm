@@ -13,7 +13,7 @@
 #else
 #include <SDL/SDL.h>
 #if defined(__APPLE_CC__)
-#include <glew/glew.h>
+#include <glew.h>
 #else
 #include "glew.h"
 #endif

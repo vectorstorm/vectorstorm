@@ -19,7 +19,7 @@ else()
 	find_library(GLEW_LIBRARY GLEW32 REQUIRED)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
-	PATH /usr/include/GL )
+	PATH /usr/include/GL /usr/local/include/GL )
 find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D.h
 	PATH /usr/local/include/Box2D )
