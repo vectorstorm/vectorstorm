@@ -25,6 +25,12 @@ vsColor vsColor::Black(0.0f,0.0f,0.0f,1.0f);
 vsColor vsColor::Clear(0.0f,0.0f,0.0f,0.0f);
 
 vsColor
+vsColor::FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+	return vsColor(r/255.f, g/255.f, b/255.f, a/255.f);
+}
+
+vsColor
 vsColor::FromHSV(float hue, float saturation, float value)
 {
 	float chroma = value * saturation;

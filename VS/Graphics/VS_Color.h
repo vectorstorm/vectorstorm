@@ -33,6 +33,7 @@ public:
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
 
 	static vsColor FromHSV(float hue, float saturation, float value);
+	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	float GetHue() const;
 	float GetSaturation() const;
 	float GetValue() const;
