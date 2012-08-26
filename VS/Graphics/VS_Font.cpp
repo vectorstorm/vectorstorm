@@ -185,7 +185,7 @@ vsBuiltInFont::Init()
         int *strokes = st_nick53[i];
 		int stripLength = 0;
 		bool inStrip = false;
-		uint16 indices[100];
+		uint16_t indices[100];
 		int z = 0;
 
 		int cursorPos;
@@ -564,7 +564,7 @@ vsFont::vsFont( const vsString &filename ):
 	m_glyph(NULL),
 	m_glyphCount(0)
 {
-	uint16 indices[6] = { 0, 2, 1, 1, 2, 3 };
+	uint16_t indices[6] = { 0, 2, 1, 1, 2, 3 };
 	m_glyphTriangleList.SetArray( indices, 6 );
 
 	vsFile fontData(filename);
@@ -661,7 +661,7 @@ vsFont::vsFont( const vsString &filename ):
 	{
 		vsGlyph *glyph = &m_glyph[i];
 
-		uint16 tlIndex[4];
+		uint16_t tlIndex[4];
 
 		for ( int j = 0; j < 4; j++ )
 		{
@@ -751,7 +751,7 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 	size_t requiredTriangles = stringLength * 6;	// three indices per triangle, two triangles per character, max.
 
 	vsRenderBuffer::PT *ptArray = new vsRenderBuffer::PT[ requiredSize ];
-	uint16 *tlArray = new uint16[ requiredTriangles ];
+	uint16_t *tlArray = new uint16_t[ requiredTriangles ];
 
 	vsRenderBuffer *ptBuffer = new vsRenderBuffer;
 	vsRenderBuffer *tlBuffer = new vsRenderBuffer;
@@ -832,7 +832,7 @@ vsFont::CreateString_NoColor_Fragment(FontContext context, const vsString &strin
 	int requiredTriangles = stringLength * 6;	// three indices per triangle, two triangles per character, max.
 
 	vsRenderBuffer::PT *ptArray = new vsRenderBuffer::PT[ requiredSize ];
-	uint16 *tlArray = new uint16[ requiredTriangles ];
+	uint16_t *tlArray = new uint16_t[ requiredTriangles ];
 
 	vsRenderBuffer *ptBuffer = new vsRenderBuffer;
 	vsRenderBuffer *tlBuffer = new vsRenderBuffer;
@@ -956,7 +956,7 @@ vsFont::AppendStringToArrays( vsFont::FragmentConstructor *constructor, const ch
 		s_tempFontList.Clear();
 	}
 
-	uint16 glyphIndices[6] = { 0, 2, 1, 1, 2, 3 };
+	uint16_t glyphIndices[6] = { 0, 2, 1, 1, 2, 3 };
 
 	for ( size_t i = 0; i < len; i++ )
 	{

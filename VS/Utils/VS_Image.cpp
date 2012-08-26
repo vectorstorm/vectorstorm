@@ -118,7 +118,7 @@ vsImage::vsImage( const vsString &filename_in )
         png_set_gray_to_rgb(png_ptr);
 
 	png_uint_32  i, rowbytes;
-    uint8*  row_pointers[height];
+    uint8_t*  row_pointers[height];
 	png_bytep image_data = NULL;
 
     png_read_update_info(png_ptr, info_ptr);
@@ -145,7 +145,7 @@ vsImage::vsImage( const vsString &filename_in )
 	m_pixel = new vsColor[m_pixelCount];
 	for ( int y = 0; y < height; y++ )
 	{
-		uint8* shuttle = &row_pointers[y][0];
+		uint8_t* shuttle = &row_pointers[y][0];
 		for ( int x = 0; x < width; x++ )
 		{
 			int ci = (y*width) + x;
@@ -223,7 +223,7 @@ vsImage::vsImage( vsTexture * texture )
         size_t bytesPerPixel = 3;	// RGB
         size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
 
-        uint8* pixels = new uint8[imageSizeInBytes];
+        uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         glBindTexture( GL_TEXTURE_2D, 0 );
@@ -289,8 +289,8 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 #if !TARGET_OS_IPHONE
 	//	SDL_Surface *screen = SDL_GetVideoSurface();
 	SDL_Rect	area;
-    uint32 saved_flags;
-    Uint8  saved_alpha;
+    uint32_t saved_flags;
+    uint8_t  saved_alpha;
 
 	SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
 
@@ -383,12 +383,12 @@ vsImage::BakePNG(int compression)
 	//int ret,funky_format;
 	unsigned int i;
 	png_colorp palette;
-	uint8 *palette_alpha=NULL;
+	uint8_t *palette_alpha=NULL;
 	png_byte **row_pointers=NULL;
 	png_ptr=NULL;info_ptr=NULL;palette=NULL;//ret=-1;
 	//funky_format=0;
 	const int c_bytesPerPixel = 4;
-	uint8 *pixels = NULL;
+	uint8_t *pixels = NULL;
 
 	vsStore *result = new vsStore(2048 * 1024);
 
@@ -437,7 +437,7 @@ vsImage::BakePNG(int compression)
 	//png_set_sRGB_gAMA_and_cHRM(png_ptr, info_ptr, PNG_sRGB_INTENT_RELATIVE);
 	png_write_info(png_ptr, info_ptr);
 
-	pixels = new uint8[m_width*m_height*c_bytesPerPixel];
+	pixels = new uint8_t[m_width*m_height*c_bytesPerPixel];
 	for ( unsigned int y = 0; y < m_height; y++ )
 	{
 		int rowStart = y * m_width * c_bytesPerPixel;

@@ -22,8 +22,8 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
 		vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
 
-		uint32 vSize = vShader.GetLength();
-		uint32 fSize = fShader.GetLength();
+		uint32_t vSize = vShader.GetLength();
+		uint32_t fSize = fShader.GetLength();
 
 		vsStore *vStore = new vsStore(vSize);
 		vsStore *fStore = new vsStore(fSize);

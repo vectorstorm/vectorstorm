@@ -30,45 +30,45 @@ vsSerialiserRead::Bool(bool &value)
 }
 
 void
-vsSerialiserRead::Int8(int8 &value)
+vsSerialiserRead::Int8(int8_t &value)
 {
 	value = m_store->ReadInt8();
 }
 
 void
-vsSerialiserRead::Uint8(uint8 &value)
+vsSerialiserRead::Uint8(uint8_t &value)
 {
 	value = m_store->ReadUint8();
 }
 
 void
-vsSerialiserRead::Int16(int16 &value)
+vsSerialiserRead::Int16(int16_t &value)
 {
 	value = m_store->ReadInt16();
 }
 
 void
-vsSerialiserRead::Uint16(uint16 &value)
+vsSerialiserRead::Uint16(uint16_t &value)
 {
 	value = m_store->ReadUint16();
 }
 
 void
-vsSerialiserRead::Int32(int32 &value)
+vsSerialiserRead::Int32(int32_t &value)
 {
 	value = m_store->ReadInt32();
 }
 
 void
-vsSerialiserRead::Uint32(uint32 &value)
+vsSerialiserRead::Uint32(uint32_t &value)
 {
 	value = m_store->ReadUint32();
 }
 
 void
-vsSerialiserRead::AssertInt32(int32 value)
+vsSerialiserRead::AssertInt32(int32_t value)
 {
-	int32 actualValue = m_store->ReadInt32();
+	int32_t actualValue = m_store->ReadInt32();
 
 	vsAssert(value == actualValue, "Error in serialisation!");
 }
@@ -116,37 +116,37 @@ vsSerialiserWrite::Bool(bool &value)
 }
 
 void
-vsSerialiserWrite::Int8(int8 &value)
+vsSerialiserWrite::Int8(int8_t &value)
 {
 	m_store->WriteInt8(value);
 }
 
 void
-vsSerialiserWrite::Uint8(uint8 &value)
+vsSerialiserWrite::Uint8(uint8_t &value)
 {
 	m_store->WriteUint8(value);
 }
 
 void
-vsSerialiserWrite::Int16(int16 &value)
+vsSerialiserWrite::Int16(int16_t &value)
 {
 	m_store->WriteInt16(value);
 }
 
 void
-vsSerialiserWrite::Uint16(uint16 &value)
+vsSerialiserWrite::Uint16(uint16_t &value)
 {
 	m_store->WriteUint16(value);
 }
 
 void
-vsSerialiserWrite::Int32(int32 &value)
+vsSerialiserWrite::Int32(int32_t &value)
 {
 	m_store->WriteInt32(value);
 }
 
 void
-vsSerialiserWrite::Uint32(uint32 &value)
+vsSerialiserWrite::Uint32(uint32_t &value)
 {
 	m_store->WriteUint32(value);
 }

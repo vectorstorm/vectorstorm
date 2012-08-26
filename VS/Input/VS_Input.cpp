@@ -742,7 +742,7 @@ vsInput::ReadHat(int hatID, ControlDirection dir)
 {
 #if !TARGET_OS_IPHONE
 	float result = 0.f;
-	Uint8 sdlDir = SDL_JoystickGetHat(m_joystick, hatID);
+	uint8_t sdlDir = SDL_JoystickGetHat(m_joystick, hatID);
 
 	if ( sdlDir != SDL_HAT_CENTERED )
 	{
@@ -830,7 +830,7 @@ bool
 vsInput::MouseIsOnScreen()
 {
 #if !TARGET_OS_IPHONE
-	Uint8 state = SDL_GetAppState();
+	uint8_t state = SDL_GetAppState();
 
 	return ( state & SDL_APPMOUSEFOCUS );
 #else
@@ -959,8 +959,8 @@ vsInput::CaptureMouse( bool capture )
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
 			SDL_WM_GrabInput( SDL_GRAB_ON );
-			//SDL_WarpMouse( (uint16)(.5f * vsSystem::GetScreen()->GetTrueWidth()),
-			//	(uint16)(.5f * vsSystem::GetScreen()->GetTrueHeight()) );
+			//SDL_WarpMouse( (uint16_t)(.5f * vsSystem::GetScreen()->GetTrueWidth()),
+			//	(uint16_t)(.5f * vsSystem::GetScreen()->GetTrueHeight()) );
 			m_mousePos = vsVector2D::Zero;
 			m_mouseMotion = vsVector2D::Zero;
 			m_suppressFirstMotion = true;

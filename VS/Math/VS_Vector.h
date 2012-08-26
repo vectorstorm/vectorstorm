@@ -20,14 +20,14 @@ class vsVector2D
 public:
 	static vsVector2D Zero;
 	static vsVector2D One;
-	
+
 	float x;
 	float y;
-	
+
 	vsVector2D() {x=0;y=0;}
 	vsVector2D(const vsVector3D &b);
 	vsVector2D(float x_in, float y_in) { x = x_in; y = y_in; }
-	
+
 	//vsVector2D	operator=( const vsVector2D &b ) {x=b.x; y=b.y; return *this;}
 	vsVector2D  operator+( const vsVector2D &b ) const {return vsVector2D(x+b.x, y+b.y);}
 	vsVector2D  operator-( const vsVector2D &b ) const {return vsVector2D(x-b.x, y-b.y);}
@@ -35,20 +35,20 @@ public:
 	vsVector2D  operator*=( float b ) {x*=b; y*=b; return *this;}
 	vsVector2D  operator+=( const vsVector2D &b ) {*this = *this+b; return *this; }
 	vsVector2D  operator-=( const vsVector2D &b ) {*this = *this-b; return *this; }
-	
+
 	bool operator==(const vsVector2D &b) const { return (x == b.x && y == b.y); }
 	bool operator!=(const vsVector2D &b) const { return !(*this==b); }
-		
+
 	float	ApproximateLength() const;	// approximates length, without using a square root operation.  Accurate to within about 8%.
 	inline float	Length() const { return vsSqrt( SqLength() ); }
 	inline float	SqLength() const { return (x*x+y*y); }
 	float	Magnitude() const { return Length(); }
 	float	SqMagnitude() const { return SqLength(); }
 	void	Normalise();
-	
+
 	float	Dot( const vsVector2D &b ) const { return ( x*b.x +
 										   y*b.y ); }
-	
+
 	void	Set(float x_in, float y_in) {x=x_in; y=y_in;}
 };
 
@@ -68,12 +68,12 @@ public:
 	float x;
 	float y;
 	float z;
-	
+
 	vsVector3D() {x=0;y=0;z=0;}
 	vsVector3D(const vsVector2D &b) {x=b.x;y=b.y;z=0;}
 	vsVector3D(const vsVector4D &b);
 	vsVector3D(float x_in, float y_in, float z_in) { x = x_in; y = y_in; z = z_in; }
-	
+
 	inline vsVector3D&	operator=( const vsVector3D &b ) {x=b.x; y=b.y; z = b.z; return *this;}
 	inline vsVector3D  operator+( const vsVector3D &b ) const {return vsVector3D(x+b.x, y+b.y, z+b.z);}
 	inline vsVector3D  operator-( const vsVector3D &b ) const {return vsVector3D(x-b.x, y-b.y, z-b.z);}
@@ -81,39 +81,39 @@ public:
 	inline vsVector3D&  operator*=( float b ) {x*=b; y*=b; z*=b; return *this;}
 	inline vsVector3D&  operator+=( const vsVector3D &b ) {x+=b.x; y+=b.y; z+=b.z; return *this; }
 	inline vsVector3D&  operator-=( const vsVector3D &b ) {x-=b.x; y-=b.y; z-=b.z; return *this; }
-	
+
 	inline bool operator==(const vsVector3D &b) const { return (this->x == b.x && this->y == b.y && this->z == b.z); }
 	inline bool operator!=(const vsVector3D &b) const { return !(*this==b); }
 	float operator[](int i) const;
-	
+
 	inline float	Length() const { return vsSqrt( SqLength() ); }
 	inline float	SqLength() const { return (x*x+y*y+z*z); }
 	void	Normalise();
-	
+
 	vsVector3D	Cross( const vsVector3D &b ) const { return vsVector3D( y*b.z - z*b.y,
 														   z*b.x - x*b.z,
 														   x*b.y - y*b.x ); }
-	
+
 	float	Dot( const vsVector3D &b ) const { return ( x*b.x +
 										   y*b.y +
 										   z*b.z ); }
-	
+
 	void	Set(float x_in, float y_in, float z_in) {x=x_in; y=y_in;z=z_in;}
-    
+
     void    Floor();
 };
 
 class vsPosition3D
 {
-	int32	m_x;
-	int32	m_y;
-	int32	m_z;
+	int32_t	m_x;
+	int32_t	m_y;
+	int32_t	m_z;
 public:
-	
+
 	vsPosition3D();
 	vsPosition3D(float x, float y, float z);
 	vsPosition3D(const vsVector3D &pos);
-	
+
 	vsPosition3D operator+( const vsVector3D &b ) const;
 	vsPosition3D operator+=( const vsVector3D &b );
 	vsVector3D operator-( const vsPosition3D &b ) const;
@@ -128,11 +128,11 @@ public:
 	float y;
 	float z;
 	float w;
-	
+
 	vsVector4D() {x=0;y=0;z=0;w=0;}
 	vsVector4D(const vsVector3D &b) {x=b.x;y=b.y;z=b.z;w=0;}
 	vsVector4D(float x_in, float y_in, float z_in, float w_in) { x = x_in; y = y_in; z = z_in; w = w_in;}
-	
+
 	vsVector4D	operator=( const vsVector4D &b ) {x=b.x; y=b.y; z = b.z; w = b.w; return *this;}
 	vsVector4D  operator+( const vsVector4D &b ) const {return vsVector4D(x+b.x, y+b.y, z+b.z, w+b.w);}
 	vsVector4D  operator-( const vsVector4D &b ) const {return vsVector4D(x-b.x, y-b.y, z-b.z, w-b.w);}
@@ -141,19 +141,19 @@ public:
 	vsVector4D  operator+=( const vsVector4D &b ) {*this = *this+b; return *this; }
 	vsVector4D  operator-=( const vsVector4D &b ) {*this = *this-b; return *this; }
 	float &		operator[]( int n );
-	
+
 	bool operator==(const vsVector4D &b) const { return (this->x == b.x && this->y == b.y && this->z == b.z && this->w == b.w); }
 	bool operator!=(const vsVector4D &b) const { return !(*this==b); }
-	
+
 	inline float	Length() const { return vsSqrt( SqLength() ); }
 	inline float	SqLength() const { return (x*x+y*y+z*z+w*w); }
 	void	Normalise();
-	
+
 	float	Dot( const vsVector4D &b ) const { return ( x*b.x +
 													   y*b.y +
 													   z*b.z +
 													   w*b.w); }
-	
+
 	void	Set(float x_in, float y_in, float z_in, float w_in) {x=x_in; y=y_in;z=z_in;w=w_in;}
 };
 

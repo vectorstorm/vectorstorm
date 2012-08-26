@@ -105,7 +105,7 @@ public:
 
 	struct Data
 	{
-		uint32		i;
+		uint32_t		i;
 		vsVector3D	vector;
 		vsColor		color;
 		vsTransform2D transform;
@@ -119,7 +119,7 @@ public:
 		float		farPlane;
 		char *p;
 
-		void Set(uint32 id) {i = id;}
+		void Set(uint32_t id) {i = id;}
 		void Set(const vsVector3D & in) {vector = in;}
 		void Set(const vsColor & in) {color = in;}
 		void Set(const vsTransform2D &t) {transform = t;}
@@ -128,7 +128,7 @@ public:
 		void Set(const vsOverlay &o) {overlay = o;}
 		void SetPointer(char *pointer) {p = pointer;}
 
-		uint32 GetUInt() { return i; }
+		uint32_t GetUInt() { return i; }
 		vsVector3D GetVector3D() {return vector;}
 		vsColor GetColor() {return color; }
 		vsTransform2D	GetTransform() {return transform;}
@@ -267,7 +267,7 @@ public:
 	void	ClearArrays();
 
 	void	LineList( int *idArray, int vertexCount );
-	void	LineStrip( uint16 *idArray, int vertexCount );
+	void	LineStrip( uint16_t *idArray, int vertexCount );
 	void	LineStrip( int *idArray, int vertexCount );
 	void	TriangleList( int *idArray, int vertexCount );
 	void	TriangleStrip( int *idArray, int vertexCount );

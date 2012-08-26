@@ -134,7 +134,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 			pixel += (v*surface->pitch);
 			pixel += (u*surface->format->BytesPerPixel);
 
-			uint32 color = SDL_MapRGBA( surface->format , (uint8)(t.r * 255) , (uint8)(t.g * 255) , (uint8)(t.b * 255), (uint8)(t.a * 255) );
+			uint32_t color = SDL_MapRGBA( surface->format , (uint8_t)(t.r * 255) , (uint8_t)(t.g * 255) , (uint8_t)(t.b * 255), (uint8_t)(t.a * 255) );
 			memcpy( pixel, &color, sizeof(color) );
 
 		}
@@ -163,8 +163,8 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 {
 	//	SDL_Surface *screen = SDL_GetVideoSurface();
 	SDL_Rect	area;
-	uint32 saved_flags;
-	Uint8  saved_alpha;
+	uint32_t saved_flags;
+	uint8_t  saved_alpha;
 
 	//SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
 
@@ -296,8 +296,8 @@ vsTextureInternal::~vsTextureInternal()
 
 #endif // TARGET_OS_IPHONE
 
-uint32
-vsTextureInternal::ScaleColour(uint32 ini, float amt)
+uint32_t
+vsTextureInternal::ScaleColour(uint32_t ini, float amt)
 {
 	char r = (ini & 0x000000FF);
 	char g = (ini & 0x0000FF00) >> 8;
@@ -309,7 +309,7 @@ vsTextureInternal::ScaleColour(uint32 ini, float amt)
 	b = (char)(b * amt);
 	a = (char)(a * amt);
 
-	uint32 result = (r & 0x000000FF) |
+	uint32_t result = (r & 0x000000FF) |
 		((g << 8) & 0x0000FF00) |
 		((b << 16) & 0x00FF0000) |
 		((a << 24) & 0xFF000000);
@@ -318,8 +318,8 @@ vsTextureInternal::ScaleColour(uint32 ini, float amt)
 
 }
 
-uint32
-vsTextureInternal::SafeAddColour(uint32 acolour, uint32 bcolour)
+uint32_t
+vsTextureInternal::SafeAddColour(uint32_t acolour, uint32_t bcolour)
 {
 	int ra = (acolour & 0x000000FF);
 	int ga = (acolour & 0x0000FF00) >> 8;
@@ -336,7 +336,7 @@ vsTextureInternal::SafeAddColour(uint32 acolour, uint32 bcolour)
 	int b = vsMin( ba + bb, 0xFF );
 	int a = vsMin( aa + ab, 0xFF );
 
-	uint32 result = (r & 0x000000FF) |
+	uint32_t result = (r & 0x000000FF) |
 		((g << 8) & 0x0000FF00) |
 		((b << 16) & 0x00FF0000) |
 		((a << 24) & 0xFF000000);

@@ -84,7 +84,7 @@ public:
 
 	time_t		GetTime();
 	void		MakeVsTime( vsTime *t, time_t time );	//
-	vsString	MakeTimeString(uint32 time);
+	vsString	MakeTimeString(uint32_t time);
 
 	void UpdateVideoMode();
 	void UpdateVideoMode(int width, int height);

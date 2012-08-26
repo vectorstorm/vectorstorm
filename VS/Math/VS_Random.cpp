@@ -22,16 +22,16 @@
 void
 vsRandom::Init()
 {
-	InitWithSeed( (uint32)time(NULL) );
+	InitWithSeed( (uint32_t)time(NULL) );
 }
 
 void
-vsRandom::InitWithSeed( uint32 seed )
+vsRandom::InitWithSeed( uint32_t seed )
 {
 	init_gen_rand( seed );
-	
+
 	int n = vsRandom::GetInt(2000);		// generate a bunch of random numbers, just to prime the random number generator.
-	
+
 	for ( int i = 0; i < n; i++ )
 	{
 		vsRandom::GetInt(10);		// generate a bunch of random numbers, just to prime the random number generator.
@@ -66,7 +66,7 @@ float
 vsRandom::GetFloat(float min, float max)
 {
 	float delta = max - min;
-	
+
 	return GetFloat(delta) + min;
 }
 
@@ -81,7 +81,7 @@ int
 vsRandom::GetInt(int min, int max)
 {
 	int delta = (max - min)+1;
-	
+
 	return GetInt(delta) + min;
 }
 
@@ -96,11 +96,11 @@ vsVector2D
 vsRandom::GetVector2D(float minLength, float maxLength)
 {
 	vsAngle a( GetFloat(TWOPI) );
-	
+
 	vsVector2D result = a.GetForwardVector();
-	
+
 	result *= GetFloat(minLength,maxLength);
-	
+
 	return result;
 }
 
@@ -108,7 +108,7 @@ vsVector2D
 vsRandom::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight)
 {
 	vsVector2D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y) );
-	
+
 	return result;
 }
 
@@ -116,11 +116,11 @@ vsVector3D
 vsRandom::GetVector3D(float minLength, float maxLength)
 {
 	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
-	
+
 	result.Normalise();
-	
+
 	result *= vsRandom::GetFloat(minLength,maxLength);
-	
+
 	return result;
 }
 
@@ -128,12 +128,12 @@ vsVector3D
 vsRandom::GetVector3D(float maxLength)
 {
 	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
-	
+
 	if ( result.SqLength() > 1.0f )
 		result.Normalise();
-	
+
 	result *= maxLength;
-	
+
 	return result;
 }
 
@@ -141,11 +141,11 @@ vsVector3D
 vsRandom::GetVector3D(const vsVector3D &topLeft, const vsVector3D &bottomRight)
 {
 	vsVector3D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y), GetFloat(topLeft.z,bottomRight.z) );
-	
+
 	return result;
 }
 
-vsVector2D	
+vsVector2D
 vsRandom::GetVector2D(const vsBox2D &box)
 {
 	return GetVector2D( box.GetMin(), box.GetMax() );
@@ -162,12 +162,12 @@ vsColor
 vsRandom::GetColor(float min, float max)
 {
 	vsVector3D result( GetFloat(0.f,100.f), GetFloat(0.f,100.f), GetFloat(0.f,100.f) );
-	
+
 	if ( result.SqLength() > 1.0f )
 		result.Normalise();
-	
+
 	float brightness = GetFloat(min,max);
 	result *= brightness;
-	
+
 	return vsColor( result.x, result.y, result.z, 1.0f );
 }

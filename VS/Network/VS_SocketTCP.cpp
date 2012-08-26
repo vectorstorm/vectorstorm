@@ -84,7 +84,7 @@ vsSocketTCP::~vsSocketTCP()
 }
 
 bool
-vsSocketTCP::Listen( uint16 port, vsSocketTCP::Type t )
+vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 {
 #ifndef _WIN32
 	if ( m_socket == -1 )

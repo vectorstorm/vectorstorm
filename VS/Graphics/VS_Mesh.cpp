@@ -166,7 +166,7 @@ vsMesh::AddTriangleToList(int list, int a, int b, int c)
 	vsAssert( list >= 0 && list < m_triangleListCount, "Unknown triangle list requested??" );
 	vsAssert( m_triangleListBuffer[list]->GetIntArraySize() > m_triangleListIndexCount[list]+2, "Overflowing triangle list??" );
 
-	uint16 *array = m_triangleListBuffer[list]->GetIntArray();
+	uint16_t *array = m_triangleListBuffer[list]->GetIntArray();
 	int triangleCount = m_triangleListIndexCount[list];
 
 	array[triangleCount++] = a;
@@ -451,7 +451,7 @@ vsMesh::Bake()
 		//int intArraySize = m_triangleListBuffer[i]->GetIntArraySize();
 		int intsUsed = m_triangleListIndexCount[i];
 
-		m_triangleListBuffer[i]->SetActiveSize( intsUsed * sizeof(uint16) );
+		m_triangleListBuffer[i]->SetActiveSize( intsUsed * sizeof(uint16_t) );
 		//vsAssert( intArraySize == intsUsed, "ERROR: Empty space in triangle list buffer??" );
 		if ( m_triangleListIndexCount[i] > 0 )
 		{
@@ -557,7 +557,7 @@ vsMesh::GetTriangle( int list, int triangle, vsVector3D *a, vsVector3D *b, vsVec
 {
 	vsAssert( triangle < GetTriangleCount( list ), "Requested a triangle which doesn't exist??" );
 
-	uint16 *vertexIndex = m_triangleListBuffer[list]->GetIntArray();
+	uint16_t *vertexIndex = m_triangleListBuffer[list]->GetIntArray();
 	vsVector3D *vertex = m_vertexBuffer->GetVector3DArray();
 
 	int i = triangle * 3;

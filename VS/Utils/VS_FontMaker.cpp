@@ -96,7 +96,7 @@ vsFontMaker::MakeFont( const vsString &name, float pointSize )
 		fontData.Record(&r);
 
 
-		Uint32 rmask, gmask, bmask, amask;
+		Uint32_t rmask, gmask, bmask, amask;
 
 		/* SDL interprets each pixel as a 32-bit number, so our masks must depend
 		 on the endianness (byte order) of the machine */

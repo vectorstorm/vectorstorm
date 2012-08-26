@@ -106,7 +106,7 @@ vsStore::Append( vsStore *o )
 }
 
 void
-vsStore::WriteInt8( int8 v )
+vsStore::WriteInt8( int8_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -115,17 +115,17 @@ vsStore::WriteInt8( int8 v )
 }
 
 void
-vsStore::WriteUint8( uint8 v )
+vsStore::WriteUint8( uint8_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
 	//memcpy( m_writeHead, &v, sizeof(v) );
-	*(uint8*)m_writeHead = v;
+	*(uint8_t*)m_writeHead = v;
 	m_writeHead += sizeof(v);
 }
 
 void
-vsStore::WriteInt16( int16 v )
+vsStore::WriteInt16( int16_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -135,7 +135,7 @@ vsStore::WriteInt16( int16 v )
 }
 
 void
-vsStore::WriteUint16( uint16 v )
+vsStore::WriteUint16( uint16_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -145,7 +145,7 @@ vsStore::WriteUint16( uint16 v )
 }
 
 void
-vsStore::WriteUint16Native( uint16 v )
+vsStore::WriteUint16Native( uint16_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -154,7 +154,7 @@ vsStore::WriteUint16Native( uint16 v )
 }
 
 void
-vsStore::WriteInt32( int32 v )
+vsStore::WriteInt32( int32_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -164,7 +164,7 @@ vsStore::WriteInt32( int32 v )
 }
 
 void
-vsStore::WriteUint32( uint32 v )
+vsStore::WriteUint32( uint32_t v )
 {
 	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
 
@@ -185,10 +185,10 @@ vsStore::WriteFloat( float v )
 void
 vsStore::WriteString( const vsString &string )
 {
-	int16 s = (int16)string.size();
+	int16_t s = (int16_t)string.size();
 
 	WriteInt16(s);
-	for ( int16 i = 0; i < s; i++ )
+	for ( int16_t i = 0; i < s; i++ )
 	{
 		WriteInt8( string[i] );
 	}
@@ -275,10 +275,10 @@ vsStore::WriteVoidStar( void *v )
 
 
 
-int8
+int8_t
 vsStore::ReadInt8()
 {
-	int8 v;
+	int8_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	memcpy( &v, m_readHead, sizeof(v) );
@@ -287,36 +287,36 @@ vsStore::ReadInt8()
 	return v;
 }
 
-uint8
+uint8_t
 vsStore::ReadUint8()
 {
-	uint8 v;
+	uint8_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	//memcpy( &v, m_readHead, sizeof(v) );
-	v = *(uint8 *)m_readHead;
+	v = *(uint8_t *)m_readHead;
 	m_readHead += sizeof(v);
 
 	return v;
 }
 
-uint8
+uint8_t
 vsStore::PeekUint8()
 {
-	uint8 v;
+	uint8_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	//memcpy( &v, m_readHead, sizeof(v) );
-	v = *(uint8 *)m_readHead;
+	v = *(uint8_t *)m_readHead;
 
 	return v;
 }
 
 
-int16
+int16_t
 vsStore::ReadInt16()
 {
-	int16 v;
+	int16_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	memcpy( &v, m_readHead, sizeof(v) );
@@ -327,10 +327,10 @@ vsStore::ReadInt16()
 }
 
 
-uint16
+uint16_t
 vsStore::ReadUint16()
 {
-	uint16 v;
+	uint16_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	memcpy( &v, m_readHead, sizeof(v) );
@@ -341,10 +341,10 @@ vsStore::ReadUint16()
 }
 
 
-int32
+int32_t
 vsStore::ReadInt32()
 {
-	int32 v;
+	int32_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	memcpy( &v, m_readHead, sizeof(v) );
@@ -355,10 +355,10 @@ vsStore::ReadInt32()
 }
 
 
-uint32
+uint32_t
 vsStore::ReadUint32()
 {
-	uint32 v;
+	uint32_t v;
 	vsAssert( BytesLeftForReading() >= sizeof(v), "Tried to read past the end of the vsStore!" );
 
 	memcpy( &v, m_readHead, sizeof(v) );
@@ -543,7 +543,7 @@ vsStore::ReadFog(vsFog *f)
 void
 vsStore::WriteOverlay(const vsOverlay &o)
 {
-	WriteUint8( (uint8)o.m_type );
+	WriteUint8( (uint8_t)o.m_type );
 
 	WriteVector2D( o.m_a );
 	WriteVector2D( o.m_direction );
@@ -579,11 +579,11 @@ vsStore::ReadTransform2D(vsTransform2D *t)
 {
     vsVector2D pos, scale;
     float angle;
-    
+
 	ReadVector2D(&pos);
 	angle = ReadFloat();
 	ReadVector2D(&scale);
-    
+
     t->SetTranslation(pos);
     t->SetAngle(angle);
     t->SetScale(scale);

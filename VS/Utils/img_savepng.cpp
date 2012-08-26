@@ -64,7 +64,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 	int i;
     unsigned int temp_alpha;
 	png_colorp palette;
-	Uint8 *palette_alpha=NULL;
+	uint8_t *palette_alpha=NULL;
 	png_byte **row_pointers=NULL;
 	png_ptr=NULL;info_ptr=NULL;palette=NULL;ret=-1;
 	funky_format=0;
@@ -128,7 +128,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 		}
 		png_set_PLTE(png_ptr,info_ptr,palette,fmt->palette->ncolors);
 		if (surf->flags&SDL_SRCCOLORKEY) {
-			palette_alpha=(Uint8 *)malloc((fmt->colorkey+1)*sizeof(Uint8));
+			palette_alpha=(uint8_t *)malloc((fmt->colorkey+1)*sizeof(uint8_t));
 			if (!palette_alpha) {
 				SDL_SetError("Couldn't create memory for palette transparency");
 				goto savedone;
@@ -242,7 +242,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 						goto savedone;
 					}
 					if (used_alpha) {
-						SDL_SetAlpha(surf,SDL_SRCALPHA,(Uint8)temp_alpha); /* Restore alpha settings*/
+						SDL_SetAlpha(surf,SDL_SRCALPHA,(uint8_t)temp_alpha); /* Restore alpha settings*/
 					}
 					for(i=0;i<tempsurf->h;i++){
 						row_pointers[i]= ((png_byte*)tempsurf->pixels) + i*tempsurf->pitch;

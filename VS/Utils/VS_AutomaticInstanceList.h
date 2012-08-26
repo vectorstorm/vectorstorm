@@ -56,7 +56,7 @@ public:
     T *GetPreviousInstance() const;
 
 	static T      *GetFirstInstance();
-    static uint32  GetInstanceCount();
+    static uint32_t  GetInstanceCount();
 
 private:
 		static T *s_firstInstance;
@@ -206,10 +206,10 @@ vsAutomaticInstanceList<T>::GetPreviousInstance() const
 *\note this function iterates through the entire list,
 *      so don't call it every time through your loop!!!
 */
-template<class T> uint32
+template<class T> uint32_t
 vsAutomaticInstanceList<T>::GetInstanceCount()
 {
-	uint32 count = 0;
+	uint32_t count = 0;
 	T *instance = vsAutomaticInstanceList<T>::GetFirstInstance();
 	while( instance )
 	{

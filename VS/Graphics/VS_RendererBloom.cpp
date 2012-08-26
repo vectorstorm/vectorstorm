@@ -909,7 +909,7 @@ bool
 vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
     m_currentSettings = s;
-    
+
 	target->Bind();
 	if ( m_antialias )
 	{
@@ -1046,7 +1046,7 @@ vsRendererBloom::Screenshot()
 	const size_t bytesPerPixel = 3;	// RGB
 	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
 
-	uint8* pixels = new uint8[imageSizeInBytes];
+	uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
 	// glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment

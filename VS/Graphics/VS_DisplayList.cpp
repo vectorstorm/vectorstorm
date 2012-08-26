@@ -1088,7 +1088,7 @@ vsDisplayList::LineList( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::LineStrip( uint16 *idArray, int vertexCount )
+vsDisplayList::LineStrip( uint16_t *idArray, int vertexCount )
 {
 	m_fifo->WriteUint8( OpCode_LineStrip );
 	m_fifo->WriteUint32( vertexCount );
@@ -1386,9 +1386,9 @@ vsDisplayList::PopOp()
 				m_currentOp.data.Set( count );
 				m_currentOp.data.SetPointer( m_fifo->GetReadHead() );
 
-				m_fifo->AdvanceReadHead( sizeof(uint16) * count );
+				m_fifo->AdvanceReadHead( sizeof(uint16_t) * count );
 //				for ( int i = 0; i < count; i++ )
-//					m_fifo->ReadUint16();
+//					m_fifo->Readuint16_t();
 
 				break;
 			}
@@ -1746,22 +1746,22 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
 			{
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				uint16 *shuttle = buffer->GetIntArray();
+				uint16_t *shuttle = buffer->GetIntArray();
 
 				for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
 				{
-					uint16 index = shuttle[i];
+					uint16_t index = shuttle[i];
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}
 			else if ( o->type == OpCode_LineStrip )
 			{
-				uint16 *shuttle = (uint16 *)o->data.p;
+				uint16_t *shuttle = (uint16_t *)o->data.p;
 				int count = o->data.GetUInt();
 
 				for ( int i = 0; i < count; i++ )
 				{
-					uint16 index = shuttle[i];
+					uint16_t index = shuttle[i];
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}
@@ -1869,22 +1869,22 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
 			{
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				uint16 *shuttle = buffer->GetIntArray();
+				uint16_t *shuttle = buffer->GetIntArray();
 
 				for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
 				{
-					uint16 index = shuttle[i];
+					uint16_t index = shuttle[i];
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}
 			else if ( o->type == OpCode_LineStrip )
 			{
-				uint16 *shuttle = (uint16 *)o->data.p;
+				uint16_t *shuttle = (uint16_t *)o->data.p;
 				int count = o->data.GetUInt();
 
 				for ( int i = 0; i < count; i++ )
 				{
-					uint16 index = shuttle[i];
+					uint16_t index = shuttle[i];
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}

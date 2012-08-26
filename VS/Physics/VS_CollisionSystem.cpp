@@ -199,7 +199,7 @@ void
 vsCollisionSystem::Update(float timeStep)
 {
 	const float c_stepIncrement = ( 1.0f / 60.0f );
-	const int32 iterations = 10;
+	const int32_t iterations = 10;
 
 	m_timeBucket += timeStep;
 

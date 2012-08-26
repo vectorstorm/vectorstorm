@@ -20,7 +20,7 @@ class vsSurface;
 
 class vsTextureInternal : public vsResource
 {
-	uint32		m_texture;
+	uint32_t		m_texture;
 
 	float		m_glTextureWidth;
 	float		m_glTextureHeight;
@@ -41,7 +41,7 @@ public:
 	vsTextureInternal( const vsString &name, vsSurface *surface, bool depth=false );
 	~vsTextureInternal();
 
-	uint32		GetTexture() { return m_texture; }
+	uint32_t		GetTexture() { return m_texture; }
 
 	float		GetWidth() { return m_width; }
 	float		GetHeight() { return m_height; }
@@ -50,8 +50,8 @@ public:
 	float		GetGLWidth() { return m_glTextureWidth; }
 	float		GetGLHeight() { return m_glTextureHeight; }
 
-	uint32		ScaleColour(uint32 ini, float amt);
-	uint32		SafeAddColour(uint32 a, uint32 b);
+	uint32_t		ScaleColour(uint32_t ini, float amt);
+	uint32_t		SafeAddColour(uint32_t a, uint32_t b);
 
 	friend class vsRenderTarget;
 };

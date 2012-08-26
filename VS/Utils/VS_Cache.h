@@ -69,7 +69,7 @@ public:
 	vsResource *		m_item;
 
 	vsString			m_key;
-	uint32				m_keyHash;
+	uint32_t				m_keyHash;
 
 	vsCacheEntry<T> *	m_next;
 
@@ -92,7 +92,7 @@ class vsCache : public vsSingleton< vsCache<T> >
 
 	vsCacheEntry<T>*		FindHashEntry( const vsString &key )
 	{
-		uint32  hash = vsCalculateHash(key.c_str(), (uint32)key.length());
+		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		int bucket = hash % m_bucketCount;
 
 		vsCacheEntry<T> *ent = m_bucket[bucket].m_next;
@@ -111,7 +111,7 @@ class vsCache : public vsSingleton< vsCache<T> >
 	void	Remove( T* item )
 	{
 		vsString &key = item->GetName();
-		uint32  hash = vsCalculateHash(key.c_str(), (uint32)key.length());
+		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		int bucket = hash % m_bucketCount;
 
 		vsCacheEntry<T> *ent = &m_bucket[bucket];
@@ -164,7 +164,7 @@ public:
 	void	Add( T* item )
 	{
 		const vsString &key = item->GetName();
-		uint32 hash = vsCalculateHash(key.c_str(), (uint32)key.length());
+		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		vsCacheEntry<T> *ent = new vsCacheEntry<T>( this, item, key, hash );
 
 		int bucket = hash % m_bucketCount;

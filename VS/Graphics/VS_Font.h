@@ -103,7 +103,7 @@ class vsFont
 	struct FragmentConstructor
 	{
 		vsRenderBuffer::PT *		ptArray;
-		uint16 *			tlArray;
+		uint16_t *			tlArray;
 
 		int					ptIndex;
 		int					tlIndex;

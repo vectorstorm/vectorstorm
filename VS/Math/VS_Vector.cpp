@@ -31,17 +31,17 @@ vsVector2D::vsVector2D( const vsVector3D &b )
 float vsVector2D::ApproximateLength() const
 {
 	const float factor = (1.0f + 1.0f/(4.0f-2.0f*SQRT_TWO))/2.0f;
-	
+
 	float ax = vsFabs(x);
 	float ay = vsFabs(y);
-	
+
 	return factor * vsMin((1.0f / SQRT_TWO)*(ax+ay), vsMax(ax, ay));
 }
 
 void vsVector2D::Normalise()
 {
 	float length = Length();
-	
+
 	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
 	*this *= (1.0f/length);
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y), "Error, NaN!" );
@@ -57,7 +57,7 @@ vsVector3D::vsVector3D( const vsVector4D &b ):
 void vsVector3D::Normalise()
 {
 	float length = Length();
-	
+
 	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
 	*this *= (1.0f/length);
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN!" );
@@ -78,7 +78,7 @@ float vsVector3D::operator[](int n) const
 		return y;
 	else if ( n == 2 )
 		return z;
-	
+
 	vsAssert(0,"Illegal index!");
 	return 0.f;
 }
@@ -98,7 +98,7 @@ float & vsVector4D::operator[]( int n )
 		return z;
 	else if ( n == 3 )
 		return w;
-	
+
 	vsAssert(0,"Illegal index!");
 	return w;
 }
@@ -126,16 +126,16 @@ vsPosition3D::vsPosition3D():
 
 vsPosition3D::vsPosition3D( float x, float y, float z )
 {
-	m_x = (int32)(x * POSITION_FACTOR);
-	m_y = (int32)(y * POSITION_FACTOR);
-	m_z = (int32)(z * POSITION_FACTOR);
+	m_x = (int32_t)(x * POSITION_FACTOR);
+	m_y = (int32_t)(y * POSITION_FACTOR);
+	m_z = (int32_t)(z * POSITION_FACTOR);
 }
 
 vsPosition3D::vsPosition3D( const vsVector3D &pos )
 {
-	m_x = (int32)(pos.x * POSITION_FACTOR);
-	m_y = (int32)(pos.y * POSITION_FACTOR);
-	m_z = (int32)(pos.z * POSITION_FACTOR);
+	m_x = (int32_t)(pos.x * POSITION_FACTOR);
+	m_y = (int32_t)(pos.y * POSITION_FACTOR);
+	m_z = (int32_t)(pos.z * POSITION_FACTOR);
 }
 
 vsPosition3D
@@ -149,10 +149,10 @@ vsPosition3D::operator+( const vsVector3D &b ) const
 vsPosition3D
 vsPosition3D::operator+=( const vsVector3D &b )
 {
-	m_x += (int32)(b.x * POSITION_FACTOR);
-	m_y += (int32)(b.y * POSITION_FACTOR);
-	m_z += (int32)(b.z * POSITION_FACTOR);
-	
+	m_x += (int32_t)(b.x * POSITION_FACTOR);
+	m_y += (int32_t)(b.y * POSITION_FACTOR);
+	m_z += (int32_t)(b.z * POSITION_FACTOR);
+
 	return *this;
 }
 
@@ -163,7 +163,7 @@ vsPosition3D::operator-( const vsPosition3D &b ) const
 					  (float)m_y - b.m_y,
 					  (float)m_z - b.m_z );
 	result *= POSITION_INV_FACTOR;
-	
+
 	return result;
 }
 
@@ -178,7 +178,7 @@ float vsProgressFraction( float value, float a, float b )
 	{
 		float delta = b - a;
 		value -= a;
-		
+
 		return value / delta;
 	}
 }

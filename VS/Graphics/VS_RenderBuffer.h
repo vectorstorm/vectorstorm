@@ -133,7 +133,7 @@ public:
 	void	SetArray( const vsVector3D *array, int size );
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
-	void	SetArray( const uint16 *array, int size );
+	void	SetArray( const uint16_t *array, int size );
     void    ResizeArray( int size );
 
 	void	SetActiveSize( int size ) { m_activeBytes = size; }
@@ -143,8 +143,8 @@ public:
 	vsVector3D *	GetVector3DArray() { return (vsVector3D*)m_array; }
 
 	void			SetIntArraySize( int size );
-	int				GetIntArraySize() { return m_arrayBytes/sizeof(uint16); }
-	uint16 *		GetIntArray() { return (uint16*)m_array; }
+	int				GetIntArraySize() { return m_arrayBytes/sizeof(uint16_t); }
+	uint16_t *		GetIntArray() { return (uint16_t*)m_array; }
 
 	void			SetColorArraySize( int size );
 	vsColor *		GetColorArray() { return (vsColor*)m_array; }

@@ -307,7 +307,7 @@ vsSystem::MakeVsTime(vsTime *t, time_t rawTime)
 }
 
 vsString
-vsSystem::MakeTimeString(uint32 time)
+vsSystem::MakeTimeString(uint32_t time)
 {
 	return vsString("Foo");
 }

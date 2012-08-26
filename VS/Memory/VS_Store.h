@@ -57,17 +57,17 @@ public:
 
 	void	Append( vsStore *o );		// add contents of 'o' to my buffer.
 
-	void	WriteInt8(int8 value);
-	void	WriteUint8(uint8 value);
+	void	WriteInt8(int8_t value);
+	void	WriteUint8(uint8_t value);
 
-	void	WriteInt16(int16 value);
-	void	WriteUint16(uint16 value);
+	void	WriteInt16(int16_t value);
+	void	WriteUint16(uint16_t value);
 
-	void	WriteUint16Native(uint16 value);	// used for making display lists that will pass these buffers directly to OpenGL;  no converting into global endianness!
+	void	WriteUint16Native(uint16_t value);	// used for making display lists that will pass these buffers directly to OpenGL;  no converting into global endianness!
 
 
-	void	WriteInt32(int32 value);
-	void	WriteUint32(uint32 value);
+	void	WriteInt32(int32_t value);
+	void	WriteUint32(uint32_t value);
 
 	void	WriteFloat(float value);
 
@@ -76,15 +76,15 @@ public:
 
 	void	WriteVoidStar(void *value);		// WARNING:  DO NOT USE THIS UNLESS YOU REALLY KNOW WHAT YOU'RE DOING!  :)
 
-	int8	ReadInt8();
-	uint8	ReadUint8();
-	uint8	PeekUint8();
+	int8_t	ReadInt8();
+	uint8_t	ReadUint8();
+	uint8_t	PeekUint8();
 
-	int16	ReadInt16();
-	uint16	ReadUint16();
+	int16_t	ReadInt16();
+	uint16_t	ReadUint16();
 
-	int32	ReadInt32();
-	uint32	ReadUint32();
+	int32_t	ReadInt32();
+	uint32_t	ReadUint32();
 
 	float	ReadFloat();
 

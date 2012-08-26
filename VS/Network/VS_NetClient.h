@@ -12,18 +12,18 @@
 
 class vsNetClient
 {
-	uint32		m_publicIP;
-	uint32		m_privateIP;
-	
-	uint16		m_publicPort;
-	uint16		m_privatePort;
+	uint32_t		m_publicIP;
+	uint32_t		m_privateIP;
+
+	uint16_t		m_publicPort;
+	uint16_t		m_privatePort;
 public:
-	
-	vsNetClient(uint32 addr, uint16 port);
-	vsNetClient(const vsString &address, uint16 port);
-	
-	uint32		GetIP() { return m_publicIP; }
-	uint16		GetPort() { return m_publicPort; }
+
+	vsNetClient(uint32_t addr, uint16_t port);
+	vsNetClient(const vsString &address, uint16_t port);
+
+	uint32_t		GetIP() { return m_publicIP; }
+	uint16_t		GetPort() { return m_publicPort; }
 };
 
 #endif // VS_NETCLIENT_H

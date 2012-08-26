@@ -36,7 +36,7 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_vbo(false),
     m_indexType(false)
 {
-	vsAssert( sizeof( uint16 ) == 2, "I've gotten the size wrong??" );
+	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
 	// TESTING:  Seems like iPhone runs SLOWER with VBOs than with arrays, so just use our vsRenderBuffer in "array" mode.
 #if !TARGET_OS_IPHONE
@@ -206,9 +206,9 @@ vsRenderBuffer::SetArray( const vsColor *array, int size )
 }
 
 void
-vsRenderBuffer::SetArray( const uint16 *array, int size )
+vsRenderBuffer::SetArray( const uint16_t *array, int size )
 {
-	SetArray_Internal((char *)array, size*sizeof(uint16), true);
+	SetArray_Internal((char *)array, size*sizeof(uint16_t), true);
 }
 
 void
@@ -232,7 +232,7 @@ vsRenderBuffer::SetColorArraySize( int size )
 void
 vsRenderBuffer::SetIntArraySize( int size )
 {
-	SetArraySize_Internal(size*sizeof(uint16));
+	SetArraySize_Internal(size*sizeof(uint16_t));
 }
 
 void
@@ -687,12 +687,12 @@ vsRenderBuffer::TriStripBuffer()
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
-		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0 );
+		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, m_array );
+		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
 	}
 }
 
@@ -702,13 +702,13 @@ vsRenderBuffer::TriListBuffer()
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0);
-		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16), m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, m_array );
+		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
 	}
 }
 
@@ -718,12 +718,12 @@ vsRenderBuffer::TriFanBuffer()
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, m_array );
+		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
 	}
 }
 
@@ -733,12 +733,12 @@ vsRenderBuffer::LineStripBuffer()
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, m_array );
+		glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
 	}
 }
 
@@ -748,12 +748,12 @@ vsRenderBuffer::LineListBuffer()
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16), GL_UNSIGNED_SHORT, m_array );
+		glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
 	}
 }
 
