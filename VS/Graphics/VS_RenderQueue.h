@@ -26,7 +26,7 @@ class vsFog;
 class vsLight;
 
 
-class vsRenderQueueLayer
+class vsRenderQueueStage
 {
 	struct BatchElement
 	{
@@ -57,8 +57,8 @@ class vsRenderQueueLayer
 
 public:
 
-	vsRenderQueueLayer();
-	~vsRenderQueueLayer();
+	vsRenderQueueStage();
+	~vsRenderQueueStage();
 
 	void			StartRender();
 	void			Draw( vsDisplayList *list );	// write our batches into here.
@@ -82,19 +82,19 @@ class vsRenderQueue
 
 	vsDisplayList *			m_genericList;
 
-	vsRenderQueueLayer *	m_layer;
-	int						m_layerCount;
+	vsRenderQueueStage *	m_stage;
+	int						m_stageCount;
 
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
 	int						m_transformStackLevel;
 
-	int				PickLayerForMaterial( vsMaterial *material );
+	int				PickStageForMaterial( vsMaterial *material );
 
 	void			InitialiseTransformStack();
 	void			DeinitialiseTransformStack();
 
 public:
-	vsRenderQueue( int layerCount, int genericListSize);
+	vsRenderQueue( int stageCount, int genericListSize);
 	~vsRenderQueue();
 
 	void			StartRender( vsScene *scene );
@@ -124,7 +124,7 @@ public:
 	// BAD, BAD CODE.  :)  Ought to get rid of this.
 	vsDisplayList * GetGenericList() { return m_genericList; }
 
-	vsRenderQueueLayer * GetLayer( int i = 0 );
+	vsRenderQueueStage * GetStage( int i = 0 );
 };
 
 #endif // VS_SCENE_DRAW_H

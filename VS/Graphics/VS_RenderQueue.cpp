@@ -16,18 +16,18 @@
 #include "VS_MaterialInternal.h"
 
 
-vsRenderQueueLayer::Batch::Batch():
+vsRenderQueueStage::Batch::Batch():
 	material("White"),
 	elementList(NULL),
 	next(NULL)
 {
 }
 
-vsRenderQueueLayer::Batch::~Batch()
+vsRenderQueueStage::Batch::~Batch()
 {
 }
 
-vsRenderQueueLayer::vsRenderQueueLayer():
+vsRenderQueueStage::vsRenderQueueStage():
 	m_batch(NULL),
 	m_batchCount(0),
 	m_batchPool(NULL),
@@ -35,7 +35,7 @@ vsRenderQueueLayer::vsRenderQueueLayer():
 {
 }
 
-vsRenderQueueLayer::~vsRenderQueueLayer()
+vsRenderQueueStage::~vsRenderQueueStage()
 {
 	while( m_batchPool )
 	{
@@ -51,8 +51,8 @@ vsRenderQueueLayer::~vsRenderQueueLayer()
 	}
 }
 
-vsRenderQueueLayer::Batch *
-vsRenderQueueLayer::FindBatch( vsMaterial *material )
+vsRenderQueueStage::Batch *
+vsRenderQueueStage::FindBatch( vsMaterial *material )
 {
 	for (Batch *batch = m_batch; batch; batch = batch->next)
 	{
@@ -104,10 +104,10 @@ vsRenderQueueLayer::FindBatch( vsMaterial *material )
 
 
 void
-vsRenderQueueLayer::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
+vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
 {
 	Batch *batch = FindBatch(material);
-	
+
 	if ( !m_batchElementPool )
 	{
 		m_batchElementPool = new BatchElement;
@@ -125,7 +125,7 @@ vsRenderQueueLayer::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 }
 
 vsDisplayList *
-vsRenderQueueLayer::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size )
+vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size )
 {
 	Batch *batch = FindBatch(material);
 
@@ -149,7 +149,7 @@ vsRenderQueueLayer::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 }
 
 void
-vsRenderQueueLayer::StartRender()
+vsRenderQueueStage::StartRender()
 {
 	m_batchCount = 0;
 	vsAssert( m_batch == NULL, "Batches not cleared?" );
@@ -159,7 +159,7 @@ vsRenderQueueLayer::StartRender()
 }
 
 void
-vsRenderQueueLayer::Draw( vsDisplayList *list )
+vsRenderQueueStage::Draw( vsDisplayList *list )
 {
 	for (Batch *b = m_batch; b; b = b->next)
 	{
@@ -185,7 +185,7 @@ vsRenderQueueLayer::Draw( vsDisplayList *list )
 }
 
 void
-vsRenderQueueLayer::EndRender()
+vsRenderQueueStage::EndRender()
 {
 	m_batchCount = 0;
 	Batch *last = NULL;
@@ -211,20 +211,20 @@ vsRenderQueueLayer::EndRender()
 	m_temporaryLists.Clear();
 }
 
-vsRenderQueue::vsRenderQueue( int layerCount, int genericListSize):
+vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
 	m_parent(NULL)
 {
 	m_transformStackLevel = 0;
 
-	m_layerCount = layerCount;
-	m_layer = new vsRenderQueueLayer[layerCount];
+	m_stageCount = stageCount;
+	m_stage = new vsRenderQueueStage[stageCount];
 
 	m_genericList = new vsDisplayList(genericListSize);
 }
 
 vsRenderQueue::~vsRenderQueue()
 {
-	vsDeleteArray( m_layer );
+	vsDeleteArray( m_stage );
 	vsDelete( m_genericList );
 }
 
@@ -234,9 +234,9 @@ vsRenderQueue::StartRender(vsScene *parent)
 	m_parent = parent;
 	InitialiseTransformStack();
 
-	for ( int i = 0; i < m_layerCount; i++ )
+	for ( int i = 0; i < m_stageCount; i++ )
 	{
-		m_layer[i].StartRender();
+		m_stage[i].StartRender();
 	}
 	m_genericList->Clear();
 
@@ -245,9 +245,9 @@ vsRenderQueue::StartRender(vsScene *parent)
 void
 vsRenderQueue::Draw( vsDisplayList *list )
 {
-	for ( int i = 0; i < m_layerCount; i++ )
+	for ( int i = 0; i < m_stageCount; i++ )
 	{
-		m_layer[i].Draw(list);
+		m_stage[i].Draw(list);
 	}
 	list->Append(*m_genericList);
 
@@ -258,9 +258,9 @@ vsRenderQueue::Draw( vsDisplayList *list )
 void
 vsRenderQueue::EndRender()
 {
-	for ( int i = 0; i < m_layerCount; i++ )
+	for ( int i = 0; i < m_stageCount; i++ )
 	{
-		m_layer[i].EndRender();
+		m_stage[i].EndRender();
 	}
 	m_genericList->Clear();
 }
@@ -355,35 +355,35 @@ vsRenderQueue::DeinitialiseTransformStack()
 void
 vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch )
 {
-	int layerId = PickLayerForMaterial( material );
+	int stageId = PickStageForMaterial( material );
 
-	m_layer[layerId].AddBatch( material, matrix, batch );
+	m_stage[stageId].AddBatch( material, matrix, batch );
 }
 
 vsDisplayList *
 vsRenderQueue::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size )
 {
-	int layerId = PickLayerForMaterial( material );
+	int stageId = PickStageForMaterial( material );
 
-	return m_layer[layerId].MakeTemporaryBatchList( material, matrix, size );
+	return m_stage[stageId].MakeTemporaryBatchList( material, matrix, size );
 }
 
 vsDisplayList *
 vsRenderQueue::MakeTemporaryBatchList( vsMaterial *material, int size )
 {
-	int layerId = PickLayerForMaterial( material );
+	int stageId = PickStageForMaterial( material );
 
-	return m_layer[layerId].MakeTemporaryBatchList( material, vsMatrix4x4::Identity, size );
+	return m_stage[stageId].MakeTemporaryBatchList( material, vsMatrix4x4::Identity, size );
 }
 
-vsRenderQueueLayer *
-vsRenderQueue::GetLayer( int i )
+vsRenderQueueStage *
+vsRenderQueue::GetStage( int i )
 {
-	vsAssert( i >= 0 && i < m_layerCount, "Requested nonexistant render layer!" );
+	vsAssert( i >= 0 && i < m_stageCount, "Requested nonexistant render stage!" );
 
-	if ( i >= 0 && i < m_layerCount )
+	if ( i >= 0 && i < m_stageCount )
 	{
-		return &m_layer[i];
+		return &m_stage[i];
 	}
 
 	return NULL;
@@ -410,7 +410,7 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 {
 	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
 	vsAssert( m_transformStackLevel > 0, "Uninitialised transform stack??" )
-    
+
 	if ( m_transformStackLevel < MAX_SCENE_STACK )
 	{
         vsMatrix4x4 matrix = transform.GetMatrix();
@@ -418,7 +418,7 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 		m_transformStack[m_transformStackLevel] = m_transformStack[m_transformStackLevel-1] * matrix;
 		m_transformStackLevel++;
 	}
-    
+
 	return m_transformStack[ m_transformStackLevel-1 ];
 }
 
@@ -447,9 +447,13 @@ vsRenderQueue::GetMatrix()
 }
 
 int
-vsRenderQueue::PickLayerForMaterial( vsMaterial *material )
+vsRenderQueue::PickStageForMaterial( vsMaterial *material )
 {
-	if ( material->GetResource()->m_glow )
+	if ( material->GetResource()->m_postGlow )
+	{
+		return 2;
+	}
+	else if ( material->GetResource()->m_glow )
 	{
 		return 1;
 	}

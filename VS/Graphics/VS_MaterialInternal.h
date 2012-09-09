@@ -51,6 +51,7 @@ public:
 	bool		m_clampU;
 	bool		m_clampV;
 	bool		m_glow;
+	bool		m_postGlow;
 	bool		m_hasColor;
 
 	vsDisplayList *	m_displayList;

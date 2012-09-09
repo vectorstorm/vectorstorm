@@ -24,7 +24,7 @@ vsTransform2D	g_drawingCameraTransform = vsTransform2D::Zero;
 vsScene *		vsScene::s_current = NULL;
 
 vsScene::vsScene():
-	m_queue( new vsRenderQueue( 2, 1024*200 ) )
+	m_queue( new vsRenderQueue( 3, 1024*200 ) )
 {
 	m_entityList = new vsEntity();
 	//	m_displayList = new vsDisplayList(40000);
