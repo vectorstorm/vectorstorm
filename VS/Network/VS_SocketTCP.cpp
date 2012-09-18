@@ -1,6 +1,6 @@
 /*
  *  VS_SocketTCP.cpp
- *  MMORPG2
+ *  Vectorstorm
  *
  *  Created by Trevor Powell on 5/06/09.
  *  Copyright 2009 Trevor Powell. All rights reserved.
@@ -8,39 +8,49 @@
  */
 
 #include "VS_SocketTCP.h"
-
-#include "VS_NetClient.h"
-
 #include "VS_Store.h"
 
 #include <stdio.h>
 #include <fcntl.h>
 
+
 #if defined(_WIN32)
 #include <WinSock2.h>
+typedef int socklen_t;	// yay, standards
 #else
+#include <netdb.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
 #endif
 #include <sys/types.h>
 
+#include <assert.h>
+
+#ifdef _WIN32
+#define USE_SELECT
+#else
+using std::max;
+#define USE_POLL
+#endif
+
+#define vsLog printf
 
 vsSocketTCP::vsSocketTCP( int maxConnectionCount ):
-m_privateIP(0),
-m_privatePort(0),
-m_socket(-1),
-m_listening(false),
-m_inUpdate(false),
-m_listener(NULL),
-m_connection(NULL),
-m_connectionCount(maxConnectionCount)
+	m_privateIP(0),
+	m_privatePort(0),
+	m_listenSocket(-1),
+	m_listening(false),
+	m_listener(NULL),
+	m_connection(NULL),
+	m_connectionCount(maxConnectionCount)
 {
 	m_connection = new vsTCPConnection[ maxConnectionCount ];
-#ifndef _WIN32
+#if defined(USE_POLL)
 	m_pollfds = new pollfd[ m_connectionCount+1 ];
-#endif // _WIN32
+#endif // USE_POLL
 
 	for ( int i = 0; i < m_connectionCount; i++ )
 	{
@@ -53,12 +63,12 @@ m_connectionCount(maxConnectionCount)
 
 vsSocketTCP::~vsSocketTCP()
 {
-	if ( m_socket > -1 )
+	if ( m_listenSocket > -1 )
 	{
 #ifdef _WIN32
-		closesocket( m_socket );
+		closesocket( m_listenSocket );
 #else
-		close( m_socket );
+		close( m_listenSocket );
 #endif
 	}
 
@@ -67,41 +77,39 @@ vsSocketTCP::~vsSocketTCP()
 		if ( m_connection[i].m_socket != -1 )
 		{
 #ifdef _WIN32
-			closesocket( m_socket );
+			closesocket( m_connection[i].m_socket );
 #else
-			close( m_socket );
+			close( m_connection[i].m_socket );
 #endif
 		}
-		vsDelete( m_connection[i].m_receiveBuffer );
-		vsDelete( m_connection[i].m_sendBuffer );
-
-#ifndef _WIN32
-		vsDeleteArray( m_pollfds );
-#endif
+		delete m_connection[i].m_receiveBuffer;
+		delete m_connection[i].m_sendBuffer;
 	}
+#ifdef USE_POLL
+	delete [] m_pollfds;
+#endif
 
-	vsDeleteArray( m_connection );
+	delete [] m_connection;
 }
 
 bool
 vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 {
-#ifndef _WIN32
-	if ( m_socket == -1 )
+	if ( m_listenSocket == -1 )
 	{
 		//vsLog("Opening socket");
 
-		m_socket = socket(AF_INET, SOCK_STREAM, 0);
-		if ( m_socket == -1 )
+		m_listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+		if ( m_listenSocket == -1 )
 		{
 			perror("socket");
-			vsAssert( m_socket != -1, vsFormatString("Socket error:  See console output for details" ) );
+			vsAssert( m_listenSocket != -1, vsFormatString("Socket error:  See console output for details" ) );
 		}
 	}
 
 	sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
 
 	switch( t )
 	{
@@ -118,13 +126,13 @@ vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 	}
 
 
-    memset(addr.sin_zero, '\0', sizeof addr.sin_zero);
+	memset(addr.sin_zero, '\0', sizeof addr.sin_zero);
 
 	//vsLog("Binding socket to port %d", port);
 
-	int err = bind( m_socket, (sockaddr *)&addr, sizeof(addr) );
+	int err = bind( m_listenSocket, (sockaddr *)&addr, sizeof(addr) );
 #ifndef _WIN32
-	fcntl(m_socket, F_SETFL, O_NONBLOCK);
+	fcntl(m_listenSocket, F_SETFL, O_NONBLOCK);
 #endif // _WIN32
 
 	if ( err == -1 )
@@ -133,7 +141,7 @@ vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 		return false;
 	}
 
-	err = listen( m_socket, m_connectionCount );
+	err = listen( m_listenSocket, m_connectionCount );
 	m_listening = true;
 	if ( err == -1 )
 	{
@@ -142,7 +150,7 @@ vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 	}
 
 	socklen_t addrSize = sizeof(addr);
-	err = getsockname(m_socket, (sockaddr*)&addr, &addrSize);
+	err = getsockname(m_listenSocket, (sockaddr*)&addr, &addrSize);
 	if ( err == -1 )
 	{
 		perror("getsockname");
@@ -161,7 +169,6 @@ vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 		char * byte = (char *)&m_privateIP;
 		vsLog("Bind succeeded:  Listening on %d.%d.%d.%d:%d", byte[0], byte[1], byte[2], byte[3], ntohs(m_privatePort));
 	}
-#endif // _WIN32
 	return true;
 }
 
@@ -171,25 +178,19 @@ vsSocketTCP::Send( vsTCPConnection *to, vsStore *packet )
 	to->m_sendBuffer->Append(packet);
 }
 
+#if defined(USE_POLL)
 void
-vsSocketTCP::Update( float timeStep )
+vsSocketTCP::DoPoll(float maxSleepDuration)
 {
-	m_inUpdate = true;
-
-#ifndef _WIN32
-
-    struct sockaddr_storage their_addr;
+	struct sockaddr_storage their_addr;
 	struct timeval tv;
-    socklen_t addr_size;
+	socklen_t addr_size;
 	int pollCount = 1;
-
 	addr_size = sizeof their_addr;
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
-
-	m_pollfds[0].fd = m_socket;
+	m_pollfds[0].fd = m_listenSocket;
 	m_pollfds[0].events = POLLIN;
-
 	for ( int i = 0; i < m_connectionCount; i++ )
 	{
 		if ( m_connection[i].m_socket != -1 )
@@ -205,11 +206,11 @@ vsSocketTCP::Update( float timeStep )
 		}
 	}
 
-	if ( poll(m_pollfds, pollCount, 0) > 0 )
+	if ( poll(m_pollfds, pollCount, 1000*maxSleepDuration) > 0 )
 	{
 		if ( m_pollfds[0].revents & POLLERR || m_pollfds[0].revents & POLLHUP || m_pollfds[0].revents & POLLNVAL )
 		{
-			vsLog("Socket error!\n");
+			vsLog("Socket error!");
 		}
 		if ( m_pollfds[0].revents & POLLIN )		// connection to our main socket?
 		{
@@ -218,7 +219,7 @@ vsSocketTCP::Update( float timeStep )
 				if ( m_connection[i].m_socket == -1 )
 				{
 					//vsLog("Accepted connection");
-					m_connection[i].m_socket = accept( m_socket, (struct sockaddr *)&their_addr, &addr_size );
+					m_connection[i].m_socket = accept( m_listenSocket, (struct sockaddr *)&their_addr, &addr_size );
 					if ( m_connection[i].m_socket == -1 )
 					{
 						perror("accept");
@@ -268,7 +269,7 @@ vsSocketTCP::Update( float timeStep )
 					int nb = 0;
 					do
 					{
-						int nb = recv( socket, buffer, (30 * 1024)-1, 0 );
+						ssize_t nb = recv( socket, buffer, (30 * 1024)-1, 0 );
 						//buffer[nb] = 0;
 						//vsLog("%s",buffer);
 						if ( nb > 0 )
@@ -291,12 +292,12 @@ vsSocketTCP::Update( float timeStep )
 				if ( m_pollfds[p].revents & POLLOUT )
 				{
 					// something to send?
-					int bytesToSend = connection->m_sendBuffer->BytesLeftForReading();
+					size_t bytesToSend = connection->m_sendBuffer->BytesLeftForReading();
 					if ( bytesToSend > 0 )
 					{
-						int nb = send( socket, connection->m_sendBuffer->GetReadHead(), bytesToSend, 0 );
+						ssize_t nb = send( socket, connection->m_sendBuffer->GetReadHead(), bytesToSend, 0 );
 
-						if ( nb == bytesToSend )
+						if ( nb == (ssize_t)bytesToSend )
 						{
 							connection->m_sendBuffer->Clear();
 							//vsLog("Completed send buffer %d, socket %d", connectionID, socket);
@@ -316,11 +317,155 @@ vsSocketTCP::Update( float timeStep )
 			}
 		}
 	}
+}
+#elif defined(USE_SELECT)
+void
+vsSocketTCP::DoSelect(float maxSleepDuration)
+{
+	fd_set rsocks, wsocks;
+	socktype_t highsock = m_listenSocket;
+	struct sockaddr_storage their_addr;
+	socklen_t addr_size;
 
-#endif // _WIN32
+	addr_size = sizeof their_addr;
 
-	m_inUpdate = false;
+	FD_ZERO(&rsocks);
+	FD_ZERO(&wsocks);
+	if ( m_listenSocket != -1 )
+	{
+		FD_SET(m_listenSocket, &rsocks);
+	}
+	for ( int i = 0; i < m_connectionCount; i++ )
+	{
+		if ( m_connection[i].m_socket != -1 )
+		{
+			FD_SET(m_connection[i].m_socket, &rsocks);
+			size_t bytesToSend = m_connection[i].m_sendBuffer->BytesLeftForReading();
+			if ( bytesToSend > 0 )
+			{
+				FD_SET(m_connection[i].m_socket, &wsocks);
+			}
 
+			highsock = max(highsock, m_connection[i].m_socket);
+		}
+	}
+	struct timeval timeout;
+	timeout.tv_sec = (int)maxSleepDuration;
+	timeout.tv_usec = (int)((1000000 * maxSleepDuration) - (1000000 * timeout.tv_sec));
+	int readSocks = select(highsock+1, &rsocks, &wsocks, NULL, &timeout);
+	if ( readSocks == -1 )
+	{
+		// error!
+		extern int errno;
+		printf("Error: %d", errno);
+	}
+	if ( readSocks > 0 )
+	{
+		if ( m_listenSocket != -1 && FD_ISSET(m_listenSocket, &rsocks) )
+		{
+			for ( int i = 0; i < m_connectionCount; i++ )
+			{
+				if ( m_connection[i].m_socket == -1 )
+				{
+					//vsLog("Accepted connection");
+					m_connection[i].m_socket = accept( m_listenSocket, (struct sockaddr *)&their_addr, &addr_size );
+					if ( m_connection[i].m_socket == -1 )
+					{
+						perror("accept");
+						vsAssert( m_connection[i].m_socket != -1, vsFormatString("Accept error:  See console output for details" ) );
+					}
+#ifndef _WIN32
+					fcntl(m_connection[i].m_socket, F_SETFL, O_NONBLOCK);
+#endif
+					m_connection[i].m_receiveBuffer = new vsStore(20 * 1024);
+					m_connection[i].m_sendBuffer = new vsStore(600 * 1024);
+					m_connection[i].m_closing = false;
+					m_connection[i].m_sigHup = false;
+
+					if ( m_listener )
+					{
+						m_listener->NewConnection( &m_connection[i] );
+					}
+					break;
+				}
+			}
+		}
+
+		for ( int i = 0; i < m_connectionCount; i++ )
+		{
+			if ( m_connection[i].m_socket == -1 )
+				continue;	// skip this one.
+			if ( FD_ISSET(m_connection[i].m_socket, &rsocks) )
+			{
+				vsTCPConnection* connection = &m_connection[i];
+				//int connectionID = i;
+				socktype_t socket = connection->m_socket;
+				char buffer[30 * 1024];
+				// received data on this socket!
+				int nb = 0;
+				do
+				{
+					size_t nb = recv( socket, buffer, (30 * 1024)-1, 0 );
+					//buffer[nb] = 0;
+					//vsLog("%s",buffer);
+					if ( nb > 0 )
+					{
+						connection->m_receiveBuffer->WriteBuffer( buffer, nb );
+
+						if ( m_listener )
+						{
+							m_listener->HandleBuffer( connection, connection->m_receiveBuffer );
+						}
+					}
+					else
+					{
+						// a receive of '0' indicates that this client disconnected.
+						m_listener->ConnectionClosed( connection );
+						connection->m_socket = -1;
+					}
+				}
+				while( nb > 0 );
+			}
+			if ( m_connection[i].m_socket != -1 && FD_ISSET(m_connection[i].m_socket, &wsocks) )
+			{
+				vsTCPConnection* connection = &m_connection[i];
+				int connectionID = i;
+				socktype_t socket = connection->m_socket;
+
+				// something to send?
+				size_t bytesToSend = connection->m_sendBuffer->BytesLeftForReading();
+				if ( bytesToSend > 0 )
+				{
+					size_t nb = send( socket, connection->m_sendBuffer->GetReadHead(), bytesToSend, 0 );
+
+					if ( nb == (size_t)bytesToSend )
+					{
+						connection->m_sendBuffer->Clear();
+						//vsLog("Completed send buffer %d, socket %d", connectionID, socket);
+					}
+					else
+					{
+						connection->m_sendBuffer->AdvanceReadHead( nb );
+						vsLog("Partial send buffer %d, socket %d", connectionID, socket);
+					}
+				}
+			}
+		}
+	}
+
+}
+#endif
+
+void
+vsSocketTCP::Poll(float maxSleepDuration)
+{
+#if defined(USE_POLL)
+	DoPoll(maxSleepDuration);
+#elif defined(USE_SELECT)
+	DoSelect(maxSleepDuration);
+#endif
+
+	// handle closing any connections which are ready to close
 	for ( int i = 0; i < m_connectionCount; i++ )
 	{
 		if ( m_connection[i].m_socket != -1 )
@@ -330,7 +475,7 @@ vsSocketTCP::Update( float timeStep )
 				bool closeNow = (m_connection[i].m_sigHup);
 
 				if ( (m_connection[i].m_sendBuffer->BytesLeftForReading() == 0) &&
-					(m_connection[i].m_receiveBuffer->BytesLeftForReading() == 0) )
+						(m_connection[i].m_receiveBuffer->BytesLeftForReading() == 0) )
 				{
 					closeNow = true;
 				}
@@ -349,12 +494,59 @@ vsSocketTCP::Update( float timeStep )
 					close( m_connection[i].m_socket );
 #endif
 					m_connection[i].m_socket = -1;
-					vsDelete( m_connection[i].m_receiveBuffer );
-					vsDelete( m_connection[i].m_sendBuffer );
+					delete m_connection[i].m_receiveBuffer;
+					m_connection[i].m_receiveBuffer = NULL;
+					delete m_connection[i].m_sendBuffer;
+					m_connection[i].m_sendBuffer = NULL;
 				}
 			}
 		}
 	}
+}
+
+vsTCPConnection*
+vsSocketTCP::Connect(const std::string& hostname, uint16_t port)
+{
+	sockaddr_in addr;
+	socklen_t addr_len;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+	struct hostent* hp = gethostbyname(hostname.c_str());
+	if ( hp == NULL ||  hp->h_addr_list[0] == NULL )
+	{
+		return NULL;
+	}
+	addr.sin_addr = *( struct in_addr*)hp->h_addr_list[0];
+	memset(addr.sin_zero, '\0', sizeof addr.sin_zero);
+	addr_len = sizeof(addr);
+	socktype_t sock = -1;
+	{
+		sock = socket(AF_INET, SOCK_STREAM, 0);
+		if ( sock == -1 )
+		{
+			perror("socket");
+			vsAssert( sock != -1, vsFormatString("Socket error:  See console output for details" ) );
+		}
+	}
+	int err = connect( sock, (struct sockaddr *)&addr, addr_len );
+	if ( err == 0 )
+	{
+#ifndef _WIN32
+		fcntl(sock, F_SETFL, O_NONBLOCK);
+#endif // _WIN32
+		m_connection[0].m_receiveBuffer = new vsStore(20 * 1024);
+		m_connection[0].m_sendBuffer = new vsStore(600 * 1024);
+		m_connection[0].m_closing = false;
+		m_connection[0].m_sigHup = false;
+		m_connection[0].m_socket = sock;
+
+		if ( m_listener )
+		{
+			m_listener->NewConnection( &m_connection[0] );
+		}
+		return &m_connection[0];
+	}
+	return NULL;
 }
 
 int
@@ -377,22 +569,6 @@ vsSocketTCP::GetConnectionCount()
 void
 vsSocketTCP::Close( vsTCPConnection *connection )
 {
-	//if ( m_inUpdate )
-	{
-		connection->m_closing = true;
-	}
-	/*else
-	{
-		if ( m_listener )
-		{
-			m_listener->ConnectionClosed( connection );
-		}
-
-		// close immediately.
-		close( connection->m_socket );
-		connection->m_socket = -1;
-		vsDelete( connection->m_receiveBuffer );
-		vsDelete( connection->m_sendBuffer );
-	}*/
+	connection->m_closing = true;
 }
 

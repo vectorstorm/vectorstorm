@@ -1,6 +1,6 @@
 /*
- *  VS_SocketTCP.h
- *  MMORPG2
+ *  VS_vsSocketTCP.h
+ *  Vectorstorm
  *
  *  Created by Trevor Powell on 5/06/09.
  *  Copyright 2009 Trevor Powell. All rights reserved.
@@ -11,11 +11,19 @@
 #define VS_SOCKET_TCP_H
 
 class vsStore;
-class vsNetClient;
+
+#ifdef _WIN32
+#include <WinSock2.h>
+typedef SOCKET socktype_t;
+#define USE_SELECT
+#else
+typedef int32_t socktype_t;
+#define USE_POLL
+#endif
 
 struct vsTCPConnection
 {
-	int32_t		m_socket;			// -1 if not currently in use
+	socktype_t	m_socket;			// -1 if not currently in use
 	vsStore	*m_receiveBuffer;	// storage space for reassembling the stream.
 	vsStore	*m_sendBuffer;		// storage space for reassembling the stream.
 
@@ -42,10 +50,8 @@ class vsSocketTCP
 	uint32_t		m_privateIP;		// stored in NETWORK BYTE ORDER
 	uint16_t		m_privatePort;
 
-	int32_t		m_socket;
+	socktype_t		m_listenSocket;
 	bool		m_listening;
-
-	bool		m_inUpdate;
 
 	vsTCPListener *		m_listener;
 
@@ -53,6 +59,12 @@ class vsSocketTCP
 	int					m_connectionCount;
 #ifndef _WIN32
 	struct pollfd *		m_pollfds;
+#endif
+
+#if defined(USE_POLL)
+	void DoPoll(float maxSleepDuration);
+#elif defined(USE_SELECT)
+	void DoSelect(float maxSleepDuration);
 #endif
 
 public:
@@ -70,7 +82,10 @@ public:
 
 	bool	Listen( uint16_t port = 0, Type t = Type_Global );	// create a socket.
 	bool	IsListening() { return m_listening; }
-	void	Update( float timeStep );
+	void	Poll(float maxSleepDuration=0.f);
+
+	vsTCPConnection*	Connect(const std::string& hostname, uint16_t port);
+	vsTCPConnection*  GetConnection(int i) { return &m_connection[i]; }
 
 	int		GetConnectionCount();
 

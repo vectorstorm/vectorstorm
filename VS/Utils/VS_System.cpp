@@ -26,6 +26,7 @@
 
 #if defined(_WIN32)
 //#include <shellapi.h>
+#include <WinSock2.h>
 #else
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -145,6 +146,16 @@ vsSystem::vsSystem(size_t totalMemoryBytes):
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
+#endif
+
+#if defined(_WIN32)
+	static bool startedUp = false;
+	if ( !startedUp )
+	{
+		WSADATA wsaData;
+		WSAStartup(MAKEWORD(2,2), &wsaData);
+		startedUp = true;
+	}
 #endif
 }
 
