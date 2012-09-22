@@ -136,7 +136,7 @@ public:
 	void	SetArray( const uint16_t *array, int size );
     void    ResizeArray( int size );
 
-	void	SetActiveSize( int size ) { m_activeBytes = size; }
+	void	SetActiveSize( int size );
 
 	void			SetVector3DArraySize( int size );
 	int				GetVector3DArraySize() { return m_arrayBytes/sizeof(vsVector3D); }

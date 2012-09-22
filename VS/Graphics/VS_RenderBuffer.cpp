@@ -67,6 +67,13 @@ vsRenderBuffer::ResizeArray( int size )
 }
 
 void
+vsRenderBuffer::SetActiveSize( int size )
+{
+	vsAssert(size != 0, "Zero-sized buffer??");
+	m_activeBytes = size;
+}
+
+void
 vsRenderBuffer::SetArraySize_Internal( int size )
 {
 	if ( m_array && size > m_arrayBytes )
@@ -78,6 +85,7 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 		m_array = new char[size];
 		m_arrayBytes = size;
 	}
+	vsAssert(size != 0, "Zero-sized buffer?");
     SetActiveSize(size);
 }
 
@@ -785,11 +793,13 @@ vsRenderBuffer::MapAll()
 		}
 		if ( b->m_indexType )
 		{
-			b->BakeIndexArray();
+			if ( b->m_activeBytes > 0 )
+				b->BakeIndexArray();
 		}
 		else
 		{
-			b->BakeArray();
+			if ( b->m_activeBytes > 0 )
+				b->BakeArray();
 		}
 	}
 #endif
