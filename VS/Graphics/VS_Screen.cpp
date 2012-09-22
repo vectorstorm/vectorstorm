@@ -27,6 +27,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_width(width),
 	m_height(height),
 	m_depth(depth),
+	m_fullscreen(fullscreen),
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
@@ -66,9 +67,13 @@ vsScreen::~vsScreen()
 void
 vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 {
+	if ( width == m_width && height == m_height && depth == m_depth && fullscreen == m_fullscreen )
+		return;
+
 	m_width = width;
 	m_height = height;
 	m_depth = depth;
+	m_fullscreen = fullscreen;
 
 	m_renderer->Deinit();
 	delete m_renderer;

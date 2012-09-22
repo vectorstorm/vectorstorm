@@ -38,6 +38,7 @@ class vsScreen
 	int					m_height;
 	int					m_depth;
 	float				m_aspectRatio;
+	bool				m_fullscreen;
 
 	vsRenderTarget *	m_currentRenderTarget;
     const vsRenderer::Settings *m_currentSettings;
