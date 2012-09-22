@@ -133,6 +133,28 @@ const char *combine6f = STRINGIFY(
 								  }
 );
 
+const char *combine7f = STRINGIFY(
+								  uniform sampler2D Pass0;
+								  uniform sampler2D Pass1;
+								  uniform sampler2D Pass2;
+								  uniform sampler2D Pass3;
+								  uniform sampler2D Pass4;
+								  uniform sampler2D Pass5;
+								  uniform sampler2D Scene;
+
+								  void main(void)
+								  {
+								  vec4 t0 = texture2D(Pass0, gl_TexCoord[0].st);
+								  vec4 t1 = texture2D(Pass1, gl_TexCoord[0].st);
+								  vec4 t2 = texture2D(Pass2, gl_TexCoord[0].st);
+								  vec4 t3 = texture2D(Pass3, gl_TexCoord[0].st);
+								  vec4 t4 = texture2D(Pass4, gl_TexCoord[0].st);
+								  vec4 t5 = texture2D(Pass5, gl_TexCoord[0].st);
+								  vec4 t6 = texture2D(Scene, gl_TexCoord[0].st);
+								  gl_FragColor = 1.2 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
+								  }
+);
+
 const char *row3f = STRINGIFY(
 							  uniform sampler2D source;
 							  uniform float coefficients[3];
@@ -237,13 +259,13 @@ const char *normalf = STRINGIFY(
 );
 
 
-//#define KERNEL_SIZE   (3)
-#define KERNEL_SIZE   (5)
+#define KERNEL_SIZE   (3)
+//#define KERNEL_SIZE   (5)
 
 GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 3, 7, 26, 41, 26, 7, 3  };
-float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
-//float kernel[KERNEL_SIZE] = { 4, 8, 4  };
+//float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
+float kernel[KERNEL_SIZE] = { 4, 8, 4  };
 
 GLuint vsRendererBloom::s_combineProg;
 GLuint vsRendererBloom::s_filterProg;
@@ -277,8 +299,8 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	//if ( !s_shadersBuilt )
 	{
 		// Compile shaders
-		s_combineProg = Compile(passv, combine4f);
-		s_filterProg = Compile(passv, row5f);
+		s_combineProg = Compile(passv, combine7f);
+		s_filterProg = Compile(passv, row3f);
 		s_overlayProg = Compile(overlayv, overlayf);
 		s_hipassProg = Compile(passv, normalf);
 		s_shadersBuilt = true;

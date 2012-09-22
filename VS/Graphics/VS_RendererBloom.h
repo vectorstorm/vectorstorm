@@ -39,7 +39,7 @@ struct vsBloomSurface
 	bool	isRenderbuffer;
 };*/
 
-#define FILTER_COUNT (3)
+#define FILTER_COUNT (5)
 
 class vsRendererBloom : public vsRendererSimple
 {
