@@ -265,7 +265,7 @@ vsRendererBloom::vsRendererBloom()
 	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
 }
 
-#define BUFFER_HEIGHT (512)
+#define BUFFER_HEIGHT (1024)
 #define BUFFER_WIDTH  (1024)
 
 void
