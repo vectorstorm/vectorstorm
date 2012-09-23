@@ -140,6 +140,14 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 }
 
 void
+vsRenderBuffer::SetArray( const vsRenderBuffer::P *array, int size )
+{
+	m_contentType = ContentType_P;
+
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::P), false);
+}
+
+void
 vsRenderBuffer::SetArray( const vsRenderBuffer::PC *array, int size )
 {
 	m_contentType = ContentType_PC;
@@ -353,6 +361,26 @@ vsRenderBuffer::Bind( vsRendererState *state )
 {
 	switch( m_contentType )
 	{
+		case ContentType_P:
+		{
+			P dummyArray[2];
+			int stride = sizeof(P);
+
+			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+
+			if ( m_vbo )
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+
+				glVertexPointer( 3, GL_FLOAT, stride, 0 );
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+			}
+			else
+			{
+				glVertexPointer( 3, GL_FLOAT, stride, m_array );
+			}
+			break;
+		}
 		case ContentType_PC:
 		{
 			PC dummyArray[2];
@@ -570,6 +598,9 @@ vsRenderBuffer::Unbind( vsRendererState *state )
 {
 	switch( m_contentType )
 	{
+        case ContentType_P:
+			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+            break;
         case ContentType_PC:
 			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
 			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
@@ -613,6 +644,9 @@ vsRenderBuffer::GetPositionCount()
 {
 	switch( m_contentType )
 	{
+		case ContentType_P:
+			return m_arrayBytes / sizeof(P);
+			break;
 		case ContentType_PC:
 			return m_arrayBytes / sizeof(PC);
 			break;
@@ -648,6 +682,11 @@ vsRenderBuffer::GetPosition(int i)
 
 	switch( m_contentType )
 	{
+		case ContentType_P:
+		{
+			P* p = (P*)m_array;
+			return p[i].position;
+		}
 		case ContentType_PC:
 		{
 			PC* pc = (PC*)m_array;

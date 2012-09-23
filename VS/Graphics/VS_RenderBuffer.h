@@ -44,6 +44,7 @@ private:
 	enum ContentType
 	{
 		ContentType_Custom,
+		ContentType_P,
 		ContentType_PC,
 		ContentType_PT,
 		ContentType_PN,
@@ -62,6 +63,11 @@ private:
 	void	SetArraySize_Internal( int bytes );
 
 public:
+
+	struct P
+	{
+		vsVector3D		position;
+	};
 
 	struct PC
 	{
@@ -123,6 +129,7 @@ public:
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();
 
+	void	SetArray( const P *array, int size );
 	void	SetArray( const PC *array, int size );
 	void	SetArray( const PT *array, int size );
 	void	SetArray( const PN *array, int size );
