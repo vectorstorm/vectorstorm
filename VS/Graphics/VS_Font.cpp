@@ -570,14 +570,19 @@ vsFont::vsFont( const vsString &filename ):
 	vsFile fontData(filename);
 	vsRecord r;
 
-	vsString textureName = "Unknown";
 	int i = 0;
 
 	while( fontData.Record(&r) )
 	{
 		if ( r.GetLabel().AsString() == "Texture" )
 		{
-			textureName = r.GetToken(0).AsString();
+			vsString textureName = r.GetToken(0).AsString();
+			m_material = new vsMaterial(textureName, DrawMode_Normal);
+		}
+		else if ( r.GetLabel().AsString() == "Material" )
+		{
+			vsString materialName = r.GetToken(0).AsString();
+			m_material = new vsMaterial(materialName);
 		}
 		else if ( r.GetLabel().AsString() == "GlyphCount" )
 		{
@@ -677,8 +682,6 @@ vsFont::vsFont( const vsString &filename ):
 
 	vsDeleteArray(pt);
 
-	//m_fontPage = new vsTexture(textureName);
-	m_material = new vsMaterial(textureName, DrawMode_Normal);
 }
 
 vsFont::~vsFont()
