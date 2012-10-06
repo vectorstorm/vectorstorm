@@ -67,6 +67,7 @@ public:
 #if !TARGET_OS_IPHONE
 		Bool_PolygonSmooth,
 #endif
+		Bool_StencilTest,
 		//Bool_Smooth,
 		//Bool_Texture2D,
 		Bool_DepthMask,

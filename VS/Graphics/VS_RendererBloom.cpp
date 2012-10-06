@@ -331,7 +331,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
     glMatrixMode(GL_MODELVIEW);
 
 	// Create Window Surface
-	vsRenderTarget::Settings settings;
+	vsSurface::Settings settings;
 	settings.depth = 0;
 	settings.width = width;
 	settings.height = height;
@@ -347,6 +347,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
     settings.linear = true;
 	settings.mipMaps = false;
 	settings.ortho = true;
+	settings.stencil = true;
 
 	if ( m_antialias )
 	{
@@ -370,6 +371,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 		settings.linear = true;
 		settings.mipMaps = false;
 		settings.ortho = false;
+		settings.stencil = false;
 		m_pass[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 		m_pass2[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
@@ -1077,7 +1079,6 @@ vsRendererBloom::Screenshot()
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	CheckGLError("glReadPixels");
-
 
 	vsImage *image = new vsImage( m_width, m_height );
 

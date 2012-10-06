@@ -95,7 +95,11 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"ClearFog",
 
 	"FlatShading",
-	"SmoothShading"
+	"SmoothShading",
+
+	"EnableStencil",
+	"DisableStencil",
+	"ClearStencil"
 };
 
 vsDisplayList *
@@ -1267,6 +1271,24 @@ vsDisplayList::ClearOverlay()
 	m_fifo->WriteOverlay(o);
 }
 
+void
+vsDisplayList::EnableStencil()
+{
+	m_fifo->WriteUint8( OpCode_EnableStencil );
+}
+
+void
+vsDisplayList::DisableStencil()
+{
+	m_fifo->WriteUint8( OpCode_DisableStencil );
+}
+
+void
+vsDisplayList::ClearStencil()
+{
+	m_fifo->WriteUint8( OpCode_ClearStencil );
+}
+
 vsDisplayList::OpCode
 vsDisplayList::PeekOpType()
 {
@@ -1441,6 +1463,9 @@ vsDisplayList::PopOp()
 			case OpCode_ClearArrays:
 			case OpCode_FlatShading:
 			case OpCode_SmoothShading:
+			case OpCode_EnableStencil:
+			case OpCode_DisableStencil:
+			case OpCode_ClearStencil:
 			default:
 				break;
 		}
@@ -1568,6 +1593,15 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_PopTransform:
 			PopTransform();
+			break;
+		case OpCode_EnableStencil:
+			EnableStencil();
+			break;
+		case OpCode_DisableStencil:
+			DisableStencil();
+			break;
+		case OpCode_ClearStencil:
+			ClearStencil();
 			break;
 		//case OpCode_SetDrawMode:
 		//	SetDrawMode( (vsDrawMode)o->data.GetUInt() );

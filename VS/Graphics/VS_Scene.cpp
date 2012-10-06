@@ -24,25 +24,25 @@ vsTransform2D	g_drawingCameraTransform = vsTransform2D::Zero;
 vsScene *		vsScene::s_current = NULL;
 
 vsScene::vsScene():
-	m_queue( new vsRenderQueue( 3, 1024*200 ) )
+	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
+	m_entityList( new vsEntity ),
+	m_camera( NULL ),
+	m_defaultCamera( new vsCamera2D ),
+	m_camera3D( NULL ),
+	m_defaultCamera3D( new vsCamera3D ),
+	m_fog( NULL ),
+	m_is3d( false ),
+	m_cameraIsReference( false ),
+	m_flatShading( false ),
+	m_stencilTest( false )
 {
-	m_entityList = new vsEntity();
-	//	m_displayList = new vsDisplayList(40000);
-	m_defaultCamera = new vsCamera2D;
 	m_camera = m_defaultCamera;
-
-	m_defaultCamera3D = new vsCamera3D;
 	m_camera3D = m_defaultCamera3D;
-
-	m_fog = NULL;
-	m_flatShading = false;
 
 	for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 	{
 		m_light[i] = NULL;
 	}
-
-	m_is3d = false;
 }
 
 vsScene::~vsScene()
@@ -157,6 +157,12 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetCameraTransform( m_camera->GetCameraTransform() );
 	}
 
+	if ( m_stencilTest )
+	{
+		//list->ClearStencil();
+		list->EnableStencil();
+	}
+
 	m_queue->StartRender(this);
 
 	vsEntity *entity = m_entityList->GetNext();
@@ -172,6 +178,11 @@ vsScene::Draw( vsDisplayList *list )
 	m_queue->Draw(list);
 
 	m_queue->EndRender();
+
+	if ( m_stencilTest )
+	{
+		list->DisableStencil();
+	}
 
 	list->ClearLights();
 	list->ClearFog();

@@ -44,6 +44,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
 	m_layer(0),
+	m_stencil(StencilOp_None),
 	m_alphaTest(false),
 	m_fog(false),
 	m_zRead(true),
@@ -187,6 +188,27 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "layer" )
 				{
 					m_layer = sr->Int();
+				}
+				else if ( label == "stencil" )
+				{
+					vsString request = sr->String();
+					std::string opString[STENCILOP_MAX] =
+					{
+						"none",
+						"one",
+						"zero",
+						"inc",
+						"dec",
+						"invert"
+					};
+
+					for ( int i = 0; i < STENCILOP_MAX; i++ )
+					{
+						if ( opString[i] == request )
+						{
+							m_stencil = (StencilOp)i;
+						}
+					}
 				}
 			}
 			break;

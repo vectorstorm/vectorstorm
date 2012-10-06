@@ -11,12 +11,13 @@
 
 static int s_renderTargetCount = 0;
 
-vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
+vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in ):
 	m_texture(NULL),
 	m_renderBufferSurface(NULL),
 	m_textureSurface(NULL),
 	m_type(t)
 {
+	vsSurface::Settings settings = settings_in;
 	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 
 	if ( t == Type_Window )
@@ -28,11 +29,13 @@ vsRenderTarget::vsRenderTarget( Type t, const Settings &settings ):
 	}
 	else
 	{
+		settings.width = vsNextPowerOfTwo(settings.width);
+		settings.height = vsNextPowerOfTwo(settings.height);
 		if ( t == Type_Multisample )
 		{
-			m_renderBufferSurface = new vsSurface( vsNextPowerOfTwo(settings.width), vsNextPowerOfTwo(settings.height), settings.depth, settings.linear, false, true );
+			m_renderBufferSurface = new vsSurface(settings, false, true);
 		}
-		m_textureSurface = new vsSurface( vsNextPowerOfTwo(settings.width), vsNextPowerOfTwo(settings.height), settings.depth, settings.linear, settings.mipMaps, false, (t == Type_Depth) );
+		m_textureSurface = new vsSurface(settings, (t == Type_Depth), false);
 		m_texWidth = settings.width / (float)vsNextPowerOfTwo(settings.width);
 		m_texHeight = settings.height / (float)vsNextPowerOfTwo(settings.height);
 	}
@@ -99,8 +102,8 @@ vsRenderTarget::Bind()
 	{
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_textureSurface->m_fbo);
 	}
-    glViewport(0,0,m_viewportWidth, m_viewportHeight);
-    glMatrixMode(GL_PROJECTION);
+	glViewport(0,0,m_viewportWidth, m_viewportHeight);
+	glMatrixMode(GL_PROJECTION);
 	if ( m_ortho )
 	{
 		glOrtho(0, GetWidth(), 0, GetHeight(), 0, 10);
@@ -109,23 +112,30 @@ vsRenderTarget::Bind()
 	{
 		glLoadIdentity();
 	}
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 void
 vsRenderTarget::Clear()
 {
+	GLbitfield bits = GL_COLOR_BUFFER_BIT;
+	vsSurface *surface = m_textureSurface;
 	if ( m_renderBufferSurface )
 	{
-		glClearColor(0,0,0,0);
-		glClear(GL_COLOR_BUFFER_BIT | (m_renderBufferSurface->m_depth ? GL_DEPTH_BUFFER_BIT : 0));
+		surface = m_renderBufferSurface;
 	}
-	else
+	if ( surface->m_depth )
 	{
-		glClearColor(0,0,0,0);
-		glClear(GL_COLOR_BUFFER_BIT | (m_textureSurface->m_depth ? GL_DEPTH_BUFFER_BIT : 0));
+		bits |= GL_DEPTH_BUFFER_BIT;
 	}
+	if ( surface->m_stencil )
+	{
+		bits |= GL_STENCIL_BUFFER_BIT;
+	}
+	glClearStencil(0);
+	glClearColor(0,0,0,0);
+	glClear(bits);
 }
 
 void
@@ -149,10 +159,10 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	{
 		assert(0);
 		/*
-		glBindTexture( GL_TEXTURE_2D, other->GetTexture()->GetResource()->GetTexture() );
-		BindSurface(&m_pass[p]);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		 */
+		   glBindTexture( GL_TEXTURE_2D, other->GetTexture()->GetResource()->GetTexture() );
+		   BindSurface(&m_pass[p]);
+		   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		   */
 	}
 }
 
@@ -161,6 +171,7 @@ vsSurface::vsSurface( int width, int height ):
 	m_height(height),
 	m_texture(0),
 	m_depth(0),
+	m_stencil(0),
 	m_fbo(0),
 	m_isRenderbuffer(false)
 {
@@ -182,148 +193,136 @@ const char c_enums[][20] =
 
 static void CheckFBO()
 {
-    GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-    if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
-        return;
+	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
+		return;
 
-    status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
-    vsAssert(status == GL_FRAMEBUFFER_COMPLETE_EXT,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
+	status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+	vsAssert(status == GL_FRAMEBUFFER_COMPLETE_EXT,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
 }
 
 
-vsSurface::vsSurface( int width, int height, bool depth, bool linear, bool withMipMaps, bool withMultisample, bool depthOnly ):
-	m_width(width),
-	m_height(height),
+vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample ):
+	m_width(settings.width),
+	m_height(settings.height),
 	m_texture(0),
 	m_depth(0),
 	m_fbo(0),
 	m_isRenderbuffer(false)
-
 {
-    GLenum internalFormat = GL_RGBA8;
+	GLenum internalFormat = GL_RGBA8;
 	GLenum pixelFormat = GL_RGBA;
-    GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
-    GLenum filter = linear ? GL_LINEAR : GL_NEAREST;
+	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;
 
-	vsAssert( !( withMultisample && withMipMaps ), "Can't do both multisample and mipmaps!" );
+	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
 
-    if ( !depthOnly )
-    {
-        // create a color texture
-        if ( withMultisample )
-        {
-            glGenRenderbuffersEXT(1, &m_texture);
-            glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_texture );
-            glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, pixelFormat, m_width, m_height );
-            m_isRenderbuffer = true;
-        }
-        else
-        {
-            glGenTextures(1, &m_texture);
-            glBindTexture(GL_TEXTURE_2D, m_texture);
-            glEnable(GL_TEXTURE_2D);
-            m_isRenderbuffer = false;
-            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
-        }
-        if ( withMipMaps )
-        {
-            int wid = m_width;
-            int hei = m_height;
-            int mapMapId = 1;
+	// create FBO
+	glGenFramebuffersEXT(1, &m_fbo);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
 
-            while ( wid > 32 || hei > 32 )
-            {
-                wid = wid >> 1;
-                hei = hei >> 1;
-                glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
-            }
-        }
-        glBindTexture(GL_TEXTURE_2D, m_texture);
-        glEnable(GL_TEXTURE_2D);
-        glGenerateMipmapEXT(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-    }
-
-	//CheckGLError("Creation of the color texture for the FBO");
-
-    // create depth
-    if (depth || depthOnly)
-    {
-		if ( withMultisample )
+	if ( depthOnly )
+	{
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+	}
+	else
+	{
+		if (multisample)
 		{
-            glGenRenderbuffersEXT(1, &m_depth);
-            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_depth);
-			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH_COMPONENT24, m_width, m_height );
+			glGenRenderbuffersEXT(1, &m_texture);
+			glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_texture );
+			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, pixelFormat, m_width, m_height );
+			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, m_texture);
+			m_isRenderbuffer = true;
 		}
 		else
 		{
-            glGenTextures(1, &m_depth);
-            glBindTexture(GL_TEXTURE_2D, m_depth);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glGenTextures(1, &m_texture);
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+			glEnable(GL_TEXTURE_2D);
+			m_isRenderbuffer = false;
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
+			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
+			if ( settings.mipMaps )
+			{
+				int wid = m_width;
+				int hei = m_height;
+				int mapMapId = 1;
+
+				while ( wid > 32 || hei > 32 )
+				{
+					wid = wid >> 1;
+					hei = hei >> 1;
+					glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
+				}
+			}
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+			glEnable(GL_TEXTURE_2D);
+			glGenerateMipmapEXT(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
+
+	if (settings.depth || depthOnly)
+	{
+		if ( multisample )
+		{
+			glGenRenderbuffersEXT(1, &m_depth);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_depth);
+			if ( settings.stencil )
+			{
+				glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH24_STENCIL8_EXT, m_width, m_height );
+				glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depth);
+			}
+			else
+			{
+				glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH_COMPONENT24, m_width, m_height );
+			}
+			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depth);
+		}
+		else
+		{
+			glGenTextures(1, &m_depth);
+			glBindTexture(GL_TEXTURE_2D, m_depth);
+			//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-            
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-            glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 		
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
-            glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-            glBindTexture(GL_TEXTURE_2D, 0);
+			//if ( stencil )
+			//{
+				//glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8_EXT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+			//}
+			//else
+			{
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+			}
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, m_depth, 0);
 		}
-        //CheckGLError("Creation of the depth renderbuffer for the FBO");
-    }
-
-    // create FBO itself
-    glGenFramebuffersEXT(1, &m_fbo);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
-
-    if ( depthOnly )
-    {
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-    }
-    else
-    {
-        if (withMultisample)
-        {
-            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, m_texture);
-        }
-        else
-        {
-            glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
-        }
-    }
-
-    if (depth || depthOnly)
-    {
-		if ( withMultisample )
-		{
-            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depth);
-		}
-		else
-		{
-            glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, m_depth, 0);
-		}
-        //CheckGLError("Creation of the depth renderbuffer for the FBO");
-    }
+		//CheckGLError("Creation of the depth renderbuffer for the FBO");
+	}
 
 	CheckFBO();
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-    //CheckGLError("Creation of the FBO itself");
+	//CheckGLError("Creation of the FBO itself");
 }
 
 vsSurface::~vsSurface()

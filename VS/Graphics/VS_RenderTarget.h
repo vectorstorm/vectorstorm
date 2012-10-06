@@ -18,17 +18,40 @@ class vsTexture;
 class vsSurface
 {
 public:
+	class Settings
+	{
+	public:
+		Settings():
+			width(512),
+			height(512),
+			depth(true),
+			linear(true),
+			mipMaps(false),
+			ortho(false),
+			stencil(false)
+		{
+		}
+		int		width;
+		int		height;
+		bool	depth;
+		bool	linear;
+		bool	mipMaps;
+		bool	ortho;
+		bool	stencil;
+	};
+
 
 	GLsizei m_width;
 	GLsizei m_height;
 	GLuint	m_texture;
 	GLuint	m_depth;
+	GLuint	m_stencil;
 	GLuint	m_fbo;
 
 	bool	m_isRenderbuffer;
 
 	vsSurface( int width, int height );	// for main window.
-	vsSurface( int width, int height, bool depth, bool linear, bool withMipMaps = false, bool withMultisample = false, bool depthOnly = false );
+	vsSurface( const Settings& settings, bool depthOnly, bool multisample );
 	~vsSurface();
 };
 
@@ -43,16 +66,6 @@ public:
 		Type_Texture,			// regular texture
 		Type_Multisample,		// regular texture, with multisample enabled
 		Type_Depth				// not implemented -- depth component only
-	};
-
-	struct Settings
-	{
-		int		width;
-		int		height;
-		bool	depth;
-		bool	linear;
-		bool	mipMaps;
-		bool	ortho;
 	};
 
 private:
@@ -74,7 +87,7 @@ private:
 public:
 
 
-	vsRenderTarget( Type t, const Settings &settings );
+	vsRenderTarget( Type t, const vsSurface::Settings &settings );
 	~vsRenderTarget();
 
 	/* if we're a multisample target, Resolve() copies the multisample data into

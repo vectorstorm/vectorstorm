@@ -327,7 +327,7 @@ vsBuiltInFont::BuildDisplayListFromString( vsDisplayList *list, const char *stri
 		offset.x += c_kerningFactor * thisSize;
 	}
 
-	list->ClearVertexArray();
+	list->ClearArrays();
 }
 
 vsDisplayList *

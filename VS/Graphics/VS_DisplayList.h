@@ -100,6 +100,10 @@ public:
 		OpCode_FlatShading,
 		OpCode_SmoothShading,
 
+		OpCode_EnableStencil,
+		OpCode_DisableStencil,
+		OpCode_ClearStencil,
+
 		OpCode_MAX
 	};
 
@@ -304,6 +308,10 @@ public:
 	void	ApplyOffset(const vsVector2D &offset);
 
 	void	Append( const vsDisplayList &list );	// appends the passed display list onto us.
+
+	void	EnableStencil();	// turns on stencil testing, cull future rendering to INSIDE stencil
+	void	DisableStencil();	// turns off stencil testing;  no stencils considered.
+	void	ClearStencil();		// clears our stencil so that everything fails.
 
 	OpCode	PeekOpType();
 	op *	PopOp();

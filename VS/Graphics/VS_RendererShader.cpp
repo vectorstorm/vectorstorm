@@ -302,6 +302,30 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
     }
     m_currentShader = NULL;
 
+	switch ( material->m_stencil )
+	{
+		case vsMaterialInternal::StencilOp_None:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+			break;
+		case vsMaterialInternal::StencilOp_One:
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+			break;
+		case vsMaterialInternal::StencilOp_Zero:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			break;
+		case vsMaterialInternal::StencilOp_Inc:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+			break;
+		case vsMaterialInternal::StencilOp_Dec:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+			break;
+		case vsMaterialInternal::StencilOp_Invert:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+			break;
+		default:
+			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
+	}
+
 	if ( material->m_shader )
 	{
 		glUseProgram( material->m_shader->GetShaderId() );

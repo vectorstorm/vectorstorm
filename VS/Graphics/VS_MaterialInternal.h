@@ -34,6 +34,17 @@ class vsMaterialInternal : public vsResource
 {
 public:
 
+	enum StencilOp
+	{
+		StencilOp_None,	// do nothing to stencil buffer (the default)
+		StencilOp_One,	// write a value of '1' into the stencil buffer
+		StencilOp_Zero, // write a value of '0' into the stencil buffer
+		StencilOp_Inc,	// increment the value already in the stencil buffer
+		StencilOp_Dec,  // decrement the value already in the stencil buffer
+		StencilOp_Invert, // If the value is 0, make it 1.  Otherwise, make it 0.
+		STENCILOP_MAX
+	};
+
 	vsShader *  m_shader;
 	vsTexture *	m_texture;			// what texture do we use?
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
@@ -44,6 +55,7 @@ public:
 	float		m_depthBiasConstant;
 	float		m_depthBiasFactor;
 	int			m_layer;
+	StencilOp	m_stencil;
 	bool		m_alphaTest;
 	bool		m_fog;
 	bool		m_zRead;

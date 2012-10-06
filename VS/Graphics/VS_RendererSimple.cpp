@@ -353,9 +353,11 @@ vsRendererSimple::PreRender(const Settings &s)
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);
+	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 	m_state.Flush();
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 	if ( m_defaultRenderMode == RenderMode_Opaque )
 		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -929,6 +931,23 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_SetOverlay:
 			{
+				break;
+			}
+			case vsDisplayList::OpCode_EnableStencil:
+			{
+				glStencilFunc(GL_EQUAL, 0x1, 0x1);
+				break;
+			}
+			case vsDisplayList::OpCode_DisableStencil:
+			{
+				//m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+				glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+				break;
+			}
+			case vsDisplayList::OpCode_ClearStencil:
+			{
+				glClearStencil(0);
+				glClear(GL_STENCIL_BUFFER_BIT);
 				break;
 			}
 			default:
