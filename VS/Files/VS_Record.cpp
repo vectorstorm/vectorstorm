@@ -133,6 +133,22 @@ vsRecord::GetChild(int i)
 	return *iter;
 }
 
+int
+vsRecord::GetChildCount(const vsString& label)
+{
+	int count = 0;
+	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin();
+			iter != m_childList.End();
+			iter++ )
+	{
+		if ( (*iter)->GetLabel().AsString() == label )
+		{
+			count++;
+		}
+	}
+	return count;
+}
+
 void
 vsRecord::AddChild(vsRecord *record)
 {
