@@ -61,6 +61,7 @@ public:
 
 	vsRecord *			GetChild(int i);
 	int					GetChildCount() { return m_childList.ItemCount(); }
+	int					GetChildCount(const vsString& label);	// returns number of children with this label
 	void				AddChild(vsRecord *record);
 	//void				SetChildCount( int count );
 
