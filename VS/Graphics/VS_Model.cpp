@@ -180,12 +180,7 @@ vsModel::Draw( vsRenderQueue *queue )
 		{
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
-				// TODO:  Fragments should draw via the batching system,
-				// not by putting themselves straight into the display list.
-				vsFragment *fragment = *iter;
-				//fragment->Draw( list );
-
-				queue->AddBatch( fragment->GetMaterial(), queue->GetMatrix(), fragment->GetDisplayList() );
+				queue->AddFragmentBatch( *iter );
 			}
 		}
 
