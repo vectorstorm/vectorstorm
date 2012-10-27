@@ -24,7 +24,7 @@ class vsCamera2D;
 class vsCamera3D;
 class vsFog;
 class vsLight;
-
+class vsFragment;
 
 class vsRenderQueueStage
 {
@@ -116,6 +116,9 @@ public:
 
 	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+
+	// ultra-convenience for fragments.
+	void			AddFragmentBatch( vsFragment *fragment );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );

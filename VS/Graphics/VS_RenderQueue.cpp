@@ -10,6 +10,7 @@
 #include "VS_RenderQueue.h"
 
 #include "VS_Camera.h"
+#include "VS_Fragment.h"
 #include "VS_Scene.h"
 #include "VS_System.h"
 
@@ -358,6 +359,12 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 	int stageId = PickStageForMaterial( material );
 
 	m_stage[stageId].AddBatch( material, matrix, batch );
+}
+
+void
+vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
+{
+	AddBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetDisplayList() );
 }
 
 vsDisplayList *
