@@ -12,6 +12,8 @@
 
 vsVector2D vsVector2D::Zero(0.0f,0.0f);
 vsVector2D vsVector2D::One(1.0f,1.0f);
+vsVector2D vsVector2D::XAxis(1.0f,0.0f);
+vsVector2D vsVector2D::YAxis(0.0f,1.0f);
 
 vsVector3D vsVector3D::Zero(0.f,0.f,0.f);
 vsVector3D vsVector3D::One(1.f,1.f,1.f);

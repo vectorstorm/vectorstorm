@@ -20,6 +20,8 @@ class vsVector2D
 public:
 	static vsVector2D Zero;
 	static vsVector2D One;
+	static vsVector2D XAxis;
+	static vsVector2D YAxis;
 
 	float x;
 	float y;
