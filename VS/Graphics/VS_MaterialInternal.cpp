@@ -185,6 +185,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					m_clampV = sr->Bool();
 				}
+				else if ( label == "blend" )
+				{
+					m_blend = sr->Bool();
+				}
 				else if ( label == "layer" )
 				{
 					m_layer = sr->Int();

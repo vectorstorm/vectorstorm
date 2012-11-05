@@ -65,6 +65,7 @@ public:
 	bool		m_glow;
 	bool		m_postGlow;
 	bool		m_hasColor;
+	bool		m_blend;
 
 	vsDisplayList *	m_displayList;
 

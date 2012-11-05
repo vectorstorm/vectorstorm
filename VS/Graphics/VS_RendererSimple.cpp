@@ -995,8 +995,6 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	vsTexture *t = material->GetTexture();
 	if ( t )
 	{
-		m_state.SetBool( vsRendererState::Bool_Blend, true );
-
 		//glEnable(GL_BLEND);
 		//if ( !m_currentTexture || t->GetResource() != m_currentTexture->GetResource() )
 		{
@@ -1057,6 +1055,7 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	}
 
 
+	m_state.SetBool( vsRendererState::Bool_Blend, material->m_blend );
 	switch( material->m_drawMode )
 	{
 		case DrawMode_Add:
@@ -1067,7 +1066,6 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 			glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
 			m_state.SetBool( vsRendererState::Bool_Lighting, false );
 			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			m_state.SetBool( vsRendererState::Bool_Blend, true );
 			break;
 		}
 		case DrawMode_Subtract:
@@ -1078,7 +1076,6 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 			m_state.SetBool( vsRendererState::Bool_Lighting, false );
 			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			m_state.SetBool( vsRendererState::Bool_Blend, true );
 			break;
 		}
 		case DrawMode_Normal:
@@ -1091,7 +1088,6 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 #endif
 			m_state.SetBool( vsRendererState::Bool_Lighting, false );
 			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			m_state.SetBool( vsRendererState::Bool_Blend, true );
 			break;
 		}
 		case DrawMode_Lit:
@@ -1111,7 +1107,6 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 
 			glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
 			glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
-			m_state.SetBool( vsRendererState::Bool_Blend, true );
 			break;
 		}
 		default:
