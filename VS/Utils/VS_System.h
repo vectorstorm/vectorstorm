@@ -58,6 +58,8 @@ class vsSystem
 	bool				m_showCursor;
 	bool				m_showCursorOverridden;
 	bool				m_focused;
+	bool				m_exitGameKeyEnabled;
+	bool				m_exitApplicationKeyEnabled;
 
 	Orientation			m_orientation;
 
@@ -104,6 +106,18 @@ public:
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
 	vsSystemPreferences *	GetPreferences() { return m_preferences; }
 
+	// if set 'true', then the default "exit game" key ('q') will be enabled,
+	// and will cause execution to return to the main game.  See
+	// CORE_Registry.h for details.
+	void EnableExitGameKey(bool enable) { m_exitGameKeyEnabled = enable; }
+	// if set 'true', then the default "quit" key ('ESC') will be enabled,
+	// and will cause the whole application to exit.  If false, you need
+	// to handle exiting the application explicitly in game code.  Call
+	// core::Exit() when you wish to trigger the application to exit.
+	void EnableExitApplicationKey(bool enable) { m_exitApplicationKeyEnabled = enable; }
+
+	bool IsExitGameKeyEnabled() const { return m_exitGameKeyEnabled; }
+	bool IsExitApplicationKeyEnabled() const { return m_exitGameKeyEnabled; }
 };
 
 

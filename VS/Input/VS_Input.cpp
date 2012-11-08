@@ -66,7 +66,7 @@ vsInput::Init()
 		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
 		m_joystickHats = SDL_JoystickNumHats(m_joystick);
 		printf("Using %s, %d axes, %d buttons, %d hats, %d balls\n", SDL_JoystickName(0), SDL_JoystickNumAxes(m_joystick),
-			   SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
+				SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
 
 
 		m_axisCenter = new float[m_joystickAxes];
@@ -337,10 +337,10 @@ vsInput::Update(float timeStep)
 					{
 						//If the key is a space
 						/*if( event.key.keysym.unicode == (Uint16)' ' ||
-							(( event.key.keysym.unicode >= (Uint16)'0' ) && ( event.key.keysym.unicode <= (Uint16)'9' )) ||
-							( ( event.key.keysym.unicode >= (Uint16)'A' ) && ( event.key.keysym.unicode <= (Uint16)'Z' ) ) ||
-							( ( event.key.keysym.unicode >= (Uint16)'a' ) && ( event.key.keysym.unicode <= (Uint16)'z' ) ) ||
-						    ( ( event.key.keysym.unicode >= (Uint16)'') */
+						  (( event.key.keysym.unicode >= (Uint16)'0' ) && ( event.key.keysym.unicode <= (Uint16)'9' )) ||
+						  ( ( event.key.keysym.unicode >= (Uint16)'A' ) && ( event.key.keysym.unicode <= (Uint16)'Z' ) ) ||
+						  ( ( event.key.keysym.unicode >= (Uint16)'a' ) && ( event.key.keysym.unicode <= (Uint16)'z' ) ) ||
+						  ( ( event.key.keysym.unicode >= (Uint16)'') */
 						if( event.key.keysym.unicode >= (Uint16)' ' && event.key.keysym.unicode <= (Uint16)'~' )
 						{
 							//Append the character
@@ -371,137 +371,144 @@ vsInput::Update(float timeStep)
 		while( SDL_PollEvent( &event ) ){
 			switch( event.type ){
 				case SDL_ACTIVEEVENT:
-				{
-					if ( event.active.state & SDL_APPINPUTFOCUS )
 					{
-						vsSystem::Instance()->SetAppHasFocus( event.active.gain );
+						if ( event.active.state & SDL_APPINPUTFOCUS )
+						{
+							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
+						}
+						break;
 					}
-					break;
-				}
 				case SDL_MOUSEBUTTONDOWN:
-				{
-					switch( event.button.button ){
-						case SDL_BUTTON_WHEELUP:
-							m_keyControlState[CID_MouseWheelUp] += 1.f;
-							break;
-						case SDL_BUTTON_WHEELDOWN:
-							m_keyControlState[CID_MouseWheelDown] += 1.f;
-							break;
+					{
+						switch( event.button.button ){
+							case SDL_BUTTON_WHEELUP:
+								m_keyControlState[CID_MouseWheelUp] += 1.f;
+								break;
+							case SDL_BUTTON_WHEELDOWN:
+								m_keyControlState[CID_MouseWheelDown] += 1.f;
+								break;
+						}
+						break;
 					}
-					break;
-				}
 				case SDL_MOUSEMOTION:
-				{
-					m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
-
-					m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-					m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
-					m_mousePos -= vsVector2D(1.f,1.f);
-
-					if ( m_suppressFirstMotion )
 					{
-						m_suppressFirstMotion = false;
-					}
-					else
-					{
-						m_mouseMotion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+						m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
 
-						m_mouseMotion.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-						m_mouseMotion.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
-						// TODO:  CORRECT FOR ORIENTATION ON IOS DEVICES
+						m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
+						m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+						m_mousePos -= vsVector2D(1.f,1.f);
+
+						if ( m_suppressFirstMotion )
+						{
+							m_suppressFirstMotion = false;
+						}
+						else
+						{
+							m_mouseMotion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+
+							m_mouseMotion.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
+							m_mouseMotion.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+							// TODO:  CORRECT FOR ORIENTATION ON IOS DEVICES
+						}
+						break;
 					}
-					break;
-				}
 				case SDL_KEYDOWN:
-				{
-					switch( event.key.keysym.sym ){
-						//case SDLK_q:
-						//	core::SetExitToMenu();
-						//	break;
-						case SDLK_ESCAPE:
-							core::SetExit();
-							break;
-						case SDLK_w:
-						case SDLK_UP:
-							m_keyControlState[CID_Up] = 1.0f;
-							m_keyControlState[CID_LUp] = 1.0f;
-							break;
-						case SDLK_s:
-						case SDLK_DOWN:
-							m_keyControlState[CID_Down] = 1.0f;
-							m_keyControlState[CID_LDown] = 1.0f;
-							break;
-						case SDLK_a:
-						case SDLK_LEFT:
-							m_keyControlState[CID_Left] = 1.0f;
-							m_keyControlState[CID_LLeft] = 1.0f;
-							break;
-						case SDLK_d:
-						case SDLK_RIGHT:
-							m_keyControlState[CID_Right] = 1.0f;
-							m_keyControlState[CID_LRight] = 1.0f;
-							break;
-						case SDLK_SPACE:
-							m_keyControlState[CID_A] = 1.0f;
-							break;
-						case SDLK_LALT:
-							m_keyControlState[CID_B] = 1.0f;
-							break;
-//						case 'a':
-//						case 'A':
-//							m_keyControlState[CID_ZoomIn] = 1.f;
-//							break;
-//						case 'z':
-//						case 'Z':
-//							m_keyControlState[CID_ZoomOut] = 1.f;
-//							break;
-						default:
-							break;
+					{
+						switch( event.key.keysym.sym )
+						{
+							case SDLK_q:
+								if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
+								{
+									core::SetExitToMenu();
+								}
+								break;
+							case SDLK_ESCAPE:
+								if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
+								{
+									core::SetExit();
+								}
+								break;
+							case SDLK_w:
+							case SDLK_UP:
+								m_keyControlState[CID_Up] = 1.0f;
+								m_keyControlState[CID_LUp] = 1.0f;
+								break;
+							case SDLK_s:
+							case SDLK_DOWN:
+								m_keyControlState[CID_Down] = 1.0f;
+								m_keyControlState[CID_LDown] = 1.0f;
+								break;
+							case SDLK_a:
+							case SDLK_LEFT:
+								m_keyControlState[CID_Left] = 1.0f;
+								m_keyControlState[CID_LLeft] = 1.0f;
+								break;
+							case SDLK_d:
+							case SDLK_RIGHT:
+								m_keyControlState[CID_Right] = 1.0f;
+								m_keyControlState[CID_LRight] = 1.0f;
+								break;
+							case SDLK_SPACE:
+								m_keyControlState[CID_A] = 1.0f;
+								break;
+							case SDLK_LALT:
+								m_keyControlState[CID_B] = 1.0f;
+								break;
+								//						case 'a':
+								//						case 'A':
+								//							m_keyControlState[CID_ZoomIn] = 1.f;
+								//							break;
+								//						case 'z':
+								//						case 'Z':
+								//							m_keyControlState[CID_ZoomOut] = 1.f;
+								//							break;
+							default:
+								break;
+						}
+						break;
 					}
-					break;
-				}
 				case SDL_KEYUP:
-				{
-					switch( event.key.keysym.sym ){
-						case SDLK_w:
-						case SDLK_UP:
-							m_keyControlState[CID_Up] = 0.0f;
-							m_keyControlState[CID_LUp] = 0.0f;
-							break;
-						case SDLK_s:
-						case SDLK_DOWN:
-							m_keyControlState[CID_Down] = 0.0f;
-							m_keyControlState[CID_LDown] = 0.0f;
-							break;
-						case SDLK_a:
-						case SDLK_LEFT:
-							m_keyControlState[CID_Left] = 0.0f;
-							m_keyControlState[CID_LLeft] = 0.0f;
-							break;
-						case SDLK_d:
-						case SDLK_RIGHT:
-							m_keyControlState[CID_Right] = 0.0f;
-							m_keyControlState[CID_LRight] = 0.0f;
-							break;
-						case SDLK_SPACE:
-							m_keyControlState[CID_A] = 0.0f;
-							break;
-						case SDLK_LALT:
-							m_keyControlState[CID_B] = 0.0f;
-							break;
-//						case 'a':
-//						case 'A':
-//							m_keyControlState[CID_ZoomIn] = 0.f;
-//							break;
-//						case 'z':
-//						case 'Z':
-//							m_keyControlState[CID_ZoomOut] = 0.f;
-//							break;
-						default:
-							break;
+					{
+						switch( event.key.keysym.sym ){
+							case SDLK_w:
+							case SDLK_UP:
+								m_keyControlState[CID_Up] = 0.0f;
+								m_keyControlState[CID_LUp] = 0.0f;
+								break;
+							case SDLK_s:
+							case SDLK_DOWN:
+								m_keyControlState[CID_Down] = 0.0f;
+								m_keyControlState[CID_LDown] = 0.0f;
+								break;
+							case SDLK_a:
+							case SDLK_LEFT:
+								m_keyControlState[CID_Left] = 0.0f;
+								m_keyControlState[CID_LLeft] = 0.0f;
+								break;
+							case SDLK_d:
+							case SDLK_RIGHT:
+								m_keyControlState[CID_Right] = 0.0f;
+								m_keyControlState[CID_LRight] = 0.0f;
+								break;
+							case SDLK_SPACE:
+								m_keyControlState[CID_A] = 0.0f;
+								break;
+							case SDLK_LALT:
+								m_keyControlState[CID_B] = 0.0f;
+								break;
+								//						case 'a':
+								//						case 'A':
+								//							m_keyControlState[CID_ZoomIn] = 0.f;
+								//							break;
+								//						case 'z':
+								//						case 'Z':
+								//							m_keyControlState[CID_ZoomOut] = 0.f;
+								//							break;
+							default:
+								break;
+						}
+						break;
 					}
-					break;
-				}
 				case SDL_VIDEORESIZE:
 					vsSystem::Instance()->UpdateVideoMode(event.resize.w, event.resize.h);
 					break;
@@ -645,7 +652,7 @@ vsInput::Update(float timeStep)
 	{
 		/*int x,y;
 
-		SDL_GetMouseState(&x,&y);
+		  SDL_GetMouseState(&x,&y);
 
 		// this is based on the window size.  (0,0 .. width,height)
 		m_mousePos = vsVector2D((float)x,(float)y);
@@ -843,7 +850,7 @@ vsInput::GetMousePosition(int scene)
 {
 	/*int x,y;
 
-	SDL_GetMouseState(&x,&y);
+	  SDL_GetMouseState(&x,&y);
 
 	// this is based on the window size.  (0,0 .. width,height)
 	vsVector2D mousePos = vsVector2D((float)x,(float)y);
@@ -863,10 +870,10 @@ vsInput::GetMousePosition(int scene)
 	vsCamera2D *c = s->GetCamera();
 
 	vsTransform2D t = c->GetCameraTransform();
-    vsVector2D scale = t.GetScale();
+	vsVector2D scale = t.GetScale();
 	scale.y *= 0.5f;
 	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
-    t.SetScale(scale);
+	t.SetScale(scale);
 	vsVector2D mousePos = t.ApplyTo( m_mousePos );
 
 	return mousePos;
@@ -884,10 +891,10 @@ vsInput::GetMouseMotion(int scene)
 	vsCamera2D *c = s->GetCamera();
 
 	vsTransform2D t = c->GetCameraTransform();
-    vsVector2D scale = t.GetScale();
+	vsVector2D scale = t.GetScale();
 	scale.y *= 0.5f;
 	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
-    t.SetScale(scale);
+	t.SetScale(scale);
 	vsVector2D mousePos = t.ApplyTo( m_mouseMotion );
 
 	return mousePos;

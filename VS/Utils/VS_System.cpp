@@ -121,6 +121,8 @@ vsSystem::vsSystem(size_t totalMemoryBytes):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
+	m_exitGameKeyEnabled( true ),
+	m_exitApplicationKeyEnabled( true ),
 	m_orientation( Orientation_Normal ),
 	m_screen( NULL )
 {
