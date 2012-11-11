@@ -117,7 +117,7 @@ public:
 	void EnableExitApplicationKey(bool enable) { m_exitApplicationKeyEnabled = enable; }
 
 	bool IsExitGameKeyEnabled() const { return m_exitGameKeyEnabled; }
-	bool IsExitApplicationKeyEnabled() const { return m_exitGameKeyEnabled; }
+	bool IsExitApplicationKeyEnabled() const { return m_exitApplicationKeyEnabled; }
 };
 
 
