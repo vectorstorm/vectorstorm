@@ -81,21 +81,31 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 	}
 	else
 	{
-		Batch *lb;
-		for(lb = m_batch; lb->next; lb = lb->next)
+		if ( m_batch->material.GetResource()->m_layer > material->GetResource()->m_layer )
 		{
-			if ( lb->next->material.GetResource()->m_layer > material->GetResource()->m_layer )
-			{
-				batch->next = lb->next;
-				lb->next = batch;
-				inserted = true;
-				break;
-			}
+			// we should sort before the first thing in the batch list.
+			batch->next = m_batch;
+			m_batch = batch;
+			inserted = true;
 		}
-
-		if ( !inserted )
+		else
 		{
-			lb->next = batch;
+			Batch *lb;
+			for(lb = m_batch; lb->next; lb = lb->next)
+			{
+				if ( lb->next->material.GetResource()->m_layer > material->GetResource()->m_layer )
+				{
+					batch->next = lb->next;
+					lb->next = batch;
+					inserted = true;
+					break;
+				}
+			}
+
+			if ( !inserted )
+			{
+				lb->next = batch;
+			}
 		}
 	}
 	m_batchCount++;
