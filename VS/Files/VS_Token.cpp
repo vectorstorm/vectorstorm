@@ -81,8 +81,31 @@ static vsString ExtractStringToken( vsString &string )
 	//result.append( 1, string[0] );	// get first '"'
 	string.erase(0,1);
 
+	bool escaped = false;
 	while( string[0] && string[0] != '\"' ){
-		result.append( 1, string[0] );
+		if ( escaped )
+		{
+			if ( string[0] == 'n' )
+			{
+				result.append( 1, '\n' );
+			}
+			else
+			{
+				result.append( 1, string[0] );
+			}
+			escaped = false;
+		}
+		else
+		{
+			if ( string[0] == '\\' )
+			{
+				escaped = true;
+			}
+			else
+			{
+				result.append( 1, string[0] );
+			}
+		}
 		string.erase(0,1);
 	}
 	//result.append( 1, string[0] );	// get last '"'
