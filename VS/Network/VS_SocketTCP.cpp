@@ -346,7 +346,7 @@ vsSocketTCP::DoSelect(float maxSleepDuration)
 				FD_SET(m_connection[i].m_socket, &wsocks);
 			}
 
-			highsock = max(highsock, m_connection[i].m_socket);
+			highsock = vsMax(highsock, m_connection[i].m_socket);
 		}
 	}
 	struct timeval timeout;

@@ -34,6 +34,14 @@
 # define UNUSED(x) x
 #endif
 
+#ifdef _WIN32
+// WinSock2 must be #included before Windows.h.  So let's just #include it here,
+// so I don't have to go searching for all possible include path orders.
+#include <WinSock2.h>
+#undef min
+#undef max
+#endif
+
 // Define our 'vsTuneable' type, which lets us change tuning values at a breakpoint,
 // while still compiling down to 'const' in release builds.
 #if defined(_DEBUG)
@@ -82,8 +90,8 @@ void operator delete[] (void *ptr) throw();
 
 #if defined(_WIN32)
 
-typedef signed char int8_t_t;
-typedef unsigned char uint8_t_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
 typedef signed short int16_t;
 typedef unsigned short uint16_t;
 typedef signed int int32_t;

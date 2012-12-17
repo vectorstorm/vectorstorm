@@ -439,8 +439,8 @@ vsSystemPreferences::CheckResolutions()
 		}
 	}
 
-	m_resolutionX = m_preferences->GetPreference("ResolutionX", 800, 0, maxWidth);
-	m_resolutionY = m_preferences->GetPreference("ResolutionY", 600, 0, maxHeight);
+	m_resolutionX = m_preferences->GetPreference("ResolutionX", 1024, 0, maxWidth);
+	m_resolutionY = m_preferences->GetPreference("ResolutionY", 576, 0, maxHeight);
 	int selectedResolution = modeCount-1;
 	//int exactResolution = modeCount-1;
 
