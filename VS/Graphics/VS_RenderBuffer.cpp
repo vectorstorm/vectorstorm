@@ -363,7 +363,6 @@ vsRenderBuffer::Bind( vsRendererState *state )
 	{
 		case ContentType_P:
 		{
-			P dummyArray[2];
 			int stride = sizeof(P);
 
 			state->SetBool( vsRendererState::ClientBool_VertexArray, true );

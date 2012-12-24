@@ -26,8 +26,8 @@ vsScene *		vsScene::s_current = NULL;
 vsScene::vsScene():
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
-	m_camera( NULL ),
 	m_defaultCamera( new vsCamera2D ),
+	m_camera( NULL ),
 	m_camera3D( NULL ),
 	m_defaultCamera3D( new vsCamera3D ),
 	m_fog( NULL ),
