@@ -16,6 +16,9 @@ vsHeap * vsHeap::s_current = NULL;
 #define MAX_HEAP_STACK (4)
 static vsHeap *	s_stack[MAX_HEAP_STACK] = {NULL,NULL,NULL,NULL};
 
+const char* __file__ = "";
+size_t __line__ = 0;
+
 #undef new
 #undef malloc
 #undef free
@@ -321,7 +324,7 @@ vsHeap::CheckForLeaks()
 				vsLog("\nERROR:  LEAKS DETECTED!\n-------------------\nLeaked blocks follow:\n");
 				foundLeak = true;
 			}
-			 vsLog("[%d] %s:%d : %d bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+			vsLog("[%d] %s:%d : %d bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
 		}
 		block = block->m_next;
 	}
@@ -433,43 +436,116 @@ void MyFree(void *p, int allocType)
 	if ( vsHeap::GetCurrent() )
 	{
 		if ( vsHeap::GetCurrent()->Contains(p) )
+		{
 			return vsHeap::GetCurrent()->Free(p, allocType);
+		}
+		else
+		{
+			// check parent heaps!
+			for ( int i = 1; i < MAX_HEAP_STACK; i++ )
+			{
+				if ( s_stack[i] && s_stack[i]->Contains(p) )
+				{
+					return s_stack[i]->Free(p, allocType);
+				}
+			}
+		}
 	}
-
-	return free(p);
+	else
+	{
+		free(p);
+	}
 }
 
 
-void* operator new (size_t size, const char *file, int line)
+void* operator new(std::size_t n) throw(std::bad_alloc)
 {
-	void *result = MyMalloc(size, file, line, Type_New);
+    using namespace std;
+
+    for (;;) {
+        void* allocated_memory = ::operator new(n, nothrow);
+        if (allocated_memory != 0) return allocated_memory;
+
+        // Store the global new handler
+        new_handler global_handler = set_new_handler(0);
+        set_new_handler(global_handler);
+
+        if (global_handler) {
+            global_handler();
+        } else {
+            throw bad_alloc();
+        }
+    }
+}
+
+// Scalar nothrow new
+void* operator new(std::size_t n, std::nothrow_t const&) throw()
+{
+    if (n == 0) n = 1;
+	if ( __line__ == 0 )
+		return malloc(n);
+
+    void* result = MyMalloc(n, __file__, __line__, Type_New);
+	__file__ = "";
+	__line__ = 0;
 	return result;
 }
 
-void* operator new[] (size_t size, const char *file, int line)
+// Array regular new
+void* operator new[](std::size_t n) throw(std::bad_alloc)
 {
-	size_t actualSize = size;	// four extra bytes at start, and four at end
+    using namespace std;
 
-	void *result = MyMalloc(actualSize, file, line, Type_NewArray);
+    for (;;) {
+        void* allocated_memory = ::operator new[](n, nothrow);
+        if (allocated_memory != 0) return allocated_memory;
+
+        // Store the global new handler
+        new_handler global_handler = set_new_handler(0);
+        set_new_handler(global_handler);
+
+        if (global_handler) {
+            global_handler();
+        } else {
+            throw bad_alloc();
+        }
+    }
+}
+
+// Array nothrow new
+void* operator new[](std::size_t n, std::nothrow_t const&) throw()
+{
+    if (n == 0) n = 1;
+	if ( __line__ == 0 )
+		return malloc(n);
+
+    void* result = MyMalloc(n, __file__, __line__, Type_NewArray);
+	__file__ = "";
+	__line__ = 0;
 	return result;
 }
 
-void operator delete (void *ptr, const char *file, int line) throw()
+// Scalar regular delete (doesn't throw either)
+void operator delete(void* p) throw()
 {
-	MyFree(ptr, Type_New);
+    MyFree(p, Type_New);
 }
 
-void operator delete[] (void *ptr, const char *file, int line) throw()
+// Scalar nothrow delete
+void operator delete(void* p, std::nothrow_t const&) throw()
 {
-	MyFree(ptr, Type_NewArray);
+    ::operator delete(p);
 }
 
-void operator delete (void *ptr) throw()
+// Array regular delete
+void operator delete[](void* p) throw()
 {
-	MyFree(ptr, Type_New);
+	MyFree(p, Type_NewArray);
 }
 
-void operator delete[] (void *ptr) throw()
+// Array nothrow delete
+void operator delete[](void* p, std::nothrow_t const&) throw()
 {
-	MyFree(ptr, Type_NewArray);
+    ::operator delete[](p);
 }
+

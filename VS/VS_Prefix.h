@@ -70,19 +70,13 @@
 void * MyMalloc(size_t size, const char*fileName, int lineNumber, int allocType = 1);	// 1 == Malloc type.  We can ignore this.  :)
 void MyFree(void *p, int allocType = 1);
 
-void* operator new (size_t size, const char *file, int line);
-void* operator new[] (size_t size, const char *file, int line);
-void operator delete (void *ptr, const char *file, int line) throw();
-void operator delete[] (void *ptr, const char *file, int line) throw();
-void operator delete (void *ptr) throw();
-void operator delete[] (void *ptr) throw();
-
 #define vsDelete(x) { if ( x ) { delete x; x = NULL; } }
 
 #define vsDeleteArray(x) { if ( x ) { delete [] x; x = NULL; } }
 
-#define INGAME_NEW new(__FILE__, __LINE__)
-#define new INGAME_NEW
+extern const char* __file__;
+extern size_t __line__;
+#define new (__file__=__FILE__,__line__=__LINE__) && 0 ? NULL : new
 
 #define malloc(x) MyMalloc(x, __FILE__, __LINE__)
 #define free(p) MyFree(p)
