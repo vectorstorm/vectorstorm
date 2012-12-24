@@ -59,7 +59,8 @@ public:
 
 	void					SetGameMode( coreGameMode *newMode );
 
-	static	void			CreateGameSystems();
+	static void				CreateGameSystems();
+	static void				DestroyGameSystems();
 
 	virtual void			Init();
 	virtual void			Deinit();

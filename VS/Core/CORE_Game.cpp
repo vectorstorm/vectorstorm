@@ -108,6 +108,15 @@ coreGame::CreateGameSystems()
 	s_system[ GameSystem_Sound ] = new vsSoundSystem;
 }
 
+void
+coreGame::DestroyGameSystems()
+{
+	vsDelete( s_system[ GameSystem_Timer] );
+	vsDelete( s_system[ GameSystem_Input] );
+	vsDelete( s_system[ GameSystem_Collision] );
+	vsDelete( s_system[ GameSystem_Sound] );
+}
+
 
 // By default, we have all game systems, in the standard order.  Other games
 // can reconfigure this to get a different set of systems, or a different update

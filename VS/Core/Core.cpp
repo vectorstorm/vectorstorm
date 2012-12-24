@@ -140,6 +140,8 @@ core::Go()
 	s_gameHeap->PrintStatus();	// print the current memory stats to our log
 
 	vsHeap::Pop(s_gameHeap);	// pop our gameHeap back off the stack.
+
+	coreGame::DestroyGameSystems();
 }
 
 void
