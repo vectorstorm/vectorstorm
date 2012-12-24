@@ -93,6 +93,12 @@ public:
 	void				SetFarPlane( float fp ) { m_farPlane = fp; UpdateFrustum();}
 	void				SetAspectRatio( float ar ) { m_aspectRatio = ar; UpdateFrustum(); }
 
+	// Convenience function, which can be used instead of SetOrientation, if you
+	// just want the camera to look at a particular position.  Optionally, you
+	// may supply an 'upDirection' value to specify which direction should appear
+	// as 'up' from the camera's point of view.  (If one is not specified, the
+	// positive Y axis will be used)
+	void				LookAt( const vsVector3D &lookat, const vsVector3D &upDirection = vsVector3D::YAxis );
 
 	bool				IsPositionVisible( const vsVector3D &pos, float r=0.f ) const;
 	bool				IsBox3DVisible( const vsBox3D &box ) const;

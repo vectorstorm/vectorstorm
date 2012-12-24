@@ -175,6 +175,13 @@ vsCamera3D::GetProjectionMatrix()
 }
 
 void
+vsCamera3D::LookAt( const vsVector3D &lookat, const vsVector3D &upDirection )
+{
+	vsQuaternion quat( lookat - GetPosition(), upDirection );
+	SetOrientation(quat);
+}
+
+void
 vsCamera3D::UpdateFrustum()
 {
 	m_frustum.Set(this);
