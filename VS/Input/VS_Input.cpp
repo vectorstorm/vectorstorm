@@ -160,6 +160,11 @@ vsInput::Load()
 		m_controlMapping[CID_RUp].Set( CT_Axis, 3, CD_Negative );
 		m_controlMapping[CID_RDown].Set( CT_Axis, 3, CD_Positive );
 	}
+	if ( m_joystickAxes >= 6 )
+	{
+		m_controlMapping[CID_TriggerL].Set( CT_Axis, 4, CD_Positive );
+		m_controlMapping[CID_TriggerR].Set( CT_Axis, 5, CD_Positive );
+	}
 
 	if ( m_joystickButtons >= 2 )
 	{
