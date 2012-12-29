@@ -68,6 +68,7 @@ public:
 	float					GetBoundingRadius() { return m_boundingRadius; }
 
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; }
+	const vsTransform3D&	GetTransform() { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
 	void			AddFragment( vsFragment *fragment );
