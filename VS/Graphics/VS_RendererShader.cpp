@@ -230,7 +230,7 @@ static const char *texf = STRINGIFY(
 										if ( color.a < alphaRef )
 											discard;
 										gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb * gl_Color.rgb, fogFactor );
-										gl_FragColor.a = color.a;
+										gl_FragColor.a = color.a * gl_Color.a;
 									}
 );
 
