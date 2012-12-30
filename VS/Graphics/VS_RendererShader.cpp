@@ -137,12 +137,13 @@ static const char *litf = STRINGIFY(
 										if (NdotL > 0.0) {
 											halfV = normalize(halfVector);
 											NdotHV = max(dot(n,halfV),0.0);
-											color += gl_FrontMaterial.specular *
-													gl_LightSource[0].specular *
+											color.rgb += gl_FrontMaterial.specular.rgb *
+													gl_LightSource[0].specular.rgb *
 													pow(NdotHV, gl_FrontMaterial.shininess);
 										}
 
-										gl_FragColor = mix(gl_Fog.color, color, fogFactor );
+										gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb, fogFactor );
+										gl_FragColor.a = color.a;
 									}
 									);
 /*
@@ -198,12 +199,13 @@ static const char *litTexf = STRINGIFY(
 										   if (gl_FrontMaterial.shininess > 0.0 && NdotL > 0.0) {
 											   halfV = normalize(halfVector);
 											   NdotHV = max(dot(n,halfV),0.0);
-											   color += gl_FrontMaterial.specular *
-											   gl_LightSource[0].specular *
+											   color.rgb += gl_FrontMaterial.specular.rgb *
+											   gl_LightSource[0].specular.rgb *
 											   pow(NdotHV, gl_FrontMaterial.shininess);
 										   }
 
-										   gl_FragColor = mix(gl_Fog.color, color * textureSample, fogFactor );
+										   gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb * textureSample.rgb, fogFactor );
+										   gl_FragColor.a = color.a * textureSample.a;
 									   }
 );
 
@@ -212,7 +214,8 @@ static const char *normalf = STRINGIFY(
 									   varying float fogFactor;
 									   void main(void)
 									   {
-										   gl_FragColor = mix(gl_Fog.color, gl_Color, fogFactor );
+										   gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_Color.rgb, fogFactor );
+										   gl_FragColor.a = gl_Color.a;
 									   }
 );
 
@@ -226,7 +229,8 @@ static const char *texf = STRINGIFY(
 										vec4 color = texture2D(source, gl_TexCoord[0].st);
 										if ( color.a < alphaRef )
 											discard;
-										gl_FragColor = mix(gl_Fog.color, color * gl_Color, fogFactor );
+										gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb * gl_Color.rgb, fogFactor );
+										gl_FragColor.a = color.a;
 									}
 );
 
