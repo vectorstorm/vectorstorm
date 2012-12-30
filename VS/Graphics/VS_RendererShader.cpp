@@ -124,7 +124,7 @@ static const char *litf = STRINGIFY(
 										float NdotHV;
 
 										/* The ambient term will always be present */
-										vec4 color = ambient;
+										vec4 color = diffuse * ambient;
 
 										/* a fragment shader can't write a varying variable, hence we need
 										 a new variable to store the normalized interpolated normal */
@@ -135,7 +135,6 @@ static const char *litf = STRINGIFY(
 										color += diffuse * NdotL;
 
 										if (NdotL > 0.0) {
-
 											halfV = normalize(halfVector);
 											NdotHV = max(dot(n,halfV),0.0);
 											color += gl_FrontMaterial.specular *
@@ -182,7 +181,7 @@ static const char *litTexf = STRINGIFY(
 										   float NdotHV;
 
 										   /* The ambient term will always be present */
-										   vec4 color = ambient;
+										   vec4 color = diffuse * ambient;
 										   vec4 textureSample = texture2D(source, gl_TexCoord[0].st);
 										   if ( textureSample.a < alphaRef )
 											   discard;
