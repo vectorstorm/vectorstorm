@@ -181,7 +181,8 @@ vsMeshMakerTriangleVertex::GetMergePriorityWith( const vsMeshMakerTriangleVertex
 	//if ( m_normal.Dot( faceNormalOther ) > s_mergeTolerance )
 	vsVector3D faceNormal = GetFirstTriangle()->m_faceNormal;
 	float normalProjection = faceNormal.Dot( faceNormalOther );
-	if ( normalProjection > s_mergeTolerance )
+	bool colorMatches = (other.m_color == m_color);
+	if ( colorMatches && normalProjection > s_mergeTolerance )
 	{
 		// good enough to merge!
 		return normalProjection;
@@ -197,13 +198,14 @@ vsMeshMakerTriangleVertex::AttemptMergeWith( vsMeshMakerTriangleVertex *other, c
 	const float sqEpsilon = epsilon*epsilon;
 
 	bool closeEnough = ((other->m_position - m_position).SqLength() < sqEpsilon);
+	bool colorMatches = (other->m_color == m_color);
 	bool texelMatches = ((other->m_texel - m_texel).SqLength() < sqEpsilon);
 
 	//vsVector2D deltaTexel = other->m_texel - m_texel;
 	//deltaTexel.x -= vsFloor(deltaTexel.x+0.5f);
 	//deltaTexel.y -= vsFloor(deltaTexel.y+0.5f);
 
-	if ( closeEnough ) //&& deltaTexel.SqLength() < sqEpsilon )
+	if ( closeEnough && colorMatches ) //&& deltaTexel.SqLength() < sqEpsilon )
 	{
 		// check my normal against 'faceNormalOther'
 		//vsAssert( m_flags & Flag_Normal, "error:  merging when I have no normal set??" );
