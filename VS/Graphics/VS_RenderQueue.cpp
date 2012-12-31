@@ -390,7 +390,7 @@ vsRenderQueue::MakeTemporaryBatchList( vsMaterial *material, int size )
 {
 	int stageId = PickStageForMaterial( material );
 
-	return m_stage[stageId].MakeTemporaryBatchList( material, vsMatrix4x4::Identity, size );
+	return m_stage[stageId].MakeTemporaryBatchList( material, m_transformStack[0], size );
 }
 
 vsRenderQueueStage *
