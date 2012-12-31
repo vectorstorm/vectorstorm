@@ -45,8 +45,12 @@ enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN
 
 	CID_A,
 	CID_B,
+	CID_X,
+	CID_Y,
 	CID_TriggerR,
 	CID_TriggerL,
+	CID_Start,
+	CID_Back,
 
 	CID_ZoomIn,
 	CID_ZoomOut,

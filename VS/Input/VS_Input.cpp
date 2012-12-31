@@ -123,6 +123,8 @@ static vsString s_cidName[CID_MAX] =
 
 	"CID_A",
 	"CID_B",
+	"CID_X",
+	"CID_Y",
 	"CID_TriggerR",
 	"CID_TriggerL",
 
@@ -454,10 +456,18 @@ vsInput::Update(float timeStep)
 								m_keyControlState[CID_LRight] = 1.0f;
 								break;
 							case SDLK_SPACE:
+							case SDLK_1:
 								m_keyControlState[CID_A] = 1.0f;
 								break;
 							case SDLK_LALT:
+							case SDLK_2:
 								m_keyControlState[CID_B] = 1.0f;
+								break;
+							case SDLK_3:
+								m_keyControlState[CID_X] = 1.0f;
+								break;
+							case SDLK_RETURN:
+								m_keyControlState[CID_Start] = 1.0f;
 								break;
 								//						case 'a':
 								//						case 'A':
@@ -496,10 +506,18 @@ vsInput::Update(float timeStep)
 								m_keyControlState[CID_LRight] = 0.0f;
 								break;
 							case SDLK_SPACE:
+							case SDLK_1:
 								m_keyControlState[CID_A] = 0.0f;
 								break;
 							case SDLK_LALT:
+							case SDLK_2:
 								m_keyControlState[CID_B] = 0.0f;
+								break;
+							case SDLK_3:
+								m_keyControlState[CID_X] = 0.0f;
+								break;
+							case SDLK_RETURN:
+								m_keyControlState[CID_Start] = 0.0f;
 								break;
 								//						case 'a':
 								//						case 'A':
