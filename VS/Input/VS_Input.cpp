@@ -469,6 +469,9 @@ vsInput::Update(float timeStep)
 							case SDLK_RETURN:
 								m_keyControlState[CID_Start] = 1.0f;
 								break;
+							case SDLK_BACKSPACE:
+								m_keyControlState[CID_Back] = 1.0f;
+								break;
 								//						case 'a':
 								//						case 'A':
 								//							m_keyControlState[CID_ZoomIn] = 1.f;
@@ -518,6 +521,9 @@ vsInput::Update(float timeStep)
 								break;
 							case SDLK_RETURN:
 								m_keyControlState[CID_Start] = 0.0f;
+								break;
+							case SDLK_BACKSPACE:
+								m_keyControlState[CID_Back] = 0.0f;
 								break;
 								//						case 'a':
 								//						case 'A':
