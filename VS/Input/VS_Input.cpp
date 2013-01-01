@@ -121,6 +121,9 @@ static vsString s_cidName[CID_MAX] =
 	"CID_Left",
 	"CID_Right",
 
+	"CID_Exit",
+	"CID_ExitApplication",
+
 	"CID_A",
 	"CID_B",
 	"CID_X",
@@ -428,12 +431,14 @@ vsInput::Update(float timeStep)
 								{
 									core::SetExitToMenu();
 								}
+								m_keyControlState[CID_Exit] = 1.0f;
 								break;
 							case SDLK_ESCAPE:
 								if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
 								{
 									core::SetExit();
 								}
+								m_keyControlState[CID_ExitApplication] = 1.0f;
 								break;
 							case SDLK_w:
 							case SDLK_UP:
@@ -488,6 +493,12 @@ vsInput::Update(float timeStep)
 				case SDL_KEYUP:
 					{
 						switch( event.key.keysym.sym ){
+							case SDLK_q:
+								m_keyControlState[CID_Exit] = 0.0f;
+								break;
+							case SDLK_ESCAPE:
+								m_keyControlState[CID_ExitApplication] = 0.0f;
+								break;
 							case SDLK_w:
 							case SDLK_UP:
 								m_keyControlState[CID_Up] = 0.0f;
