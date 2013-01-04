@@ -384,6 +384,18 @@ vsInput::Update(float timeStep)
 					{
 						if ( event.active.state & SDL_APPINPUTFOCUS )
 						{
+							// turn off mouse capture when we lose focus, if it's on.
+							if ( m_captureMouse )
+							{
+								if ( event.active.gain )
+								{
+									SDL_WM_GrabInput( SDL_GRAB_ON );
+								}
+								else
+								{
+									SDL_WM_GrabInput( SDL_GRAB_OFF );
+								}
+							}
 							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
 						}
 						break;
