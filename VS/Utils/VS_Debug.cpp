@@ -20,6 +20,7 @@
 
 #if defined(_WIN32)
 #include <Windows.h>
+#define __thread 
 #endif
 #if defined(__APPLE_CC__)
 #include <execinfo.h>
