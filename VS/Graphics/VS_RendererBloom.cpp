@@ -1015,6 +1015,14 @@ vsRendererBloom::Supported(bool experimental)
 		glBindFramebufferEXT && glFramebufferTexture2DEXT && glCreateShader && glShaderSource && glCompileShader &&
 		glGetShaderiv && glCreateProgram && glAttachShader && glLinkProgram )
 	{
+		GLint textureUnits;
+		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &textureUnits);
+		vsLog("Maximum texture units: %d", textureUnits);
+		if ( textureUnits < 7 )
+		{
+			vsLog("Need 7 texture units for bloom shader.  Only %d supported.", textureUnits);
+			return false;
+		}
 		if ( !experimental )
 			vsLog("Successfully detected all required extensions for bloom shader.");
 		else if ( experimental )
