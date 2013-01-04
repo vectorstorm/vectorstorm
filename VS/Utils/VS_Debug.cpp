@@ -16,10 +16,29 @@
 #include "VS_System.h"
 
 #include <assert.h>
+#include <vector>
 
 #if defined(_WIN32)
 #include <Windows.h>
 #endif
+#if defined(__APPLE_CC__)
+#include <execinfo.h>
+#endif
+
+__thread std::vector<const char *> _error_context_name;
+__thread std::vector<const char *> _error_context_data;
+
+vsErrorContext::vsErrorContext(const char *name, const char *data)
+{
+	_error_context_name.push_back(name);
+	_error_context_data.push_back(data);
+}
+
+vsErrorContext::~vsErrorContext()
+{
+	_error_context_name.pop_back();
+	_error_context_data.pop_back();
+}
 
 //#if defined(_DEBUG)
 
@@ -37,55 +56,40 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		{
 			trimmedFile = trimmedFile.substr(pos+1);
 		}
-		
+		std::vector<const char *>::iterator it;
+		for ( size_t i = 0; i < _error_context_name.size(); i++ )
+		{
+			vsLog("When %s: %s", _error_context_name[i], _error_context_data[i]);
+		}
+
 		vsLog("Failed assertion:  %s", msg.c_str());
 		vsLog("Failed condition: (%s)", conditionStr.c_str());
 		vsLog("at %s:%d", trimmedFile.c_str(), line);
-		//	assert(0);
-		//	exit(1);
-		
-		vsString loc = vsFormatString("(%s) %s:%d", conditionStr.c_str(), trimmedFile.c_str(), line);
-		
-		vsDisplayList *m = vsBuiltInFont::CreateString(msg, 12.0f, 15.0f, Justification_Center);
-		vsDisplayList *l = vsBuiltInFont::CreateString(loc, 12.0f, 15.0f, Justification_Center);
-		
-		vsSprite *mSprite = new vsSprite(m);
-		vsSprite *lSprite = new vsSprite(l);
-		
-		mSprite->SetPosition( vsVector2D(0.f, -30.f) );
-		lSprite->SetPosition( vsVector2D(0.f, 30.f) );
-		
-		mSprite->SetColor( vsColor::White );
-		lSprite->SetColor( vsColor::White );
-		
-		vsScreen *screen = vsSystem::GetScreen();
-		vsScene *scene = screen->GetScene(0);
-		
-		if ( scene )
+
 		{
-			scene->SetCamera2D(NULL);
-			scene->RegisterEntityOnTop( mSprite );
-			scene->RegisterEntityOnTop( lSprite );
-		}
-		
-		screen->Draw();
-		screen->Draw();
-		screen->Draw();
-		
-		// Now we intentionally try to write to NULL, to trigger debuggers to stop, 
+#if defined(_WIN32)
+			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
+			MessageBoxA(NULL, mbString.c_str(), NULL, MB_OK);
+#endif
+#if defined(__APPLE_CC__)
+			void* callstack[128];
+			int i, frames = backtrace(callstack, 128);
+			char** strs = backtrace_symbols(callstack, frames);
+			for (i = 0; i < frames; ++i) {
+				vsLog("%s\n", strs[i]);
+			}
+			free(strs);
+#endif
+
+		// Now we intentionally try to write to NULL, to trigger debuggers to stop,
 		// so we can perhaps try to debug whatever went wrong.
 		//
 		// If there's no debugger running, then this will probably yield a segfault.
 		// If we're running on something primitive enough that it doesn't even segfault,
 		// then just explicitly exit.
-		{
-#if defined(_WIN32) && defined(_DEBUG)
-			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
-			MessageBoxA(NULL, mbString.c_str(), NULL, MB_OK);
-#endif
 			char *ptr = NULL;
 			*ptr = 0;
-			
+
 			exit(1);
 		}
 	}
