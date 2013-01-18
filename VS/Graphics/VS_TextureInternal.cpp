@@ -65,11 +65,7 @@ vsTextureInternal::~vsTextureInternal()
 
 
 #else
-#if __APPLE_CC__
-#include <SDL_image/SDL_image.h>
-#else
 #include "SDL_image.h"
-#endif
 
 /* Quick utility function for texture creation */
 static int power_of_two(int input)

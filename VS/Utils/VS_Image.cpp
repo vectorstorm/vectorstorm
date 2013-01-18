@@ -18,13 +18,8 @@
 #include "VS_Store.h"
 
 #if !TARGET_OS_IPHONE
-#ifdef __APPLE_CC__
-#include <SDL_Image/SDL_Image.h>
-#include <libpng15/png.h>
-#else
 #include "SDL_image.h"
 #include <png.h>
-#endif
 #include "VS_OpenGL.h"
 
 #ifndef _WIN32

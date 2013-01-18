@@ -11,11 +11,7 @@
 #define SND_MUSIC_H
 
 #if !TARGET_OS_IPHONE
-#if __APPLE_CC__
-#include <SDL_mixer/SDL_mixer.h>
-#else
 #include <SDL_mixer.h>
-#endif
 #endif
 
 class vsMusic
