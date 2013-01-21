@@ -42,6 +42,7 @@ include_directories(
 	${ZLIB_INCLUDE_DIRS} 
 	${GLEW_INCLUDE_DIR} 
 	${BOX2D_INCLUDE_DIR}
+	#/usr/local/include
 	)
 
 if(APPLE)
@@ -51,6 +52,10 @@ if(APPLE)
 	add_definitions("-D__apple_cc__")
 	mark_as_advanced(BOX2D_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARY)
 	include_directories(${GLEW_INCLUDE_DIR} ${BOX2D_INCLUDE_DIR})
+	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
+	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
+	#string(REGEX REPLACE "(\r?\n)+$" "" CMAKE_OSX_SYSROOT "${CMAKE_OSX_SYSROOT}")
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7")
 endif ()
 
 # find . -type d

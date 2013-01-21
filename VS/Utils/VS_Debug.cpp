@@ -20,26 +20,26 @@
 
 #if defined(_WIN32)
 #include <Windows.h>
-#define __thread 
+#define __thread
 #endif
 #if defined(__APPLE_CC__)
 #include <execinfo.h>
 #endif
 
-__thread std::vector<const char *> _error_context_name;
-__thread std::vector<const char *> _error_context_data;
+//std::vector<const char *> _error_context_name;
+//std::vector<const char *> _error_context_data;
 
-vsErrorContext::vsErrorContext(const char *name, const char *data)
-{
-	_error_context_name.push_back(name);
-	_error_context_data.push_back(data);
-}
+//vsErrorContext::vsErrorContext(const char *name, const char *data)
+//{
+	//_error_context_name.push_back(name);
+	//_error_context_data.push_back(data);
+//}
 
-vsErrorContext::~vsErrorContext()
-{
-	_error_context_name.pop_back();
-	_error_context_data.pop_back();
-}
+//vsErrorContext::~vsErrorContext()
+//{
+	//_error_context_name.pop_back();
+	//_error_context_data.pop_back();
+//}
 
 //#if defined(_DEBUG)
 
@@ -57,11 +57,11 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		{
 			trimmedFile = trimmedFile.substr(pos+1);
 		}
-		std::vector<const char *>::iterator it;
-		for ( size_t i = 0; i < _error_context_name.size(); i++ )
-		{
-			vsLog("When %s: %s", _error_context_name[i], _error_context_data[i]);
-		}
+		//std::vector<const char *>::iterator it;
+		//for ( size_t i = 0; i < _error_context_name.size(); i++ )
+		//{
+			//vsLog("When %s: %s", _error_context_name[i], _error_context_data[i]);
+		//}
 
 		vsLog("Failed assertion:  %s", msg.c_str());
 		vsLog("Failed condition: (%s)", conditionStr.c_str());

@@ -19,12 +19,12 @@
 
 void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const char *file, int line );
 
-class vsErrorContext
-{
-public:
-    vsErrorContext(const char *name, const char *data);
-	~vsErrorContext();
-};
+//class vsErrorContext
+//{
+//public:
+    //vsErrorContext(const char *name, const char *data);
+	//~vsErrorContext();
+//};
 
 #else
 #define vsAssert(x,y) {}
