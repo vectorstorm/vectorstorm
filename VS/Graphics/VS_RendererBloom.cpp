@@ -26,9 +26,6 @@ bool g_renderSceneTexture = false;
 bool g_renderOffscreenTexture = false;
 int  g_renderOffscreenTextureId = 0;
 
-static GLint g_locSource, g_locCoefficients, g_locOffsetX, g_locOffsetY, g_combineScene;
-static GLint g_pass[FILTER_COUNT];
-
 
 #define STRINGIFY(A)  #A
 
@@ -267,12 +264,6 @@ GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
 float kernel[KERNEL_SIZE] = { 4, 8, 4  };
 
-GLuint vsRendererBloom::s_combineProg;
-GLuint vsRendererBloom::s_filterProg;
-GLuint vsRendererBloom::s_overlayProg;
-GLuint vsRendererBloom::s_hipassProg;
-bool vsRendererBloom::s_shadersBuilt = false;
-
 //#include <SDL/SDL_opengl.h>
 
 
@@ -296,27 +287,23 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	m_width = width;
 	m_height = height;
 
-	//if ( !s_shadersBuilt )
-	{
-		// Compile shaders
-		s_combineProg = Compile(passv, combine7f);
-		s_filterProg = Compile(passv, row3f);
-		s_overlayProg = Compile(overlayv, overlayf);
-		s_hipassProg = Compile(passv, normalf);
-		s_shadersBuilt = true;
-	}
+	// Compile shaders
+	m_combineProg = Compile(passv, combine7f);
+	m_filterProg = Compile(passv, row3f);
+	m_overlayProg = Compile(overlayv, overlayf);
+	m_hipassProg = Compile(passv, normalf);
 
-    g_locSource = glGetUniformLocation(s_filterProg, "source");
-    g_locCoefficients = glGetUniformLocation(s_filterProg, "coefficients");
-    g_locOffsetX = glGetUniformLocation(s_filterProg, "offsetx");
-    g_locOffsetY = glGetUniformLocation(s_filterProg, "offsety");
-    g_combineScene = glGetUniformLocation(s_combineProg, "Scene");
+    m_locSource = glGetUniformLocation(m_filterProg, "source");
+    m_locCoefficients = glGetUniformLocation(m_filterProg, "coefficients");
+    m_locOffsetX = glGetUniformLocation(m_filterProg, "offsetx");
+    m_locOffsetY = glGetUniformLocation(m_filterProg, "offsety");
+    m_combineScene = glGetUniformLocation(m_combineProg, "Scene");
 
     for ( int i = 0; i < FILTER_COUNT; i++ )
     {
         char name[]="Pass#";
         sprintf(name, "Pass%d", i);
-        g_pass[i] = glGetUniformLocation(s_combineProg, name);
+        m_passInt[i] = glGetUniformLocation(m_combineProg, name);
     }
 
 
@@ -381,6 +368,11 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 void
 vsRendererBloom::Deinit()
 {
+	DestroyShader(m_combineProg);
+	DestroyShader(m_filterProg);
+	DestroyShader(m_overlayProg);
+	DestroyShader(m_hipassProg);
+
 	vsDelete( m_window );
 	vsDelete( m_scene );
 	for (int p = 0; p < FILTER_COUNT; p++)
@@ -609,8 +601,18 @@ vsRendererBloom::Compile(const char *vert, const char *frag, int vLength, int fL
         vsLog(buf);
         vsAssert(success,"Unable to link shaders.\n");
     }
+	glDetachShader(program,vertShader);
+	glDetachShader(program,fragShader);
+	glDeleteShader(vertShader);
+	glDeleteShader(fragShader);
 
     return program;
+}
+
+void
+vsRendererBloom::DestroyShader(GLuint shader)
+{
+	glDeleteProgram(shader);
 }
 
 
@@ -624,12 +626,12 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
     int p;
 
     // Set up the filter.
-    glUseProgram(s_filterProg);
+    glUseProgram(m_filterProg);
 
-    glUniform1i(g_locSource, 0);
-    glUniform1fv(g_locCoefficients, KERNEL_SIZE, kernel);
-    glUniform1f(g_locOffsetX, 0);
-    glUniform1f(g_locOffsetY, 0);
+    glUniform1i(m_locSource, 0);
+    glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
+    glUniform1f(m_locOffsetX, 0);
+    glUniform1f(m_locOffsetY, 0);
 
 	/*float top = -1.f;
 	float left = -1.f;
@@ -641,7 +643,7 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
     for (p = 0; p < count; p++)
     {
         float offset = 1.2f / sources[p]->GetWidth();
-        glUniform1f(g_locOffsetX, offset);
+        glUniform1f(m_locOffsetX, offset);
 		dests[p]->Bind();
 		dests[p]->Clear();
         glBindTexture(GL_TEXTURE_2D, sources[p]->GetTexture()->GetResource()->GetTexture());
@@ -650,13 +652,13 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
-    glUniform1f(g_locOffsetX, 0);
+    glUniform1f(m_locOffsetX, 0);
 
     // Perform the blurring.
     for (p = 0; p < count; p++)
     {
         float offset = 1.2f / dests[p]->GetWidth();
-        glUniform1f(g_locOffsetY, offset);
+        glUniform1f(m_locOffsetY, offset);
         sources[p]->Bind();
 		sources[p]->Clear();
         glBindTexture(GL_TEXTURE_2D, dests[p]->GetTexture()->GetResource()->GetTexture());
@@ -784,7 +786,7 @@ vsRendererBloom::PostRender()
 	float bot = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 
 //	glUseProgram(0);
-    glUseProgram(s_hipassProg);
+    glUseProgram(m_hipassProg);
 
 	float v[8] = {
 		left, top,
@@ -852,7 +854,7 @@ vsRendererBloom::PostRender()
 	m_window->Bind();
 	//ClearSurface();
 
-    glUseProgram(s_combineProg);
+    glUseProgram(m_combineProg);
 
     for (p = 0; p < FILTER_COUNT; p++)
     {
@@ -860,13 +862,13 @@ vsRendererBloom::PostRender()
         glBindTexture(GL_TEXTURE_2D, m_pass[p]->GetTexture()->GetResource()->GetTexture());
         glEnable(GL_TEXTURE_2D);
 
-        glUniform1i(g_pass[p], p);
+        glUniform1i(m_passInt[p], p);
     }
 
 	glActiveTexture(GL_TEXTURE0 + FILTER_COUNT);
 	glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
     glEnable(GL_TEXTURE_2D);
-    glUniform1i(g_combineScene, FILTER_COUNT);
+    glUniform1i(m_combineScene, FILTER_COUNT);
 
 	glVertexPointer( 2, GL_FLOAT, 0, wv );
 	/*

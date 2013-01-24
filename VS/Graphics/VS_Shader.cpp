@@ -59,6 +59,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
+	vsRendererShader::Instance()->DestroyShader(m_shader);
 }
 
 void

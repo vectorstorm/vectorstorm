@@ -45,11 +45,12 @@ class vsRendererBloom : public vsRendererSimple
 {
 	typedef vsRendererSimple Parent;
 
-	static GLuint			s_combineProg;
-	static GLuint			s_filterProg;
-	static GLuint			s_overlayProg;
-	static GLuint			s_hipassProg;
-	static bool				s_shadersBuilt;
+	GLuint			m_combineProg;
+	GLuint			m_filterProg;
+	GLuint			m_overlayProg;
+	GLuint			m_hipassProg;
+	GLint m_locSource, m_locCoefficients, m_locOffsetX, m_locOffsetY, m_combineScene;
+	GLint m_passInt[FILTER_COUNT];
 
 	bool			m_antialias;
 
@@ -66,6 +67,7 @@ class vsRendererBloom : public vsRendererSimple
 
 protected:
 	GLuint			Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
+	void			DestroyShader(GLuint shader);
 
 public:
 	vsRendererBloom();
