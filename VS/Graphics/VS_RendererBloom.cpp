@@ -463,8 +463,8 @@ vsRendererBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, boo
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
     glBindTexture(GL_TEXTURE_2D, 0);
 
 	CheckGLError("Creation of the color texture for the FBO");
@@ -647,8 +647,8 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 		dests[p]->Bind();
 		dests[p]->Clear();
         glBindTexture(GL_TEXTURE_2D, sources[p]->GetTexture()->GetResource()->GetTexture());
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
@@ -662,8 +662,8 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
         sources[p]->Bind();
 		sources[p]->Clear();
         glBindTexture(GL_TEXTURE_2D, dests[p]->GetTexture()->GetResource()->GetTexture());
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
