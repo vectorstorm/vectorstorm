@@ -344,8 +344,15 @@ vsRenderQueue::InitialiseTransformStack()
 		//
 		//		startingTransform.SetTranslation( vsVector3D(0.f, 0.0f, 0.f) );
 		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
+		vsTransform2D cameraTransform = m_parent->GetCamera()->GetCameraTransform();
+		// cameraMatrix will have a scale on its members from the camera. (Since
+		// that's where it stores the FOV).
+		// We remove that, since that eventually becomes part of the PROJECTION
+		// transform, not the MODELVIEW transform, which is all we care about here..
+		cameraTransform.SetScale(vsVector2D(1.f,1.f));
+		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
 
-		m_transformStack[0] = startingMatrix;
+		m_transformStack[0] = cameraMatrix * startingMatrix;
 		m_transformStackLevel = 1;
 	}
 }
