@@ -518,19 +518,32 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			{
 				vsTransform2D t = op->data.GetTransform();
 
+				vsVector3D v = t.GetTranslation();
+				if ( m_currentTransformStackLevel == 0 )
+				{
+					v -= m_currentCameraPosition;
+				}
+
 				vsTransform2D localToWorld = m_transformStack[m_currentTransformStackLevel] * t;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
-				bool translation = (t.GetTranslation() != vsVector2D::Zero);
+				bool translation = (v != vsVector2D::Zero);
 				bool rotation = (t.GetAngle() != vsAngle::Zero);
 				bool scale = (t.GetScale() != vsVector2D::One);
 				glPushMatrix();
 				if ( translation )
-					glTranslatef( t.GetTranslation().x, t.GetTranslation().y, 0.0f );
+					glTranslatef( v.x, v.y, v.z );
 				if ( rotation )
 					glRotatef( t.GetAngle().GetDegrees(), 0.0f, 0.0f, 1.0f );
 				if ( scale )
 					glScalef( t.GetScale().x, t.GetScale().y, 1.0f );
+
+				vsMatrix4x4 mat;
+				glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&mat);
+				if ( mat.x == mat.y )
+				{
+					mat.y = mat.x;
+				}
 				break;
 			}
 			case vsDisplayList::OpCode_PushTranslation:
@@ -578,6 +591,7 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetCameraTransform:
 			{
 				vsTransform2D t = op->data.GetTransform();
+				m_currentCameraPosition = vsVector3D::Zero;
 
 				SetCameraTransform(t);
 				break;

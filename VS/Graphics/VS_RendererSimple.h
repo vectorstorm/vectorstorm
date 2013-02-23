@@ -50,7 +50,7 @@ protected:
 	vsVector3D *		m_currentNormalArray;
 	vsVector2D *		m_currentTexelArray;
 	vsColor *			m_currentColorArray;
-    
+
     vsShader *          m_currentShader;
 
 	vsRenderBuffer *	m_currentVertexBuffer;
