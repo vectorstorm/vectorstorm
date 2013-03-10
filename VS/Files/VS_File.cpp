@@ -284,8 +284,22 @@ vsFile::Store( vsStore *s )
 	else
 	{
 		s->Rewind();
-		size_t n = fread(s->GetReadHead(), 1, s->BufferLength(), m_file );
+		size_t n = fread(s->GetWriteHead(), 1, s->BufferLength(), m_file );
 		s->SetLength(n);
+	}
+}
+
+void
+vsFile::StoreBytes( vsStore *s, size_t bytes )
+{
+	if ( m_mode == MODE_Write )
+	{
+		fwrite(s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()), m_file );
+	}
+	else
+	{
+		size_t n = fread(s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()), m_file );
+		s->AdvanceWriteHead(n);
 	}
 }
 

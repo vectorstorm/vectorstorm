@@ -73,6 +73,12 @@ vsStore::AdvanceReadHead( size_t bytes )
 }
 
 void
+vsStore::AdvanceWriteHead( size_t bytes )
+{
+	m_writeHead += bytes;
+}
+
+void
 vsStore::SeekReadHeadTo( size_t l )
 {
 	m_readHead = m_buffer + l;

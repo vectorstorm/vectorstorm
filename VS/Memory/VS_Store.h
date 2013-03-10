@@ -40,6 +40,7 @@ public:
 	virtual ~vsStore();
 
 	char *	GetReadHead()	{ return m_readHead; }
+	char *	GetWriteHead()	{ return m_writeHead; }
 	inline size_t		BytesLeftForWriting() const { return (size_t)(m_bufferEnd - m_writeHead); }
 	inline size_t		BytesLeftForReading() const { return (size_t)(m_writeHead - m_readHead); }
 
@@ -50,6 +51,7 @@ public:
 
 	void	Rewind();	// rewind to the start
 	void	AdvanceReadHead(size_t bytes);
+	void	AdvanceWriteHead(size_t bytes);
 	void	SeekReadHeadTo(size_t pos);
 	size_t	GetReadHeadPosition();
 	void	RewindWriteHeadTo(size_t pos);

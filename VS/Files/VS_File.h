@@ -55,6 +55,7 @@ public:
 	void		Rewind();
 
 	void		Store( vsStore *store );		// read/write this raw data directly.
+	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store
 
 	/*  These functions are probably deprecated;  use vsRecord objects instead!
 	 *
