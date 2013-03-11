@@ -14,6 +14,7 @@
 #include "VS_Color.h"
 #include "VS_Random.h"
 #include "VS_Vector.h"
+#include "VS_Debug.h"
 
 #include "MT/SFMT.h"
 
@@ -73,7 +74,9 @@ vsRandom::GetFloat(float min, float max)
 int
 vsRandom::GetInt(int maxValue)
 {
-	float result = ((float)gen_rand32() * maxValue) / (float)0xffffffff;
+	float maxGenRandValue = 0xffffffff;
+	float result = ((float)gen_rand32() / (maxGenRandValue+1) * (maxValue));
+	//vsAssert( (int)result < maxValue, "Illegal random result?" );
 	return (int)result;
 }
 
