@@ -10,6 +10,7 @@
 #ifndef MEM_STORE_H
 #define MEM_STORE_H
 
+class vsBox2D;
 class vsColor;
 class vsFog;
 class vsLight;
@@ -126,6 +127,9 @@ public:
 
 	void		WriteMaterial(const vsMaterial &m);
 	void		ReadMaterial(vsMaterial *m);
+
+	void		WriteBox2D(const vsBox2D &box);
+	void		ReadBox2D(vsBox2D *box);
 };
 
 #endif // MEM_FIFO_H

@@ -104,6 +104,8 @@ public:
 
 	GLsizei GetWidth() { return m_textureSurface->m_width; }
 	GLsizei GetHeight() { return m_textureSurface->m_height; }
+	GLsizei GetViewportWidth() { return m_viewportWidth; }
+	GLsizei GetViewportHeight() { return m_viewportHeight; }
 
 	float	GetTexWidth() { return m_texWidth; }
 	float	GetTexHeight() { return m_texHeight; }

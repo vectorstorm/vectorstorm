@@ -10,6 +10,7 @@
 #include "VS_Store.h"
 
 #include "VS_Angle.h"
+#include "VS_Box.h"
 #include "VS_Color.h"
 #include "VS_Fog.h"
 #include "VS_Light.h"
@@ -635,4 +636,19 @@ vsStore::ReadMaterial(vsMaterial *m)
 	//m->SetTexture( (vsTexture*)ReadVoidStar() );
 }
 
+void
+vsStore::WriteBox2D(const vsBox2D &box)
+{
+	WriteVector2D(box.GetMin());
+	WriteVector2D(box.GetMax());
+}
+
+void
+vsStore::ReadBox2D(vsBox2D *box)
+{
+	vsVector2D min, max;
+	ReadVector2D(&min);
+	ReadVector2D(&max);
+	box->Set(min,max);
+}
 

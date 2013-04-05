@@ -1289,6 +1289,19 @@ vsDisplayList::ClearStencil()
 	m_fifo->WriteUint8( OpCode_ClearStencil );
 }
 
+void
+vsDisplayList::SetViewport( const vsBox2D &box )
+{
+	m_fifo->WriteUint8( OpCode_SetViewport );
+	m_fifo->WriteBox2D( box );
+}
+
+void
+vsDisplayList::ClearViewport()
+{
+	m_fifo->WriteUint8( OpCode_ClearViewport );
+}
+
 vsDisplayList::OpCode
 vsDisplayList::PeekOpType()
 {
@@ -1454,6 +1467,9 @@ vsDisplayList::PopOp()
 			case OpCode_Fog:
 				m_fifo->ReadFog( &m_currentOp.data.fog );
 				break;
+			case OpCode_SetViewport:
+				m_fifo->ReadBox2D( &m_currentOp.data.box2D );
+				break;
 			case OpCode_ClearLights:
 			case OpCode_PopTransform:
 			case OpCode_ClearVertexArray:
@@ -1466,6 +1482,7 @@ vsDisplayList::PopOp()
 			case OpCode_EnableStencil:
 			case OpCode_DisableStencil:
 			case OpCode_ClearStencil:
+			case OpCode_ClearViewport:
 			default:
 				break;
 		}
@@ -1602,6 +1619,12 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_ClearStencil:
 			ClearStencil();
+			break;
+		case OpCode_SetViewport:
+			SetViewport( o->data.GetBox2D() );
+			break;
+		case OpCode_ClearViewport:
+			ClearViewport();
 			break;
 		//case OpCode_SetDrawMode:
 		//	SetDrawMode( (vsDrawMode)o->data.GetUInt() );

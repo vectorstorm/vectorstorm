@@ -31,10 +31,12 @@ vsScene::vsScene():
 	m_camera3D( NULL ),
 	m_defaultCamera3D( new vsCamera3D ),
 	m_fog( NULL ),
+	m_viewport(),
 	m_is3d( false ),
 	m_cameraIsReference( false ),
 	m_flatShading( false ),
-	m_stencilTest( false )
+	m_stencilTest( false ),
+	m_hasViewport( false )
 {
 	m_camera = m_defaultCamera;
 	m_camera3D = m_defaultCamera3D;
@@ -84,6 +86,19 @@ vsScene::GetFOV()
 }
 
 void
+vsScene::SetViewport( const vsBox2D& viewport )
+{
+	m_viewport = viewport;
+	m_hasViewport = true;
+}
+
+void
+vsScene::ClearViewport()
+{
+	m_hasViewport = false;
+}
+
+void
 vsScene::Update( float timeStep )
 {
 	s_current = this;
@@ -128,6 +143,11 @@ vsScene::Draw( vsDisplayList *list )
 	else
 	{
 		list->SmoothShading();
+	}
+
+	if ( m_hasViewport )
+	{
+		list->SetViewport( m_viewport );
 	}
 
 	if ( m_is3d )
@@ -182,6 +202,10 @@ vsScene::Draw( vsDisplayList *list )
 	if ( m_stencilTest )
 	{
 		list->DisableStencil();
+	}
+	if ( m_hasViewport )
+	{
+		list->ClearViewport();
 	}
 
 	list->ClearLights();

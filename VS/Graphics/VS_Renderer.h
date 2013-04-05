@@ -46,6 +46,9 @@ protected:
 
 	int					m_width;
 	int					m_height;
+
+	int					m_viewportWidth;
+	int					m_viewportHeight;
 public:
 
 	vsRenderer() {m_defaultRenderMode = RenderMode_Additive;}

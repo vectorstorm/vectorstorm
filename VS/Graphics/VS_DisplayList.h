@@ -11,6 +11,7 @@
 #define VS_DISPLAYLIST_H
 
 #include "VS/Math/VS_Angle.h"
+#include "VS/Math/VS_Box.h"
 #include "VS/Math/VS_Matrix.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS/Math/VS_Transform.h"
@@ -104,6 +105,9 @@ public:
 		OpCode_DisableStencil,
 		OpCode_ClearStencil,
 
+		OpCode_SetViewport,
+		OpCode_ClearViewport,
+
 		OpCode_MAX
 	};
 
@@ -111,6 +115,7 @@ public:
 	{
 		uint32_t		i;
 		vsVector3D	vector;
+		vsBox2D		box2D;
 		vsColor		color;
 		vsTransform2D transform;
 		vsLight		light;
@@ -124,6 +129,7 @@ public:
 		char *p;
 
 		void Set(uint32_t id) {i = id;}
+		void Set(const vsBox2D & in) {box2D = in;}
 		void Set(const vsVector3D & in) {vector = in;}
 		void Set(const vsColor & in) {color = in;}
 		void Set(const vsTransform2D &t) {transform = t;}
@@ -133,6 +139,7 @@ public:
 		void SetPointer(char *pointer) {p = pointer;}
 
 		uint32_t GetUInt() { return i; }
+		vsBox2D GetBox2D() {return box2D;}
 		vsVector3D GetVector3D() {return vector;}
 		vsColor GetColor() {return color; }
 		vsTransform2D	GetTransform() {return transform;}
@@ -312,6 +319,11 @@ public:
 	void	EnableStencil();	// turns on stencil testing, cull future rendering to INSIDE stencil
 	void	DisableStencil();	// turns off stencil testing;  no stencils considered.
 	void	ClearStencil();		// clears our stencil so that everything fails.
+
+	// SetViewport requires 'box' be expressed in [0..1] for X and Y, relative
+	// to screen resolution.
+	void	SetViewport( const vsBox2D &box );
+	void	ClearViewport();
 
 	OpCode	PeekOpType();
 	op *	PopOp();

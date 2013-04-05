@@ -65,8 +65,8 @@ vsRendererSimple::~vsRendererSimple()
 void
 vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 {
-	m_width = width;
-	m_height = height;
+	m_viewportWidth = m_width = width;
+	m_viewportHeight = m_height = height;
 
 #if !TARGET_OS_IPHONE
 	const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
@@ -187,7 +187,7 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
 	glDepthFunc( GL_LEQUAL );
 
-	glViewport( 0, 0, (GLsizei)width, (GLsizei)height );
+	glViewport( 0, 0, (GLsizei)m_width, (GLsizei)m_height );
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
@@ -962,6 +962,24 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			{
 				glClearStencil(0);
 				glClear(GL_STENCIL_BUFFER_BIT);
+				break;
+			}
+			case vsDisplayList::OpCode_SetViewport:
+			{
+				const vsBox2D& box = op->data.box2D;
+				glViewport( box.GetMin().x * m_viewportWidth,
+						box.GetMin().y * m_viewportHeight,
+						box.Width() * m_viewportWidth,
+						box.Height() * m_viewportHeight );
+				//glViewport( box.GetMin().x,
+						//box.GetMin().y,
+						//box.Width(),
+						//box.Height());
+				break;
+			}
+			case vsDisplayList::OpCode_ClearViewport:
+			{
+				glViewport( 0, 0, (GLsizei)m_viewportWidth, (GLsizei)m_viewportHeight );
 				break;
 			}
 			default:

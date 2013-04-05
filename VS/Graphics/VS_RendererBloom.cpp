@@ -344,6 +344,8 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
+	m_viewportWidth = m_scene->GetViewportWidth();
+	m_viewportHeight = m_scene->GetViewportHeight();
 
 
 

@@ -10,6 +10,7 @@
 #ifndef VS_SCENE_H
 #define VS_SCENE_H
 
+#include "VS/Math/VS_Box.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS/Math/VS_Transform.h"
 #include "VS/Graphics/VS_DisplayList.h"
@@ -39,11 +40,13 @@ class vsScene
 	vsCamera3D *	m_defaultCamera3D;
 	vsLight *		m_light[MAX_SCENE_LIGHTS];
 	vsFog *			m_fog;
+	vsBox2D			m_viewport;
 
 	bool			m_is3d;
 	bool			m_cameraIsReference;
 	bool			m_flatShading;
 	bool			m_stencilTest;
+	bool			m_hasViewport;
 
 	static vsScene *s_current;
 
@@ -56,6 +59,11 @@ public:
 	bool			Is3D() { return m_is3d; }
 
 	float			GetFOV();
+
+	// SetViewport requires 'box' be expressed in [0..1] for X and Y, relative
+	// to screen resolution.
+	void			SetViewport( const vsBox2D& viewport );
+	void			ClearViewport();
 
 	vsVector2D		GetCorner(bool bottom, bool right);
 
