@@ -31,16 +31,6 @@ public:
 
         TYPE_MAX
     };
-private:
-
-	char *			m_array;
-	int				m_arrayBytes;
-	int				m_glArrayBytes;
-
-	int				m_activeBytes;
-
-	Type	        m_type;
-
 	enum ContentType
 	{
 		ContentType_Custom,
@@ -53,6 +43,16 @@ private:
 		ContentType_PNT,
 		ContentType_PCNT
 	};
+private:
+
+	char *			m_array;
+	int				m_arrayBytes;
+	int				m_glArrayBytes;
+
+	int				m_activeBytes;
+
+	Type	        m_type;
+
 	ContentType		m_contentType;
 
 	unsigned int	m_bufferID;
@@ -166,6 +166,9 @@ public:
 
 	int		GetPositionCount();		// for new-style buffers, which don't offer direct array access.
 	vsVector3D	GetPosition(int i);
+	vsVector3D	GetNormal(int i);
+	vsVector2D	GetTexel(int i);
+	vsColor		GetColor(int i);
 
 	void	BindVertexBuffer( vsRendererState *state );
 	void	UnbindVertexBuffer( vsRendererState *state );

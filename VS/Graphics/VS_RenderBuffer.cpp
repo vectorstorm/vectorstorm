@@ -673,7 +673,6 @@ vsRenderBuffer::GetPositionCount()
 	return 0;
 }
 
-
 vsVector3D
 vsRenderBuffer::GetPosition(int i)
 {
@@ -722,7 +721,122 @@ vsRenderBuffer::GetPosition(int i)
 		}
 	}
 	return vsVector3D::Zero;
+}
 
+vsVector3D
+vsRenderBuffer::GetNormal(int i)
+{
+	vsAssert( i < GetPositionCount(), "Illegal buffer normal request!" );
+
+	switch( m_contentType )
+	{
+		case ContentType_P:
+		case ContentType_PC:
+		case ContentType_PT:
+		{
+			return vsVector3D::One;
+		}
+		case ContentType_PN:
+		{
+			PN* pn = (PN*)m_array;
+			return pn[i].normal;
+		}
+		case ContentType_PCN:
+		{
+			PCN* pnc = (PCN*)m_array;
+			return pnc[i].normal;
+		}
+		case ContentType_PNT:
+		{
+			PNT* pnt = (PNT*)m_array;
+			return pnt[i].normal;
+		}
+		case ContentType_PCNT:
+		{
+			PCNT* pnct = (PCNT*)m_array;
+			return pnct[i].normal;
+		}
+		default:
+		{
+			vsAssert(0, "Unhandled vsRenderBuffer content type!");
+		}
+	}
+	return vsVector3D::Zero;
+}
+
+vsVector2D
+vsRenderBuffer::GetTexel(int i)
+{
+	vsAssert( i < GetPositionCount(), "Illegal buffer texel request!" );
+
+	switch( m_contentType )
+	{
+		case ContentType_P:
+		case ContentType_PC:
+		case ContentType_PN:
+		case ContentType_PCN:
+		{
+			return vsVector2D::Zero;
+		}
+		case ContentType_PT:
+		{
+			PT* pt = (PT*)m_array;
+			return pt[i].texel;
+		}
+		case ContentType_PNT:
+		{
+			PNT* pnt = (PNT*)m_array;
+			return pnt[i].texel;
+		}
+		case ContentType_PCNT:
+		{
+			PCNT* pnct = (PCNT*)m_array;
+			return pnct[i].texel;
+		}
+		default:
+		{
+			vsAssert(0, "Unhandled vsRenderBuffer content type!");
+		}
+	}
+	return vsVector2D::Zero;
+}
+
+
+vsColor
+vsRenderBuffer::GetColor(int i)
+{
+	vsAssert( i < GetPositionCount(), "Illegal buffer color request!" );
+
+	switch( m_contentType )
+	{
+		case ContentType_P:
+		case ContentType_PT:
+		case ContentType_PN:
+		case ContentType_PNT:
+		{
+			return vsColor::PureWhite;
+		}
+		case ContentType_PC:
+		{
+			PC* pc = (PC*)m_array;
+			return pc[i].color;
+		}
+		case ContentType_PCN:
+		{
+			PCN* pnc = (PCN*)m_array;
+			return pnc[i].color;
+		}
+		case ContentType_PCNT:
+		{
+			PCNT* pnct = (PCNT*)m_array;
+			return pnct[i].color;
+		}
+		default:
+		{
+			vsAssert(0, "Unhandled vsRenderBuffer content type!");
+		}
+	}
+	return vsColor::PureWhite;
 }
 
 
