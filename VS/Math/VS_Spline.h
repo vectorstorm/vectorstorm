@@ -61,6 +61,8 @@ public:
 
 	vsVector3D	PositionAtTime( float t ) const;
 	vsVector3D	VelocityAtTime( float t ) const;
+
+	vsVector3D	ClosestPointTo( const vsVector3D& position );
 };
 
 
