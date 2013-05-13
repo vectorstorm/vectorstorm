@@ -185,6 +185,13 @@ vsMesh::SetTriangleListMaterial( int list, vsMaterial *material )
 	m_triangleListMaterial[list] = new vsMaterial(material);
 }
 
+vsMaterial *
+vsMesh::GetTriangleListMaterial( int list )
+{
+	vsAssert( list >= 0 && list < m_triangleListCount, "Unknown triangle list requested??" );
+	return m_triangleListMaterial[list];
+}
+
 void
 vsMesh::SetTriangleListTriangleCount( int list, int count )
 {
@@ -565,5 +572,14 @@ vsMesh::GetTriangle( int list, int triangle, vsVector3D *a, vsVector3D *b, vsVec
 	*a = vertex[ vertexIndex[i] ];
 	*b = vertex[ vertexIndex[i+1] ];
 	*c = vertex[ vertexIndex[i+2] ];
+}
+
+vsRenderBuffer *
+vsMesh::GetVertexBuffer()
+{
+	if ( m_interleavedBuffer )
+		return m_interleavedBuffer;
+	else
+		return m_vertexBuffer;
 }
 

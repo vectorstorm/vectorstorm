@@ -64,6 +64,7 @@ public:
 
 	int				GetTriangleListCount() { return m_triangleListCount; }
 	void			SetTriangleListMaterial( int list, vsMaterial *material );
+	vsMaterial *	GetTriangleListMaterial( int list );
 	void			SetTriangleListTriangleCount( int list, int triangleCount );
 	void			AddTriangleToList( int list, int triA, int triB, int triC);
 
@@ -71,6 +72,9 @@ public:
 	void			WriteFragments( vsModel *model );
 
 	void			Bake();
+
+	vsRenderBuffer *GetVertexBuffer();
+	vsRenderBuffer *GetIndexBuffer(int list) { return m_triangleListBuffer[list]; }
 
 	void			Draw( vsDisplayList *list );
 	void			DrawNormals( vsDisplayList *list );
