@@ -158,7 +158,13 @@ public:
 	void			SetVector2DArraySize( int size );
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
+	P *				GetPArray() { return (P*)m_array; }
+	PN *			GetPNArray() { return (PN*)m_array; }
+	PC *			GetPCArray() { return (PC*)m_array; }
+	PT *			GetPTArray() { return (PT*)m_array; }
 	PCT *			GetPCTArray() { return (PCT*)m_array; }
+	PCN *			GetPCNArray() { return (PCN*)m_array; }
+	PNT *			GetPNTArray() { return (PNT*)m_array; }
 	PCNT *			GetPCNTArray() { return (PCNT*)m_array; }
 
 	void	BakeArray();	// bake any modified array values into our GPU-based storage, if any.
