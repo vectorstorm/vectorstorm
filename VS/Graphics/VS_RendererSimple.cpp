@@ -37,6 +37,11 @@
 
 #endif
 
+void vsRenderDebug( const vsString &message )
+{
+	vsLog("%s", message.c_str());
+}
+
 //static bool s_vertexBuffersSupported = false;
 
 vsRendererSimple::vsRendererSimple()
@@ -980,6 +985,11 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ClearViewport:
 			{
 				glViewport( 0, 0, (GLsizei)m_viewportWidth, (GLsizei)m_viewportHeight );
+				break;
+			}
+			case vsDisplayList::OpCode_Debug:
+			{
+				vsRenderDebug( op->data.string );
 				break;
 			}
 			default:

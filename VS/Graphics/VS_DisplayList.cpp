@@ -1302,6 +1302,13 @@ vsDisplayList::ClearViewport()
 	m_fifo->WriteUint8( OpCode_ClearViewport );
 }
 
+void
+vsDisplayList::Debug(const vsString &string )
+{
+	m_fifo->WriteUint8( OpCode_Debug );
+	m_fifo->WriteString(string);
+}
+
 vsDisplayList::OpCode
 vsDisplayList::PeekOpType()
 {
@@ -1470,6 +1477,9 @@ vsDisplayList::PopOp()
 			case OpCode_SetViewport:
 				m_fifo->ReadBox2D( &m_currentOp.data.box2D );
 				break;
+			case OpCode_Debug:
+				 m_currentOp.data.string = m_fifo->ReadString();
+				break;
 			case OpCode_ClearLights:
 			case OpCode_PopTransform:
 			case OpCode_ClearVertexArray:
@@ -1625,6 +1635,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_ClearViewport:
 			ClearViewport();
+			break;
+		case OpCode_Debug:
+			Debug( o->data.GetString() );
 			break;
 		//case OpCode_SetDrawMode:
 		//	SetDrawMode( (vsDrawMode)o->data.GetUInt() );

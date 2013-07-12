@@ -108,6 +108,8 @@ public:
 		OpCode_SetViewport,
 		OpCode_ClearViewport,
 
+		OpCode_Debug,
+
 		OpCode_MAX
 	};
 
@@ -123,6 +125,7 @@ public:
 		//vsMaterial	material;
 		vsMatrix4x4 matrix4x4;
 		vsOverlay	overlay;
+		vsString	string;
 		float		fov;
 		float		nearPlane;
 		float		farPlane;
@@ -136,6 +139,7 @@ public:
 		//void Set(const vsMaterial &m) { material = m; }
 		void Set(const vsMatrix4x4 &m, float fov_in, float nearPlane_in, float farPlane_in) {matrix4x4 = m; fov = fov_in; nearPlane = nearPlane_in; farPlane = farPlane_in;}
 		void Set(const vsOverlay &o) {overlay = o;}
+		void Set(const vsString &s) {string = s;}
 		void SetPointer(char *pointer) {p = pointer;}
 
 		uint32_t GetUInt() { return i; }
@@ -145,6 +149,7 @@ public:
 		vsTransform2D	GetTransform() {return transform;}
 		vsMatrix4x4 &	GetMatrix4x4() {return matrix4x4;}
 		vsOverlay GetOverlay() {return overlay;}
+		vsString GetString() {return string;}
 	};
 
 	struct op
@@ -275,6 +280,7 @@ public:
 	void	ClearNormalArray();
 	void	ClearTexelArray();
 	void	ClearColorArray();
+	void	ClearBuffers() { ClearArrays(); }
 	void	ClearArrays();
 
 	void	LineList( int *idArray, int vertexCount );
@@ -324,6 +330,11 @@ public:
 	// to screen resolution.
 	void	SetViewport( const vsBox2D &box );
 	void	ClearViewport();
+
+	// Debug will cause the passed message to be printed to the log when the
+	// renderer hits it.
+	// Can be useful for debugging renderer commands.
+	void	Debug(const vsString &message);
 
 	OpCode	PeekOpType();
 	op *	PopOp();
