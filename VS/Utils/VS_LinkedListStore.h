@@ -15,42 +15,42 @@ class vsListStoreEntry
 {
 public:
 	T *					m_item;
-	
+
 	vsListStoreEntry<T> *	m_next;
 	vsListStoreEntry<T> *	m_prev;
-	
+
 	vsListStoreEntry() : m_item(NULL), m_next(NULL), m_prev(NULL) {}
 	vsListStoreEntry( T *t ) : m_item(t), m_next(NULL), m_prev(NULL) {}
-	~vsListStoreEntry() 
-	{ 
-		Extract(); 
-		vsDelete(m_item); 
+	~vsListStoreEntry()
+	{
+		Extract();
+		vsDelete(m_item);
 	}
-	
+
 	void	Append( vsListStoreEntry<T> *next )
 	{
 		next->m_next = m_next;
 		next->m_prev = this;
-		
+
 		if ( m_next )
 		{
 			m_next->m_prev = next;
 		}
 		m_next = next;
 	}
-	
+
 	void	Prepend( vsListStoreEntry<T> *prev )
 	{
 		prev->m_next = this;
 		prev->m_prev = m_prev;
-		
+
 		if ( m_prev )
 		{
 			m_prev->m_next = prev;
 		}
 		m_prev = prev;
 	}
-	
+
 	void	Extract()
 	{
 		if ( m_next )
@@ -64,30 +64,30 @@ template<class T>
 class vsListStoreIterator
 {
 	vsListStoreEntry<T>	*	m_current;
-	
+
 public:
-	
+
 	vsListStoreIterator( vsListStoreEntry<T> *initial ): m_current(initial) {}
-	
-	T *				Get() 
-	{ 
-		if ( m_current ) 
+
+	T *				Get()
+	{
+		if ( m_current )
 		{
 			return m_current->m_item;
-		} 
-		return NULL; 
+		}
+		return NULL;
 	}
-	
-	bool			Next() 
-	{ 
-		m_current = m_current->m_next; 
-		return (m_current != NULL); 
+
+	bool			Next()
+	{
+		m_current = m_current->m_next;
+		return (m_current != NULL);
 	}
-	
-	bool			Previous() 
-	{ 
-		m_current = m_current->m_prev; 
-		return (m_current != NULL); 
+
+	bool			Previous()
+	{
+		m_current = m_current->m_prev;
+		return (m_current != NULL);
 	}
 
 	void	Append( T *item )
@@ -101,7 +101,7 @@ public:
 		vsListStoreEntry<T> *ent = new vsListStoreEntry<T>( item );
 		m_current->Prepend( ent );
 	}
-	
+
 	bool						operator==( const vsListStoreIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
 	bool						operator!=( const vsListStoreIterator &b ) { return !((*this)==b); }
 	vsListStoreIterator<T>&		operator++() { Next(); return *this; }
@@ -117,11 +117,11 @@ class vsLinkedListStore
 {
 	vsListStoreEntry<T>		*m_listEntry;
 	vsListStoreEntry<T>		*m_tail;
-	
+
 	vsListStoreEntry<T> *	FindEntry( T *item )
 	{
 		vsListStoreEntry<T> *ent = m_listEntry->m_next;
-		
+
 		while( ent )
 		{
 			if ( ent->m_item == item )
@@ -132,20 +132,20 @@ class vsLinkedListStore
 		}
 		return NULL;
 	}
-	
+
 public:
-	
+
 	typedef vsListStoreIterator<T> Iterator;
 
 	vsLinkedListStore()
 	{
 		m_listEntry = new vsListStoreEntry<T>;
 		m_tail = new vsListStoreEntry<T>;
-		
+
 		m_listEntry->m_next = m_tail;
 		m_tail->m_prev = m_listEntry;
 	}
-	
+
 	~vsLinkedListStore()
 	{
 		while ( m_listEntry->m_next )
@@ -156,7 +156,7 @@ public:
 		vsDelete( m_listEntry );
 		m_tail = NULL;
 	}
-	
+
 	void	Clear()
 	{
 		while ( m_listEntry->m_next != m_tail )
@@ -165,54 +165,53 @@ public:
 			vsDelete( toDelete );
 		}
 	}
-	
+
 	void	AddItem( T *item )
 	{
 		vsListStoreEntry<T> *ent = new vsListStoreEntry<T>( item );
-		
+
 		m_tail->Prepend( ent );
 	}
-	
-	void	RemoveItem( T *item )
+
+	bool	RemoveItem( T *item )
 	{
 		vsListStoreEntry<T> *ent = FindEntry(item);
 		if ( ent )
 		{
 			ent->Extract();
 			vsDelete(ent);
-			return;
+			return true;
 		}
-		
-		vsAssert(0, "Error: couldn't find item??");
+		return false;
 	}
-	
+
 	bool	Contains( T *item )
 	{
 		vsListStoreEntry<T> *ent = FindEntry(item);
 		return (ent != NULL);
 	}
-	
+
 	bool	IsEmpty()
 	{
 		vsListStoreIterator<T> it(m_listEntry);
-		
+
 		return ( ++it == m_tail );
 	}
-	
+
 	int		ItemCount()
 	{
 		int count = 0;
-		
+
 		vsListStoreIterator<T> it(m_listEntry);
-		
+
 		while(++it != m_tail)
 		{
 			count++;
 		}
-		
+
 		return count;
 	}
-	
+
 	vsListStoreIterator<T>	Begin() const
 	{
 		return 		++vsListStoreIterator<T>(m_listEntry);
@@ -222,7 +221,7 @@ public:
 	{
 		return 		vsListStoreIterator<T>(m_tail);
 	}
-	
+
 	T *	operator[](int n)
 	{
 		for( vsListStoreIterator<T> iter = Begin(); iter != End(); iter++ )
@@ -231,14 +230,14 @@ public:
 				return *iter;
 			n--;
 		}
-		
+
 		return NULL;
 	}
-	
+
 	vsLinkedListStore<T>& operator=( vsLinkedListStore<T> &o )
 	{
 		Clear();
-		
+
 		for( vsListStoreIterator<T> iter = o.Begin(); iter != o.End(); iter++ )
 		{
 			T* copy = new T(*(*iter));

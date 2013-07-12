@@ -17,38 +17,38 @@ class vsListEntry
 {
 public:
 	T					m_item;
-	
+
 	vsListEntry<T> *	m_next;
 	vsListEntry<T> *	m_prev;
-	
+
 	vsListEntry() : m_item(NULL), m_next(NULL), m_prev(NULL) {}
 	vsListEntry( const T &t ) : m_item(t), m_next(NULL), m_prev(NULL) {}
 	~vsListEntry() { Extract(); }
-	
+
 	void	Append( vsListEntry<T> *next )
 	{
 		next->m_next = m_next;
 		next->m_prev = this;
-		
+
 		if ( m_next )
 		{
 			m_next->m_prev = next;
 		}
 		m_next = next;
 	}
-	
+
 	void	Prepend( vsListEntry<T> *prev )
 	{
 		prev->m_next = this;
 		prev->m_prev = m_prev;
-		
+
 		if ( m_prev )
 		{
 			m_prev->m_next = prev;
 		}
 		m_prev = prev;
 	}
-	
+
 	void	Extract()
 	{
 		if ( m_next )
@@ -62,14 +62,14 @@ template<class T>
 class vsListIterator
 {
 	vsListEntry<T>	*	m_current;
-	
+
 public:
-	
-	vsListIterator( vsListEntry<T> *initial ): 
+
+	vsListIterator( vsListEntry<T> *initial ):
 		m_current(initial)
 	{
 	}
-	
+
 	T				Get() { return m_current->m_item; }
 	bool			Next() { m_current = m_current->m_next; return (m_current != NULL); }
 	bool			Prev() { m_current = m_current->m_prev; return (m_current != NULL); }
@@ -103,11 +103,11 @@ class vsLinkedList
 	vsPool<vsListEntry<T> >	m_entry;
 	vsListEntry<T>		*m_listEntry;
 	vsListEntry<T>		*m_tail;
-	
+
 	vsListEntry<T> *	FindEntry( T item )
 	{
 		vsListEntry<T> *ent = m_listEntry->m_next;
-		
+
 		while( ent )
 		{
 			if ( ent->m_item == item )
@@ -120,19 +120,19 @@ class vsLinkedList
 	}
 
 public:
-	
+
 	typedef vsListIterator<T> Iterator;
-	
+
 	vsLinkedList():
 		m_entry(32, vsPool<vsListEntry<T> >::Type_Expandable)
 	{
 		m_listEntry = m_entry.Borrow();
 		m_tail = m_entry.Borrow();
-		
+
 		m_listEntry->m_next = m_tail;
 		m_tail->m_prev = m_listEntry;
 	}
-	
+
 	~vsLinkedList()
 	{
 		while ( m_listEntry->m_next )
@@ -145,7 +145,7 @@ public:
 		m_listEntry = NULL;
 		m_tail = NULL;
 	}
-	
+
 	void	Clear()
 	{
 		while ( !IsEmpty() )
@@ -155,20 +155,21 @@ public:
 			m_entry.Return(ent);
 		}
 	}
-	
+
 	void	AddItem( const T &item )
 	{
 		vsListEntry<T> *ent = m_entry.Borrow();
 		ent->m_item = item;
-		
+
 		m_tail->Prepend( ent );
 	}
-	
-	void	RemoveItem( T item )
+
+	// returns false if the item wasn't in the list.
+	bool	RemoveItem( T item )
 	{
 		vsListEntry<T> *ent = FindEntry(item);
 		//vsAssert(ent, "Error: couldn't find item??");
-		
+
 		while( ent && ent != m_tail )	// no removing our tail!
 		{
 			ent->Extract();
@@ -176,6 +177,8 @@ public:
 
 			ent = FindEntry(item);
 		}
+
+		return ent != NULL;
 	}
 
 	void	Prepend( vsListIterator<T> &iter, const T &item )
@@ -183,38 +186,38 @@ public:
 		vsListEntry<T> *ent = m_entry.Borrow();
 		iter.GetEntry()->Prepend( ent );
 	}
-	
+
 	bool	Contains( T item )
 	{
-		return (NULL != FindEntry(item)); 
+		return (NULL != FindEntry(item));
 	}
-	
+
 	bool	IsEmpty()
 	{
 		vsListIterator<T> it(m_listEntry);
-		
+
 		return ( m_listEntry->m_next == m_tail );
 	}
-	
+
 	int		ItemCount()
 	{
 		int count = 0;
-		
+
 		vsListIterator<T> it(m_listEntry);
-		
+
 		while(++it != m_tail)
 		{
 			count++;
 		}
-		
+
 		return count;
 	}
-	
+
 	vsListIterator<T>	Begin() const
 	{
 		return 		++vsListIterator<T>(m_listEntry);
 	}
-	
+
 	vsListIterator<T>	End() const
 	{
 		return 		vsListIterator<T>(m_tail);
@@ -228,7 +231,7 @@ public:
 				return *iter;
 			n--;
 		}
-		
+
 		return NULL;
 	}
 };

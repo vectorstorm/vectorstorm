@@ -18,23 +18,23 @@ class vsArrayIterator
 {
 	const vsArray<T> *		m_parent;
 	int						m_current;
-	
+
 public:
-	
+
 	vsArrayIterator( const vsArray<T> *array, int initial ): m_parent(array), m_current(initial) {}
-	
+
 	T				Get() { return m_parent->Get(*this); }
-	
+
 	bool			Next() { m_current++; return (m_current < m_parent->ItemCount() ); }
 	bool			Prev() { m_current--; return (m_current >= 0); }
 	bool						operator==( const vsArrayIterator &b ) { return (m_current == b.m_current && m_parent == b.m_parent ); }
 	bool						operator!=( const vsArrayIterator &b ) { return !((*this)==b); }
 	vsArrayIterator<T>&		operator++() { Next(); return *this; }
 	vsArrayIterator<T>		operator++(int postFix) { vsArrayIterator<T> other(m_parent, m_current); Next(); return other; }
-	
+
 	vsArrayIterator<T>&		operator--() { Prev(); return *this; }
 	vsArrayIterator<T>		operator--(int postFix) { vsArrayIterator<T> other(m_parent, m_current); Prev(); return other; }
-	
+
 	friend class vsArray<T>;
 };
 
@@ -46,7 +46,7 @@ class vsArray
 	T *					m_array;
 	int					m_arrayLength;		// how many things actually in our array?
 	int					m_arrayStorage;		// how big is our storage?  (We can fit this many things into our array without resizing it)
-	
+
 	int	FindEntry( T item ) const
 	{
 		for ( int i = 0; i < m_arrayLength; i++ )
@@ -55,35 +55,35 @@ class vsArray
 				return i;
 		}
 
-		return -1;
+		return npos;
 	}
-	
+
 public:
-	
+
 	typedef vsArrayIterator<T> Iterator;
-	
+
 	vsArray( int initialStorage = 32 )
 	{
 		m_array = new T[ initialStorage ];
 		m_arrayLength = 0;
 		m_arrayStorage = initialStorage;
 	}
-	
+
 	virtual ~vsArray()
 	{
 		vsDeleteArray( m_array );
 	}
-	
+
 	T		Get( const vsArrayIterator<T> &iter ) const
 	{
-		return m_array[ iter.m_current ]; 
+		return m_array[ iter.m_current ];
 	}
 
 	virtual void	Clear()
 	{
 		m_arrayLength = 0;
 	}
-	
+
 	void	AddItem( const T &item )
 	{
 		if ( m_arrayLength < m_arrayStorage )
@@ -94,7 +94,7 @@ public:
 		{
 			// reallocate our array and copy data into it.
 			int newSize = vsMax( 16, m_arrayStorage * 2 );
-			
+
 			T *newArray = new T[newSize];
 			for ( int i = 0; i < m_arrayLength; i++ )
 			{
@@ -104,28 +104,26 @@ public:
 			m_array = newArray;
 
 			m_arrayStorage = newSize;
-			
+
 			return AddItem( item );
 		}
 	}
-	
-	void	RemoveItem( const T &item )
+
+	bool	RemoveItem( const T &item )
 	{
 		int index = FindEntry(item);
-		//vsAssert(ent, "Error: couldn't find item??");]
-		
-		if ( index != -1 )
+		if ( index != npos )
 		{
 			m_array[index] = m_array[m_arrayLength-1];
 			m_arrayLength--;
 		}
+		return index != npos;
 	}
-	
+
 	vsArrayIterator<T>	RemoveItem( vsArrayIterator<T> &item )
 	{
 		int index = item.m_current;
-		
-		if ( index != -1 )
+		if ( index != npos )
 		{
 			for ( int i = index; i < m_arrayLength-1; i++ )
 			{
@@ -133,48 +131,53 @@ public:
 			}
 			m_arrayLength--;
 		}
-		
 		if ( index < m_arrayLength )
 			return item;
-		
 		return End();
 	}
-	
+
 	bool	Contains( T item ) const
 	{
-		return (-1 != FindEntry(item)); 
+		return (npos != FindEntry(item));
 	}
-	
+
+	int		Find( T item ) const
+	{
+		return FindEntry(item);
+	}
+
 	bool	IsEmpty() const
 	{
 		return ( m_arrayLength == 0 );
 	}
-	
+
 	int		ItemCount() const
 	{
 		return m_arrayLength;
 	}
-	
+
 	vsArrayIterator<T>	Begin() const
 	{
 		return 		vsArrayIterator<T>(this,0);
 	}
-	
+
 	vsArrayIterator<T>	End() const
 	{
 		return 		vsArrayIterator<T>(this,m_arrayLength);
 	}
-	
+
 	T	&GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
 		return m_array[id];
 	}
-	
+
 	T	&operator[](int id)
 	{
 		return GetItem(id);
 	}
+
+	static const int npos = -1;
 };
 
 #endif // VS_ARRAY_H
