@@ -130,7 +130,7 @@ vsScene::Update( float timeStep )
 }
 
 void
-vsScene::Draw( vsDisplayList *list )
+vsScene::Draw( vsDisplayList *list, const DrawSettings& s )
 {
 	s_current = this;
 
@@ -145,16 +145,34 @@ vsScene::Draw( vsDisplayList *list )
 		list->SmoothShading();
 	}
 
-	if ( m_hasViewport )
+	if ( s.useCustomViewport )
 	{
+		list->SetViewport( s.customViewport );
+	}
+	else if ( m_hasViewport )
+	{
+		// TODO:  If the scene has a viewport, we should embed that viewport
+		// inside the custom one (if there is a custom one)
 		list->SetViewport( m_viewport );
 	}
 
 	if ( m_is3d )
 	{
-		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
-		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
-		list->SetCameraProjection( m_camera3D->GetTransform() );
+		vsMatrix4x4 proj = m_camera3D->GetProjectionMatrix();
+		vsTransform3D trans = m_camera3D->GetTransform();
+		if ( s.horizontalPixelOffset != 0.f)
+		{
+			vsMatrix4x4 H = vsMatrix4x4::Identity;
+			H.w.x = s.horizontalPixelOffset;
+			proj = H * proj;
+		}
+		if ( s.cameraLocalOffset != vsVector3D::Zero )
+		{
+			vsVector3D localOffset = trans.GetRotation().ApplyTo(s.cameraLocalOffset);
+			trans.SetTranslation( trans.GetTranslation() + localOffset );
+		}
+		list->SetProjectionMatrix4x4(proj);
+		list->SetCameraProjection(trans);
 
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
@@ -168,7 +186,6 @@ vsScene::Draw( vsDisplayList *list )
 		{
 			list->Fog( *m_fog );
 		}
-
 	}
 	else
 	{

@@ -24,6 +24,9 @@ find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
 
+find_path(OVR_INCLUDE_DIR OVR.h REQUIRED HINTS ../LibOVR/Include/)
+
+
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
 	${SDL_LIBRARY}
@@ -32,6 +35,7 @@ set(VS_LIBRARIES
 	${PNG_LIBRARY}
 	${GLEW_LIBRARY}
 	${BOX2D_LIBRARY}
+	${OVR_LIBRARY}
 	)
 
 include_directories(
@@ -42,6 +46,7 @@ include_directories(
 	${ZLIB_INCLUDE_DIRS} 
 	${GLEW_INCLUDE_DIR} 
 	${BOX2D_INCLUDE_DIR}
+	${OVR_INCLUDE_DIR}
 	#/usr/local/include
 	)
 
@@ -62,231 +67,101 @@ endif ()
 
 set(CORE_SOURCES
 	VS/Core/Core.cpp
-	VS/Core/Core.h
 	VS/Core/CORE_Game.cpp
-	VS/Core/CORE_Game.h
 	VS/Core/CORE_GameMode.cpp
-	VS/Core/CORE_GameMode.h
 	VS/Core/CORE_GameRegistry.cpp
-	VS/Core/CORE_GameRegistry.h
 	VS/Core/CORE_GameSystem.cpp
-	VS/Core/CORE_GameSystem.h
 	)
 set(FILES_SOURCES
 	VS/Files/VS_File.cpp
-	VS/Files/VS_File.h
 	VS/Files/VS_Record.cpp
-	VS/Files/VS_Record.h
 	VS/Files/VS_Token.cpp
-	VS/Files/VS_Token.h
 	)
 set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Camera.cpp
-	VS/Graphics/VS_Camera.h
 	VS/Graphics/VS_Color.cpp
-	VS/Graphics/VS_Color.h
 	VS/Graphics/VS_DisplayList.cpp
-	VS/Graphics/VS_DisplayList.h
 	VS/Graphics/VS_Entity.cpp
-	VS/Graphics/VS_Entity.h
 	VS/Graphics/VS_Fog.cpp
-	VS/Graphics/VS_Fog.h
 	VS/Graphics/VS_Font.cpp
-	VS/Graphics/VS_Font.h
 	VS/Graphics/VS_Fragment.cpp
-	VS/Graphics/VS_Fragment.h
 	VS/Graphics/VS_Light.cpp
-	VS/Graphics/VS_Light.h
 	VS/Graphics/VS_Material.cpp
-	VS/Graphics/VS_Material.h
 	VS/Graphics/VS_MaterialInternal.cpp
-	VS/Graphics/VS_MaterialInternal.h
 	VS/Graphics/VS_MaterialManager.cpp
-	VS/Graphics/VS_MaterialManager.h
 	VS/Graphics/VS_Mesh.cpp
-	VS/Graphics/VS_Mesh.h
 	VS/Graphics/VS_Model.cpp
-	VS/Graphics/VS_Model.h
 	VS/Graphics/VS_Overlay.cpp
-	VS/Graphics/VS_Overlay.h
 	VS/Graphics/VS_RenderBuffer.cpp
-	VS/Graphics/VS_RenderBuffer.h
 	VS/Graphics/VS_RenderQueue.cpp
-	VS/Graphics/VS_RenderQueue.h
 	VS/Graphics/VS_RenderTarget.cpp
-	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
-	VS/Graphics/VS_Renderer.h
 	VS/Graphics/VS_RendererBloom.cpp
-	VS/Graphics/VS_RendererBloom.h
 	VS/Graphics/VS_RendererPretty.cpp
-	VS/Graphics/VS_RendererPretty.h
 	VS/Graphics/VS_RendererShader.cpp
-	VS/Graphics/VS_RendererShader.h
 	VS/Graphics/VS_RendererSimple.cpp
-	VS/Graphics/VS_RendererSimple.h
 	VS/Graphics/VS_RendererState.cpp
-	VS/Graphics/VS_RendererState.h
+	VS/Graphics/VS_Rift.cpp
 	VS/Graphics/VS_Scene.cpp
-	VS/Graphics/VS_Scene.h
 	VS/Graphics/VS_Screen.cpp
-	VS/Graphics/VS_Screen.h
 	VS/Graphics/VS_Shader.cpp
-	VS/Graphics/VS_Shader.h
 	VS/Graphics/VS_ShaderSuite.cpp
-	VS/Graphics/VS_ShaderSuite.h
 	VS/Graphics/VS_Sprite.cpp
-	VS/Graphics/VS_Sprite.h
 	VS/Graphics/VS_Texture.cpp
-	VS/Graphics/VS_Texture.h
 	VS/Graphics/VS_TextureInternal.cpp
-	VS/Graphics/VS_TextureInternal.h
-	VS/Graphics/VS_TextureInternalIPhone.h
 	VS/Graphics/VS_TextureManager.cpp
-	VS/Graphics/VS_TextureManager.h
-	)
-set(INPUT_SOURCES
 	VS/Input/VS_Input.cpp
-	VS/Input/VS_Input.h
-	)
-set(MATH_SOURCES
-	VS/Math/MT/SFMT-params.h
-	VS/Math/MT/SFMT-params11213.h
-	VS/Math/MT/SFMT-params1279.h
-	VS/Math/MT/SFMT-params132049.h
-	VS/Math/MT/SFMT-params19937.h
-	VS/Math/MT/SFMT-params216091.h
-	VS/Math/MT/SFMT-params2281.h
-	VS/Math/MT/SFMT-params4253.h
-	VS/Math/MT/SFMT-params44497.h
-	VS/Math/MT/SFMT-params607.h
-	VS/Math/MT/SFMT-params86243.h
 	VS/Math/MT/SFMT.cpp
-	VS/Math/MT/SFMT.h
 	VS/Math/VS_Angle.cpp
-	VS/Math/VS_Angle.h
 	VS/Math/VS_Box.cpp
-	VS/Math/VS_Box.h
 	VS/Math/VS_EulerAngles.cpp
-	VS/Math/VS_EulerAngles.h
 	VS/Math/VS_Frustum.cpp
-	VS/Math/VS_Frustum.h
 	VS/Math/VS_Math.cpp
-	VS/Math/VS_Math.h
 	VS/Math/VS_Matrix.cpp
-	VS/Math/VS_Matrix.h
 	VS/Math/VS_Perlin.cpp
-	VS/Math/VS_Perlin.h
 	VS/Math/VS_Quaternion.cpp
-	VS/Math/VS_Quaternion.h
 	VS/Math/VS_Random.cpp
-	VS/Math/VS_Random.h
 	VS/Math/VS_Spline.cpp
-	VS/Math/VS_Spline.h
 	VS/Math/VS_Transform.cpp
-	VS/Math/VS_Transform.h
 	VS/Math/VS_Vector.cpp
-	VS/Math/VS_Vector.h
-	)
-set(MEMORY_SOURCES
 	VS/Memory/VS_Heap.cpp
-	VS/Memory/VS_Heap.h
 	VS/Memory/VS_Serialiser.cpp
-	VS/Memory/VS_Serialiser.h
 	VS/Memory/VS_Store.cpp
-	VS/Memory/VS_Store.h
-	)
-set(NETWORK_SOURCES
 	VS/Network/VS_NetClient.cpp
-	VS/Network/VS_NetClient.h
 	VS/Network/VS_Socket.cpp
-	VS/Network/VS_Socket.h
 	VS/Network/VS_SocketTCP.cpp
-	VS/Network/VS_SocketTCP.h
-	)
-set(PHYSICS_SOURCES
 	VS/Physics/VS_CollisionObject.cpp
-	VS/Physics/VS_CollisionObject.h
 	VS/Physics/VS_CollisionSystem.cpp
-	VS/Physics/VS_CollisionSystem.h
 	VS/Physics/VS_PhysicsEmitter.cpp
-	VS/Physics/VS_PhysicsEmitter.h
 	VS/Physics/VS_PhysicsSprite.cpp
-	VS/Physics/VS_PhysicsSprite.h
-	)
-set(SOUND_SOURCES
 	VS/Sound/VS_Music.cpp
-	VS/Sound/VS_Music.h
 	VS/Sound/VS_SoundSample.cpp
-	VS/Sound/VS_SoundSample.h
 	VS/Sound/VS_SoundSystem.cpp
-	VS/Sound/VS_SoundSystem.h
-	)
-set(THREADS_SOURCES
 	VS/Threads/VS_Mutex.cpp
-	VS/Threads/VS_Mutex.h
 	VS/Threads/VS_Semaphore.cpp
-	VS/Threads/VS_Semaphore.h
 	VS/Threads/VS_Task.cpp
-	VS/Threads/VS_Task.h
-	)
-set(UTILS_SOURCES
-	VS/Utils/VS_Array.h
-	VS/Utils/VS_ArrayStore.h
-	VS/Utils/VS_AutomaticInstanceList.h
 	#VS/Utils/VS_Cache.cpp
-	VS/Utils/VS_Cache.h
 	VS/Utils/VS_Debug.cpp
-	VS/Utils/VS_Debug.h
 	VS/Utils/VS_Factory.cpp
-	VS/Utils/VS_Factory.h
 	#VS/Utils/VS_FontMaker.cpp
-	VS/Utils/VS_FontMaker.h
 	VS/Utils/VS_HashTable.cpp
-	VS/Utils/VS_HashTable.h
 	#VS/Utils/VS_HashTableStore.cpp
-	VS/Utils/VS_HashTableStore.h
 	VS/Utils/VS_Image.cpp
-	VS/Utils/VS_Image.h
-	VS/Utils/VS_LinkedList.h
-	VS/Utils/VS_LinkedListStore.h
 	VS/Utils/VS_LocalisationTable.cpp
-	VS/Utils/VS_LocalisationTable.h
 	VS/Utils/VS_Log.cpp
-	VS/Utils/VS_Log.h
 	VS/Utils/VS_Menu.cpp
-	VS/Utils/VS_Menu.h
 	VS/Utils/VS_MeshMaker.cpp
-	VS/Utils/VS_MeshMaker.h
 	VS/Utils/VS_Octree.cpp
-	VS/Utils/VS_Octree.h
-	VS/Utils/VS_PointOctree.h
 	#VS/Utils/VS_Pool.cpp
-	VS/Utils/VS_Pool.h
 	VS/Utils/VS_Preferences.cpp
-	VS/Utils/VS_Preferences.h
 	VS/Utils/VS_Primitive.cpp
-	VS/Utils/VS_Primitive.h
-	VS/Utils/VS_Singleton.h
 	VS/Utils/VS_SingletonManager.cpp
-	VS/Utils/VS_SingletonManager.h
 	VS/Utils/VS_Spring.cpp
-	VS/Utils/VS_Spring.h
 	VS/Utils/VS_String.cpp
-	VS/Utils/VS_String.h
-	VS/Utils/VS_StrongPointer.h
-	VS/Utils/VS_StrongPointerTarget.h
 	VS/Utils/VS_System.cpp
-	VS/Utils/VS_System.h
 	VS/Utils/VS_Timer.cpp
-	VS/Utils/VS_Timer.h
 	VS/Utils/VS_TimerSystem.cpp
-	VS/Utils/VS_TimerSystem.h
-	VS/Utils/VS_Tween.h
-	VS/Utils/VS_WeakPointer.h
-	VS/Utils/VS_WeakPointerTarget.h
 	VS/Utils/img_savepng.cpp
-	VS/Utils/img_savepng.h
 	)
 set(SOURCES
 	VS/VS_Headers.h

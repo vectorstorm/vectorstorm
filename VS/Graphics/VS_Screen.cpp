@@ -16,8 +16,10 @@
 #include "VS_RendererShader.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
+#include "VS_Rift.h"
 
 #include "VS_TimerSystem.h"
+
 
 const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
 
@@ -28,6 +30,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_height(height),
 	m_depth(depth),
 	m_fullscreen(fullscreen),
+	m_useRift(true),
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
@@ -53,6 +56,31 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 
 	m_fifo = new vsDisplayList(c_fifoSize);
 	m_subfifo = new vsDisplayList(c_fifoSize);
+
+	if ( m_useRift )
+	{
+		m_riftObject = new vsRift;
+		// For now, hard-code 64 mm "Interpupillary Distance".
+		//
+		// Which is fancy-talk for "distance between pupils".
+		//
+		float ipd = m_riftObject->GetDistanceBetweenPupils();
+		float lens_offset = m_riftObject->GetLensSeparationDistance();
+
+		float viewCenter         = m_riftObject->GetHScreenSize() * 0.25f;
+		float eyeProjectionShift = viewCenter - lens_offset*0.5f;
+		float projectionCenterOffset   = 4.0f * eyeProjectionShift / m_riftObject->GetHScreenSize();
+
+		m_riftLeftEyeSettings.useCustomViewport = true;
+		m_riftLeftEyeSettings.customViewport = vsBox2D( vsVector2D::Zero, vsVector2D(0.5f,1.f) );
+		m_riftLeftEyeSettings.horizontalPixelOffset = projectionCenterOffset;
+		m_riftLeftEyeSettings.cameraLocalOffset = vsVector3D(-0.5f * ipd,0.f,0.f);
+
+		m_riftRightEyeSettings.useCustomViewport = true;
+		m_riftRightEyeSettings.customViewport = vsBox2D( vsVector2D(0.5f,0.f), vsVector2D::One );
+		m_riftRightEyeSettings.horizontalPixelOffset = -projectionCenterOffset;
+		m_riftLeftEyeSettings.cameraLocalOffset = vsVector3D(0.5f * ipd,0.f,0.f);
+	}
 }
 
 vsScreen::~vsScreen()
@@ -62,6 +90,7 @@ vsScreen::~vsScreen()
 	delete m_fifo;
 	delete m_subfifo;
 	delete m_renderer;
+	vsDelete(m_riftObject);
 }
 
 void
@@ -141,12 +170,11 @@ vsScreen::Update( float timeStep )
 }
 
 static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us about how much display list we're using until we're at least half full
-//static long s_fifoHighWaterMark = 0;	// don't start warning us about how much display list we're using until we're at least half full
 
 void
 vsScreen::Draw()
 {
-    DrawWithSettings( m_defaultRenderSettings );
+	DrawWithSettings( m_defaultRenderSettings  );
 }
 
 void
@@ -156,18 +184,35 @@ vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
 	if ( m_scene == NULL )
 		return;
 
+	int renders = 1;
+	vsScene::DrawSettings *settings[2];
+	if ( m_useRift )
+	{
+		renders = 2;
+		settings[0] = &m_riftLeftEyeSettings;
+		settings[1] = &m_riftRightEyeSettings;
+	}
+	else
+	{
+		renders = 1;
+		settings[0] = &m_defaultSceneDrawSettings;
+	}
+
 	m_renderer->PreRender(s);
 
-	for ( int i = 0; i < m_sceneCount; i++ )
+	for ( int draw = 0; draw < renders; draw++ )
 	{
-		m_fifo->Clear();
-		m_scene[i]->Draw( m_fifo );
-		m_renderer->RenderDisplayList(m_fifo);
-
-		if ( m_fifo->GetSize() > s_fifoHighWaterMark )
+		for ( int i = 0; i < m_sceneCount; i++ )
 		{
-			printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
-			s_fifoHighWaterMark = m_fifo->GetSize();
+			m_fifo->Clear();
+			m_scene[i]->Draw( m_fifo, *settings[draw] );
+			m_renderer->RenderDisplayList(m_fifo);
+
+			if ( m_fifo->GetSize() > s_fifoHighWaterMark )
+			{
+				printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
+				s_fifoHighWaterMark = m_fifo->GetSize();
+			}
 		}
 	}
 
@@ -195,7 +240,7 @@ vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene,
 		{
 			for ( int i = firstScene; i <= lastScene; i++ )
 			{
-				m_scene[i]->Draw( m_subfifo );
+				m_scene[i]->Draw( m_subfifo, m_defaultSceneDrawSettings );
 				m_renderer->RenderDisplayList( m_subfifo );
 			}
 			m_renderer->PostRenderTarget( target );
@@ -236,6 +281,10 @@ vsScreen::GetTrueAspectRatio()
         {
             return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
         }
+	}
+	if ( m_useRift )
+	{
+		return m_aspectRatio * 0.5f;
 	}
 
 	return m_aspectRatio;

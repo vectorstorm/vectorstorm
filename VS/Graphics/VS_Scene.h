@@ -14,7 +14,12 @@
 #include "VS/Math/VS_Vector.h"
 #include "VS/Math/VS_Transform.h"
 #include "VS/Graphics/VS_DisplayList.h"
-#include "VS/Graphics/VS_Screen.h"
+//#include "VS/Graphics/VS_Screen.h"
+
+#if defined(_DEBUG)
+#define DEBUG_SCENE
+#endif // _DEBUG
+
 
 class vsEntity;
 class vsDisplayList;
@@ -52,6 +57,23 @@ class vsScene
 
 public:
 
+	struct DrawSettings
+	{
+		vsBox2D customViewport;
+		bool useCustomViewport;
+
+		float horizontalPixelOffset;
+		vsVector3D cameraLocalOffset;
+
+		DrawSettings():
+			customViewport(),
+			useCustomViewport(false),
+			horizontalPixelOffset(0.f),
+			cameraLocalOffset(vsVector3D::Zero)
+		{
+		}
+	};
+
 	vsScene();
 	virtual			~vsScene();
 
@@ -83,7 +105,7 @@ public:
 #endif // DEBUG_SCENE
 
 	void			Update( float timeStep );
-	void			Draw( vsDisplayList *list );
+	void			Draw( vsDisplayList *list, const DrawSettings& s );
 
 	void			RegisterEntityOnTop( vsEntity *sprite );
 	void			RegisterEntityOnBottom( vsEntity *sprite );

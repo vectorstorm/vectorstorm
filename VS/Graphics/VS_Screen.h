@@ -10,24 +10,26 @@
 #ifndef VS_SCREEN_H
 #define VS_SCREEN_H
 
-#if defined(_DEBUG)
-#define DEBUG_SCENE
-#endif // _DEBUG
-
 #include "Graphics/VS_Renderer.h"
+#include "Graphics/VS_Scene.h"
 #include "Utils/VS_Singleton.h"
 
 class vsDisplayList;
 class vsScene;
 class vsRenderTarget;
 class vsImage;
+class vsRift;
 
 
 class vsScreen
 {
 	vsRenderer *		m_renderer;		// our renderer
 	vsScene **			m_scene;		// our draw scenes
-    vsRenderer::Settings    m_defaultRenderSettings;
+	vsRift *			m_riftObject;
+	vsRenderer::Settings    m_defaultRenderSettings;
+	vsScene::DrawSettings    m_defaultSceneDrawSettings;
+	vsScene::DrawSettings    m_riftLeftEyeSettings;
+	vsScene::DrawSettings    m_riftRightEyeSettings;
 
 	int					m_sceneCount;	// how many layers we have
 
@@ -39,6 +41,7 @@ class vsScreen
 	int					m_depth;
 	float				m_aspectRatio;
 	bool				m_fullscreen;
+	bool				m_useRift;
 
 	vsRenderTarget *	m_currentRenderTarget;
     const vsRenderer::Settings *m_currentSettings;
