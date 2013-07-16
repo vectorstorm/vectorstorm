@@ -12,26 +12,59 @@ using namespace OVR;
 
 Ptr<DeviceManager> pManager;
 Ptr<HMDDevice>     pHMD;
+Ptr<SensorDevice>  pSensor;
 HMDInfo hmd;
+SensorFusion FusionResult;
 
-vsRift::vsRift()
+vsRift::vsRift():
+	m_hasHmd(false)
 {
 	System::Init(Log::ConfigureDefaultLog(LogMask_All));
-	pManager = *DeviceManager::Create();
-	pHMD     = *pManager->EnumerateDevices<HMDDevice>().CreateDevice();
-	if (pHMD->GetDeviceInfo(&hmd))
+	Ptr<DeviceManager> pManager = *DeviceManager::Create();
+	pHMD = *pManager->EnumerateDevices<HMDDevice>().CreateDevice();
+
+	if (pHMD)
 	{
+		m_hasHmd = pHMD->GetDeviceInfo(&hmd);
+
 		m_monitorName    = hmd.DisplayDeviceName;
 		m_eyeDistance    = hmd.InterpupillaryDistance;
 		for ( int i = 0; i < 4; i++ )
 		{
 			m_distortionK[i] = hmd.DistortionK[i];
 		}
+
+		pSensor = *pHMD->GetSensor();
 	}
+	else
+	{
+		pSensor = *pManager->EnumerateDevices<SensorDevice>().CreateDevice();
+	}
+
+	if (pSensor)
+	{
+		FusionResult.AttachToSensor(pSensor);
+	}
+
+	//DeviceEnumerator<HMDDevice> de = pManager->EnumerateDevices<HMDDevice>();
+	//pHMD     = de.CreateDevice();
+	//if (pHMD && pHMD->GetDeviceInfo(&hmd))
+	//{
+	//m_hasHmd = true;
+	//m_monitorName    = hmd.DisplayDeviceName;
+	//m_eyeDistance    = hmd.InterpupillaryDistance;
+	//for ( int i = 0; i < 4; i++ )
+	//{
+	//m_distortionK[i] = hmd.DistortionK[i];
+	//}
+	//}
 }
 
 vsRift::~vsRift()
 {
+	pSensor.Clear();
+	pHMD.Clear();
+	pManager.Clear();
 	System::Destroy();
 }
 
@@ -58,3 +91,16 @@ vsRift::GetDistanceBetweenPupils() const
 {
 	return hmd.InterpupillaryDistance;
 }
+
+vsVector4D
+vsRift::GetDistortionK() const
+{
+	return vsVector4D(
+			m_distortionK[0],
+			m_distortionK[1],
+			m_distortionK[2],
+			m_distortionK[3]
+			);
+
+}
+

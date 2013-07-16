@@ -14,6 +14,7 @@
 #include "VS_RendererPretty.h"
 #include "VS_RendererBloom.h"
 #include "VS_RendererShader.h"
+#include "VS_RendererRift.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
 #include "VS_Rift.h"
@@ -25,12 +26,12 @@ const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
 
 vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_scene(NULL),
+	m_riftObject(NULL),
 	m_sceneCount(0),
 	m_width(width),
 	m_height(height),
 	m_depth(depth),
 	m_fullscreen(fullscreen),
-	m_useRift(true),
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
@@ -42,7 +43,10 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 #if TARGET_OS_IPHONE
 	m_renderer = new vsRendererPretty();
 #else
-	if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
+	m_riftObject = new vsRift;
+	if ( m_riftObject->HasRift() && vsRendererRift::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
+		m_renderer = new vsRendererRift();
+	else if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
 		m_renderer = new vsRendererShader();
 	else if ( vsRendererBloom::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
 		m_renderer = new vsRendererBloom();
@@ -57,9 +61,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_fifo = new vsDisplayList(c_fifoSize);
 	m_subfifo = new vsDisplayList(c_fifoSize);
 
-	if ( m_useRift )
+	if ( m_riftObject->HasRift() )
 	{
-		m_riftObject = new vsRift;
 		// For now, hard-code 64 mm "Interpupillary Distance".
 		//
 		// Which is fancy-talk for "distance between pupils".
@@ -186,7 +189,7 @@ vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
 
 	int renders = 1;
 	vsScene::DrawSettings *settings[2];
-	if ( m_useRift )
+	if ( m_riftObject->HasRift() )
 	{
 		renders = 2;
 		settings[0] = &m_riftLeftEyeSettings;
@@ -282,7 +285,7 @@ vsScreen::GetTrueAspectRatio()
             return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
         }
 	}
-	if ( m_useRift )
+	if ( m_riftObject->HasRift() )
 	{
 		return m_aspectRatio * 0.5f;
 	}

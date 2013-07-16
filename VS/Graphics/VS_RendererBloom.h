@@ -45,6 +45,7 @@ class vsRendererBloom : public vsRendererSimple
 {
 	typedef vsRendererSimple Parent;
 
+protected:
 	GLuint			m_combineProg;
 	GLuint			m_filterProg;
 	GLuint			m_overlayProg;
@@ -65,7 +66,6 @@ class vsRendererBloom : public vsRendererSimple
 	void			Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir);
 	void			ClearSurface();
 
-protected:
 	GLuint			Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
 	void			DestroyShader(GLuint shader);
 
@@ -83,6 +83,7 @@ public:
 	virtual void	PreRender( const Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
+	virtual void	PostBloom() {}
 
 	virtual bool	SupportsShaders() { return true; }
 

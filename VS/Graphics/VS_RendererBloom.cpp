@@ -333,7 +333,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	settings.depth = true;
     settings.linear = true;
 	settings.mipMaps = false;
-	settings.ortho = true;
+	settings.ortho = false;
 	settings.stencil = true;
 
 	if ( m_antialias )
@@ -765,7 +765,7 @@ vsRendererBloom::PostRender()
 
 	int p;
 
-//	glDisable(GL_MULTISAMPLE);
+	//	glDisable(GL_MULTISAMPLE);
 	glUseProgram(0);
 	glBlendFunc( GL_ONE, GL_ZERO );
 
@@ -774,8 +774,8 @@ vsRendererBloom::PostRender()
 	glColor4f(glowBrightness,glowBrightness,glowBrightness,1.f);
 
 	glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
-    glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
+	glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glGenerateMipmapEXT(GL_TEXTURE_2D);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -787,8 +787,8 @@ vsRendererBloom::PostRender()
 	float right = (2.0f * m_scene->GetTexWidth()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 	float bot = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 
-//	glUseProgram(0);
-    glUseProgram(m_hipassProg);
+	//	glUseProgram(0);
+	glUseProgram(m_hipassProg);
 
 	float v[8] = {
 		left, top,
@@ -823,80 +823,94 @@ vsRendererBloom::PostRender()
 
 	glColor4f(1.f,1.f,1.f,1.f);
 
-    for (p = 1; p < FILTER_COUNT; p++)
-    {
+	for (p = 1; p < FILTER_COUNT; p++)
+	{
 		m_pass[p-1]->BlitTo( m_pass[p] );
 
-							/*
-		if ( glBindFramebufferEXT && glBlitFramebufferEXT )
-		{
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_pass[p-1].fbo);
-			//Bind the standard FBO
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, m_pass[p].fbo);
-			//Let's say I want to copy the entire surface
-			//Let's say I only want to copy the color buffer only
-			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimension
-			glBlitFramebufferEXT(0, 0, m_pass[p-1].width, m_pass[p-1].height, 0, 0, m_pass[p].width, m_pass[p].height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		/*
+		   if ( glBindFramebufferEXT && glBlitFramebufferEXT )
+		   {
+		   glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_pass[p-1].fbo);
+		//Bind the standard FBO
+		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, m_pass[p].fbo);
+		//Let's say I want to copy the entire surface
+		//Let's say I only want to copy the color buffer only
+		//Let's say I don't need the GPU to do filtering since both surfaces have the same dimension
+		glBlitFramebufferEXT(0, 0, m_pass[p-1].width, m_pass[p-1].height, 0, 0, m_pass[p].width, m_pass[p].height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 		}
 		else
 		{
-			glBindTexture(GL_TEXTURE_2D, m_pass[p-1].texture);
-			BindSurface(&m_pass[p]);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindTexture(GL_TEXTURE_2D, m_pass[p-1].texture);
+		BindSurface(&m_pass[p]);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
-							 */
-    }
+		*/
+	}
 
 	// Perform the horizontal blurring pass.
 	Blur(m_pass, m_pass2, FILTER_COUNT, HORIZONTAL);
-    // Perform the vertical blurring pass.
+	// Perform the vertical blurring pass.
 	//Blur(m_pass2, m_pass, FILTER_COUNT, VERTICAL);
+#if 1
+	m_scene->Bind();
+	//m_window->Bind();
 
+	glUseProgram(m_combineProg);
 
-	m_window->Bind();
-	//ClearSurface();
+	for (p = 0; p < FILTER_COUNT; p++)
+	{
+		glActiveTexture(GL_TEXTURE0 + p);
+		glBindTexture(GL_TEXTURE_2D, m_pass[p]->GetTexture()->GetResource()->GetTexture());
+		glEnable(GL_TEXTURE_2D);
 
-    glUseProgram(m_combineProg);
-
-    for (p = 0; p < FILTER_COUNT; p++)
-    {
-        glActiveTexture(GL_TEXTURE0 + p);
-        glBindTexture(GL_TEXTURE_2D, m_pass[p]->GetTexture()->GetResource()->GetTexture());
-        glEnable(GL_TEXTURE_2D);
-
-        glUniform1i(m_passInt[p], p);
-    }
+		glUniform1i(m_passInt[p], p);
+	}
 
 	glActiveTexture(GL_TEXTURE0 + FILTER_COUNT);
 	glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
-    glEnable(GL_TEXTURE_2D);
-    glUniform1i(m_combineScene, FILTER_COUNT);
+	glEnable(GL_TEXTURE_2D);
+	glUniform1i(m_combineScene, FILTER_COUNT);
 
-	glVertexPointer( 2, GL_FLOAT, 0, wv );
-	/*
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2i(0, 0); glVertex2i(0, 0);
-    glTexCoord2f(m_scene.texWidth, 0); glVertex2i(m_window.width, 0);
-    glTexCoord2f(0, m_scene.texHeight); glVertex2i(0, m_window.height);
-    glTexCoord2f(m_scene.texWidth, m_scene.texHeight); glVertex2i(m_window.width, m_window.height);
-    glEnd();
-	*/
+	glVertexPointer( 2, GL_FLOAT, 0, v );
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	//m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+	//m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 	m_state.Flush();
 
-    glUseProgram(0);
+	glUseProgram(0);
+#endif // 0
 
-    for (p = 0; p < FILTER_COUNT; p++)
-    {
-        glActiveTexture(GL_TEXTURE0 + p);
-        glDisable(GL_TEXTURE_2D);
-    }
-    glActiveTexture(GL_TEXTURE0 + FILTER_COUNT);
-    glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0);
+	glUseProgram(0);
+	for (p = 0; p < FILTER_COUNT; p++)
+	{
+		glActiveTexture(GL_TEXTURE0 + p);
+		glDisable(GL_TEXTURE_2D);
+	}
+	glActiveTexture(GL_TEXTURE0 + FILTER_COUNT);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_TEXTURE_2D);
+
+	glUseProgram(0);
+
+	PostBloom();
+	m_scene->Resolve();
+
+	m_window->Bind();
+	//m_window->Clear();
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
+	//glVertexPointer( 2, GL_FLOAT, 0, wv );
+	//glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBegin(GL_QUADS);
+	glTexCoord2i(0, 0); glVertex2i(0, 0);
+	glTexCoord2f(m_scene->GetTexWidth(), 0); glVertex2i(m_window->GetWidth(), 0);
+	glTexCoord2f(m_scene->GetTexWidth(), m_scene->GetTexHeight()); glVertex2i(m_window->GetWidth(), m_window->GetHeight());
+	glTexCoord2f(0, m_scene->GetTexHeight()); glVertex2i(0, m_window->GetHeight());
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+
 
 #if defined(_DEBUG)
 
@@ -916,7 +930,7 @@ vsRendererBloom::PostRender()
 		{
 			glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		//	glGenerateMipmapEXT(GL_TEXTURE_2D);
+			//	glGenerateMipmapEXT(GL_TEXTURE_2D);
 		}
 
 		glBegin(GL_QUADS);

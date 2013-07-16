@@ -98,6 +98,7 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_RendererBloom.cpp
 	VS/Graphics/VS_RendererPretty.cpp
+	VS/Graphics/VS_RendererRift.cpp
 	VS/Graphics/VS_RendererShader.cpp
 	VS/Graphics/VS_RendererSimple.cpp
 	VS/Graphics/VS_RendererState.cpp

@@ -8,6 +8,7 @@
  */
 
 #ifndef VS_RENDERERSHADER_H
+#define VS_RENDERERSHADER_H
 
 #include "VS_RendererBloom.h"
 
