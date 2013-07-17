@@ -26,35 +26,37 @@ static const char *distortf = STRINGIFY(
 								  uniform vec2 Scale;
 								  uniform vec2 ScaleIn;
 								  uniform vec4 HmdWarpParam;
+								  uniform vec4 ChromAbParam;
 
-								  vec2 HmdWarp(vec2 tc)
+								  void main(void)
 								  {
-								  vec2 theta = (tc - LensCenter) * ScaleIn; // Scales to [-1,1]
+								  vec2 theta = (gl_TexCoord[0].st - LensCenter) * ScaleIn; // Scales to [-1,1]
 								  float rSq = theta.x * theta.x + theta.y * theta.y;
 								  vec2 rvector = theta * (HmdWarpParam.x + HmdWarpParam.y * rSq +
 									  HmdWarpParam.z * rSq * rSq +
 									  HmdWarpParam.w * rSq * rSq * rSq);
-								  return LensCenter + Scale * rvector;
+								  // Detect whether blue texture coordinates
+								  // are out of range since these will be
+								  // scaled the furthest.
+								  vec2 thetaBlue = rvector * (ChromAbParam.z + ChromAbParam.w * rSq);
+								  vec2 tcBlue = LensCenter + Scale * thetaBlue;
+								  if ( tcBlue.x < ScreenCenter.x - 0.25 || tcBlue.x > ScreenCenter.x + 0.25 )
+								  {
+									  gl_FragColor = vec4(0.0,0.0,0.0,1.0);
 								  }
-
-								  void main(void)
+								  else if ( tcBlue.y < ScreenCenter.y - 0.5 || tcBlue.y > ScreenCenter.y + 0.5 )
 								  {
-								  vec2 tc = HmdWarp(gl_TexCoord[0].st);
-								  //gl_FragColor = vec4(gl_TexCoord[0].s, gl_TexCoord[0].t, 0.0, 1.0);
-								  //gl_FragColor = vec4(Scale.x, Scale.y, 0.0, 1.0);
-								  //vec2 tc = gl_TexCoord[0].st;
-								  if ( tc.x < ScreenCenter.x - 0.25 || tc.x > ScreenCenter.x + 0.25 )
-								  {
-									  gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-								  }
-								  else if ( tc.y < ScreenCenter.y - 0.5 || tc.y > ScreenCenter.y + 0.5 )
-								  {
-									  gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+									  gl_FragColor = vec4(0.0,0.0,0.0,1.0);
 								  }
 								  else
 								  {
-									  vec4 t0 = texture2D(Scene, tc);
-									  gl_FragColor = t0;
+									  float blue = texture2D(Scene, tcBlue).b;
+									  vec2 tcGreen = LensCenter + Scale * rvector;
+									  vec4 green = texture2D(Scene, tcGreen);
+									  vec2 thetaRed = rvector * (ChromAbParam.x + ChromAbParam.y * rSq);
+									  vec2 tcRed = LensCenter + Scale * thetaRed;
+									  float red = texture2D(Scene, tcRed).r;
+									  gl_FragColor = vec4(red, green.g, blue, green.a);
 									  //gl_FragColor = vec4(0.5 + 0.5 * tc.s, 0.5 + 0.5 * tc.t, 0.0, 1.0);
 								  }
 								  //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
@@ -81,6 +83,7 @@ vsRendererRift::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
     m_scaleIn = glGetUniformLocation(m_distortProg, "ScaleIn");
     m_hmdWarpParam = glGetUniformLocation(m_distortProg, "HmdWarpParam");
 	m_textureSampler = glGetUniformLocation(m_distortProg, "Scene");
+	m_chromAbParam = glGetUniformLocation(m_distortProg, "ChromAbParam");
 }
 
 void
@@ -135,7 +138,6 @@ vsRendererRift::PostBloom()
 		vsVector2D scaleIn(2.0 / (texWidth), 2.0 / (texHeight) / aspectRatio);
 		float scaleFactor = 1.0f / edp.Scale;
 		vsVector2D scale(((texWidth)/2.0f) * scaleFactor, ((texHeight)/ 2.0f) * scaleFactor * aspectRatio);
-		//scale *= 0.8f;
 		vsVector4D distortionK = r->GetDistortionK();
 		glUniform1i(m_textureSampler, 0);
 		glUniform2fv(m_lensCenter, 1, (float*)&lensCenter);
@@ -143,6 +145,7 @@ vsRendererRift::PostBloom()
 		glUniform2fv(m_scale, 1, (float*)&scale);
 		glUniform2fv(m_scaleIn, 1, (float*)&scaleIn);
 		glUniform4fv(m_hmdWarpParam, 1, (float*)&distortionK);
+		glUniform4fv(m_chromAbParam, 1, edp.ChromaticAberration);
 
 		m_scene->Bind();
 		//glUseProgram(0);
@@ -186,7 +189,7 @@ vsRendererRift::PostBloom()
 		vsVector2D scaleIn(2.0 / (texWidth), 2.0 / (texHeight) / aspectRatio);
 		float scaleFactor = 1.0f / edp.Scale;
 		vsVector2D scale(((texWidth)/2.0f) * scaleFactor, ((texHeight)/ 2.0f) * scaleFactor * aspectRatio);
-		//scale *= 0.8f;
+		glUniform4fv(m_chromAbParam, 1, edp.ChromaticAberration);
 		vsVector4D distortionK = r->GetDistortionK();
 		glUniform1i(m_textureSampler, 0);
 		glUniform2fv(m_lensCenter, 1, (float*)&lensCenter);

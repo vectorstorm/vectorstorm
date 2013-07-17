@@ -14,7 +14,7 @@
 class vsRendererRift: public vsRendererShader
 {
 	GLuint			m_distortProg;
-	GLint m_textureSampler, m_lensCenter, m_screenCenter, m_scale, m_scaleIn, m_hmdWarpParam;
+	GLint m_textureSampler, m_lensCenter, m_screenCenter, m_scale, m_scaleIn, m_hmdWarpParam, m_chromAbParam;
 public:
 	vsRendererRift();
 	virtual ~vsRendererRift();
