@@ -114,16 +114,18 @@ vsQuaternion
 vsRift::GetOrientation() const
 {
     Quatf q = FusionResult.GetOrientation();
-	float yaw, pitch, roll;
-	q.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
-	vsEulerAngles ang;
-	ang.yaw = -yaw;
-	ang.pitch = -pitch;
-	ang.bank = roll;
-	vsQuaternion result(ang);
-	return result;
-	return vsQuaternion(q.x,q.y,q.z,q.w);
-	//return vsQuaternion(q.x,-q.y,q.z,q.w);
+	Matrix4f m(q);
+	vsVector3D forward(m.M[0][2], m.M[1][2], m.M[2][2]);
+	vsVector3D down(m.M[0][1], m.M[1][1], m.M[2][1]);
+
+	// Their 'x' and 'y' axes go different directions from ours, so flip them.
+	forward.x *= -1;
+	forward.y *= -1;
+	down.x *= -1;
+	down.y *= -1;
+
+	// Also, their matrix uses a 'down' vector instead of an 'up' one.  So flip that.
+	return vsQuaternion(forward, -down);
 }
 
 float
