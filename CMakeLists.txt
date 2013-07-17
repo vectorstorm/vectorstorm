@@ -5,6 +5,9 @@ else()
 	message(STATUS "No build type selected, default to Debug")
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel")
 endif()
+
+add_subdirectory( OculusSDK/LibOVR )
+
 project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 	
@@ -24,7 +27,7 @@ find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
 
-find_path(OVR_INCLUDE_DIR OVR.h REQUIRED HINTS ../LibOVR/Include/)
+find_path(OVR_INCLUDE_DIR OVR.h REQUIRED HINTS OculusSDK/LibOVR/Include/)
 
 
 set(VS_LIBRARIES

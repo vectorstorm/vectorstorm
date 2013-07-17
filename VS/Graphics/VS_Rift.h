@@ -17,6 +17,24 @@
 // (which eventually gets used elsewhere inside VectorStorm -- hopefully
 // in a way this will eventually support other HMDs, if they pop up)
 
+enum RiftEye
+{
+	RiftEye_Left,
+	RiftEye_Right
+};
+struct EyeDistortionParams
+{
+    float   K[4];
+    float   XCenterOffset, YCenterOffset;
+    float   Scale;
+
+    float   ChromaticAberration[4]; // Additional per-channel scaling is applied after distortion:
+                                    // Index [0] - Red channel constant coefficient.
+                                    // Index [1] - Red channel r^2 coefficient.
+                                    // Index [2] - Blue channel constant coefficient.
+                                    // Index [3] - Blue channel r^2 coefficient.
+};
+
 class vsRift: public vsSingleton<vsRift>
 {
 	vsString m_monitorName;
@@ -24,7 +42,7 @@ class vsRift: public vsSingleton<vsRift>
 	float m_distortionK[4];
 	bool m_hasHmd;
 public:
-	vsRift();
+	vsRift(int resX, int resY);
 	~vsRift();
 
 	bool HasRift() const { return m_hasHmd; }
@@ -34,6 +52,8 @@ public:
 	float GetVScreenSize() const;
 	float GetDistanceBetweenPupils() const;
 	vsVector4D GetDistortionK() const;
+
+	struct EyeDistortionParams GetDistortionParams(RiftEye eye);
 };
 
 #endif /* VS_RIFT_H */

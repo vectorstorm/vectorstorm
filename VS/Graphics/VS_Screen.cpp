@@ -43,7 +43,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 #if TARGET_OS_IPHONE
 	m_renderer = new vsRendererPretty();
 #else
-	m_riftObject = new vsRift;
+	m_riftObject = new vsRift(width, height);
 	if ( m_riftObject->HasRift() && vsRendererRift::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
 		m_renderer = new vsRendererRift();
 	else if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )

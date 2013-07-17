@@ -99,8 +99,9 @@ vsRendererRift::PostBloom()
 	float bot = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 	float lrmid = left + ((right-left) * 0.5f);
 	float tbmid = top + bot * 0.5f;
+	float aspectRatio = (m_window->GetWidth() * 0.5f) / m_window->GetHeight();
 
-		glUseProgram(m_distortProg);
+	glUseProgram(m_distortProg);
 	{
 		float v[8] = {
 			left, top,
@@ -121,12 +122,20 @@ vsRendererRift::PostBloom()
 		float texTop = 0.f;
 		float texBot = m_scene->GetTexHeight();
 		float texTBMid = (texTop + texBot) * 0.5f;
+
+		float texWidth = texRight - texLeft;
+		float texHeight = texBot - texTop;
 		vsRift *r = vsRift::Instance();
-		vsVector2D lensCenter(texLRMid,texTBMid);
+		struct EyeDistortionParams edp = r->GetDistortionParams(RiftEye_Left);
+
+		//vsVector2D lensCenter(texLRMid,texTBMid);
+		vsVector2D lensCenter(texLeft + (texWidth + edp.XCenterOffset * 0.5f) * 0.5f,edp.YCenterOffset + texTBMid);
 		vsVector2D screenCenter(texLRMid, texTBMid);
 		// scaleIn needs to take the width/height trom (texRight-texLeft) to 2.0
-		vsVector2D scaleIn(2.0 / (texRight-texLeft), 2.0 / (texBot-texTop));
-		vsVector2D scale((texRight-texLeft)/2.0, (texBot-texTop)/ 2.0);
+		vsVector2D scaleIn(2.0 / (texWidth), 2.0 / (texHeight) / aspectRatio);
+		float scaleFactor = 1.0f / edp.Scale;
+		vsVector2D scale(((texWidth)/2.0f) * scaleFactor, ((texHeight)/ 2.0f) * scaleFactor * aspectRatio);
+		//scale *= 0.8f;
 		vsVector4D distortionK = r->GetDistortionK();
 		glUniform1i(m_textureSampler, 0);
 		glUniform2fv(m_lensCenter, 1, (float*)&lensCenter);
@@ -165,12 +174,19 @@ vsRendererRift::PostBloom()
 		float texTop = 0.f;
 		float texBot = m_scene->GetTexHeight();
 		float texTBMid = (texTop + texBot) * 0.5f;
+		float texWidth = texRight - texLeft;
+		float texHeight = texBot - texTop;
 		vsRift *r = vsRift::Instance();
-		vsVector2D lensCenter(texLRMid,texTBMid);
+		struct EyeDistortionParams edp = r->GetDistortionParams(RiftEye_Right);
+
+		//vsVector2D lensCenter(texLRMid,texTBMid);
+		vsVector2D lensCenter(texLeft + (texWidth + edp.XCenterOffset * 0.5f) * 0.5f,edp.YCenterOffset + texTBMid);
 		vsVector2D screenCenter(texLRMid, texTBMid);
 		// scaleIn needs to take the width/height trom (texRight-texLeft) to 2.0
-		vsVector2D scaleIn(2.0 / (texRight-texLeft), 2.0 / (texBot-texTop));
-		vsVector2D scale((texRight-texLeft)/2.0, (texBot-texTop)/ 2.0);
+		vsVector2D scaleIn(2.0 / (texWidth), 2.0 / (texHeight) / aspectRatio);
+		float scaleFactor = 1.0f / edp.Scale;
+		vsVector2D scale(((texWidth)/2.0f) * scaleFactor, ((texHeight)/ 2.0f) * scaleFactor * aspectRatio);
+		//scale *= 0.8f;
 		vsVector4D distortionK = r->GetDistortionK();
 		glUniform1i(m_textureSampler, 0);
 		glUniform2fv(m_lensCenter, 1, (float*)&lensCenter);
