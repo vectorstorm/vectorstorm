@@ -189,9 +189,16 @@ vsScene::Draw( vsDisplayList *list, const DrawSettings& s )
 	}
 	else
 	{
+		vsMatrix4x4 proj = m_camera->GetOrthoMatrix( vsSystem::GetScreen()->GetAspectRatio() );
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
-		//list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
-		list->SetCameraTransform( m_camera->GetCameraTransform() );
+		if ( s.horizontalPixelOffset != 0.f)
+		{
+			vsMatrix4x4 H = vsMatrix4x4::Identity;
+			H.w.x = s.horizontalPixelOffset;
+			proj = H * proj;
+		}
+		list->SetProjectionMatrix4x4( proj );
+		//list->SetCameraTransform( m_camera->GetCameraTransform() );
 	}
 
 	if ( m_stencilTest )

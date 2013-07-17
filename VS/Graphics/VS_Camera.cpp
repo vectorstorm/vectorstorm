@@ -22,20 +22,28 @@ vsCamera2D::vsCamera2D()
 vsCamera2D::~vsCamera2D()
 {
 }
-/*
+
 vsMatrix4x4
-vsCamera2D::GetProjectionMatrix( float aspectRatio )
+vsCamera2D::GetOrthoMatrix( float aspectRatio )
 {
-	float hh = vsTan(m_fov * .5f) * m_nearPlane;
+	float hh = GetFOV() * 0.5f;
 	float hw = hh * aspectRatio;
 
+	float left = -hw;
+	float right = hw;
+	float top = -hh;
+	float bottom = hh;
+	float far = 1000.0;
+	float near = -1000.0;
+
 	vsMatrix4x4 m(
-			vsVector4D( 2.f*m_nearPlane / (hw * 2.0f), 0.f, 0.f, 0.f ),
-			vsVector4D( 0.f, 2.f*m_nearPlane / (hh * 2.0f), 0.f, 0.f ),
-			vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane) ),
-			vsVector4D( 0.f, 0.f, -1.f, 0.f )
+			vsVector4D( 2.f / (right - left), 0.f, 0.f, -((right+left)/(right-left)) ),
+			vsVector4D( 0.f, 2.f / (top - bottom), 0.f, -((top+bottom)/(top-bottom)) ),
+			vsVector4D( 0.f, 0.f, -2.f / (far - near), -((far+near)/(far-near)) ),
+			vsVector4D( 0.f, 0.f, 0.f, 1.f )
 			);
-}*/
+	return m;
+}
 
 bool
 vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )

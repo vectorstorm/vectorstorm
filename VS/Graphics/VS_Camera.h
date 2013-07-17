@@ -29,6 +29,8 @@ public:
 
 	virtual void		Update( float /*timeStep*/ ) {}
 
+	vsMatrix4x4			GetOrthoMatrix(float aspectRatio);
+
 	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
 	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
 	float				GetFOV() { return m_transform.GetScale().y; }
