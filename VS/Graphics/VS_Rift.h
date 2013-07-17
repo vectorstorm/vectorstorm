@@ -11,6 +11,7 @@
 
 #include "VS/Utils/VS_Singleton.h"
 #include "VS/Math/VS_Vector.h"
+#include "VS/Math/VS_Quaternion.h"
 
 // Management class for an Oculus Rift device.  This handles everything
 // to do with the rift, from detection to input to basic rendering data
@@ -52,6 +53,7 @@ public:
 	float GetVScreenSize() const;
 	float GetDistanceBetweenPupils() const;
 	vsVector4D GetDistortionK() const;
+	vsQuaternion GetOrientation() const;
 
 	struct EyeDistortionParams GetDistortionParams(RiftEye eye);
 };

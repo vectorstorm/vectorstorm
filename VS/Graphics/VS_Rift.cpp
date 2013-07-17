@@ -9,6 +9,7 @@
 #include "VS_Rift.h"
 #include "VS_Screen.h"
 #include "VS_System.h"
+#include "VS/Math/VS_EulerAngles.h"
 #include <OVR.h>
 using namespace OVR;
 
@@ -107,6 +108,22 @@ float
 vsRift::GetVScreenSize() const
 {
 	return hmd.VScreenSize;
+}
+
+vsQuaternion
+vsRift::GetOrientation() const
+{
+    Quatf q = FusionResult.GetOrientation();
+	float yaw, pitch, roll;
+	q.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
+	vsEulerAngles ang;
+	ang.yaw = -yaw;
+	ang.pitch = -pitch;
+	ang.bank = roll;
+	vsQuaternion result(ang);
+	return result;
+	return vsQuaternion(q.x,q.y,q.z,q.w);
+	//return vsQuaternion(q.x,-q.y,q.z,q.w);
 }
 
 float

@@ -62,6 +62,7 @@
 #include <VS/Graphics/VS_RenderQueue.h>
 #include <VS/Graphics/VS_RenderTarget.h>
 #include <VS/Graphics/VS_Renderer.h>
+#include <VS/Graphics/VS_Rift.h>
 #include <VS/Graphics/VS_Scene.h>
 #include <VS/Graphics/VS_Screen.h>
 #include <VS/Graphics/VS_Shader.h>
