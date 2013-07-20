@@ -11,6 +11,7 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 #include "VS_Matrix.h"
+#include "VS_Vector.h"
 
 vsCamera2D::vsCamera2D()
 {
@@ -33,13 +34,13 @@ vsCamera2D::GetOrthoMatrix( float aspectRatio )
 	float right = hw;
 	float top = -hh;
 	float bottom = hh;
-	float far = 1000.0;
-	float near = -1000.0;
+	float farClip = 1000.0;
+	float nearClip = -1000.0;
 
 	vsMatrix4x4 m(
 			vsVector4D( 2.f / (right - left), 0.f, 0.f, -((right+left)/(right-left)) ),
 			vsVector4D( 0.f, 2.f / (top - bottom), 0.f, -((top+bottom)/(top-bottom)) ),
-			vsVector4D( 0.f, 0.f, -2.f / (far - near), -((far+near)/(far-near)) ),
+			vsVector4D( 0.f, 0.f, -2.f / (farClip - nearClip), -((farClip+nearClip)/(farClip-nearClip)) ),
 			vsVector4D( 0.f, 0.f, 0.f, 1.f )
 			);
 	return m;

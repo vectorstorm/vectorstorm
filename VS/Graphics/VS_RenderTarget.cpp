@@ -63,11 +63,11 @@ vsRenderTarget::Resolve()
 {
 	if ( m_renderBufferSurface )	// need to copy from the render buffer surface to the regular texture.
 	{
-		if ( glBindFramebuffer && glBlitFramebufferEXT )
+		if ( glBindFramebufferEXT && glBlitFramebufferEXT )
 		{
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_renderBufferSurface->m_fbo);
 			//Bind the standard FBO
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, m_textureSurface->m_fbo);
 			//Let's say I want to copy the entire surface
 			//Let's say I only want to copy the color buffer only
 			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimensions
@@ -96,11 +96,11 @@ vsRenderTarget::Bind()
 {
 	if ( m_renderBufferSurface )
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_renderBufferSurface->m_fbo);
 	}
 	else
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_textureSurface->m_fbo);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_textureSurface->m_fbo);
 	}
 	glViewport(0,0,m_viewportWidth, m_viewportHeight);
 	glMatrixMode(GL_PROJECTION);
@@ -144,16 +144,16 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	if ( glBindFramebufferEXT && glBlitFramebufferEXT )
 	{
 		if ( m_renderBufferSurface )
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_renderBufferSurface->m_fbo);
 		else
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
+			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_textureSurface->m_fbo);
 
 		if ( other->m_renderBufferSurface )
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_renderBufferSurface->m_fbo);
+			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, other->m_renderBufferSurface->m_fbo);
 		else
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
+			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, other->m_textureSurface->m_fbo);
 
-		glBlitFramebuffer(0, 0, m_viewportWidth, m_viewportHeight, 0, 0, other->m_viewportWidth, other->m_viewportHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitFramebufferEXT(0, 0, m_viewportWidth, m_viewportHeight, 0, 0, other->m_viewportWidth, other->m_viewportHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	else
 	{
