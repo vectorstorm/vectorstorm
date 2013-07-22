@@ -28,15 +28,29 @@ class vsSemaphore
 {
 	semaphore_t		m_semaphore;
 	int				m_value;
+	bool			m_released;
 public:
 
-    vsSemaphore(unsigned int initialValue);
-    ~vsSemaphore();
+	vsSemaphore(unsigned int initialValue);
+	~vsSemaphore();
 
-    void Wait();    // wait until there's some value here.
-    void Post();    // increment value of semaphore.
+	// Wait until the semaphore's value is greater than zero,  until the
+	// semaphore has been released.  Returns 'false' if the semaphore has been
+	// released, or true if the semaphore's value is greater than zero.  Threads
+	// should use this 'false' result as a signal to exit, for an orderly
+	// system shutdown.
+	bool Wait();
 
-	int PeekValue() { return m_value; }
+	// increment value of semaphore by one.
+	void Post();
+
+	// Release() must be called before destroying the vsSemaphore!
+	//
+	// This function completely releases the semaphore;  Wait() will return
+	// immediately with a 'false' result for all threads waiting now on this
+	// semaphore object now or in the future (even if the semaphore's value is
+	// greater than 0).
+	void Release();
 };
 
 

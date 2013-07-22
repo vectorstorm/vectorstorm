@@ -16,29 +16,38 @@ vsSemaphore::vsSemaphore(unsigned int initialValue)
 	pthread_mutex_lock( &m_semaphore.mutex );
     pthread_cond_init( &m_semaphore.cond, NULL );
 	m_value = initialValue;
+	m_released = false;
 	pthread_mutex_unlock( &m_semaphore.mutex );
 }
 
 vsSemaphore::~vsSemaphore()
 {
+	vsAssert(m_released, "Semaphore destroyed without being released?");
 	pthread_mutex_lock(&m_semaphore.mutex);
 	pthread_cond_destroy( &m_semaphore.cond );
-	vsAssert( m_value == 0, "Semaphore not properly released before destruction" );
 	pthread_mutex_unlock(&m_semaphore.mutex);
 	pthread_mutex_destroy( &m_semaphore.mutex );
 }
 
-void
+bool
 vsSemaphore::Wait()
 {
+	if ( m_released )
+		return false;
+
 	pthread_mutex_lock(&m_semaphore.mutex);
-	while ( m_value == 0 )
+	while ( m_value == 0 && !m_released )
 	{
 		pthread_cond_wait( &m_semaphore.cond, &m_semaphore.mutex );
 	}
-	m_value--;
+	if ( !m_released )
+	{
+		m_value--;
+	}
 
 	pthread_mutex_unlock(&m_semaphore.mutex);
+
+	return !m_released;
 }
 
 void
@@ -50,11 +59,22 @@ vsSemaphore::Post()
 	pthread_mutex_unlock(&m_semaphore.mutex);
 }
 
+void
+vsSemaphore::Release()
+{
+	if ( !m_released )
+	{
+		m_released = true;
+		pthread_cond_broadcast(&m_semaphore.cond);
+	}
+}
+
 #else
 
 vsSemaphore::vsSemaphore(unsigned int initialValue)
 {
 	m_semaphore = CreateSemaphore( NULL, initialValue, 100000, NULL );
+	m_released = false;
 }
 
 vsSemaphore::~vsSemaphore()
@@ -62,16 +82,26 @@ vsSemaphore::~vsSemaphore()
 	CloseHandle( m_semaphore );
 }
 
-void
+bool
 vsSemaphore::Wait()
 {
+	if ( m_released )
+		return false;
 	WaitForSingleObject( m_semaphore, INFINITE );
+	return !m_released;
 }
 
 void
 vsSemaphore::Post()
 {
 	ReleaseSemaphore( m_semaphore, 1, NULL );
+}
+
+void
+vsSemaphore::Release()
+{
+	m_released = true;
+	ReleaseSemaphore( m_semaphore, 1000, NULL );
 }
 
 
