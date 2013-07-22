@@ -181,6 +181,13 @@ public:
 		return ent != NULL;
 	}
 
+	void	Remove( vsListIterator<T> &iter )
+	{
+		vsListEntry<T> *ent = iter.GetEntry();
+		ent->Extract();
+		m_entry.Return(ent);
+	}
+
 	void	Prepend( vsListIterator<T> &iter, const T &item )
 	{
 		vsListEntry<T> *ent = m_entry.Borrow();

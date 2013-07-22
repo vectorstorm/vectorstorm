@@ -102,6 +102,8 @@ public:
 		m_current->Prepend( ent );
 	}
 
+	vsListStoreEntry<T>* GetEntry() { return m_current; }
+
 	bool						operator==( const vsListStoreIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
 	bool						operator!=( const vsListStoreIterator &b ) { return !((*this)==b); }
 	vsListStoreIterator<T>&		operator++() { Next(); return *this; }
@@ -184,6 +186,14 @@ public:
 		}
 		return false;
 	}
+
+	void	Remove( vsListStoreIterator<T> &iter )
+	{
+		vsListStoreEntry<T> *ent = iter.GetEntry();
+		ent->Extract();
+		vsDelete(ent);
+	}
+
 
 	bool	Contains( T *item )
 	{
