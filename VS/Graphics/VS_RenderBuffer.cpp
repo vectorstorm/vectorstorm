@@ -206,6 +206,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCNT *array, int size )
 void
 vsRenderBuffer::SetArray( const vsVector3D *array, int size )
 {
+	m_contentType = ContentType_P;
 	SetArray_Internal((char *)array, size*sizeof(vsVector3D), false);
 }
 
