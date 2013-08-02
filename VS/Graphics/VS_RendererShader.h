@@ -18,11 +18,15 @@ class vsRendererShader : public vsRendererBloom, public vsSingleton<vsRendererSh
 {
 	typedef vsRendererBloom Parent;
 
-	static GLuint			s_addProg;
 	static GLuint			s_normalProg;
 	static GLuint			s_litProg;
 	static GLuint			s_normalTexProg;
 	static GLuint			s_litTexProg;
+
+	static GLuint			s_normalProgFogLoc;
+	static GLuint			s_litProgFogLoc;
+	static GLuint			s_normalTexProgFogLoc;
+	static GLuint			s_litTexProgFogLoc;
 
 	static bool				s_shadersBuilt;
 

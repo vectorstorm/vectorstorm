@@ -21,18 +21,27 @@ GLuint			vsRendererShader::s_litProg = -1;
 GLuint			vsRendererShader::s_normalTexProg = -1;
 GLuint			vsRendererShader::s_litTexProg = -1;
 
+GLuint			vsRendererShader::s_normalProgFogLoc = -1;
+GLuint			vsRendererShader::s_litProgFogLoc = -1;
+GLuint			vsRendererShader::s_normalTexProgFogLoc = -1;
+GLuint			vsRendererShader::s_litTexProgFogLoc = -1;
+
 bool				vsRendererShader::s_shadersBuilt = false;
 
 
 #define STRINGIFY(A)  #A
 
 static const char *normalv = STRINGIFY(
+									   uniform bool fog;
 									   varying float fogFactor;
 									   void main(void)
 									   {
 										   gl_FrontColor = gl_Color;
 										   gl_Position    = ftransform();
 
+										   fogFactor = 1.0;
+										   if ( fog )
+										   {
 										   const float LOG2 = 1.442695;
 										   vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
 										   float distance = length(vVertex);
@@ -42,10 +51,12 @@ static const char *normalv = STRINGIFY(
 															distance *
 															LOG2 );
 										   fogFactor = clamp(fogFactor, 0.0, 1.0);
+										   }
 									   }
 									   );
 
 static const char *texv = STRINGIFY(
+									uniform bool fog;
 									varying float fogFactor;
 									void main(void)
 									{
@@ -53,6 +64,9 @@ static const char *texv = STRINGIFY(
 										gl_FrontColor = gl_Color;
 										gl_Position    = ftransform();
 
+										fogFactor = 1.0;
+										if ( fog )
+										{
 										const float LOG2 = 1.442695;
 										vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
 										float distance = length(vVertex);
@@ -62,6 +76,7 @@ static const char *texv = STRINGIFY(
 														 distance *
 														 LOG2 );
 										fogFactor = clamp(fogFactor, 0.0, 1.0);
+										}
 									}
 									);
 
@@ -72,6 +87,7 @@ static const char *litv = STRINGIFY(
 									varying vec3 lightDir;
 									varying vec3 halfVector;
 									varying float fogFactor;
+									uniform bool fog;
 
 									void main()
 									{
@@ -96,6 +112,9 @@ static const char *litv = STRINGIFY(
 
 										gl_Position = ftransform();
 
+										fogFactor = 1.0;
+										if ( fog )
+										{
 										const float LOG2 = 1.442695;
 										vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
 										float distance = length(vVertex);
@@ -105,6 +124,7 @@ static const char *litv = STRINGIFY(
 														 distance *
 														 LOG2 );
 										fogFactor = clamp(fogFactor, 0.0, 1.0);
+										}
 									}
 									);
 
@@ -260,6 +280,11 @@ vsRendererShader::InitPhaseTwo(int width, int height, int depth, bool fullscreen
 
 	s_litTexfAlphaRef = glGetUniformLocation(s_litTexProg, "alphaRef");
 	s_texfAlphaRef = glGetUniformLocation(s_normalTexProg, "alphaRef");
+
+	s_normalProgFogLoc = glGetUniformLocation(s_normalProg, "fog");
+	s_litProgFogLoc = glGetUniformLocation(s_litProg, "fog");
+	s_normalTexProgFogLoc = glGetUniformLocation(s_normalTexProg, "fog");
+	s_litTexProgFogLoc = glGetUniformLocation(s_litTexProg, "fog");
 }
 
 void
@@ -354,6 +379,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					else
 					{
 						glUseProgram( s_normalTexProg );
+						glUniform1f( s_normalTexProgFogLoc, material->m_fog );
 						glUniform1f( s_texfAlphaRef, material->m_alphaRef );
 					}
 				}
@@ -368,6 +394,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					else
 					{
 						glUseProgram( s_normalProg );
+						glUniform1f( s_normalProgFogLoc, 0 );
 					}
 				}
 				break;
@@ -385,6 +412,7 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					else
 					{
 						glUseProgram( s_litTexProg );
+						glUniform1f( s_litTexProgFogLoc, material->m_fog );
 						glUniform1f( s_litTexfAlphaRef, material->m_alphaRef );
 					}
 				}
@@ -399,6 +427,8 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 					else
 					{
 						glUseProgram( s_litProg );
+						glUniform1f( s_litProgFogLoc, 1 );
+						//glUniform1f( s_litProgFogLoc, material->m_fog );
 					}
 				}
 				break;
