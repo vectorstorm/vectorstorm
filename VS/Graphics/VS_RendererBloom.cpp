@@ -88,7 +88,7 @@ const char *combine4f = STRINGIFY(
 								  vec4 t1 = texture2D(Pass1, gl_TexCoord[0].st);
 								  vec4 t2 = texture2D(Pass2, gl_TexCoord[0].st);
 								  vec4 t3 = texture2D(Scene, gl_TexCoord[0].st);
-								  gl_FragColor = (t0 + t1 + t2 + t3);
+								  gl_FragColor = (t0 + t1 + t2) + t3;
 								  }
 );
 
@@ -148,7 +148,7 @@ const char *combine7f = STRINGIFY(
 								  vec4 t4 = texture2D(Pass4, gl_TexCoord[0].st);
 								  vec4 t5 = texture2D(Pass5, gl_TexCoord[0].st);
 								  vec4 t6 = texture2D(Scene, gl_TexCoord[0].st);
-								  gl_FragColor = 1.2 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
+								  gl_FragColor = 2.0 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
 								  }
 );
 
@@ -193,7 +193,7 @@ const char *row5f = STRINGIFY(
 							  gl_FragColor = c;
 							  }
 );
-/*
+
 const char *row7f = STRINGIFY(
 							  uniform sampler2D source;
 							  uniform float coefficients[7];
@@ -216,7 +216,7 @@ const char *row7f = STRINGIFY(
 
 							  gl_FragColor = c;
 							  }
-);*/
+);
 
 const char *hipassf = STRINGIFY(
 								uniform sampler2D source;
@@ -262,7 +262,7 @@ const char *normalf = STRINGIFY(
 GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 3, 7, 26, 41, 26, 7, 3  };
 //float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
-float kernel[KERNEL_SIZE] = { 4, 8, 4  };
+float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 
 //#include <SDL/SDL_opengl.h>
 
@@ -278,8 +278,8 @@ vsRendererBloom::vsRendererBloom()
 	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
 }
 
-#define BUFFER_HEIGHT (1024)
-#define BUFFER_WIDTH  (1024)
+#define BUFFER_HEIGHT (512)
+#define BUFFER_WIDTH  (512)
 
 void
 vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
@@ -313,7 +313,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
     for (int c = 0; c < KERNEL_SIZE; c++)
         sum += kernel[c];
     for (int c = 0; c < KERNEL_SIZE; c++)
-        kernel[c] /= sum;
+        kernel[c] *= (1.f / sum);
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -644,11 +644,12 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
     // Perform the blurring.
     for (p = 0; p < count; p++)
     {
-        float offset = 1.2f / sources[p]->GetWidth();
-        glUniform1f(m_locOffsetX, offset);
+		float offset = 1.2f / sources[p]->GetWidth();
+		glUniform1f(m_locOffsetX, offset);
+		glUniform1f(m_locOffsetY, 0.f);
 		dests[p]->Bind();
 		dests[p]->Clear();
-        glBindTexture(GL_TEXTURE_2D, sources[p]->GetTexture()->GetResource()->GetTexture());
+		glBindTexture(GL_TEXTURE_2D, sources[p]->GetTexture()->GetResource()->GetTexture());
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -659,11 +660,12 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
     // Perform the blurring.
     for (p = 0; p < count; p++)
     {
-        float offset = 1.2f / dests[p]->GetWidth();
-        glUniform1f(m_locOffsetY, offset);
-        sources[p]->Bind();
+		float offset = 1.2f / dests[p]->GetWidth();
+		glUniform1f(m_locOffsetX, 0.f);
+		glUniform1f(m_locOffsetY, offset);
+		sources[p]->Bind();
 		sources[p]->Clear();
-        glBindTexture(GL_TEXTURE_2D, dests[p]->GetTexture()->GetResource()->GetTexture());
+		glBindTexture(GL_TEXTURE_2D, dests[p]->GetTexture()->GetResource()->GetTexture());
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -765,7 +767,6 @@ vsRendererBloom::PostRender()
 
 	int p;
 
-//	glDisable(GL_MULTISAMPLE);
 	glUseProgram(0);
 	glBlendFunc( GL_ONE, GL_ZERO );
 
@@ -777,7 +778,7 @@ vsRendererBloom::PostRender()
     glBindTexture(GL_TEXTURE_2D, m_scene->GetTexture()->GetResource()->GetTexture());
     glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glGenerateMipmapEXT(GL_TEXTURE_2D);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	m_pass[0]->Bind();
 
@@ -816,8 +817,9 @@ vsRendererBloom::PostRender()
 	glVertexPointer( 2, GL_FLOAT, 0, v );
 	glTexCoordPointer( 2, GL_FLOAT, 0, t );
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	glUseProgram( 0 );
 
