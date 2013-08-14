@@ -37,6 +37,9 @@
 
 #endif
 
+SDL_Window *m_window = NULL;
+SDL_Renderer *m_renderer = NULL;
+
 void vsRenderDebug( const vsString &message )
 {
 	vsLog("%s", message.c_str());
@@ -74,34 +77,34 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 	m_viewportHeight = m_height = height;
 
 #if !TARGET_OS_IPHONE
-	const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
+	//const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
 	int videoFlags;
 
-	videoFlags = SDL_OPENGL;
-	videoFlags |= SDL_GL_DOUBLEBUFFER;
-	videoFlags |= SDL_HWPALETTE;
+	videoFlags = SDL_WINDOW_OPENGL;
+	//videoFlags |= SDL_GL_DOUBLEBUFFER;
+	//videoFlags |= SDL_HWPALETTE;
 
-	if ( videoInfo->hw_available )
-		videoFlags |= SDL_HWSURFACE;
-	else
-		videoFlags |= SDL_SWSURFACE;
+	//if ( videoInfo->hw_available )
+		//videoFlags |= SDL_HWSURFACE;
+	//else
+		//videoFlags |= SDL_SWSURFACE;
 
-	if ( videoInfo->blit_hw )
-		videoFlags |= SDL_HWACCEL;
+	//if ( videoInfo->blit_hw )
+		//videoFlags |= SDL_WINDOW_HWACCEL;
 
 	if ( fullscreen )
-		videoFlags |= SDL_FULLSCREEN;
+		videoFlags |= SDL_WINDOW_FULLSCREEN;
 	//else
 		//videoFlags |= SDL_VIDEORESIZE;
 
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
-#ifdef _DEBUG
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
-#else
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );	// in release builds, lock our frames to vsynch.
-#endif
+//#ifdef _DEBUG
+	//SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
+//#else
+	//SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );	// in release builds, lock our frames to vsynch.
+//#endif
 
 	// ATI cards misbehave if you request accelerated visuals, and NVidia cards do the right thing regardless.
 	// So comment it out!
@@ -126,9 +129,16 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 	CGLEnable( CGLGetCurrentContext(), kCGLCEMPEngine);*/
 #endif // __APPLE__
 
-	SDL_Surface *s = SDL_SetVideoMode( width, height, videoInfo->vfmt->BitsPerPixel, videoFlags );
+	//SDL_Surface *s = SDL_SetVideoMode( width, height, videoInfo->vfmt->BitsPerPixel, videoFlags );
+	m_window = SDL_CreateWindow("My Game Window",
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			width, height,
+			videoFlags);
 
-	if ( !s ){
+	SDL_CreateWindowAndRenderer(width, height, videoFlags, &m_window, &m_renderer);
+
+	if ( !m_window || !m_renderer  ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
@@ -162,9 +172,8 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 	SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &val );
 	if ( !val )
 		vsLog("WARNING:  Failed to initialise double-buffering");
-	SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &val );
-	if ( !val )
-		vsLog("WARNING:  Failed to initialise swap control");
+
+	//SDL_GL_SetSwapInterval(1);
 //	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &val );
 //	if ( !val )
 //		vsLog("WARNING:  Failed to initialise accelerated rendering");
@@ -380,7 +389,7 @@ vsRendererSimple::PostRender()
 	vsTimerSystem::Instance()->EndRenderTime();
 	//glFinish();
 #if !TARGET_OS_IPHONE
-	SDL_GL_SwapBuffers();
+	SDL_GL_SwapWindow(m_window);
 #endif
 	vsTimerSystem::Instance()->EndGPUTime();
 	CheckGLError("PostRender");

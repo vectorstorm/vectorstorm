@@ -33,7 +33,7 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL/SDL_mouse.h>
+#include <SDL2/SDL_mouse.h>
 #endif
 
 bool				vsSystem::s_initted			= false;
@@ -281,7 +281,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// Get GL context attributes
 	printAttributes ();
 
-	SDL_WM_SetCaption("VectorStorm Engine",NULL);
+	//SDL_WM_SetCaption("VectorStorm Engine",NULL);
 #endif
 	vsHeap::Pop(g_globalHeap);
 
@@ -295,7 +295,7 @@ void
 vsSystem::SetWindowCaption(const vsString &caption)
 {
 #if !TARGET_OS_IPHONE
-	SDL_WM_SetCaption(caption.c_str(),NULL);
+	//SDL_WM_SetCaption(caption.c_str(),NULL);
 #endif
 }
 
@@ -393,44 +393,42 @@ vsSystemPreferences::CheckResolutions()
 #if !TARGET_OS_IPHONE
 	vsLog("Checking supported resolutions...\n");
 
-	SDL_Rect **modes;
+	SDL_DisplayMode *modes;
 	int modeCount;
 	int maxWidth = 0;
 	int maxHeight = 0;
 	/* Get available fullscreen/hardware modes */
-	modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_HWSURFACE);
+	modeCount = SDL_GetNumDisplayModes(0);
+	modes = new SDL_DisplayMode[modeCount];
+
+	for ( int i = 0; i < modeCount; i++ )
+	{
+		SDL_GetDisplayMode(0, i, &modes[i]);
+	}
 
 	/* Check if there are any modes available */
-	if(modes == (SDL_Rect **)0){
+	if(modeCount <= 0){
 		vsLog("No modes available!\n");
 		exit(-1);
 	}
 
 	/* Check if our resolution is restricted */
-	if(modes == (SDL_Rect **)-1){
-		vsLog("All resolutions available.\n");
-	}
-	else
 	{
-		m_supportedResolutionCount = 0;
+		m_supportedResolutionCount = modeCount;
 		/* Print valid modes */
 		vsLog("Available Modes\n");
-		for(modeCount=0;modes[modeCount];++modeCount)
-		{
-			m_supportedResolutionCount++;
-		}
 
 		m_supportedResolution = new Resolution[m_supportedResolutionCount];
 
 		for(int i=0;i<modeCount;i++)
 		{
-			m_supportedResolution[modeCount-(i+1)].width = modes[i]->w;
-			m_supportedResolution[modeCount-(i+1)].height = modes[i]->h;
+			m_supportedResolution[modeCount-(i+1)].width = modes[i].w;
+			m_supportedResolution[modeCount-(i+1)].height = modes[i].h;
 
-			if ( modes[i]->w > maxWidth )
-				maxWidth = modes[i]->w;
-			if ( modes[i]->h > maxHeight )
-				maxHeight = modes[i]->h;
+			if ( modes[i].w > maxWidth )
+				maxWidth = modes[i].w;
+			if ( modes[i].h > maxHeight )
+				maxHeight = modes[i].h;
 		}
 
 		for(int i = 0; i<modeCount; i++ )
@@ -481,6 +479,7 @@ vsSystemPreferences::CheckResolutions()
 	m_resolutionX->m_value = m_supportedResolution[selectedResolution].width;
 	m_resolutionY->m_value = m_supportedResolution[selectedResolution].height;
 	m_resolution->m_value = selectedResolution;
+	delete [] modes;
 }
 
 Resolution *

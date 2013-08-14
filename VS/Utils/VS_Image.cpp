@@ -18,7 +18,7 @@
 #include "VS_Store.h"
 
 #if !TARGET_OS_IPHONE
-#include "SDL_image.h"
+#include <SDL2/SDL_image.h>
 #include <png.h>
 #include "VS_OpenGL.h"
 
@@ -287,7 +287,9 @@ vsImage::LoadFromSurface( SDL_Surface *source )
     uint32_t saved_flags;
     uint8_t  saved_alpha;
 
-	SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
+	SDL_BlendMode bm;
+	SDL_GetSurfaceBlendMode(source, &bm);
+	SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
 
 	m_width = source->w;
 	m_height = source->h;
@@ -313,11 +315,6 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 											  );
 	vsAssert(image, "Error??");
 
-    saved_flags = source->flags&(SDL_SRCALPHA|SDL_RLEACCELOK);
-    saved_alpha = source->format->alpha;
-    if ( (saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA ) {
-        SDL_SetAlpha(source, 0, 0);
-    }
 
     /* Copy the surface into the GL-format texture image, to make loading easier */
     area.x = 0;
@@ -326,10 +323,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
     area.h = source->h;
     SDL_BlitSurface(source, &area, image, &area);
 
-    /* Restore the alpha blending attributes */
-    if ( (saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA ) {
-        SDL_SetAlpha(source, saved_flags, saved_alpha);
-    }
+	SDL_SetSurfaceBlendMode(source, bm);
 
 	// now lets copy our image data
 

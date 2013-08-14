@@ -65,7 +65,7 @@ vsTextureInternal::~vsTextureInternal()
 
 
 #else
-#include "SDL_image.h"
+#include <SDL2/SDL_image.h>
 
 /* Quick utility function for texture creation */
 static int power_of_two(int input)
@@ -191,10 +191,11 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 			);
 	vsAssert(image, "Error??");
 
-	saved_flags = source->flags&(SDL_SRCALPHA|SDL_RLEACCELOK);
-	saved_alpha = source->format->alpha;
-	if ( (saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA ) {
-		SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
+	SDL_BlendMode bm;
+	SDL_GetSurfaceBlendMode(source, &bm);
+	if ( bm != SDL_BLENDMODE_NONE )
+	{
+		SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
 	}
 
 	/* Copy the surface into the GL texture image */
@@ -205,8 +206,9 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 	SDL_BlitSurface(source, &area, image, &area);
 
 	/* Restore the alpha blending attributes */
-	if ( (saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA ) {
-		SDL_SetAlpha(source, saved_flags, saved_alpha);
+	if ( bm != SDL_BLENDMODE_NONE )
+	{
+		SDL_SetSurfaceBlendMode(source, bm);
 	}
 
 	/* Create an OpenGL texture for the image */

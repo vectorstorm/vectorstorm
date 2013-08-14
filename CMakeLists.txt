@@ -9,9 +9,9 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 	
 find_package(OpenGL)
-find_package(SDL REQUIRED)
-find_package(SDL_image REQUIRED)
-find_package(SDL_mixer REQUIRED)
+#find_package(SDL REQUIRED)
+#find_package(SDL_image REQUIRED)
+#find_package(SDL_mixer REQUIRED)
 find_package(PNG REQUIRED)
 if(UNIX)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
@@ -23,6 +23,9 @@ find_path(GLEW_INCLUDE_DIR glew.h
 find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
+find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
 
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}

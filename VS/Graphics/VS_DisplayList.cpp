@@ -24,7 +24,7 @@
 #include "VS_TextureManager.h"
 
 #if !TARGET_OS_IPHONE
-#include "SDL/SDL_opengl.h"
+#include "SDL2/SDL_opengl.h"
 #endif
 
 vsDisplayList		s_compiledDisplayLists;

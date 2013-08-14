@@ -264,7 +264,7 @@ GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
 float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 
-//#include <SDL/SDL_opengl.h>
+//#include <SDL2/SDL_opengl.h>
 
 
 

@@ -19,7 +19,7 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN LOAD/SAVE!

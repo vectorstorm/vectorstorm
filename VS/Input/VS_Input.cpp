@@ -22,7 +22,7 @@
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
 #else
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 vsInput::vsInput()
@@ -188,8 +188,8 @@ vsInput::Load()
 	m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
 	m_controlMapping[CID_MouseMiddleButton].Set( CT_MouseButton, SDL_BUTTON_MIDDLE );
 	m_controlMapping[CID_MouseRightButton].Set( CT_MouseButton, SDL_BUTTON_RIGHT );
-	m_controlMapping[CID_MouseWheelUp].Set( CT_MouseButton, SDL_BUTTON_WHEELUP );
-	m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
+	//m_controlMapping[CID_MouseWheelUp].Set( CT_MouseButton, SDL_BUTTON_WHEELUP );
+	//m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
 
 	if ( m_joystick )
 	{
@@ -254,14 +254,14 @@ vsInput::SetStringMode(bool mode)
 			m_stringModeString.clear();
 
 			//Enable Unicode
-			SDL_EnableUNICODE( SDL_ENABLE );
+			//SDL_EnableUNICODE( SDL_ENABLE );
 		}
 		else
 		{
 			m_stringMode = false;
 
 			//Disable Unicode
-			SDL_EnableUNICODE( SDL_DISABLE );
+			//SDL_EnableUNICODE( SDL_DISABLE );
 
 		}
 	}
@@ -334,10 +334,14 @@ vsInput::Update(float timeStep)
 			//vsString temp = m_stringModeString;
 
 			switch( event.type ){
-				case SDL_ACTIVEEVENT:
-					if ( event.active.type == SDL_APPINPUTFOCUS )
+				case SDL_APP_DIDENTERBACKGROUND:
 					{
-						vsSystem::Instance()->SetAppHasFocus( event.active.gain );
+						vsSystem::Instance()->SetAppHasFocus(false);
+					}
+					break;
+				case SDL_APP_DIDENTERFOREGROUND:
+					{
+						vsSystem::Instance()->SetAppHasFocus(true);
 					}
 					break;
 				case SDL_KEYDOWN:
@@ -351,11 +355,11 @@ vsInput::Update(float timeStep)
 						  ( ( event.key.keysym.unicode >= (Uint16)'A' ) && ( event.key.keysym.unicode <= (Uint16)'Z' ) ) ||
 						  ( ( event.key.keysym.unicode >= (Uint16)'a' ) && ( event.key.keysym.unicode <= (Uint16)'z' ) ) ||
 						  ( ( event.key.keysym.unicode >= (Uint16)'') */
-						if( event.key.keysym.unicode >= (Uint16)' ' && event.key.keysym.unicode <= (Uint16)'~' )
-						{
-							//Append the character
-							m_stringModeString += (char)event.key.keysym.unicode;
-						}
+						//if( event.key.keysym.unicode >= (Uint16)' ' && event.key.keysym.unicode <= (Uint16)'~' )
+						//{
+						//	//Append the character
+						//	m_stringModeString += (char)event.key.keysym.unicode;
+						//}
 					}
 					if( ( event.key.keysym.sym == SDLK_BACKSPACE ) && ( m_stringModeString.length() != 0 ) )
 					{
@@ -380,35 +384,45 @@ vsInput::Update(float timeStep)
 		//		int i, j;
 		while( SDL_PollEvent( &event ) ){
 			switch( event.type ){
-				case SDL_ACTIVEEVENT:
+				case SDL_APP_DIDENTERBACKGROUND:
 					{
-						if ( event.active.state & SDL_APPINPUTFOCUS )
-						{
-							// turn off mouse capture when we lose focus, if it's on.
-							if ( m_captureMouse )
-							{
-								if ( event.active.gain )
-								{
-									SDL_WM_GrabInput( SDL_GRAB_ON );
-								}
-								else
-								{
-									SDL_WM_GrabInput( SDL_GRAB_OFF );
-								}
-							}
-							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
-						}
-						break;
+						vsSystem::Instance()->SetAppHasFocus(false);
 					}
-				case SDL_MOUSEBUTTONDOWN:
+					break;
+				case SDL_APP_DIDENTERFOREGROUND:
 					{
-						switch( event.button.button ){
-							case SDL_BUTTON_WHEELUP:
-								m_keyControlState[CID_MouseWheelUp] += 1.f;
-								break;
-							case SDL_BUTTON_WHEELDOWN:
-								m_keyControlState[CID_MouseWheelDown] += 1.f;
-								break;
+						vsSystem::Instance()->SetAppHasFocus(true);
+					}
+					break;
+//				case SDL_ACTIVEEVENT:
+//					{
+//						if ( event.active.state & SDL_APPINPUTFOCUS )
+//						{
+//							// turn off mouse capture when we lose focus, if it's on.
+//							if ( m_captureMouse )
+//							{
+//								if ( event.active.gain )
+//								{
+//									SDL_WM_GrabInput( SDL_GRAB_ON );
+//								}
+//								else
+//								{
+//									SDL_WM_GrabInput( SDL_GRAB_OFF );
+//								}
+//							}
+//							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
+//						}
+//						break;
+//					}
+				case SDL_MOUSEWHEEL:
+					{
+						if ( event.wheel.y > 0 )
+						{
+							m_keyControlState[CID_MouseWheelUp] += event.wheel.y;
+						}
+						else
+						{
+							m_keyControlState[CID_MouseWheelDown] -= event.wheel.y;
 						}
 						break;
 					}
@@ -561,8 +575,17 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_VIDEORESIZE:
-					vsSystem::Instance()->UpdateVideoMode(event.resize.w, event.resize.h);
+				//case SDL_VIDEORESIZE:
+					//vsSystem::Instance()->UpdateVideoMode(event.resize.w, event.resize.h);
+					//break;
+				case SDL_WINDOWEVENT:
+					switch (event.window.event)
+					{
+						// we only have one window, so a close event means quit!
+						case SDL_WINDOWEVENT_CLOSE:
+							core::SetExit();
+							break;
+					}
 					break;
 				case SDL_QUIT:
 					core::SetExit();
@@ -889,9 +912,10 @@ bool
 vsInput::MouseIsOnScreen()
 {
 #if !TARGET_OS_IPHONE
-	uint8_t state = SDL_GetAppState();
+	return true;
+	//uint8_t state = SDL_GetAppState();
 
-	return ( state & SDL_APPMOUSEFOCUS );
+	//return ( state & SDL_APPMOUSEFOCUS );
 #else
 	return false;
 #endif
@@ -1017,7 +1041,7 @@ vsInput::CaptureMouse( bool capture )
 		{
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
-			SDL_WM_GrabInput( SDL_GRAB_ON );
+			SDL_SetRelativeMouseMode(SDL_TRUE);
 			//SDL_WarpMouse( (uint16_t)(.5f * vsSystem::GetScreen()->GetTrueWidth()),
 			//	(uint16_t)(.5f * vsSystem::GetScreen()->GetTrueHeight()) );
 			m_mousePos = vsVector2D::Zero;
@@ -1026,8 +1050,7 @@ vsInput::CaptureMouse( bool capture )
 		}
 		else
 		{
-			SDL_WM_GrabInput( SDL_GRAB_OFF );
-			SDL_WarpMouse( m_capturedMouseX,m_capturedMouseY );
+			SDL_SetRelativeMouseMode(SDL_FALSE);
 
 			m_mousePos = vsVector2D((float)m_capturedMouseX,(float)m_capturedMouseY);
 
