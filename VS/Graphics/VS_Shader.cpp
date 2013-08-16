@@ -12,7 +12,11 @@
 #include "VS_RendererShader.h"
 
 #include "VS_File.h"
+#include "VS_Input.h"
 #include "VS_Store.h"
+#include "VS_Screen.h"
+#include "VS_System.h"
+#include "VS_TimerSystem.h"
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
@@ -50,7 +54,10 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		//m_shader = vsRendererShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
-        m_alphaRef = glGetUniformLocation(m_shader, "alphaRef");
+        m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
+		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
+		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
+		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 
 		delete vStore;
 		delete fStore;
@@ -59,15 +66,42 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
-	vsRendererShader::Instance()->DestroyShader(m_shader);
+	if ( vsRendererShader::Exists() )
+	{
+		vsRendererShader::Instance()->DestroyShader(m_shader);
+	}
 }
 
 void
 vsShader::SetAlphaRef( float aref )
 {
-    if ( m_alphaRef >= 0 )
-    {
-        glUniform1f( m_alphaRef, aref );
-    }
+	if ( m_alphaRefLoc >= 0 )
+	{
+		glUniform1f( m_alphaRefLoc, aref );
+	}
+}
+
+void
+vsShader::Prepare()
+{
+	if ( m_resolutionLoc >= 0 )
+	{
+		int xRes = vsSystem::GetScreen()->GetWidth();
+		int yRes = vsSystem::GetScreen()->GetHeight();
+		glUniform2f( m_resolutionLoc, xRes, yRes );
+	}
+	if ( m_globalTimeLoc >= 0 )
+	{
+		float time = vsTimerSystem::Instance()->GetMicroseconds() / 1000000.f;
+		glUniform1f( m_globalTimeLoc, time );
+	}
+	if ( m_mouseLoc >= 0 )
+	{
+		vsVector2D mousePos = vsInput::Instance()->GetWindowMousePosition();
+		int yRes = vsSystem::GetScreen()->GetHeight();
+		// the coordinate system in the GLSL shader is inverted from the
+		// coordinate system we like to use.  So let's invert it!
+		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
+	}
 }
 

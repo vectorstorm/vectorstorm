@@ -19,7 +19,10 @@ class vsShader
 {
 	uint32_t m_shader;
 
-    int m_alphaRef;
+	int32_t m_alphaRefLoc;
+	int32_t m_resolutionLoc;
+	int32_t m_globalTimeLoc;
+	int32_t m_mouseLoc;
 
 public:
 
@@ -30,7 +33,7 @@ public:
 
     void SetAlphaRef( float aref );
 
-	virtual void Prepare() {}	// called before we start rendering something with this shader
+	virtual void Prepare(); // called before we start rendering something with this shader
 };
 
 
