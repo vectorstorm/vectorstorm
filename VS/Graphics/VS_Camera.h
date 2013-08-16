@@ -31,11 +31,13 @@ public:
 
 	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
 	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
-	float				GetFOV() { return m_transform.GetScale().y; }
+	float				GetFieldOfView() { return m_transform.GetScale().y; }
+	float				GetFOV() { return GetFieldOfView(); }
 
 	void				SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
 	void				SetAngle( const vsAngle &ang ) { m_transform.SetAngle( ang ); }
-	void				SetFOV( float fov ) { m_transform.SetScale( vsVector2D( fov, fov ) ); }
+	void				SetFieldOfView( float fov ) { m_transform.SetScale( vsVector2D( fov, fov ) ); }
+	void				SetFOV( float fov ) { SetFieldOfView(fov); }
 
 		// this "GetCameraTransform()" function is giving an incorrect 'scale' value.  Need to fix it!
 	const vsTransform2D &		GetCameraTransform() { return m_transform; }
@@ -75,7 +77,8 @@ public:
 	const vsVector3D &		GetPosition() const { return m_transform.GetTranslation(); }
 	const vsQuaternion &	GetOrientation() const { return m_transform.GetRotation(); }
 	const vsTransform3D &	GetTransform() const { return m_transform; }
-	float					GetFOV() const { return m_fov; }
+	float					GetFieldOfView() const { return m_fov; }
+	float					GetFOV() const { return GetFieldOfView(); } // deprecated
 	float					GetNearPlane() const { return m_nearPlane; }
 	float					GetFarPlane() const { return m_farPlane; }
 	float				GetAspectRatio() const { return m_aspectRatio; }
@@ -88,7 +91,8 @@ public:
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; UpdateFrustum();}
 	void				SetPosition( const vsVector4D &pos ) { m_transform.SetTranslation( pos ); UpdateFrustum();}
 	void				SetOrientation( const vsQuaternion &quat ) { m_transform.SetRotation( quat ); UpdateFrustum();}
-	void				SetFOV( float fov ) { m_fov = fov; UpdateFrustum();}
+	void				SetFieldOfView( float fov ) { m_fov = fov; UpdateFrustum();}
+	void				SetFOV( float fov ) { SetFieldOfView(fov); } // deprecated
 	void				SetNearPlane( float np ) { m_nearPlane = np; UpdateFrustum();}
 	void				SetFarPlane( float fp ) { m_farPlane = fp; UpdateFrustum();}
 	void				SetAspectRatio( float ar ) { m_aspectRatio = ar; UpdateFrustum(); }
