@@ -29,15 +29,15 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	}
 	else
 	{
-		settings.width = vsNextPowerOfTwo(settings.width);
-		settings.height = vsNextPowerOfTwo(settings.height);
+		//settings.width = vsNextPowerOfTwo(settings.width);
+		//settings.height = vsNextPowerOfTwo(settings.height);
 		if ( t == Type_Multisample )
 		{
 			m_renderBufferSurface = new vsSurface(settings, false, true);
 		}
 		m_textureSurface = new vsSurface(settings, (t == Type_Depth), false);
-		m_texWidth = settings.width / (float)vsNextPowerOfTwo(settings.width);
-		m_texHeight = settings.height / (float)vsNextPowerOfTwo(settings.height);
+		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
+		m_texHeight = 1.0;//settings.height / (float)vsNextPowerOfTwo(settings.height);
 	}
 
 	m_viewportWidth = settings.width;
