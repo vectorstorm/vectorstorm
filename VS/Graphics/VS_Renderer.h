@@ -51,11 +51,19 @@ protected:
 	int					m_viewportHeight;
 public:
 
-	vsRenderer() {m_defaultRenderMode = RenderMode_Additive;}
+	vsRenderer():
+		m_currentSettings(),
+		m_defaultRenderMode(RenderMode_Additive),
+		m_width(0),
+		m_height(0),
+		m_viewportWidth(0),
+		m_viewportHeight(0)
+	{
+	}
 	virtual ~vsRenderer() {Deinit();}
 
 	virtual void		Init(int width, int height, int depth, bool fullscreen) {UNUSED(width); UNUSED(height); UNUSED(depth); UNUSED(fullscreen);}
-	virtual void		InitPhaseTwo(int width, int height, int depth, bool fullscreen) {m_width = width; m_height = height; UNUSED(depth); UNUSED(fullscreen);}
+	virtual void		InitPhaseTwo(int width, int height, int depth, bool fullscreen) {m_width = m_viewportWidth = width; m_height = m_viewportHeight = height; UNUSED(depth); UNUSED(fullscreen);}
 	virtual void		Deinit() {}
 
 	virtual bool		SupportsShaders() { return false; }
