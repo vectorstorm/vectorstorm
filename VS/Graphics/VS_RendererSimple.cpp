@@ -1059,6 +1059,15 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	}
 
 	//glPolygonOffset( material->m_depthBiasConstant, material->m_depthBiasFactor );
+	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
+	{
+		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	}
+	else
+	{
+		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
+		m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
+	}
 
 	m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, material->m_zRead );

@@ -84,17 +84,17 @@ public:
 	}
 };
 
-class glPolygonOffsetUnitsSetter : public StateSetter<float>
+class glPolygonOffsetUnitsSetter : public StateSetter2<float,float>
 {
 public:
-	glPolygonOffsetUnitsSetter( const float &initialValue ):
-		StateSetter<float>( initialValue )
+	glPolygonOffsetUnitsSetter( const float &initialValueA, const float &initialValueB ):
+		StateSetter2<float,float>( initialValueA, initialValueB )
 	{
 	}
 
 	virtual void DoFlush()
 	{
-		glPolygonOffset( 0.f, m_value ) ;
+		glPolygonOffset( m_valueB, m_valueA ) ;
 	}
 };
 
@@ -139,7 +139,7 @@ vsRendererState::vsRendererState()
 	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( GL_TEXTURE_COORD_ARRAY, false );
 
 	m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
-	m_floatState[Float_PolygonOffsetUnits] = new glPolygonOffsetUnitsSetter( 0.f );
+	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
 
 	m_intState[Int_CullFace] = new glCullFaceSetter(0);
 }
@@ -177,6 +177,12 @@ vsRendererState::SetFloat( vsRendererState::Float key, float value )
 }
 
 void
+vsRendererState::SetFloat2( vsRendererState::Float2 key, float valueA, float valueB )
+{
+	m_float2State[key]->Set(valueA, valueB);
+}
+
+void
 vsRendererState::SetInt( vsRendererState::Int key, int value )
 {
 	m_intState[key]->Set(value);
@@ -198,6 +204,10 @@ vsRendererState::Flush()
 	for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		m_floatState[i]->Flush();
+	}
+	for ( int i = 0; i < FLOAT2_COUNT; i++ )
+	{
+		m_float2State[i]->Flush();
 	}
 }
 
