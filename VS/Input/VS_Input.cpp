@@ -922,6 +922,17 @@ vsInput::MouseIsOnScreen()
 }
 
 vsVector2D
+vsInput::GetWindowMousePosition()
+{
+	vsVector2D retval = m_mousePos;
+	retval += vsVector2D::One;
+	retval.x *= (.5f * vsSystem::GetScreen()->GetTrueWidth());
+	retval.y *= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+
+	return retval;
+}
+
+vsVector2D
 vsInput::GetMousePosition(int scene)
 {
 	/*int x,y;

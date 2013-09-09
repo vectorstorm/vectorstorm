@@ -12,12 +12,12 @@
 class vsRendererPretty : public vsRendererSimple
 {
 	typedef vsRendererSimple Parent;
-	
+
 	unsigned int	m_offscreenTexture;
 public:
 					vsRendererPretty();
 	virtual			~vsRendererPretty();
-	
+
 	virtual void	PreRender( const Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();

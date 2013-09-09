@@ -109,11 +109,23 @@ vsMatrix3x3::operator[](int n) const
 	return vsVector3D::Zero;
 }
 
-vsMatrix3x3 vsMatrix3x3::Inverse() const
+float
+vsMatrix3x3::Determinant() const
+{
+	float value;
+	value =
+		x.x * (y.y * z.z - y.z * z.y) -
+		x.y * (y.x * z.z - y.z * z.x) +
+		x.z * (y.x * z.y - y.y * z.x);
+	return value;
+}
+
+vsMatrix3x3
+vsMatrix3x3::Transpose() const
 {
     // just a transpose
     vsMatrix3x3 result;
-    
+
     result.x.x = x.x;
     result.x.y = y.x;
     result.x.z = z.x;
@@ -121,7 +133,7 @@ vsMatrix3x3 vsMatrix3x3::Inverse() const
     result.y.x = x.y;
     result.y.y = y.y;
     result.y.z = z.y;
-    
+
     result.z.x = x.z;
     result.z.y = y.z;
     result.z.z = z.z;
@@ -129,9 +141,58 @@ vsMatrix3x3 vsMatrix3x3::Inverse() const
     return result;
 }
 
+vsMatrix3x3
+vsMatrix3x3::Inverse() const
+{
+	float determinant = Determinant();
+
+	if ( determinant == 0.f )
+	{
+		// no inverse!
+		return *this;
+	}
+
+	float invdet = 1.0f/determinant;
+	vsMatrix3x3 result;
+
+	result.x.x = (y.y * z.z - z.y * y.z) * invdet;
+	result.x.y = (x.z * z.y - x.y * z.z) * invdet;
+	result.x.z = (x.y * y.z - x.z * y.y) * invdet;
+	result.y.x = (y.z * z.x - y.x * z.z) * invdet;
+	result.y.y = (x.x * z.z - x.z * z.x) * invdet;
+	result.y.z = (y.x * x.z - x.x * y.z) * invdet;
+	result.z.x = (y.x * z.y - z.x * y.y) * invdet;
+	result.z.y = (z.x * x.y - x.x * z.y) * invdet;
+	result.z.z = (x.x * y.y - y.x * x.y) * invdet;
+
+    return result;
+}
+
 void vsMatrix3x3::Invert()
 {
     *this = Inverse();
+}
+
+vsMatrix3x3
+vsMatrix3x3::operator*(vsMatrix3x3& b) const
+{
+	return vsMatrix3x3(
+			vsVector3D(
+				x.x * b.x.x + x.y * b.y.x + x.z * b.z.x,
+				x.x * b.x.y + x.y * b.y.y + x.z * b.z.y,
+				x.x * b.x.z + x.y * b.y.z + x.z * b.z.z
+				),
+			vsVector3D(
+				y.x * b.x.x + y.y * b.y.x + y.z * b.z.x,
+				y.x * b.x.y + y.y * b.y.y + y.z * b.z.y,
+				y.x * b.x.z + y.y * b.y.z + y.z * b.z.z
+				),
+			vsVector3D(
+				z.x * b.x.x + z.y * b.y.x + z.z * b.z.x,
+				z.x * b.x.y + z.y * b.y.y + z.z * b.z.y,
+				z.x * b.x.z + z.y * b.y.z + z.z * b.z.z
+				)
+			);
 }
 
 
@@ -423,12 +484,12 @@ vsMatrix4x4::Determinant() const
 {
 	float value;
 	value =
-	x.w * y.z * z.y * w.x-x.z * y.w * z.y * w.x-x.w * y.y * z.z * w.x+x.y * y.w    * z.z * w.x+
-	x.z * y.y * z.w * w.x-x.y * y.z * z.w * w.x-x.w * y.z * z.x * w.y+x.z * y.w    * z.x * w.y+
-	x.w * y.x * z.z * w.y-x.x * y.w * z.z * w.y-x.z * y.x * z.w * w.y+x.x * y.z    * z.w * w.y+
-	x.w * y.y * z.x * w.z-x.y * y.w * z.x * w.z-x.w * y.x * z.y * w.z+x.x * y.w    * z.y * w.z+
-	x.y * y.x * z.w * w.z-x.x * y.y * z.w * w.z-x.z * y.y * z.x * w.w+x.y * y.z    * z.x * w.w+
-	x.z * y.x * z.y * w.w-x.x * y.z * z.y * w.w-x.y * y.x * z.z * w.w+x.x * y.y    * z.z * w.w;
+	x.w * y.z * z.y * w.x - x.z * y.w * z.y * w.x - x.w * y.y * z.z * w.x+x.y * y.w * z.z * w.x+
+	x.z * y.y * z.w * w.x - x.y * y.z * z.w * w.x - x.w * y.z * z.x * w.y+x.z * y.w * z.x * w.y+
+	x.w * y.x * z.z * w.y - x.x * y.w * z.z * w.y - x.z * y.x * z.w * w.y+x.x * y.z * z.w * w.y+
+	x.w * y.y * z.x * w.z - x.y * y.w * z.x * w.z - x.w * y.x * z.y * w.z+x.x * y.w * z.y * w.z+
+	x.y * y.x * z.w * w.z - x.x * y.y * z.w * w.z - x.z * y.y * z.x * w.w+x.y * y.z * z.x * w.w+
+	x.z * y.x * z.y * w.w - x.x * y.z * z.y * w.w - x.y * y.x * z.z * w.w+x.x * y.y * z.z * w.w;
 	return value;
 }
 

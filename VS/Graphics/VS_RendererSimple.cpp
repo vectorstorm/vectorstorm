@@ -47,22 +47,11 @@ void vsRenderDebug( const vsString &message )
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRendererSimple::vsRendererSimple()
+vsRendererSimple::vsRendererSimple():
+	m_currentTexture(NULL),
+	m_currentShader(NULL)
 {
-	m_currentTexture = NULL;
-    m_currentShader = NULL;
 	m_shaderList = new vsDisplayList(200 * 1024);
-
-/*	if ( glGenBuffersARB )
-	{
-		s_vertexBuffersSupported = true;
-		vsLog("glGenBuffersARB exists:  Enabling VBO support");
-	}
-	else
-	{
-		s_vertexBuffersSupported = false;
-		vsLog("glGenBuffersARB missing:  Disabling VBO support");
-	}*/
 }
 
 vsRendererSimple::~vsRendererSimple()
@@ -99,6 +88,7 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
 
 //#ifdef _DEBUG
 	//SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
@@ -174,6 +164,12 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 		vsLog("WARNING:  Failed to initialise double-buffering");
 
 	//SDL_GL_SetSwapInterval(1);
+	//SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &val );
+	//if ( !val )
+		//vsLog("WARNING:  Failed to initialise swap control");
+	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &val );
+	if ( !val )
+		vsLog("WARNING:  Failed to get stencil buffer bits");
 //	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &val );
 //	if ( !val )
 //		vsLog("WARNING:  Failed to initialise accelerated rendering");
@@ -1075,6 +1071,15 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 	}
 
 	//glPolygonOffset( material->m_depthBiasConstant, material->m_depthBiasFactor );
+	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
+	{
+		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	}
+	else
+	{
+		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
+		m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
+	}
 
 	m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, material->m_zRead );
@@ -1103,6 +1108,29 @@ vsRendererSimple::SetMaterial(vsMaterialInternal *material)
 		{
 			m_state.SetInt( vsRendererState::Int_CullFace, GL_FRONT );
 		}
+	}
+	switch ( material->m_stencil )
+	{
+		case vsMaterialInternal::StencilOp_None:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+			break;
+		case vsMaterialInternal::StencilOp_One:
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+			break;
+		case vsMaterialInternal::StencilOp_Zero:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			break;
+		case vsMaterialInternal::StencilOp_Inc:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+			break;
+		case vsMaterialInternal::StencilOp_Dec:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+			break;
+		case vsMaterialInternal::StencilOp_Invert:
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+			break;
+		default:
+			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
 
 

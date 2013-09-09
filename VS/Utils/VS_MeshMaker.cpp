@@ -280,10 +280,11 @@ vsMeshMakerTriangle::IsDegenerate() const
 }
 
 
-vsMeshMaker::vsMeshMaker( bool buildNormals )
+vsMeshMaker::vsMeshMaker( int flags )
 {
 	m_octree = NULL;
-	m_buildingNormals = buildNormals;
+	m_buildingNormals = flags & Flag_BuildNormals;
+	m_attemptMerge = !(flags & Flag_NoMerge);
 	m_triangleCount = 0;
 //	m_triangle = new vsMeshMakerTriangle[maxTriangleCount];
 
@@ -405,83 +406,81 @@ vsMeshMaker::BakeTriangleEdge( vsMeshMakerTriangle *triangle, int vertA, int ver
 int
 vsMeshMaker::BakeTriangleVertex( vsMeshMakerTriangleVertex &vertex, const vsVector3D &faceNormal )
 {
-	float bestPriority = -1.f;
-	vsMeshMakerTriangleVertex *best = NULL;
-
-	// I don't need to test EVERY vertex;  only the ones in the same cell with me!
-	//vsMeshMakerCell *cell = GetCellForPosition( vertex.GetPosition() );
-
-	vsVector2D deltaTexel;
-
-//	for ( int i = 0; i < m_vertexCount; i++ )
-	const float testDistance = 1.1f;
-	vsArray<vsMeshMakerTriangleVertex*> array;
-	m_octree->FindPointsWithin( &array, vertex.GetPosition(), testDistance );
-
-	for (int i = 0; i < array.ItemCount(); i++)
-	//for (int i = 0; i < m_vertexCount; i++ )
+	if ( m_attemptMerge )
 	{
-		//vsMeshMakerTriangleVertex *other = &m_vertex[i];
-		vsMeshMakerTriangleVertex *other = array[i];
-		if ( m_buildingNormals )
+		float bestPriority = -1.f;
+		vsMeshMakerTriangleVertex *best = NULL;
+
+		vsVector2D deltaTexel;
+
+		const float testDistance = 1.1f;
+		vsArray<vsMeshMakerTriangleVertex*> array;
+		m_octree->FindPointsWithin( &array, vertex.GetPosition(), testDistance );
+
+		for (int i = 0; i < array.ItemCount(); i++)
 		{
-			const float epsilon = 0.01f;
-			const float sqEpsilon = epsilon*epsilon;
-
-			const bool closeEnough = (other->GetPosition() - vertex.GetPosition()).SqLength() < sqEpsilon;
-			//			bool texelMatches = ((other.m_texel - m_texel).SqLength() < sqEpsilon);
-
-			deltaTexel = other->GetTexel() - vertex.GetTexel();
-			if ( deltaTexel.x > 1.f )
+			//vsMeshMakerTriangleVertex *other = &m_vertex[i];
+			vsMeshMakerTriangleVertex *other = array[i];
+			if ( m_buildingNormals )
 			{
-				deltaTexel.x -= vsFloor(deltaTexel.x);
-			}
-			if ( deltaTexel.y > 1.f )
-			{
-				deltaTexel.y -= vsFloor(deltaTexel.y);
-			}
-			//			const bool texelMatches = deltaTexel.SqLength() < sqEpsilon;
-			bool texelMatches = true;
+				const float epsilon = 0.01f;
+				const float sqEpsilon = epsilon*epsilon;
 
-			if ( closeEnough && texelMatches )
-			{
-				float priority = other->GetMergePriorityWith(vertex, faceNormal);
+				const bool closeEnough = (other->GetPosition() - vertex.GetPosition()).SqLength() < sqEpsilon;
+				//			bool texelMatches = ((other.m_texel - m_texel).SqLength() < sqEpsilon);
 
-				if ( priority > bestPriority )
+				deltaTexel = other->GetTexel() - vertex.GetTexel();
+				if ( deltaTexel.x > 1.f )
 				{
-					bestPriority = priority;
-					best = other;
+					deltaTexel.x -= vsFloor(deltaTexel.x);
+				}
+				if ( deltaTexel.y > 1.f )
+				{
+					deltaTexel.y -= vsFloor(deltaTexel.y);
+				}
+				//			const bool texelMatches = deltaTexel.SqLength() < sqEpsilon;
+				bool texelMatches = true;
+
+				if ( closeEnough && texelMatches )
+				{
+					float priority = other->GetMergePriorityWith(vertex, faceNormal);
+
+					if ( priority > bestPriority )
+					{
+						bestPriority = priority;
+						best = other;
+					}
+				}
+			}
+			else
+			{
+				if ( *other == vertex )
+				{
+					return i;
 				}
 			}
 		}
-		else
+
+		if ( best && bestPriority >= 0.f )
 		{
-			if ( *other == vertex )
+			vsMeshMakerTriangleVertex newVertex = vertex;
+
+			bool didMerge = best->AttemptMergeWith(&newVertex, faceNormal);
+			if ( didMerge )
 			{
-				return i;
+				return best->m_index;
 			}
-		}
-	}
+			else
+			{
+				// did a fake merge.
+				newVertex.m_index = m_vertexCount;
+				m_vertex[m_vertexCount] = newVertex;
+				//cell->m_vertexIndex.push_back(m_vertexCount);
+				m_octree->AddPoint( &m_vertex[m_vertexCount] );
+				m_vertexCount++;
 
-	if ( best && bestPriority >= 0.f )
-	{
-		vsMeshMakerTriangleVertex newVertex = vertex;
-
-		bool didMerge = best->AttemptMergeWith(&newVertex, faceNormal);
-		if ( didMerge )
-		{
-			return best->m_index;
-		}
-		else
-		{
-			// did a fake merge.
-			newVertex.m_index = m_vertexCount;
-			m_vertex[m_vertexCount] = newVertex;
-			//cell->m_vertexIndex.push_back(m_vertexCount);
-			m_octree->AddPoint( &m_vertex[m_vertexCount] );
-			m_vertexCount++;
-
-			return m_vertexCount-1;
+				return m_vertexCount-1;
+			}
 		}
 	}
 

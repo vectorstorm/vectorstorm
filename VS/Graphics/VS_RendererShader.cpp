@@ -303,15 +303,15 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 
 	Parent::SetMaterial( material );
 
-	if ( m_currentSettings.polygonOffsetUnits == 0.f )
-	{
-		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
-		m_state.SetFloat( vsRendererState::Float_PolygonOffsetUnits, m_currentSettings.polygonOffsetUnits );
-	}
+	//if ( m_currentSettings.polygonOffsetUnits == 0.f )
+	//{
+		//m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	//}
+	//else
+	//{
+		//m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
+		//m_state.SetFloat( vsRendererState::Float_PolygonOffsetUnits, m_currentSettings.polygonOffsetUnits );
+	//}
     if ( m_currentSettings.writeColor )
     {
         glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);

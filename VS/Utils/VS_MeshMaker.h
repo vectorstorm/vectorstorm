@@ -32,20 +32,20 @@ struct vsMeshMakerTriangleVertex: public vsPointOctreeElement
 	vsColor			m_color;
 	vsVector2D		m_texel;
 	int				m_mergeCount;
-	
+
 	vsVector3D		m_totalNormal;
-	
+
 	vsMeshMakerTriangleVertex *	m_fakeNormalMergedWith;
-	
+
 //	vsMeshMakerTriangleEdge *	m_edge[MAX_EDGES_PER_VERTEX];
 //	int							m_edgeCount;
 
 	vsMeshMakerTriangle *		m_firstTriangle;
 //	vsMeshMakerTriangle *		m_triangle[MAX_TRIANGLES_PER_VERTEX];
 //	int							m_triangleCount;
-	
+
 public:
-	
+
 	enum
 	{
 		Flag_Position	= BIT(0),
@@ -53,17 +53,17 @@ public:
 		Flag_Color		= BIT(2),
 		Flag_Texel		= BIT(3)
 	};
-	
+
 	int				m_flags;
-	
+
 	int				m_index;						// used by vsMeshMaker internally
-	
+
 	vsMeshMakerTriangleVertex();
-	
+
 	// returns true if the merge happened, false if we converted 'other' into a fake merged vertex.
 	bool				AttemptMergeWith( vsMeshMakerTriangleVertex *other, const vsVector3D &faceNormalOther );
 	float				GetMergePriorityWith( const vsMeshMakerTriangleVertex &other, const vsVector3D &faceNormalOther );
-	
+
 //	void				AddEdge( vsMeshMakerTriangleEdge *edge );
 //	vsMeshMakerTriangleEdge *	GetEdge(int i);
 //	int							GetEdgeCount() { return m_edgeCount; }
@@ -73,9 +73,9 @@ public:
 	//void					RemoveTriangle( vsMeshMakerTriangle *triangle );
 	//vsMeshMakerTriangle *	GetTriangle(int i);
 	//int						GetTriangleCount() { return m_triangleCount; }
-	
+
 	void					CalculateNormal();
-	
+
 	void				SetPosition( const vsVector3D &position );
 	void				SetNormal( const vsVector3D &normal );
 	void				SetColor( const vsColor &color );
@@ -85,7 +85,7 @@ public:
 	const vsVector3D &	GetNormal() const;
 	const vsColor &		GetColor() const { return m_color; }
 	const vsVector2D &	GetTexel() const { return m_texel; }
-	
+
 	inline bool				operator==(const vsMeshMakerTriangleVertex &other) const;
 };
 
@@ -93,9 +93,9 @@ struct vsMeshMakerTriangle
 {
 	vsMaterial *				m_material;
 	vsMeshMakerTriangleVertex	m_vertex[3];
-	
+
 	vsVector3D					m_faceNormal;		// calculated internally;  no need for caller to provide this
-	
+
 	bool						IsDegenerate() const;
 };
 
@@ -104,7 +104,7 @@ struct vsMeshMakerTriangle
 class vsMeshMaker
 {
 	struct InternalData;
-	
+
 	int					m_triangleCount;
 
 	vsPointOctree<vsMeshMakerTriangleVertex> *m_octree;
@@ -114,26 +114,32 @@ class vsMeshMaker
 	//float				m_cellDimX;
 	//float				m_cellDimY;
 	//float				m_cellDimZ;
-	
+
 	vsMeshMakerTriangleVertex *m_vertex;
 	int				m_vertexCount;
-	
+
 	bool			m_buildingNormals;
-	
+	bool			m_attemptMerge;
+
 	InternalData		*m_internalData;
-	
+
 	void			BakeTriangleEdge( vsMeshMakerTriangle *triangle, int vertA, int vertB );
 	int				BakeTriangleVertex( vsMeshMakerTriangleVertex &vertex, const vsVector3D &faceNormal );
 	int				BakeTriangleMaterial( vsMaterial *material );
 	void			BuildTriangleStripsForMaterial( int matId );
-	
+
 	//vsMeshMakerCell *	GetCellForPosition( const vsVector3D &position );
-	
+
 public:
-	
-					vsMeshMaker( bool buildNormals = false );
+
+	enum
+	{
+		Flag_BuildNormals = BIT(0),
+		Flag_NoMerge = BIT(1)
+	};
+					vsMeshMaker( int flags = 0 );
 					~vsMeshMaker();
-	
+
 	void			Clear();
 	void			AddTriangle( const vsMeshMakerTriangle &triangle );
 	vsMesh *		Bake();

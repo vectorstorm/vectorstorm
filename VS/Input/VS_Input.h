@@ -182,7 +182,8 @@ public:
 	vsVector2D		GetTouchPosition(int touchID, int scene = 0);
 
 	bool			MouseIsOnScreen();
-	vsVector2D		GetMousePosition(int scene = 0);
+	vsVector2D		GetWindowMousePosition(); // returns the mouse position in pixels, relative to the window.
+	vsVector2D		GetMousePosition(int scene = 0); // returns the mouse position relative to the rendering context of the specified scene.
 	vsVector2D		GetMouseMotion(int scene = 0);
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }

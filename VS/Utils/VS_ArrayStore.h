@@ -108,6 +108,8 @@ public:
 			{
 				newArray[i] = m_array[i];
 			}
+			vsDeleteArray(m_array);
+			m_array = newArray;
 			m_arrayStorage = newSize;
 
 			return AddItem( item );
