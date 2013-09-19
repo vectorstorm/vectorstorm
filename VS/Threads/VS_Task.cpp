@@ -14,36 +14,41 @@ void *vsTask::DoStartThread(void* arg)
 DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
 #endif
 {
-    vsTask *task = (vsTask*)arg;
+#ifdef UNIX
+	intptr_t result;
+#else
+	DWORD result;
+#endif
+	vsTask *task = (vsTask*)arg;
 
-    task->m_done = false;
-    int result = task->Run();
-    task->m_done = true;
+	task->m_done = false;
+	result = task->Run();
+	task->m_done = true;
 	task->m_thread = 0L;
 
 #ifdef UNIX
-    return (void*)result;
+	return (void*)result;
 #else
-    return result;
+	return result;
 #endif
 }
 
 vsTask::vsTask():
-    m_thread(0),
-    m_done(false)
+	m_thread(0),
+	m_done(false)
 {
 }
 
 vsTask::~vsTask()
 {
-    if ( !m_done && m_thread != 0 )
-    {
+	if ( !m_done && m_thread != 0 )
+	{
 #ifdef UNIX
 		//		pthread_kill( m_thread, SIGKILL );
 #else
 		CloseHandle(m_thread);
 #endif
-        m_thread = 0;
+		m_thread = 0;
 	}
 }
 
@@ -54,12 +59,12 @@ vsTask::Start()
 	pthread_create( &m_thread, NULL, &vsTask::DoStartThread, (void*)this );
 #else
 	m_thread = CreateThread(
-            NULL,                   // default security attributes
-            0,                      // use default stack size
-            &vsTask::DoStartThread, // thread function name
-            (void*)this,			// argument to thread function
-            0,                      // use default creation flags
-            NULL);					// returns the thread identifier
+			NULL,                   // default security attributes
+			0,                      // use default stack size
+			&vsTask::DoStartThread, // thread function name
+			(void*)this,			// argument to thread function
+			0,                      // use default creation flags
+			NULL);					// returns the thread identifier
 
 
 #endif
