@@ -273,6 +273,23 @@ vsMesh::MakeFragment(int listId)
 		buffer->BakeArray();
 		vsDeleteArray( array );
 	}
+	else if ( m_vertexBuffer && m_texelBuffer && m_colorBuffer )
+	{
+		buffer = new vsRenderBuffer;
+
+		int size = m_vertexBuffer->GetVector3DArraySize();
+
+		vsRenderBuffer::PCT *array = new vsRenderBuffer::PCT[size];
+		for ( int i = 0; i < size; i++ )
+		{
+			array[i].position = m_vertexBuffer->GetVector3DArray()[i];
+			array[i].color = m_colorBuffer->GetColorArray()[i];
+			array[i].texel = m_texelBuffer->GetVector2DArray()[i];
+		}
+		buffer->SetArray(array, size);
+		buffer->BakeArray();
+		vsDeleteArray( array );
+	}
 	else if ( m_vertexBuffer && m_normalBuffer && m_texelBuffer )
 	{
 		buffer = new vsRenderBuffer;
