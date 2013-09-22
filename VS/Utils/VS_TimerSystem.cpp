@@ -113,12 +113,12 @@ void
 vsTimerSystem::Init()
 {
 #if defined(_WIN32)
-   if (!QueryPerformanceFrequency(&g_liFrequency))
-      printf("QPF() failed with error %d\n", GetLastError());
+	if (!QueryPerformanceFrequency(&g_liFrequency))
+		printf("QPF() failed with error %d\n", GetLastError());
 #endif
-
-//	m_startCpu = SDL_GetTicks();
-//	m_startGpu = SDL_GetTicks();
+	m_initTime = GetMicroseconds();
+	//	m_startCpu = SDL_GetTicks();
+	//	m_startGpu = SDL_GetTicks();
 	m_startCpu = GetMicroseconds();
 	m_startRender = GetMicroseconds();
 	m_startGpu = GetMicroseconds();
@@ -147,7 +147,7 @@ vsTimerSystem::GetMicroseconds()
 {
 #if defined(_WIN32)
 	if ( !QueryPerformanceCounter(&g_liCurrent) )
-         printf("QPC() failed with error %d\n", GetLastError());
+		printf("QPC() failed with error %d\n", GetLastError());
 
 	return (unsigned long)((g_liCurrent.QuadPart * 1000000) / g_liFrequency.QuadPart);
 #else	// !_WIN32
@@ -158,6 +158,12 @@ vsTimerSystem::GetMicroseconds()
 #endif	// !_WIN32
 }
 
+unsigned long
+vsTimerSystem::GetMicrosecondsSinceInit()
+{
+	return GetMicroseconds() - m_initTime;
+}
+
 #define MAX_TIME_PER_FRAME (2.0f/60.0f)		// 60fps.
 #define MIN_TIME_PER_FRAME (1.0f/60.0f)
 
@@ -166,7 +172,7 @@ vsTimerSystem::Update( float timeStep )
 {
 	UNUSED(timeStep);
 
-//	unsigned long now = SDL_GetTicks();
+	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();
 
 	unsigned long minTicksPerRound = 15000;
@@ -187,7 +193,7 @@ vsTimerSystem::Update( float timeStep )
 	{
 #if !TARGET_OS_IPHONE
 		int delayTicks = (desiredTicksPerRound-roundTime)/1000;
-//		vsLog("Delaying %d ticks.\n", delayTicks);
+		//		vsLog("Delaying %d ticks.\n", delayTicks);
 		SDL_Delay(delayTicks);
 		now = GetMicroseconds();
 		roundTime = now - m_startCpu;
@@ -226,10 +232,10 @@ vsTimerSystem::EndRenderTime()
 	m_startGpu = now;
 }
 
-	void
+void
 vsTimerSystem::EndGPUTime()
 {
-//	unsigned long now = SDL_GetTicks();
+	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();
 	m_gpuTime = (now - m_startGpu);
 }
@@ -238,7 +244,7 @@ void
 vsTimerSystem::PostUpdate( float timeStep )
 {
 	UNUSED(timeStep);
-//	unsigned long now = SDL_GetTicks();
+	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();
 
 	m_startRender = now;
