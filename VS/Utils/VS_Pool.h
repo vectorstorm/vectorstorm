@@ -16,11 +16,11 @@ template<class T>
 class vsPool
 {
 	vsArray<T*>				m_unusedList;
-	
+
 	int						m_count;
 	int						m_unusedCount;
 	bool					m_expandable;
-	
+
 public:
 
 	enum Type
@@ -38,27 +38,19 @@ public:
 			m_unusedList.AddItem( new T );
 		}
 	}
-	
+
 	~vsPool()
 	{
 		vsAssert(m_count ==  m_unusedCount, "Not all instances returned to the pool before pool shutdown??");
-		
+
 		while ( !m_unusedList.IsEmpty() )
 		{
 			T* object = *m_unusedList.Begin();
 			m_unusedList.RemoveItem( object );
 			vsDelete(object);
 		}
-		/*
-		 *while ( !m_usedList.IsEmpty() )
-		 *{
-		 *    T* object = *m_usedList.Begin();
-		 *    m_usedList.RemoveItem( object );
-		 *    vsDelete(object);
-		 *}
-		 */
 	}
-	
+
 	T*	Borrow()
 	{
 		if ( !m_expandable )
@@ -72,14 +64,14 @@ public:
 			m_unusedList.AddItem( new T );
 		}
 		m_unusedCount--;
-		
+
 		T* result = *m_unusedList.Begin();
 		m_unusedList.RemoveItem(result);
 		//m_usedList.AddItem(result);
-		
+
 		return result;
 	}
-	
+
 	void Return( T* item )
 	{
 		m_unusedCount++;
@@ -87,11 +79,11 @@ public:
 		//m_usedList.RemoveItem(item);
 		m_unusedList.AddItem(item);
 	}
-	
-	//	vsLinkedList<T*> *GetUnusedList()	// intended for any late initialisation that needs to be done by the pool owner.
-	//{
-	//	return &m_unusedList;
-	//}
+
+	bool IsEmpty()
+	{
+		return (m_unusedCount == 0 || m_expandable);
+	}
 };
 
 #endif // VS_POOL_H
