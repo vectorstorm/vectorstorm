@@ -575,9 +575,6 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				//case SDL_VIDEORESIZE:
-					//vsSystem::Instance()->UpdateVideoMode(event.resize.w, event.resize.h);
-					//break;
 				case SDL_WINDOWEVENT:
 					switch (event.window.event)
 					{
@@ -585,6 +582,13 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_CLOSE:
 							core::SetExit();
 							break;
+						case SDL_WINDOWEVENT_RESIZED:
+							{
+								int windowWidth = event.window.data1;
+								int windowHeight = event.window.data2;
+								vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
+								break;
+							}
 					}
 					break;
 				case SDL_QUIT:

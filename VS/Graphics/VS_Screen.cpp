@@ -72,8 +72,12 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 
 	m_width = width;
 	m_height = height;
+	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
 	m_fullscreen = fullscreen;
+	m_renderer->UpdateVideoMode(width, height, depth);
+
+	return;
 
 	m_renderer->Deinit();
 	delete m_renderer;

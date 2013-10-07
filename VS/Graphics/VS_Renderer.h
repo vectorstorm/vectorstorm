@@ -66,6 +66,8 @@ public:
 	virtual void		InitPhaseTwo(int width, int height, int depth, bool fullscreen) {m_width = m_viewportWidth = width; m_height = m_viewportHeight = height; UNUSED(depth); UNUSED(fullscreen);}
 	virtual void		Deinit() {}
 
+	virtual void		UpdateVideoMode(int width, int height, int depth);
+
 	virtual bool		SupportsShaders() { return false; }
 
 	virtual void		PreRender( const Settings &s ) { m_currentSettings = s; }

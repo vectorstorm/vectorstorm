@@ -83,8 +83,8 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 
 	if ( fullscreen )
 		videoFlags |= SDL_WINDOW_FULLSCREEN;
-	//else
-		//videoFlags |= SDL_VIDEORESIZE;
+	else
+		videoFlags |= SDL_WINDOW_RESIZABLE;
 
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
@@ -120,12 +120,6 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 #endif // __APPLE__
 
 	//SDL_Surface *s = SDL_SetVideoMode( width, height, videoInfo->vfmt->BitsPerPixel, videoFlags );
-	m_window = SDL_CreateWindow("My Game Window",
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			width, height,
-			videoFlags);
-
 	SDL_CreateWindowAndRenderer(width, height, videoFlags, &m_window, &m_renderer);
 
 	if ( !m_window || !m_renderer  ){
@@ -208,6 +202,8 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 void
 vsRendererSimple::Deinit()
 {
+	SDL_DestroyWindow( m_window );
+	m_window = NULL;
 }
 
 void
@@ -358,6 +354,7 @@ vsRendererSimple::PreRender(const Settings &s)
 {
     Parent::PreRender(s);
 	CheckGLError("PreRender");
+	glViewport( 0, 0, (GLsizei)m_width, (GLsizei)m_height );
 
     m_currentShader = NULL;
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );

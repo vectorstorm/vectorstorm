@@ -251,6 +251,8 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// Since we're going to be restarting our OpenGL context, we need to recompile all of our compiled display lists!
 	// So before we tear down OpenGL, let's uncompile them all.
 
+	GetScreen()->UpdateVideoMode( width, height, 32, m_preferences->GetFullscreen() );
+	return;
 	vsDisplayList::UncompileAll();
 	vsRenderBuffer::UnmapAll();
 

@@ -19,3 +19,12 @@ vsRenderer::Settings::Settings():
 	invertCull(false)
 {
 }
+
+void
+vsRenderer::UpdateVideoMode(int width, int height, int depth)
+{
+	UNUSED(depth);
+	m_width = m_viewportWidth = width;
+	m_height = m_viewportHeight = height;
+}
+
