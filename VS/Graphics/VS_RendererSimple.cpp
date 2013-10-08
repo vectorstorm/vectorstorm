@@ -202,8 +202,10 @@ vsRendererSimple::Init(int width, int height, int depth, bool fullscreen)
 void
 vsRendererSimple::Deinit()
 {
+	SDL_DestroyRenderer( m_renderer );
 	SDL_DestroyWindow( m_window );
 	m_window = NULL;
+	m_renderer = NULL;
 }
 
 void
