@@ -92,8 +92,9 @@ vsShader::Prepare()
 	}
 	if ( m_globalTimeLoc >= 0 )
 	{
-		float time = vsTimerSystem::Instance()->GetMicroseconds() / 1000000.f;
-		glUniform1f( m_globalTimeLoc, time );
+		int milliseconds = vsTimerSystem::Instance()->GetMicrosecondsSinceInit() / 1000;
+		float seconds = milliseconds / 1000.f;
+		glUniform1f( m_globalTimeLoc, seconds );
 	}
 	if ( m_mouseLoc >= 0 )
 	{

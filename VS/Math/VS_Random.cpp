@@ -74,10 +74,7 @@ vsRandom::GetFloat(float min, float max)
 int
 vsRandom::GetInt(int maxValue)
 {
-	float maxGenRandValue = 0xffffffff;
-	float result = ((float)gen_rand32() / (maxGenRandValue+1) * (maxValue));
-	//vsAssert( (int)result < maxValue, "Illegal random result?" );
-	return (int)result;
+	return gen_rand32() % maxValue;
 }
 
 int

@@ -35,6 +35,8 @@ class vsTimerSystem : public coreGameSystem
 {
 	static vsTimerSystem *	s_instance;
 
+	unsigned long		m_initTime;
+
 	unsigned long		m_startCpu;
 	unsigned long		m_startRender;
 	unsigned long		m_startGpu;
@@ -59,6 +61,7 @@ public:
 	virtual void		Deinit();
 
 	unsigned long		GetMicroseconds();
+	unsigned long		GetMicrosecondsSinceInit();
 
 	virtual void		Update( float timeStep );
 	virtual void		PostUpdate(float timeStep);

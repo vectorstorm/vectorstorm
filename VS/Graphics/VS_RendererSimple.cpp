@@ -508,6 +508,7 @@ vsRendererSimple::RawRenderDisplayList( vsDisplayList *list )
 #if !TARGET_OS_IPHONE
 			case vsDisplayList::OpCode_DrawPoint:
 			{
+				m_state.Flush();
 				glBegin( GL_POINTS );
 					vsVector3D pos = op->data.GetVector3D();
 					glVertex3f( pos.x, pos.y, pos.z );
