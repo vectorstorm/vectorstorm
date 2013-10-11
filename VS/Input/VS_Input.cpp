@@ -25,7 +25,8 @@
 #include <SDL2/SDL.h>
 #endif
 
-vsInput::vsInput()
+vsInput::vsInput():
+	m_mouseIsInWindow(true)
 {
 	m_captureMouse = false;
 }
@@ -394,26 +395,6 @@ vsInput::Update(float timeStep)
 						vsSystem::Instance()->SetAppHasFocus(true);
 					}
 					break;
-//				case SDL_ACTIVEEVENT:
-//					{
-//						if ( event.active.state & SDL_APPINPUTFOCUS )
-//						{
-//							// turn off mouse capture when we lose focus, if it's on.
-//							if ( m_captureMouse )
-//							{
-//								if ( event.active.gain )
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_ON );
-//								}
-//								else
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_OFF );
-//								}
-//							}
-//							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
-//						}
-//						break;
-//					}
 				case SDL_MOUSEWHEEL:
 					{
 						if ( event.wheel.y > 0 )
@@ -589,6 +570,37 @@ vsInput::Update(float timeStep)
 								vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
 								break;
 							}
+						case SDL_WINDOWEVENT_FOCUS_LOST:
+							vsSystem::Instance()->SetAppHasFocus( false );
+							break;
+						case SDL_WINDOWEVENT_FOCUS_GAINED:
+							vsSystem::Instance()->SetAppHasFocus( true );
+							break;
+						case SDL_WINDOWEVENT_ENTER:
+							m_mouseIsInWindow = true;
+							break;
+						case SDL_WINDOWEVENT_LEAVE:
+							m_mouseIsInWindow = false;
+							break;
+//					{
+//						if ( event.active.state & SDL_APPINPUTFOCUS )
+//						{
+//							// turn off mouse capture when we lose focus, if it's on.
+//							if ( m_captureMouse )
+//							{
+//								if ( event.active.gain )
+//								{
+//									SDL_WM_GrabInput( SDL_GRAB_ON );
+//								}
+//								else
+//								{
+//									SDL_WM_GrabInput( SDL_GRAB_OFF );
+//								}
+//							}
+//							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
+//						}
+//						break;
+//					}
 					}
 					break;
 				case SDL_QUIT:
@@ -761,6 +773,19 @@ vsInput::ReadMouseButton( int buttonID )
 	int buttons = SDL_GetMouseState(NULL,NULL);
 	bool buttonDown = !!(buttons & SDL_BUTTON(buttonID));
 
+#if defined(__APPLE_CC__)
+	// Apple-style Command+LeftMouseButton == RightMouseButton.
+	if ( !buttonDown && buttonID == SDL_BUTTON_RIGHT )
+	{
+		// test alt+left_button, for trackpad users.
+		// SDL1 did this automatically, apparently.
+
+		SDL_Keymod keymod = SDL_GetModState();
+		if ( keymod & KMOD_LGUI )
+			buttonDown = !!(buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
+	}
+#endif // __APPLE_CC__
+
 	return buttonDown?1.0f:0.0f;
 #else
 	return 0.0f;
@@ -916,7 +941,7 @@ bool
 vsInput::MouseIsOnScreen()
 {
 #if !TARGET_OS_IPHONE
-	return true;
+	return m_mouseIsInWindow;
 	//uint8_t state = SDL_GetAppState();
 
 	//return ( state & SDL_APPMOUSEFOCUS );

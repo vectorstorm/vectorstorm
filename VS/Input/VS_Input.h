@@ -143,6 +143,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 
+	bool			m_mouseIsInWindow;
+
 	void			ReadAxis( int axisID, ControlDirection dir, int cid );
 	void			ReadButton( int buttonID, int cid );
 
