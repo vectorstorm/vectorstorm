@@ -7,7 +7,7 @@ else()
 endif()
 project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
-	
+
 find_package(OpenGL)
 #find_package(SDL REQUIRED)
 #find_package(SDL_image REQUIRED)
@@ -38,12 +38,12 @@ set(VS_LIBRARIES
 	)
 
 include_directories(
-	${PNG_PNG_INCLUDE_DIR} 
-	${SDL_INCLUDE_DIR} 
-	${SDLMIXER_INCLUDE_DIR} 
-	${SDLIMAGE_INCLUDE_DIR} 
-	${ZLIB_INCLUDE_DIRS} 
-	${GLEW_INCLUDE_DIR} 
+	${PNG_PNG_INCLUDE_DIR}
+	${SDL_INCLUDE_DIR}
+	${SDLMIXER_INCLUDE_DIR}
+	${SDLIMAGE_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIRS}
+	${GLEW_INCLUDE_DIR}
 	${BOX2D_INCLUDE_DIR}
 	#/usr/local/include
 	)
@@ -120,14 +120,10 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
-	VS/Graphics/VS_RendererBloom.cpp
-	VS/Graphics/VS_RendererBloom.h
-	VS/Graphics/VS_RendererPretty.cpp
-	VS/Graphics/VS_RendererPretty.h
-	VS/Graphics/VS_RendererShader.cpp
-	VS/Graphics/VS_RendererShader.h
-	VS/Graphics/VS_RendererSimple.cpp
-	VS/Graphics/VS_RendererSimple.h
+	VS/Graphics/VS_RenderScheme.cpp
+	VS/Graphics/VS_RenderSchemeFixedFunction.cpp
+	VS/Graphics/VS_RenderSchemeBloom.cpp
+	VS/Graphics/VS_RenderSchemeShader.cpp
 	VS/Graphics/VS_RendererState.cpp
 	VS/Graphics/VS_RendererState.h
 	VS/Graphics/VS_Scene.cpp

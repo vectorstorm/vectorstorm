@@ -18,7 +18,8 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	m_type(t)
 {
 	vsSurface::Settings settings = settings_in;
-	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
+	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount);
+	s_renderTargetCount += 1;
 
 	if ( t == Type_Window )
 	{

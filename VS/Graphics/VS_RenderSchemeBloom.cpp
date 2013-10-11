@@ -11,7 +11,7 @@
 
 #include "VS_OpenGL.h"
 
-#include "VS_RendererBloom.h"
+#include "VS_RenderSchemeBloom.h"
 #include "VS_RenderTarget.h"
 
 #include "VS_Image.h"
@@ -264,28 +264,14 @@ GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
 float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 
-//#include <SDL2/SDL_opengl.h>
-
-
-
-
-
-vsRendererBloom::vsRendererBloom()
-{
-#if defined(OVERLAYS_IN_SHADER)
-	m_applyOverlaysToColor = false;
-#endif // OVERLAYS_IN_SHADER
-	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
-}
-
 #define BUFFER_HEIGHT (512)
 #define BUFFER_WIDTH  (512)
 
-void
-vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
+
+vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
+	vsRenderScheme(renderer)
 {
-	m_width = width;
-	m_height = height;
+	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
 
 	// Compile shaders
 	m_combineProg = Compile(passv, combine7f);
@@ -320,16 +306,16 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	// Create Window Surface
 	vsSurface::Settings settings;
 	settings.depth = 0;
-	settings.width = width;
-	settings.height = height;
+	settings.width = m_renderer->GetWidthPixels();
+	settings.height = m_renderer->GetHeightPixels();
 	settings.ortho = true;
 	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
 
     // Create 3D Scene Surface
 	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
 
-    settings.width = width;
-    settings.height = height;
+    settings.width = m_renderer->GetWidthPixels();
+    settings.height = m_renderer->GetHeightPixels();
 	settings.depth = true;
     settings.linear = true;
 	settings.mipMaps = false;
@@ -344,13 +330,11 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
-	m_viewportWidth = m_scene->GetViewportWidth();
-	m_viewportHeight = m_scene->GetViewportHeight();
+	m_renderer->SetViewportWidthPixels( m_scene->GetViewportWidth() );
+	m_renderer->SetViewportHeightPixels( m_scene->GetViewportHeight() );
 
-
-
-	width = BUFFER_WIDTH;
-	height = BUFFER_HEIGHT;
+	int width = BUFFER_WIDTH;
+	int height = BUFFER_HEIGHT;
 	// Create Source Surfaces
 	for (int p = 0; p < FILTER_COUNT; p++)
 	{
@@ -364,11 +348,9 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 		m_pass[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 		m_pass2[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
-
 }
 
-void
-vsRendererBloom::Deinit()
+vsRenderSchemeBloom::~vsRenderSchemeBloom()
 {
 	DestroyShader(m_combineProg);
 	DestroyShader(m_filterProg);
@@ -394,7 +376,7 @@ static GLuint s_overlayInverseDistanceLoc;
 
 #if defined(OVERLAYS_IN_SHADER)
 void
-vsRendererBloom::SetOverlay( const vsOverlay &o )
+vsRenderSchemeBloom::SetOverlay( const vsOverlay &o )
 {
 	float c[4] = { o.m_aColor.r, o.m_aColor.g, o.m_aColor.b, o.m_aColor.a };
 	float cb[4] = { o.m_bColor.r, o.m_bColor.g, o.m_bColor.b, o.m_bColor.a };
@@ -417,7 +399,7 @@ vsRendererBloom::SetOverlay( const vsOverlay &o )
 #endif	// OVERLAYS_IN_SHADER
 /*
 void
-vsRendererBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, bool linear, bool withMipMaps, bool withMultisample)
+vsRenderSchemeBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, bool linear, bool withMipMaps, bool withMultisample)
 {
 	//vsAssert(linear, "Asked for a non-linear surface!");
 	vsAssert(!fp, "Asked for floating point surface!");
@@ -513,7 +495,7 @@ vsRendererBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, boo
 }
 
 void
-vsRendererBloom::DeleteSurface(vsBloomSurface *surface)
+vsRenderSchemeBloom::DeleteSurface(vsBloomSurface *surface)
 {
 	if ( surface->isRenderbuffer )
 	{
@@ -544,7 +526,7 @@ const char c_enums[][20] =
 };
 
 void
-vsRendererBloom::CheckFBO()
+vsRenderSchemeBloom::CheckFBO()
 {
     GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
     if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
@@ -555,7 +537,7 @@ vsRendererBloom::CheckFBO()
 }
 
 GLuint
-vsRendererBloom::Compile(const char *vert, const char *frag, int vLength, int fLength )
+vsRenderSchemeBloom::Compile(const char *vert, const char *frag, int vLength, int fLength )
 {
     GLchar buf[256];
     GLuint vertShader, fragShader, program;
@@ -612,18 +594,14 @@ vsRendererBloom::Compile(const char *vert, const char *frag, int vLength, int fL
 }
 
 void
-vsRendererBloom::DestroyShader(GLuint shader)
+vsRenderSchemeBloom::DestroyShader(GLuint shader)
 {
 	glDeleteProgram(shader);
 }
 
 
-vsRendererBloom::~vsRendererBloom()
-{
-}
-
 void
-vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir)
+vsRenderSchemeBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir)
 {
     int p;
 
@@ -674,18 +652,17 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 
 
 void
-vsRendererBloom::PreRender(const Settings &s)
+vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 {
 	m_scene->Bind();
-    Parent::PreRender(s);
     //int p;
     //GLint loc;
 
     // Draw 3D scene.
 	if ( m_antialias )
 	{
-		m_state.SetBool( vsRendererState::Bool_PolygonSmooth, true );
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
 //	glBlendFunc( GL_ONE, GL_ZERO );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
@@ -693,14 +670,13 @@ vsRendererBloom::PreRender(const Settings &s)
 	//glEnable(GL_MULTISAMPLE);
 
 	//glDepthMask(GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
+	m_renderer->GetState()->Flush();
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-//	Parent::PreRender();
 //	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_FALSE);
 
 #if defined(OVERLAYS_IN_SHADER)
@@ -742,26 +718,25 @@ vsRendererBloom::PreRender(const Settings &s)
 
  glDisable(GL_TEXTURE_2D);
 
- Parent::PostRender();
  return;*/
 
 
 void
-vsRendererBloom::PostRender()
+vsRenderSchemeBloom::PostRender()
 {
-	m_state.SetBool( vsRendererState::Bool_Fog, false );
-	//	m_state.SetBool( vsRendererState::Bool_AlphaTest, false );
-	m_state.SetBool( vsRendererState::Bool_CullFace, false );
-	m_state.SetBool( vsRendererState::Bool_Lighting, false );
-	m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-	m_state.SetBool( vsRendererState::Bool_Multisample, false );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Fog, false );
+	//	m_renderer->GetState()->SetBool( vsRendererState::Bool_AlphaTest, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_CullFace, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Lighting, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_ColorMaterial, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, false );
+	m_renderer->GetState()->Flush();
 
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 
-	CheckGLError("PrePostRender");
+	m_renderer->CheckGLError("PrePostRender");
 
 	m_scene->Resolve();
 
@@ -810,9 +785,9 @@ vsRendererBloom::PostRender()
 		m_scene->GetTexWidth(), m_scene->GetTexHeight()
 	};
 
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	m_renderer->GetState()->Flush();
 
 	glVertexPointer( 2, GL_FLOAT, 0, v );
 	glTexCoordPointer( 2, GL_FLOAT, 0, t );
@@ -885,9 +860,9 @@ vsRendererBloom::PostRender()
 	*/
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_VertexArray, false );
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	m_renderer->GetState()->Flush();
 
     glUseProgram(0);
 
@@ -932,19 +907,16 @@ vsRendererBloom::PostRender()
 	}
 #endif // _DEBUG
 
-	Parent::PostRender();
 }
 
 bool
-vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
+vsRenderSchemeBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
-    m_currentSettings = s;
-
 	target->Bind();
 	if ( m_antialias )
 	{
-		m_state.SetBool( vsRendererState::Bool_PolygonSmooth, true );
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
 //	glBlendFunc( GL_ONE, GL_ZERO );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
@@ -952,8 +924,8 @@ vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget 
 	//glEnable(GL_MULTISAMPLE);
 
 	//glDepthMask(GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
+	m_renderer->GetState()->Flush();
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -962,30 +934,29 @@ vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget 
 }
 
 bool
-vsRendererBloom::PostRenderTarget( vsRenderTarget *target )
+vsRenderSchemeBloom::PostRenderTarget( vsRenderTarget *target )
 {
 	m_scene->Bind();
 	return true;
 }
 
 void
-vsRendererBloom::RenderDisplayList( vsDisplayList *list )
+vsRenderSchemeBloom::RenderDisplayList( vsDisplayList *list )
 {
 	// give us thicker lines, nicely smoothed.
 	glLineWidth( 2.0f );
 //	glPointSize( 2.5f );
-	m_state.SetBool( vsRendererState::Bool_LineSmooth, true );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_LineSmooth, true );
 	//glEnable( GL_LINE_SMOOTH );
 	//glEnable( GL_MULTISAMPLE );
 	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	//glBlendFunc( GL_ONE, GL_ZERO );
 
 	// let our parent class actually perform the rendering, now that we've modified our GL settings.
-	Parent::RenderDisplayList(list);
 }
 /*
 void
-vsRendererBloom::BindSurface(vsBloomSurface *surface)
+vsRenderSchemeBloom::BindSurface(vsBloomSurface *surface)
 {
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->fbo);
     glViewport(0,0, surface->viewport.width, surface->viewport.height);
@@ -997,7 +968,7 @@ vsRendererBloom::BindSurface(vsBloomSurface *surface)
 }*/
 /*
 void
-vsRendererBloom::UseSurfaceAsTexture(vsBloomSurface *surface)
+vsRenderSchemeBloom::UseSurfaceAsTexture(vsBloomSurface *surface)
 {
 }
  */
@@ -1005,7 +976,7 @@ vsRendererBloom::UseSurfaceAsTexture(vsBloomSurface *surface)
 
 /*
 void
-vsRendererBloom::ClearSurface()
+vsRenderSchemeBloom::ClearSurface()
 {
 	//    const vsBloomSurface *surface = g_boundSurface;
     glClearColor(0,0,0,0);
@@ -1013,7 +984,7 @@ vsRendererBloom::ClearSurface()
 }*/
 
 bool
-vsRendererBloom::Supported(bool experimental)
+vsRenderSchemeBloom::Supported(bool experimental)
 {
 	glewExperimental = experimental;
 
@@ -1079,10 +1050,12 @@ vsRendererBloom::Supported(bool experimental)
 }
 
 vsImage *
-vsRendererBloom::Screenshot()
+vsRenderSchemeBloom::Screenshot()
 {
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
 	const size_t bytesPerPixel = 3;	// RGB
-	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
+	const size_t imageSizeInBytes = bytesPerPixel * width * height;
 
 	uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
@@ -1091,16 +1064,16 @@ vsRendererBloom::Screenshot()
 	// (otherwise glReadPixels would write out of bounds)
 	m_window->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width * bytesPerPixel;
+		int rowStart = y * width * bytesPerPixel;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int rInd = rowStart + (x*bytesPerPixel);
 			int gInd = rInd+1;
@@ -1121,9 +1094,11 @@ vsRendererBloom::Screenshot()
 
 
 vsImage *
-vsRendererBloom::ScreenshotDepth()
+vsRenderSchemeBloom::ScreenshotDepth()
 {
-	int imageSize = sizeof(float) * m_width * m_height;
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
+	int imageSize = sizeof(float) * width * height;
 
 	float* pixels = new float[imageSize];
 
@@ -1132,17 +1107,17 @@ vsRendererBloom::ScreenshotDepth()
 	// (otherwise glReadPixels would write out of bounds)
 	m_scene->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * width;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -1158,9 +1133,11 @@ vsRendererBloom::ScreenshotDepth()
 }
 
 vsImage *
-vsRendererBloom::ScreenshotAlpha()
+vsRenderSchemeBloom::ScreenshotAlpha()
 {
-	int imageSize = sizeof(float) * m_width * m_height;
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
+	int imageSize = sizeof(float) * width * height;
 
 	float* pixels = new float[imageSize];
 
@@ -1169,17 +1146,17 @@ vsRendererBloom::ScreenshotAlpha()
 	// (otherwise glReadPixels would write out of bounds)
 	m_scene->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_ALPHA, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_ALPHA, GL_FLOAT, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * width;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -1195,3 +1172,4 @@ vsRendererBloom::ScreenshotAlpha()
 }
 
 #endif // TARGET_OS_IPHONE
+

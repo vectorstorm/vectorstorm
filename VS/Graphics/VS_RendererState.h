@@ -1,6 +1,6 @@
 //
 //  VS_RendererState.h
-//  MMORPG2
+//  VectorStorm
 //
 //  Created by Trevor Powell on 23/04/11.
 //  Copyright 2011 VectorStorm. All rights reserved.
@@ -8,8 +8,6 @@
 
 #ifndef VS_RENDERER_STATE_H
 #define VS_RENDERER_STATE_H
-
-#include "VS_Array.h"
 
 template<typename T>
 class StateSetter

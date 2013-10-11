@@ -10,7 +10,7 @@
 #ifndef VS_RENDERERBLOOM_H
 #define VS_RENDERERBLOOM_H
 
-#include "VS_RendererSimple.h"
+#include "VS_RenderScheme.h"
 #include "VS_RenderTarget.h"
 //#define NO_SDL_GLEXT
 #include "VS_OpenGL.h"
@@ -22,28 +22,12 @@ struct vsViewport
     GLsizei width;
     GLsizei height;
 };
-/*
-struct vsBloomSurface
-{
-    GLsizei width;
-    GLsizei height;
-	vsViewport	viewport;
-	GLfloat	texWidth;	// 0..1  viewport.width/width
-	GLfloat	texHeight;	// 0..1
-    GLfloat modelview[16];
-    GLfloat projection[16];
-    GLuint texture;
-    GLuint depth;
-    GLuint fbo;
-
-	bool	isRenderbuffer;
-};*/
 
 #define FILTER_COUNT (6)
 
-class vsRendererBloom : public vsRendererSimple
+class vsRenderSchemeBloom : public vsRenderScheme
 {
-	typedef vsRendererSimple Parent;
+	typedef vsRenderScheme Parent;
 
 	GLuint			m_combineProg;
 	GLuint			m_filterProg;
@@ -70,17 +54,14 @@ protected:
 	void			DestroyShader(GLuint shader);
 
 public:
-	vsRendererBloom();
-	virtual			~vsRendererBloom();
-
-	virtual void	InitPhaseTwo(int width, int height, int depth, bool fullscreen);
-	virtual void	Deinit();
+	vsRenderSchemeBloom(vsRenderer *renderer);
+	virtual			~vsRenderSchemeBloom();
 
 #if defined(OVERLAYS_IN_SHADER)
 	virtual void	SetOverlay( const vsOverlay &o );
 #endif // OVERLAYS_IN_SHADER
 
-	virtual void	PreRender( const Settings &s );
+	virtual void	PreRender( const vsRenderer::Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
 

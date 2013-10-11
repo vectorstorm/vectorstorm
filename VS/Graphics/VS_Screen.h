@@ -70,8 +70,6 @@ public:
 	bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
 	bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
 
-	void			SetOpaqueRendering();
-
 	vsImage *       Screenshot();
 	vsImage *       ScreenshotDepth();
 	vsImage *       ScreenshotAlpha();
