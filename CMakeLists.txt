@@ -9,9 +9,14 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL)
+# Disabled; these packages are looking for SDL1  we manually find SDL2, instead, below.
 #find_package(SDL REQUIRED)
 #find_package(SDL_image REQUIRED)
 #find_package(SDL_mixer REQUIRED)
+find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
+
 find_package(PNG REQUIRED)
 if(UNIX)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
@@ -23,19 +28,17 @@ find_path(GLEW_INCLUDE_DIR glew.h
 find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
-find_library(SDL_LIBRARY SDL2 REQUIRED)
-find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
-find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
 
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
 	${SDL_LIBRARY}
-	${SDLIMAGE_LIBRARY}
-	${SDLMIXER_LIBRARY}
+	${SDL_IMAGE_LIBRARY}
+	${SDL_MIXER_LIBRARY}
 	${PNG_LIBRARY}
 	${GLEW_LIBRARY}
 	${BOX2D_LIBRARY}
 	)
+
 
 include_directories(
 	${PNG_PNG_INCLUDE_DIR}
@@ -339,6 +342,10 @@ include_directories(
 		${THREADS_SOURCES}
 		${UTILS_SOURCES}
 		${PLATFORM_SOURCES}
+		)
+
+	target_link_libraries( vectorstorm
+		${VS_LIBRARIES}
 		)
 
 	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3
