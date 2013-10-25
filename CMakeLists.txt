@@ -9,13 +9,10 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL)
-# Disabled; these packages are looking for SDL1  we manually find SDL2, instead, below.
-#find_package(SDL REQUIRED)
-#find_package(SDL_image REQUIRED)
-#find_package(SDL_mixer REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
+
 
 find_package(PNG REQUIRED)
 if(UNIX)
@@ -28,6 +25,16 @@ find_path(GLEW_INCLUDE_DIR glew.h
 find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
+
+# Check our build environment and set any variables
+# which need setting
+set(CMAKE_REQUIRED_LIBRARIES ${SDL_LIBRARY})
+include(CheckFunctionExists)
+check_function_exists( SDL_GL_GetDrawableSize HIGHDPI_SUPPORTED )
+
+include_directories("${PROJECT_BINARY_DIR}")
+configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
+	"${PROJECT_BINARY_DIR}/VS_Config.h" )
 
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
@@ -327,6 +334,7 @@ include_directories(
 		add_definitions("/FI\"VS_Prefix.h\"")
 	endif()
 
+	add_definitions("-DVECTORSTORM_INTERNAL")
 	add_library(
 		vectorstorm
 		${SOURCES}

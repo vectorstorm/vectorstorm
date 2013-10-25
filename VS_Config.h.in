@@ -1,0 +1,2 @@
+// Configured build settings, as detected by cmake
+#cmakedefine HIGHDPI_SUPPORTED

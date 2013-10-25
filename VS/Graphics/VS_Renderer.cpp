@@ -77,7 +77,9 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen):
 	int videoFlags;
 
 	videoFlags = SDL_WINDOW_OPENGL;
+#ifdef HIGHDPI_SUPPORTED
 	videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
 
 	if ( fullscreen )
 		videoFlags |= SDL_WINDOW_FULLSCREEN;
@@ -125,9 +127,20 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen):
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+#ifdef HIGHDPI_SUPPORTED
 	SDL_GL_GetDrawableSize(m_window, &m_widthPixels, &m_heightPixels);
+#else
+	m_widthPixels = width;
+	m_heightPixels = height;
+#endif
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
+	if ( m_viewportWidthPixels != m_widthPixels ||
+			m_viewportHeightPixels != m_heightPixels )
+	{
+		vsLog("High DPI Rendering enabled");
+		vsLog("High DPI backing store is: %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
+	}
 
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, "Error initialising glew!");
