@@ -521,10 +521,6 @@ vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 	//glDepthMask(GL_TRUE);
 	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
 	m_renderer->GetState()->Flush();
-	glClearColor(0.f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 //	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_FALSE);
 }

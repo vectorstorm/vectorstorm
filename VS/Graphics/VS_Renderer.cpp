@@ -394,6 +394,10 @@ vsRenderer::PreRender(const Settings &s)
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_currentMaterial = NULL;
+
+	m_scheme->PreRender(s);
+
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glClearStencil(0);
@@ -402,9 +406,6 @@ vsRenderer::PreRender(const Settings &s)
 	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-	m_currentMaterial = NULL;
-
-	m_scheme->PreRender(s);
 	CheckGLError("PreRender");
 }
 
