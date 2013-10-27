@@ -1,3 +1,4 @@
+#if 0
 /*
  Based on zlib license - see http://www.gzip.org/zlib/zlib_license.html
 
@@ -280,3 +281,5 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 			}
 			return ret;
 		}
+
+#endif // 0
