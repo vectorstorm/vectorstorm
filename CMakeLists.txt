@@ -120,8 +120,6 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Mesh.h
 	VS/Graphics/VS_Model.cpp
 	VS/Graphics/VS_Model.h
-	VS/Graphics/VS_Overlay.cpp
-	VS/Graphics/VS_Overlay.h
 	VS/Graphics/VS_RenderBuffer.cpp
 	VS/Graphics/VS_RenderBuffer.h
 	VS/Graphics/VS_RenderQueue.cpp

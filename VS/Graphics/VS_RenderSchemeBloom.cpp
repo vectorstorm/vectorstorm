@@ -15,10 +15,6 @@
 #include "VS_RenderTarget.h"
 
 #include "VS_Image.h"
-#include "VS_Overlay.h"
-
-//#define OVERLAYS_IN_SHADER
-
 
 vsRenderTarget *g_boundSurface = NULL;
 
@@ -366,153 +362,6 @@ vsRenderSchemeBloom::~vsRenderSchemeBloom()
 	}
 }
 
-#if defined(OVERLAYS_IN_SHADER)
-static GLuint s_overlayColorALoc;
-static GLuint s_overlayColorBLoc;
-static GLuint s_overlayPosALoc;
-static GLuint s_overlayDirectionLoc;
-static GLuint s_overlayInverseDistanceLoc;
-#endif  //(OVERLAYS_IN_SHADER)
-
-#if defined(OVERLAYS_IN_SHADER)
-void
-vsRenderSchemeBloom::SetOverlay( const vsOverlay &o )
-{
-	float c[4] = { o.m_aColor.r, o.m_aColor.g, o.m_aColor.b, o.m_aColor.a };
-	float cb[4] = { o.m_bColor.r, o.m_bColor.g, o.m_bColor.b, o.m_bColor.a };
-
-	vsTransform2D &t = m_transformStack[m_currentTransformStackLevel];
-
-	vsVector2D localPos = t.ApplyInverseTo( o.m_a );
-	vsVector2D localDir = (-t.m_angle).ApplyRotationTo( o.m_direction );
-
-	float p[4] = { localPos.x, localPos.y, 0.f, 0.f };
-	float d[4] = { localDir.x, localDir.y, 0.f, 0.f };
-
-	glUniform4fv(s_overlayColorALoc,1,c);
-    glUniform4fv(s_overlayColorBLoc,1,cb);
-
-    glUniform4fv(s_overlayPosALoc,1,p);
-    glUniform4fv(s_overlayDirectionLoc,1,d);
-	glUniform1f(s_overlayInverseDistanceLoc, 1.0f / o.m_distance);
-}
-#endif	// OVERLAYS_IN_SHADER
-/*
-void
-vsRenderSchemeBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, bool linear, bool withMipMaps, bool withMultisample)
-{
-	//vsAssert(linear, "Asked for a non-linear surface!");
-	vsAssert(!fp, "Asked for floating point surface!");
-    GLenum internalFormat = fp ? GL_RGBA16F_ARB : GL_RGBA8;
-    GLenum type = fp ? GL_HALF_FLOAT_ARB : GL_UNSIGNED_INT_8_8_8_8_REV;
-    GLenum filter = linear ? GL_LINEAR : GL_NEAREST;
-
-	vsAssert( !( withMultisample && withMipMaps ), "Can't do both multisample and mipmaps!" );
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-
-    // create a color texture
-	if ( withMultisample )
-	{
-		glGenRenderbuffersEXT(1, &surface->texture);
-		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, surface->texture );
-		glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_RGBA, surface->width, surface->height );
-		surface->isRenderbuffer = true;
-		CheckGLError("Creation of the color texture for the FBO");
-	}
-	else
-	{
-		glGenTextures(1, &surface->texture);
-		glBindTexture(GL_TEXTURE_2D, surface->texture);
-		glEnable(GL_TEXTURE_2D);
-		surface->isRenderbuffer = false;
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, surface->width, surface->height, 0, GL_RGBA, type, 0);
-	}
-	if ( withMipMaps )
-	{
-		int wid = surface->width;
-		int hei = surface->height;
-		int mapMapId = 1;
-
-		while ( wid > 32 || hei > 32 )
-		{
-			wid = wid >> 1;
-			hei = hei >> 1;
-			glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, GL_RGBA, type, 0);
-		}
-	}
-
-	glBindTexture(GL_TEXTURE_2D, surface->texture);
-	glEnable(GL_TEXTURE_2D);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-	CheckGLError("Creation of the color texture for the FBO");
-
-    // create depth renderbuffer
-    if (depth)
-    {
-        glGenRenderbuffersEXT(1, &surface->depth);
-        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, surface->depth);
-		if ( withMultisample )
-		{
-			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH_COMPONENT24, surface->width, surface->height );
-		}
-		else
-		{
-			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, surface->width, surface->height);
-		}
-        CheckGLError("Creation of the depth renderbuffer for the FBO");
-    }
-    else
-    {
-        surface->depth = 0;
-    }
-
-    // create FBO itself
-    glGenFramebuffersEXT(1, &surface->fbo);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->fbo);
-	if (withMultisample)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, surface->texture);
-	}
-	else
-	{
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, surface->texture, 0);
-	}
-    if (depth)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, surface->depth);
-	}
-    CheckFBO();
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-    CheckGLError("Creation of the FBO itself");
-}
-
-void
-vsRenderSchemeBloom::DeleteSurface(vsBloomSurface *surface)
-{
-	if ( surface->isRenderbuffer )
-	{
-		glDeleteRenderbuffersEXT(1, &surface->texture);
-	}
-	else
-	{
-		glDeleteTextures(1, &surface->texture);
-	}
-	if ( surface->depth )
-	{
-		glDeleteRenderbuffersEXT(1, &surface->depth);
-	}
-	glDeleteFramebuffersEXT(1, &surface->fbo);
-}
- */
-
 const char c_enums[][20] =
 {
 	"attachment",         // GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT........... All framebuffer attachment points are 'framebuffer attachment complete'.
@@ -678,48 +527,7 @@ vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 //	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_FALSE);
-
-#if defined(OVERLAYS_IN_SHADER)
-	glUseProgram(s_overlayProg);
-	s_overlayColorALoc = glGetUniformLocation(s_overlayProg, "colorA");
-	s_overlayColorBLoc = glGetUniformLocation(s_overlayProg, "colorB");
-	s_overlayPosALoc = glGetUniformLocation(s_overlayProg, "pos");
-	s_overlayDirectionLoc = glGetUniformLocation(s_overlayProg, "dir");
-	s_overlayInverseDistanceLoc = glGetUniformLocation(s_overlayProg, "invDist");
-
-	float c[4] = { 1.f, 1.f, 1.f, 1.f };
-    glUniform4fv(s_overlayColorALoc,1,c);
-    glUniform4fv(s_overlayColorBLoc,1,c);
-
-    glUniform4f(s_overlayPosALoc,0.f,0.f,0.f,0.f);
-    glUniform4f(s_overlayDirectionLoc,0.f,0.f,0.f,0.f);
-#endif // OVERLAYS_IN_SHADER
 }
-
-
-/*	BindSurface(&m_window);
- ClearSurface();
- glActiveTexture(GL_TEXTURE0);
- glBindTexture(GL_TEXTURE_2D, m_pass[0].texture);
- glEnable(GL_TEXTURE_2D);
- glBlendFunc( GL_SRC_COLOR, GL_ONE );
-
- glColor4f(1,1,1,1);
- glBegin(GL_QUADS);
- glTexCoord2i(0, 1); glVertex2i(0.0f, 0);
- glTexCoord2i(1, 1); glVertex2i(m_window.width, 0);
- glTexCoord2i(1, 0); glVertex2i(m_window.width, m_window.height);
- glTexCoord2i(0, 0); glVertex2i(0.0f, m_window.height);
- //    glTexCoord2i(0, 0); glVertex2i(-1, -1);
- //    glTexCoord2i(1, 0); glVertex2i(1, -1);
- //    glTexCoord2i(1, 1); glVertex2i(1, 1);
- //    glTexCoord2i(0, 1); glVertex2i(-1, 1 );
- glEnd();
-
- glDisable(GL_TEXTURE_2D);
-
- return;*/
-
 
 void
 vsRenderSchemeBloom::PostRender()

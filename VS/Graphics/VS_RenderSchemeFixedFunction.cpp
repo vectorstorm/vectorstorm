@@ -22,22 +22,3 @@ vsRenderSchemeFixedFunction::~vsRenderSchemeFixedFunction()
 {
 }
 
-void
-vsRenderSchemeFixedFunction::PreRender(const vsRenderer::Settings &s)
-{
-	// give us thicker lines
-	glLineWidth( 2.0f );
-}
-
-void
-vsRenderSchemeFixedFunction::RenderDisplayList( vsDisplayList *list )
-{
-	Parent::RenderDisplayList(list);
-}
-
-void
-vsRenderSchemeFixedFunction::PostRender()
-{
-	Parent::PostRender();
-}
-

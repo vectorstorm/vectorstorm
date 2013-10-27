@@ -20,13 +20,11 @@
 #include "VS/Graphics/VS_Fog.h"
 #include "VS/Graphics/VS_Light.h"
 #include "VS/Graphics/VS_Material.h"
-#include "VS/Graphics/VS_Overlay.h"
 
 class vsRecord;
 class vsStore;
 class vsRenderBuffer;
 class vsLight;
-class vsOverlay;
 class vsMaterial;
 class vsBox3D;
 
@@ -39,7 +37,6 @@ public:
 	{
 		OpCode_SetColor,
 		OpCode_SetSpecularColor,
-		OpCode_SetOverlay,
 		OpCode_SetTexture,
 		OpCode_ClearTexture,
 
@@ -124,7 +121,6 @@ public:
 		vsFog		fog;
 		//vsMaterial	material;
 		vsMatrix4x4 matrix4x4;
-		vsOverlay	overlay;
 		vsString	string;
 		float		fov;
 		float		nearPlane;
@@ -138,7 +134,6 @@ public:
 		void Set(const vsTransform2D &t) {transform = t;}
 		//void Set(const vsMaterial &m) { material = m; }
 		void Set(const vsMatrix4x4 &m, float fov_in, float nearPlane_in, float farPlane_in) {matrix4x4 = m; fov = fov_in; nearPlane = nearPlane_in; farPlane = farPlane_in;}
-		void Set(const vsOverlay &o) {overlay = o;}
 		void Set(const vsString &s) {string = s;}
 		void SetPointer(char *pointer) {p = pointer;}
 
@@ -148,7 +143,6 @@ public:
 		vsColor GetColor() {return color; }
 		vsTransform2D	GetTransform() {return transform;}
 		vsMatrix4x4 &	GetMatrix4x4() {return matrix4x4;}
-		vsOverlay GetOverlay() {return overlay;}
 		vsString GetString() {return string;}
 	};
 
@@ -295,9 +289,6 @@ public:
 	void	TriangleFanBuffer( vsRenderBuffer *buffer );
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );
-
-	void	SetOverlay( const vsOverlay &overlay );
-	void	ClearOverlay();
 
 	//void	SetDrawMode( vsDrawMode mode );
 

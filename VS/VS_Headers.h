@@ -57,7 +57,6 @@
 #include <VS/Graphics/VS_Light.h>
 #include <VS/Graphics/VS_Mesh.h>
 #include <VS/Graphics/VS_Model.h>
-#include <VS/Graphics/VS_Overlay.h>
 #include <VS/Graphics/VS_RenderBuffer.h>
 #include <VS/Graphics/VS_RenderQueue.h>
 #include <VS/Graphics/VS_RenderTarget.h>

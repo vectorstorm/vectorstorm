@@ -9,10 +9,8 @@
 
 #include "VS_Screen.h"
 #include "VS_DisplayList.h"
-#include "VS_RenderSchemeBloom.h"
-#include "VS_RenderSchemeFixedFunction.h"
-#include "VS_RenderSchemeShader.h"
 #include "VS_Renderer.h"
+#include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
@@ -67,18 +65,6 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 	//delete m_renderer;
 
     vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
-//#if TARGET_OS_IPHONE
-	//m_renderer = new vsRendererPretty();
-//#else
-	//if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		//m_renderer = new vsRendererShader();
-	//else if ( vsRendererBloom::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		//m_renderer = new vsRendererBloom();
-	//else
-		//m_renderer = new vsRendererPretty();
-//#endif
-	//m_renderer->Init(width, height, depth, fullscreen);
-	//m_renderer->InitPhaseTwo(width, height, depth, fullscreen);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);

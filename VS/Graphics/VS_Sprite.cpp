@@ -10,7 +10,6 @@
 #include "VS_Sprite.h"
 
 #include "VS_DisplayList.h"
-#include "VS_Overlay.h"
 #include "VS_RenderQueue.h"
 
 #include "VS_File.h"

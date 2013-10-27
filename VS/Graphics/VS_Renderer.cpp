@@ -15,7 +15,6 @@
 #include "VS_Image.h"
 #include "VS_MaterialInternal.h"
 #include "VS_Matrix.h"
-#include "VS_Overlay.h"
 #include "VS_RenderBuffer.h"
 #include "VS_Screen.h"
 #include "VS_Shader.h"
@@ -984,10 +983,6 @@ vsRenderer::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SmoothShading:
 			{
 				glShadeModel( GL_SMOOTH );
-				break;
-			}
-			case vsDisplayList::OpCode_SetOverlay:
-			{
 				break;
 			}
 			case vsDisplayList::OpCode_EnableStencil:

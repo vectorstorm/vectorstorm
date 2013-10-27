@@ -8,7 +8,6 @@
  */
 
 #include "VS_DisplayList.h"
-#include "VS_Overlay.h"
 #include "VS_File.h"
 #include "VS_Record.h"
 #include "VS_Store.h"
@@ -35,7 +34,6 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
 	"SetSpecularColor",
-	"SetOverlay",
 	"SetTexture",
 	"ClearTexture",
 
@@ -178,24 +176,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 					loader->SetSpecularColor(color);
 					break;
 				}
-				case OpCode_SetOverlay:
-				{
-					vsOverlay overlay = r->Overlay();
-					loader->SetOverlay(overlay);
-					break;
-				}
-					/*case OpCode_SetTexture:
-					 {
-					 textureList[textureCount++] = new vsTexture( r.String() );//vsTextureManager::Instance()->LoadTexture( r.String() );
-					 vsAssert(textureCount < MAX_OWNED_TEXTURES, "Too many textures in this .vec file!");
-					 loader->SetTexture( textureList[textureCount-1] );
-					 break;
-					 }*/
-					/*case OpCode_ClearTexture:
-					 {
-					 loader->SetTexture( NULL );
-					 break;
-					 }*/
 				case OpCode_MoveTo:
 				{
 					vsVector2D pos = r->Vector2D();
@@ -1254,24 +1234,6 @@ vsDisplayList::SmoothShading()
 }
 
 void
-vsDisplayList::SetOverlay( const vsOverlay &o )
-{
-	m_fifo->WriteUint8( OpCode_SetOverlay );
-	m_fifo->WriteOverlay(o);
-}
-
-void
-vsDisplayList::ClearOverlay()
-{
-	m_fifo->WriteUint8( OpCode_SetOverlay );
-
-	vsOverlay o;
-	o.Clear();
-
-	m_fifo->WriteOverlay(o);
-}
-
-void
 vsDisplayList::EnableStencil()
 {
 	m_fifo->WriteUint8( OpCode_EnableStencil );
@@ -1324,7 +1286,6 @@ vsDisplayList::PeekOpType()
 static vsColor		s_color;
 static vsVector2D	s_vector;
 static vsVector3D	s_vector3d;
-static vsOverlay	s_overlay;
 static vsTransform2D	s_transform;
 
 vsDisplayList::op *
@@ -1345,11 +1306,6 @@ vsDisplayList::PopOp()
 			case OpCode_SetTexture:
 				m_currentOp.data.p = (char *)m_fifo->ReadVoidStar();
 				break;
-			case OpCode_SetOverlay:
-			{
-				m_fifo->ReadOverlay( &m_currentOp.data.overlay );
-				break;
-			}
 			case OpCode_MoveTo:
 			case OpCode_LineTo:
 			case OpCode_DrawPoint:
@@ -1515,9 +1471,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_SetSpecularColor:
 			SetColor( o->data.GetColor() );
-			break;
-		case OpCode_SetOverlay:
-			SetOverlay( o->data.GetOverlay() );
 			break;
 		case OpCode_MoveTo:
 			MoveTo( o->data.GetVector3D() );

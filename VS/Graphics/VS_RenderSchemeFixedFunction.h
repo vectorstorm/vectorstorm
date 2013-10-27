@@ -11,14 +11,8 @@
 
 class vsRenderSchemeFixedFunction : public vsRenderScheme
 {
-	typedef vsRenderScheme Parent;
 
-	unsigned int	m_offscreenTexture;
 public:
 					vsRenderSchemeFixedFunction( vsRenderer *renderer );
 	virtual			~vsRenderSchemeFixedFunction();
-
-	virtual void	PreRender( const vsRenderer::Settings &s );
-	virtual void	RenderDisplayList( vsDisplayList *list );
-	virtual void	PostRender();
 };
