@@ -504,25 +504,16 @@ void
 vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 {
 	m_scene->Bind();
-    //int p;
-    //GLint loc;
 
-    // Draw 3D scene.
 	if ( m_antialias )
 	{
 		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
 		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
-//	glBlendFunc( GL_ONE, GL_ZERO );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	//ClearSurface();
-	//glEnable(GL_MULTISAMPLE);
 
-	//glDepthMask(GL_TRUE);
 	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
 	m_renderer->GetState()->Flush();
-
-//	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_FALSE);
 }
 
 void
@@ -607,35 +598,13 @@ vsRenderSchemeBloom::PostRender()
     for (p = 1; p < FILTER_COUNT; p++)
     {
 		m_pass[p-1]->BlitTo( m_pass[p] );
-
-							/*
-		if ( glBindFramebufferEXT && glBlitFramebufferEXT )
-		{
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_pass[p-1].fbo);
-			//Bind the standard FBO
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, m_pass[p].fbo);
-			//Let's say I want to copy the entire surface
-			//Let's say I only want to copy the color buffer only
-			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimension
-			glBlitFramebufferEXT(0, 0, m_pass[p-1].width, m_pass[p-1].height, 0, 0, m_pass[p].width, m_pass[p].height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		}
-		else
-		{
-			glBindTexture(GL_TEXTURE_2D, m_pass[p-1].texture);
-			BindSurface(&m_pass[p]);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		}
-							 */
     }
 
-	// Perform the horizontal blurring pass.
+	// Perform the blur operations.
 	Blur(m_pass, m_pass2, FILTER_COUNT, HORIZONTAL);
-    // Perform the vertical blurring pass.
-	//Blur(m_pass2, m_pass, FILTER_COUNT, VERTICAL);
 
 
 	m_window->Bind();
-	//ClearSurface();
 
     glUseProgram(m_combineProg);
 
@@ -747,45 +716,10 @@ vsRenderSchemeBloom::PostRenderTarget( vsRenderTarget *target )
 void
 vsRenderSchemeBloom::RenderDisplayList( vsDisplayList *list )
 {
-	// give us thicker lines, nicely smoothed.
+	// give us thicker lines (if supported).
 	glLineWidth( 2.0f );
-//	glPointSize( 2.5f );
 	m_renderer->GetState()->SetBool( vsRendererState::Bool_LineSmooth, true );
-	//glEnable( GL_LINE_SMOOTH );
-	//glEnable( GL_MULTISAMPLE );
-	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	//glBlendFunc( GL_ONE, GL_ZERO );
-
-	// let our parent class actually perform the rendering, now that we've modified our GL settings.
 }
-/*
-void
-vsRenderSchemeBloom::BindSurface(vsBloomSurface *surface)
-{
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->fbo);
-    glViewport(0,0, surface->viewport.width, surface->viewport.height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(surface->projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(surface->modelview);
-	g_boundSurface = surface;
-}*/
-/*
-void
-vsRenderSchemeBloom::UseSurfaceAsTexture(vsBloomSurface *surface)
-{
-}
- */
-
-
-/*
-void
-vsRenderSchemeBloom::ClearSurface()
-{
-	//    const vsBloomSurface *surface = g_boundSurface;
-    glClearColor(0,0,0,0);
-    glClear(GL_COLOR_BUFFER_BIT | (surface->depth ? GL_DEPTH_BUFFER_BIT : 0));
-}*/
 
 bool
 vsRenderSchemeBloom::Supported(bool experimental)
