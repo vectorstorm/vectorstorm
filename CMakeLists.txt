@@ -32,9 +32,9 @@ set(CMAKE_REQUIRED_LIBRARIES ${SDL_LIBRARY})
 include(CheckFunctionExists)
 check_function_exists( SDL_GL_GetDrawableSize HIGHDPI_SUPPORTED )
 
-include_directories("${PROJECT_BINARY_DIR}")
+include_directories("${PROJECT_BINARY_DIR}/config")
 configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
-	"${PROJECT_BINARY_DIR}/VS_Config.h" )
+	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
 
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
