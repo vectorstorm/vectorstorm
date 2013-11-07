@@ -289,8 +289,6 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Tween.h
 	VS/Utils/VS_WeakPointer.h
 	VS/Utils/VS_WeakPointerTarget.h
-	VS/Utils/img_savepng.cpp
-	VS/Utils/img_savepng.h
 	)
 set(SOURCES
 	VS/VS_Headers.h
