@@ -1248,7 +1248,7 @@ vsImage *
 vsRenderer::Screenshot()
 {
 	const size_t bytesPerPixel = 3;	// RGB
-	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
+	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_widthPixels) * size_t(m_heightPixels);
 
 	uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
@@ -1256,17 +1256,17 @@ vsRenderer::Screenshot()
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < m_heightPixels; y++ )
 	{
-		int rowStart = y * m_width * bytesPerPixel;
+		int rowStart = y * m_widthPixels * bytesPerPixel;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < m_widthPixels; x++ )
 		{
 			int rInd = rowStart + (x*bytesPerPixel);
 			int gInd = rInd+1;
@@ -1289,7 +1289,7 @@ vsImage *
 vsRenderer::ScreenshotDepth()
 {
 #if !TARGET_OS_IPHONE
-	int imageSize = sizeof(float) * m_width * m_height;
+	int imageSize = sizeof(float) * m_widthPixels * m_heightPixels;
 
 	float* pixels = new float[imageSize];
 
@@ -1297,17 +1297,17 @@ vsRenderer::ScreenshotDepth()
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
 	CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < m_heightPixels; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * m_widthPixels;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < m_widthPixels; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -1328,7 +1328,7 @@ vsRenderer::ScreenshotDepth()
 vsImage *
 vsRenderer::ScreenshotAlpha()
 {
-	int imageSize = sizeof(float) * m_width * m_height;
+	int imageSize = sizeof(float) * m_widthPixels * m_heightPixels;
 
 	float* pixels = new float[imageSize];
 
@@ -1336,17 +1336,17 @@ vsRenderer::ScreenshotAlpha()
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_ALPHA, GL_FLOAT, pixels);
+	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_ALPHA, GL_FLOAT, pixels);
 	CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < m_heightPixels; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * m_widthPixels;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < m_widthPixels; x++ )
 		{
 			int ind = rowStart + x;
 
