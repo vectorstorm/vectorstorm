@@ -54,6 +54,7 @@ vsRenderer::Settings::Settings():
 
 SDL_Window *m_window = NULL;
 SDL_Renderer *m_renderer = NULL;
+SDL_GLContext m_context;
 
 void vsRenderDebug( const vsString &message )
 {
@@ -141,8 +142,15 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen):
 		vsLog("High DPI backing store is: %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
 	}
 
+	m_context = SDL_GL_CreateContext(m_window);
+	if ( !m_context )
+	{
+		vsLog("Failed to create OpenGL context??");
+		exit(1);
+	}
+
 	GLenum err = glewInit();
-	vsAssert(GLEW_OK == err, "Error initialising glew!");
+	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
 	if ( GL_VERSION_2_1 )
 	{
 		vsLog("Support for GL 2.1 found");
