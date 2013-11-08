@@ -113,7 +113,7 @@ public:
 
 public:
 
-	vsRenderer(int width, int height, int depth, bool fullscreen);
+	vsRenderer(int width, int height, int depth, bool fullscreen, bool vsync);
 	virtual ~vsRenderer();
 
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);

@@ -19,7 +19,7 @@
 
 const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
+vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync):
 	m_scene(NULL),
 	m_sceneCount(0),
 	m_width(width),
@@ -29,7 +29,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
-	m_renderer = new vsRenderer(width, height, depth, fullscreen);
+	m_renderer = new vsRenderer(width, height, depth, fullscreen, vsync);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);

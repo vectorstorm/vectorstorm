@@ -195,7 +195,7 @@ vsSystem::Init()
 //	m_screen = new vsScreen( 1280, 720, 32, false );
 	m_screen = new vsScreen( 960, 640, 32, false );
 #else
-	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen() );
+	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetVSync() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -377,6 +377,7 @@ vsSystemPreferences::vsSystemPreferences()
 
 	m_resolution = NULL;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 0, 0, 1);
+	m_vsync = m_preferences->GetPreference("VSync", 0, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
 	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
@@ -531,6 +532,18 @@ bool
 vsSystemPreferences::GetFullscreen()
 {
 	return !!m_fullscreen->m_value;
+}
+
+void
+vsSystemPreferences::SetVSync(bool vsync)
+{
+	m_vsync->m_value = vsync;
+}
+
+bool
+vsSystemPreferences::GetVSync()
+{
+	return !!m_vsync->m_value;
 }
 
 void

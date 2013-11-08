@@ -63,7 +63,7 @@ void vsRenderDebug( const vsString &message )
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen):
+vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen, bool vsync):
 	m_currentTexture(NULL),
 	m_scheme(NULL)
 {
@@ -160,12 +160,12 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen):
 		vsLog("No support for GL 2.1");
 	}
 
-//	if ( glewIsSupported("glDrawElements") )
+	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
 	{
-		vsLog("glDrawElements supported.");
-
-		assert ( glDrawElements != NULL );
+		vsLog("Couldn't set vsync");
 	}
+
+	vsLog( "VSync: %s", SDL_GL_GetSwapInterval() > 0 ? "ENABLED" : "DISABLED" );
 
 	int val;
 	SDL_GL_GetAttribute( SDL_GL_MULTISAMPLEBUFFERS, &val );
@@ -237,6 +237,7 @@ vsRenderer::~vsRenderer()
 	vsDelete( m_scheme );
 	vsDelete( m_shaderList );
 	SDL_DestroyRenderer( m_renderer );
+	SDL_GL_DeleteContext( m_context );
 	SDL_DestroyWindow( m_window );
 	m_window = NULL;
 	m_renderer = NULL;

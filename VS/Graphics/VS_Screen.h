@@ -45,7 +45,7 @@ class vsScreen
 
 public:
 
-	vsScreen(int width, int height, int depth, bool fullscreen);
+	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
 	~vsScreen();
 
 	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
