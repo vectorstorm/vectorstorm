@@ -113,7 +113,13 @@ public:
 
 public:
 
-	vsRenderer(int width, int height, int depth, bool fullscreen, bool vsync);
+	enum
+	{
+		Flag_Fullscreen = BIT(0),
+		Flag_VSync = BIT(1),
+		Flag_Resizable = BIT(2)
+	};
+	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();
 
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);

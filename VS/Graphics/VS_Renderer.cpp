@@ -63,7 +63,7 @@ void vsRenderDebug( const vsString &message )
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen, bool vsync):
+vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 	m_currentTexture(NULL),
 	m_scheme(NULL)
 {
@@ -81,10 +81,10 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen, bool v
 	videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 
-	if ( fullscreen )
+	if ( flags & Flag_Fullscreen )
 		videoFlags |= SDL_WINDOW_FULLSCREEN;
-	//else
-		//videoFlags |= SDL_WINDOW_RESIZABLE;
+	else if ( flags & Flag_Resizable )
+		videoFlags |= SDL_WINDOW_RESIZABLE;
 
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
@@ -160,7 +160,7 @@ vsRenderer::vsRenderer(int width, int height, int depth, bool fullscreen, bool v
 		vsLog("No support for GL 2.1");
 	}
 
-	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
+	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 	{
 		vsLog("Couldn't set vsync");
 	}
@@ -248,9 +248,16 @@ vsRenderer::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 {
 	UNUSED(depth);
 	UNUSED(fullscreen);
-	vsAssert(0, "Not yet implemented");
+	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
+#ifdef HIGHDPI_SUPPORTED
+	SDL_GL_GetDrawableSize(m_window, &m_widthPixels, &m_heightPixels);
+#else
+	m_widthPixels = width;
+	m_heightPixels = height;
+#endif
+	m_scheme->Resize();
 }
 
 void

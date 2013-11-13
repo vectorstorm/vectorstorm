@@ -29,7 +29,13 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
-	m_renderer = new vsRenderer(width, height, depth, fullscreen, vsync);
+	int flags = 0;
+	if ( fullscreen )
+		flags |= vsRenderer::Flag_Fullscreen;
+	if ( vsync )
+		flags |= vsRenderer::Flag_VSync;
+
+	m_renderer = new vsRenderer(width, height, depth, flags);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);

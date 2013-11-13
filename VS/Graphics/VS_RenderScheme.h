@@ -19,6 +19,9 @@ public:
 	vsRenderScheme( vsRenderer *renderer );
 	virtual ~vsRenderScheme() {}
 
+	// do any operations which need to be performed after a resize
+	virtual void	Resize() {}
+
 	virtual void	SetMaterial( vsMaterialInternal *material ) {}
 
 	virtual void	PreRender( const vsRenderer::Settings &s ) {}

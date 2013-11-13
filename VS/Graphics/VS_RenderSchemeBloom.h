@@ -61,6 +61,8 @@ public:
 	virtual void	SetOverlay( const vsOverlay &o );
 #endif // OVERLAYS_IN_SHADER
 
+	virtual void	Resize();
+
 	virtual void	PreRender( const vsRenderer::Settings &s );
 	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();

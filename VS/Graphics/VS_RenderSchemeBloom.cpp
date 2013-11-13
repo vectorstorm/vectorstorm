@@ -265,7 +265,9 @@ float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 
 
 vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
-	vsRenderScheme(renderer)
+	vsRenderScheme(renderer),
+	m_window(NULL),
+	m_scene(NULL)
 {
 	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
 
@@ -286,6 +288,7 @@ vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
         char name[]="Pass#";
         sprintf(name, "Pass%d", i);
         m_passInt[i] = glGetUniformLocation(m_combineProg, name);
+		m_pass[i] = m_pass2[i] = NULL;
     }
 
 
@@ -298,6 +301,36 @@ vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
         kernel[c] *= (1.f / sum);
 
     glMatrixMode(GL_MODELVIEW);
+
+	Resize();
+}
+
+vsRenderSchemeBloom::~vsRenderSchemeBloom()
+{
+	DestroyShader(m_combineProg);
+	DestroyShader(m_filterProg);
+	DestroyShader(m_overlayProg);
+	DestroyShader(m_hipassProg);
+
+	vsDelete( m_window );
+	vsDelete( m_scene );
+	for (int p = 0; p < FILTER_COUNT; p++)
+	{
+		vsDelete( m_pass[p] );
+		vsDelete( m_pass2[p] );
+	}
+}
+
+void
+vsRenderSchemeBloom::Resize()
+{
+	vsDelete( m_window );
+	vsDelete( m_scene );
+	for (int p = 0; p < FILTER_COUNT; p++)
+	{
+		vsDelete( m_pass[p] );
+		vsDelete( m_pass2[p] );
+	}
 
 	// Create Window Surface
 	vsSurface::Settings settings;
@@ -343,22 +376,6 @@ vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
 		settings.stencil = false;
 		m_pass[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 		m_pass2[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
-	}
-}
-
-vsRenderSchemeBloom::~vsRenderSchemeBloom()
-{
-	DestroyShader(m_combineProg);
-	DestroyShader(m_filterProg);
-	DestroyShader(m_overlayProg);
-	DestroyShader(m_hipassProg);
-
-	vsDelete( m_window );
-	vsDelete( m_scene );
-	for (int p = 0; p < FILTER_COUNT; p++)
-	{
-		vsDelete( m_pass[p] );
-		vsDelete( m_pass2[p] );
 	}
 }
 
