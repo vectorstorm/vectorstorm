@@ -957,6 +957,9 @@ vsDisplayList::VertexArray( vsVector3D *array, int arrayCount )
 void
 vsDisplayList::VertexBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom ||
+			buffer->GetContentType() == vsRenderBuffer::ContentType_P,
+			"Known render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_VertexBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -975,6 +978,8 @@ vsDisplayList::NormalArray( vsVector3D *array, int arrayCount )
 void
 vsDisplayList::NormalBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_NormalBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -982,6 +987,8 @@ vsDisplayList::NormalBuffer( vsRenderBuffer *buffer )
 void
 vsDisplayList::TexelBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_TexelBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -989,6 +996,8 @@ vsDisplayList::TexelBuffer( vsRenderBuffer *buffer )
 void
 vsDisplayList::ColorBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_ColorBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
