@@ -101,10 +101,10 @@ vsPerlinOctave::InterpolatedNoise2D(float x, float y, int wrap)
 	fractional_X = (3.0f * fractional_X * fractional_X) - (2.0f * fractional_X * fractional_X * fractional_X);
 	fractional_Y = (3.0f * fractional_Y * fractional_Y) - (2.0f * fractional_Y * fractional_Y * fractional_Y);
 
-	float v1 = SmoothedNoise2D(integer_X,     integer_Y, wrap);
-	float v2 = SmoothedNoise2D(integer_X + 1, integer_Y, wrap);
-	float v3 = SmoothedNoise2D(integer_X,     integer_Y + 1, wrap);
-	float v4 = SmoothedNoise2D(integer_X + 1, integer_Y + 1, wrap);
+	float v1 = Noise2D(integer_X,     integer_Y, wrap);
+	float v2 = Noise2D(integer_X + 1, integer_Y, wrap);
+	float v3 = Noise2D(integer_X,     integer_Y + 1, wrap);
+	float v4 = Noise2D(integer_X + 1, integer_Y + 1, wrap);
 
 	float i1 = vsInterpolate(fractional_X, v1 , v2);
 	float i2 = vsInterpolate(fractional_X, v3 , v4);
