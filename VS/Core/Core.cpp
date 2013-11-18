@@ -45,7 +45,7 @@ core::Init( size_t mainMemorySize )
 {
 	vsSystem::Instance()->Init();
 
-	s_gameHeap = new vsHeap(mainMemorySize);
+	s_gameHeap = new vsHeap("game",mainMemorySize);
 }
 
 void

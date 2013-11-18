@@ -126,7 +126,7 @@ vsSystem::vsSystem(size_t totalMemoryBytes):
 	m_orientation( Orientation_Normal ),
 	m_screen( NULL )
 {
-	g_globalHeap = new vsHeap(totalMemoryBytes);
+	g_globalHeap = new vsHeap("global",totalMemoryBytes);
 
 	s_instance = this;
 	new vsSingletonManager;

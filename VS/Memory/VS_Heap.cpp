@@ -23,7 +23,8 @@ size_t __line__ = 0;
 #undef malloc
 #undef free
 
-vsHeap::vsHeap(size_t size)
+vsHeap::vsHeap(vsString name, size_t size):
+	m_name(name)
 {
 	if ( s_current )
 		m_startOfMemory = s_current->Alloc(size, __FILE__, __LINE__, Type_Heap);
@@ -312,6 +313,7 @@ vsHeap::PrintStatus()
 void
 vsHeap::CheckForLeaks()
 {
+	m_mutex.Lock();
 	bool foundLeak = false;
 	memBlock *block = m_blockList.m_next;
 
@@ -324,10 +326,11 @@ vsHeap::CheckForLeaks()
 				vsLog("\nERROR:  LEAKS DETECTED!\n-------------------\nLeaked blocks follow:\n");
 				foundLeak = true;
 			}
-			vsLog("[%d] %s:%d : %d bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+			vsLog("[%s:%d] %s:%d : %d bytes", m_name.c_str(), block->m_blockId, block->m_filename, block->m_line, block->m_size);
 		}
 		block = block->m_next;
 	}
+	m_mutex.Unlock();
 
 	vsAssert(!foundLeak, "Memory leaks found!  Details to stdout.");
 }
@@ -414,7 +417,6 @@ memBlock::ExtractBlock()
 	m_nextBlock = m_prevBlock = NULL;
 }
 
-
 void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType)
 {
 	void * result;
@@ -425,7 +427,6 @@ void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType
 //		printf("Allocating %s:%d, 0x%x\n", fileName, lineNumber, (unsigned int)result);
 		return result;
 	}
-
 	return malloc(size);
 }
 
