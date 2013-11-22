@@ -573,7 +573,7 @@ vsRenderSchemeBloom::PostRender()
 	float top = -1.f;
 	float left = -1.f;
 	float right = (2.0f * m_scene->GetTexWidth()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
-	float bot = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
+	float bottom = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 
 //	glUseProgram(0);
     glUseProgram(m_hipassProg);
@@ -581,8 +581,8 @@ vsRenderSchemeBloom::PostRender()
 	float v[8] = {
 		left, top,
 		right, top,
-		left, bot,
-		right, bot
+		left, bottom,
+		right, bottom
 	};
 	float wv[8] = {
 		0.f,0.f,
@@ -728,14 +728,6 @@ vsRenderSchemeBloom::PostRenderTarget( vsRenderTarget *target )
 {
 	m_scene->Bind();
 	return true;
-}
-
-void
-vsRenderSchemeBloom::RenderDisplayList( vsDisplayList *list )
-{
-	// give us thicker lines (if supported).
-	glLineWidth( 2.0f );
-	m_renderer->GetState()->SetBool( vsRendererState::Bool_LineSmooth, true );
 }
 
 bool

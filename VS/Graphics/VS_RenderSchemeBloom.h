@@ -64,7 +64,6 @@ public:
 	virtual void	Resize();
 
 	virtual void	PreRender( const vsRenderer::Settings &s );
-	virtual void	RenderDisplayList( vsDisplayList *list );
 	virtual void	PostRender();
 
 	virtual bool	SupportsShaders() { return true; }
