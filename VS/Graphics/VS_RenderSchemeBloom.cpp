@@ -144,7 +144,7 @@ const char *combine7f = STRINGIFY(
 								  vec4 t4 = texture2D(Pass4, gl_TexCoord[0].st);
 								  vec4 t5 = texture2D(Pass5, gl_TexCoord[0].st);
 								  vec4 t6 = texture2D(Scene, gl_TexCoord[0].st);
-								  gl_FragColor = 1.0 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
+								  gl_FragColor = 0.6 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
 								  }
 );
 

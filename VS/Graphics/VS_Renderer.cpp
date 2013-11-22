@@ -423,7 +423,7 @@ vsRenderer::PreRender(const Settings &s)
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 	// our baseline size is 1024x768.  We want single-pixel lines at that size.
-	float lineScaleFactor = m_heightPixels / 768.f;
+	float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
 	glLineWidth( lineScaleFactor );
 	GetState()->SetBool( vsRendererState::Bool_LineSmooth, true );
 
