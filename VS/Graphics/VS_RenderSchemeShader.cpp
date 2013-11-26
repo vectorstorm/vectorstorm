@@ -281,6 +281,13 @@ vsRenderSchemeShader::~vsRenderSchemeShader()
 }
 
 void
+vsRenderSchemeShader::PreRender( const vsRenderer::Settings &s )
+{
+	vsRenderSchemeBloom::PreRender(s);
+	m_currentMaterial = NULL;
+}
+
+void
 vsRenderSchemeShader::SetMaterial( vsMaterialInternal *material )
 {
 	if ( material == m_currentMaterial )

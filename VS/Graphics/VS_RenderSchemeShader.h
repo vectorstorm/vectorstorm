@@ -33,11 +33,13 @@ class vsRenderSchemeShader : public vsRenderSchemeBloom, public vsSingleton<vsRe
 	vsMaterialInternal *	m_currentMaterial;
 	vsShader *				m_currentShader;
 
-	virtual void			SetMaterial(vsMaterialInternal *material);
 
 public:
 					vsRenderSchemeShader( vsRenderer *renderer );
 	virtual			~vsRenderSchemeShader();
+
+	virtual void	PreRender( const vsRenderer::Settings &s );
+	virtual void	SetMaterial(vsMaterialInternal *material);
 
 	static bool		Supported(bool experimental = false);
 };

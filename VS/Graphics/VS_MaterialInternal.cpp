@@ -52,6 +52,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_clampU(false),
 	m_clampV(false),
 	m_glow(false),
+	m_postGlow(false),
 	m_hasColor(true)
 {
 	m_displayList = new vsDisplayList(32);
