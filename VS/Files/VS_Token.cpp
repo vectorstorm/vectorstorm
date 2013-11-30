@@ -357,3 +357,9 @@ vsToken::SetFloat(float value)
 	m_type = Type_Float;
 }
 
+bool
+vsToken::IsType( vsToken::Type t )
+{
+	return m_type == t;
+}
+
