@@ -114,7 +114,10 @@ public:
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			m_array[index] = m_array[m_arrayLength-1];
+			for ( int i = index; i < m_arrayLength-1; i++ )
+			{
+				m_array[i] = m_array[i+1];
+			}
 			m_arrayLength--;
 		}
 		return index != npos;
