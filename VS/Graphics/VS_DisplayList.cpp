@@ -1255,6 +1255,19 @@ vsDisplayList::DisableStencil()
 }
 
 void
+vsDisplayList::EnableScissor( const vsBox2D& box )
+{
+	m_fifo->WriteUint8( OpCode_EnableScissor );
+	m_fifo->WriteBox2D( box );
+}
+
+void
+vsDisplayList::DisableScissor()
+{
+	m_fifo->WriteUint8( OpCode_DisableScissor );
+}
+
+void
 vsDisplayList::ClearStencil()
 {
 	m_fifo->WriteUint8( OpCode_ClearStencil );
@@ -1445,6 +1458,9 @@ vsDisplayList::PopOp()
 			case OpCode_Debug:
 				 m_currentOp.data.string = m_fifo->ReadString();
 				break;
+			case OpCode_EnableScissor:
+				m_fifo->ReadBox2D( &m_currentOp.data.box2D );
+				break;
 			case OpCode_ClearLights:
 			case OpCode_PopTransform:
 			case OpCode_ClearVertexArray:
@@ -1456,6 +1472,7 @@ vsDisplayList::PopOp()
 			case OpCode_SmoothShading:
 			case OpCode_EnableStencil:
 			case OpCode_DisableStencil:
+			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
 			default:
@@ -1588,6 +1605,12 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_DisableStencil:
 			DisableStencil();
+			break;
+		case OpCode_EnableScissor:
+			EnableScissor( o->data.GetBox2D() );
+			break;
+		case OpCode_DisableScissor:
+			DisableScissor();
 			break;
 		case OpCode_ClearStencil:
 			ClearStencil();

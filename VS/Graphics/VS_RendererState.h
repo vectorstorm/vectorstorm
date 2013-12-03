@@ -110,6 +110,7 @@ public:
 		Bool_PolygonSmooth,
 #endif
 		Bool_StencilTest,
+		Bool_ScissorTest,
 		//Bool_Smooth,
 		//Bool_Texture2D,
 		Bool_DepthMask,

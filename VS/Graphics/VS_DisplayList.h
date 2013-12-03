@@ -102,6 +102,9 @@ public:
 		OpCode_DisableStencil,
 		OpCode_ClearStencil,
 
+		OpCode_EnableScissor,
+		OpCode_DisableScissor,
+
 		OpCode_SetViewport,
 		OpCode_ClearViewport,
 
@@ -313,9 +316,12 @@ public:
 
 	void	Append( const vsDisplayList &list );	// appends the passed display list onto us.
 
-	void	EnableStencil();	// turns on stencil testing, cull future rendering to INSIDE stencil
-	void	DisableStencil();	// turns off stencil testing;  no stencils considered.
-	void	ClearStencil();		// clears our stencil so that everything fails.
+	void	EnableStencil();   // turns on stencil testing, cull future rendering to INSIDE stencil
+	void	DisableStencil();  // turns off stencil testing;  no stencils considered.
+	void	ClearStencil();    // clears our stencil so that everything fails.
+
+	void	EnableScissor(const vsBox2D &box);   // turns on scissoring, inside this box.
+	void	DisableScissor();                    // turns off scissoring.
 
 	// SetViewport requires 'box' be expressed in [0..1] for X and Y, relative
 	// to screen resolution.

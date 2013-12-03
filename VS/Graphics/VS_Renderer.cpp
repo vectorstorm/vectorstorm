@@ -1024,6 +1024,21 @@ vsRenderer::RawRenderDisplayList( vsDisplayList *list )
 				glClear(GL_STENCIL_BUFFER_BIT);
 				break;
 			}
+			case vsDisplayList::OpCode_EnableScissor:
+			{
+				m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
+				const vsBox2D& box = op->data.box2D;
+				glScissor( box.GetMin().x * m_viewportWidthPixels,
+						box.GetMin().y * m_viewportHeightPixels,
+						box.Width() * m_viewportWidthPixels,
+						box.Height() * m_viewportHeightPixels );
+				break;
+			}
+			case vsDisplayList::OpCode_DisableScissor:
+			{
+				m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
+				break;
+			}
 			case vsDisplayList::OpCode_SetViewport:
 			{
 				const vsBox2D& box = op->data.box2D;
