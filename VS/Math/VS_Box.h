@@ -40,6 +40,7 @@ public:
 	vsVector2D	TopRight() const { return vsVector2D(max.x, min.y); }
 	vsVector2D	BottomLeft() const { return vsVector2D(min.x, max.y); }
 	vsVector2D	BottomRight() const { return max; }
+	vsVector2D	Corner(int i) const;
 	void		Expand( float amt ) { min += -amt * vsVector2D::One; max += amt * vsVector2D::One; }
 	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.
 
