@@ -77,9 +77,10 @@ void MyFree(void *p, int allocType = 1);
 
 #define vsDeleteArray(x) { if ( x ) { delete [] x; x = NULL; } }
 
-extern const char* __file__;
-extern size_t __line__;
-#define new (__file__=__FILE__,__line__=__LINE__) && 0 ? NULL : new
+void* operator new(std::size_t n, const char* file, size_t line) throw(std::bad_alloc);
+void* operator new[](std::size_t n, const char* file, size_t line) throw(std::bad_alloc);
+#define DEBUG_NEW new(__FILE__, __LINE__)
+#define new DEBUG_NEW
 
 #define malloc(x) MyMalloc(x, __FILE__, __LINE__)
 #define free(p) MyFree(p)

@@ -20,6 +20,7 @@ public:
 	void *		m_start;
 	void *		m_end;
 	size_t		m_size;
+	size_t		m_sizeRequested;
 	int			m_blockId;
 
 	char		m_filename[128];
@@ -64,7 +65,7 @@ class vsHeap
 
 	size_t	m_memoryUsed;
 	size_t	m_highWaterMark;
-	int		m_totalAllocations;
+	size_t	m_totalAllocations;
 
 	int		m_leakMark;
 
@@ -86,8 +87,8 @@ public:
 	static vsHeap *	GetCurrent() { return s_current; }
 	bool				Contains(void *p) { return (p >= m_startOfMemory && p < m_endOfMemory); }
 
-	void *	Alloc(size_t size, const char *fileName, int line, int allocType);
-	void	Free(void *ptr, int allocType);
+	void *	Alloc(size_t size, const char *fileName, int line, int allocType);	// Assumes mutex is already locked
+	void	Free(void *ptr, int allocType); // Assumes mutex is already locked
 
 	static void	Push( vsHeap *newCurrent );	// push a new allocator context
 	static void	Pop( vsHeap *oldCurrent = NULL );							// pop it off.
