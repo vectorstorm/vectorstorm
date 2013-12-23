@@ -43,7 +43,7 @@ m_responder(NULL)
 vsCollisionObject::~vsCollisionObject()
 {
 	SetCollisionsActive(false);
-	
+
 	for ( int i = 0; i < m_circleCount; i++ )
 	{
 		vsDelete( m_circleDef[i].shape );
@@ -81,7 +81,7 @@ vsCollisionObject::SetBox(const vsVector2D &topLeft, const vsVector2D &bottomRig
 
 	width = vsMax( width, 0.1f );
 	height = vsMax( height, 0.1f );
-	
+
 	b2PolygonShape *ps = new b2PolygonShape;
 	ps->SetAsBox(width * 0.5f, height * 0.5f);
 
@@ -105,7 +105,7 @@ vsCollisionObject::SetPolygon(const vsVector2D *v, int vertexCount, const vsAngl
 	{
 		ps->m_vertices[i].Set( v[i].x, v[i].y );
 	}
-	ps->m_vertexCount = vertexCount;
+	ps->m_count = vertexCount;
 
 	m_boxDef[m_boxCount].shape = ps;
 	m_boxDef[m_boxCount].density = density;
@@ -124,7 +124,7 @@ vsCollisionObject::SetBox(const vsVector2D &extents, const vsVector2D &position,
 
 	b2PolygonShape *ps = new b2PolygonShape;
 	ps->SetAsBox(width * 0.5f, height * 0.5f);
-	
+
 	m_boxDef[m_boxCount].shape = ps;
 	m_boxDef[m_boxCount].density = density;
 	m_boxDef[m_boxCount].filter.categoryBits = m_colFlags;
@@ -148,7 +148,7 @@ vsCollisionObject::AddBox(const vsVector2D &extents, const vsVector2D &position,
 
 	b2PolygonShape *ps = new b2PolygonShape;
 	ps->SetAsBox(width * 0.5f, height * 0.5f, center, angle);
-	
+
 	m_boxDef[m_boxCount].shape = ps;
 	m_boxDef[m_boxCount].density = density;
 	m_boxDef[m_boxCount].filter.categoryBits = m_colFlags;
@@ -453,16 +453,14 @@ vsCollisionObject::AddForce( const vsVector2D &force )
 	vsAssert(m_body, "Tried to add force without a body!");
 	b2Vec2 f(force.x, force.y);
 	b2Vec2 w = m_body->GetWorldCenter();
-	m_body->SetAwake(true);
-	m_body->ApplyForce( f, w );
+	m_body->ApplyForce( f, w, true );
 }
 
 void
 vsCollisionObject::AddTorque( float torque )
 {
 	vsAssert(m_body, "Tried to apply torque without a body!");
-	m_body->SetAwake(true);
-	m_body->ApplyTorque( torque );
+	m_body->ApplyTorque( torque, true );
 }
 
 void
