@@ -176,6 +176,10 @@ public:
 	vsVector2D	GetTexel(int i);
 	vsColor		GetColor(int i);
 
+	// Probably only useful for santity checking that the correct drawing
+	// functions are being called, for our known buffer types.
+	ContentType	GetContentType() { return m_contentType; }
+
 	void	BindVertexBuffer( vsRendererState *state );
 	void	UnbindVertexBuffer( vsRendererState *state );
 

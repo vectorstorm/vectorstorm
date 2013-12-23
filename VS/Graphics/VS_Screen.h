@@ -45,7 +45,7 @@ class vsScreen
 
 public:
 
-	vsScreen(int width, int height, int depth, bool fullscreen);
+	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
 	~vsScreen();
 
 	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
@@ -69,8 +69,6 @@ public:
 	void			DrawWithSettings(const vsRenderer::Settings &s);
 	bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
 	bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
-
-	void			SetOpaqueRendering();
 
 	vsImage *       Screenshot();
 	vsImage *       ScreenshotDepth();

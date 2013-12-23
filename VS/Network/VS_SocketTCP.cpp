@@ -175,7 +175,36 @@ vsSocketTCP::Listen( uint16_t port, vsSocketTCP::Type t )
 void
 vsSocketTCP::Send( vsTCPConnection *to, vsStore *packet )
 {
-	to->m_sendBuffer->Append(packet);
+	DoSend(to,packet);
+}
+
+void
+vsSocketTCP::DoSend( vsTCPConnection *to, vsStore *packet )
+{
+	// check if we're feeling backed up.  If so, just queue ourselves for
+	// later transmission.
+	int pendingBytesToSend = to->m_sendBuffer->BytesLeftForReading();
+	if ( pendingBytesToSend )
+	{
+		to->m_sendBuffer->Append(packet);
+	}
+	else
+	{
+		// nothing backed up, so send immediately!
+		int bytesToSend = packet->BytesLeftForReading();
+#if defined(_WIN32)
+			// Microsoft things that 'send()' sends a char array, rather than a
+			// blob of memory addressed by a void pointer.  That's adorable.
+			size_t nb = send( to->m_socket, (char*)packet->GetReadHead(), bytesToSend, 0 );
+#else
+			size_t nb = send( to->m_socket, packet->GetReadHead(), bytesToSend, 0 );
+#endif
+			if ( nb < bytesToSend )
+			{
+				packet->SeekReadHeadTo(nb);
+				to->m_sendBuffer->WriteBuffer(packet->GetReadHead(), packet->BytesLeftForReading());
+			}
+	}
 }
 
 #if defined(USE_POLL)

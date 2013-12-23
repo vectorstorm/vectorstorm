@@ -18,7 +18,7 @@
 #include "VS_System.h"
 
 #if !TARGET_OS_IPHONE
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 #define TICK_INTERVAL (1)	// 16 ticks per frame;  slightly over 60fps

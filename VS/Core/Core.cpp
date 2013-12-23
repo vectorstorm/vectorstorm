@@ -18,7 +18,7 @@
 //  with the prefix file or something, to at least get the SDL #include into platform or middleware #ifdefs or
 //  something? :/
 #if !TARGET_OS_IPHONE
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 #include "Memory/VS_Heap.h"
@@ -45,7 +45,7 @@ core::Init( size_t mainMemorySize )
 {
 	vsSystem::Instance()->Init();
 
-	s_gameHeap = new vsHeap(mainMemorySize);
+	s_gameHeap = new vsHeap("game",mainMemorySize);
 }
 
 void

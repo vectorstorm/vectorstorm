@@ -11,14 +11,10 @@
 
 #include "VS_OpenGL.h"
 
-#include "VS_RendererBloom.h"
+#include "VS_RenderSchemeBloom.h"
 #include "VS_RenderTarget.h"
 
 #include "VS_Image.h"
-#include "VS_Overlay.h"
-
-//#define OVERLAYS_IN_SHADER
-
 
 vsRenderTarget *g_boundSurface = NULL;
 
@@ -148,7 +144,7 @@ const char *combine7f = STRINGIFY(
 								  vec4 t4 = texture2D(Pass4, gl_TexCoord[0].st);
 								  vec4 t5 = texture2D(Pass5, gl_TexCoord[0].st);
 								  vec4 t6 = texture2D(Scene, gl_TexCoord[0].st);
-								  gl_FragColor = 1.0 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
+								  gl_FragColor = 0.6 * (t0 + t1 + t2 + t3 + t4 + t5) + t6;
 								  }
 );
 
@@ -264,28 +260,16 @@ GLfloat black[4] = {0,0,0,0};
 //float kernel[KERNEL_SIZE] = { 7, 26, 41, 26, 7  };
 float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 
-//#include <SDL/SDL_opengl.h>
-
-
-
-
-
-vsRendererBloom::vsRendererBloom()
-{
-#if defined(OVERLAYS_IN_SHADER)
-	m_applyOverlaysToColor = false;
-#endif // OVERLAYS_IN_SHADER
-	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
-}
-
 #define BUFFER_HEIGHT (512)
 #define BUFFER_WIDTH  (512)
 
-void
-vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
+
+vsRenderSchemeBloom::vsRenderSchemeBloom(vsRenderer *renderer):
+	vsRenderScheme(renderer),
+	m_window(NULL),
+	m_scene(NULL)
 {
-	m_width = width;
-	m_height = height;
+	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
 
 	// Compile shaders
 	m_combineProg = Compile(passv, combine7f);
@@ -304,6 +288,7 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
         char name[]="Pass#";
         sprintf(name, "Pass%d", i);
         m_passInt[i] = glGetUniformLocation(m_combineProg, name);
+		m_pass[i] = m_pass2[i] = NULL;
     }
 
 
@@ -317,58 +302,10 @@ vsRendererBloom::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
 
     glMatrixMode(GL_MODELVIEW);
 
-	// Create Window Surface
-	vsSurface::Settings settings;
-	settings.depth = 0;
-	settings.width = width;
-	settings.height = height;
-	settings.ortho = true;
-	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
-
-    // Create 3D Scene Surface
-	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
-
-    settings.width = width;
-    settings.height = height;
-	settings.depth = true;
-    settings.linear = true;
-	settings.mipMaps = false;
-	settings.ortho = true;
-	settings.stencil = true;
-
-	if ( m_antialias )
-	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
-	}
-	else
-	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
-	}
-	m_viewportWidth = m_scene->GetViewportWidth();
-	m_viewportHeight = m_scene->GetViewportHeight();
-
-
-
-	width = BUFFER_WIDTH;
-	height = BUFFER_HEIGHT;
-	// Create Source Surfaces
-	for (int p = 0; p < FILTER_COUNT; p++)
-	{
-		settings.width = width >> p;
-		settings.height = height >> p;
-		settings.depth = false;
-		settings.linear = true;
-		settings.mipMaps = false;
-		settings.ortho = false;
-		settings.stencil = false;
-		m_pass[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
-		m_pass2[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
-	}
-
+	Resize();
 }
 
-void
-vsRendererBloom::Deinit()
+vsRenderSchemeBloom::~vsRenderSchemeBloom()
 {
 	DestroyShader(m_combineProg);
 	DestroyShader(m_filterProg);
@@ -384,152 +321,63 @@ vsRendererBloom::Deinit()
 	}
 }
 
-#if defined(OVERLAYS_IN_SHADER)
-static GLuint s_overlayColorALoc;
-static GLuint s_overlayColorBLoc;
-static GLuint s_overlayPosALoc;
-static GLuint s_overlayDirectionLoc;
-static GLuint s_overlayInverseDistanceLoc;
-#endif  //(OVERLAYS_IN_SHADER)
-
-#if defined(OVERLAYS_IN_SHADER)
 void
-vsRendererBloom::SetOverlay( const vsOverlay &o )
+vsRenderSchemeBloom::Resize()
 {
-	float c[4] = { o.m_aColor.r, o.m_aColor.g, o.m_aColor.b, o.m_aColor.a };
-	float cb[4] = { o.m_bColor.r, o.m_bColor.g, o.m_bColor.b, o.m_bColor.a };
-
-	vsTransform2D &t = m_transformStack[m_currentTransformStackLevel];
-
-	vsVector2D localPos = t.ApplyInverseTo( o.m_a );
-	vsVector2D localDir = (-t.m_angle).ApplyRotationTo( o.m_direction );
-
-	float p[4] = { localPos.x, localPos.y, 0.f, 0.f };
-	float d[4] = { localDir.x, localDir.y, 0.f, 0.f };
-
-	glUniform4fv(s_overlayColorALoc,1,c);
-    glUniform4fv(s_overlayColorBLoc,1,cb);
-
-    glUniform4fv(s_overlayPosALoc,1,p);
-    glUniform4fv(s_overlayDirectionLoc,1,d);
-	glUniform1f(s_overlayInverseDistanceLoc, 1.0f / o.m_distance);
-}
-#endif	// OVERLAYS_IN_SHADER
-/*
-void
-vsRendererBloom::CreateSurface(vsBloomSurface *surface, bool depth, bool fp, bool linear, bool withMipMaps, bool withMultisample)
-{
-	//vsAssert(linear, "Asked for a non-linear surface!");
-	vsAssert(!fp, "Asked for floating point surface!");
-    GLenum internalFormat = fp ? GL_RGBA16F_ARB : GL_RGBA8;
-    GLenum type = fp ? GL_HALF_FLOAT_ARB : GL_UNSIGNED_INT_8_8_8_8_REV;
-    GLenum filter = linear ? GL_LINEAR : GL_NEAREST;
-
-	vsAssert( !( withMultisample && withMipMaps ), "Can't do both multisample and mipmaps!" );
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-
-    // create a color texture
-	if ( withMultisample )
+	vsDelete( m_window );
+	vsDelete( m_scene );
+	for (int p = 0; p < FILTER_COUNT; p++)
 	{
-		glGenRenderbuffersEXT(1, &surface->texture);
-		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, surface->texture );
-		glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_RGBA, surface->width, surface->height );
-		surface->isRenderbuffer = true;
-		CheckGLError("Creation of the color texture for the FBO");
+		vsDelete( m_pass[p] );
+		vsDelete( m_pass2[p] );
+	}
+
+	// Create Window Surface
+	vsSurface::Settings settings;
+	settings.depth = 0;
+	settings.width = m_renderer->GetWidthPixels();
+	settings.height = m_renderer->GetHeightPixels();
+	settings.ortho = true;
+	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
+
+    // Create 3D Scene Surface
+	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
+
+    settings.width = m_renderer->GetWidthPixels();
+    settings.height = m_renderer->GetHeightPixels();
+	settings.depth = true;
+    settings.linear = true;
+	settings.mipMaps = false;
+	settings.ortho = true;
+	settings.stencil = true;
+
+	if ( m_antialias )
+	{
+		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
 	}
 	else
 	{
-		glGenTextures(1, &surface->texture);
-		glBindTexture(GL_TEXTURE_2D, surface->texture);
-		glEnable(GL_TEXTURE_2D);
-		surface->isRenderbuffer = false;
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, surface->width, surface->height, 0, GL_RGBA, type, 0);
+		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
-	if ( withMipMaps )
+	m_renderer->SetViewportWidthPixels( m_scene->GetViewportWidth() );
+	m_renderer->SetViewportHeightPixels( m_scene->GetViewportHeight() );
+
+	int width = BUFFER_WIDTH;
+	int height = BUFFER_HEIGHT;
+	// Create Source Surfaces
+	for (int p = 0; p < FILTER_COUNT; p++)
 	{
-		int wid = surface->width;
-		int hei = surface->height;
-		int mapMapId = 1;
-
-		while ( wid > 32 || hei > 32 )
-		{
-			wid = wid >> 1;
-			hei = hei >> 1;
-			glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, GL_RGBA, type, 0);
-		}
+		settings.width = width >> p;
+		settings.height = height >> p;
+		settings.depth = false;
+		settings.linear = true;
+		settings.mipMaps = false;
+		settings.ortho = false;
+		settings.stencil = false;
+		m_pass[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
+		m_pass2[p] = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
-
-	glBindTexture(GL_TEXTURE_2D, surface->texture);
-	glEnable(GL_TEXTURE_2D);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-	CheckGLError("Creation of the color texture for the FBO");
-
-    // create depth renderbuffer
-    if (depth)
-    {
-        glGenRenderbuffersEXT(1, &surface->depth);
-        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, surface->depth);
-		if ( withMultisample )
-		{
-			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, 4, GL_DEPTH_COMPONENT24, surface->width, surface->height );
-		}
-		else
-		{
-			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, surface->width, surface->height);
-		}
-        CheckGLError("Creation of the depth renderbuffer for the FBO");
-    }
-    else
-    {
-        surface->depth = 0;
-    }
-
-    // create FBO itself
-    glGenFramebuffersEXT(1, &surface->fbo);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->fbo);
-	if (withMultisample)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, surface->texture);
-	}
-	else
-	{
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, surface->texture, 0);
-	}
-    if (depth)
-	{
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, surface->depth);
-	}
-    CheckFBO();
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-    CheckGLError("Creation of the FBO itself");
 }
-
-void
-vsRendererBloom::DeleteSurface(vsBloomSurface *surface)
-{
-	if ( surface->isRenderbuffer )
-	{
-		glDeleteRenderbuffersEXT(1, &surface->texture);
-	}
-	else
-	{
-		glDeleteTextures(1, &surface->texture);
-	}
-	if ( surface->depth )
-	{
-		glDeleteRenderbuffersEXT(1, &surface->depth);
-	}
-	glDeleteFramebuffersEXT(1, &surface->fbo);
-}
- */
 
 const char c_enums[][20] =
 {
@@ -544,7 +392,7 @@ const char c_enums[][20] =
 };
 
 void
-vsRendererBloom::CheckFBO()
+vsRenderSchemeBloom::CheckFBO()
 {
     GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
     if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
@@ -555,7 +403,7 @@ vsRendererBloom::CheckFBO()
 }
 
 GLuint
-vsRendererBloom::Compile(const char *vert, const char *frag, int vLength, int fLength )
+vsRenderSchemeBloom::Compile(const char *vert, const char *frag, int vLength, int fLength )
 {
     GLchar buf[256];
     GLuint vertShader, fragShader, program;
@@ -612,18 +460,14 @@ vsRendererBloom::Compile(const char *vert, const char *frag, int vLength, int fL
 }
 
 void
-vsRendererBloom::DestroyShader(GLuint shader)
+vsRenderSchemeBloom::DestroyShader(GLuint shader)
 {
 	glDeleteProgram(shader);
 }
 
 
-vsRendererBloom::~vsRendererBloom()
-{
-}
-
 void
-vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir)
+vsRenderSchemeBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int count, Direction dir)
 {
     int p;
 
@@ -674,94 +518,37 @@ vsRendererBloom::Blur(vsRenderTarget **sources, vsRenderTarget **dests, int coun
 
 
 void
-vsRendererBloom::PreRender(const Settings &s)
+vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 {
 	m_scene->Bind();
-    Parent::PreRender(s);
-    //int p;
-    //GLint loc;
 
-    // Draw 3D scene.
 	if ( m_antialias )
 	{
-		m_state.SetBool( vsRendererState::Bool_PolygonSmooth, true );
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
-//	glBlendFunc( GL_ONE, GL_ZERO );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	//ClearSurface();
-	//glEnable(GL_MULTISAMPLE);
 
-	//glDepthMask(GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
-	glClearColor(0.f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-//	Parent::PreRender();
-//	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_FALSE);
-
-#if defined(OVERLAYS_IN_SHADER)
-	glUseProgram(s_overlayProg);
-	s_overlayColorALoc = glGetUniformLocation(s_overlayProg, "colorA");
-	s_overlayColorBLoc = glGetUniformLocation(s_overlayProg, "colorB");
-	s_overlayPosALoc = glGetUniformLocation(s_overlayProg, "pos");
-	s_overlayDirectionLoc = glGetUniformLocation(s_overlayProg, "dir");
-	s_overlayInverseDistanceLoc = glGetUniformLocation(s_overlayProg, "invDist");
-
-	float c[4] = { 1.f, 1.f, 1.f, 1.f };
-    glUniform4fv(s_overlayColorALoc,1,c);
-    glUniform4fv(s_overlayColorBLoc,1,c);
-
-    glUniform4f(s_overlayPosALoc,0.f,0.f,0.f,0.f);
-    glUniform4f(s_overlayDirectionLoc,0.f,0.f,0.f,0.f);
-#endif // OVERLAYS_IN_SHADER
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
+	m_renderer->GetState()->Flush();
 }
 
-
-/*	BindSurface(&m_window);
- ClearSurface();
- glActiveTexture(GL_TEXTURE0);
- glBindTexture(GL_TEXTURE_2D, m_pass[0].texture);
- glEnable(GL_TEXTURE_2D);
- glBlendFunc( GL_SRC_COLOR, GL_ONE );
-
- glColor4f(1,1,1,1);
- glBegin(GL_QUADS);
- glTexCoord2i(0, 1); glVertex2i(0.0f, 0);
- glTexCoord2i(1, 1); glVertex2i(m_window.width, 0);
- glTexCoord2i(1, 0); glVertex2i(m_window.width, m_window.height);
- glTexCoord2i(0, 0); glVertex2i(0.0f, m_window.height);
- //    glTexCoord2i(0, 0); glVertex2i(-1, -1);
- //    glTexCoord2i(1, 0); glVertex2i(1, -1);
- //    glTexCoord2i(1, 1); glVertex2i(1, 1);
- //    glTexCoord2i(0, 1); glVertex2i(-1, 1 );
- glEnd();
-
- glDisable(GL_TEXTURE_2D);
-
- Parent::PostRender();
- return;*/
-
-
 void
-vsRendererBloom::PostRender()
+vsRenderSchemeBloom::PostRender()
 {
-	m_state.SetBool( vsRendererState::Bool_Fog, false );
-	//	m_state.SetBool( vsRendererState::Bool_AlphaTest, false );
-	m_state.SetBool( vsRendererState::Bool_CullFace, false );
-	m_state.SetBool( vsRendererState::Bool_Lighting, false );
-	m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-	m_state.SetBool( vsRendererState::Bool_Multisample, false );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Fog, false );
+	//	m_renderer->GetState()->SetBool( vsRendererState::Bool_AlphaTest, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_CullFace, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Lighting, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_ColorMaterial, false );
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, false );
+	m_renderer->GetState()->Flush();
 
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 
-	CheckGLError("PrePostRender");
+	m_renderer->CheckGLError("PrePostRender");
 
 	m_scene->Resolve();
 
@@ -786,7 +573,7 @@ vsRendererBloom::PostRender()
 	float top = -1.f;
 	float left = -1.f;
 	float right = (2.0f * m_scene->GetTexWidth()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
-	float bot = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
+	float bottom = (2.0f * m_scene->GetTexHeight()) - 1.f;	// texWidth is the fraction of our width that we're actually using.
 
 //	glUseProgram(0);
     glUseProgram(m_hipassProg);
@@ -794,8 +581,8 @@ vsRendererBloom::PostRender()
 	float v[8] = {
 		left, top,
 		right, top,
-		left, bot,
-		right, bot
+		left, bottom,
+		right, bottom
 	};
 	float wv[8] = {
 		0.f,0.f,
@@ -810,9 +597,9 @@ vsRendererBloom::PostRender()
 		m_scene->GetTexWidth(), m_scene->GetTexHeight()
 	};
 
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	m_renderer->GetState()->Flush();
 
 	glVertexPointer( 2, GL_FLOAT, 0, v );
 	glTexCoordPointer( 2, GL_FLOAT, 0, t );
@@ -828,35 +615,13 @@ vsRendererBloom::PostRender()
     for (p = 1; p < FILTER_COUNT; p++)
     {
 		m_pass[p-1]->BlitTo( m_pass[p] );
-
-							/*
-		if ( glBindFramebufferEXT && glBlitFramebufferEXT )
-		{
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_pass[p-1].fbo);
-			//Bind the standard FBO
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, m_pass[p].fbo);
-			//Let's say I want to copy the entire surface
-			//Let's say I only want to copy the color buffer only
-			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimension
-			glBlitFramebufferEXT(0, 0, m_pass[p-1].width, m_pass[p-1].height, 0, 0, m_pass[p].width, m_pass[p].height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		}
-		else
-		{
-			glBindTexture(GL_TEXTURE_2D, m_pass[p-1].texture);
-			BindSurface(&m_pass[p]);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		}
-							 */
     }
 
-	// Perform the horizontal blurring pass.
+	// Perform the blur operations.
 	Blur(m_pass, m_pass2, FILTER_COUNT, HORIZONTAL);
-    // Perform the vertical blurring pass.
-	//Blur(m_pass2, m_pass, FILTER_COUNT, VERTICAL);
 
 
 	m_window->Bind();
-	//ClearSurface();
 
     glUseProgram(m_combineProg);
 
@@ -885,9 +650,9 @@ vsRendererBloom::PostRender()
 	*/
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_VertexArray, false );
+	m_renderer->GetState()->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	m_renderer->GetState()->Flush();
 
     glUseProgram(0);
 
@@ -932,19 +697,16 @@ vsRendererBloom::PostRender()
 	}
 #endif // _DEBUG
 
-	Parent::PostRender();
 }
 
 bool
-vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
+vsRenderSchemeBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
-    m_currentSettings = s;
-
 	target->Bind();
 	if ( m_antialias )
 	{
-		m_state.SetBool( vsRendererState::Bool_PolygonSmooth, true );
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
+		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
 //	glBlendFunc( GL_ONE, GL_ZERO );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
@@ -952,8 +714,8 @@ vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget 
 	//glEnable(GL_MULTISAMPLE);
 
 	//glDepthMask(GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
+	m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, true );
+	m_renderer->GetState()->Flush();
 	glClearColor(0.f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -962,58 +724,14 @@ vsRendererBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget 
 }
 
 bool
-vsRendererBloom::PostRenderTarget( vsRenderTarget *target )
+vsRenderSchemeBloom::PostRenderTarget( vsRenderTarget *target )
 {
 	m_scene->Bind();
 	return true;
 }
 
-void
-vsRendererBloom::RenderDisplayList( vsDisplayList *list )
-{
-	// give us thicker lines, nicely smoothed.
-	glLineWidth( 2.0f );
-//	glPointSize( 2.5f );
-	m_state.SetBool( vsRendererState::Bool_LineSmooth, true );
-	//glEnable( GL_LINE_SMOOTH );
-	//glEnable( GL_MULTISAMPLE );
-	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	//glBlendFunc( GL_ONE, GL_ZERO );
-
-	// let our parent class actually perform the rendering, now that we've modified our GL settings.
-	Parent::RenderDisplayList(list);
-}
-/*
-void
-vsRendererBloom::BindSurface(vsBloomSurface *surface)
-{
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->fbo);
-    glViewport(0,0, surface->viewport.width, surface->viewport.height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(surface->projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(surface->modelview);
-	g_boundSurface = surface;
-}*/
-/*
-void
-vsRendererBloom::UseSurfaceAsTexture(vsBloomSurface *surface)
-{
-}
- */
-
-
-/*
-void
-vsRendererBloom::ClearSurface()
-{
-	//    const vsBloomSurface *surface = g_boundSurface;
-    glClearColor(0,0,0,0);
-    glClear(GL_COLOR_BUFFER_BIT | (surface->depth ? GL_DEPTH_BUFFER_BIT : 0));
-}*/
-
 bool
-vsRendererBloom::Supported(bool experimental)
+vsRenderSchemeBloom::Supported(bool experimental)
 {
 	glewExperimental = experimental;
 
@@ -1079,10 +797,12 @@ vsRendererBloom::Supported(bool experimental)
 }
 
 vsImage *
-vsRendererBloom::Screenshot()
+vsRenderSchemeBloom::Screenshot()
 {
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
 	const size_t bytesPerPixel = 3;	// RGB
-	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
+	const size_t imageSizeInBytes = bytesPerPixel * width * height;
 
 	uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
@@ -1091,16 +811,16 @@ vsRendererBloom::Screenshot()
 	// (otherwise glReadPixels would write out of bounds)
 	m_window->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width * bytesPerPixel;
+		int rowStart = y * width * bytesPerPixel;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int rInd = rowStart + (x*bytesPerPixel);
 			int gInd = rInd+1;
@@ -1121,9 +841,11 @@ vsRendererBloom::Screenshot()
 
 
 vsImage *
-vsRendererBloom::ScreenshotDepth()
+vsRenderSchemeBloom::ScreenshotDepth()
 {
-	int imageSize = sizeof(float) * m_width * m_height;
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
+	int imageSize = sizeof(float) * width * height;
 
 	float* pixels = new float[imageSize];
 
@@ -1132,17 +854,17 @@ vsRendererBloom::ScreenshotDepth()
 	// (otherwise glReadPixels would write out of bounds)
 	m_scene->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * width;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -1158,9 +880,11 @@ vsRendererBloom::ScreenshotDepth()
 }
 
 vsImage *
-vsRendererBloom::ScreenshotAlpha()
+vsRenderSchemeBloom::ScreenshotAlpha()
 {
-	int imageSize = sizeof(float) * m_width * m_height;
+	size_t width = m_window->GetViewportWidth();
+	size_t height = m_window->GetViewportHeight();
+	int imageSize = sizeof(float) * width * height;
 
 	float* pixels = new float[imageSize];
 
@@ -1169,17 +893,17 @@ vsRendererBloom::ScreenshotAlpha()
 	// (otherwise glReadPixels would write out of bounds)
 	m_scene->Bind();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, m_width, m_height, GL_ALPHA, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	glReadPixels(0, 0, width, height, GL_ALPHA, GL_FLOAT, pixels);
+	m_renderer->CheckGLError("glReadPixels");
 
 
-	vsImage *image = new vsImage( m_width, m_height );
+	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < m_height; y++ )
+	for ( int y = 0; y < height; y++ )
 	{
-		int rowStart = y * m_width;
+		int rowStart = y * width;
 
-		for ( int x = 0; x < m_width; x++ )
+		for ( int x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -1195,3 +919,4 @@ vsRendererBloom::ScreenshotAlpha()
 }
 
 #endif // TARGET_OS_IPHONE
+

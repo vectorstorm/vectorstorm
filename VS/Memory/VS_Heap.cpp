@@ -16,14 +16,12 @@ vsHeap * vsHeap::s_current = NULL;
 #define MAX_HEAP_STACK (4)
 static vsHeap *	s_stack[MAX_HEAP_STACK] = {NULL,NULL,NULL,NULL};
 
-const char* __file__ = "";
-size_t __line__ = 0;
-
 #undef new
 #undef malloc
 #undef free
 
-vsHeap::vsHeap(size_t size)
+vsHeap::vsHeap(vsString name, size_t size):
+	m_name(name)
 {
 	if ( s_current )
 		m_startOfMemory = s_current->Alloc(size, __FILE__, __LINE__, Type_Heap);
@@ -43,15 +41,16 @@ vsHeap::vsHeap(size_t size)
 
 	m_leakMark = 0;
 
-//	for ( int i = 0; i < MAX_ALLOCATIONS; i++ )
-//	{
-//		m_unusedBlockList.Append( &m_blockStore[i] );
-//	}
+	//	for ( int i = 0; i < MAX_ALLOCATIONS; i++ )
+	//	{
+	//		m_unusedBlockList.Append( &m_blockStore[i] );
+	//	}
 
 	memBlock *iniBlock = (memBlock *)m_startOfMemory;
 	iniBlock->m_start = m_startOfMemory;
 	iniBlock->m_end = m_endOfMemory;
 	iniBlock->m_size = m_memorySize;
+	iniBlock->m_sizeRequested = m_memorySize;
 	iniBlock->m_used = false;
 	iniBlock->m_next = NULL;
 	iniBlock->m_prev = NULL;
@@ -125,10 +124,11 @@ vsHeap::FindFreeMemBlockOfSize( size_t size )
 }
 
 void *
-vsHeap::Alloc(size_t size, const char *file, int line, int allocType)
+vsHeap::Alloc(size_t size_requested, const char *file, int line, int allocType)
 {
 	m_mutex.Lock();
 
+	size_t size = size_requested;
 	size += sizeof( memBlock ) + sizeof( unsigned long );		// we need to allocate enough space for our new 'memBlock' header, and some bytes on the end.
 	size = (size+31) & 0xffffffe0;								// round 'size' up to the nearest 32 bytes, to force alignment.
 
@@ -164,6 +164,7 @@ vsHeap::Alloc(size_t size, const char *file, int line, int allocType)
 	block->m_line = line;
 	block->m_blockId = m_totalAllocations++;
 	block->m_allocType = allocType;
+	block->m_sizeRequested = size_requested;
 
 	block->m_used = true;
 	void *result = (void *)((char *)block->m_start + sizeof(memBlock));
@@ -173,7 +174,7 @@ vsHeap::Alloc(size_t size, const char *file, int line, int allocType)
 	{
 		m_highWaterMark = m_memoryUsed;
 		/*if ( m_highWaterMark > 1024 * 1024 )
-			TraceMemoryBlocks();*/
+		  TraceMemoryBlocks();*/
 	}
 
 	if ( allocType != Type_Heap )
@@ -212,72 +213,72 @@ vsHeap::Free(void *p, int allocType)
 	//while ( block )
 	//{
 	//	if ( block->m_start == p )
+	{
+		// make sure the user hasn't overwritten our code past the end of their memory block.
+		void * safety = (void *)((char *)block->m_end - sizeof(unsigned long));
+		unsigned long *safetyLong = (unsigned long *)safety;
+		vsAssert( *safetyLong == 0xeeeeeeee, "Buffer overflow detected!" );	// if we hit this assert, someone has overwritten the bounds of this memory buffer!
+
+		if( block->m_allocType != allocType )
 		{
-			// make sure the user hasn't overwritten our code past the end of their memory block.
-			void * safety = (void *)((char *)block->m_end - sizeof(unsigned long));
-			unsigned long *safetyLong = (unsigned long *)safety;
-			vsAssert( *safetyLong == 0xeeeeeeee, "Buffer overflow detected!" );	// if we hit this assert, someone has overwritten the bounds of this memory buffer!
-
-			if( block->m_allocType != allocType )
+			const char *allocFunction[] =
 			{
-				const char *allocFunction[] =
-				{
-					"vsHeap constructor",
-					"Static alloc",
-					"malloc",
-					"new",
-					"new []"
-				};
-				const char *freeFunction[] =
-				{
-					"vsHeap destructor",
-					"None",
-					"free",
-					"delete",
-					"delete []"
-				};
-				printf("Error:  Allocation from %s line %d was allocated using %s\n", block->m_filename, block->m_line, allocFunction[(int)block->m_allocType]);
-				printf("Error:   but was freed using %s;  should have been %s!\n", freeFunction[allocType], freeFunction[(int)block->m_allocType]);
-			}
-
-			// check if we can merge together with the prev or the next block.
-			void *	userArea = (void *)((char *)block->m_start + sizeof(memBlock));
-			size_t	userSize = block->m_size - sizeof(memBlock);
-			memset(userArea, 0xdddddddd, userSize );
-			block->m_used = false;
-			m_memoryUsed -= block->m_size;
-
-			memBlock *nextBlock = block->m_nextBlock;
-			memBlock *prevBlock = block->m_prevBlock;
-
-			if ( nextBlock && !nextBlock->m_used )
+				"vsHeap constructor",
+				"Static alloc",
+				"malloc",
+				"new",
+				"new []"
+			};
+			const char *freeFunction[] =
 			{
-				//memBlock *nextBlock = block->m_next;
+				"vsHeap destructor",
+				"None",
+				"free",
+				"delete",
+				"delete []"
+			};
+			printf("Error:  Allocation from %s line %d was allocated using %s\n", block->m_filename, block->m_line, allocFunction[(int)block->m_allocType]);
+			printf("Error:   but was freed using %s;  should have been %s!\n", freeFunction[allocType], freeFunction[(int)block->m_allocType]);
+		}
 
-				// next block isn't being used;  let's merge it into us!
-				block->m_end = nextBlock->m_end;
-				block->m_size += nextBlock->m_size;
+		// check if we can merge together with the prev or the next block.
+		void *	userArea = (void *)((char *)block->m_start + sizeof(memBlock));
+		size_t	userSize = block->m_size - sizeof(memBlock);
+		memset(userArea, 0xdddddddd, userSize );
+		block->m_used = false;
+		m_memoryUsed -= block->m_size;
 
-				nextBlock->ExtractBlock();
-				nextBlock->Extract();
-			}
-			if ( prevBlock && prevBlock != &m_unusedBlockList && !prevBlock->m_used )
-			{
-				// previous block isn't being used;  let's merge ourself into it!
-				prevBlock->m_end = block->m_end;
-				prevBlock->m_size += block->m_size;
-				block->ExtractBlock();
-				block->Extract();
-				m_mutex.Unlock();
-				return;
-			}
+		memBlock *nextBlock = block->m_nextBlock;
+		memBlock *prevBlock = block->m_prevBlock;
 
+		if ( nextBlock && !nextBlock->m_used )
+		{
+			//memBlock *nextBlock = block->m_next;
+
+			// next block isn't being used;  let's merge it into us!
+			block->m_end = nextBlock->m_end;
+			block->m_size += nextBlock->m_size;
+
+			nextBlock->ExtractBlock();
+			nextBlock->Extract();
+		}
+		if ( prevBlock && prevBlock != &m_unusedBlockList && !prevBlock->m_used )
+		{
+			// previous block isn't being used;  let's merge ourself into it!
+			prevBlock->m_end = block->m_end;
+			prevBlock->m_size += block->m_size;
+			block->ExtractBlock();
 			block->Extract();
-			m_unusedBlockList.Append(block);
-			//foundBlockToFree = true;
 			m_mutex.Unlock();
 			return;
 		}
+
+		block->Extract();
+		m_unusedBlockList.Append(block);
+		//foundBlockToFree = true;
+		m_mutex.Unlock();
+		return;
+	}
 	//	block = block->m_next;
 	//}
 
@@ -312,6 +313,7 @@ vsHeap::PrintStatus()
 void
 vsHeap::CheckForLeaks()
 {
+	m_mutex.Lock();
 	bool foundLeak = false;
 	memBlock *block = m_blockList.m_next;
 
@@ -324,10 +326,11 @@ vsHeap::CheckForLeaks()
 				vsLog("\nERROR:  LEAKS DETECTED!\n-------------------\nLeaked blocks follow:\n");
 				foundLeak = true;
 			}
-			vsLog("[%d] %s:%d : %d bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+			vsLog("[%s:%d] %s:%d : %d bytes", m_name.c_str(), block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
 		}
 		block = block->m_next;
 	}
+	m_mutex.Unlock();
 
 	vsAssert(!foundLeak, "Memory leaks found!  Details to stdout.");
 }
@@ -341,7 +344,7 @@ vsHeap::TraceMemoryBlocks()
 	{
 		if ( block->m_used )
 		{
-			vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+			vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
 		}
 		block = block->m_next;
 	}
@@ -360,12 +363,12 @@ vsHeap::PrintBlockList()
 }
 
 memBlock::memBlock():
-m_start(0),
-m_end(0),
-m_size(0),
-m_used(false),
-m_next(NULL),
-m_prev(NULL)
+	m_start(0),
+	m_end(0),
+	m_size(0),
+	m_used(false),
+	m_next(NULL),
+	m_prev(NULL)
 {
 }
 
@@ -414,7 +417,6 @@ memBlock::ExtractBlock()
 	m_nextBlock = m_prevBlock = NULL;
 }
 
-
 void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType)
 {
 	void * result;
@@ -422,17 +424,16 @@ void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType
 	if ( vsHeap::GetCurrent() )
 	{
 		result = vsHeap::GetCurrent()->Alloc(size, fileName, lineNumber, allocType);
-//		printf("Allocating %s:%d, 0x%x\n", fileName, lineNumber, (unsigned int)result);
+		//		printf("Allocating %s:%d, 0x%x\n", fileName, lineNumber, (unsigned int)result);
 		return result;
 	}
-
 	return malloc(size);
 }
 
 void MyFree(void *p, int allocType)
 {
 	//	vsAssert( (int)p != 0xcdcdcdcd, "Tried to free an uninitialised pointer?");
-//	printf("Deallocating 0x%x\n", (unsigned int)p);
+	//	printf("Deallocating 0x%x\n", (unsigned int)p);
 	if ( vsHeap::GetCurrent() )
 	{
 		if ( vsHeap::GetCurrent()->Contains(p) )
@@ -457,84 +458,31 @@ void MyFree(void *p, int allocType)
 	}
 }
 
-
-void* operator new(std::size_t n) throw(std::bad_alloc)
+void* operator new(std::size_t n, const char* file, size_t line) throw(std::bad_alloc)
 {
-    using namespace std;
+	if (n == 0) n = 1;
 
-    for (;;) {
-        void* allocated_memory = ::operator new(n, nothrow);
-        if (allocated_memory != 0) return allocated_memory;
-
-        // Store the global new handler
-        new_handler global_handler = set_new_handler(0);
-        set_new_handler(global_handler);
-
-        if (global_handler) {
-            global_handler();
-        } else {
-            throw bad_alloc();
-        }
-    }
-}
-
-// Scalar nothrow new
-void* operator new(std::size_t n, std::nothrow_t const&) throw()
-{
-    if (n == 0) n = 1;
-	if ( __line__ == 0 )
-		return malloc(n);
-
-    void* result = MyMalloc(n, __file__, __line__, Type_New);
-	__file__ = "";
-	__line__ = 0;
+	void* result = MyMalloc(n, file, line, Type_New);
 	return result;
 }
 
 // Array regular new
-void* operator new[](std::size_t n) throw(std::bad_alloc)
+void* operator new[](std::size_t n, const char*file, size_t line) throw(std::bad_alloc)
 {
-    using namespace std;
-
-    for (;;) {
-        void* allocated_memory = ::operator new[](n, nothrow);
-        if (allocated_memory != 0) return allocated_memory;
-
-        // Store the global new handler
-        new_handler global_handler = set_new_handler(0);
-        set_new_handler(global_handler);
-
-        if (global_handler) {
-            global_handler();
-        } else {
-            throw bad_alloc();
-        }
-    }
-}
-
-// Array nothrow new
-void* operator new[](std::size_t n, std::nothrow_t const&) throw()
-{
-    if (n == 0) n = 1;
-	if ( __line__ == 0 )
-		return malloc(n);
-
-    void* result = MyMalloc(n, __file__, __line__, Type_NewArray);
-	__file__ = "";
-	__line__ = 0;
+	void* result = MyMalloc(n, file, line, Type_NewArray);
 	return result;
 }
 
 // Scalar regular delete (doesn't throw either)
 void operator delete(void* p) throw()
 {
-    MyFree(p, Type_New);
+	MyFree(p, Type_New);
 }
 
 // Scalar nothrow delete
 void operator delete(void* p, std::nothrow_t const&) throw()
 {
-    ::operator delete(p);
+	::operator delete(p);
 }
 
 // Array regular delete
@@ -546,6 +494,6 @@ void operator delete[](void* p) throw()
 // Array nothrow delete
 void operator delete[](void* p, std::nothrow_t const&) throw()
 {
-    ::operator delete[](p);
+	::operator delete[](p);
 }
 

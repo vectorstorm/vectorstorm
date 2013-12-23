@@ -120,6 +120,7 @@ vsRendererState::vsRendererState()
 	m_boolState[Bool_CullFace] =		new glEnableSetter( GL_CULL_FACE, false );
 	m_boolState[Bool_DepthTest] =		new glEnableSetter( GL_DEPTH_TEST, false );
 	m_boolState[Bool_StencilTest] =		new glEnableSetter( GL_STENCIL_TEST, false );
+	m_boolState[Bool_ScissorTest] =		new glEnableSetter( GL_SCISSOR_TEST, false );
 	m_boolState[Bool_Fog] =				new glEnableSetter( GL_FOG, false );
 	m_boolState[Bool_Lighting] =		new glEnableSetter( GL_LIGHTING, false );
 	m_boolState[Bool_LineSmooth] =		new glEnableSetter( GL_LINE_SMOOTH, false );

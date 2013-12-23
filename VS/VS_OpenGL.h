@@ -11,7 +11,7 @@
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
 #else
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #if defined(__APPLE_CC__)
 #include <glew.h>
 #else

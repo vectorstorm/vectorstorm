@@ -1,6 +1,6 @@
 /*
- *  VS_RendererShader.cpp
- *  MMORPG2
+ *  VS_RenderSchemeShader.cpp
+ *  VectorStorm
  *
  *  Created by Trevor Powell on 6/05/09.
  *  Copyright 2009 Trevor Powell. All rights reserved.
@@ -9,24 +9,24 @@
 
 #if !TARGET_OS_IPHONE
 
-#include "VS_RendererShader.h"
+#include "VS_RenderSchemeShader.h"
 
 #include "VS_MaterialInternal.h"
 
 #include "VS_Shader.h"
 #include "VS_ShaderSuite.h"
 
-GLuint			vsRendererShader::s_normalProg = -1;
-GLuint			vsRendererShader::s_litProg = -1;
-GLuint			vsRendererShader::s_normalTexProg = -1;
-GLuint			vsRendererShader::s_litTexProg = -1;
+GLuint			vsRenderSchemeShader::s_normalProg = -1;
+GLuint			vsRenderSchemeShader::s_litProg = -1;
+GLuint			vsRenderSchemeShader::s_normalTexProg = -1;
+GLuint			vsRenderSchemeShader::s_litTexProg = -1;
 
-GLuint			vsRendererShader::s_normalProgFogLoc = -1;
-GLuint			vsRendererShader::s_litProgFogLoc = -1;
-GLuint			vsRendererShader::s_normalTexProgFogLoc = -1;
-GLuint			vsRendererShader::s_litTexProgFogLoc = -1;
+GLuint			vsRenderSchemeShader::s_normalProgFogLoc = -1;
+GLuint			vsRenderSchemeShader::s_litProgFogLoc = -1;
+GLuint			vsRenderSchemeShader::s_normalTexProgFogLoc = -1;
+GLuint			vsRenderSchemeShader::s_litTexProgFogLoc = -1;
 
-bool				vsRendererShader::s_shadersBuilt = false;
+bool				vsRenderSchemeShader::s_shadersBuilt = false;
 
 
 #define STRINGIFY(A)  #A
@@ -258,20 +258,9 @@ static GLint s_litTexfAlphaRef;
 static GLint s_texfAlphaRef;
 
 
-vsRendererShader::vsRendererShader()
+vsRenderSchemeShader::vsRenderSchemeShader( vsRenderer *renderer ):
+	vsRenderSchemeBloom(renderer)
 {
-
-}
-
-vsRendererShader::~vsRendererShader()
-{
-}
-
-void
-vsRendererShader::InitPhaseTwo(int width, int height, int depth, bool fullscreen)
-{
-	Parent::InitPhaseTwo(width, height, depth, fullscreen);
-
 	s_normalProg = Compile(normalv, normalf);
 	s_litProg = Compile(litv, litf);
 	s_normalTexProg = Compile(texv, texf);
@@ -287,32 +276,36 @@ vsRendererShader::InitPhaseTwo(int width, int height, int depth, bool fullscreen
 	s_litTexProgFogLoc = glGetUniformLocation(s_litTexProg, "fog");
 }
 
-void
-vsRendererShader::Deinit()
+vsRenderSchemeShader::~vsRenderSchemeShader()
 {
-	Parent::Deinit();
 }
 
 void
-vsRendererShader::SetMaterial( vsMaterialInternal *material )
+vsRenderSchemeShader::PreRender( const vsRenderer::Settings &s )
+{
+	vsRenderSchemeBloom::PreRender(s);
+	m_currentMaterial = NULL;
+}
+
+void
+vsRenderSchemeShader::SetMaterial( vsMaterialInternal *material )
 {
 	if ( material == m_currentMaterial )
 	{
 		return;
 	}
+	m_currentMaterial = material;
 
-	Parent::SetMaterial( material );
-
-	//if ( m_currentSettings.polygonOffsetUnits == 0.f )
+	//if ( m_renderer->GetCurrentSettings().polygonOffsetUnits == 0.f )
 	//{
-		//m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+		//m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	//}
 	//else
 	//{
-		//m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
-		//m_state.SetFloat( vsRendererState::Float_PolygonOffsetUnits, m_currentSettings.polygonOffsetUnits );
+		//m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
+		//m_renderer->GetState()->SetFloat( vsRendererState::Float_PolygonOffsetUnits, m_renderer->GetCurrentSettings().polygonOffsetUnits );
 	//}
-    if ( m_currentSettings.writeColor )
+    if ( m_renderer->GetCurrentSettings().writeColor )
     {
         glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
     }
@@ -320,13 +313,13 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
     {
         glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
     }
-    if ( m_currentSettings.writeDepth )
+    if ( m_renderer->GetCurrentSettings().writeDepth )
     {
-        m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
+        m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
     }
     else
     {
-        m_state.SetBool( vsRendererState::Bool_DepthMask, false );
+        m_renderer->GetState()->SetBool( vsRendererState::Bool_DepthMask, false );
     }
     m_currentShader = NULL;
 
@@ -369,9 +362,9 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 			case DrawMode_Normal:
 				if ( material->m_texture )
 				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
+					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::NormalTex) )
 					{
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
+                        m_currentShader = m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::NormalTex);
 						glUseProgram(m_currentShader->GetShaderId());
 						m_currentShader->Prepare();
                         m_currentShader->SetAlphaRef( material->m_alphaRef );
@@ -385,9 +378,9 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 				}
 				else
 				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
+					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::Normal) )
 					{
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
+                        m_currentShader = m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::Normal);
 						glUseProgram(m_currentShader->GetShaderId());
 						m_currentShader->Prepare();
 					}
@@ -402,9 +395,9 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 
 				if ( material->m_texture )
 				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
+					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::LitTex) )
 					{
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
+                        m_currentShader = m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::LitTex);
 						glUseProgram(m_currentShader->GetShaderId());
 						m_currentShader->Prepare();
                         m_currentShader->SetAlphaRef( material->m_alphaRef );
@@ -418,9 +411,9 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 				}
 				else
 				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
+					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::Lit) )
 					{
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
+                        m_currentShader = m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::Lit);
 						glUseProgram(m_currentShader->GetShaderId());
 						m_currentShader->Prepare();
 					}
@@ -437,11 +430,11 @@ vsRendererShader::SetMaterial( vsMaterialInternal *material )
 		}
 	}
 
-    m_state.Flush();
+    m_renderer->GetState()->Flush();
 }
 
 bool
-vsRendererShader::Supported(bool experimental)
+vsRenderSchemeShader::Supported(bool experimental)
 {
 	return Parent::Supported(experimental);
 }

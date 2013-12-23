@@ -11,7 +11,6 @@
 #include "VS/Files/VS_File.h"
 
 #include "VS/Graphics/VS_Color.h"
-#include "VS/Graphics/VS_Overlay.h"
 #include "VS/Math/VS_Vector.h"
 
 
@@ -390,57 +389,3 @@ vsRecord::Vector3D()
 					  GetToken(2).AsFloat() );
 }
 
-vsOverlay
-vsRecord::Overlay()
-{
-	vsString types[vsOverlay::TYPE_MAX] =
-	{
-		"None",
-		"Constant",
-		"Linear",
-		"LinearLocal"
-	};
-
-	int type = -1;
-	vsAssert( GetToken(1).GetType() == vsToken::Type_Label, "First parameter of Overlay object isn't a label!" );
-	for ( int i = 0; i < vsOverlay::TYPE_MAX; i++ )
-	{
-		if ( GetToken(1).AsString() == types[i] )
-		{
-			type = i;
-		}
-	}
-
-	vsAssert( type != -1, "Unknown Overlay type!" );
-
-	vsOverlay result;
-
-	switch( type )
-	{
-		case vsOverlay::None:
-			result.SetNone();
-			break;
-		case vsOverlay::Constant:
-			result.SetConstant( vsColor( GetToken(2).AsFloat(),
-										GetToken(3).AsFloat(),
-										GetToken(4).AsFloat(),
-										GetToken(5).AsFloat() ) );
-			break;
-		case vsOverlay::Linear:
-		case vsOverlay::LinearLocal:
-		{
-			vsVector2D a( GetToken(2).AsFloat(), GetToken(3).AsFloat() );
-			vsColor aColor( GetToken(4).AsFloat(), GetToken(5).AsFloat(), GetToken(6).AsFloat(), GetToken(7).AsFloat() );
-			vsVector2D b( GetToken(8).AsFloat(), GetToken(9).AsFloat() );
-			vsColor bColor( GetToken(10).AsFloat(), GetToken(11).AsFloat(), GetToken(12).AsFloat(), GetToken(13).AsFloat() );
-
-			if ( type == vsOverlay::Linear )
-				result.SetLinear( a, aColor, b, bColor );
-			else
-				result.SetLinearLocal( a, aColor, b, bColor );
-			break;
-		}
-	}
-
-	return result;
-}

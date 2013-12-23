@@ -139,6 +139,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_resolutionX;
 	vsPreferenceObject *	m_resolutionY;
 	vsPreferenceObject *	m_fullscreen;
+	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 
 	vsPreferenceObject *	m_effectVolume;
@@ -166,6 +167,9 @@ public:
 
 	bool			GetFullscreen();
 	void			SetFullscreen(bool fullscreen);
+
+	bool			GetVSync();
+	void			SetVSync(bool vsync);
 
 	bool			GetBloom();
 	void			SetBloom(bool enabled);

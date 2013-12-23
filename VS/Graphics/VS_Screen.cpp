@@ -9,11 +9,9 @@
 
 #include "VS_Screen.h"
 #include "VS_DisplayList.h"
+#include "VS_Renderer.h"
+#include "VS_RenderTarget.h"
 #include "VS_Scene.h"
-#include "VS_RendererSimple.h"
-#include "VS_RendererPretty.h"
-#include "VS_RendererBloom.h"
-#include "VS_RendererShader.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
 
@@ -21,7 +19,7 @@
 
 const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
+vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync):
 	m_scene(NULL),
 	m_sceneCount(0),
 	m_width(width),
@@ -31,22 +29,13 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
-	vsRendererSimple *bootstrap = new vsRendererSimple;
-	bootstrap->Init(width, height, depth, fullscreen);
-	delete bootstrap;
+	int flags = 0;
+	if ( fullscreen )
+		flags |= vsRenderer::Flag_Fullscreen;
+	if ( vsync )
+		flags |= vsRenderer::Flag_VSync;
 
-	// MUST call vsRendererShader::Supported, or stuff breaks.  Don't just comment out that call!
-#if TARGET_OS_IPHONE
-	m_renderer = new vsRendererPretty();
-#else
-	if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		m_renderer = new vsRendererShader();
-	else if ( vsRendererBloom::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		m_renderer = new vsRendererBloom();
-	else
-		m_renderer = new vsRendererPretty();
-#endif
-	m_renderer->InitPhaseTwo(width, height, depth, fullscreen);
+	m_renderer = new vsRenderer(width, height, depth, flags);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -57,11 +46,9 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen):
 
 vsScreen::~vsScreen()
 {
-	m_renderer->Deinit();
-
-	delete m_fifo;
-	delete m_subfifo;
-	delete m_renderer;
+	vsDelete( m_renderer );
+	vsDelete( m_fifo );
+	vsDelete( m_subfifo );
 }
 
 void
@@ -72,25 +59,18 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 
 	m_width = width;
 	m_height = height;
+	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
 	m_fullscreen = fullscreen;
+	m_renderer->UpdateVideoMode(width, height, depth, fullscreen);
+	for ( int i = 0; i < m_sceneCount; i++ )
+	{
+		m_scene[i]->UpdateVideoMode();
+	}
 
-	m_renderer->Deinit();
-	delete m_renderer;
+	//delete m_renderer;
 
     vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
-#if TARGET_OS_IPHONE
-	m_renderer = new vsRendererPretty();
-#else
-	if ( vsRendererShader::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		m_renderer = new vsRendererShader();
-	else if ( vsRendererBloom::Supported() && vsSystem::Instance()->GetPreferences()->GetBloom() )
-		m_renderer = new vsRendererBloom();
-	else
-		m_renderer = new vsRendererPretty();
-#endif
-	m_renderer->Init(width, height, depth, fullscreen);
-	m_renderer->InitPhaseTwo(width, height, depth, fullscreen);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -297,12 +277,6 @@ void
 vsScreen::RenderDisplayList( vsDisplayList *list )
 {
 	m_renderer->RawRenderDisplayList(list);
-}
-
-void
-vsScreen::SetOpaqueRendering()
-{
-	m_renderer->SetDefaultRenderMode( RenderMode_Opaque );
 }
 
 vsImage *

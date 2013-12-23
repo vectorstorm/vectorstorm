@@ -14,7 +14,7 @@
 #include "VS_System.h"
 
 #if !TARGET_OS_IPHONE
-#include <SDL_mixer.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 
 vsSoundSystem *	vsSoundSystem::s_instance = NULL;
@@ -49,7 +49,7 @@ vsSoundSystem::vsSoundSystem()
 			   frequency, format_str, channels);
 	}
 
-	const char * soundDriver = SDL_AudioDriverName(NULL, 0);
+	const char * soundDriver = SDL_GetAudioDeviceName(0, 0);
 	if ( soundDriver )
 		printf(" ++ Sound playing using %s.\n", soundDriver);
 	else

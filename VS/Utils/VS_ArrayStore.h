@@ -157,7 +157,7 @@ public:
 		return (npos != FindEntry(item));
 	}
 
-	int		Find( T item ) const
+	int		Find( T *item ) const
 	{
 		return FindEntry(item);
 	}

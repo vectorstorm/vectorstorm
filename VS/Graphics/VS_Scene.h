@@ -60,6 +60,8 @@ public:
 
 	float			GetFOV();
 
+	void			UpdateVideoMode();
+
 	// SetViewport requires 'box' be expressed in [0..1] for X and Y, relative
 	// to screen resolution.
 	void			SetViewport( const vsBox2D& viewport );

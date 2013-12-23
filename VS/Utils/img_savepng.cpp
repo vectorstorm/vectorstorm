@@ -1,3 +1,4 @@
+#if 0
 /*
  Based on zlib license - see http://www.gzip.org/zlib/zlib_license.html
 
@@ -25,8 +26,8 @@
  * 11/08/2004 - Compr fix, levels -1,1-7 now work - Tyler Montbriand
  */
 #include <stdlib.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_byteorder.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_endian.h>
 #if defined(__APPLE_CC__)
 #include <libpng15/png.h>
 #else
@@ -62,7 +63,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 	SDL_Surface *tempsurf=NULL;
 	int ret,funky_format,used_alpha;
 	int i;
-    unsigned int temp_alpha;
+    uint8_t temp_alpha;
 	png_colorp palette;
 	uint8_t *palette_alpha=NULL;
 	png_byte **row_pointers=NULL;
@@ -127,18 +128,19 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 			palette[i].blue=fmt->palette->colors[i].b;
 		}
 		png_set_PLTE(png_ptr,info_ptr,palette,fmt->palette->ncolors);
-		if (surf->flags&SDL_SRCCOLORKEY) {
-			palette_alpha=(uint8_t *)malloc((fmt->colorkey+1)*sizeof(uint8_t));
+		uint32_t colorkey;
+		if (SDL_GetColorKey(surf, &colorkey) > 0) {
+			palette_alpha=(uint8_t *)malloc((colorkey+1)*sizeof(uint8_t));
 			if (!palette_alpha) {
 				SDL_SetError("Couldn't create memory for palette transparency");
 				goto savedone;
 			}
 			/* FIXME: memset? */
-			for (unsigned int i=0;i<(fmt->colorkey+1);i++) {
+			for (unsigned int i=0;i<(colorkey+1);i++) {
 				palette_alpha[i]=255;
 			}
-			palette_alpha[fmt->colorkey]=0;
-			png_set_tRNS(png_ptr,info_ptr,palette_alpha,fmt->colorkey+1,NULL);
+			palette_alpha[colorkey]=0;
+			png_set_tRNS(png_ptr,info_ptr,palette_alpha,colorkey+1,NULL);
 		}
 	}else{ /* Truecolor */
 		if (fmt->Amask) {
@@ -229,21 +231,15 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 						SDL_SetError("Couldn't allocate temp surface");
 						goto savedone;
 					}
-					if(surf->flags&SDL_SRCALPHA){
-						temp_alpha=fmt->alpha;
-						used_alpha=1;
-						SDL_SetAlpha(surf,0,255); /* Set for an opaque blit */
-					}else{
-						used_alpha=0;
-					}
+					SDL_BlendMode bm;
+					SDL_GetSurfaceBlendMode(surf, &bm);
+					SDL_SetSurfaceBlendMode(surf, SDL_BLENDMODE_NONE);
 					if(SDL_BlitSurface(surf,NULL,tempsurf,NULL)!=0){
 						SDL_SetError("Couldn't blit surface to temp surface");
 						SDL_FreeSurface(tempsurf);
 						goto savedone;
 					}
-					if (used_alpha) {
-						SDL_SetAlpha(surf,SDL_SRCALPHA,(uint8_t)temp_alpha); /* Restore alpha settings*/
-					}
+					SDL_SetSurfaceBlendMode(surf, bm);
 					for(i=0;i<tempsurf->h;i++){
 						row_pointers[i]= ((png_byte*)tempsurf->pixels) + i*tempsurf->pitch;
 					}
@@ -285,3 +281,5 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 			}
 			return ret;
 		}
+
+#endif // 0

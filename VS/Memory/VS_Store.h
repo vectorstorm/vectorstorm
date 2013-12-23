@@ -16,7 +16,6 @@ class vsFog;
 class vsLight;
 class vsMaterial;
 class vsMatrix4x4;
-class vsOverlay;
 class vsTransform2D;
 class vsTransform3D;
 class vsVector2D;
@@ -115,9 +114,6 @@ public:
 
 	void		WriteFog(const vsFog &f);
 	void		ReadFog(vsFog *f);
-
-	void		WriteOverlay(const vsOverlay &o);
-	void		ReadOverlay(vsOverlay *o);
 
 	void		WriteTransform2D(const vsTransform2D &t);
 	void		ReadTransform2D(vsTransform2D *t);

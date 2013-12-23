@@ -60,10 +60,9 @@ static void RemoveLeadingWhitespace( vsString &string )
 
 	while(!done)
 	{
-
 		done = true;
 
-		if ( IsWhitespace(string[0]) )
+		if ( !string.empty() && IsWhitespace(string[0]) )
 		{
 			string.erase(0,1);
 			done = false;
@@ -82,7 +81,7 @@ static vsString ExtractStringToken( vsString &string )
 	string.erase(0,1);
 
 	bool escaped = false;
-	while( string[0] && string[0] != '\"' ){
+	while( !string.empty() && string[0] && string[0] != '\"' ){
 		if ( escaped )
 		{
 			if ( string[0] == 'n' )
@@ -356,5 +355,11 @@ vsToken::SetFloat(float value)
 {
 	m_float = value;
 	m_type = Type_Float;
+}
+
+bool
+vsToken::IsType( vsToken::Type t )
+{
+	return m_type == t;
 }
 

@@ -67,6 +67,8 @@ class vsSocketTCP
 	void DoSelect(float maxSleepDuration);
 #endif
 
+	void DoSend( vsTCPConnection *to, vsStore *packet );
+
 public:
 
 	enum Type

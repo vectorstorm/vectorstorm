@@ -11,7 +11,7 @@
 #define SND_SAMPLE_H
 
 #if !TARGET_OS_IPHONE
-#include <SDL_mixer.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 
 class vsSoundSample

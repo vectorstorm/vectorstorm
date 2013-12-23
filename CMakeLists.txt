@@ -7,12 +7,13 @@ else()
 endif()
 project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
-	
+
 find_package(OpenGL)
-find_package(SDL REQUIRED)
-find_package(SDL_image REQUIRED)
-find_package(SDL_mixer REQUIRED)
-find_package(PNG REQUIRED)
+find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
+
+
 if(UNIX)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
 else()
@@ -24,23 +25,32 @@ find_library(BOX2D_LIBRARY Box2D REQUIRED)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/local/include )
 
+# Check our build environment and set any variables
+# which need setting
+set(CMAKE_REQUIRED_LIBRARIES ${SDL_LIBRARY})
+include(CheckFunctionExists)
+check_function_exists( SDL_GL_GetDrawableSize HIGHDPI_SUPPORTED )
+
+include_directories("${PROJECT_BINARY_DIR}/config")
+configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
+	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
+
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
 	${SDL_LIBRARY}
-	${SDLIMAGE_LIBRARY}
-	${SDLMIXER_LIBRARY}
-	${PNG_LIBRARY}
+	${SDL_IMAGE_LIBRARY}
+	${SDL_MIXER_LIBRARY}
 	${GLEW_LIBRARY}
 	${BOX2D_LIBRARY}
 	)
 
+
 include_directories(
-	${PNG_PNG_INCLUDE_DIR} 
-	${SDL_INCLUDE_DIR} 
-	${SDLMIXER_INCLUDE_DIR} 
-	${SDLIMAGE_INCLUDE_DIR} 
-	${ZLIB_INCLUDE_DIRS} 
-	${GLEW_INCLUDE_DIR} 
+	${SDL_INCLUDE_DIR}
+	${SDLMIXER_INCLUDE_DIR}
+	${SDLIMAGE_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIRS}
+	${GLEW_INCLUDE_DIR}
 	${BOX2D_INCLUDE_DIR}
 	#/usr/local/include
 	)
@@ -107,8 +117,6 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Mesh.h
 	VS/Graphics/VS_Model.cpp
 	VS/Graphics/VS_Model.h
-	VS/Graphics/VS_Overlay.cpp
-	VS/Graphics/VS_Overlay.h
 	VS/Graphics/VS_RenderBuffer.cpp
 	VS/Graphics/VS_RenderBuffer.h
 	VS/Graphics/VS_RenderQueue.cpp
@@ -117,14 +125,10 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
-	VS/Graphics/VS_RendererBloom.cpp
-	VS/Graphics/VS_RendererBloom.h
-	VS/Graphics/VS_RendererPretty.cpp
-	VS/Graphics/VS_RendererPretty.h
-	VS/Graphics/VS_RendererShader.cpp
-	VS/Graphics/VS_RendererShader.h
-	VS/Graphics/VS_RendererSimple.cpp
-	VS/Graphics/VS_RendererSimple.h
+	VS/Graphics/VS_RenderScheme.cpp
+	VS/Graphics/VS_RenderSchemeFixedFunction.cpp
+	VS/Graphics/VS_RenderSchemeBloom.cpp
+	VS/Graphics/VS_RenderSchemeShader.cpp
 	VS/Graphics/VS_RendererState.cpp
 	VS/Graphics/VS_RendererState.h
 	VS/Graphics/VS_Scene.cpp
@@ -285,8 +289,6 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Tween.h
 	VS/Utils/VS_WeakPointer.h
 	VS/Utils/VS_WeakPointerTarget.h
-	VS/Utils/img_savepng.cpp
-	VS/Utils/img_savepng.h
 	)
 set(SOURCES
 	VS/VS_Headers.h
@@ -325,6 +327,7 @@ include_directories(
 		add_definitions("/FI\"VS_Prefix.h\"")
 	endif()
 
+	add_definitions("-DVECTORSTORM_INTERNAL")
 	add_library(
 		vectorstorm
 		${SOURCES}
@@ -340,6 +343,10 @@ include_directories(
 		${THREADS_SOURCES}
 		${UTILS_SOURCES}
 		${PLATFORM_SOURCES}
+		)
+
+	target_link_libraries( vectorstorm
+		${VS_LIBRARIES}
 		)
 
 	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3

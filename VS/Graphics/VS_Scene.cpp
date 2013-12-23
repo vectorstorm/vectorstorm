@@ -86,6 +86,18 @@ vsScene::GetFOV()
 }
 
 void
+vsScene::UpdateVideoMode()
+{
+	if ( m_camera3D )
+	{
+		m_camera3D->SetAspectRatio( vsSystem::GetScreen()->GetAspectRatio() );
+	}
+	if ( m_camera )
+	{
+	}
+}
+
+void
 vsScene::SetViewport( const vsBox2D& viewport )
 {
 	m_viewport = viewport;

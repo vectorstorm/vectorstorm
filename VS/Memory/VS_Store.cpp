@@ -16,7 +16,6 @@
 #include "VS_Light.h"
 #include "VS_Material.h"
 #include "VS_Matrix.h"
-#include "VS_Overlay.h"
 #include "VS_Transform.h"
 #include "VS_Vector.h"
 
@@ -26,25 +25,24 @@
 #include <netinet/in.h> // for access to ntohl, et al
 #endif
 
-vsStore::vsStore( size_t maxSize )
+vsStore::vsStore( size_t maxSize ):
+	m_buffer( new char[maxSize] ),
+	m_bufferLength( maxSize ),
+	m_bufferEnd( &m_buffer[m_bufferLength] ),
+	m_readHead( m_buffer ),
+	m_writeHead( m_buffer ),
+	m_bufferIsExternal( false )
 {
-	m_buffer = new char[maxSize];
-	m_bufferLength = maxSize;
-	m_bufferEnd = &m_buffer[m_bufferLength];
-
-	m_readHead = m_writeHead = m_buffer;
-	m_bufferIsExternal = false;
 }
 
-vsStore::vsStore( char *buffer, int bufferLength )
+vsStore::vsStore( char *buffer, int bufferLength ):
+	m_buffer( buffer ),
+	m_bufferLength( bufferLength ),
+	m_bufferEnd( &m_buffer[m_bufferLength] ),
+	m_readHead( m_buffer ),
+	m_writeHead( m_bufferEnd ),
+	m_bufferIsExternal( true )
 {
-	m_buffer = buffer;
-	m_bufferLength = bufferLength;
-	m_bufferEnd = &m_buffer[m_bufferLength];
-
-	m_readHead  = m_buffer;
-	m_writeHead = m_bufferEnd;
-	m_bufferIsExternal = true;
 }
 
 vsStore::~vsStore()
@@ -546,32 +544,6 @@ vsStore::ReadFog(vsFog *f)
 		f->SetExponential( color, density );
 	}
 }
-
-void
-vsStore::WriteOverlay(const vsOverlay &o)
-{
-	WriteUint8( (uint8_t)o.m_type );
-
-	WriteVector2D( o.m_a );
-	WriteVector2D( o.m_direction );
-	WriteFloat( o.m_distance );
-	WriteColor( o.m_aColor );
-	WriteColor( o.m_bColor );
-}
-
-void
-vsStore::ReadOverlay(vsOverlay *o)
-{
-	vsOverlay result;
-
-	o->m_type = (vsOverlay::Type)ReadUint8();
-	ReadVector2D(&o->m_a);
-	ReadVector2D(&o->m_direction);
-	o->m_distance = ReadFloat();
-	ReadColor(&o->m_aColor);
-	ReadColor(&o->m_bColor);
-}
-
 
 void
 vsStore::WriteTransform2D(const vsTransform2D &v)

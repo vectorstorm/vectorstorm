@@ -223,14 +223,13 @@ vsRenderQueueStage::EndRender()
 }
 
 vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
-	m_parent(NULL)
+	m_parent(NULL),
+	m_genericList(new vsDisplayList(genericListSize)),
+	m_stage(new vsRenderQueueStage[stageCount]),
+	m_stageCount(stageCount),
+	m_transformStack(),
+	m_transformStackLevel(0)
 {
-	m_transformStackLevel = 0;
-
-	m_stageCount = stageCount;
-	m_stage = new vsRenderQueueStage[stageCount];
-
-	m_genericList = new vsDisplayList(genericListSize);
 }
 
 vsRenderQueue::~vsRenderQueue()

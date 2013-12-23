@@ -9,7 +9,7 @@
 
 #include "VS_Shader.h"
 
-#include "VS_RendererShader.h"
+#include "VS_RenderSchemeShader.h"
 
 #include "VS_File.h"
 #include "VS_Input.h"
@@ -21,7 +21,7 @@
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
-	if ( vsRendererShader::Exists() )
+	if ( vsRenderSchemeShader::Exists() )
 	{
 		vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
 		vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
@@ -50,8 +50,8 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 
 #if !TARGET_OS_IPHONE
-		m_shader = vsRendererShader::Instance()->Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
-		//m_shader = vsRendererShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
+		m_shader = vsRenderSchemeShader::Instance()->Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+		//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
         m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
@@ -66,9 +66,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
-	if ( vsRendererShader::Exists() )
+	if ( vsRenderSchemeShader::Exists() )
 	{
-		vsRendererShader::Instance()->DestroyShader(m_shader);
+		vsRenderSchemeShader::Instance()->DestroyShader(m_shader);
 	}
 }
 

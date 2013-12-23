@@ -8,7 +8,6 @@
  */
 
 #include "VS_DisplayList.h"
-#include "VS_Overlay.h"
 #include "VS_File.h"
 #include "VS_Record.h"
 #include "VS_Store.h"
@@ -24,7 +23,7 @@
 #include "VS_TextureManager.h"
 
 #if !TARGET_OS_IPHONE
-#include "SDL/SDL_opengl.h"
+#include "SDL2/SDL_opengl.h"
 #endif
 
 vsDisplayList		s_compiledDisplayLists;
@@ -35,7 +34,6 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
 	"SetSpecularColor",
-	"SetOverlay",
 	"SetTexture",
 	"ClearTexture",
 
@@ -178,24 +176,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 					loader->SetSpecularColor(color);
 					break;
 				}
-				case OpCode_SetOverlay:
-				{
-					vsOverlay overlay = r->Overlay();
-					loader->SetOverlay(overlay);
-					break;
-				}
-					/*case OpCode_SetTexture:
-					 {
-					 textureList[textureCount++] = new vsTexture( r.String() );//vsTextureManager::Instance()->LoadTexture( r.String() );
-					 vsAssert(textureCount < MAX_OWNED_TEXTURES, "Too many textures in this .vec file!");
-					 loader->SetTexture( textureList[textureCount-1] );
-					 break;
-					 }*/
-					/*case OpCode_ClearTexture:
-					 {
-					 loader->SetTexture( NULL );
-					 break;
-					 }*/
 				case OpCode_MoveTo:
 				{
 					vsVector2D pos = r->Vector2D();
@@ -977,6 +957,9 @@ vsDisplayList::VertexArray( vsVector3D *array, int arrayCount )
 void
 vsDisplayList::VertexBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom ||
+			buffer->GetContentType() == vsRenderBuffer::ContentType_P,
+			"Known render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_VertexBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -995,6 +978,8 @@ vsDisplayList::NormalArray( vsVector3D *array, int arrayCount )
 void
 vsDisplayList::NormalBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_NormalBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -1002,6 +987,8 @@ vsDisplayList::NormalBuffer( vsRenderBuffer *buffer )
 void
 vsDisplayList::TexelBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_TexelBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -1009,6 +996,8 @@ vsDisplayList::TexelBuffer( vsRenderBuffer *buffer )
 void
 vsDisplayList::ColorBuffer( vsRenderBuffer *buffer )
 {
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_ColorBuffer );
 	m_fifo->WriteVoidStar( buffer );
 }
@@ -1254,24 +1243,6 @@ vsDisplayList::SmoothShading()
 }
 
 void
-vsDisplayList::SetOverlay( const vsOverlay &o )
-{
-	m_fifo->WriteUint8( OpCode_SetOverlay );
-	m_fifo->WriteOverlay(o);
-}
-
-void
-vsDisplayList::ClearOverlay()
-{
-	m_fifo->WriteUint8( OpCode_SetOverlay );
-
-	vsOverlay o;
-	o.Clear();
-
-	m_fifo->WriteOverlay(o);
-}
-
-void
 vsDisplayList::EnableStencil()
 {
 	m_fifo->WriteUint8( OpCode_EnableStencil );
@@ -1281,6 +1252,19 @@ void
 vsDisplayList::DisableStencil()
 {
 	m_fifo->WriteUint8( OpCode_DisableStencil );
+}
+
+void
+vsDisplayList::EnableScissor( const vsBox2D& box )
+{
+	m_fifo->WriteUint8( OpCode_EnableScissor );
+	m_fifo->WriteBox2D( box );
+}
+
+void
+vsDisplayList::DisableScissor()
+{
+	m_fifo->WriteUint8( OpCode_DisableScissor );
 }
 
 void
@@ -1324,7 +1308,6 @@ vsDisplayList::PeekOpType()
 static vsColor		s_color;
 static vsVector2D	s_vector;
 static vsVector3D	s_vector3d;
-static vsOverlay	s_overlay;
 static vsTransform2D	s_transform;
 
 vsDisplayList::op *
@@ -1345,11 +1328,6 @@ vsDisplayList::PopOp()
 			case OpCode_SetTexture:
 				m_currentOp.data.p = (char *)m_fifo->ReadVoidStar();
 				break;
-			case OpCode_SetOverlay:
-			{
-				m_fifo->ReadOverlay( &m_currentOp.data.overlay );
-				break;
-			}
 			case OpCode_MoveTo:
 			case OpCode_LineTo:
 			case OpCode_DrawPoint:
@@ -1480,6 +1458,9 @@ vsDisplayList::PopOp()
 			case OpCode_Debug:
 				 m_currentOp.data.string = m_fifo->ReadString();
 				break;
+			case OpCode_EnableScissor:
+				m_fifo->ReadBox2D( &m_currentOp.data.box2D );
+				break;
 			case OpCode_ClearLights:
 			case OpCode_PopTransform:
 			case OpCode_ClearVertexArray:
@@ -1491,6 +1472,7 @@ vsDisplayList::PopOp()
 			case OpCode_SmoothShading:
 			case OpCode_EnableStencil:
 			case OpCode_DisableStencil:
+			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
 			default:
@@ -1515,9 +1497,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_SetSpecularColor:
 			SetColor( o->data.GetColor() );
-			break;
-		case OpCode_SetOverlay:
-			SetOverlay( o->data.GetOverlay() );
 			break;
 		case OpCode_MoveTo:
 			MoveTo( o->data.GetVector3D() );
@@ -1626,6 +1605,12 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_DisableStencil:
 			DisableStencil();
+			break;
+		case OpCode_EnableScissor:
+			EnableScissor( o->data.GetBox2D() );
+			break;
+		case OpCode_DisableScissor:
+			DisableScissor();
 			break;
 		case OpCode_ClearStencil:
 			ClearStencil();

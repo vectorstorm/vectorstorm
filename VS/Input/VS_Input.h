@@ -19,7 +19,7 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN LOAD/SAVE!
@@ -142,6 +142,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 
 	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
+
+	bool			m_mouseIsInWindow;
 
 	void			ReadAxis( int axisID, ControlDirection dir, int cid );
 	void			ReadButton( int buttonID, int cid );

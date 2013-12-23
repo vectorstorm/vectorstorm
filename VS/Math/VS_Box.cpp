@@ -23,6 +23,26 @@ vsBox2D::Intersects(const vsBox2D &other) const
 	return true;
 }
 
+vsVector2D
+vsBox2D::Corner(int i) const
+{
+	switch(i)
+	{
+		case 0:
+			return min;
+		case 1:
+			return vsVector2D(max.x, min.y);
+		case 2:
+			return vsVector2D(min.x, max.y);
+		case 3:
+			return max;
+		default:
+			break;
+	}
+	vsAssert(0, "Illegal corner?");
+	return vsVector2D::Zero;
+}
+
 bool
 vsBox2D::ContainsPoint( const vsVector2D &pos ) const
 {

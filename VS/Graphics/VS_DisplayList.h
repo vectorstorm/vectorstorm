@@ -20,13 +20,11 @@
 #include "VS/Graphics/VS_Fog.h"
 #include "VS/Graphics/VS_Light.h"
 #include "VS/Graphics/VS_Material.h"
-#include "VS/Graphics/VS_Overlay.h"
 
 class vsRecord;
 class vsStore;
 class vsRenderBuffer;
 class vsLight;
-class vsOverlay;
 class vsMaterial;
 class vsBox3D;
 
@@ -39,7 +37,6 @@ public:
 	{
 		OpCode_SetColor,
 		OpCode_SetSpecularColor,
-		OpCode_SetOverlay,
 		OpCode_SetTexture,
 		OpCode_ClearTexture,
 
@@ -105,6 +102,9 @@ public:
 		OpCode_DisableStencil,
 		OpCode_ClearStencil,
 
+		OpCode_EnableScissor,
+		OpCode_DisableScissor,
+
 		OpCode_SetViewport,
 		OpCode_ClearViewport,
 
@@ -124,7 +124,6 @@ public:
 		vsFog		fog;
 		//vsMaterial	material;
 		vsMatrix4x4 matrix4x4;
-		vsOverlay	overlay;
 		vsString	string;
 		float		fov;
 		float		nearPlane;
@@ -138,7 +137,6 @@ public:
 		void Set(const vsTransform2D &t) {transform = t;}
 		//void Set(const vsMaterial &m) { material = m; }
 		void Set(const vsMatrix4x4 &m, float fov_in, float nearPlane_in, float farPlane_in) {matrix4x4 = m; fov = fov_in; nearPlane = nearPlane_in; farPlane = farPlane_in;}
-		void Set(const vsOverlay &o) {overlay = o;}
 		void Set(const vsString &s) {string = s;}
 		void SetPointer(char *pointer) {p = pointer;}
 
@@ -148,7 +146,6 @@ public:
 		vsColor GetColor() {return color; }
 		vsTransform2D	GetTransform() {return transform;}
 		vsMatrix4x4 &	GetMatrix4x4() {return matrix4x4;}
-		vsOverlay GetOverlay() {return overlay;}
 		vsString GetString() {return string;}
 	};
 
@@ -296,9 +293,6 @@ public:
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );
 
-	void	SetOverlay( const vsOverlay &overlay );
-	void	ClearOverlay();
-
 	//void	SetDrawMode( vsDrawMode mode );
 
 	void	SetMaterial( vsMaterial *material );
@@ -322,9 +316,12 @@ public:
 
 	void	Append( const vsDisplayList &list );	// appends the passed display list onto us.
 
-	void	EnableStencil();	// turns on stencil testing, cull future rendering to INSIDE stencil
-	void	DisableStencil();	// turns off stencil testing;  no stencils considered.
-	void	ClearStencil();		// clears our stencil so that everything fails.
+	void	EnableStencil();   // turns on stencil testing, cull future rendering to INSIDE stencil
+	void	DisableStencil();  // turns off stencil testing;  no stencils considered.
+	void	ClearStencil();    // clears our stencil so that everything fails.
+
+	void	EnableScissor(const vsBox2D &box);   // turns on scissoring, inside this box.
+	void	DisableScissor();                    // turns off scissoring.
 
 	// SetViewport requires 'box' be expressed in [0..1] for X and Y, relative
 	// to screen resolution.
