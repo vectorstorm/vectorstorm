@@ -43,7 +43,7 @@ protected:
 
 	float			m_particleLifetime;
 
-	void			Spawn(const vsVector2D &pos, const vsVector2D &vel, const vsColor &color = vsColor::White);
+	void			Spawn(const vsVector2D &pos, const vsVector2D &vel, const vsColor &color = c_white);
 
 public:
 
@@ -55,8 +55,8 @@ public:
 	void	SetSpawnColor( const vsColor &c ) { m_color = c; }
 
 	void	SetSpawnRate( float particlesPerSecond ) { m_spawnRate = particlesPerSecond; }
-	void	SpawnImmediateBurst( int spawnCount, const vsVector2D &pos, const vsVector2D &vel, float speed, float radius = 0.f, const vsColor &color = vsColor::White );
-	void	SpawnImmediateBurst( int spawnCount, const vsVector2D &pos, float speed, float radius = 0.f, const vsColor &color = vsColor::White );
+	void	SpawnImmediateBurst( int spawnCount, const vsVector2D &pos, const vsVector2D &vel, float speed, float radius = 0.f, const vsColor &color = c_white );
+	void	SpawnImmediateBurst( int spawnCount, const vsVector2D &pos, float speed, float radius = 0.f, const vsColor &color = c_white );
 	virtual void	Update( float timeStep );
 };
 

@@ -197,7 +197,7 @@ vsPhysicsSprite::Draw( vsRenderQueue *queue )
 
 	if ( drawVelocity )
 	{
-		list->SetColor( vsColor::Red );
+		list->SetColor( c_red );
 		list->MoveTo( GetPosition() );
 		list->LineTo( GetPosition() + GetVelocity() );
 	}

@@ -69,15 +69,15 @@ vsTimerSystemEntity::Draw( vsRenderQueue *queue )
 	gpuPos += renderPos;
 
 	list->SetMaterial( m_material );
-	list->SetColor( vsColor::Blue );
+	list->SetColor( c_blue );
 	list->MoveTo( startPoint );
 	list->LineTo( cpuPos );
 
-	list->SetColor( vsColor::Green );
+	list->SetColor( c_green );
 	list->MoveTo( cpuPos );
 	list->LineTo( renderPos );
 
-	list->SetColor( vsColor::Red );
+	list->SetColor( c_red );
 	list->MoveTo( renderPos );
 	list->LineTo( gpuPos );
 
@@ -87,7 +87,7 @@ vsTimerSystemEntity::Draw( vsRenderQueue *queue )
 	vsVector2D sixtyDown( sixtyUp.x, 0.02f );
 	vsVector2D thirtyDown( thirtyUp.x, 0.02f );
 
-	list->SetColor( vsColor::Blue );
+	list->SetColor( c_blue );
 	list->MoveTo( sixtyUp + startPoint );
 	list->LineTo( sixtyDown + startPoint );
 

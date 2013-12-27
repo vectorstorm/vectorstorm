@@ -170,26 +170,6 @@ vsPosition3D::operator-( const vsPosition3D &b ) const
 }
 
 
-float vsProgressFraction( float value, float a, float b )
-{
-	if ( a == b )
-	{
-		return 0.f;
-	}
-	else
-	{
-		float delta = b - a;
-		value -= a;
-
-		return value / delta;
-	}
-}
-
-float vsInterpolate( float alpha, float a, float b )
-{
-	return ((1.0f-alpha)*a) + (alpha*b);
-}
-
 vsVector2D vsInterpolate( float alpha, const vsVector2D &a, const vsVector2D &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);

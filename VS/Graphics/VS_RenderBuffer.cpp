@@ -815,7 +815,7 @@ vsRenderBuffer::GetColor(int i)
 		case ContentType_PN:
 		case ContentType_PNT:
 		{
-			return vsColor::PureWhite;
+			return c_white;
 		}
 		case ContentType_PC:
 		{
@@ -837,7 +837,7 @@ vsRenderBuffer::GetColor(int i)
 			vsAssert(0, "Unhandled vsRenderBuffer content type!");
 		}
 	}
-	return vsColor::PureWhite;
+	return c_white;
 }
 
 

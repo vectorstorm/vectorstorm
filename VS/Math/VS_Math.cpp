@@ -162,3 +162,23 @@ bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, cons
 	return (*t >= 0.f);
 }
 
+float vsProgressFraction( float value, float a, float b )
+{
+	if ( a == b )
+	{
+		return 0.f;
+	}
+	else
+	{
+		float delta = b - a;
+		value -= a;
+
+		return value / delta;
+	}
+}
+
+float vsInterpolate( float alpha, float a, float b )
+{
+	return ((1.0f-alpha)*a) + (alpha*b);
+}
+

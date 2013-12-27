@@ -153,7 +153,7 @@ vsSpline3D::ClosestPointTo( const vsVector3D& position )
 
 vsSplineColor::vsSplineColor()
 {
-	Set( vsColor::PureWhite, vsColor::PureWhite, vsColor::PureWhite );
+	Set( c_white, c_white, c_white );
 }
 
 vsSplineColor::vsSplineColor( const vsColor &start, const vsColor &middle, const vsColor &end )

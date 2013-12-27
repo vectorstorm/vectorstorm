@@ -70,9 +70,9 @@ public:
 	vsDisplayList *	m_displayList;
 
 	vsMaterialInternal( const vsString & materialName );
-	vsMaterialInternal( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = vsColor::Black );
-	vsMaterialInternal( vsTexture *texture, vsDrawMode mode, const vsColor &c, const vsColor &sc = vsColor::Black );
-	vsMaterialInternal( vsDrawMode mode, const vsColor &c, const vsColor &sc = vsColor::Black);
+	vsMaterialInternal( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
+	vsMaterialInternal( vsTexture *texture, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
+	vsMaterialInternal( vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black);
 	~vsMaterialInternal();
 
 	void		LoadFromFile( vsFile *file );

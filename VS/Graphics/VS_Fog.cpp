@@ -10,7 +10,7 @@
 #include "VS_Fog.h"
 
 vsFog::vsFog():
-	m_fogColor( vsColor::Black ),
+	m_fogColor( c_black ),
 	m_density(0.f),
 	m_start(0.f),
 	m_end(0.f),

@@ -110,12 +110,12 @@ vsSimpleMenu::Update(float timeStep)
 	{
 		if ( m_itemLabel[i] )
 		{
-			vsColor c = vsColor::Blue;
+			vsColor c = c_blue;
 
 			if ( i == m_highlightedId )
 			{
 				vsColor lightBlue(0.5f,0.5f,1.0f,0.8f);
-				c = vsInterpolate( pulseAmt, lightBlue, vsColor::White );
+				c = vsInterpolate( pulseAmt, lightBlue, c_white );
 			}
 
 			m_itemLabel[i]->SetColor( c );
@@ -186,7 +186,7 @@ vsSimpleMenu::SetItemLabel( int itemId, const vsString & label )
 	}
 
 	m_itemLabel[itemId] = new vsSprite(vsBuiltInFont::CreateString(label, m_letterSize, m_capSize));
-	m_itemLabel[itemId]->SetColor(vsColor::Blue);
+	m_itemLabel[itemId]->SetColor(c_blue);
 	AddChild( m_itemLabel[itemId] );
 }
 
@@ -198,6 +198,6 @@ vsSimpleMenu::SetItemValue( int itemId, const vsString & value )
 		delete m_itemValue[itemId];
 
 	m_itemValue[itemId] = new vsSprite(vsBuiltInFont::CreateString(value, m_letterSize, m_capSize));
-	m_itemValue[itemId]->SetColor(vsColor::Blue);
+	m_itemValue[itemId]->SetColor(c_blue);
 	AddChild( m_itemValue[itemId] );
 }

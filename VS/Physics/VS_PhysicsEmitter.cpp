@@ -32,7 +32,7 @@ vsPhysicsEmitter::vsPhysicsEmitter(const vsString &filename, float mass, int max
 
 		m_particleInUse[i] = false;
 		m_particleLife[i] = 0.f;
-		m_particleColor[i] = vsColor::White;
+		m_particleColor[i] = c_white;
 	}
 
 	m_particleLifetime = 2.0f;
@@ -43,7 +43,7 @@ vsPhysicsEmitter::vsPhysicsEmitter(const vsString &filename, float mass, int max
 	m_velocity = vsVector2D::Zero;
 	m_radius = 0.f;
 	m_velRadius = 0.f;
-	m_color = vsColor::White;
+	m_color = c_white;
 }
 
 vsPhysicsEmitter::~vsPhysicsEmitter()
@@ -84,7 +84,7 @@ vsPhysicsEmitter::Update(float timeStep)
 
 				//c.a = vsInterpolate( amt, c.a, 0.f );
 
-				m_particle[i]->SetColor( vsInterpolate( amt, c, vsColor::Black ) );
+				m_particle[i]->SetColor( vsInterpolate( amt, c, c_black ) );
 			}
 		}
 	}

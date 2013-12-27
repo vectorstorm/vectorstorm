@@ -170,10 +170,6 @@ vsVector2D operator-(const vsVector2D &vec);
 vsVector3D operator-(const vsVector3D &vec);
 vsVector3D operator-(const vsVector4D &vec);
 
-float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
-
-float vsInterpolate( float alpha, float a, float b );
-
 vsVector2D vsInterpolate( float alpha, const vsVector2D &a, const vsVector2D &b );
 vsVector3D vsInterpolate( float alpha, const vsVector3D &a, const vsVector3D &b );
 vsVector4D vsInterpolate( float alpha, const vsVector4D &a, const vsVector4D &b );

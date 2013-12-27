@@ -331,7 +331,7 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 					//					case OpCode_SetDrawMode:
 					//					{
 					//						loader->SetDrawMode( (vsDrawMode)r.GetToken(0).AsInteger() );
-					//						loader->SetMaterial( vsMaterial((vsDrawMode)r.GetToken(0).AsInteger(), vsColor::PureWhite) );
+					//						loader->SetMaterial( vsMaterial((vsDrawMode)r.GetToken(0).AsInteger(), c_white) );
 					//						break;
 					//					}
 				case OpCode_PushTransform:
@@ -784,7 +784,7 @@ vsDisplayList::LineTo( const vsVector3D &pos )
 	if ( m_colorSet )
 	{
 		m_fifo->WriteUint8( OpCode_SetColor );
-		m_fifo->WriteColor( vsColor::PureWhite );
+		m_fifo->WriteColor( c_white );
 
 		c[0] = m_cursorColor;
 		c[1] = m_nextLineColor;

@@ -80,7 +80,7 @@ vsSprite::vsSprite( vsDisplayList *list ) :
 	vsEntity(),
 	m_displayList(list),
 	m_boundingRadius(0.f),
-	m_color(vsColor::White),
+	m_color(c_white),
 	m_overlay(NULL),
 	m_material(NULL),
 	m_useColor(false),

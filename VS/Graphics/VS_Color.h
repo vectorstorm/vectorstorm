@@ -15,21 +15,6 @@ class vsColor
 public:
 	float r, g, b, a;
 
-	static vsColor PureWhite;
-	static vsColor White;
-	static vsColor Grey;
-	static vsColor Blue;
-	static vsColor Green;
-	static vsColor LightGreen;
-	static vsColor Yellow;
-	static vsColor Orange;
-	static vsColor LightBlue;
-	static vsColor DarkBlue;
-	static vsColor Red;
-	static vsColor Purple;
-	static vsColor Black;
-	static vsColor Clear;
-
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
 
 	static vsColor FromHSV(float hue, float saturation, float value);
@@ -54,7 +39,22 @@ public:
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
 };
 
+extern const vsColor c_white;
+extern const vsColor c_grey;
+extern const vsColor c_blue;
+extern const vsColor c_green;
+extern const vsColor c_lightGreen;
+extern const vsColor c_yellow;
+extern const vsColor c_orange;
+extern const vsColor c_lightBlue;
+extern const vsColor c_darkBlue;
+extern const vsColor c_red;
+extern const vsColor c_purple;
+extern const vsColor c_black;
+extern const vsColor c_clear;
+
 vsColor  operator*( float scalar, const vsColor &color );
 vsColor vsInterpolate( float alpha, const vsColor &a, const vsColor &b );
+vsColor vsInterpolateHSV( float alpha, const vsColor &a, const vsColor &b );
 
 #endif // VS_COLOR_H

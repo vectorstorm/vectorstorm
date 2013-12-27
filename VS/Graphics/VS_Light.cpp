@@ -14,7 +14,7 @@ vsLight::vsLight()
 	m_type = Type_Ambient;
 	m_position = vsVector3D::Zero;
 	m_direction = vsVector3D::ZAxis;
-	m_color = vsColor::White;
+	m_color = c_white;
 	m_ambient = vsColor(0.f,0.f,0.f,0.f);
 }
 

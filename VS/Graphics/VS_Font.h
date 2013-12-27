@@ -49,7 +49,7 @@ struct vsFontDrawParameters		// font drawing should take one of these!!!
 	vsFontDrawParameters():
 		context(FontContext_2D),
 		justification(Justification_Left),
-		color(vsColor::White),
+		color(c_white),
 		setColor(true),
 		maxWidth(-1)
 	{
@@ -114,7 +114,7 @@ class vsFont
 	vsDisplayList * CreateString_Internal( FontContext context, const char* string, float size, JustificationType j, float maxWidth = -1.f);
 	vsFragment * CreateString_Fragment_Internal( FontContext context, const char* string, float size, JustificationType j, float maxWidth = -1.f);
 
-	void		BuildDisplayListFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero, const vsColor &color = vsColor::White);
+	void		BuildDisplayListFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero, const vsColor &color = c_white);
 	void		BuildDisplayListFromCharacter( FontContext context, vsDisplayList *list, char c, float size);
 
 	void		AppendStringToArrays( vsFont::FragmentConstructor *constructor, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero);
@@ -143,8 +143,8 @@ public:
 	vsFont( const vsString &filename );
 	~vsFont();
 
-	void			CreateStringInDisplayList( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = vsColor::White);
-	void			CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = vsColor::White);
+	void			CreateStringInDisplayList( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
+	void			CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 
 
 	vsDisplayList *	CreateString2D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_2D, string, size, j, maxWidth ); }
@@ -153,9 +153,9 @@ public:
 	vsDisplayList *	CreateString3D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_3D, string, size, j, maxWidth ); }
 	vsDisplayList *	CreateCharacter3D( char letter, float size) { return CreateCharacter( FontContext_3D, letter, size ); }
 
-	vsDisplayList *	CreateString( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = vsColor::White);
+	vsDisplayList *	CreateString( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 
-	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = vsColor::White, const vsTransform3D &transform = vsTransform3D::Identity );
+	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
 	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
 
 	vsDisplayList *	CreateString_NoColor( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);

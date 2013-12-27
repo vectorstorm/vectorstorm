@@ -8,21 +8,21 @@
  */
 
 #include "VS_Color.h"
+#include "VS_Vector.h"
 
-vsColor vsColor::PureWhite(1.0f,1.0f,1.0f,1.0f);
-vsColor vsColor::White(1.0f,1.0f,1.0f,1.0f);
-vsColor vsColor::Grey(0.5f,0.5f,0.5f,1.0f);
-vsColor vsColor::Blue(0.2f,0.2f,1.0f,1.0f);
-vsColor vsColor::LightBlue(0.5f,0.5f,1.0f,1.0f);
-vsColor vsColor::DarkBlue(0.0f,0.0f,0.25f,1.0f);
-vsColor vsColor::Red(1.0f,0.2f,0.2f,1.0f);
-vsColor vsColor::Green(0.2f,1.0f,0.2f,1.0f);
-vsColor vsColor::LightGreen(0.5f,1.0f,0.5f,1.0f);
-vsColor vsColor::Yellow(1.0f,1.0f,0.2f,1.0f);
-vsColor vsColor::Orange(1.0f,0.5f,0.2f,1.0f);
-vsColor vsColor::Purple(1.0f,0.2f,1.0f,1.0f);
-vsColor vsColor::Black(0.0f,0.0f,0.0f,1.0f);
-vsColor vsColor::Clear(0.0f,0.0f,0.0f,0.0f);
+const vsColor c_white(1.0f,1.0f,1.0f,1.0f);
+const vsColor c_grey(0.5f,0.5f,0.5f,1.0f);
+const vsColor c_blue(0.2f,0.2f,1.0f,1.0f);
+const vsColor c_lightBlue(0.5f,0.5f,1.0f,1.0f);
+const vsColor c_darkBlue(0.0f,0.0f,0.25f,1.0f);
+const vsColor c_red(1.0f,0.2f,0.2f,1.0f);
+const vsColor c_green(0.2f,1.0f,0.2f,1.0f);
+const vsColor c_lightGreen(0.5f,1.0f,0.5f,1.0f);
+const vsColor c_yellow(1.0f,1.0f,0.2f,1.0f);
+const vsColor c_orange(1.0f,0.5f,0.2f,1.0f);
+const vsColor c_purple(1.0f,0.2f,1.0f,1.0f);
+const vsColor c_black(0.0f,0.0f,0.0f,1.0f);
+const vsColor c_clear(0.0f,0.0f,0.0f,0.0f);
 
 vsColor
 vsColor::FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
@@ -64,7 +64,7 @@ vsColor::FromHSV(float hue, float saturation, float value)
 			break;
 	}
 
-	result += vsColor::PureWhite * (value - chroma);
+	result += c_white * (value - chroma);
 
 	return result;
 }
@@ -122,5 +122,32 @@ vsColor  operator*( float scalar, const vsColor &color ) {return color * scalar;
 vsColor vsInterpolate( float alpha, const vsColor &a, const vsColor &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
+}
+
+vsColor vsInterpolateHSV( float alpha, const vsColor &a, const vsColor &b )
+{
+	float aHue = a.GetHue();
+	float bHue = b.GetHue();
+	float hue;
+	if ( fabs(bHue - aHue) < 0.5f )
+	{
+		hue = vsInterpolate(alpha, aHue, bHue);
+	}
+	else
+	{
+		if ( aHue > bHue )
+			aHue -= 1.f;
+		else
+			bHue -= 1.f;
+
+		hue = vsInterpolate(alpha, aHue, bHue);
+
+		// now verify that 'hue' is inside [0..1]
+		if ( hue < 1.f )
+			hue += 1.f;
+	}
+	float sat = vsInterpolate(alpha, a.GetSaturation(), b.GetSaturation());
+	float val = vsInterpolate(alpha, a.GetValue(), b.GetValue());
+	return vsColor::FromHSV(hue, sat, val);
 }
 

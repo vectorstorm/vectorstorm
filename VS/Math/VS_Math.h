@@ -44,6 +44,9 @@ int		vsNextPowerOfTwo( int value );
 class vsVector3D;
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v);
 
+float vsInterpolate( float alpha, float a, float b );
+float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
+
 
 #endif // VS_MATH_H
 
