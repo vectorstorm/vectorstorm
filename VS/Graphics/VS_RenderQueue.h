@@ -106,8 +106,8 @@ public:
 	vsMatrix4x4		PushTranslation( const vsVector3D &vector );
 
 	void			PopMatrix();
-	vsMatrix4x4		GetMatrix();
-
+	const vsMatrix4x4&		GetMatrix();
+	const vsMatrix4x4&		GetTopMatrix();
 
 	vsScene *		GetScene() { return m_parent; }
 

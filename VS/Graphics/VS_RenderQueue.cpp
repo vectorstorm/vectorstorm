@@ -461,12 +461,20 @@ vsRenderQueue::PopMatrix()
 	m_transformStackLevel--;
 }
 
-vsMatrix4x4
+const vsMatrix4x4&
 vsRenderQueue::GetMatrix()
 {
 	vsAssert( m_transformStackLevel > 0, "Nothing in the transform stack!" );
 
-		return m_transformStack[m_transformStackLevel-1];
+	return m_transformStack[m_transformStackLevel-1];
+}
+
+const vsMatrix4x4&
+vsRenderQueue::GetTopMatrix()
+{
+	vsAssert( m_transformStackLevel > 0, "Nothing in the transform stack!" );
+
+	return m_transformStack[0];
 }
 
 int
