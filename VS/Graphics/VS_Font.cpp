@@ -745,6 +745,12 @@ vsFont::CreateString( FontContext context, const vsString &string, float size, J
 vsFragment *
 vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, float maxWidth, const vsColor &color, const vsTransform3D &transform )
 {
+	return CreateString_Fragment( context, string, size, j, vsBox2D::CenteredBox( vsVector2D(maxWidth, -1) ), color, transform );
+}
+
+vsFragment *
+vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D &bounds, const vsColor &color, const vsTransform3D &transform )
+{
 	size_t stringLength = string.length();
 
 	if ( stringLength == 0 )
@@ -764,37 +770,44 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 	constructor.tlArray = tlArray;
 	constructor.ptIndex = constructor.tlIndex = 0;
 
+	bool fits = false;
+
+	float lineHeight = 1.f;
+	float lineMargin = lineHeight * c_lineMarginFactor;
+
+	while ( !fits )
+	{
+		WrapLine(string, size, j, bounds.Width());
+		fits = true;
+		if ( bounds.Height() != -1.f )
+		{
+			float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
+			if ( totalScaledHeight > bounds.Height() )
+			{
+				fits = false;
+				// try a smaller font.
+				size *= 0.95f;
+			}
+		}
+	}
+
 	vsVector2D size_vec(size, size);
 	if ( context == FontContext_3D )
 	{
 		size_vec.y *= -1.f;	// upside down, in 3D context!
 	}
 
-	if ( 1 )//maxWidth > 0.f )
+	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
+	float baseOffsetDown = totalHeight * 0.5f;
+	float topLinePosition = baseOffsetDown - totalHeight + lineHeight;
+
+	vsVector2D offset(0.f,topLinePosition);
+
+	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
-		WrapLine(string, size, j, maxWidth);
+		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
-		float lineHeight = 1.f;
-		float lineMargin = lineHeight * c_lineMarginFactor;
-
-		float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
-		float baseOffsetDown = totalHeight * 0.5f;
-		float topLinePosition = baseOffsetDown - totalHeight + lineHeight;
-
-		vsVector2D offset(0.f,topLinePosition);
-
-		for ( int i = 0; i < m_wrappedLineCount; i++ )
-		{
-			offset.y = topLinePosition + (i*(lineHeight+lineMargin));
-
-			AppendStringToArrays( &constructor, m_wrappedLine[i].c_str(), size_vec, j, offset );
-		}
-	}
-	else
-	{
-		vsVector2D offset(0.f,0.5f);
-
-		AppendStringToArrays( &constructor, string.c_str(), size_vec, j, offset );
+		AppendStringToArrays( &constructor, m_wrappedLine[i].c_str(), size_vec, j, offset );
 	}
 
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );

@@ -13,6 +13,7 @@
 #include "VS_Texture.h"
 #include "VS/Math/VS_Transform.h"
 #include "VS_RenderBuffer.h"
+#include "VS/Math/VS_Box.h"
 
 class vsDisplayList;
 class vsFragment;
@@ -154,6 +155,9 @@ public:
 	vsDisplayList *	CreateCharacter3D( char letter, float size) { return CreateCharacter( FontContext_3D, letter, size ); }
 
 	vsDisplayList *	CreateString( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
+
+	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D& bounds, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
+//	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, const vsBox2D& bounds);
 
 	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
 	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
