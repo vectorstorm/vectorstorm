@@ -105,6 +105,14 @@ public:
 	void				LookAt( const vsVector3D &lookat, const vsVector3D &upDirection = vsVector3D::YAxis );
 
 	bool				IsPositionVisible( const vsVector3D &pos, float r=0.f ) const;
+
+	enum VisibilityType
+	{
+		VisibilityType_NotVisible,
+		VisibilityType_PartiallyVisible,
+		VisibilityType_AllVisible
+	};
+	VisibilityType		ClassifyBox3D( const vsBox3D &box ) const;
 	bool				IsBox3DVisible( const vsBox3D &box ) const;
 };
 

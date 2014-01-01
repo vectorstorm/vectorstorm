@@ -28,6 +28,15 @@ public:
 
 	bool	IsPointInside( const vsVector3D &position, float radius=0.f ) const;
 	bool	IsBox3DInside( const vsBox3D &box ) const;
+
+	enum Classification
+	{
+		Outside,
+		Intersect,
+		Inside
+	};
+	Classification ClassifyBox3D( const vsBox3D &box ) const;
+	Classification ClassifySphere( const vsVector3D &position, float radius ) const;
 };
 
 #endif // VS_FRUSTUM_H

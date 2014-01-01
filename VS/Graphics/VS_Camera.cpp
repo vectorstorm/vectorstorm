@@ -195,6 +195,25 @@ vsCamera3D::IsPositionVisible( const vsVector3D &pos, float radius ) const
 	return m_frustum.IsPointInside( pos, radius );
 }
 
+vsCamera3D::VisibilityType
+vsCamera3D::ClassifyBox3D( const vsBox3D &box ) const
+{
+	VisibilityType result = VisibilityType_NotVisible;
+	switch( m_frustum.ClassifyBox3D( box ) )
+	{
+		case vsFrustum::Inside:
+			result = VisibilityType_AllVisible;
+			break;
+		case vsFrustum::Intersect:
+			result = VisibilityType_PartiallyVisible;
+			break;
+		case vsFrustum::Outside:
+			result = VisibilityType_NotVisible;
+			break;
+	}
+	return result;
+}
+
 bool
 vsCamera3D::IsBox3DVisible( const vsBox3D &box ) const
 {

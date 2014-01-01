@@ -111,13 +111,46 @@ vsFrustum::IsPointInside( const vsVector3D &position, float radius ) const
 	return true;
 }
 
-// Code structure for IsBox3DInside taken from the Lighthouse 3D OpenGL
-// "View Frustum Culling Tutorial"
-// at http://www.lighthouse3d.com/opengl/viewfrustum/index.php
+// Code structure for the below visibility calculations taken from the
+// Lighthouse 3D OpenGL "View Frustum Culling Tutorial" at
+// http://www.lighthouse3d.com/opengl/viewfrustum/index.php
 
 bool
 vsFrustum::IsBox3DInside( const vsBox3D &box ) const
 {
+	return ClassifyBox3D(box) != Outside;
+}
+
+vsFrustum::Classification
+vsFrustum::ClassifySphere( const vsVector3D &center, float radius ) const
+{
+	float distance;
+	Classification result = Inside;
+
+	for(int i=0; i < 6; i++)
+	{
+		distance = (center-m_planePoint[i]).Dot(m_planeNormal[i]);
+		if (distance < -radius)
+			return Outside;
+		else if (distance < radius)
+			result = Intersect;
+	}
+	return result;
+}
+
+vsFrustum::Classification
+vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
+{
+	// make a sphere that encompasses our box.  If it's entirely
+	// inside or entirely outside our view, just use that result.
+	float radius = 0.5f * vsMax(box.Width(), vsMax(box.Height(), box.Depth()));
+	vsVector3D middle = box.Middle();
+	Classification sphereClassification = ClassifySphere( middle, radius );
+	if ( sphereClassification != Intersect )
+		return sphereClassification;
+
+	// check this sphere against our frustum
+
 	int in, out;
 
 	vsVector3D boxVert[8];
@@ -153,8 +186,10 @@ vsFrustum::IsBox3DInside( const vsBox3D &box ) const
 		}
 		//if all corners are out
 		if (!in)
-			return false;
+			return Outside;
 	}
-	return true;
+	if (out == 0)
+		return Inside;
+	return Intersect;
 }
 
