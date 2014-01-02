@@ -182,3 +182,23 @@ float vsInterpolate( float alpha, float a, float b )
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
+float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB )
+{
+  vsVector3D deltaA = endA - startA;
+  vsVector3D deltaB = endB - startB;
+
+  // perpendicular
+  vsVector3D perp = deltaA.Cross(deltaB);
+
+  float timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+  float timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+
+  vsVector3D closestPointA = startA + timeA * deltaA;
+  vsVector3D closestPointB = startB + timeB * deltaB;
+
+  float distance = (closestPointB-closestPointA).SqLength();
+
+  return distance;
+}
+
+
