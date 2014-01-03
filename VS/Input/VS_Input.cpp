@@ -251,6 +251,7 @@ vsInput::SetStringMode(bool mode)
 	{
 		if ( mode )
 		{
+			SDL_StartTextInput();
 			m_stringMode = true;
 			m_stringModeString.clear();
 
@@ -259,6 +260,7 @@ vsInput::SetStringMode(bool mode)
 		}
 		else
 		{
+			SDL_StopTextInput();
 			m_stringMode = false;
 
 			//Disable Unicode
@@ -329,58 +331,6 @@ vsInput::Update(float timeStep)
 #else
 	SDL_Event event;
 
-	if ( m_stringMode )
-	{
-		while( SDL_PollEvent( &event ) ){
-			//vsString temp = m_stringModeString;
-
-			switch( event.type ){
-				case SDL_APP_DIDENTERBACKGROUND:
-					{
-						vsSystem::Instance()->SetAppHasFocus(false);
-					}
-					break;
-				case SDL_APP_DIDENTERFOREGROUND:
-					{
-						vsSystem::Instance()->SetAppHasFocus(true);
-					}
-					break;
-				case SDL_KEYDOWN:
-					//Keep a copy of the current version of the string
-					//If the string less than maximum size
-					if( m_stringModeString.length() <= 1024 )
-					{
-						//If the key is a space
-						/*if( event.key.keysym.unicode == (Uint16)' ' ||
-						  (( event.key.keysym.unicode >= (Uint16)'0' ) && ( event.key.keysym.unicode <= (Uint16)'9' )) ||
-						  ( ( event.key.keysym.unicode >= (Uint16)'A' ) && ( event.key.keysym.unicode <= (Uint16)'Z' ) ) ||
-						  ( ( event.key.keysym.unicode >= (Uint16)'a' ) && ( event.key.keysym.unicode <= (Uint16)'z' ) ) ||
-						  ( ( event.key.keysym.unicode >= (Uint16)'') */
-						//if( event.key.keysym.unicode >= (Uint16)' ' && event.key.keysym.unicode <= (Uint16)'~' )
-						//{
-						//	//Append the character
-						//	m_stringModeString += (char)event.key.keysym.unicode;
-						//}
-					}
-					if( ( event.key.keysym.sym == SDLK_BACKSPACE ) && ( m_stringModeString.length() != 0 ) )
-					{
-						//Remove a character from the end
-						m_stringModeString.erase( m_stringModeString.length() - 1 );
-					}
-					else if ( event.key.keysym.sym == SDLK_RETURN )
-					{
-						SetStringMode(false);
-					}
-					break;
-				case SDL_QUIT:
-					core::SetExit();
-					break;
-				default:
-					break;
-			}
-		}
-	}
-	else	// !m_stringMode
 	{
 		//		int i, j;
 		while( SDL_PollEvent( &event ) ){
@@ -394,6 +344,14 @@ vsInput::Update(float timeStep)
 					{
 						vsSystem::Instance()->SetAppHasFocus(true);
 					}
+					break;
+				case SDL_TEXTINPUT:
+					m_stringModeString += event.text.text;
+					break;
+				case SDL_TEXTEDITING:
+					m_stringModeString = event.text.text;
+					m_stringModeCursorPosition = event.edit.start;
+					m_stringModeSelectionLength = event.edit.length;
 					break;
 				case SDL_MOUSEWHEEL:
 					{
@@ -431,69 +389,93 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYDOWN:
 					{
-						switch( event.key.keysym.sym )
+						if ( m_stringMode )
 						{
-							case SDLK_q:
-								if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
-								{
-									core::SetExitToMenu();
-								}
-								m_keyControlState[CID_Exit] = 1.0f;
-								break;
-							case SDLK_ESCAPE:
-								if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
-								{
-									core::SetExit();
-								}
-								m_keyControlState[CID_ExitApplication] = 1.0f;
-								break;
-							case SDLK_w:
-							case SDLK_UP:
-								m_keyControlState[CID_Up] = 1.0f;
-								m_keyControlState[CID_LUp] = 1.0f;
-								break;
-							case SDLK_s:
-							case SDLK_DOWN:
-								m_keyControlState[CID_Down] = 1.0f;
-								m_keyControlState[CID_LDown] = 1.0f;
-								break;
-							case SDLK_a:
-							case SDLK_LEFT:
-								m_keyControlState[CID_Left] = 1.0f;
-								m_keyControlState[CID_LLeft] = 1.0f;
-								break;
-							case SDLK_d:
-							case SDLK_RIGHT:
-								m_keyControlState[CID_Right] = 1.0f;
-								m_keyControlState[CID_LRight] = 1.0f;
-								break;
-							case SDLK_SPACE:
-							case SDLK_1:
-								m_keyControlState[CID_A] = 1.0f;
-								break;
-							case SDLK_LALT:
-							case SDLK_2:
-								m_keyControlState[CID_B] = 1.0f;
-								break;
-							case SDLK_3:
-								m_keyControlState[CID_X] = 1.0f;
-								break;
-							case SDLK_RETURN:
-								m_keyControlState[CID_Start] = 1.0f;
-								break;
-							case SDLK_BACKSPACE:
-								m_keyControlState[CID_Back] = 1.0f;
-								break;
-								//						case 'a':
-								//						case 'A':
-								//							m_keyControlState[CID_ZoomIn] = 1.f;
-								//							break;
-								//						case 'z':
-								//						case 'Z':
-								//							m_keyControlState[CID_ZoomOut] = 1.f;
-								//							break;
-							default:
-								break;
+							switch( event.key.keysym.sym )
+							{
+								case SDLK_BACKSPACE:
+									if ( m_stringMode && m_stringModeString.length() != 0 )
+									{
+										//Remove a character from the end
+										m_stringModeString.erase( m_stringModeString.length() - 1 );
+									}
+									break;
+								case SDLK_RETURN:
+									if ( m_stringMode )
+									{
+										SetStringMode(false);
+									}
+									break;
+								default:
+									break;
+							}
+						}
+						else
+						{
+							switch( event.key.keysym.sym )
+							{
+								case SDLK_q:
+									if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
+									{
+										core::SetExitToMenu();
+									}
+									m_keyControlState[CID_Exit] = 1.0f;
+									break;
+								case SDLK_ESCAPE:
+									if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
+									{
+										core::SetExit();
+									}
+									m_keyControlState[CID_ExitApplication] = 1.0f;
+									break;
+								case SDLK_w:
+								case SDLK_UP:
+									m_keyControlState[CID_Up] = 1.0f;
+									m_keyControlState[CID_LUp] = 1.0f;
+									break;
+								case SDLK_s:
+								case SDLK_DOWN:
+									m_keyControlState[CID_Down] = 1.0f;
+									m_keyControlState[CID_LDown] = 1.0f;
+									break;
+								case SDLK_a:
+								case SDLK_LEFT:
+									m_keyControlState[CID_Left] = 1.0f;
+									m_keyControlState[CID_LLeft] = 1.0f;
+									break;
+								case SDLK_d:
+								case SDLK_RIGHT:
+									m_keyControlState[CID_Right] = 1.0f;
+									m_keyControlState[CID_LRight] = 1.0f;
+									break;
+								case SDLK_SPACE:
+								case SDLK_1:
+									m_keyControlState[CID_A] = 1.0f;
+									break;
+								case SDLK_LALT:
+								case SDLK_2:
+									m_keyControlState[CID_B] = 1.0f;
+									break;
+								case SDLK_3:
+									m_keyControlState[CID_X] = 1.0f;
+									break;
+								case SDLK_RETURN:
+									m_keyControlState[CID_Start] = 1.0f;
+									break;
+								case SDLK_BACKSPACE:
+									m_keyControlState[CID_Back] = 1.0f;
+									break;
+									//						case 'a':
+									//						case 'A':
+									//							m_keyControlState[CID_ZoomIn] = 1.f;
+									//							break;
+									//						case 'z':
+									//						case 'Z':
+									//							m_keyControlState[CID_ZoomOut] = 1.f;
+									//							break;
+								default:
+									break;
+							}
 						}
 						break;
 					}

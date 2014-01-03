@@ -141,6 +141,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	bool			m_pollingForDeviceControl;			// are we waiting for an arbitrary control input?  (typically for the purposes of mapping device controls to our virtual controller)
 
 	vsString		m_stringModeString;
+	int				m_stringModeCursorPosition;
+	int				m_stringModeSelectionLength;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 
 	bool			m_mouseIsInWindow;
