@@ -46,6 +46,11 @@ public:
 		return m_current;
 	}
 
+	const T &	GetTarget()
+	{
+		return m_end;
+	}
+
 	void TweenTo(const T &value, float time)
 	{
 		if ( value == m_current )
