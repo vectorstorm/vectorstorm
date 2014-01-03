@@ -349,9 +349,13 @@ vsInput::Update(float timeStep)
 					m_stringModeString += event.text.text;
 					break;
 				case SDL_TEXTEDITING:
-					m_stringModeString = event.text.text;
-					m_stringModeCursorPosition = event.edit.start;
-					m_stringModeSelectionLength = event.edit.length;
+					// This event is for partial, in-progress code points
+					// which haven't yet settled on a final glyph.  For now,
+					// let's just ignore them.
+					//
+					//m_stringModeString = event.text.text;
+					//m_stringModeCursorPosition = event.edit.start;
+					//m_stringModeSelectionLength = event.edit.length;
 					break;
 				case SDL_MOUSEWHEEL:
 					{
