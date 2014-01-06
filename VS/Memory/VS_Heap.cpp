@@ -458,7 +458,7 @@ void MyFree(void *p, int allocType)
 	}
 }
 
-void* operator new(std::size_t n, const char* file, size_t line) throw(std::bad_alloc)
+void* operator new(std::size_t n, const char* file, size_t line)
 {
 	if (n == 0) n = 1;
 
@@ -467,7 +467,7 @@ void* operator new(std::size_t n, const char* file, size_t line) throw(std::bad_
 }
 
 // Array regular new
-void* operator new[](std::size_t n, const char*file, size_t line) throw(std::bad_alloc)
+void* operator new[](std::size_t n, const char*file, size_t line)
 {
 	void* result = MyMalloc(n, file, line, Type_NewArray);
 	return result;
@@ -490,6 +490,18 @@ void operator delete[](void* p) throw()
 {
 	MyFree(p, Type_NewArray);
 }
+
+void operator delete(void* p, const char* file, size_t line)
+{
+	::operator delete(p);
+}
+
+void operator delete[](void* p, const char* file, size_t line)
+{
+	::operator delete[](p);
+}
+
+
 
 // Array nothrow delete
 void operator delete[](void* p, std::nothrow_t const&) throw()

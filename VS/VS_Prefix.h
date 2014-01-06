@@ -77,8 +77,11 @@ void MyFree(void *p, int allocType = 1);
 
 #define vsDeleteArray(x) { if ( x ) { delete [] x; x = NULL; } }
 
-void* operator new(std::size_t n, const char* file, size_t line) throw(std::bad_alloc);
-void* operator new[](std::size_t n, const char* file, size_t line) throw(std::bad_alloc);
+void* operator new(std::size_t n, const char* file, size_t line);
+void* operator new[](std::size_t n, const char* file, size_t line);
+void operator delete(void* pointer, const char* file, size_t line);
+void operator delete[](void* pointer, const char* file, size_t line);
+
 #define DEBUG_NEW new(__FILE__, __LINE__)
 #define new DEBUG_NEW
 
