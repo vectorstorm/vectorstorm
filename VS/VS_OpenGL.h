@@ -15,6 +15,6 @@
 #if defined(__APPLE_CC__)
 #include <glew.h>
 #else
-#include <gl/glew.h>
+#include <GL/glew.h>
 #endif
 #endif
