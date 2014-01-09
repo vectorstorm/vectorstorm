@@ -359,13 +359,21 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_MOUSEWHEEL:
 					{
-						if ( event.wheel.y > 0 )
+						float wheelAmt = (float)event.wheel.y;
+						#ifndef _WIN32
+						// windows seems to have a particularly unresponsive mouse wheel.
+						// rather than boost up Windows' mouse wheel to match everyone else's,
+						// let's slow down everyone else's to match Windows.  (Which makes me sad,
+						// but will yield better behaviour overall)
+						wheelAmt *= 0.10f;
+						#endif
+						if ( wheelAmt > 0 )
 						{
-							m_keyControlState[CID_MouseWheelUp] += event.wheel.y;
+							m_keyControlState[CID_MouseWheelUp] += wheelAmt;
 						}
 						else
 						{
-							m_keyControlState[CID_MouseWheelDown] -= event.wheel.y;
+							m_keyControlState[CID_MouseWheelDown] -= wheelAmt;
 						}
 						break;
 					}
