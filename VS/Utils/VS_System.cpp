@@ -207,13 +207,11 @@ void
 vsSystem::InitGameData()
 {
 	m_materialManager = new vsMaterialManager;
-	//m_displayListManager = new vsDisplayListManager;
 }
 
 void
 vsSystem::DeinitGameData()
 {
-	//vsDelete( m_displayListManager );
 	vsDelete( m_materialManager );
 	m_textureManager->CollectGarbage();
 }

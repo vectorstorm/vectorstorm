@@ -25,10 +25,10 @@ public:
 
 class vsSocket
 {
-	uint32_t		m_privateIP;
-	uint32_t		m_publicIP;
+	uint32_t	m_privateIP;
 	int			m_privatePort;
-	int			m_publicPort;
+	//uint32_t	m_publicIP;	// for use someday if I ever do a serious network game
+	//int		m_publicPort;
 
 	int			m_socket;
 

@@ -21,7 +21,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount);
 	s_renderTargetCount += 1;
 
-	if ( t == Type_Window )
+	if ( m_type == Type_Window )
 	{
 		m_textureSurface = new vsSurface( settings.width, settings.height );
 
@@ -32,7 +32,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	{
 		//settings.width = vsNextPowerOfTwo(settings.width);
 		//settings.height = vsNextPowerOfTwo(settings.height);
-		if ( t == Type_Multisample )
+		if ( m_type == Type_Multisample )
 		{
 			m_renderBufferSurface = new vsSurface(settings, false, true);
 		}

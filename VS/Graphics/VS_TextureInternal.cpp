@@ -159,8 +159,6 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 {
 	//	SDL_Surface *screen = SDL_GetVideoSurface();
 	SDL_Rect	area;
-	uint32_t saved_flags;
-	uint8_t  saved_alpha;
 
 	//SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
 

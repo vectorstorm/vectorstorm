@@ -12,7 +12,6 @@
 
 #include "Utils/VS_Singleton.h"
 
-class vsDisplayListManager;
 class vsMaterialManager;
 class vsPreferences;
 class vsPreferenceObject;
@@ -63,7 +62,6 @@ class vsSystem
 
 	Orientation			m_orientation;
 
-	vsDisplayListManager *	m_displayListManager;
 	vsTextureManager *	m_textureManager;
 	vsMaterialManager *	m_materialManager;
 

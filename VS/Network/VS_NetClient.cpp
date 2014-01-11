@@ -17,8 +17,8 @@
 
 vsNetClient::vsNetClient(uint32_t addr, uint16_t port)
 {
-	m_publicIP = addr;
-	m_publicPort = port;
+	m_privateIP = addr;
+	m_privatePort = port;
 }
 
 vsNetClient::vsNetClient(const vsString &address, uint16_t port)
@@ -32,8 +32,8 @@ vsNetClient::vsNetClient(const vsString &address, uint16_t port)
 		vsAssert( h != NULL, vsFormatString("Gethostbyname error:  See console output for details" ) );
 	}
 
-	m_publicIP = ((struct in_addr *)h->h_addr)->s_addr;
-	m_publicPort = port;
+	m_privateIP = ((struct in_addr *)h->h_addr)->s_addr;
+	m_privatePort = port;
 }
 
 

@@ -164,8 +164,6 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 #if !TARGET_OS_IPHONE
 	//	SDL_Surface *screen = SDL_GetVideoSurface();
 	SDL_Rect	area;
-    uint32_t saved_flags;
-    uint8_t  saved_alpha;
 
 	SDL_BlendMode bm;
 	SDL_GetSurfaceBlendMode(source, &bm);

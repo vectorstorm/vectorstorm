@@ -26,9 +26,9 @@
 
 vsSocket::vsSocket(int port):
 	m_privateIP(0),
-	m_publicIP(0),
 	m_privatePort(0),
-	m_publicPort(0),
+	//m_publicIP(0),
+	//m_publicPort(0),
 	m_listener(NULL)
 {
 	UNUSED(port);
