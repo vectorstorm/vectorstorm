@@ -28,6 +28,10 @@ vsPerlinOctave::Noise1D(int x)		// returns a value in the range [ -1 .. 1 ]
 	int n = x;
 	n = (n<<13) ^ n;
 	return (float)( 1.0f - ( (n * (n * n * m_a + m_b) + m_c) & 0x7fffffff) / 1073741824.0f);
+
+	// my random integer which is going to be a POSITIVE 32-bit integer.
+	int part = ( (n * (n * n * m_a + m_b) + m_c) & 0x7fffffff);
+	return (float)( 1.0f - part / 1073741824.0f);
 }
 
 float
@@ -74,7 +78,9 @@ vsPerlinOctave::Noise2D(int x, int y, int wrap)
 
 	unsigned int n = x + (y * 57);
 	n = (n<<13) ^ n;
-	return (float)( 1.0f - ( (n * (n * n * m_a + m_b) + m_c) & 0x7fffffff) / 1073741824.0f);
+	int intPart = ( (n * (n * n * m_a + m_b) + m_c) & 0x7fffffff); // [ 0 .. 2^31 ]
+	float outVal = (float)( 1.0f -  intPart / 1073741824.0f); // [ -1 .. 1 ]
+	return outVal;
 }
 
 float
@@ -112,18 +118,24 @@ vsPerlinOctave::InterpolatedNoise2D(float x, float y, int wrap)
 	return vsInterpolate(fractional_Y, i1 , i2);
 }
 
-vsPerlin::vsPerlin(int octaves, float persistence, float wrap)
+vsPerlin::vsPerlin(int octaves, float persistence, float wrap):
+	m_octave(new vsPerlinOctave *[octaves]),
+	m_octaveCount(octaves),
+	m_persistence(persistence),
+	m_invTotalPossible(0.f),
+	m_wrap(wrap)
 {
-	m_octaveCount = octaves;
-	m_octave = new vsPerlinOctave *[m_octaveCount];
-	m_wrap = wrap;
+	float totalPossible = 0.f;
+	float totalFromThisOctave = 1.f;
 
 	for ( int i = 0; i < m_octaveCount; i++ )
 	{
 		m_octave[i] = new vsPerlinOctave;
+		totalPossible += totalFromThisOctave;
+		totalFromThisOctave *= persistence;
 	}
 
-	m_persistence = persistence;
+	m_invTotalPossible = 1.f / totalPossible;
 }
 
 vsPerlin::~vsPerlin()
@@ -146,10 +158,12 @@ vsPerlin::Noise(float time)
 	{
 		float frequency = (float)(1 << i);
 
-		total = total + m_octave[i]->InterpolatedNoise1D(time * frequency) * amplitude;
+		total += m_octave[i]->InterpolatedNoise1D(time * frequency) * amplitude;
 
 		amplitude *= p;
 	}
+
+	total *= m_invTotalPossible;
 
 	return total;
 }
@@ -161,22 +175,17 @@ vsPerlin::Noise(const vsVector2D &pos)
 	float p = m_persistence;
 	float amplitude = 1.f;
 
-	float totalMaxAmplitude = 0.f;
-
 	for ( int i = 0; i < m_octaveCount; i++ )
 	{
 		float frequency = (float)(1 << i);
 
-		total = total + m_octave[i]->InterpolatedNoise2D(pos.x * frequency, pos.y * frequency, m_wrap * frequency) * amplitude;
-		totalMaxAmplitude += amplitude;
+		total += m_octave[i]->InterpolatedNoise2D(pos.x * frequency, pos.y * frequency, m_wrap * frequency) * amplitude;
 
 		amplitude *= p;
 	}
 
-	total /= totalMaxAmplitude;
 	// now, our result could be anywhere in -1.f .. 1.f
-
-	vsAssert( (total >= -1.f && total <= 1.f), "Perlin ERROR!" );
+	total *= m_invTotalPossible;
 
 	return total;
 }

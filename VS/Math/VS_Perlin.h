@@ -37,13 +37,30 @@ class vsPerlin
 	vsPerlinOctave **	m_octave;
 	int					m_octaveCount;
 	float				m_persistence;
+	float				m_invTotalPossible;
 
 	float				m_wrap;
 
 public:
 
-		// "octaves" specifies how many noise channels should be combined to create the noise data.  Legal values: 1..inf.  (linear increase in computation time as this increases)
-		// "persistance" tells how the octaves influence the final noise data.  At 1, all have full effect.  At 0, only the first octave is used.  Good values are usually in the range of 0.1 to 0.7, but this will vary a lot based upon how large a sample of data you'll be taking from the noise function.
+		// "octaves" specifies how many noise channels should be combined to
+		// create the noise data.  Legal values: 1..inf.  (linear increase in
+		// computation time as this increases).  Each 'octave' posesses twice
+		// as much detail as the previous.  (That is, the first octave reaches
+		// a new value at [0, 1, 2, 3...], while the second reaches a new value
+		// at [0, 0.5, 1, 1.5, 2...], and the third reaches a new value at
+		// [0, 0.25, 0.5, 0.75, 1...].  These octaves get combined together
+		// to produce the noise output.
+		//
+		// "persistance" tells how the different octaves influence the final
+		// noise data.  With a persistance value of 1, all have full effect.
+		// At 0, only the first octave is used.  Good values are usually in the
+		// range of 0.1 to 0.7, but this will vary a lot based upon how large
+		// (and how dense) a sample of data you'll be taking from the noise
+		// function.
+		//
+		// "wrap", if non-zero, specifies the value at which noise should
+		// "wrap around" on each axis.
 	vsPerlin(int octaves, float persistance, float wrap = 0.f);
 	~vsPerlin();
 
