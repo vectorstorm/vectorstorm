@@ -13,7 +13,7 @@
 #include "VS/Math/VS_Transform.h"
 
 #include "VS_DisableDebugNew.h"
-#include <Box2D/Box2D.h>
+#include <Box2D.h>
 #include "VS_EnableDebugNew.h"
 
 enum{

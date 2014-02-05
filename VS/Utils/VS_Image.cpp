@@ -256,9 +256,9 @@ vsImage::BakePNG(int compression)
 	int err = SDL_LockSurface( image );
 	vsAssert(!err, "Couldn't lock surface??");
 	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
-    for ( int v = 0; v < m_height; v++ )
+    for ( size_t v = 0; v < m_height; v++ )
     {
-        for ( int u = 0; u < m_width; u++ )
+        for ( size_t u = 0; u < m_width; u++ )
         {
             int i = v*image->pitch + u*4;
             int ri = i;

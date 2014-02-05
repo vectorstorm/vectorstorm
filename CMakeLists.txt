@@ -8,7 +8,8 @@ endif()
 project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
-find_package(OpenGL)
+find_package(OpenGL REQUIRED)
+find_package(PNG REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
@@ -16,14 +17,17 @@ find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
 
 if(UNIX)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
+	find_library(PTHREAD_LIBRARY pthread)
 else()
 	find_library(GLEW_LIBRARY GLEW32 REQUIRED)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL )
-find_library(BOX2D_LIBRARY Box2D REQUIRED)
-find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
-	PATH /usr/local/include )
+find_library(BOX2D_LIBRARY Box2D REQUIRED
+	PATH /usr/lib /usr/local/lib )
+find_path(BOX2D_INCLUDE_DIR Box2D.h
+	PATH /usr/include /usr/local/include
+	/usr/include/Box2D /usr/local/include/Box2D )
 
 # Check our build environment and set any variables
 # which need setting
@@ -37,11 +41,13 @@ configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 
 set(VS_LIBRARIES
 	${OPENGL_LIBRARIES}
+	${PNG_LIBRARY}
 	${SDL_LIBRARY}
 	${SDL_IMAGE_LIBRARY}
 	${SDL_MIXER_LIBRARY}
 	${GLEW_LIBRARY}
 	${BOX2D_LIBRARY}
+	${PTHREAD_LIBRARY}
 	)
 
 
