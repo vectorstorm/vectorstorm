@@ -194,8 +194,11 @@ vsInput::Load()
 
 	if ( m_joystick )
 	{
-		vsString joystickName = SDL_JoystickName(0);
-		if ( joystickName.length() == 0 )
+		const char* nameStr = SDL_JoystickName(0);
+		vsString joystickName;
+		if ( nameStr != NULL )
+			joystickName = nameStr;
+		else
 			joystickName = "Generic";
 		vsPreferences p(joystickName);
 
