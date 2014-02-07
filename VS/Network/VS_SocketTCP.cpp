@@ -24,6 +24,7 @@ typedef int socklen_t;	// yay, standards
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <unistd.h>
 #endif
 #include <sys/types.h>
 
@@ -191,7 +192,7 @@ vsSocketTCP::DoSend( vsTCPConnection *to, vsStore *packet )
 	else
 	{
 		// nothing backed up, so send immediately!
-		int bytesToSend = packet->BytesLeftForReading();
+		size_t bytesToSend = packet->BytesLeftForReading();
 #if defined(_WIN32)
 			// Microsoft things that 'send()' sends a char array, rather than a
 			// blob of memory addressed by a void pointer.  That's adorable.
@@ -212,12 +213,9 @@ void
 vsSocketTCP::DoPoll(float maxSleepDuration)
 {
 	struct sockaddr_storage their_addr;
-	struct timeval tv;
 	socklen_t addr_size;
 	int pollCount = 1;
 	addr_size = sizeof their_addr;
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
 	m_pollfds[0].fd = m_listenSocket;
 	m_pollfds[0].events = POLLIN;
 	for ( int i = 0; i < m_connectionCount; i++ )

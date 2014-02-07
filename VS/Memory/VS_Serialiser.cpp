@@ -203,7 +203,7 @@ vsSerialiserReadStream::Ensure(size_t bytes)
 	{
 		size_t bytes = m_store->BytesLeftForReading();
 		vsStore temp(bytes);
-		for ( int i = 0; i < bytes; i++ )
+		for ( size_t i = 0; i < bytes; i++ )
 		{
 			temp.WriteInt8(m_store->ReadInt8());
 		}

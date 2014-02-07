@@ -194,8 +194,11 @@ vsInput::Load()
 
 	if ( m_joystick )
 	{
-		vsString joystickName = SDL_JoystickName(0);
-		if ( joystickName.length() == 0 )
+		const char* nameStr = SDL_JoystickName(0);
+		vsString joystickName;
+		if ( nameStr != NULL )
+			joystickName = nameStr;
+		else
 			joystickName = "Generic";
 		vsPreferences p(joystickName);
 
@@ -360,11 +363,11 @@ vsInput::Update(float timeStep)
 				case SDL_MOUSEWHEEL:
 					{
 						float wheelAmt = (float)event.wheel.y;
-						#ifndef _WIN32
-						// windows seems to have a particularly unresponsive mouse wheel.
-						// rather than boost up Windows' mouse wheel to match everyone else's,
-						// let's slow down everyone else's to match Windows.  (Which makes me sad,
-						// but will yield better behaviour overall)
+						#ifdef __APPLE_CC__
+						// The Mac implementation of SDL_input has a very
+						// responsive mouse wheel.  Let's slow it down to match
+						// everybody else, until those clever SDL folks figure
+						// out how to make wheel scrolling speeds similar.
 						wheelAmt *= 0.10f;
 						#endif
 						if ( wheelAmt > 0 )

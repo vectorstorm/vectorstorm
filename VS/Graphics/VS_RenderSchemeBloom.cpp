@@ -586,9 +586,9 @@ vsRenderSchemeBloom::PostRender()
 	};
 	float wv[8] = {
 		0.f,0.f,
-		m_window->GetWidth(), 0.f,
-		0.f,m_window->GetHeight(),
-		m_window->GetWidth(),m_window->GetHeight()
+		(float)m_window->GetWidth(), 0.f,
+		0.f,(float)m_window->GetHeight(),
+		(float)m_window->GetWidth(),(float)m_window->GetHeight()
 	};
 	float t[8] = {
 		0.f, 0.f,
@@ -816,11 +816,11 @@ vsRenderSchemeBloom::Screenshot()
 
 	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < height; y++ )
+	for ( size_t y = 0; y < height; y++ )
 	{
 		int rowStart = y * width * bytesPerPixel;
 
-		for ( int x = 0; x < width; x++ )
+		for ( size_t x = 0; x < width; x++ )
 		{
 			int rInd = rowStart + (x*bytesPerPixel);
 			int gInd = rInd+1;
@@ -860,11 +860,11 @@ vsRenderSchemeBloom::ScreenshotDepth()
 
 	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < height; y++ )
+	for ( size_t y = 0; y < height; y++ )
 	{
 		int rowStart = y * width;
 
-		for ( int x = 0; x < width; x++ )
+		for ( size_t x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
@@ -899,11 +899,11 @@ vsRenderSchemeBloom::ScreenshotAlpha()
 
 	vsImage *image = new vsImage( width, height );
 
-	for ( int y = 0; y < height; y++ )
+	for ( size_t y = 0; y < height; y++ )
 	{
 		int rowStart = y * width;
 
-		for ( int x = 0; x < width; x++ )
+		for ( size_t x = 0; x < width; x++ )
 		{
 			int ind = rowStart + x;
 
