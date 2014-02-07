@@ -10,6 +10,7 @@
 #include "VS_Font.h"
 
 #include "VS_DisplayList.h"
+#include "VS_DynamicMaterial.h"
 #include "VS_Fragment.h"
 #include "VS_Vector.h"
 
@@ -577,7 +578,10 @@ vsFont::vsFont( const vsString &filename ):
 		if ( r.GetLabel().AsString() == "Texture" )
 		{
 			vsString textureName = r.GetToken(0).AsString();
-			m_material = new vsMaterial(textureName, DrawMode_Normal);
+			vsDynamicMaterial *mat = new vsDynamicMaterial();
+			mat->SetTexture(textureName);
+			mat->SetDrawMode(DrawMode_Normal);
+			m_material = mat;
 		}
 		else if ( r.GetLabel().AsString() == "Material" )
 		{

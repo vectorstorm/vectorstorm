@@ -50,11 +50,13 @@
 #include <VS/Graphics/VS_Camera.h>
 #include <VS/Graphics/VS_Color.h>
 #include <VS/Graphics/VS_DisplayList.h>
+#include <VS/Graphics/VS_DynamicMaterial.h>
 #include <VS/Graphics/VS_Entity.h>
 #include <VS/Graphics/VS_Fog.h>
 #include <VS/Graphics/VS_Fragment.h>
 #include <VS/Graphics/VS_Font.h>
 #include <VS/Graphics/VS_Light.h>
+#include <VS/Graphics/VS_Material.h>
 #include <VS/Graphics/VS_Mesh.h>
 #include <VS/Graphics/VS_Model.h>
 #include <VS/Graphics/VS_RenderBuffer.h>

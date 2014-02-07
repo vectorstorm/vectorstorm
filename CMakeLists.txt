@@ -97,6 +97,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Color.h
 	VS/Graphics/VS_DisplayList.cpp
 	VS/Graphics/VS_DisplayList.h
+	VS/Graphics/VS_DynamicMaterial.cpp
+	VS/Graphics/VS_DynamicMaterial.h
 	VS/Graphics/VS_Entity.cpp
 	VS/Graphics/VS_Entity.h
 	VS/Graphics/VS_Fog.cpp

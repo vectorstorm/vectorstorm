@@ -29,16 +29,12 @@ class vsMaterialInternal;
 
 class vsMaterial : public vsCacheReference<vsMaterialInternal>
 {
+protected:
+	vsMaterial();
 public:
 
-	//vsMaterial();
 	vsMaterial( const vsString &name );
 	vsMaterial( vsMaterial *other );
-	vsMaterial( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
-	vsMaterial( const vsString & textureName, vsDrawMode mode );
-	vsMaterial( vsTexture *texture, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
-	vsMaterial( vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black);
-//	~vsMaterial();
 
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }

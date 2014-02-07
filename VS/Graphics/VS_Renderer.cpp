@@ -1177,22 +1177,22 @@ vsRenderer::SetMaterial(vsMaterialInternal *material)
 	}
 	switch ( material->m_stencil )
 	{
-		case vsMaterialInternal::StencilOp_None:
+		case StencilOp_None:
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 			break;
-		case vsMaterialInternal::StencilOp_One:
+		case StencilOp_One:
 			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 			break;
-		case vsMaterialInternal::StencilOp_Zero:
+		case StencilOp_Zero:
 			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
 			break;
-		case vsMaterialInternal::StencilOp_Inc:
+		case StencilOp_Inc:
 			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 			break;
-		case vsMaterialInternal::StencilOp_Dec:
+		case StencilOp_Dec:
 			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 			break;
-		case vsMaterialInternal::StencilOp_Invert:
+		case StencilOp_Invert:
 			glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
 			break;
 		default:
