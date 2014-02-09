@@ -27,6 +27,9 @@ public:
 	virtual void	PreRender( const vsRenderer::Settings &s ) {}
 	virtual void	RenderDisplayList( vsDisplayList *list ) {}
 	virtual void	PostRender() {}
+
+	virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) { return true;}
+	virtual bool	PostRenderTarget( vsRenderTarget *target ) { return true; }
 };
 
 #endif /* VS_RENDERSCHEME_H */

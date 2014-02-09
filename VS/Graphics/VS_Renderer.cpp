@@ -1392,13 +1392,13 @@ vsRenderer::ScreenshotAlpha()
 bool
 vsRenderer::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
-	return true;
+	return m_scheme->PreRenderTarget(s,target);
 }
 
 bool
 vsRenderer::PostRenderTarget( vsRenderTarget *target )
 {
-	return true;
+	return m_scheme->PostRenderTarget(target);
 }
 
 #ifdef CHECK_GL_ERRORS
