@@ -140,14 +140,17 @@ vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
 
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
-		m_fifo->Clear();
-		m_scene[i]->Draw( m_fifo );
-		m_renderer->RenderDisplayList(m_fifo);
-
-		if ( m_fifo->GetSize() > s_fifoHighWaterMark )
+		if ( m_scene[i]->IsEnabled() )
 		{
-			printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
-			s_fifoHighWaterMark = m_fifo->GetSize();
+			m_fifo->Clear();
+			m_scene[i]->Draw( m_fifo );
+			m_renderer->RenderDisplayList(m_fifo);
+
+			if ( m_fifo->GetSize() > s_fifoHighWaterMark )
+			{
+				printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
+				s_fifoHighWaterMark = m_fifo->GetSize();
+			}
 		}
 	}
 

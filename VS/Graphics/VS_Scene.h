@@ -47,6 +47,7 @@ class vsScene
 	bool			m_flatShading;
 	bool			m_stencilTest;
 	bool			m_hasViewport;
+	bool			m_enabled;	// if false, we won't automatically draw this scene
 
 	static vsScene *s_current;
 
@@ -57,6 +58,9 @@ public:
 
 	void			Set3D(bool i) { m_is3d = i; }
 	bool			Is3D() { return m_is3d; }
+
+	void			SetEnabled(bool enable) { m_enabled = enable; }
+	bool			IsEnabled() { return m_enabled; }
 
 	float			GetFOV();
 

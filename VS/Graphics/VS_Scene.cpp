@@ -36,7 +36,8 @@ vsScene::vsScene():
 	m_cameraIsReference( false ),
 	m_flatShading( false ),
 	m_stencilTest( false ),
-	m_hasViewport( false )
+	m_hasViewport( false ),
+	m_enabled( true )
 {
 	m_camera = m_defaultCamera;
 	m_camera3D = m_defaultCamera3D;
