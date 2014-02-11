@@ -30,24 +30,24 @@
 int vsImage::m_textureMakerCount = 0;
 
 vsImage::vsImage(unsigned int width, unsigned int height):
-	m_pixel(NULL),
-	m_pixelCount(0),
-	m_width(width),
-	m_height(height)
+    m_pixel(NULL),
+    m_pixelCount(0),
+    m_width(width),
+    m_height(height)
 {
-	m_pixelCount = width * height;
+    m_pixelCount = width * height;
 
-	m_pixel = new vsColor[m_pixelCount];
+    m_pixel = new vsColor[m_pixelCount];
 }
 
 vsImage::vsImage( const vsString &filename_in )
 {
 #if !TARGET_OS_IPHONE
-	vsString filename = vsFile::GetFullFilename(filename_in);
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
-	LoadFromSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
+    vsString filename = vsFile::GetFullFilename(filename_in);
+    SDL_Surface *loadedImage = IMG_Load(filename.c_str());
+    vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
+    LoadFromSurface(loadedImage);
+    SDL_FreeSurface(loadedImage);
 #endif
 }
 
@@ -61,13 +61,13 @@ vsImage::vsImage( vsTexture * texture )
 
     bool depthTexture = texture->GetResource()->IsDepth();
 
-	// glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
-	// have allocated the exact size needed for the image so we have to use 1-byte alignment
-	// (otherwise glReadPixels would write out of bounds)
+    // glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
+    // have allocated the exact size needed for the image so we have to use 1-byte alignment
+    // (otherwise glReadPixels would write out of bounds)
     glActiveTexture( GL_TEXTURE0 );
     glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
 
     if ( depthTexture )
@@ -95,12 +95,12 @@ vsImage::vsImage( vsTexture * texture )
     }
     else
     {
-        size_t bytesPerPixel = 3;	// RGB
+        size_t bytesPerPixel = 4;	// RGBA
         size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
 
         uint8_t* pixels = new uint8_t[imageSizeInBytes];
 
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         glBindTexture( GL_TEXTURE_2D, 0 );
 
         for ( unsigned int y = 0; y < m_height; y++ )
@@ -112,12 +112,14 @@ vsImage::vsImage( vsTexture * texture )
                 int rInd = rowStart + (x*bytesPerPixel);
                 int gInd = rInd+1;
                 int bInd = rInd+2;
+                int aInd = rInd+3;
 
                 int rVal = pixels[rInd];
                 int gVal = pixels[gInd];
                 int bVal = pixels[bInd];
+                int aVal = pixels[aInd];
 
-                Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, 1.0f );
+                Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, aVal/255.f );
             }
         }
         vsDeleteArray( pixels );
@@ -127,71 +129,71 @@ vsImage::vsImage( vsTexture * texture )
 
 vsImage::~vsImage()
 {
-	vsDeleteArray( m_pixel );
+    vsDeleteArray( m_pixel );
 }
 
 vsColor &
 vsImage::Pixel(unsigned int u, unsigned int v)
 {
-	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
+    vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
 
-	return m_pixel[ PixelIndex(u,v) ];
+    return m_pixel[ PixelIndex(u,v) ];
 }
 
 void
 vsImage::Clear( const vsColor &clearColor )
 {
-	for ( int i = 0; i < m_pixelCount; i++ )
-	{
-		m_pixel[i] = clearColor;
-	}
+    for ( int i = 0; i < m_pixelCount; i++ )
+    {
+        m_pixel[i] = clearColor;
+    }
 }
 
 vsTexture *
 vsImage::Bake()
 {
-	vsString name = vsFormatString("MakerTexture%d", m_textureMakerCount++);
+    vsString name = vsFormatString("MakerTexture%d", m_textureMakerCount++);
 
-	vsTextureInternal *ti = new vsTextureInternal(name, this);
-	vsTextureManager::Instance()->Add(ti);
+    vsTextureInternal *ti = new vsTextureInternal(name, this);
+    vsTextureManager::Instance()->Add(ti);
 
-	return new vsTexture(name);
+    return new vsTexture(name);
 }
 
 void
 vsImage::LoadFromSurface( SDL_Surface *source )
 {
 #if !TARGET_OS_IPHONE
-	//	SDL_Surface *screen = SDL_GetVideoSurface();
-	SDL_Rect	area;
+    //	SDL_Surface *screen = SDL_GetVideoSurface();
+    SDL_Rect	area;
 
-	SDL_BlendMode bm;
-	SDL_GetSurfaceBlendMode(source, &bm);
-	SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
+    SDL_BlendMode bm;
+    SDL_GetSurfaceBlendMode(source, &bm);
+    SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
 
-	m_width = source->w;
-	m_height = source->h;
+    m_width = source->w;
+    m_height = source->h;
 
-	int w = source->w;
-	int h = source->h;
+    int w = source->w;
+    int h = source->h;
 
-	SDL_Surface *image = SDL_CreateRGBSurface(
-											  SDL_SWSURFACE,
-											  w, h,
-											  32,
+    SDL_Surface *image = SDL_CreateRGBSurface(
+            SDL_SWSURFACE,
+            w, h,
+            32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-											  0x000000FF,
-											  0x0000FF00,
-											  0x00FF0000,
-											  0xFF000000
+            0x000000FF,
+            0x0000FF00,
+            0x00FF0000,
+            0xFF000000
 #else
-											  0xFF000000,
-											  0x00FF0000,
-											  0x0000FF00,
-											  0x000000FF
+            0xFF000000,
+            0x00FF0000,
+            0x0000FF00,
+            0x000000FF
 #endif
-											  );
-	vsAssert(image, "Error??");
+            );
+    vsAssert(image, "Error??");
 
 
     /* Copy the surface into the GL-format texture image, to make loading easier */
@@ -201,12 +203,12 @@ vsImage::LoadFromSurface( SDL_Surface *source )
     area.h = source->h;
     SDL_BlitSurface(source, &area, image, &area);
 
-	SDL_SetSurfaceBlendMode(source, bm);
+    SDL_SetSurfaceBlendMode(source, bm);
 
-	// now lets copy our image data
+    // now lets copy our image data
 
     m_pixelCount = w*h;
-	m_pixel = new vsColor[m_pixelCount];
+    m_pixel = new vsColor[m_pixelCount];
 
     for ( int v = 0; v < h; v++ )
     {
@@ -223,39 +225,39 @@ vsImage::LoadFromSurface( SDL_Surface *source )
             unsigned char b = ((unsigned char*)image->pixels)[bi];
             unsigned char a = ((unsigned char*)image->pixels)[ai];
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
+            // flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
             Pixel(u,(w-1)-v) = vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f );
         }
     }
 
-	SDL_FreeSurface(image); /* No longer needed */
+    SDL_FreeSurface(image); /* No longer needed */
 #endif // TARGET_OS_IPHONE
 }
 
 vsStore *
 vsImage::BakePNG(int compression)
 {
-	// first, create an SDL_Surface from our raw pixel data.
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			m_width, m_height,
-			32,
+    // first, create an SDL_Surface from our raw pixel data.
+    SDL_Surface *image = SDL_CreateRGBSurface(
+            SDL_SWSURFACE,
+            m_width, m_height,
+            32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
+            0x000000FF,
+            0x0000FF00,
+            0x00FF0000,
+            0xFF000000
 #else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
+            0xFF000000,
+            0x00FF0000,
+            0x0000FF00,
+            0x000000FF
 #endif
-			);
-	vsAssert(image, "Error??");
-	int err = SDL_LockSurface( image );
-	vsAssert(!err, "Couldn't lock surface??");
-	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
+            );
+    vsAssert(image, "Error??");
+    int err = SDL_LockSurface( image );
+    vsAssert(!err, "Couldn't lock surface??");
+    vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
     for ( size_t v = 0; v < m_height; v++ )
     {
         for ( size_t u = 0; u < m_width; u++ )
@@ -266,8 +268,8 @@ vsImage::BakePNG(int compression)
             int bi = ri+2;
             int ai = ri+3;
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = Pixel(u,(m_height-1)-v);
+            // flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
+            vsColor pixel = Pixel(u,(m_height-1)-v);
 
             ((unsigned char*)image->pixels)[ri] = 255.f * pixel.r;
             ((unsigned char*)image->pixels)[gi] = 255.f * pixel.g;
@@ -275,25 +277,25 @@ vsImage::BakePNG(int compression)
             ((unsigned char*)image->pixels)[ai] = 255.f * pixel.a;
         }
     }
-	//
-	// now, let's save out our surface.
-	const int pngDataSize = 1024*1024*10;
-	char* pngData = new char[pngDataSize];
-	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
-		vsLog( "%s", SDL_GetError() );
-	int retval = IMG_SavePNG_RW(image,
-			dst,
-			false);
-	SDL_UnlockSurface( image );
-	if ( retval == -1 )
-		vsLog( "%s", SDL_GetError() );
-	int bytes = SDL_RWtell(dst);
-	vsStore *result = new vsStore(bytes);
-	result->WriteBuffer(pngData,bytes);
-	SDL_RWclose(dst);
-	SDL_FreeSurface(image);
-	delete [] pngData;
+    //
+    // now, let's save out our surface.
+    const int pngDataSize = 1024*1024*10;
+    char* pngData = new char[pngDataSize];
+    SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
+    vsLog( "%s", SDL_GetError() );
+    int retval = IMG_SavePNG_RW(image,
+            dst,
+            false);
+    SDL_UnlockSurface( image );
+    if ( retval == -1 )
+        vsLog( "%s", SDL_GetError() );
+    int bytes = SDL_RWtell(dst);
+    vsStore *result = new vsStore(bytes);
+    result->WriteBuffer(pngData,bytes);
+    SDL_RWclose(dst);
+    SDL_FreeSurface(image);
+    delete [] pngData;
 
-	return result;
+    return result;
 }
 
