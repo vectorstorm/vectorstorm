@@ -66,6 +66,7 @@ public:
 	bool		m_postGlow;
 	bool		m_hasColor;
 	bool		m_blend;
+	bool		m_smoothEdges;	// true by default.  Antialias edges.
 
 	vsDisplayList *	m_displayList;
 

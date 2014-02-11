@@ -360,6 +360,7 @@ vsRenderSchemeShader::SetMaterial( vsMaterialInternal *material )
 			case DrawMode_Add:
 			case DrawMode_Subtract:
 			case DrawMode_Normal:
+			case DrawMode_Absolute:
 				if ( material->m_texture )
 				{
 					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::NormalTex) )

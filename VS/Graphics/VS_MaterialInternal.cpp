@@ -23,6 +23,7 @@ static const vsString s_modeString[DRAWMODE_MAX] =
 	"lit",		//DrawMode_Lit,
 	"add",		//DrawMode_Add,
 	"subtract",	//DrawMode_Subtract,
+	"absolute", //DrawMode_Absolute
 };
 
 static const vsString s_cullString[CULL_MAX] =
@@ -146,6 +147,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					m_fog = sr->Bool();
 					setFog = true;
+				}
+				else if ( label == "smoothEdges" )
+				{
+					m_smoothEdges = sr->Bool();
 				}
 				else if ( label == "mode" )
 				{

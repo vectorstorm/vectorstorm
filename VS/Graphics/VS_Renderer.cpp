@@ -1254,9 +1254,19 @@ vsRenderer::SetMaterial(vsMaterialInternal *material)
 			glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
 			break;
 		}
+		case DrawMode_Absolute:
+		{
+#if !TARGET_OS_IPHONE
+			glBlendEquation(GL_FUNC_ADD);
+#endif
+			glBlendFunc(GL_ONE,GL_ZERO);	// absolute, no alpha processing
+			break;
+		}
 		default:
 			vsAssert(0, "Unknown draw mode requested!");
 	}
+
+	m_state.SetBool( vsRendererState::Bool_PolygonSmooth, material->m_smoothEdges );
 
 	if ( material->m_hasColor )
 	{
