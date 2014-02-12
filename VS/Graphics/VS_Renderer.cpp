@@ -425,7 +425,6 @@ vsRenderer::PreRender(const Settings &s)
 	// our baseline size is 1024x768.  We want single-pixel lines at that size.
 	float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
 	glLineWidth( lineScaleFactor );
-	GetState()->SetBool( vsRendererState::Bool_LineSmooth, true );
 
 	CheckGLError("PreRender");
 }
@@ -1265,8 +1264,6 @@ vsRenderer::SetMaterial(vsMaterialInternal *material)
 		default:
 			vsAssert(0, "Unknown draw mode requested!");
 	}
-
-	m_state.SetBool( vsRendererState::Bool_PolygonSmooth, material->m_smoothEdges );
 
 	if ( material->m_hasColor )
 	{

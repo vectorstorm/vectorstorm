@@ -524,7 +524,6 @@ vsRenderSchemeBloom::PreRender(const vsRenderer::Settings &s)
 
 	if ( m_antialias )
 	{
-		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
 		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
@@ -705,7 +704,6 @@ vsRenderSchemeBloom::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTar
 	target->Bind();
 	if ( m_antialias )
 	{
-		m_renderer->GetState()->SetBool( vsRendererState::Bool_PolygonSmooth, true );
 		m_renderer->GetState()->SetBool( vsRendererState::Bool_Multisample, true );
 	}
 //	glBlendFunc( GL_ONE, GL_ZERO );

@@ -148,10 +148,6 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					m_fog = sr->Bool();
 					setFog = true;
 				}
-				else if ( label == "smoothEdges" )
-				{
-					m_smoothEdges = sr->Bool();
-				}
 				else if ( label == "mode" )
 				{
 					vsAssert( sr->GetTokenCount() == 1, "Mode directive with more than one token??" );

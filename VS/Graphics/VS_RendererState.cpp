@@ -123,11 +123,7 @@ vsRendererState::vsRendererState()
 	m_boolState[Bool_ScissorTest] =		new glEnableSetter( GL_SCISSOR_TEST, false );
 	m_boolState[Bool_Fog] =				new glEnableSetter( GL_FOG, false );
 	m_boolState[Bool_Lighting] =		new glEnableSetter( GL_LIGHTING, false );
-	m_boolState[Bool_LineSmooth] =		new glEnableSetter( GL_LINE_SMOOTH, false );
 	m_boolState[Bool_Multisample] =		new glEnableSetter( GL_MULTISAMPLE, false );
-#if !TARGET_OS_IPHONE
-	m_boolState[Bool_PolygonSmooth] =	new glEnableSetter( GL_POLYGON_SMOOTH, false );
-#endif
 	m_boolState[Bool_PolygonOffsetFill] = new glEnableSetter( GL_POLYGON_OFFSET_FILL, false );
 	//m_boolState[Bool_Smooth] =			new glEnableSetter( GL_SMOOTH, false );
 	//m_boolState[Bool_Texture2D] =		new glEnableSetter( GL_TEXTURE_2D, false );

@@ -103,12 +103,8 @@ public:
 		Bool_DepthTest,
 		Bool_Fog,
 		Bool_Lighting,
-		Bool_LineSmooth,
 		Bool_Multisample,
 		Bool_PolygonOffsetFill,
-#if !TARGET_OS_IPHONE
-		Bool_PolygonSmooth,
-#endif
 		Bool_StencilTest,
 		Bool_ScissorTest,
 		//Bool_Smooth,
