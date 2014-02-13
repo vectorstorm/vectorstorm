@@ -1104,26 +1104,31 @@ vsRenderer::SetMaterial(vsMaterialInternal *material)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}*/
-	vsTexture *t = material->GetTexture();
-	if ( t )
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
-		//glEnable(GL_BLEND);
-		//if ( !m_currentTexture || t->GetResource() != m_currentTexture->GetResource() )
+		vsTexture *t = material->GetTexture(i);
+		glActiveTexture(GL_TEXTURE0 + i);
+		if ( t )
 		{
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-			m_currentTexture = t;
+			//glEnable(GL_BLEND);
+			//if ( !m_currentTexture || t->GetResource() != m_currentTexture->GetResource() )
+			{
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
+				m_currentTexture = t;
 
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+			}
+		}
+		else
+		{
+			//glDisable(GL_BLEND);
+			glDisable(GL_TEXTURE_2D);
+			m_currentTexture = NULL;
 		}
 	}
-	else
-	{
-		//glDisable(GL_BLEND);
-		glDisable(GL_TEXTURE_2D);
-		m_currentTexture = NULL;
-	}
+	glActiveTexture(GL_TEXTURE0);
 
 	if ( material->m_alphaTest )
 	{

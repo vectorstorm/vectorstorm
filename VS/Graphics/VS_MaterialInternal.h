@@ -17,6 +17,7 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 
+#define MAX_TEXTURE_SLOTS (4)
 //class vsTexture;
 class vsFile;
 class vsShader;
@@ -45,7 +46,7 @@ class vsMaterialInternal : public vsResource
 public:
 
 	vsShader *  m_shader;
-	vsTexture *	m_texture;			// what texture do we use?
+	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
 	vsColor		m_specularColor;	// if we're of "Lit" type, this is our specular color
 	vsDrawMode	m_drawMode;
@@ -54,6 +55,7 @@ public:
 	float		m_depthBiasConstant;
 	float		m_depthBiasFactor;
 	int			m_layer;
+	int			m_textureCount;
 	StencilOp	m_stencil;
 	bool		m_alphaTest;
 	bool		m_fog;
@@ -74,7 +76,7 @@ public:
 
 	void		LoadFromFile( vsFile *file );
 
-	vsTexture *	GetTexture() const { return m_texture; }
+	vsTexture *	GetTexture(int i = 0) const { return m_texture[i]; }
 
 	void operator=(const vsMaterialInternal &b);
 	bool operator==(const vsMaterialInternal &b) const { return (m_color==b.m_color && m_drawMode==b.m_drawMode); }

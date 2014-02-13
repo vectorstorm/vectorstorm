@@ -29,15 +29,19 @@ vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 }
 
 void
-vsDynamicMaterial::SetTexture( vsTexture *texture )
+vsDynamicMaterial::SetTexture( int i, vsTexture *texture )
 {
-	GetResource()->m_texture = new vsTexture(texture);
+	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
+	vsDelete(GetResource()->m_texture[i]);
+	GetResource()->m_texture[i] = new vsTexture(texture);
 }
 
 void
-vsDynamicMaterial::SetTexture( const vsString &texture )
+vsDynamicMaterial::SetTexture( int i, const vsString &texture )
 {
-	GetResource()->m_texture = new vsTexture(texture);
+	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
+	vsDelete(GetResource()->m_texture[i]);
+	GetResource()->m_texture[i] = new vsTexture(texture);
 }
 
 void

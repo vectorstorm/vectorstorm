@@ -579,7 +579,7 @@ vsFont::vsFont( const vsString &filename ):
 		{
 			vsString textureName = r.GetToken(0).AsString();
 			vsDynamicMaterial *mat = new vsDynamicMaterial();
-			mat->SetTexture(textureName);
+			mat->SetTexture(0, textureName);
 			mat->SetDrawMode(DrawMode_Normal);
 			m_material = mat;
 		}

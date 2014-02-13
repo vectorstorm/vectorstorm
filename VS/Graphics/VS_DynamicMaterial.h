@@ -22,8 +22,8 @@ class vsDynamicMaterial: public vsMaterial
 public:
 	vsDynamicMaterial();
 
-	void SetTexture( vsTexture *texture );
-	void SetTexture( const vsString &texture );
+	void SetTexture( int i, vsTexture *texture );
+	void SetTexture( int i, const vsString &texture );
 	void SetColor( const vsColor& color );
 	void SetSpecularColor( const vsColor& specularColor );
 	void SetDrawMode( vsDrawMode drawMode );

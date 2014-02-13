@@ -361,7 +361,7 @@ vsRenderSchemeShader::SetMaterial( vsMaterialInternal *material )
 			case DrawMode_Subtract:
 			case DrawMode_Normal:
 			case DrawMode_Absolute:
-				if ( material->m_texture )
+				if ( material->m_texture[0] )
 				{
 					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::NormalTex) )
 					{
@@ -394,7 +394,7 @@ vsRenderSchemeShader::SetMaterial( vsMaterialInternal *material )
 				break;
 			case DrawMode_Lit:
 
-				if ( material->m_texture )
+				if ( material->m_texture[0] )
 				{
 					if ( m_renderer->GetCurrentSettings().shaderSuite && m_renderer->GetCurrentSettings().shaderSuite->GetShader(vsShaderSuite::LitTex) )
 					{

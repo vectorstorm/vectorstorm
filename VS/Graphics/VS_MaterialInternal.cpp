@@ -36,7 +36,7 @@ static const vsString s_cullString[CULL_MAX] =
 vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
 	m_shader(NULL),
-	m_texture(NULL),
+	m_texture(),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -45,6 +45,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
 	m_layer(0),
+	m_textureCount(0),
 	m_stencil(StencilOp_None),
 	m_alphaTest(false),
 	m_fog(false),
@@ -57,6 +58,9 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_hasColor(true),
 	m_blend(false)
 {
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+		m_texture[i] = NULL;
+
 	vsString fileName = vsFormatString("materials/%s.mat", name.c_str());
 
 	if (vsFile::Exists(fileName))
@@ -68,7 +72,8 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 
 vsMaterialInternal::~vsMaterialInternal()
 {
-	vsDelete( m_texture );
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+		vsDelete( m_texture[i] );
 	vsDelete( m_shader );
 }
 
@@ -168,7 +173,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					vsAssert( sr->GetTokenCount() == 1, "Texture directive with more than one token??" );
 					vsString textureString = sr->String();
-					m_texture = new vsTexture( textureString );
+					m_texture[m_textureCount++] = new vsTexture( textureString );
 				}
 				else if ( label == "shader" )
 				{
