@@ -57,8 +57,6 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_hasColor(true),
 	m_blend(false)
 {
-	m_displayList = new vsDisplayList(32);
-
 	vsString fileName = vsFormatString("materials/%s.mat", name.c_str());
 
 	if (vsFile::Exists(fileName))
@@ -70,7 +68,6 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 
 vsMaterialInternal::~vsMaterialInternal()
 {
-	vsDelete( m_displayList );
 	vsDelete( m_texture );
 	vsDelete( m_shader );
 }
@@ -221,14 +218,5 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 			break;
 		}
 	}
-	Compile();
 }
-
-void
-vsMaterialInternal::Compile()
-{
-	m_displayList->SetMaterial(this);
-	//m_displayList->Compile();
-}
-
 

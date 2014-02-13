@@ -1192,16 +1192,8 @@ vsDisplayList::SetMaterial( vsMaterial *material )
 void
 vsDisplayList::SetMaterial( vsMaterialInternal *material )
 {
-	if ( material->m_displayList->IsCompiled() )
-	{
-		Append( *material->m_displayList );
-	}
-	else
-	{
-		// old, slow-style material drawing (still used for compiling display list, for fast method)
-		m_fifo->WriteUint8( OpCode_SetMaterial );
-		m_fifo->WriteVoidStar( material );
-	}
+	m_fifo->WriteUint8( OpCode_SetMaterial );
+	m_fifo->WriteVoidStar( material );
 }
 
 void

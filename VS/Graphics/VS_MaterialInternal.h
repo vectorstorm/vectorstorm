@@ -19,7 +19,6 @@
 
 //class vsTexture;
 class vsFile;
-class vsDisplayList;
 class vsShader;
 
 enum CullingType
@@ -67,8 +66,6 @@ public:
 	bool		m_hasColor;
 	bool		m_blend;
 
-	vsDisplayList *	m_displayList;
-
 	vsMaterialInternal( const vsString & materialName );
 	vsMaterialInternal( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
 	vsMaterialInternal( vsTexture *texture, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
@@ -76,7 +73,6 @@ public:
 	~vsMaterialInternal();
 
 	void		LoadFromFile( vsFile *file );
-	void		Compile();
 
 	vsTexture *	GetTexture() const { return m_texture; }
 
