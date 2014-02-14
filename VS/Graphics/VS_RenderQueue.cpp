@@ -436,8 +436,8 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 
 	if ( m_transformStackLevel < MAX_SCENE_STACK )
 	{
-        vsMatrix4x4 matrix = transform.GetMatrix();
-        matrix.SetTranslation( -1.f * matrix.w );
+		vsMatrix4x4 matrix = transform.GetMatrix();
+		// matrix.SetTranslation( -1.f * matrix.w );
 		m_transformStack[m_transformStackLevel] = m_transformStack[m_transformStackLevel-1] * matrix;
 		m_transformStackLevel++;
 	}
