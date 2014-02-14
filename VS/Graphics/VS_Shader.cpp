@@ -9,8 +9,6 @@
 
 #include "VS_Shader.h"
 
-#include "VS_RenderSchemeShader.h"
-
 #include "VS_File.h"
 #include "VS_Input.h"
 #include "VS_Store.h"
@@ -21,6 +19,7 @@
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
+#if 0
 	if ( vsRenderSchemeShader::Exists() )
 	{
 		vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
@@ -62,28 +61,34 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		delete vStore;
 		delete fStore;
 	}
+#endif // 0
 }
 
 vsShader::~vsShader()
 {
+#if 0
 	if ( vsRenderSchemeShader::Exists() )
 	{
 		vsRenderSchemeShader::Instance()->DestroyShader(m_shader);
 	}
+#endif // 0
 }
 
 void
 vsShader::SetAlphaRef( float aref )
 {
+#if 0
 	if ( m_alphaRefLoc >= 0 )
 	{
 		glUniform1f( m_alphaRefLoc, aref );
 	}
+#endif // 0
 }
 
 void
 vsShader::Prepare()
 {
+#if 0
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsSystem::GetScreen()->GetWidth();
@@ -104,5 +109,6 @@ vsShader::Prepare()
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
+#endif // 0
 }
 

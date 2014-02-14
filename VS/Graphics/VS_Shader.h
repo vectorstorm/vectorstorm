@@ -19,10 +19,10 @@ class vsShader
 {
 	uint32_t m_shader;
 
-	int32_t m_alphaRefLoc;
-	int32_t m_resolutionLoc;
-	int32_t m_globalTimeLoc;
-	int32_t m_mouseLoc;
+	// int32_t m_alphaRefLoc;
+	// int32_t m_resolutionLoc;
+	// int32_t m_globalTimeLoc;
+	// int32_t m_mouseLoc;
 
 public:
 

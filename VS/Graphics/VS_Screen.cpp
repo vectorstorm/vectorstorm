@@ -9,7 +9,7 @@
 
 #include "VS_Screen.h"
 #include "VS_DisplayList.h"
-#include "VS_Renderer.h"
+#include "VS_Renderer_OpenGL2.h"
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 #include "VS_System.h"
@@ -35,7 +35,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
 
-	m_renderer = new vsRenderer(width, height, depth, flags);
+	m_renderer = new vsRenderer_OpenGL2(width, height, depth, flags);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -272,7 +272,7 @@ vsScreen::GetAspectRatio()
 bool
 vsScreen::SupportsShaders()
 {
-	return m_renderer->SupportsShaders();
+	return true;
 }
 
 

@@ -24,7 +24,6 @@ class vsDisplayList;
 class vsMaterialInternal;
 class vsOverlay;
 class vsRenderBuffer;
-class vsRenderScheme;
 class vsShader;
 class vsShaderSuite;
 class vsTransform2D;
@@ -48,14 +47,6 @@ public:
 		Settings();
 	};
 
-#define MAX_VERTS_IN_ARRAY (100)
-#define MAX_STACK_LEVEL (30)
-
-	vsDisplayList *		m_shaderList;
-
-	vsTexture *			m_currentTexture;
-	vsVector3D			m_currentCameraPosition;
-
 	Settings			m_currentSettings;
 
 	// m_width, m_viewportWidth, m_height, and m_viewportHeight are the
@@ -73,44 +64,6 @@ public:
 	int					m_viewportWidthPixels;
 	int					m_viewportHeightPixels;
 
-	vsRenderScheme *	m_scheme;
-
-    vsRendererState		m_state;
-
-	vsMaterialInternal *m_currentMaterial;
-
-	vsVector3D *		m_currentVertexArray;
-	vsVector3D *		m_currentNormalArray;
-	vsVector2D *		m_currentTexelArray;
-	vsColor *			m_currentColorArray;
-
-	vsRenderBuffer *	m_currentVertexBuffer;
-	vsRenderBuffer *	m_currentNormalBuffer;
-	vsRenderBuffer *	m_currentTexelBuffer;
-	vsRenderBuffer *	m_currentColorBuffer;
-
-	vsColor				m_overlayColorArray[MAX_VERTS_IN_ARRAY];
-	vsTransform2D		m_transformStack[MAX_STACK_LEVEL];
-	//vsMaterial*			m_materialStack[MAX_STACK_LEVEL];
-	int					m_currentTransformStackLevel;
-	int					m_currentMaterialStackLevel;
-	int					m_currentVertexArrayCount;
-	int					m_currentNormalArrayCount;
-	int					m_currentTexelArrayCount;
-	int					m_currentColorArrayCount;
-	int					m_lightCount;
-	bool				m_inOverlay;
-	bool				m_usingNormalArray;
-	bool				m_usingTexelArray;
-	bool				m_usingColorArray;
-
-	void				SetCameraTransform( const vsTransform2D &t );
-	void				SetCameraProjection( const vsMatrix4x4 &m );
-	void				Set3DProjection( float fov, float nearPlane, float farPlane );
-
-	virtual void		SetMaterial(vsMaterialInternal *material);
-	//virtual void		SetDrawMode(vsDrawMode mode);
-
 public:
 
 	enum
@@ -122,36 +75,26 @@ public:
 	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();
 
-	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);
+	virtual void	UpdateVideoMode(int width, int height, int depth, bool fullscreen) = 0;
 
-	void	PreRender( const Settings &s );
-	void	RenderDisplayList( vsDisplayList *list );
-	void	RawRenderDisplayList( vsDisplayList *list );
-	void	PostRender();
+	virtual void	PreRender( const Settings &s ) = 0;
+	virtual void	RenderDisplayList( vsDisplayList *list ) = 0;
+	virtual void	RawRenderDisplayList( vsDisplayList *list ) = 0;
+	virtual void	PostRender() = 0;
 
-	bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target );
-	bool	PostRenderTarget( vsRenderTarget *target );
-
-	bool	SupportsShaders() { return false; }
+	virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) = 0;
+	virtual bool	PostRenderTarget( vsRenderTarget *target ) = 0;
 
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }
 	void	SetViewportWidthPixels( int width ) { m_widthPixels = width; }
 	void	SetViewportHeightPixels( int height ) { m_heightPixels = height; }
 
-	vsRendererState * GetState() { return &m_state; }
-
 	const Settings& GetCurrentSettings() const { return m_currentSettings; }
 
-	vsImage*	Screenshot();
-	vsImage*	ScreenshotDepth();
-	vsImage*	ScreenshotAlpha();
-
-#ifdef CHECK_GL_ERRORS
-	void			CheckGLError(const char* string);
-#else
-	inline void			CheckGLError(const char* string) {}
-#endif
+	virtual vsImage*	Screenshot() = 0;
+	virtual vsImage*	ScreenshotDepth() = 0;
+	virtual vsImage*	ScreenshotAlpha() = 0;
 };
 
 #endif // VS_RENDERER_H

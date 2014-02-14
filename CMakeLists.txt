@@ -133,10 +133,12 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
-	VS/Graphics/VS_RenderScheme.cpp
-	VS/Graphics/VS_RenderSchemeFixedFunction.cpp
-	VS/Graphics/VS_RenderSchemeBloom.cpp
-	VS/Graphics/VS_RenderSchemeShader.cpp
+	VS/Graphics/VS_Renderer_OpenGL2.cpp
+	VS/Graphics/VS_Renderer_OpenGL2.h
+	# VS/Graphics/VS_RenderScheme.cpp
+	# VS/Graphics/VS_RenderSchemeFixedFunction.cpp
+	# VS/Graphics/VS_RenderSchemeBloom.cpp
+	# VS/Graphics/VS_RenderSchemeShader.cpp
 	VS/Graphics/VS_RendererState.cpp
 	VS/Graphics/VS_RendererState.h
 	VS/Graphics/VS_Scene.cpp
