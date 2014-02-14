@@ -167,6 +167,13 @@ vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 
 	vsLog( "VSync: %s", SDL_GL_GetSwapInterval() > 0 ? "ENABLED" : "DISABLED" );
 
+	int MaxVertexTextureImageUnits;
+	glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &MaxVertexTextureImageUnits);
+	int MaxCombinedTextureImageUnits;
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &MaxCombinedTextureImageUnits);
+
+	vsLog( "TextureUnits: %d from vertex shader, %d total", MaxVertexTextureImageUnits, MaxCombinedTextureImageUnits );
+
 	int val;
 	SDL_GL_GetAttribute( SDL_GL_MULTISAMPLEBUFFERS, &val );
 	if ( val )
