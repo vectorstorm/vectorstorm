@@ -27,6 +27,9 @@ class vsShader
 	int32_t m_mouseLoc;
 	int32_t m_fogLoc;
 	int32_t m_textureLoc;
+	int32_t m_localToWorldLoc;
+	int32_t m_worldToViewLoc;
+	int32_t m_viewToProjectionLoc;
 
 public:
 
@@ -38,6 +41,9 @@ public:
     void SetAlphaRef( float aref );
 	void SetFog( bool fog );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
+	void SetLocalToWorld( const vsMatrix4x4& localToWorld );
+	void SetWorldToView( const vsMatrix4x4& worldToView );
+	void SetViewToProjection( const vsMatrix4x4& projection );
 
 	virtual void Prepare(); // called before we start rendering something with this shader
 };

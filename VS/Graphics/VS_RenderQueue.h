@@ -85,6 +85,7 @@ class vsRenderQueue
 	vsRenderQueueStage *	m_stage;
 	int						m_stageCount;
 
+	vsMatrix4x4				m_worldToView;
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
 	int						m_transformStackLevel;
 
@@ -107,7 +108,7 @@ public:
 
 	void			PopMatrix();
 	const vsMatrix4x4&		GetMatrix();
-	const vsMatrix4x4&		GetTopMatrix();
+	const vsMatrix4x4&		GetWorldToViewMatrix();
 
 	vsScene *		GetScene() { return m_parent; }
 

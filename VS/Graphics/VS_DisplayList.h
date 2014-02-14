@@ -48,11 +48,12 @@ public:
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
 		OpCode_SetMatrix4x4,
+		OpCode_SetWorldToViewMatrix4x4,
 		OpCode_PopTransform,
 		OpCode_SetCameraTransform,
 		OpCode_Set3DProjection,
 		OpCode_SetProjectionMatrix4x4,
-		OpCode_SetCameraProjection,
+		OpCode_SetCameraTransform3D,
 
 		OpCode_VertexArray,
 		OpCode_NormalArray,
@@ -252,12 +253,13 @@ public:
 	void	PushTranslation( const vsVector3D &translation );
 	void	PushMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
+	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!
 	void	Set3DProjection( float fov, float nearPlane, float farPlane );
 	void	SetProjectionMatrix4x4( const vsMatrix4x4 &m );
-	void	SetCameraProjection( const vsTransform3D &t );	// no stack of camera transforms;  they an only be set absolutely!
-	void	SetCameraProjection( const vsMatrix4x4 &m );	// no stack of camera transforms;  they an only be set absolutely!
+	void	SetCameraTransform( const vsTransform3D &t );	// no stack of camera transforms;  they an only be set absolutely!
+	void	SetCameraTransform( const vsMatrix4x4 &m );	// no stack of camera transforms;  they an only be set absolutely!
 
 	void	VertexArray( vsVector2D *vertexArray, int vertexCount );	// will automatically be promoted into vsVertex3Ds
 	void	VertexArray( vsVector3D *vertexArray, int vertexCount );

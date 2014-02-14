@@ -31,6 +31,8 @@ class vsTransform2D;
 class vsVector2D;
 struct SDL_Surface;
 
+#define MAX_STACK_LEVEL (30)
+
 class vsRenderer_OpenGL2: public vsRenderer, public vsSingleton<vsRenderer_OpenGL2>
 {
 private:
@@ -39,6 +41,10 @@ private:
 
 	vsVector3D           m_currentCameraPosition;
 	Settings             m_currentSettings;
+
+	vsMatrix4x4			m_currentLocalToWorld;
+	vsMatrix4x4			m_currentWorldToView;
+	vsMatrix4x4			m_currentViewToProjection;
 
 	vsRenderTarget *     m_window;
 	vsRenderTarget *     m_scene;
@@ -58,6 +64,7 @@ private:
 	vsRenderBuffer *     m_currentTexelBuffer;
 	vsRenderBuffer *     m_currentColorBuffer;
 
+	vsMatrix4x4          m_transformStack[MAX_STACK_LEVEL];
 	int                  m_currentTransformStackLevel;
 	int                  m_currentVertexArrayCount;
 	int                  m_currentNormalArrayCount;
@@ -70,7 +77,7 @@ private:
 	bool                 m_antialias;
 
 	void				SetCameraTransform( const vsTransform2D &t );
-	void				SetCameraProjection( const vsMatrix4x4 &m );
+	void				SetCameraTransform( const vsMatrix4x4 &m );
 	void				Set3DProjection( float fov, float nearPlane, float farPlane );
 
 	virtual void		SetMaterial(vsMaterialInternal *material);

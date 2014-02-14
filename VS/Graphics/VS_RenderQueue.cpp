@@ -315,12 +315,13 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
 		cameraMatrix.z = -forward;
-		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
+		// cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
 		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
 
-		m_transformStack[0] = cameraMatrix * requestedMatrix;
+		m_worldToView = cameraMatrix * requestedMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 	else
@@ -351,7 +352,8 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraTransform.SetScale(vsVector2D(1.f,1.f));
 		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
 
-		m_transformStack[0] = cameraMatrix * startingMatrix;
+		m_worldToView = cameraMatrix * startingMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 }
@@ -470,11 +472,9 @@ vsRenderQueue::GetMatrix()
 }
 
 const vsMatrix4x4&
-vsRenderQueue::GetTopMatrix()
+vsRenderQueue::GetWorldToViewMatrix()
 {
-	vsAssert( m_transformStackLevel > 0, "Nothing in the transform stack!" );
-
-	return m_transformStack[0];
+	return m_worldToView;
 }
 
 int

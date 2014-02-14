@@ -163,11 +163,13 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetViewport( m_viewport );
 	}
 
+	m_queue->StartRender(this);
+
 	if ( m_is3d )
 	{
 		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
 		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
-		list->SetCameraProjection( m_camera3D->GetTransform() );
+		list->SetCameraTransform( m_camera3D->GetTransform() );
 
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
@@ -186,7 +188,6 @@ vsScene::Draw( vsDisplayList *list )
 	else
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
-		//list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
 		list->SetCameraTransform( m_camera->GetCameraTransform() );
 	}
 
@@ -195,8 +196,6 @@ vsScene::Draw( vsDisplayList *list )
 		//list->ClearStencil();
 		list->EnableStencil();
 	}
-
-	m_queue->StartRender(this);
 
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
