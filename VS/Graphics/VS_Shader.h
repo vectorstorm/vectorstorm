@@ -14,6 +14,7 @@ class vsDisplayList;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
+#include "VS_MaterialInternal.h"
 class vsMatrix4x4;
 
 class vsShader
@@ -25,6 +26,7 @@ class vsShader
 	int32_t m_globalTimeLoc;
 	int32_t m_mouseLoc;
 	int32_t m_fogLoc;
+	int32_t m_textureLoc;
 
 public:
 
@@ -35,6 +37,7 @@ public:
 
     void SetAlphaRef( float aref );
 	void SetFog( bool fog );
+	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 
 	virtual void Prepare(); // called before we start rendering something with this shader
 };

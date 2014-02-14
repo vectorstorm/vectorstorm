@@ -57,6 +57,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 		m_fogLoc = glGetUniformLocation(m_shader, "fog");
+		m_textureLoc = glGetUniformLocation(m_shader, "texture");
 
 		delete vStore;
 		delete fStore;
@@ -83,6 +84,16 @@ vsShader::SetFog( bool fog )
 	if ( m_fogLoc >= 0 )
 	{
 		glUniform1i( m_fogLoc, fog );
+	}
+}
+
+void
+vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
+{
+	if ( m_textureLoc >= 0 )
+	{
+		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3 };
+		glUniform1iv( m_textureLoc, 4, value );
 	}
 }
 

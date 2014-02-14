@@ -1221,6 +1221,7 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 		m_currentShader->Prepare();
 		m_currentShader->SetAlphaRef( material->m_alphaRef );
 		m_currentShader->SetFog( material->m_fog );
+		m_currentShader->SetTextures( material->m_texture );
 	}
 	else
 	{
