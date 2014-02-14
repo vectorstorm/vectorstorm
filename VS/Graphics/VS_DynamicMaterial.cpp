@@ -20,12 +20,16 @@ void
 vsDynamicMaterial::SetShader( vsShader *shader )
 {
 	GetResource()->m_shader = shader;
+	if ( GetResource()->m_alphaTest )
+		shader->SetAlphaRef( GetResource()->m_alphaRef );
 }
 
 void
 vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 {
 	GetResource()->m_shader = new vsShader(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, GetResource()->m_texture != NULL);
+	if ( GetResource()->m_alphaTest )
+		GetResource()->m_shader->SetAlphaRef( GetResource()->m_alphaRef );
 }
 
 void

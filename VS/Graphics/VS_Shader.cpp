@@ -75,6 +75,7 @@ vsShader::~vsShader()
 void
 vsShader::SetAlphaRef( float aref )
 {
+	glUseProgram( GetShaderId() );
 	if ( m_alphaRefLoc >= 0 )
 	{
 		glUniform1f( m_alphaRefLoc, aref );
