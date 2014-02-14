@@ -15,12 +15,12 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
+#include "VS_Renderer_OpenGL2.h"
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
-#if 0
-	if ( vsRenderSchemeShader::Exists() )
+	if ( vsRenderer_OpenGL2::Exists() )
 	{
 		vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
 		vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
@@ -47,9 +47,8 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 			fString = "#define TEXTURE 1\n" + fString;
 		}
 
-
 #if !TARGET_OS_IPHONE
-		m_shader = vsRenderSchemeShader::Instance()->Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+		m_shader = vsRenderer_OpenGL2::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
 		//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
@@ -57,38 +56,39 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
+		m_fogLoc = glGetUniformLocation(m_shader, "fog");
 
 		delete vStore;
 		delete fStore;
 	}
-#endif // 0
 }
 
 vsShader::~vsShader()
 {
-#if 0
-	if ( vsRenderSchemeShader::Exists() )
-	{
-		vsRenderSchemeShader::Instance()->DestroyShader(m_shader);
-	}
-#endif // 0
+	vsRenderer_OpenGL2::DestroyShader(m_shader);
 }
 
 void
 vsShader::SetAlphaRef( float aref )
 {
-#if 0
 	if ( m_alphaRefLoc >= 0 )
 	{
 		glUniform1f( m_alphaRefLoc, aref );
 	}
-#endif // 0
+}
+
+void
+vsShader::SetFog( bool fog )
+{
+	if ( m_fogLoc >= 0 )
+	{
+		glUniform1i( m_fogLoc, fog );
+	}
 }
 
 void
 vsShader::Prepare()
 {
-#if 0
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsSystem::GetScreen()->GetWidth();
@@ -109,6 +109,5 @@ vsShader::Prepare()
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
-#endif // 0
 }
 

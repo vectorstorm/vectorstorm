@@ -31,27 +31,6 @@
 
 #include "VS_TimerSystem.h"
 
-extern const char *normalv;
-extern const char *texv;
-extern const char *litv;
-extern const char *litf;
-extern const char *litTexf;
-extern const char *normalf;
-extern const char *texf;
-
-GLuint			vsRenderer_OpenGL2::s_normalProg = -1;
-GLuint			vsRenderer_OpenGL2::s_litProg = -1;
-GLuint			vsRenderer_OpenGL2::s_normalTexProg = -1;
-GLuint			vsRenderer_OpenGL2::s_litTexProg = -1;
-
-GLuint			vsRenderer_OpenGL2::s_normalProgFogLoc = -1;
-GLuint			vsRenderer_OpenGL2::s_litProgFogLoc = -1;
-GLuint			vsRenderer_OpenGL2::s_normalTexProgFogLoc = -1;
-GLuint			vsRenderer_OpenGL2::s_litTexProgFogLoc = -1;
-static GLint s_litTexfAlphaRef;
-static GLint s_texfAlphaRef;
-
-bool				vsRenderer_OpenGL2::s_shadersBuilt = false;
 
 
 #if TARGET_OS_IPHONE
@@ -237,19 +216,7 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
 
-	s_normalProg = Compile(normalv, normalf);
-	s_litProg = Compile(litv, litf);
-	s_normalTexProg = Compile(texv, texf);
-	s_litTexProg = Compile(litv, litTexf);
-	s_shadersBuilt = true;
-
-	s_litTexfAlphaRef = glGetUniformLocation(s_litTexProg, "alphaRef");
-	s_texfAlphaRef = glGetUniformLocation(s_normalTexProg, "alphaRef");
-
-	s_normalProgFogLoc = glGetUniformLocation(s_normalProg, "fog");
-	s_litProgFogLoc = glGetUniformLocation(s_litProg, "fog");
-	s_normalTexProgFogLoc = glGetUniformLocation(s_normalTexProg, "fog");
-	s_litTexProgFogLoc = glGetUniformLocation(s_litTexProg, "fog");
+	m_defaultShaderSuite.InitShaders("default.vs", "default.fs");
 
 	Resize();
 
@@ -1200,10 +1167,9 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
 
+	m_currentShader = NULL;
 	if ( material->m_shader )
 	{
-		glUseProgram( material->m_shader->GetShaderId() );
-		material->m_shader->Prepare();
         m_currentShader = material->m_shader;
 	}
 	else
@@ -1217,71 +1183,48 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
-					{
                         m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
-						glUseProgram(m_currentShader->GetShaderId());
-						m_currentShader->Prepare();
-                        m_currentShader->SetAlphaRef( material->m_alphaRef );
-					}
 					else
-					{
-						glUseProgram( s_normalTexProg );
-						glUniform1f( s_normalTexProgFogLoc, material->m_fog );
-						glUniform1f( s_texfAlphaRef, material->m_alphaRef );
-					}
+						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
 				}
 				else
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
-					{
                         m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
-						glUseProgram(m_currentShader->GetShaderId());
-						m_currentShader->Prepare();
-					}
 					else
-					{
-						glUseProgram( s_normalProg );
-						glUniform1f( s_normalProgFogLoc, 0 );
-					}
+						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
 				}
 				break;
 			case DrawMode_Lit:
-
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
-					{
                         m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
-						glUseProgram(m_currentShader->GetShaderId());
-						m_currentShader->Prepare();
-                        m_currentShader->SetAlphaRef( material->m_alphaRef );
-					}
 					else
-					{
-						glUseProgram( s_litTexProg );
-						glUniform1f( s_litTexProgFogLoc, material->m_fog );
-						glUniform1f( s_litTexfAlphaRef, material->m_alphaRef );
-					}
+						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
 				}
 				else
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
-					{
                         m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
-						glUseProgram(m_currentShader->GetShaderId());
-						m_currentShader->Prepare();
-					}
 					else
-					{
-						glUseProgram( s_litProg );
-						glUniform1f( s_litProgFogLoc, 1 );
-						//glUniform1f( s_litProgFogLoc, material->m_fog );
-					}
+						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
 				}
 				break;
 			default:
 				vsAssert(0,"Unknown drawmode??");
 		}
+	}
+	if ( m_currentShader )
+	{
+		glUseProgram( m_currentShader->GetShaderId() );
+		m_currentShader->Prepare();
+		m_currentShader->SetAlphaRef( material->m_alphaRef );
+		m_currentShader->SetFog( material->m_fog );
+	}
+	else
+	{
+		glUseProgram( 0 );
 	}
 
 	/*static bool doIt = false;

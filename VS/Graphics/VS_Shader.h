@@ -14,15 +14,17 @@ class vsDisplayList;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
+class vsMatrix4x4;
 
 class vsShader
 {
 	uint32_t m_shader;
 
-	// int32_t m_alphaRefLoc;
-	// int32_t m_resolutionLoc;
-	// int32_t m_globalTimeLoc;
-	// int32_t m_mouseLoc;
+	int32_t m_alphaRefLoc;
+	int32_t m_resolutionLoc;
+	int32_t m_globalTimeLoc;
+	int32_t m_mouseLoc;
+	int32_t m_fogLoc;
 
 public:
 
@@ -32,6 +34,7 @@ public:
 	uint32_t GetShaderId() { return m_shader; }
 
     void SetAlphaRef( float aref );
+	void SetFog( bool fog );
 
 	virtual void Prepare(); // called before we start rendering something with this shader
 };

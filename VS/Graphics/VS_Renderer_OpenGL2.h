@@ -17,6 +17,7 @@
 #include "VS_Fog.h"
 #include "VS_Material.h"
 #include "VS_RendererState.h"
+#include "VS_ShaderSuite.h"
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
@@ -26,26 +27,15 @@ class vsDisplayList;
 class vsMaterialInternal;
 class vsOverlay;
 class vsRenderBuffer;
-class vsShader;
-class vsShaderSuite;
 class vsTransform2D;
 class vsVector2D;
 struct SDL_Surface;
 
-class vsRenderer_OpenGL2: public vsRenderer
+class vsRenderer_OpenGL2: public vsRenderer, public vsSingleton<vsRenderer_OpenGL2>
 {
 private:
 
-	static GLuint			s_normalProg;
-	static GLuint			s_litProg;
-	static GLuint			s_normalTexProg;
-	static GLuint			s_litTexProg;
-
-	static GLuint			s_normalProgFogLoc;
-	static GLuint			s_litProgFogLoc;
-	static GLuint			s_normalTexProgFogLoc;
-	static GLuint			s_litTexProgFogLoc;
-	static bool				s_shadersBuilt;
+	vsShaderSuite		m_defaultShaderSuite;
 
 	vsVector3D           m_currentCameraPosition;
 	Settings             m_currentSettings;
@@ -88,9 +78,6 @@ private:
 
 	void Resize();
 
-	GLuint			Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
-	void			DestroyShader(GLuint shader);
-
 public:
 
 	enum
@@ -130,6 +117,10 @@ public:
 #else
 	inline void			CheckGLError(const char* string) {}
 #endif
+
+	static GLuint		Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
+	static void			DestroyShader(GLuint shader);
+
 };
 
 #endif // VS_RENDERER_OPENGL2_H
