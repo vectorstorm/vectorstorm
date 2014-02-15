@@ -349,6 +349,7 @@ vsRenderQueue::InitialiseTransformStack()
 		// transform, not the MODELVIEW transform, which is all we care about here..
 		cameraTransform.SetScale(vsVector2D(1.f,1.f));
 		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
+		cameraMatrix.Invert();
 
 		m_worldToView = cameraMatrix * startingMatrix;
 		m_transformStack[0] = vsMatrix4x4::Identity;
