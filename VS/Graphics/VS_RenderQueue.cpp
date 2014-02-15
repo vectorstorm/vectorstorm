@@ -311,6 +311,7 @@ vsRenderQueue::InitialiseTransformStack()
 		vsVector3D forward = cameraMatrix.z;
 		vsVector3D up = cameraMatrix.y;
 		vsVector3D side = forward.Cross(up);
+		// vsVector3D translation = cameraMatrix.w;
 
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
@@ -318,9 +319,13 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
-		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
+		// vsMatrix4x4 translateMatrix;
+		// translateMatrix.w.Set(-translation.x, -translation.y, -translation.z, 1.f);
 
-		m_transformStack[0] = cameraMatrix * requestedMatrix;
+		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;// * translateMatrix;
+
+		m_worldToView = cameraMatrix * requestedMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 	else
@@ -351,7 +356,8 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraTransform.SetScale(vsVector2D(1.f,1.f));
 		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
 
-		m_transformStack[0] = cameraMatrix * startingMatrix;
+		m_worldToView = cameraMatrix * startingMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 }
@@ -470,11 +476,9 @@ vsRenderQueue::GetMatrix()
 }
 
 const vsMatrix4x4&
-vsRenderQueue::GetTopMatrix()
+vsRenderQueue::GetWorldToViewMatrix()
 {
-	vsAssert( m_transformStackLevel > 0, "Nothing in the transform stack!" );
-
-	return m_transformStack[0];
+	return m_worldToView;
 }
 
 int

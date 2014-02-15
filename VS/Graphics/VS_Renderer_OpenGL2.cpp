@@ -312,6 +312,9 @@ vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
 			break;
 	}
 
+
+	glGetFloatv(GL_PROJECTION_MATRIX,(GLfloat*)&m_currentViewToProjection);
+
 	glMatrixMode( GL_MODELVIEW );
 
 	//glRotatef( rotationDegrees, 0, 0, 1 );
@@ -345,6 +348,7 @@ vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
 void
 vsRenderer_OpenGL2::Set3DProjection( float fov, float nearPlane, float farPlane )
 {
+	vsAssert(0, "No longer being used");
 	vsScreen *s = vsSystem::GetScreen();
 
 	float hh = vsTan(fov * .5f) * nearPlane;
@@ -394,10 +398,10 @@ vsRenderer_OpenGL2::Set3DProjection( float fov, float nearPlane, float farPlane 
 }
 
 void
-vsRenderer_OpenGL2::SetCameraProjection( const vsMatrix4x4 &m )
+vsRenderer_OpenGL2::SetCameraTransform( const vsMatrix4x4 &m )
 {
-	m_currentCameraPosition = m.w;
-
+	// m_currentCameraPosition = m.w;
+#if 0
 	//vsVector3D p = vsVector3D::Zero;
 	vsVector3D forward = /*m.t + */m.z;
 	vsVector3D up = m.y;
@@ -423,12 +427,15 @@ vsRenderer_OpenGL2::SetCameraProjection( const vsMatrix4x4 &m )
 	mat[10] = -forward[2];
 	mat[14] = 0.0;
 	//------------------
-	mat[3] = mat[7] = mat[11] = 0.0;
+	mat[3] = m.w.x;
+	mat[7] = m.w.y;
+	mat[11] = m.w.z;
 	mat[15] = 1.0;
 
 	glMultMatrixf( (float*)&mat );
 
 	CheckGLError("SetCameraProjection");
+#endif // 0
 }
 
 void
@@ -536,6 +543,8 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 
 	m_inOverlay = false;
 
+	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
+
 	while(op)
 	{
 		switch( op->type )
@@ -616,10 +625,8 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsVector3D v = t.GetTranslation();
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					v -= m_currentCameraPosition;
+					// v -= m_currentCameraPosition;
 				}
-
-				++m_currentTransformStackLevel;
 
 				bool translation = (v != vsVector2D::Zero);
 				bool rotation = (t.GetAngle() != vsAngle::Zero);
@@ -632,12 +639,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				if ( scale )
 					glScalef( t.GetScale().x, t.GetScale().y, 1.0f );
 
-				vsMatrix4x4 mat;
-				glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&mat);
-				if ( mat.x == mat.y )
-				{
-					mat.y = mat.x;
-				}
+				t.SetTranslation(v);
+				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
+				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+
+				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
+
 				break;
 			}
 			case vsDisplayList::OpCode_PushTranslation:
@@ -646,11 +654,17 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glPushMatrix();
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					v -= m_currentCameraPosition;
+					// v -= m_currentCameraPosition;
 				}
 
+				vsMatrix4x4 m;
+				m.SetTranslation(v);
+				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
+				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
+
 				glTranslatef( v.x, v.y, v.z );
-				m_currentTransformStackLevel++;
 				break;
 			}
 			case vsDisplayList::OpCode_PushMatrix4x4:
@@ -660,11 +674,14 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					m.w -= m_currentCameraPosition;
+					// m.w -= m_currentCameraPosition;
 				}
+				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
+				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
 
 				glMultMatrixf((float *)&m);
-				m_currentTransformStackLevel++;
 				break;
 			}
 			case vsDisplayList::OpCode_SetMatrix4x4:
@@ -672,13 +689,22 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glPushMatrix();
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				glLoadMatrixf((float *)&m);
-				m_currentTransformStackLevel++;
+				m_transformStack[++m_currentTransformStackLevel] = m;
+				m_currentLocalToWorld = m;
+				m_currentShader->SetLocalToWorld(m);
+				break;
+			}
+			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
+			{
+				m_currentWorldToView = op->data.GetMatrix4x4();
 				break;
 			}
 			case vsDisplayList::OpCode_PopTransform:
 			{
 				vsAssert(m_currentTransformStackLevel > 0, "Renderer transform stack underflow??");
 				m_currentTransformStackLevel--;
+				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+				m_currentShader->SetLocalToWorld(m_currentLocalToWorld);
 				glPopMatrix();
 				break;
 			}
@@ -688,10 +714,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_currentCameraPosition = vsVector3D::Zero;
 
 				SetCameraTransform(t);
+				t.SetScale(vsVector2D::One);
+				m_currentWorldToView = t.GetMatrix();
 				break;
 			}
 			case vsDisplayList::OpCode_Set3DProjection:
 			{
+				vsAssert(0, "NOT USED");
 				float fov = op->data.fov;
 				float nearPlane = op->data.nearPlane;
 				float farPlane = op->data.farPlane;
@@ -703,6 +732,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			{
 				glMatrixMode( GL_PROJECTION );
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
+				m_currentViewToProjection = m;
 				glLoadMatrixf((float *)&m);
 				glMatrixMode( GL_MODELVIEW );
 				glLoadIdentity();
@@ -725,11 +755,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glScalef(-1.f, 1.f, 1.f);
 				break;
 			}
-			case vsDisplayList::OpCode_SetCameraProjection:
+			case vsDisplayList::OpCode_SetCameraTransform3D:
 			{
+				vsAssert(0, "NO LONGER BEING USED");
 				const vsMatrix4x4 &m = op->data.GetMatrix4x4();
-
-				SetCameraProjection(m);
+				SetCameraTransform(m);
+				m_currentWorldToView = m;
+				// m_currentWorldToView.SetTranslation(vsVector3D::Zero);
 				break;
 			}
 			case vsDisplayList::OpCode_VertexArray:
@@ -1222,6 +1254,9 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 		m_currentShader->SetAlphaRef( material->m_alphaRef );
 		m_currentShader->SetFog( material->m_fog );
 		m_currentShader->SetTextures( material->m_texture );
+		m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
+		m_currentShader->SetWorldToView( m_currentWorldToView );
+		m_currentShader->SetViewToProjection( m_currentViewToProjection );
 	}
 	else
 	{

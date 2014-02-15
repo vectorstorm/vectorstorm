@@ -58,6 +58,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 		m_fogLoc = glGetUniformLocation(m_shader, "fog");
 		m_textureLoc = glGetUniformLocation(m_shader, "texture");
+		m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
+		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
+		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 
 		delete vStore;
 		delete fStore;
@@ -94,6 +97,33 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 	{
 		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3 };
 		glUniform1iv( m_textureLoc, 4, value );
+	}
+}
+
+void
+vsShader::SetLocalToWorld( const vsMatrix4x4& localToWorld )
+{
+	if ( m_localToWorldLoc >= 0 )
+	{
+		glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&localToWorld );
+	}
+}
+
+void
+vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
+{
+	if ( m_worldToViewLoc >= 0 )
+	{
+		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
+	}
+}
+
+void
+vsShader::SetViewToProjection( const vsMatrix4x4& projection )
+{
+	if ( m_viewToProjectionLoc >= 0 )
+	{
+		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
 }
 
