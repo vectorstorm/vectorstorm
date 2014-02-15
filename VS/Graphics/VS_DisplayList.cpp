@@ -883,6 +883,13 @@ vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 }
 
 void
+vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
+{
+	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
+	m_fifo->WriteMatrix4x4( m );
+}
+
+void
 vsDisplayList::PushTranslation( const vsVector3D &offset )
 {
 	m_fifo->WriteUint8( OpCode_PushTranslation );
@@ -1419,6 +1426,7 @@ vsDisplayList::PopOp()
 				break;
 			case OpCode_PushMatrix4x4:
 			case OpCode_SetMatrix4x4:
+			case OpCode_SetWorldToViewMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
 			case OpCode_Set3DProjection:
@@ -1578,6 +1586,7 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			PushMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_SetMatrix4x4:
+		case OpCode_SetWorldToViewMatrix4x4:
 			SetMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_Set3DProjection:

@@ -401,7 +401,7 @@ void
 vsRenderer_OpenGL2::SetCameraTransform( const vsMatrix4x4 &m )
 {
 	// m_currentCameraPosition = m.w;
-
+#if 0
 	//vsVector3D p = vsVector3D::Zero;
 	vsVector3D forward = /*m.t + */m.z;
 	vsVector3D up = m.y;
@@ -435,6 +435,7 @@ vsRenderer_OpenGL2::SetCameraTransform( const vsMatrix4x4 &m )
 	glMultMatrixf( (float*)&mat );
 
 	CheckGLError("SetCameraProjection");
+#endif // 0
 }
 
 void
@@ -624,7 +625,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsVector3D v = t.GetTranslation();
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					v -= m_currentCameraPosition;
+					// v -= m_currentCameraPosition;
 				}
 
 				bool translation = (v != vsVector2D::Zero);
@@ -653,7 +654,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glPushMatrix();
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					v -= m_currentCameraPosition;
+					// v -= m_currentCameraPosition;
 				}
 
 				vsMatrix4x4 m;
@@ -673,7 +674,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 
 				if ( m_currentTransformStackLevel == 0 )
 				{
-					m.w -= m_currentCameraPosition;
+					// m.w -= m_currentCameraPosition;
 				}
 				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
@@ -691,6 +692,11 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_transformStack[++m_currentTransformStackLevel] = m;
 				m_currentLocalToWorld = m;
 				m_currentShader->SetLocalToWorld(m);
+				break;
+			}
+			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
+			{
+				m_currentWorldToView = op->data.GetMatrix4x4();
 				break;
 			}
 			case vsDisplayList::OpCode_PopTransform:
@@ -714,6 +720,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_Set3DProjection:
 			{
+				vsAssert(0, "NOT USED");
 				float fov = op->data.fov;
 				float nearPlane = op->data.nearPlane;
 				float farPlane = op->data.farPlane;
@@ -750,9 +757,11 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_SetCameraTransform3D:
 			{
+				vsAssert(0, "NO LONGER BEING USED");
 				const vsMatrix4x4 &m = op->data.GetMatrix4x4();
-				m_currentWorldToView = m;
 				SetCameraTransform(m);
+				m_currentWorldToView = m;
+				// m_currentWorldToView.SetTranslation(vsVector3D::Zero);
 				break;
 			}
 			case vsDisplayList::OpCode_VertexArray:

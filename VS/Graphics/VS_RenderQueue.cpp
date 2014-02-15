@@ -311,14 +311,18 @@ vsRenderQueue::InitialiseTransformStack()
 		vsVector3D forward = cameraMatrix.z;
 		vsVector3D up = cameraMatrix.y;
 		vsVector3D side = forward.Cross(up);
+		// vsVector3D translation = cameraMatrix.w;
 
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
 		cameraMatrix.z = -forward;
-		// cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
+		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
-		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
+		// vsMatrix4x4 translateMatrix;
+		// translateMatrix.w.Set(-translation.x, -translation.y, -translation.z, 1.f);
+
+		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;// * translateMatrix;
 
 		m_worldToView = cameraMatrix * requestedMatrix;
 		m_transformStack[0] = vsMatrix4x4::Identity;
