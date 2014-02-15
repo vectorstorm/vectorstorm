@@ -346,99 +346,6 @@ vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
 }
 
 void
-vsRenderer_OpenGL2::Set3DProjection( float fov, float nearPlane, float farPlane )
-{
-	vsAssert(0, "No longer being used");
-	vsScreen *s = vsSystem::GetScreen();
-
-	float hh = vsTan(fov * .5f) * nearPlane;
-	float hw = hh * s->GetAspectRatio();
-
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-
-	switch( vsSystem::Instance()->GetOrientation() )
-	{
-		case Orientation_Normal:
-		case Orientation_Six:
-			glFrustum(-hw,hw,-hh,hh,nearPlane,farPlane);
-			break;
-		case Orientation_Three:
-		case Orientation_Nine:
-			glFrustum(-hh,hh,-hw,hw,nearPlane,farPlane);
-			break;
-	}
-
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-
-	switch( vsSystem::Instance()->GetOrientation() )
-	{
-		case Orientation_Normal:
-			break;
-		case Orientation_Six:
-			glRotatef(180.f, 0.f, 0.f, 1.f);
-			break;
-		case Orientation_Three:
-			glRotatef(270.f, 0.f, 0.f, 1.f);
-			break;
-		case Orientation_Nine:
-			glRotatef(90.f, 0.f, 0.f, 1.f);
-			break;
-	}
-
-	glScalef(-1.f, 1.f, 1.f);
-
-	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.SetBool( vsRendererState::Bool_CullFace, true );
-	m_state.SetInt( vsRendererState::Int_CullFace, GL_FRONT );
-
-	CheckGLError("Set3DProjection");
-}
-
-void
-vsRenderer_OpenGL2::SetCameraTransform( const vsMatrix4x4 &m )
-{
-	// m_currentCameraPosition = m.w;
-#if 0
-	//vsVector3D p = vsVector3D::Zero;
-	vsVector3D forward = /*m.t + */m.z;
-	vsVector3D up = m.y;
-	vsVector3D side = forward.Cross(up);
-	/*
-	gluLookAt(p.x, p.y, p.z,
-			  t.x, t.y, t.z,
-			  u.x, u.y, u.z );*/
-
-	float mat[16];
-	mat[0] = side[0];
-	mat[4] = side[1];
-	mat[8] = side[2];
-	mat[12] = 0.0;
-	//------------------
-	mat[1] = up[0];
-	mat[5] = up[1];
-	mat[9] = up[2];
-	mat[13] = 0.0;
-	//------------------
-	mat[2] = -forward[0];
-	mat[6] = -forward[1];
-	mat[10] = -forward[2];
-	mat[14] = 0.0;
-	//------------------
-	mat[3] = m.w.x;
-	mat[7] = m.w.y;
-	mat[11] = m.w.z;
-	mat[15] = 1.0;
-
-	glMultMatrixf( (float*)&mat );
-
-	CheckGLError("SetCameraProjection");
-#endif // 0
-}
-
-void
 vsRenderer_OpenGL2::PreRender(const Settings &s)
 {
 	CheckGLError("PreRender");
@@ -718,16 +625,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_currentWorldToView = t.GetMatrix();
 				break;
 			}
-			case vsDisplayList::OpCode_Set3DProjection:
-			{
-				vsAssert(0, "NOT USED");
-				float fov = op->data.fov;
-				float nearPlane = op->data.nearPlane;
-				float farPlane = op->data.farPlane;
-
-				Set3DProjection(fov, nearPlane, farPlane);
-				break;
-			}
 			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
 			{
 				glMatrixMode( GL_PROJECTION );
@@ -753,15 +650,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				}
 
 				glScalef(-1.f, 1.f, 1.f);
-				break;
-			}
-			case vsDisplayList::OpCode_SetCameraTransform3D:
-			{
-				vsAssert(0, "NO LONGER BEING USED");
-				const vsMatrix4x4 &m = op->data.GetMatrix4x4();
-				SetCameraTransform(m);
-				m_currentWorldToView = m;
-				// m_currentWorldToView.SetTranslation(vsVector3D::Zero);
 				break;
 			}
 			case vsDisplayList::OpCode_VertexArray:

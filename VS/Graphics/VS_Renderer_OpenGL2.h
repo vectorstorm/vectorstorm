@@ -77,8 +77,6 @@ private:
 	bool                 m_antialias;
 
 	void				SetCameraTransform( const vsTransform2D &t );
-	void				SetCameraTransform( const vsMatrix4x4 &m );
-	void				Set3DProjection( float fov, float nearPlane, float farPlane );
 
 	virtual void		SetMaterial(vsMaterialInternal *material);
 	//virtual void		SetDrawMode(vsDrawMode mode);

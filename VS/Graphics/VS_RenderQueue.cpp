@@ -295,8 +295,6 @@ vsRenderQueue::InitialiseTransformStack()
 				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
 				break;
 		}
-		//
-//		startingTransform.SetTranslation( vsVector3D(0.f, 0.0f, 0.f) );
 		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
 
 		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
@@ -311,7 +309,6 @@ vsRenderQueue::InitialiseTransformStack()
 		vsVector3D forward = cameraMatrix.z;
 		vsVector3D up = cameraMatrix.y;
 		vsVector3D side = forward.Cross(up);
-		// vsVector3D translation = cameraMatrix.w;
 
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
@@ -319,10 +316,7 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
-		// vsMatrix4x4 translateMatrix;
-		// translateMatrix.w.Set(-translation.x, -translation.y, -translation.z, 1.f);
-
-		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;// * translateMatrix;
+		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
 
 		m_worldToView = cameraMatrix * requestedMatrix;
 		m_transformStack[0] = vsMatrix4x4::Identity;

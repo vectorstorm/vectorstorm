@@ -53,7 +53,6 @@ public:
 		OpCode_SetCameraTransform,
 		OpCode_Set3DProjection,
 		OpCode_SetProjectionMatrix4x4,
-		OpCode_SetCameraTransform3D,
 
 		OpCode_VertexArray,
 		OpCode_NormalArray,
@@ -258,8 +257,6 @@ public:
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!
 	void	Set3DProjection( float fov, float nearPlane, float farPlane );
 	void	SetProjectionMatrix4x4( const vsMatrix4x4 &m );
-	void	SetCameraTransform( const vsTransform3D &t );	// no stack of camera transforms;  they an only be set absolutely!
-	void	SetCameraTransform( const vsMatrix4x4 &m );	// no stack of camera transforms;  they an only be set absolutely!
 
 	void	VertexArray( vsVector2D *vertexArray, int vertexCount );	// will automatically be promoted into vsVertex3Ds
 	void	VertexArray( vsVector3D *vertexArray, int vertexCount );

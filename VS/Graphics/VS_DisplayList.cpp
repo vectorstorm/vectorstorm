@@ -921,19 +921,6 @@ vsDisplayList::SetProjectionMatrix4x4( const vsMatrix4x4 &m )
 
 
 void
-vsDisplayList::SetCameraTransform( const vsTransform3D &t )
-{
-	SetCameraTransform(t.GetMatrix());
-}
-
-void
-vsDisplayList::SetCameraTransform( const vsMatrix4x4 &m )
-{
-	m_fifo->WriteUint8( OpCode_SetCameraTransform3D );
-	m_fifo->WriteMatrix4x4( m );
-}
-
-void
 vsDisplayList::PopTransform()
 {
 	m_fifo->WriteUint8( OpCode_PopTransform );
@@ -1437,9 +1424,6 @@ vsDisplayList::PopOp()
 			case OpCode_SetProjectionMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
-			case OpCode_SetCameraTransform3D:
-				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
-				break;
 			case OpCode_SetDrawMode:
 				m_currentOp.data.Set( m_fifo->ReadUint8() );
 				break;
@@ -1594,9 +1578,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_SetProjectionMatrix4x4:
 			SetProjectionMatrix4x4( o->data.GetMatrix4x4() );
-			break;
-		case OpCode_SetCameraTransform3D:
-			SetCameraTransform( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_PopTransform:
 			PopTransform();
