@@ -317,31 +317,6 @@ vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
 
 	glMatrixMode( GL_MODELVIEW );
 
-	//glRotatef( rotationDegrees, 0, 0, 1 );
-	//glTranslatef( 0, -640, 0 );
-	switch( vsSystem::Instance()->GetOrientation() )
-	{
-		case Orientation_Normal:
-			break;
-		case Orientation_Six:
-			glRotatef(180.f, 0.f, 0.f, 1.f);
-			break;
-		case Orientation_Three:
-			glRotatef(90.f, 0.f, 0.f, 1.f);
-			break;
-		case Orientation_Nine:
-			glRotatef(270.f, 0.f, 0.f, 1.f);
-			break;
-	}
-
-
-
-	glRotatef( -t.GetAngle().GetDegrees(), 0.0f, 0.0f, 1.0f );
-	glTranslatef( -t.GetTranslation().x, -t.GetTranslation().y, 0.0f );
-
-	m_state.SetBool( vsRendererState::Bool_DepthTest, false );
-	m_state.SetBool( vsRendererState::Bool_CullFace, false );
-
 	CheckGLError("SetCameraTransform");
 }
 
@@ -529,24 +504,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			{
 				vsTransform2D t = op->data.GetTransform();
 
-				vsVector3D v = t.GetTranslation();
-				if ( m_currentTransformStackLevel == 0 )
-				{
-					// v -= m_currentCameraPosition;
-				}
-
-				bool translation = (v != vsVector2D::Zero);
-				bool rotation = (t.GetAngle() != vsAngle::Zero);
-				bool scale = (t.GetScale() != vsVector2D::One);
-				glPushMatrix();
-				if ( translation )
-					glTranslatef( v.x, v.y, v.z );
-				if ( rotation )
-					glRotatef( t.GetAngle().GetDegrees(), 0.0f, 0.0f, 1.0f );
-				if ( scale )
-					glScalef( t.GetScale().x, t.GetScale().y, 1.0f );
-
-				t.SetTranslation(v);
 				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
@@ -558,11 +515,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_PushTranslation:
 			{
 				vsVector3D &v = op->data.vector;
-				glPushMatrix();
-				if ( m_currentTransformStackLevel == 0 )
-				{
-					// v -= m_currentCameraPosition;
-				}
 
 				vsMatrix4x4 m;
 				m.SetTranslation(v);
@@ -571,31 +523,20 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
 				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
 
-				glTranslatef( v.x, v.y, v.z );
 				break;
 			}
 			case vsDisplayList::OpCode_PushMatrix4x4:
 			{
 				vsMatrix4x4 m = op->data.GetMatrix4x4();
-				glPushMatrix();
-
-				if ( m_currentTransformStackLevel == 0 )
-				{
-					// m.w -= m_currentCameraPosition;
-				}
 				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
 				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
-
-				glMultMatrixf((float *)&m);
 				break;
 			}
 			case vsDisplayList::OpCode_SetMatrix4x4:
 			{
-				glPushMatrix();
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
-				glLoadMatrixf((float *)&m);
 				m_transformStack[++m_currentTransformStackLevel] = m;
 				m_currentLocalToWorld = m;
 				m_currentShader->SetLocalToWorld(m);
@@ -612,7 +553,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_currentTransformStackLevel--;
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
 				m_currentShader->SetLocalToWorld(m_currentLocalToWorld);
-				glPopMatrix();
 				break;
 			}
 			case vsDisplayList::OpCode_SetCameraTransform:
@@ -630,26 +570,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glMatrixMode( GL_PROJECTION );
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				m_currentViewToProjection = m;
-				glLoadMatrixf((float *)&m);
-				glMatrixMode( GL_MODELVIEW );
-				glLoadIdentity();
-
-				switch( vsSystem::Instance()->GetOrientation() )
-				{
-					case Orientation_Normal:
-						break;
-					case Orientation_Six:
-						glRotatef(180.f, 0.f, 0.f, 1.f);
-						break;
-					case Orientation_Three:
-						glRotatef(270.f, 0.f, 0.f, 1.f);
-						break;
-					case Orientation_Nine:
-						glRotatef(90.f, 0.f, 0.f, 1.f);
-						break;
-				}
-
-				glScalef(-1.f, 1.f, 1.f);
 				break;
 			}
 			case vsDisplayList::OpCode_VertexArray:
