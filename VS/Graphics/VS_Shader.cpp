@@ -36,6 +36,36 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		vsString vString( vStore->GetReadHead(), vSize );
 		vsString fString( fStore->GetReadHead(), fSize );
 
+		vsString version;
+
+		// check whether each shader begins with a #version statement.
+		// If so, let's remove and remember it, then re-insert it into
+		// the final version of the shader.  (We check on both vertex
+		// and fragment shaders, and insert the same value into both)
+		if ( vString.find("#version") == 0 )
+		{
+			int64_t pos = vString.find('\n');
+			if ( pos != vsString::npos )
+			{
+				version = std::string("#version ") + vString.substr(9, pos-9) + "\n";
+				vString.erase(0,pos);
+			}
+		}
+		if ( fString.find("#version") == 0 )
+		{
+			int64_t pos = fString.find('\n');
+			if ( pos != vsString::npos )
+			{
+				std::string fVersion = std::string("#version ") + fString.substr(9, pos-9) + "\n";
+				if ( version == vsEmptyString )
+					version = fVersion;
+				else
+					vsAssert( version == fVersion, "Non-matching #version statements in vertex and fragment shaders" );
+
+				fString.erase(0,pos);
+			}
+		}
+
 		if ( lit )
 		{
 			vString = "#define LIT 1\n" + vString;
@@ -46,6 +76,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 			vString = "#define TEXTURE 1\n" + vString;
 			fString = "#define TEXTURE 1\n" + fString;
 		}
+
+		vString = version + vString;
+		fString = version + fString;
 
 #if !TARGET_OS_IPHONE
 		m_shader = vsRenderer_OpenGL2::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
