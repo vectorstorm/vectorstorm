@@ -216,7 +216,7 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
 
-	m_defaultShaderSuite.InitShaders("default.vs", "default.fs");
+	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl");
 
 	Resize();
 
