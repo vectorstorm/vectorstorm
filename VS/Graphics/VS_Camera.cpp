@@ -40,7 +40,7 @@ vsCamera2D::GetProjectionMatrix( float aspectRatio )
 bool
 vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )
 {
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	float aspectRatio = vsScreen::Instance()->GetAspectRatio();
 	vsVector2D finalPos = pos;
 
 	if ( GetAngle().Get() != 0.f )
@@ -66,7 +66,7 @@ vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )
 bool
 vsCamera2D::WrapAround( vsVector2D &pos_in, float r )
 {
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	float aspectRatio = vsScreen::Instance()->GetAspectRatio();
 	vsVector2D finalPos = pos_in;
 
 	finalPos -= GetPosition();
@@ -127,7 +127,7 @@ vsCamera3D::vsCamera3D(ProjectionType type)
 	m_nearPlane = 1.f;
 	m_farPlane = 2000.f;
 	m_type = type;
-	m_aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	m_aspectRatio = vsScreen::Instance()->GetAspectRatio();
 }
 
 vsCamera3D::~vsCamera3D()

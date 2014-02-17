@@ -165,8 +165,8 @@ vsShader::Prepare()
 {
 	if ( m_resolutionLoc >= 0 )
 	{
-		int xRes = vsSystem::GetScreen()->GetWidth();
-		int yRes = vsSystem::GetScreen()->GetHeight();
+		int xRes = vsScreen::Instance()->GetWidth();
+		int yRes = vsScreen::Instance()->GetHeight();
 		glUniform2f( m_resolutionLoc, xRes, yRes );
 	}
 	if ( m_globalTimeLoc >= 0 )
@@ -178,7 +178,7 @@ vsShader::Prepare()
 	if ( m_mouseLoc >= 0 )
 	{
 		vsVector2D mousePos = vsInput::Instance()->GetWindowMousePosition();
-		int yRes = vsSystem::GetScreen()->GetHeight();
+		int yRes = vsScreen::Instance()->GetHeight();
 		// the coordinate system in the GLSL shader is inverted from the
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );

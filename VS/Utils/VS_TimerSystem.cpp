@@ -129,7 +129,7 @@ vsTimerSystem::Init()
 	if ( !m_entity )	// we get 'initted' multiple times;  make sure we don't re-allocate this!
 	{
 		m_entity = new vsTimerSystemEntity;
-		vsSystem::GetScreen()->GetDebugScene()->RegisterEntityOnTop( m_entity );
+		vsScreen::Instance()->GetDebugScene()->RegisterEntityOnTop( m_entity );
 	}
 #endif // DEBUG_TIMING_BAR
 }

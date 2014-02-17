@@ -709,7 +709,7 @@ vsDisplayList::Compile_Internal()
 	m_displayListId = glGenLists(1);
 	glNewList(m_displayListId,GL_COMPILE);
 	Rewind();
-	vsSystem::GetScreen()->RenderDisplayList(this);
+	vsScreen::Instance()->RenderDisplayList(this);
 	glEndList();
 	m_compiled = true;
 

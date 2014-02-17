@@ -18,6 +18,7 @@
 #include "VS_TimerSystem.h"
 
 const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
+vsScreen *	vsScreen::s_instance = NULL;
 
 vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync):
 	m_scene(NULL),
@@ -29,6 +30,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_currentRenderTarget(NULL),
     m_currentSettings(NULL)
 {
+	vsAssert(s_instance == NULL, "Tried to create a second vsScreen");
+	s_instance = this;
 	int flags = 0;
 	if ( fullscreen )
 		flags |= vsRenderer::Flag_Fullscreen;
@@ -49,6 +52,7 @@ vsScreen::~vsScreen()
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
 	vsDelete( m_subfifo );
+	s_instance = NULL;
 }
 
 void

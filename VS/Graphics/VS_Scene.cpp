@@ -91,7 +91,7 @@ vsScene::UpdateVideoMode()
 {
 	if ( m_camera3D )
 	{
-		m_camera3D->SetAspectRatio( vsSystem::GetScreen()->GetAspectRatio() );
+		m_camera3D->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
 	}
 	if ( m_camera )
 	{
@@ -316,7 +316,7 @@ vsScene::GetCorner(bool bottom, bool right)
 		pos.y = -halfFov;
 
 	// now, to figure out where the edge is, we need to know our screen aspect ratio, which is the ratio of horizontal pixels to vertical pixels.
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	float aspectRatio = vsScreen::Instance()->GetAspectRatio();
 
 	if ( right )
 		pos.x = halfFov * aspectRatio;
@@ -348,7 +348,7 @@ public:
 	void				Init()
 	{
 		SetFOV( 1.0f );
-		SetPosition( vsVector2D(0.5f * vsSystem::GetScreen()->GetAspectRatio() , 0.5f) );
+		SetPosition( vsVector2D(0.5f * vsScreen::Instance()->GetAspectRatio() , 0.5f) );
 	}
 };
 

@@ -25,6 +25,7 @@ class vsImage;
 
 class vsScreen
 {
+	static vsScreen *	s_instance;
 	vsRenderer *		m_renderer;		// our renderer
 	vsScene **			m_scene;		// our draw scenes
     vsRenderer::Settings    m_defaultRenderSettings;
@@ -44,6 +45,8 @@ class vsScreen
     const vsRenderer::Settings *m_currentSettings;
 
 public:
+
+	static vsScreen *	Instance() { return s_instance; }
 
 	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
 	~vsScreen();
