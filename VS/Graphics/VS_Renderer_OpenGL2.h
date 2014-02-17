@@ -37,6 +37,19 @@ class vsRenderer_OpenGL2: public vsRenderer, public vsSingleton<vsRenderer_OpenG
 {
 private:
 
+	enum
+	{ // if I extend this, be sure to update the string array in the .cpp!
+		CAP_ARB_framebuffer_object,
+		CAP_EXT_framebuffer_object,
+		CAP_EXT_framebuffer_multisample,
+		CAP_EXT_framebuffer_blit,
+		CAP_MAX
+	};
+	struct Capabilities
+	{
+		bool supported[CAP_MAX];
+	};
+	Capabilities		m_capabilities;
 	vsShaderSuite		m_defaultShaderSuite;
 
 	vsVector3D           m_currentCameraPosition;

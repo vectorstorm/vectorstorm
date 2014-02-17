@@ -32,7 +32,6 @@
 #include "VS_TimerSystem.h"
 
 
-
 #if TARGET_OS_IPHONE
 
 #define glOrtho( a, b, c, d, e, f ) glOrthof( a, b, c, d, e, f )
@@ -59,6 +58,14 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	m_window(NULL),
 	m_scene(NULL)
 {
+	const char* c_capabilityString[vsRenderer_OpenGL2::CAP_MAX] =
+	{
+		"GL_ARB_framebuffer_object",
+		"GL_EXT_framebuffer_object",
+		"GL_EXT_framebuffer_multisample",
+		"GL_EXT_framebuffer_blit"
+	};
+
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
 
@@ -141,13 +148,36 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
-	if ( GL_VERSION_2_1 )
+	if ( !GL_VERSION_2_1 )
 	{
-		vsLog("Support for GL 2.1 found");
+		vsLog("No support for GL 2.1 -- cannot run.");
+		exit(1);	// TODO:  What can I do in this situation?
 	}
 	else
 	{
-		vsLog("No support for GL 2.1");
+		for ( int i = 0; i < CAP_MAX; i++ )
+		{
+			m_capabilities.supported[i] = glewIsSupported( c_capabilityString[i] );
+			vsLog("%s: %s", c_capabilityString[i], m_capabilities.supported[i] ?
+					"supported" : "not supported");
+		}
+
+		// check caps to make sure that we can run.
+		bool canRun = true;
+		if ( !m_capabilities.supported[CAP_ARB_framebuffer_object] &&
+				( !m_capabilities.supported[CAP_EXT_framebuffer_object] ||
+				  !m_capabilities.supported[CAP_EXT_framebuffer_blit] ||
+				  !m_capabilities.supported[CAP_EXT_framebuffer_multisample] )
+		   )
+		{
+			canRun = false;
+		}
+
+		if ( !canRun )
+		{
+			vsLog("Insufficient extensions to run.");
+			exit(1);
+		}
 	}
 
 	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
