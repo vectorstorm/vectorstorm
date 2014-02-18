@@ -18,6 +18,7 @@
 #include "Utils/VS_Singleton.h"
 
 class vsDisplayList;
+class vsRenderPipeline;
 class vsScene;
 class vsRenderTarget;
 class vsImage;
@@ -27,6 +28,7 @@ class vsScreen
 {
 	static vsScreen *	s_instance;
 	vsRenderer *		m_renderer;		// our renderer
+	vsRenderPipeline *	m_pipeline;		// our default pipeline
 	vsScene **			m_scene;		// our draw scenes
     vsRenderer::Settings    m_defaultRenderSettings;
 

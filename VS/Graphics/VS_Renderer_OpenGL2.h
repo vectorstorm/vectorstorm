@@ -96,6 +96,8 @@ private:
 
 	void Resize();
 
+	void	SetRenderTarget( vsRenderTarget *target );
+
 public:
 
 	enum
@@ -113,6 +115,8 @@ public:
 	void	RenderDisplayList( vsDisplayList *list );
 	void	RawRenderDisplayList( vsDisplayList *list );
 	void	PostRender();
+
+	virtual vsRenderTarget *GetMainRenderTarget() { return m_scene; }
 
 	bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target );
 	bool	PostRenderTarget( vsRenderTarget *target );

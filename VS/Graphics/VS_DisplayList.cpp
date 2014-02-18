@@ -1191,6 +1191,13 @@ vsDisplayList::SetMaterial( vsMaterialInternal *material )
 }
 
 void
+vsDisplayList::SetRenderTarget( vsRenderTarget *target )
+{
+	m_fifo->WriteUint8( OpCode_SetRenderTarget );
+	m_fifo->WriteVoidStar( target );
+}
+
+void
 vsDisplayList::Light( const vsLight &light )
 {
 	m_fifo->WriteUint8( OpCode_Light );
@@ -1428,6 +1435,9 @@ vsDisplayList::PopOp()
 				m_currentOp.data.Set( m_fifo->ReadUint8() );
 				break;
 			case OpCode_SetMaterial:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_SetRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_Light:

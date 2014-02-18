@@ -135,6 +135,12 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Renderer.h
 	VS/Graphics/VS_Renderer_OpenGL2.cpp
 	VS/Graphics/VS_Renderer_OpenGL2.h
+	VS/Graphics/VS_RenderPipeline.cpp
+	VS/Graphics/VS_RenderPipeline.h
+	VS/Graphics/VS_RenderPipelineStage.cpp
+	VS/Graphics/VS_RenderPipelineStage.h
+	VS/Graphics/VS_RenderPipelineStageScene.cpp
+	VS/Graphics/VS_RenderPipelineStageScene.h
 	# VS/Graphics/VS_RenderScheme.cpp
 	# VS/Graphics/VS_RenderSchemeFixedFunction.cpp
 	# VS/Graphics/VS_RenderSchemeBloom.cpp

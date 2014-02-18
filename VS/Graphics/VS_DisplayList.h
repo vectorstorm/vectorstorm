@@ -88,6 +88,7 @@ public:
 		OpCode_SetDrawMode,
 
 		OpCode_SetMaterial,
+		OpCode_SetRenderTarget,
 
 		OpCode_Light,
 		OpCode_ClearLights,
@@ -296,6 +297,7 @@ public:
 
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( vsMaterialInternal *material );
+	void	SetRenderTarget( vsRenderTarget *target );
 
 	void	Light( const vsLight &light );
 	void	ClearLights();

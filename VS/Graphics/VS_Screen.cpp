@@ -9,6 +9,9 @@
 
 #include "VS_Screen.h"
 #include "VS_DisplayList.h"
+#include "VS_RenderPipeline.h"
+#include "VS_RenderPipelineStage.h"
+#include "VS_RenderPipelineStageScene.h"
 #include "VS_Renderer_OpenGL2.h"
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
@@ -21,6 +24,8 @@ const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
 vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync):
+	m_renderer(NULL),
+	m_pipeline(NULL),
 	m_scene(NULL),
 	m_sceneCount(0),
 	m_width(width),
@@ -95,6 +100,9 @@ vsScreen::CreateScenes(int count)
 		m_scene[i] = new vsScene;
 	m_sceneCount = count;
 
+	m_pipeline = new vsRenderPipeline(count);
+	for ( int i = 0; i < count; i++ )
+		m_pipeline->SetStage(i, new vsRenderPipelineStageScene( m_scene[i], m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
 
 #if defined(DEBUG_SCENE)
 	m_scene[m_sceneCount-1]->SetDebugCamera();
@@ -104,11 +112,13 @@ vsScreen::CreateScenes(int count)
 void
 vsScreen::DestroyScenes()
 {
+	if ( m_pipeline )
+		vsDelete( m_pipeline );
 	if ( m_scene )
 	{
 		for ( int i = 0; i < m_sceneCount; i++ )
-			delete m_scene[i];
-		delete [] m_scene;
+			vsDelete( m_scene[i] );
+		vsDeleteArray( m_scene );
 
 		m_scene = NULL;
 	}
@@ -130,7 +140,16 @@ static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us ab
 void
 vsScreen::Draw()
 {
-    DrawWithSettings( m_defaultRenderSettings );
+    //DrawWithSettings( m_defaultRenderSettings );
+	m_currentSettings = &m_defaultRenderSettings;
+
+	m_renderer->PreRender(m_defaultRenderSettings);
+	m_fifo->Clear();
+	m_pipeline->Draw(m_fifo);
+	m_renderer->RenderDisplayList(m_fifo);
+	m_renderer->PostRender();
+
+	m_currentSettings = NULL;
 }
 
 void

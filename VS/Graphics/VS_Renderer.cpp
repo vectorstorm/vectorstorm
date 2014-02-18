@@ -30,6 +30,8 @@
 
 #include "VS_TimerSystem.h"
 
+vsRenderer*  vsRenderer::s_instance = NULL;
+
 vsRenderer::Settings::Settings():
 	shaderSuite(NULL),
     aspectRatio(1.f),
@@ -39,6 +41,7 @@ vsRenderer::Settings::Settings():
 	writeDepth(true),
 	invertCull(false)
 {
+	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
 }
 
 
@@ -58,9 +61,11 @@ vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 	m_viewportWidth(width),
 	m_viewportHeight(height)
 {
+	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
 }
 
 vsRenderer::~vsRenderer()
 {
+	s_instance = NULL;
 }
 

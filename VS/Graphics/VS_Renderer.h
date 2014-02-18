@@ -47,6 +47,7 @@ public:
 		Settings();
 	};
 
+	static vsRenderer*  s_instance;
 	Settings			m_currentSettings;
 
 	// m_width, m_viewportWidth, m_height, and m_viewportHeight are the
@@ -66,6 +67,7 @@ public:
 
 public:
 
+	static vsRenderer* Instance() { return s_instance; }
 	enum
 	{
 		Flag_Fullscreen = BIT(0),
@@ -89,6 +91,8 @@ public:
 	int		GetHeightPixels() const { return m_heightPixels; }
 	void	SetViewportWidthPixels( int width ) { m_widthPixels = width; }
 	void	SetViewportHeightPixels( int height ) { m_heightPixels = height; }
+
+	virtual vsRenderTarget *GetMainRenderTarget() = 0;
 
 	const Settings& GetCurrentSettings() const { return m_currentSettings; }
 

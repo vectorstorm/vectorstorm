@@ -486,12 +486,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetMaterial:
 			{
 				vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
-				if ( material->GetName() == "BrushLine" )
-				{
-					int a = 10;
-					a++;
-				}
 				SetMaterial( material );
+				break;
+			}
+			case vsDisplayList::OpCode_SetRenderTarget:
+			{
+				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+				SetRenderTarget(target);
 				break;
 			}
 			case vsDisplayList::OpCode_SetTexture:
@@ -1467,6 +1468,13 @@ vsRenderer_OpenGL2::ScreenshotAlpha()
 	vsDeleteArray( pixels );
 
 	return image;
+}
+
+void
+vsRenderer_OpenGL2::SetRenderTarget( vsRenderTarget *target )
+{
+	target->Bind();
+	// TODO:  The OpenGL code should be in HERE, not in the vsRenderTarget!
 }
 
 bool
