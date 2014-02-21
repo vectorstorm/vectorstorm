@@ -21,8 +21,6 @@
 
 vsTransform2D	g_drawingCameraTransform = vsTransform2D::Zero;
 
-vsScene *		vsScene::s_current = NULL;
-
 vsScene::vsScene():
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
@@ -114,8 +112,6 @@ vsScene::ClearViewport()
 void
 vsScene::Update( float timeStep )
 {
-	s_current = this;
-
 	vsEntity *entity = m_entityList->GetNext();
 	vsEntity *next;
 	while ( entity != m_entityList )
@@ -138,17 +134,11 @@ vsScene::Update( float timeStep )
 	{
 		m_camera3D->Update( timeStep );
 	}
-
-	s_current = NULL;
 }
 
 void
 vsScene::Draw( vsDisplayList *list )
 {
-	s_current = this;
-
-	//	m_displayList->Clear();
-
 	if ( m_flatShading )
 	{
 		list->FlatShading();
@@ -224,8 +214,6 @@ vsScene::Draw( vsDisplayList *list )
 	list->ClearLights();
 	list->ClearFog();
 	list->SetMaterial(vsMaterial::White);
-
-	s_current = NULL;
 }
 
 void
@@ -347,7 +335,7 @@ public:
 
 	void				Init()
 	{
-		SetFOV( 2.0f );
+		SetFOV( 1.0f );
 		SetPosition( vsVector2D(0.5f * vsScreen::Instance()->GetAspectRatio() , 0.5f) );
 	}
 };

@@ -133,26 +133,26 @@ vsScreen::Update( float timeStep )
 	}
 }
 
-static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us about how much display list we're using until we're at least half full
+// static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us about how much display list we're using until we're at least half full
 //static long s_fifoHighWaterMark = 0;	// don't start warning us about how much display list we're using until we're at least half full
 
 void
 vsScreen::Draw()
 {
-	DrawWithPipeline(m_pipeline);
+	DrawPipeline(m_pipeline);
 }
 
 void
-vsScreen::DrawWithPipeline( vsRenderPipeline *pipeline )
+vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 {
 	m_currentSettings = &m_defaultRenderSettings;
 
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
 	pipeline->Draw(m_fifo);
-
 #ifdef DEBUG_SCENE
-	m_fifo->SetRenderTarget( NULL );
+	m_renderer->RenderDisplayList(m_fifo);
+	m_fifo->Clear();
 	m_scene[m_sceneCount-1]->Draw(m_fifo);
 #endif
 	m_renderer->RenderDisplayList(m_fifo);
@@ -160,69 +160,6 @@ vsScreen::DrawWithPipeline( vsRenderPipeline *pipeline )
 
 	m_currentSettings = NULL;
 }
-
-void
-vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
-{
-    m_currentSettings = &s;
-	if ( m_scene == NULL )
-		return;
-
-	m_renderer->PreRender(s);
-
-	for ( int i = 0; i < m_sceneCount; i++ )
-	{
-		if ( m_scene[i]->IsEnabled() )
-		{
-			m_fifo->Clear();
-			m_scene[i]->Draw( m_fifo );
-			m_renderer->RenderDisplayList(m_fifo);
-
-			if ( m_fifo->GetSize() > s_fifoHighWaterMark )
-			{
-				printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
-				s_fifoHighWaterMark = m_fifo->GetSize();
-			}
-		}
-	}
-
-	m_renderer->PostRender();
-    m_currentSettings = NULL;
-}
-
-#if 0
-bool
-vsScreen::DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target )
-{
-	return DrawSceneRangeToTarget( s, scene, scene, target );
-}
-
-bool
-vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target )
-{
-    m_currentSettings = &s;
-	bool rendered = false;
-	if ( m_scene )
-	{
-		m_subfifo->Clear();
-
-		m_currentRenderTarget = target;
-		if ( m_renderer->PreRenderTarget( s, target ) )
-		{
-			for ( int i = firstScene; i <= lastScene; i++ )
-			{
-				m_scene[i]->Draw( m_subfifo );
-				m_renderer->RenderDisplayList( m_subfifo );
-			}
-			m_renderer->PostRenderTarget( target );
-			rendered = true;
-		}
-		m_currentRenderTarget = NULL;
-	}
-    m_currentSettings = NULL;
-	return rendered;
-}
-#endif // 0
 
 vsScene *
 vsScreen::GetScene(int i)
@@ -245,14 +182,14 @@ vsScreen::GetTrueAspectRatio()
 {
 	if ( m_currentRenderTarget )
 	{
-        if ( m_currentSettings && m_currentSettings->useCustomAspectRatio )
-        {
-            return m_currentSettings->aspectRatio;
-        }
-        else
-        {
-            return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
-        }
+		if ( m_currentSettings && m_currentSettings->useCustomAspectRatio )
+		{
+			return m_currentSettings->aspectRatio;
+		}
+		else
+		{
+			return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
+		}
 	}
 
 	return m_aspectRatio;
