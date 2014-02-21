@@ -85,6 +85,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SetDrawMode",
 
 	"SetMaterial",
+	"SetRenderTarget",
+	"ResolveRenderTarget",
 
 	"Light",
 	"ClearLights",
@@ -1198,6 +1200,13 @@ vsDisplayList::SetRenderTarget( vsRenderTarget *target )
 }
 
 void
+vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
+{
+	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
+	m_fifo->WriteVoidStar( target );
+}
+
+void
 vsDisplayList::Light( const vsLight &light )
 {
 	m_fifo->WriteUint8( OpCode_Light );
@@ -1438,6 +1447,9 @@ vsDisplayList::PopOp()
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_SetRenderTarget:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_ResolveRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_Light:

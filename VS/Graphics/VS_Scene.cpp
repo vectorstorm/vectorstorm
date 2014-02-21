@@ -347,7 +347,7 @@ public:
 
 	void				Init()
 	{
-		SetFOV( 1.0f );
+		SetFOV( 2.0f );
 		SetPosition( vsVector2D(0.5f * vsScreen::Instance()->GetAspectRatio() , 0.5f) );
 	}
 };

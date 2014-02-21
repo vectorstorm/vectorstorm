@@ -71,9 +71,10 @@ public:
 
 	void			Update( float timeStep );
 	void			Draw();
+	void			DrawWithPipeline( vsRenderPipeline *pipeline );
 	void			DrawWithSettings(const vsRenderer::Settings &s);
-	bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
-	bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
+	// bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
+	// bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
 
 	vsImage *       Screenshot();
 	vsImage *       ScreenshotDepth();

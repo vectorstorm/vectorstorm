@@ -11,7 +11,7 @@
 #include "VS_DisplayList.h"
 #include "VS_RenderPipeline.h"
 #include "VS_RenderPipelineStage.h"
-#include "VS_RenderPipelineStageScene.h"
+#include "VS_RenderPipelineStageScenes.h"
 #include "VS_Renderer_OpenGL2.h"
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
@@ -100,9 +100,8 @@ vsScreen::CreateScenes(int count)
 		m_scene[i] = new vsScene;
 	m_sceneCount = count;
 
-	m_pipeline = new vsRenderPipeline(count);
-	for ( int i = 0; i < count; i++ )
-		m_pipeline->SetStage(i, new vsRenderPipelineStageScene( m_scene[i], m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
+	m_pipeline = new vsRenderPipeline(1);
+	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
 
 #if defined(DEBUG_SCENE)
 	m_scene[m_sceneCount-1]->SetDebugCamera();
@@ -140,12 +139,22 @@ static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us ab
 void
 vsScreen::Draw()
 {
-    //DrawWithSettings( m_defaultRenderSettings );
+	DrawWithPipeline(m_pipeline);
+}
+
+void
+vsScreen::DrawWithPipeline( vsRenderPipeline *pipeline )
+{
 	m_currentSettings = &m_defaultRenderSettings;
 
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
-	m_pipeline->Draw(m_fifo);
+	pipeline->Draw(m_fifo);
+
+#ifdef DEBUG_SCENE
+	m_fifo->SetRenderTarget( NULL );
+	m_scene[m_sceneCount-1]->Draw(m_fifo);
+#endif
 	m_renderer->RenderDisplayList(m_fifo);
 	m_renderer->PostRender();
 
@@ -181,6 +190,7 @@ vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
     m_currentSettings = NULL;
 }
 
+#if 0
 bool
 vsScreen::DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target )
 {
@@ -212,6 +222,7 @@ vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene,
     m_currentSettings = NULL;
 	return rendered;
 }
+#endif // 0
 
 vsScene *
 vsScreen::GetScene(int i)

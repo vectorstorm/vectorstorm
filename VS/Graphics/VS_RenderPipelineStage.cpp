@@ -9,7 +9,8 @@
 
 #include "VS_RenderPipelineStage.h"
 
-vsRenderPipelineStage::vsRenderPipelineStage()
+vsRenderPipelineStage::vsRenderPipelineStage():
+	m_enabled(true)
 {
 }
 

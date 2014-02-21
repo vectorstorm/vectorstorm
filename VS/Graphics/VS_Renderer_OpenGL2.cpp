@@ -321,9 +321,13 @@ vsRenderer_OpenGL2::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
 {
-	vsScreen *s = vsSystem::GetScreen();
 	float hei = t.GetScale().x;
-	float wid = s->GetAspectRatio() * hei;
+	float wid = hei * (m_currentRenderTarget->GetWidth() / (float)m_currentRenderTarget->GetHeight());
+	if ( m_currentSettings.useCustomAspectRatio )
+	{
+		wid = m_currentSettings.aspectRatio * hei;
+	}
+
 	float hw = wid * 0.5f;
 	float hh = hei * 0.5f;
 
@@ -360,6 +364,7 @@ vsRenderer_OpenGL2::PreRender(const Settings &s)
 	m_currentMaterial = NULL;
 
 	m_scene->Bind();
+	m_currentRenderTarget = m_scene;
 
 	if ( m_antialias )
 	{
@@ -389,7 +394,7 @@ void
 vsRenderer_OpenGL2::PostRender()
 {
 	m_scene->Resolve();
-	m_window->Bind();
+	// m_window->Bind();
 	m_scene->BlitTo(m_window);
 
 	vsTimerSystem::Instance()->EndRenderTime();
@@ -493,6 +498,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			{
 				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 				SetRenderTarget(target);
+				break;
+			}
+			case vsDisplayList::OpCode_ResolveRenderTarget:
+			{
+				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+				if ( target )
+					target->Resolve();
 				break;
 			}
 			case vsDisplayList::OpCode_SetTexture:
@@ -1473,13 +1485,25 @@ vsRenderer_OpenGL2::ScreenshotAlpha()
 void
 vsRenderer_OpenGL2::SetRenderTarget( vsRenderTarget *target )
 {
-	target->Bind();
 	// TODO:  The OpenGL code should be in HERE, not in the vsRenderTarget!
+	if ( target )
+	{
+		target->Bind();
+		m_currentRenderTarget = target;
+		target->Clear();// this doesn't belong here.  Separate display list call?
+	}
+	else
+	{
+		m_scene->Bind();
+		m_currentRenderTarget = m_scene;
+	}
 }
 
+/*
 bool
 vsRenderer_OpenGL2::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
 {
+	m_currentSettings = s;
 	target->Bind();
 	if ( m_antialias )
 	{
@@ -1500,6 +1524,7 @@ vsRenderer_OpenGL2::PostRenderTarget( vsRenderTarget *target )
 	m_scene->Bind();
 	return true;
 }
+*/
 
 #ifdef CHECK_GL_ERRORS
 void

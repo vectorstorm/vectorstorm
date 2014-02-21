@@ -14,9 +14,13 @@ class vsDisplayList;
 
 class vsRenderPipelineStage
 {
+	bool m_enabled;
 public:
 	vsRenderPipelineStage();
 	virtual ~vsRenderPipelineStage();
+
+	void SetEnabled(bool enable) { m_enabled = enable; }
+	bool IsEnabled() { return m_enabled; }
 
 	virtual void Draw( vsDisplayList *list );
 };

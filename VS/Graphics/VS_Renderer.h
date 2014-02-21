@@ -84,8 +84,8 @@ public:
 	virtual void	RawRenderDisplayList( vsDisplayList *list ) = 0;
 	virtual void	PostRender() = 0;
 
-	virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) = 0;
-	virtual bool	PostRenderTarget( vsRenderTarget *target ) = 0;
+	// virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) = 0;
+	// virtual bool	PostRenderTarget( vsRenderTarget *target ) = 0;
 
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }

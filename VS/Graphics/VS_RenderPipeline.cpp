@@ -37,7 +37,7 @@ vsRenderPipeline::Draw( vsDisplayList *list )
 {
 	for ( int i = 0; i < m_stageCount; i++ )
 	{
-		if ( m_stage[i] )
+		if ( m_stage[i] && m_stage[i]->IsEnabled() )
 			m_stage[i]->Draw(list);
 	}
 }

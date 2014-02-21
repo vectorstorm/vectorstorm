@@ -61,6 +61,7 @@ private:
 
 	vsRenderTarget *     m_window;
 	vsRenderTarget *     m_scene;
+	vsRenderTarget *     m_currentRenderTarget;
 
     vsRendererState      m_state;
 
@@ -117,9 +118,6 @@ public:
 	void	PostRender();
 
 	virtual vsRenderTarget *GetMainRenderTarget() { return m_scene; }
-
-	bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target );
-	bool	PostRenderTarget( vsRenderTarget *target );
 
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }
