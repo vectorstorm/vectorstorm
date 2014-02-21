@@ -44,7 +44,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		// and fragment shaders, and insert the same value into both)
 		if ( vString.find("#version") == 0 )
 		{
-			int64_t pos = vString.find('\n');
+			size_t pos = vString.find('\n');
 			if ( pos != vsString::npos )
 			{
 				version = std::string("#version ") + vString.substr(9, pos-9) + "\n";
@@ -53,7 +53,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		}
 		if ( fString.find("#version") == 0 )
 		{
-			int64_t pos = fString.find('\n');
+			size_t pos = fString.find('\n');
 			if ( pos != vsString::npos )
 			{
 				std::string fVersion = std::string("#version ") + fString.substr(9, pos-9) + "\n";
