@@ -62,6 +62,7 @@
 #include <VS/Graphics/VS_RenderBuffer.h>
 #include <VS/Graphics/VS_RenderPipeline.h>
 #include <VS/Graphics/VS_RenderPipelineStage.h>
+#include <VS/Graphics/VS_RenderPipelineStageBlit.h>
 #include <VS/Graphics/VS_RenderPipelineStageScenes.h>
 #include <VS/Graphics/VS_RenderQueue.h>
 #include <VS/Graphics/VS_RenderTarget.h>

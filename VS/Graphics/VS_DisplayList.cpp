@@ -1207,6 +1207,14 @@ vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 }
 
 void
+vsDisplayList::BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to )
+{
+	m_fifo->WriteUint8( OpCode_BlitRenderTarget );
+	m_fifo->WriteVoidStar( from );
+	m_fifo->WriteVoidStar( to );
+}
+
+void
 vsDisplayList::Light( const vsLight &light )
 {
 	m_fifo->WriteUint8( OpCode_Light );
@@ -1451,6 +1459,10 @@ vsDisplayList::PopOp()
 				break;
 			case OpCode_ResolveRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_BlitRenderTarget:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_Light:
 				m_fifo->ReadLight( &m_currentOp.data.light );

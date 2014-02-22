@@ -118,6 +118,7 @@ public:
 	void	PostRender();
 
 	virtual vsRenderTarget *GetMainRenderTarget() { return m_scene; }
+	virtual vsRenderTarget *GetPresentTarget() { return m_window; }
 
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }

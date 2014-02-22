@@ -11,6 +11,7 @@
 #include "VS_DisplayList.h"
 #include "VS_RenderPipeline.h"
 #include "VS_RenderPipelineStage.h"
+#include "VS_RenderPipelineStageBlit.h"
 #include "VS_RenderPipelineStageScenes.h"
 #include "VS_Renderer_OpenGL2.h"
 #include "VS_RenderTarget.h"
@@ -100,12 +101,25 @@ vsScreen::CreateScenes(int count)
 		m_scene[i] = new vsScene;
 	m_sceneCount = count;
 
-	m_pipeline = new vsRenderPipeline(1);
+	m_pipeline = new vsRenderPipeline(2);
 	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
+	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 
 #if defined(DEBUG_SCENE)
 	m_scene[m_sceneCount-1]->SetDebugCamera();
 #endif // DEBUG_SCENE
+}
+
+vsRenderTarget *
+vsScreen::GetMainRenderTarget()
+{
+	return m_renderer->GetMainRenderTarget();
+}
+
+vsRenderTarget *
+vsScreen::GetPresentTarget()
+{
+	return m_renderer->GetPresentTarget();
 }
 
 void

@@ -93,6 +93,7 @@ public:
 	void	SetViewportHeightPixels( int height ) { m_heightPixels = height; }
 
 	virtual vsRenderTarget *GetMainRenderTarget() = 0;
+	virtual vsRenderTarget *GetPresentTarget() = 0;
 
 	const Settings& GetCurrentSettings() const { return m_currentSettings; }
 

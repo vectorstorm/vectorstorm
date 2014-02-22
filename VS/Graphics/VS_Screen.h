@@ -53,6 +53,9 @@ public:
 	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
 	~vsScreen();
 
+	vsRenderTarget *	GetMainRenderTarget();
+	vsRenderTarget *	GetPresentTarget();
+
 	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
 
 	int				GetTrueWidth() { return m_width; }

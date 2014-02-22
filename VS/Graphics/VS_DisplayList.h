@@ -90,6 +90,7 @@ public:
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
 		OpCode_ResolveRenderTarget,
+		OpCode_BlitRenderTarget,
 
 		OpCode_Light,
 		OpCode_ClearLights,
@@ -131,6 +132,7 @@ public:
 		float		nearPlane;
 		float		farPlane;
 		char *p;
+		char *p2;
 
 		void Set(uint32_t id) {i = id;}
 		void Set(const vsBox2D & in) {box2D = in;}
@@ -141,6 +143,7 @@ public:
 		void Set(const vsMatrix4x4 &m, float fov_in, float nearPlane_in, float farPlane_in) {matrix4x4 = m; fov = fov_in; nearPlane = nearPlane_in; farPlane = farPlane_in;}
 		void Set(const vsString &s) {string = s;}
 		void SetPointer(char *pointer) {p = pointer;}
+		void SetPointer2(char *pointer) {p2 = pointer;}
 
 		uint32_t GetUInt() { return i; }
 		vsBox2D GetBox2D() {return box2D;}
@@ -300,6 +303,7 @@ public:
 	void	SetMaterial( vsMaterialInternal *material );
 	void	SetRenderTarget( vsRenderTarget *target );
 	void	ResolveRenderTarget( vsRenderTarget *target );
+	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
 
 	void	Light( const vsLight &light );
 	void	ClearLights();

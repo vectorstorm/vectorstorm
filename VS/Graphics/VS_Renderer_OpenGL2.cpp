@@ -393,9 +393,8 @@ vsRenderer_OpenGL2::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL2::PostRender()
 {
-	m_scene->Resolve();
-	// m_window->Bind();
-	m_scene->BlitTo(m_window);
+	// m_scene->Resolve();
+	// m_scene->BlitTo(m_window);
 
 	vsTimerSystem::Instance()->EndRenderTime();
 	//glFinish();
@@ -505,6 +504,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 				if ( target )
 					target->Resolve();
+				break;
+			}
+			case vsDisplayList::OpCode_BlitRenderTarget:
+			{
+				vsRenderTarget *from = (vsRenderTarget*)op->data.p;
+				vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
+				from->BlitTo(to);
 				break;
 			}
 			case vsDisplayList::OpCode_SetTexture:
