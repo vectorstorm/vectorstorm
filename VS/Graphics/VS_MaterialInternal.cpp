@@ -180,7 +180,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
-					m_shader = new vsShader( vString, fString, m_drawMode == DrawMode_Lit, (m_texture != NULL) );
+					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, (m_texture != NULL) );
 				}
 				else if ( label == "clampU" )
 				{

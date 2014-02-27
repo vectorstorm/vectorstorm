@@ -141,6 +141,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderPipelineStage.h
 	VS/Graphics/VS_RenderPipelineStageBlit.cpp
 	VS/Graphics/VS_RenderPipelineStageBlit.h
+	VS/Graphics/VS_RenderPipelineStageBloom.cpp
+	VS/Graphics/VS_RenderPipelineStageBloom.h
 	VS/Graphics/VS_RenderPipelineStageScenes.cpp
 	VS/Graphics/VS_RenderPipelineStageScenes.h
 	# VS/Graphics/VS_RenderScheme.cpp

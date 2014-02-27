@@ -19,8 +19,6 @@ class vsMatrix4x4;
 
 class vsShader
 {
-	uint32_t m_shader;
-
 	int32_t m_alphaRefLoc;
 	int32_t m_resolutionLoc;
 	int32_t m_globalTimeLoc;
@@ -31,10 +29,15 @@ class vsShader
 	int32_t m_worldToViewLoc;
 	int32_t m_viewToProjectionLoc;
 
+protected:
+	uint32_t m_shader;
+
 public:
 
 	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 	virtual ~vsShader();
+
+	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 
 	uint32_t GetShaderId() { return m_shader; }
 

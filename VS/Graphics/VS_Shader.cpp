@@ -22,21 +22,10 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 {
 	if ( vsRenderer_OpenGL2::Exists() )
 	{
-		vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
-		vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
-
-		uint32_t vSize = vShader.GetLength();
-		uint32_t fSize = fShader.GetLength();
-
-		vsStore *vStore = new vsStore(vSize);
-		vsStore *fStore = new vsStore(fSize);
-
-		vShader.Store( vStore );
-		fShader.Store( fStore );
-		vsString vString( vStore->GetReadHead(), vSize );
-		vsString fString( fStore->GetReadHead(), fSize );
-
 		vsString version;
+
+		vsString vString = vertexShader;
+		vsString fString = fragmentShader;
 
 		// check whether each shader begins with a #version statement.
 		// If so, let's remove and remember it, then re-insert it into
@@ -95,14 +84,37 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 
-		delete vStore;
-		delete fStore;
 	}
 }
 
 vsShader::~vsShader()
 {
 	vsRenderer_OpenGL2::DestroyShader(m_shader);
+}
+
+vsShader *
+vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
+{
+	vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
+	vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
+
+	uint32_t vSize = vShader.GetLength();
+	uint32_t fSize = fShader.GetLength();
+
+	vsStore *vStore = new vsStore(vSize);
+	vsStore *fStore = new vsStore(fSize);
+
+	vShader.Store( vStore );
+	fShader.Store( fStore );
+	vsString vString( vStore->GetReadHead(), vSize );
+	vsString fString( fStore->GetReadHead(), fSize );
+
+	vsShader *result =  new vsShader(vString, fString, lit, texture);
+
+	delete vStore;
+	delete fStore;
+
+	return result;
 }
 
 void
