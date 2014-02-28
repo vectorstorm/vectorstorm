@@ -104,17 +104,6 @@ vsRenderTarget::Bind()
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_textureSurface->m_fbo);
 	}
 	glViewport(0,0,m_viewportWidth, m_viewportHeight);
-	glMatrixMode(GL_PROJECTION);
-	if ( m_ortho )
-	{
-		glOrtho(0, GetWidth(), 0, GetHeight(), 0, 10);
-	}
-	else
-	{
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 }
 
 void

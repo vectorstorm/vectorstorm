@@ -90,8 +90,7 @@ private:
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
 
-	void				SetCameraTransform( const vsTransform2D &t );
-
+	void				FlushRenderState();
 	virtual void		SetMaterial(vsMaterialInternal *material);
 	//virtual void		SetDrawMode(vsDrawMode mode);
 

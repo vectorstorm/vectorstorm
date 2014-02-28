@@ -319,42 +319,6 @@ vsRenderer_OpenGL2::UpdateVideoMode(int width, int height, int depth, bool fulls
 }
 
 void
-vsRenderer_OpenGL2::SetCameraTransform( const vsTransform2D &t )
-{
-	float hei = t.GetScale().x;
-	float wid = hei * (m_currentRenderTarget->GetWidth() / (float)m_currentRenderTarget->GetHeight());
-	if ( m_currentSettings.useCustomAspectRatio )
-	{
-		wid = m_currentSettings.aspectRatio * hei;
-	}
-
-	float hw = wid * 0.5f;
-	float hh = hei * 0.5f;
-
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-
-	switch( vsSystem::Instance()->GetOrientation() )
-	{
-		case Orientation_Normal:
-		case Orientation_Six:
-			glOrtho( -hw, hw, hh, -hh, -1000, 1000 );
-			break;
-		case Orientation_Three:
-		case Orientation_Nine:
-			glOrtho( -hh, hh, hw, -hw, -1000, 1000 );
-			break;
-	}
-
-
-	glGetFloatv(GL_PROJECTION_MATRIX,(GLfloat*)&m_currentViewToProjection);
-
-	glMatrixMode( GL_MODELVIEW );
-
-	CheckGLError("SetCameraTransform");
-}
-
-void
 vsRenderer_OpenGL2::PreRender(const Settings &s)
 {
 	CheckGLError("PreRender");
@@ -362,6 +326,7 @@ vsRenderer_OpenGL2::PreRender(const Settings &s)
 
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
+	m_currentShader = NULL;
 
 	m_scene->Bind();
 	m_currentRenderTarget = m_scene;
@@ -408,28 +373,49 @@ vsRenderer_OpenGL2::PostRender()
 void
 vsRenderer_OpenGL2::RenderDisplayList( vsDisplayList *list )
 {
-	vsTransform2D defCamera;
-	defCamera.SetTranslation( vsVector2D::Zero );
-	defCamera.SetAngle( vsAngle::Zero );
-	defCamera.SetScale( vsVector2D(1000.0f,1000.0f) );
-	SetCameraTransform(defCamera);
+	// vsTransform2D defCamera;
+	// defCamera.SetTranslation( vsVector2D::Zero );
+	// defCamera.SetAngle( vsAngle::Zero );
+	// defCamera.SetScale( vsVector2D(1000.0f,1000.0f) );
+	// SetCameraTransform(defCamera);
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+	m_currentMaterial = NULL;
+	m_currentShader = NULL;
 	RawRenderDisplayList(list);
 
 	CheckGLError("RenderDisplayList");
 }
 
 void
+vsRenderer_OpenGL2::FlushRenderState()
+{
+	m_state.Flush();
+	if ( m_currentShader )
+	{
+		glUseProgram( m_currentShader->GetShaderId() );
+		m_currentShader->Prepare();
+		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
+		m_currentShader->SetFog( m_currentMaterial->m_fog );
+		m_currentShader->SetTextures( m_currentMaterial->m_texture );
+		m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
+		m_currentShader->SetWorldToView( m_currentWorldToView );
+		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+	}
+	else
+	{
+		glUseProgram( 0 );
+	}
+}
+
+void
 vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 {
 	m_currentCameraPosition = vsVector3D::Zero;
-
-	m_currentMaterial = NULL;
 
 	vsDisplayList::op *op = list->PopOp();
 	//vsVector3D	cursorPos;
@@ -469,14 +455,14 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			{
 				const vsColor &nextColor = op->data.GetColor();
 				glColor4f( nextColor.r, nextColor.g, nextColor.b, nextColor.a );
-				m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
+				// m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
 				break;
 			}
 			case vsDisplayList::OpCode_SetSpecularColor:
 			{
-				const vsColor &nextColor = op->data.GetColor();
-				glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&nextColor );
-				m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
+				// const vsColor &nextColor = op->data.GetColor();
+				// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&nextColor );
+				// m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
 				break;
 			}
 			case vsDisplayList::OpCode_MoveTo:
@@ -533,19 +519,12 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 #if !TARGET_OS_IPHONE
 			case vsDisplayList::OpCode_DrawPoint:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glBegin( GL_POINTS );
 					vsVector3D pos = op->data.GetVector3D();
 					glVertex3f( pos.x, pos.y, pos.z );
 				glEnd();
 
-				break;
-			}
-			case vsDisplayList::OpCode_CompiledDisplayList:
-			{
-				uint32_t id = op->data.GetUInt();
-				glCallList(id);
-				m_currentMaterial = NULL;	// display state could have been changed by the display list.
 				break;
 			}
 #endif // !TARGET_OS_IPHONE
@@ -588,12 +567,19 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				m_transformStack[++m_currentTransformStackLevel] = m;
 				m_currentLocalToWorld = m;
-				m_currentShader->SetLocalToWorld(m);
+				if ( m_currentShader )
+				{
+					m_currentShader->SetLocalToWorld(m);
+				}
 				break;
 			}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
 			{
 				m_currentWorldToView = op->data.GetMatrix4x4();
+				if ( m_currentShader )
+				{
+					m_currentShader->SetWorldToView(m_currentWorldToView);
+				}
 				break;
 			}
 			case vsDisplayList::OpCode_PopTransform:
@@ -606,12 +592,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_SetCameraTransform:
 			{
-				vsTransform2D t = op->data.GetTransform();
-				m_currentCameraPosition = vsVector3D::Zero;
-
-				SetCameraTransform(t);
-				t.SetScale(vsVector2D::One);
-				m_currentWorldToView = t.GetMatrix();
 				break;
 			}
 			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
@@ -619,6 +599,8 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glMatrixMode( GL_PROJECTION );
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				m_currentViewToProjection = m;
+				if ( m_currentShader )
+					m_currentShader->SetViewToProjection(m);
 				break;
 			}
 			case vsDisplayList::OpCode_VertexArray:
@@ -706,14 +688,12 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
 				m_currentColorArray = (vsColor *)op->data.p;
 				m_currentColorArrayCount = op->data.i;
-				m_currentMaterial = NULL;
 				break;
 			}
 			case vsDisplayList::OpCode_ColorBuffer:
 			{
 				m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
 				m_currentColorBuffer->BindColorBuffer( &m_state );
-				m_currentMaterial = NULL;
 				break;
 			}
 			case vsDisplayList::OpCode_ClearColorArray:
@@ -765,66 +745,66 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_LineList:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
 			case vsDisplayList::OpCode_LineStrip:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleList:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleStrip:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 				ib->TriStripBuffer();
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleListBuffer:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 				ib->TriListBuffer();
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 				ib->TriFanBuffer();
 				break;
 			}
 			case vsDisplayList::OpCode_LineListBuffer:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 				ib->LineListBuffer();
 				break;
 			}
 			case vsDisplayList::OpCode_LineStripBuffer:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 				ib->LineStripBuffer();
 				break;
 			}
 			case vsDisplayList::OpCode_TriangleFan:
 			{
-				m_state.Flush();
+				FlushRenderState();
 				glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
@@ -1030,7 +1010,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
     {
         m_state.SetBool( vsRendererState::Bool_DepthMask, false );
     }
-    m_currentShader = NULL;
 
 	switch ( material->m_stencil )
 	{
@@ -1056,6 +1035,7 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
 
+	vsAssert( m_currentMaterial != NULL, "In SetMaterial() with no material?" );
 	m_currentShader = NULL;
 	if ( material->m_shader )
 	{
@@ -1103,21 +1083,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 			default:
 				vsAssert(0,"Unknown drawmode??");
 		}
-	}
-	if ( m_currentShader )
-	{
-		glUseProgram( m_currentShader->GetShaderId() );
-		m_currentShader->Prepare();
-		m_currentShader->SetAlphaRef( material->m_alphaRef );
-		m_currentShader->SetFog( material->m_fog );
-		m_currentShader->SetTextures( material->m_texture );
-		m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
-		m_currentShader->SetWorldToView( m_currentWorldToView );
-		m_currentShader->SetViewToProjection( m_currentViewToProjection );
-	}
-	else
-	{
-		glUseProgram( 0 );
 	}
 
 	/*static bool doIt = false;
@@ -1304,7 +1269,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 			glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
 		}
 	}
-	m_state.Flush();
 }
 
 GLuint
@@ -1557,229 +1521,4 @@ vsRenderer_OpenGL2::CheckGLError(const char* string)
     vsAssert(false,errString);
 }
 #endif
-
-#define STRINGIFY(A)  #A
-
-const char *normalv = STRINGIFY(
-									   uniform bool fog;
-									   varying float fogFactor;
-									   void main(void)
-									   {
-										   gl_FrontColor = gl_Color;
-										   gl_Position    = ftransform();
-
-										   fogFactor = 1.0;
-										   if ( fog )
-										   {
-										   const float LOG2 = 1.442695;
-										   vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
-										   float distance = length(vVertex);
-										   fogFactor = exp2( -gl_Fog.density *
-															gl_Fog.density *
-															distance *
-															distance *
-															LOG2 );
-										   fogFactor = clamp(fogFactor, 0.0, 1.0);
-										   }
-									   }
-									   );
-
-const char *texv = STRINGIFY(
-									uniform bool fog;
-									varying float fogFactor;
-									void main(void)
-									{
-										gl_TexCoord[0] = gl_MultiTexCoord0;
-										gl_FrontColor = gl_Color;
-										gl_Position    = ftransform();
-
-										fogFactor = 1.0;
-										if ( fog )
-										{
-										const float LOG2 = 1.442695;
-										vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
-										float distance = length(vVertex);
-										fogFactor = exp2( -gl_Fog.density *
-														 gl_Fog.density *
-														 distance *
-														 distance *
-														 LOG2 );
-										fogFactor = clamp(fogFactor, 0.0, 1.0);
-										}
-									}
-									);
-
-const char *litv = STRINGIFY(
-									varying vec4 diffuse;
-									varying vec4 ambient;
-									varying vec3 normal;
-									varying vec3 lightDir;
-									varying vec3 halfVector;
-									varying float fogFactor;
-									uniform bool fog;
-
-									void main()
-									{
-										gl_TexCoord[0] = gl_MultiTexCoord0;
-										/* first transform the normal into eye space and
-										 normalize the result */
-										normal = normalize(gl_NormalMatrix * gl_Normal);
-
-										/* now normalize the light's direction. Note that
-										 according to the OpenGL specification, the light
-										 is stored in eye space. Also since we're talking about
-										 a directional light, the position field is actually direction */
-										lightDir = normalize(vec3(gl_LightSource[0].position));
-
-										/* Normalize the halfVector to pass it to the fragment shader */
-										halfVector = normalize(gl_LightSource[0].halfVector.xyz);
-
-										/* Compute the diffuse, ambient and globalAmbient terms */
-										diffuse = /*gl_FrontMaterial.diffuse*/ gl_Color * gl_LightSource[0].diffuse;
-										ambient = gl_FrontMaterial.ambient * gl_LightSource[0].ambient;
-										ambient += gl_LightModel.ambient * gl_FrontMaterial.ambient;
-
-										gl_Position = ftransform();
-
-										fogFactor = 1.0;
-										if ( fog )
-										{
-										const float LOG2 = 1.442695;
-										vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
-										float distance = length(vVertex);
-										fogFactor = exp2( -gl_Fog.density *
-														 gl_Fog.density *
-														 distance *
-														 distance *
-														 LOG2 );
-										fogFactor = clamp(fogFactor, 0.0, 1.0);
-										}
-									}
-									);
-
-const char *litf = STRINGIFY(
-									varying vec4 diffuse;
-									varying vec4 ambient;
-									varying vec3 normal;
-									varying vec3 lightDir;
-									varying vec3 halfVector;
-									varying float fogFactor;
-
-									void main()
-									{
-										vec3 n;
-										vec3 halfV;
-										float NdotL;
-										float NdotHV;
-
-										/* The ambient term will always be present */
-										vec4 color = diffuse * ambient;
-
-										/* a fragment shader can't write a varying variable, hence we need
-										 a new variable to store the normalized interpolated normal */
-										n = normalize(normal);
-
-										/* compute the dot product between normal and ldir */
-										NdotL = max(dot(n,lightDir)+1.0,0.0) * 0.5;
-										color += diffuse * NdotL;
-
-										if (NdotL > 0.0) {
-											halfV = normalize(halfVector);
-											NdotHV = max(dot(n,halfV),0.0);
-											color.rgb += gl_FrontMaterial.specular.rgb *
-													gl_LightSource[0].specular.rgb *
-													pow(NdotHV, gl_FrontMaterial.shininess);
-										}
-
-										gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb, fogFactor );
-										gl_FragColor.a = color.a;
-									}
-									);
-/*
-static const char *litTexv = STRINGIFY(
-									   void main(void)
-									   {
-										   vec3 Normal = gl_NormalMatrix * gl_Normal;
-
-										   vec3 Light = gl_LightSource[0].position.xyz;//normalize();
-
-										   float Diffuse = max(dot(Normal, Light),0.0);
-
-										   gl_TexCoord[0] = gl_MultiTexCoord0;
-										   gl_FrontColor = gl_Color;
-										   gl_FrontColor.rgb *= Diffuse;
-										   gl_Position = ftransform();
-									   }
-									   );
-*/
-const char *litTexf = STRINGIFY(
-									   uniform sampler2D source;
-									   uniform float alphaRef;
-
-									   varying vec4 diffuse;
-									   varying vec4 ambient;
-									   varying vec3 normal;
-									   varying vec3 lightDir;
-									   varying vec3 halfVector;
-									   varying float fogFactor;
-
-									   void main()
-									   {
-										   vec3 n;
-										   vec3 halfV;
-										   float NdotL;
-										   float NdotHV;
-
-										   /* The ambient term will always be present */
-										   vec4 color = diffuse * ambient;
-										   vec4 textureSample = texture2D(source, gl_TexCoord[0].st);
-										   if ( textureSample.a < alphaRef )
-											   discard;
-
-										   /* a fragment shader can't write a varying variable, hence we need
-											a new variable to store the normalized interpolated normal */
-										   n = normalize(normal);
-
-										   /* compute the dot product between normal and ldir */
-										   //NdotL = max(dot(n,lightDir),0.0);
-										   NdotL = max(dot(n,lightDir)+1.0,0.0) * 0.5;
-										   color += diffuse * NdotL;
-
-										   if (gl_FrontMaterial.shininess > 0.0 && NdotL > 0.0) {
-											   halfV = normalize(halfVector);
-											   NdotHV = max(dot(n,halfV),0.0);
-											   color.rgb += gl_FrontMaterial.specular.rgb *
-											   gl_LightSource[0].specular.rgb *
-											   pow(NdotHV, gl_FrontMaterial.shininess);
-										   }
-
-										   gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb * textureSample.rgb, fogFactor );
-										   gl_FragColor.a = color.a * textureSample.a;
-									   }
-);
-
-
-const char *normalf = STRINGIFY(
-									   varying float fogFactor;
-									   void main(void)
-									   {
-										   gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_Color.rgb, fogFactor );
-										   gl_FragColor.a = gl_Color.a;
-									   }
-);
-
-const char *texf = STRINGIFY(
-									uniform sampler2D source;
-									uniform float alphaRef;
-									varying float fogFactor;
-
-									void main(void)
-									{
-										vec4 color = texture2D(source, gl_TexCoord[0].st);
-										if ( color.a < alphaRef )
-											discard;
-										gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb * gl_Color.rgb, fogFactor );
-										gl_FragColor.a = color.a * gl_Color.a;
-									}
-);
 

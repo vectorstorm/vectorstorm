@@ -17,7 +17,7 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 
-#define MAX_TEXTURE_SLOTS (4)
+#define MAX_TEXTURE_SLOTS (8)
 //class vsTexture;
 class vsFile;
 class vsShader;

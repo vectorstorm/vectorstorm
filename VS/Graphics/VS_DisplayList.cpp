@@ -921,7 +921,6 @@ vsDisplayList::SetProjectionMatrix4x4( const vsMatrix4x4 &m )
 	m_fifo->WriteMatrix4x4( m );
 }
 
-
 void
 vsDisplayList::PopTransform()
 {

@@ -21,6 +21,7 @@ class vsCamera2D
 {
 protected:
 	vsTransform2D	m_transform;
+	float m_aspectRatio;
 
 public:
 
@@ -33,14 +34,17 @@ public:
 	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
 	float				GetFieldOfView() { return m_transform.GetScale().y; }
 	float				GetFOV() { return GetFieldOfView(); }
+	float				GetAspectRatio() { return m_aspectRatio; }
 
 	void				SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
 	void				SetAngle( const vsAngle &ang ) { m_transform.SetAngle( ang ); }
 	void				SetFieldOfView( float fov ) { m_transform.SetScale( vsVector2D( fov, fov ) ); }
 	void				SetFOV( float fov ) { SetFieldOfView(fov); }
+	void				SetAspectRatio( float ar ) { m_aspectRatio = ar; }
 
 		// this "GetCameraTransform()" function is giving an incorrect 'scale' value.  Need to fix it!
 	const vsTransform2D &		GetCameraTransform() { return m_transform; }
+	vsMatrix4x4			GetProjectionMatrix();
 
 	bool				IsPositionVisible( const vsVector2D &pos, float r=0.f );
 	bool				WrapAround( vsVector2D &pos, float r=0.f );

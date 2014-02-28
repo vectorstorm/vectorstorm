@@ -178,7 +178,7 @@ vsScene::Draw( vsDisplayList *list )
 	else
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
-		list->SetCameraTransform( m_camera->GetCameraTransform() );
+		list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
 	}
 	list->SetWorldToViewMatrix4x4( m_queue->GetWorldToViewMatrix() );
 

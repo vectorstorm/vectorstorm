@@ -140,8 +140,8 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
 	if ( m_textureLoc >= 0 )
 	{
-		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3 };
-		glUniform1iv( m_textureLoc, 4, value );
+		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+		glUniform1iv( m_textureLoc, MAX_TEXTURE_SLOTS, value );
 	}
 }
 

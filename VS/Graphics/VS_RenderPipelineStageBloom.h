@@ -13,6 +13,7 @@
 #include "VS_RenderPipelineStage.h"
 
 class vsDynamicMaterial;
+class vsMaterial;
 class vsRenderTarget;
 class vsShader;
 
@@ -20,17 +21,18 @@ class vsShader;
 
 class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 {
-	vsShader *m_combine;
-	vsShader *m_filter;
-	vsShader *m_hipass;
 	vsDynamicMaterial *m_hipassMaterial;
-	vsDynamicMaterial *m_filterMaterial;
+	vsDynamicMaterial *m_horizontalBlurMaterial[BLOOM_PASSES];
+	vsDynamicMaterial *m_verticalBlurMaterial[BLOOM_PASSES];
 	vsDynamicMaterial *m_combineMaterial;
+	vsDynamicMaterial *m_straight;
+	vsMaterial *m_white;
 	vsRenderTarget *m_from;
 	vsRenderTarget *m_to;
 	vsRenderTarget *m_pass[BLOOM_PASSES];
+	vsRenderTarget *m_pass2[BLOOM_PASSES];
 public:
-	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, vsRenderTarget *pass[BLOOM_PASSES] );
+	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, vsRenderTarget *pass[BLOOM_PASSES], vsRenderTarget *pass2[BLOOM_PASSES] );
 	virtual ~vsRenderPipelineStageBloom();
 
 	virtual void Draw( vsDisplayList *list );
