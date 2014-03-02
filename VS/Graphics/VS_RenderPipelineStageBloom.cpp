@@ -134,9 +134,6 @@ vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 	vsDelete( m_combineMaterial );
 	vsDelete( m_straight );
 	vsDelete( m_white );
-	// vsDelete( m_combine );
-	// vsDelete( m_filter );
-	// vsDelete( m_hipass );
 }
 
 void
@@ -153,12 +150,6 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		vsVector3D(ar,-1.f,0.f),
 		vsVector3D(ar,1.f,0.f)
 	};
-	// vsVector3D pv[4] = {
-	// 	vsVector3D(-1.f,-1.f,0.f),
-	// 	vsVector3D(-1.f,1.f,0.f),
-	// 	vsVector3D(1.f,-1.f,0.f),
-	// 	vsVector3D(1.f,1.f,0.f)
-	// };
 	vsVector2D t[4] = {
 		vsVector2D(0.f,1.f),
 		vsVector2D(0.f,0.f),
@@ -176,7 +167,6 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->VertexArray(v,4);
 	list->TexelArray(t,4);
 	list->TriangleStrip(ind,4);
-
 
 	// next, blit passes into each other.
 	//
@@ -209,14 +199,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->SetRenderTarget(m_to);
 	list->SetMaterial(m_combineMaterial);
 	list->TriangleStrip(ind,4);
-	// 	list->DrawFullScreen();
-
-	// TEMP:  for drawing the screen while the rest of this stuff is
-	// being implemented
 	list->ClearArrays();
-	// list->SetRenderTarget(m_to);
-	// list->BlitRenderTarget(m_pass[2], m_to);
-	// list->BlitRenderTarget(m_from, m_to);
 }
 
 
@@ -266,9 +249,6 @@ const char *passv = STRINGIFY(
 			c += coefficients[2] * texture2D(texture[0], tc + offset);
 
 			gl_FragColor = c;
-			// gl_FragColor.a = 1.0;
-			// gl_FragColor = texture2D(texture[0], tc);
-			// gl_FragColor = vec4(1.0,0.0,0.0,1.0);
 			}
 			);
 
