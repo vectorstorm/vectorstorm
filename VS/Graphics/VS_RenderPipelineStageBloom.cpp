@@ -193,7 +193,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		list->ResolveRenderTarget(m_pass[i]);
-		list->ResolveRenderTarget(m_pass2[i]);
+		// list->ResolveRenderTarget(m_pass2[i]);
 	}
 	// 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
@@ -223,7 +223,7 @@ const char *passv = STRINGIFY(
 			void main(void)
 			{
 				vec4 c = texture2D(texture[0], gl_TexCoord[0].st);
-				vec4 glow;
+				vec4 glow = vec4(0);
 				for ( int i = 1; i < 7; i++ )
 				{
 					glow += texture2D(texture[i], gl_TexCoord[0].st);
@@ -253,11 +253,11 @@ const char *passv = STRINGIFY(
 			);
 
 	const char *normalf = STRINGIFY(
-			uniform sampler2D source;
+			uniform sampler2D texture[8];
 
 			void main(void)
 			{
-			vec4 color = texture2D(source, gl_TexCoord[0].st);
+			vec4 color = texture2D(texture[0], gl_TexCoord[0].st);
 
 			float bloom = color.a;
 
