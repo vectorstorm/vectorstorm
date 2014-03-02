@@ -104,6 +104,7 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	}
 
 	m_combineMaterial = new vsDynamicMaterial;
+	m_combineMaterial->SetDrawMode(DrawMode_Absolute);
 	m_combineMaterial->SetShader(new vsBloomCombineShader);
 	m_combineMaterial->SetTexture(0, m_from->GetTexture());
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
