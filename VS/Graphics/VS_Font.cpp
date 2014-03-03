@@ -833,10 +833,10 @@ vsFont::LoadBMFont( vsFile *file )
 			g->texelBuffer.SetArray(g->texel,4);
 
 			vsRenderBuffer::PT	pt[4];
-			for ( int i = 0; i < 4; i++ )
+			for ( int j = 0; j < 4; j++ )
 			{
-				pt[i].position = g->vertex[i];
-				pt[i].texel = g->texel[i];
+				pt[j].position = g->vertex[j];
+				pt[j].texel = g->texel[j];
 			}
 			vsAssert(sizeof(pt) == 128,"Something's gone wrong??");
 			g->ptBuffer.SetArray(pt,4);
