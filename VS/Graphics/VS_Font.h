@@ -18,6 +18,7 @@
 class vsDisplayList;
 class vsFragment;
 class vsMaterial;
+class vsFile;
 
 #include "VS/Math/VS_Vector.h"
 
@@ -122,9 +123,8 @@ class vsFont
 
 	void		WrapLine(const vsString &string, float size, JustificationType j, float maxWidth);
 
-	vsRenderBuffer *		m_ptBuffer;
+	vsRenderBuffer *m_ptBuffer;
 	vsMaterial *	m_material;
-	vsTexture *		m_fontPage;
 	vsGlyph *		m_glyph;
 	int				m_glyphCount;
 
@@ -139,6 +139,8 @@ class vsFont
 
 	vsGlyph *		FindGlyphForCharacter( char letter );
 
+	void LoadOldFormat(vsFile *file);
+	void LoadBMFont(vsFile *file);
 public:
 
 	vsFont( const vsString &filename );

@@ -334,6 +334,7 @@ vsBuiltInFont::BuildDisplayListFromString( vsDisplayList *list, const char *stri
 vsDisplayList *
 vsBuiltInFont::CreateString_Internal(const char* string, float size, float capSize, JustificationType j, float maxWidth)
 {
+	size *= 2.f;
 	vsDisplayList *result = NULL;
 	vsDisplayList loader(1024 * 10);
 
@@ -561,7 +562,6 @@ vsBuiltInFont::GetKerningForSize( float size )
 }
 
 vsFont::vsFont( const vsString &filename ):
-	//m_fontPage(NULL),
 	m_glyph(NULL),
 	m_glyphCount(0)
 {
@@ -569,8 +569,29 @@ vsFont::vsFont( const vsString &filename ):
 	m_glyphTriangleList.SetArray( indices, 6 );
 
 	vsFile fontData(filename);
-	vsRecord r;
 
+	if ( filename.find(".fnt") == vsString::npos )	// This is awful.
+	{
+		LoadOldFormat(&fontData);
+	}
+	else
+	{
+		LoadBMFont(&fontData);
+	}
+}
+
+vsFont::~vsFont()
+{
+	vsDeleteArray( m_glyph );
+	vsDelete( m_material );
+	vsDelete( m_ptBuffer );
+}
+
+void
+vsFont::LoadOldFormat( vsFile *font )
+{
+	vsFile &fontData = *font;
+	vsRecord r;
 	int i = 0;
 
 	while( fontData.Record(&r) )
@@ -581,6 +602,8 @@ vsFont::vsFont( const vsString &filename ):
 			vsDynamicMaterial *mat = new vsDynamicMaterial();
 			mat->SetTexture(0, textureName);
 			mat->SetDrawMode(DrawMode_Normal);
+			mat->SetLayer(101);
+			mat->SetPostGlow(true);
 			m_material = mat;
 		}
 		else if ( r.GetLabel().AsString() == "Material" )
@@ -599,6 +622,7 @@ vsFont::vsFont( const vsString &filename ):
 			vsGlyph *g = &m_glyph[i++];
 
 			g->glyph = r.GetToken(0).AsInteger();
+			g->xAdvance = 0.f;
 
 			bool chomping = true;
 
@@ -686,14 +710,164 @@ vsFont::vsFont( const vsString &filename ):
 
 	vsDeleteArray(pt);
 
+
 }
 
-vsFont::~vsFont()
+vsToken * GetBMFontValue( vsRecord *r, const vsString& label )
 {
-	vsDeleteArray( m_glyph );
-	//vsDelete( m_fontPage );
-	vsDelete( m_material );
-	vsDelete( m_ptBuffer );
+	for ( int i = 0; i < r->GetTokenCount()-2; i++ )
+	{
+		if ( r->GetToken(i).GetType() == vsToken::Type_Label &&
+				r->GetToken(i).AsString() == label )
+		{
+			return &r->GetToken(i+2);
+		}
+	}
+	return NULL;
+}
+
+vsString GetBMFontValue_String( vsRecord *r, const vsString& label )
+{
+	for ( int i = 0; i < r->GetTokenCount()-2; i++ )
+	{
+		if ( r->GetToken(i).GetType() == vsToken::Type_Label &&
+				r->GetToken(i).AsString() == label )
+		{
+			return r->GetToken(i+2).AsString();
+		}
+	}
+	return "";
+}
+
+int GetBMFontValue_Integer( vsRecord *r, const vsString& label )
+{
+	for ( int i = 0; i < r->GetTokenCount()-2; i++ )
+	{
+		if ( r->GetToken(i).GetType() == vsToken::Type_Label &&
+				r->GetToken(i).AsString() == label )
+		{
+			return r->GetToken(i+2).AsInteger();
+		}
+	}
+	return 0;
+}
+
+void
+vsFont::LoadBMFont( vsFile *file )
+{
+	vsFile &fontData = *file;
+	vsRecord r;
+	int i = 0;
+
+	float size = 64;
+	float width = 512;
+	float height = 512;
+	float fontScaleCheat = 1.3f;	// adjustment to make BMFont size come out like mine.
+
+	while( fontData.Record(&r) )
+	{
+		vsString string = r.ToString();
+		vsString label = r.GetLabel().AsString();
+		if ( r.GetLabel().AsString() == "info" )
+		{
+			size = GetBMFontValue_Integer(&r, "size");
+		}
+		else if ( r.GetLabel().AsString() == "common" )
+		{
+			width = (float)GetBMFontValue_Integer(&r, "scaleW");
+			height = (float)GetBMFontValue_Integer(&r, "scaleH");
+		}
+		else if ( r.GetLabel().AsString() == "page" )
+		{
+			vsString filename = GetBMFontValue(&r, "file")->AsString();
+			m_material = new vsMaterial(filename);
+			// vsDynamicMaterial *m = new vsDynamicMaterial;
+			// m->SetTexture(0, filename);
+		}
+		else if ( r.GetLabel().AsString() == "chars" )
+		{
+			m_glyphCount = GetBMFontValue(&r, "count")->AsInteger();
+			m_glyph = new vsGlyph[m_glyphCount];
+		}
+		else if ( r.GetLabel().AsString() == "char" )
+		{
+			float glyphWidth = fontScaleCheat * GetBMFontValue_Integer(&r, "width") / size;
+			float glyphHeight = fontScaleCheat * GetBMFontValue_Integer(&r, "height") / size;
+			m_glyph[i].glyph = GetBMFontValue(&r, "id")->AsInteger();
+			// m_glyph[i].baseline = vsVector2D::Zero;
+			m_glyph[i].baseline.Set(
+					fontScaleCheat * -GetBMFontValue(&r, "xoffset")->AsInteger() / size,
+					fontScaleCheat * -GetBMFontValue(&r, "yoffset")->AsInteger() / size
+					);
+			// m_glyph[i].baseline += vsVector2D(size,size) * 0.5f;
+			m_glyph[i].xAdvance = fontScaleCheat * GetBMFontValue_Integer(&r, "xadvance") / size;
+
+			{
+				// my original code was measuring from the bottom --
+				// BMFont format measures from the top.  So we need to
+				// lift our characters up by one character-height in order
+				// to draw in the same position as the old font code.
+				float l = 0.f;
+				float t = -1.0f;
+				float w = glyphWidth;
+				float h = glyphHeight;
+
+				m_glyph[i].vertex[0].Set(l,t,0.f);
+				m_glyph[i].vertex[1].Set(l+w,t,0.f);
+				m_glyph[i].vertex[2].Set(l,t+h,0.f);
+				m_glyph[i].vertex[3].Set(l+w,t+h,0.f);
+			}
+			{
+				float l = GetBMFontValue_Integer(&r, "x") / width;
+				float t = GetBMFontValue_Integer(&r, "y") / height;
+				float w = GetBMFontValue_Integer(&r, "width") / width;
+				float h = GetBMFontValue_Integer(&r, "height") / height;
+
+				m_glyph[i].texel[0].Set(l,t);
+				m_glyph[i].texel[1].Set(l+w,t);
+				m_glyph[i].texel[2].Set(l,t+h);
+				m_glyph[i].texel[3].Set(l+w,t+h);
+			}
+			vsGlyph *g = &m_glyph[i];
+			g->vertexBuffer.SetArray(g->vertex,4);
+			g->texelBuffer.SetArray(g->texel,4);
+
+			vsRenderBuffer::PT	pt[4];
+			for ( int i = 0; i < 4; i++ )
+			{
+				pt[i].position = g->vertex[i];
+				pt[i].texel = g->texel[i];
+			}
+			vsAssert(sizeof(pt) == 128,"Something's gone wrong??");
+			g->ptBuffer.SetArray(pt,4);
+
+			i++;
+		}
+	}
+
+	m_ptBuffer = new vsRenderBuffer;
+
+	vsRenderBuffer::PT	*pt = new vsRenderBuffer::PT[m_glyphCount*4];
+
+	for ( int i = 0; i < m_glyphCount; i++ )
+	{
+		vsGlyph *glyph = &m_glyph[i];
+
+		uint16_t tlIndex[4];
+
+		for ( int j = 0; j < 4; j++ )
+		{
+			pt[i*4+j].position = glyph->vertex[j];
+			pt[i*4+j].texel = glyph->texel[i];
+
+			tlIndex[j] = i*4+j;
+		}
+
+		glyph->tlBuffer.SetArray(tlIndex,4);
+	}
+	m_ptBuffer->SetArray(pt, m_glyphCount*4);
+
+	vsDeleteArray(pt);
 }
 
 vsGlyph *
@@ -755,6 +929,7 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 vsFragment *
 vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D &bounds, const vsColor &color, const vsTransform3D &transform )
 {
+	size *= 1.0f;
 	size_t stringLength = string.length();
 
 	if ( stringLength == 0 )
@@ -921,6 +1096,7 @@ vsFont::CreateString_NoColor_Fragment(FontContext context, const vsString &strin
 void
 vsFont::CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j, float maxWidth, const vsColor &color )
 {
+	size *= 10.f;
 	list->SetMaterial( m_material );
 	list->SetColor( color );
 
