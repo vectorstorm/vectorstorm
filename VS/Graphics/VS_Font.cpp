@@ -762,7 +762,7 @@ vsFont::LoadBMFont( vsFile *file )
 	float size = 64;
 	float width = 512;
 	float height = 512;
-	float fontScaleCheat = 1.3f;	// adjustment to make BMFont size come out like mine.
+	float fontScaleCheat = 1.0f;	// adjustment to make BMFont size come out like mine.
 
 	while( fontData.Record(&r) )
 	{
@@ -776,6 +776,10 @@ vsFont::LoadBMFont( vsFile *file )
 		{
 			width = (float)GetBMFontValue_Integer(&r, "scaleW");
 			height = (float)GetBMFontValue_Integer(&r, "scaleH");
+
+			// we get two scanlines of blank in the texture, so rescale us a little
+			// to fill those two scanlines
+			fontScaleCheat = (size + 2.f) / size;
 		}
 		else if ( r.GetLabel().AsString() == "page" )
 		{

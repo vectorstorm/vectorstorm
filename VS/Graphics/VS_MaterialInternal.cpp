@@ -171,9 +171,17 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "texture" )
 				{
-					vsAssert( sr->GetTokenCount() == 1, "Texture directive with more than one token??" );
+					vsAssert( sr->GetTokenCount() >= 1, "Texture directive with more than one token??" );
 					vsString textureString = sr->String();
-					m_texture[m_textureCount++] = new vsTexture( textureString );
+					m_texture[m_textureCount] = new vsTexture( textureString );
+
+					if ( sr->GetTokenCount() == 2 )
+					{
+						vsString textureMode = sr->GetToken(1).AsString();
+						if ( textureMode == "nearest" )
+							m_texture[m_textureCount]->GetResource()->SetNearestSampling();
+					}
+					m_textureCount++;
 				}
 				else if ( label == "shader" )
 				{

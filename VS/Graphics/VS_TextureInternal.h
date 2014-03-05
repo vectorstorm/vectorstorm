@@ -41,6 +41,9 @@ public:
 	vsTextureInternal( const vsString &name, vsSurface *surface, bool depth=false );
 	~vsTextureInternal();
 
+	void		SetNearestSampling();
+	void		SetLinearSampling();
+
 	uint32_t		GetTexture() { return m_texture; }
 
 	float		GetWidth() { return m_width; }
