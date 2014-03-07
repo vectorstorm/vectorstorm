@@ -69,7 +69,7 @@ vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRen
 	vsRenderTarget::Type type = vsRenderTarget::Type_Texture;
 	if ( request.antialias )
 		type = vsRenderTarget::Type_Multisample;
-	vsRenderTarget *newTarget = new vsRenderTarget(vsRenderTarget::Type_Texture, settings);
+	vsRenderTarget *newTarget = new vsRenderTarget(type, settings);
 
 	RenderTargetRegistration *reg = new RenderTargetRegistration(newTarget, request);
 	reg->SetUsedByStage( stage );
