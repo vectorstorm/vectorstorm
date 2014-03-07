@@ -47,7 +47,6 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, (t == Type_Depth));
 	vsTextureManager::Instance()->Add(ti);
 	m_texture = new vsTexture(name);
-	m_ortho = settings.ortho;
 
 	Clear();
 }

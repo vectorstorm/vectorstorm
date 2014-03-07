@@ -21,19 +21,22 @@ class vsShader;
 
 class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 {
+	int m_dims;
 	vsDynamicMaterial *m_hipassMaterial;
 	vsDynamicMaterial *m_horizontalBlurMaterial[BLOOM_PASSES];
 	vsDynamicMaterial *m_verticalBlurMaterial[BLOOM_PASSES];
 	vsDynamicMaterial *m_combineMaterial;
 	vsDynamicMaterial *m_straight;
-	vsMaterial *m_white;
 	vsRenderTarget *m_from;
 	vsRenderTarget *m_to;
 	vsRenderTarget *m_pass[BLOOM_PASSES];
 	vsRenderTarget *m_pass2[BLOOM_PASSES];
 public:
-	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, vsRenderTarget *pass[BLOOM_PASSES], vsRenderTarget *pass2[BLOOM_PASSES] );
+	// 'dims' is how large our largest blur buffer should be.
+	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims = 512 );
 	virtual ~vsRenderPipelineStageBloom();
+
+	virtual void PreparePipeline( vsRenderPipeline *pipeline );
 
 	virtual void Draw( vsDisplayList *list );
 };

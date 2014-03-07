@@ -27,7 +27,6 @@ public:
 			depth(true),
 			linear(true),
 			mipMaps(false),
-			ortho(false),
 			stencil(false)
 		{
 		}
@@ -36,7 +35,6 @@ public:
 		bool	depth;
 		bool	linear;
 		bool	mipMaps;
-		bool	ortho;
 		bool	stencil;
 	};
 
@@ -82,7 +80,6 @@ private:
 	float		m_texWidth;
 	float		m_texHeight;
 	Type		m_type;
-	bool		m_ortho;
 
 public:
 

@@ -9,6 +9,8 @@
 
 #include "VS_RenderPipeline.h"
 #include "VS_RenderPipelineStage.h"
+#include "VS_RenderTarget.h"
+#include "VS_Renderer.h"
 
 vsRenderPipeline::vsRenderPipeline( int maxStageCount ):
 	m_stage( new vsRenderPipelineStage*[maxStageCount] ),
@@ -25,11 +27,69 @@ vsRenderPipeline::~vsRenderPipeline()
 	vsDeleteArray(m_stage);
 }
 
+vsRenderTarget *
+vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRenderPipelineStage *stage )
+{
+	// OKAY!  Let's start by checking all our existing registrations and see
+	// whether any of them will match this request.
+
+	for ( vsArrayStore<RenderTargetRegistration>::Iterator it = m_target.Begin();
+			it != m_target.End();
+			it++ )
+	{
+		RenderTargetRegistration *reg = *it;
+		if ( !reg->IsUsedByStage(stage) && reg->Matches(request) )
+		{
+			// we've found an existing render target which isn't used by this
+			// stage, and which matches our request.
+
+			reg->SetUsedByStage(stage);
+			return reg->GetRenderTarget();
+		}
+	}
+
+	// If we've gotten here, we haven't found a matching already-existing render
+	// target.  So let's create a new one!
+
+	vsSurface::Settings settings;
+	if ( request.type == RenderTargetRequest::Type_AbsoluteSize )
+	{
+		settings.width = request.width;
+		settings.height = request.height;
+	}
+	else
+	{
+		settings.width = vsRenderer::Instance()->GetWidthPixels() >> request.mipmapLevel;
+		settings.height = vsRenderer::Instance()->GetHeightPixels() >> request.mipmapLevel;
+	}
+	settings.depth = request.depth;
+	settings.linear = request.linear;
+	settings.mipMaps = request.mipmaps;
+	settings.stencil = request.stencil;
+	vsRenderTarget::Type type = vsRenderTarget::Type_Texture;
+	if ( request.antialias )
+		type = vsRenderTarget::Type_Multisample;
+	vsRenderTarget *newTarget = new vsRenderTarget(vsRenderTarget::Type_Texture, settings);
+
+	RenderTargetRegistration *reg = new RenderTargetRegistration(newTarget, request);
+	reg->SetUsedByStage( stage );
+	m_target.AddItem(reg);
+
+	return newTarget;
+}
+
 void
 vsRenderPipeline::SetStage( int stageId, vsRenderPipelineStage *stage )
 {
-	vsDelete( m_stage[stageId] );
+	// TODO:  Support changing stages.  The only bit not handled right now is
+	// cleaning up no-longer-in-use render targets so that they can be reused
+	// or deallocated.  Fixing this will probably involve setting up reference
+	// counting so the pipeline can figure out which stages are using which
+	// render targets.
+	vsAssert( m_stage[stageId] == NULL, "Resetting a pipeline stage isn't supported" );
 	m_stage[stageId] = stage;
+
+	stage->PreparePipeline(this);
 }
 
 void

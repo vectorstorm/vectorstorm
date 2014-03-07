@@ -11,6 +11,7 @@
 #define VS_RENDERPIPELINESTAGE_H
 
 class vsDisplayList;
+class vsRenderPipeline;
 
 class vsRenderPipelineStage
 {
@@ -18,6 +19,8 @@ class vsRenderPipelineStage
 public:
 	vsRenderPipelineStage();
 	virtual ~vsRenderPipelineStage();
+
+	virtual void PreparePipeline( vsRenderPipeline *pipeline ) {}
 
 	void SetEnabled(bool enable) { m_enabled = enable; }
 	bool IsEnabled() { return m_enabled; }

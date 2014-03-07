@@ -11,6 +11,7 @@
 #include "VS_Camera.h"
 #include "VS_DisplayList.h"
 #include "VS_DynamicMaterial.h"
+#include "VS_RenderPipeline.h"
 #include "VS_RenderTarget.h"
 #include "VS_Shader.h"
 
@@ -62,14 +63,53 @@ public:
 	}
 };
 
-vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, vsRenderTarget *pass[BLOOM_PASSES], vsRenderTarget *pass2[BLOOM_PASSES] ):
+vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims ):
+	m_dims(dims),
+	m_hipassMaterial(NULL),
+	m_combineMaterial(NULL),
+	m_straight(NULL),
 	m_from(from),
 	m_to(to)
 {
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		m_pass[i] = pass[i];
-		m_pass2[i] = pass2[i];
+		m_pass[i] = NULL;
+		m_pass2[i] = NULL;
+		m_horizontalBlurMaterial[i] = NULL;
+		m_verticalBlurMaterial[i] = NULL;
+	}
+}
+
+vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
+{
+	vsDelete( m_hipassMaterial );
+	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	{
+		vsDelete( m_horizontalBlurMaterial[i] );
+		vsDelete( m_verticalBlurMaterial[i] );
+	}
+	vsDelete( m_combineMaterial );
+	vsDelete( m_straight );
+}
+
+void
+vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
+{
+	RenderTargetRequest req;
+	req.type = RenderTargetRequest::Type_AbsoluteSize;
+	req.depth = false;
+	req.stencil = false;
+	req.linear = true;
+	req.mipmaps = false;
+	req.antialias = false;
+	req.share = true;
+
+	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	{
+		req.width = m_dims >> i;
+		req.height = m_dims >> i;
+		m_pass[i] = pipeline->RequestRenderTarget(req, this);
+		m_pass2[i] = pipeline->RequestRenderTarget(req, this);
 	}
 
 	// Normalize kernel coefficients
@@ -112,8 +152,6 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 		m_combineMaterial->SetTexture(1+i, m_pass[i]->GetTexture());
 	}
 
-	m_white = new vsMaterial("White");
-
 	m_straight = new vsDynamicMaterial();
 	m_straight->SetDrawMode(DrawMode_Absolute);
 	m_straight->SetColor(c_white);
@@ -122,19 +160,6 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	m_straight->SetZWrite(false);
 	m_straight->SetGlow(false);
 	m_straight->SetTexture(0, m_from->GetTexture());
-}
-
-vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
-{
-	vsDelete( m_hipassMaterial );
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
-	{
-		vsDelete( m_horizontalBlurMaterial[i] );
-		vsDelete( m_verticalBlurMaterial[i] );
-	}
-	vsDelete( m_combineMaterial );
-	vsDelete( m_straight );
-	vsDelete( m_white );
 }
 
 void

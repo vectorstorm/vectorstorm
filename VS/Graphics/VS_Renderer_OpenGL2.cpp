@@ -270,7 +270,6 @@ vsRenderer_OpenGL2::Resize()
 	settings.depth = 0;
 	settings.width = GetWidthPixels();
 	settings.height = GetHeightPixels();
-	settings.ortho = true;
 	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
 
     // Create 3D Scene Surface
@@ -281,7 +280,6 @@ vsRenderer_OpenGL2::Resize()
 	settings.depth = true;
     settings.linear = true;
 	settings.mipMaps = false;
-	settings.ortho = true;
 	settings.stencil = true;
 
 	if ( m_antialias )
