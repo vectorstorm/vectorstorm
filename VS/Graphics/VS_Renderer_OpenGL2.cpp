@@ -529,8 +529,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
-
 				break;
 			}
 			case vsDisplayList::OpCode_PushTranslation:
@@ -542,8 +540,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
-
 				break;
 			}
 			case vsDisplayList::OpCode_PushMatrix4x4:
@@ -552,7 +548,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
 				break;
 			}
 			case vsDisplayList::OpCode_SetMatrix4x4:
@@ -560,10 +555,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsMatrix4x4 &m = op->data.GetMatrix4x4();
 				m_transformStack[++m_currentTransformStackLevel] = m;
 				m_currentLocalToWorld = m;
-				if ( m_currentShader )
-				{
-					m_currentShader->SetLocalToWorld(m);
-				}
 				break;
 			}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
@@ -580,7 +571,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				vsAssert(m_currentTransformStackLevel > 0, "Renderer transform stack underflow??");
 				m_currentTransformStackLevel--;
 				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				m_currentShader->SetLocalToWorld(m_currentLocalToWorld);
 				break;
 			}
 			case vsDisplayList::OpCode_SetCameraTransform:
