@@ -340,9 +340,9 @@ include_directories(
 	)
 
 	if (UNIX)
-		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_DEBUG}" )
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELEASE}" )
+		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_DEBUG}" )
+		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
+		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
 	else ()
 		add_definitions("/FI\"VS_Prefix.h\"")
 	endif()
