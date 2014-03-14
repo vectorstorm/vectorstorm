@@ -591,6 +591,7 @@ void
 vsFont::LoadOldFormat( vsFile *font )
 {
 	m_size = 1.f;
+	m_lineSpacing = 0.4f;
 	vsFile &fontData = *font;
 	vsRecord r;
 	int i = 0;
@@ -775,6 +776,7 @@ vsFont::LoadBMFont( vsFile *file )
 		{
 			width = (float)GetBMFontValue_Integer(&r, "scaleW");
 			height = (float)GetBMFontValue_Integer(&r, "scaleH");
+			m_lineSpacing = (GetBMFontValue_Integer(&r, "lineHeight") - m_size) / m_size;
 		}
 		else if ( r.GetLabel().AsString() == "page" )
 		{
@@ -951,7 +953,7 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 	bool fits = false;
 
 	float lineHeight = 1.f;
-	float lineMargin = lineHeight * c_lineMarginFactor;
+	float lineMargin = m_lineSpacing;
 
 	while ( !fits )
 	{
@@ -1065,7 +1067,7 @@ vsFont::CreateString_NoColor_Fragment(FontContext context, const vsString &strin
 		WrapLine(string, size, j, maxWidth);
 
 		float lineHeight = 1.f;
-		float lineMargin = lineHeight * c_lineMarginFactor;
+		float lineMargin = m_lineSpacing;
 
 		float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
 		float baseOffsetDown = totalHeight * 0.5f;
@@ -1122,7 +1124,7 @@ vsFont::CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *l
 		WrapLine(string, size, j, maxWidth);
 
 		float lineHeight = 1.f;
-		float lineMargin = lineHeight * c_lineMarginFactor;
+		float lineMargin = m_lineSpacing;
 
 		float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
 		float baseOffsetDown = totalHeight * 0.5f;

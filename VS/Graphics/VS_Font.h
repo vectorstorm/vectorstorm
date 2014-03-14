@@ -128,6 +128,7 @@ class vsFont
 	vsGlyph *		m_glyph;
 	int				m_glyphCount;
 	float			m_size;
+	float			m_lineSpacing;
 
 	vsRenderBuffer		m_glyphTriangleList;
 
