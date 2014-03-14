@@ -466,19 +466,8 @@ vsDisplayList::Load( const vsString &filename )
 	return result;
 }
 
-vsDisplayList *
-vsDisplayList::Compile( const vsString &filename )
-{
-	vsDisplayList *result = vsDisplayList::Load(filename);
-	result->Compile();
-
-	return result;
-}
-
-
 vsDisplayList::vsDisplayList():
 	m_displayListId(0),
-	m_compiled(false),
 	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
@@ -494,7 +483,6 @@ vsDisplayList::vsDisplayList():
 
 vsDisplayList::vsDisplayList( size_t memSize ):
 	m_displayListId(0),
-	m_compiled(false),
 	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
@@ -537,13 +525,6 @@ vsDisplayList::~vsDisplayList()
 	{
 		m_instanceParent->m_instanceCount--;
 	}
-
-#if !TARGET_OS_IPHONE
-	if ( m_compiled )
-	{
-		glDeleteLists(m_displayListId,1);
-	}
-#endif // !TARGET_OS_IPHONE
 }
 
 vsDisplayList *
@@ -584,37 +565,6 @@ void
 vsDisplayList::Rewind()
 {
 	m_fifo->Rewind();
-}
-
-void
-vsDisplayList::Uncompile()
-{
-	if ( m_compiled )
-	{
-		ExtractFromCompiledList();
-		Uncompile_Internal();
-	}
-}
-
-void
-vsDisplayList::Uncompile_Internal()
-{
-#if !TARGET_OS_IPHONE
-	glDeleteLists(m_displayListId,1);
-#endif // TARGET_OS_IPHONE
-	m_compiled = false;
-}
-
-void
-vsDisplayList::Compile()
-{
-	if ( m_compiled )
-	{
-		Uncompile();
-	}
-	//Compile_Internal();
-
-	//s_compiledDisplayLists.AppendToCompiledList(this);
 }
 
 void
@@ -703,47 +653,6 @@ vsDisplayList::Mark()
 }
 
 void
-vsDisplayList::Compile_Internal()
-{
-#if !TARGET_OS_IPHONE
-	s_compiling = true;
-
-	m_displayListId = glGenLists(1);
-	glNewList(m_displayListId,GL_COMPILE);
-	Rewind();
-	vsScreen::Instance()->RenderDisplayList(this);
-	glEndList();
-	m_compiled = true;
-
-	s_compiling = false;
-#endif // TARGET_OS_IPHONE
-}
-
-void
-vsDisplayList::CompileAll()
-{
-	vsDisplayList *shuttle = s_compiledDisplayLists.GetNextCompiled();
-
-	while ( shuttle != &s_compiledDisplayLists )
-	{
-		shuttle->Compile_Internal();
-		shuttle = shuttle->GetNextCompiled();
-	}
-}
-
-void
-vsDisplayList::UncompileAll()
-{
-	vsDisplayList *shuttle = s_compiledDisplayLists.GetNextCompiled();
-
-	while ( shuttle != &s_compiledDisplayLists )
-	{
-		shuttle->Uncompile_Internal();
-		shuttle = shuttle->GetNextCompiled();
-	}
-}
-
-void
 vsDisplayList::SetColor( const vsColor &color )
 {
 	m_fifo->WriteUint8( OpCode_SetColor );
@@ -819,20 +728,9 @@ vsDisplayList::DrawPoint( const vsVector3D &pos )
 }
 
 void
-vsDisplayList::DrawCompiledDisplayList( unsigned int displayListId )
-{
-	m_fifo->WriteUint8( OpCode_CompiledDisplayList );
-	m_fifo->WriteUint32( displayListId );
-}
-
-void
 vsDisplayList::Append( const vsDisplayList &list )
 {
-	if ( list.m_compiled )
-	{
-		DrawCompiledDisplayList( list.m_displayListId );
-	}
-	else if ( list.m_instanceParent )
+	if ( list.m_instanceParent )
 	{
 		Append( *list.m_instanceParent );
 	}
@@ -882,6 +780,12 @@ vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetMatrix4x4 );
 	m_fifo->WriteMatrix4x4( m );
+}
+
+void
+vsDisplayList::SnapMatrix()
+{
+	m_fifo->WriteUint8( OpCode_SnapMatrix );
 }
 
 void
@@ -1523,9 +1427,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_DrawPoint:
 			DrawPoint( o->data.GetVector3D() );
-			break;
-		case OpCode_CompiledDisplayList:
-			DrawCompiledDisplayList( o->data.GetUInt() );
 			break;
 		case OpCode_VertexArray:
 			VertexArray( (vsVector3D *)o->data.p, o->data.GetUInt() );

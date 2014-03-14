@@ -557,6 +557,17 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_currentLocalToWorld = m;
 				break;
 			}
+			case vsDisplayList::OpCode_SnapMatrix:
+			{
+				vsMatrix4x4 m = m_transformStack[m_currentTransformStackLevel];
+				vsVector4D &t = m.w;
+				t.x = (int)t.x;
+				t.y = (int)t.y;
+				t.z = (int)t.z;
+				m_transformStack[++m_currentTransformStackLevel] = m;
+				m_currentLocalToWorld = m;
+				break;
+			}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
 			{
 				m_currentWorldToView = op->data.GetMatrix4x4();

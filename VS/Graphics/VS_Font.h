@@ -127,6 +127,7 @@ class vsFont
 	vsMaterial *	m_material;
 	vsGlyph *		m_glyph;
 	int				m_glyphCount;
+	float			m_size;
 
 	vsRenderBuffer		m_glyphTriangleList;
 
@@ -143,8 +144,14 @@ class vsFont
 	void LoadBMFont(vsFile *file);
 public:
 
+	// Note:  old-format files will have a native size of "1.0".  new-format
+	// BMFont files will have a native size as specified in the file.  The 'size'
+	// parameter of font creation functions is a multiplier on top of the default
+	// font size.
 	vsFont( const vsString &filename );
 	~vsFont();
+
+	float			GetNativeSize() { return m_size; }
 
 	void			CreateStringInDisplayList( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 	void			CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);

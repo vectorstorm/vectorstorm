@@ -249,7 +249,6 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// Since we're going to be restarting our OpenGL context, we need to recompile all of our compiled display lists!
 	// So before we tear down OpenGL, let's uncompile them all.
 
-	vsDisplayList::UncompileAll();
 	vsRenderBuffer::UnmapAll();
 
 	vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
@@ -285,7 +284,6 @@ vsSystem::UpdateVideoMode(int width, int height)
 
 	// And now that we're back, let's re-compile all our display lists.
 
-	vsDisplayList::CompileAll();
 	vsRenderBuffer::MapAll();
 }
 

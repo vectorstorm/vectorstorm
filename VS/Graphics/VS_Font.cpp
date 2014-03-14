@@ -22,9 +22,9 @@
 #include "VS_File.h"
 #include "VS_Record.h"
 
-#if 0
-#define USE_EXPLICIT_ARRAY	// if set, we'll use vertex/texel arrays, instead of VBOs.
-#endif
+// #define USE_EXPLICIT_ARRAY	// if set, we'll use vertex/texel arrays, instead of VBOs.
+
+// #define FONTS_DRAW_FROM_BASE	// if set, fonts get drawn with their baseline at 0.  If not, the middle of the font goes there.
 
 static int lookup_letterIndex( char letter );
 
@@ -590,6 +590,7 @@ vsFont::~vsFont()
 void
 vsFont::LoadOldFormat( vsFile *font )
 {
+	m_size = 1.f;
 	vsFile &fontData = *font;
 	vsRecord r;
 	int i = 0;
@@ -759,10 +760,8 @@ vsFont::LoadBMFont( vsFile *file )
 	vsRecord r;
 	int i = 0;
 
-	float size = 64;
 	float width = 512;
 	float height = 512;
-	float fontScaleCheat = 1.0f;	// adjustment to make BMFont size come out like mine.
 
 	while( fontData.Record(&r) )
 	{
@@ -770,16 +769,12 @@ vsFont::LoadBMFont( vsFile *file )
 		vsString label = r.GetLabel().AsString();
 		if ( r.GetLabel().AsString() == "info" )
 		{
-			size = GetBMFontValue_Integer(&r, "size");
+			m_size = GetBMFontValue_Integer(&r, "size");
 		}
 		else if ( r.GetLabel().AsString() == "common" )
 		{
 			width = (float)GetBMFontValue_Integer(&r, "scaleW");
 			height = (float)GetBMFontValue_Integer(&r, "scaleH");
-
-			// we get two scanlines of blank in the texture, so rescale us a little
-			// to fill those two scanlines
-			fontScaleCheat = (size + 2.f) / size;
 		}
 		else if ( r.GetLabel().AsString() == "page" )
 		{
@@ -795,16 +790,16 @@ vsFont::LoadBMFont( vsFile *file )
 		}
 		else if ( r.GetLabel().AsString() == "char" )
 		{
-			float glyphWidth = fontScaleCheat * GetBMFontValue_Integer(&r, "width") / size;
-			float glyphHeight = fontScaleCheat * GetBMFontValue_Integer(&r, "height") / size;
+			float glyphWidth = GetBMFontValue_Integer(&r, "width") / m_size;
+			float glyphHeight = GetBMFontValue_Integer(&r, "height") / m_size;
 			m_glyph[i].glyph = GetBMFontValue(&r, "id")->AsInteger();
 			// m_glyph[i].baseline = vsVector2D::Zero;
 			m_glyph[i].baseline.Set(
-					fontScaleCheat * -GetBMFontValue(&r, "xoffset")->AsInteger() / size,
-					fontScaleCheat * -GetBMFontValue(&r, "yoffset")->AsInteger() / size
+					-GetBMFontValue(&r, "xoffset")->AsInteger() / m_size,
+					-GetBMFontValue(&r, "yoffset")->AsInteger() / m_size
 					);
-			// m_glyph[i].baseline += vsVector2D(size,size) * 0.5f;
-			m_glyph[i].xAdvance = fontScaleCheat * GetBMFontValue_Integer(&r, "xadvance") / size;
+
+			m_glyph[i].xAdvance = GetBMFontValue_Integer(&r, "xadvance") / m_size;
 
 			{
 				// my original code was measuring from the bottom --
@@ -812,7 +807,7 @@ vsFont::LoadBMFont( vsFile *file )
 				// lift our characters up by one character-height in order
 				// to draw in the same position as the old font code.
 				float l = 0.f;
-				float t = -1.0f;
+				float t = -1.f;
 				float w = glyphWidth;
 				float h = glyphHeight;
 
@@ -985,6 +980,20 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 	float topLinePosition = baseOffsetDown - totalHeight + lineHeight;
 
 	vsVector2D offset(0.f,topLinePosition);
+#ifdef FONTS_DRAW_FROM_BASE
+	// TODO:  This seems sensible, but it gets complicated when strings wrap --
+	// do we move the top line in that case?  Maybe this needs to be (yet) more
+	// configurable settings for the font drawing code?
+	float totalHeight = lineHeight * m_size;
+	if ( m_wrappedLineCount > 1 )
+	{
+		totalHeight += (lineHeight + lineMargin) * (m_wrappedLineCount-1);
+	}
+	float totalExtraHeight = totalHeight - (lineHeight * m_size);
+	float baseOffsetDown = vsFloor(totalExtraHeight * 0.5f);
+	float topLinePosition = baseOffsetDown - totalExtraHeight;
+	vsVector2D offset(0.f,topLinePosition / m_size);
+#endif
 
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
@@ -1004,12 +1013,16 @@ vsFont::CreateString_Fragment(FontContext context, const vsString &string, float
 
 	vsDisplayList *list = new vsDisplayList(60);
 
-	list->PushTransform( transform );
+	if ( transform != vsTransform3D::Identity )
+		list->PushTransform( transform );
+	list->SnapMatrix();
 	list->SetColor( color );
 	list->BindBuffer( ptBuffer );
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
 	list->PopTransform();
+	if ( transform != vsTransform3D::Identity )
+		list->PopTransform();
 
 	fragment->SetDisplayList( list );
 

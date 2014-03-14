@@ -111,6 +111,8 @@ public:
 		OpCode_SetViewport,
 		OpCode_ClearViewport,
 
+		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix set.
+
 		OpCode_Debug,
 
 		OpCode_MAX
@@ -167,7 +169,6 @@ private:
 	op  m_currentOp;
 
 	unsigned long	m_displayListId;
-	bool			m_compiled;
 	bool			m_ownFifo;
 
 	vsDisplayList *	m_next;					// if we're compiled, then we'll be put into a linked list of compiled display lists.
@@ -202,14 +203,6 @@ private:
 	static vsDisplayList *	Load_Obj(const vsString &);
 	void					Write_CVec( const vsString &filename );
 
-	// ====INTERNAL USE ONLY====
-	static void	UncompileAll();
-	static void	CompileAll();
-
-	void	Uncompile_Internal();	//
-	void	Compile_Internal();		//
-	// ====INTERNAL USE ONLY====
-
 public:
 
 	// for use by vsFragment.
@@ -217,7 +210,6 @@ public:
 
 	static vsDisplayList *	Load(const vsString &);
 	static vsDisplayList *	Load( vsRecord *record );
-	static vsDisplayList *	Compile(const vsString &);
 
 			vsDisplayList();		// if no memory size is specified, we size dynamically, in 4kb chunks.
 			vsDisplayList(size_t memSize);
@@ -233,11 +225,6 @@ public:
 	void	Clear();
 	void	Rewind();	// reset to the start of the display list
 
-	void	Uncompile();	// uncompile this display list.		Shouldn't ever need to call this;  Compile() will call this automatically, if the list had previously been compiled.
-	void	Compile();		// compile this display list.
-
-	bool	IsCompiled() { return m_compiled; }
-
 	void		Mark();		// crunch from the last mark to the current position.
 
 	 //	The following functions do not draw primitives immediately;  instead, they add them to this display list.
@@ -251,12 +238,12 @@ public:
 	void	LineTo( const vsVector3D &pos );
 	void	DrawPoint( const vsVector3D &pos );
 	void	DrawLine( const vsVector3D &from, const vsVector3D &to );
-	void	DrawCompiledDisplayList( unsigned int displayListId );
 	void	PushTransform( const vsTransform2D &t );
 	void	PushTransform( const vsTransform3D &t );
 	void	PushTranslation( const vsVector3D &translation );
 	void	PushMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
+	void	SnapMatrix();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!

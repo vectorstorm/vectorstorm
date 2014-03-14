@@ -260,13 +260,6 @@ vsScreen::SupportsShaders()
 	return true;
 }
 
-
-void
-vsScreen::RenderDisplayList( vsDisplayList *list )
-{
-	m_renderer->RawRenderDisplayList(list);
-}
-
 vsImage *
 vsScreen::Screenshot()
 {
