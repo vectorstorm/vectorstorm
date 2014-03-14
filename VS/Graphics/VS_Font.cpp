@@ -1115,7 +1115,6 @@ vsFont::CreateString_NoColor_Fragment(FontContext context, const vsString &strin
 void
 vsFont::CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j, float maxWidth, const vsColor &color )
 {
-	size *= 10.f;
 	list->SetMaterial( m_material );
 	list->SetColor( color );
 
