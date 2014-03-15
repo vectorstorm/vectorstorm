@@ -39,57 +39,29 @@ struct vsGlyph
 {
 	int		glyph;
 
-	vsVector3D	vertex[4];		// our vertices
-	vsVector2D	texel[4];		// our texture coordinates
+	vsVector3D	vertex[4];        // our vertices
+	vsVector2D	texel[4];         // our texture coordinates
 
-	vsRenderBuffer	tlBuffer;				// my triangle list, referencing the global font pt-format VBO
+	vsRenderBuffer	tlBuffer;     // my triangle list, referencing the global font pt-format VBO
 
 	vsRenderBuffer	ptBuffer;
-	vsRenderBuffer	vertexBuffer;			// my vbo of vertex data.
-	vsRenderBuffer	texelBuffer;			// my vbo of texel data.
+	vsRenderBuffer	vertexBuffer; // my vbo of vertex data.
+	vsRenderBuffer	texelBuffer;  // my vbo of texel data.
 
-	vsVector2D	baseline;		// where do we start drawing from?
-	float		xAdvance;		// how far do we need to move our cursor, after drawing this glyph?
+	vsVector2D	baseline;         // where do we start drawing from?
+	float		xAdvance;         // how far do we need to move our cursor, after drawing this glyph?
 };
 
 class vsFont
 {
-	struct FragmentConstructor
-	{
-		vsRenderBuffer::PT *		ptArray;
-		uint16_t *			tlArray;
+	vsRenderBuffer * m_ptBuffer;
+	vsMaterial *     m_material;
+	vsGlyph *        m_glyph;
+	int              m_glyphCount;
+	float            m_size;
+	float            m_lineSpacing;
 
-		int					ptIndex;
-		int					tlIndex;
-	};
-
-	void AppendCharacterToList( FontContext context, char c, vsDisplayList *list, vsVector2D &offset, float size );
-//	void			AppendCharacterToArrays( FontContext context, char c, vsVector3D *vertex, vsVector3D *texel, vsVector2D &offset, float size );
-	vsDisplayList * CreateString_Internal( FontContext context, const char* string, float size, JustificationType j, float maxWidth = -1.f);
-	vsFragment * CreateString_Fragment_Internal(FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D &bounds, const vsColor &color, const vsTransform3D &transform, bool withColor );
-
-	void		BuildDisplayListFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero, const vsColor &color = c_white);
-	void		BuildDisplayListFromCharacter( FontContext context, vsDisplayList *list, char c, float size);
-
-	void		AppendStringToArrays( vsFont::FragmentConstructor *constructor, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero);
-
-	void		WrapLine(const vsString &string, float size, JustificationType j, float maxWidth);
-
-	vsRenderBuffer *m_ptBuffer;
-	vsMaterial *	m_material;
-	vsGlyph *		m_glyph;
-	int				m_glyphCount;
-	float			m_size;
-	float			m_lineSpacing;
-
-	vsRenderBuffer		m_glyphTriangleList;
-
-#define MAX_WRAPPED_LINES (50)
-
-	vsString	m_wrappedLine[MAX_WRAPPED_LINES];
-	int			m_wrappedLineCount;
-
-
+	vsRenderBuffer   m_glyphTriangleList;
 
 	vsGlyph *		FindGlyphForCharacter( char letter );
 
@@ -97,39 +69,13 @@ class vsFont
 	void LoadBMFont(vsFile *file);
 public:
 
-	// Note:  old-format files will have a native size of "1.0".  new-format
-	// BMFont files will have a native size as specified in the file.  The 'size'
-	// parameter of font creation functions is a multiplier on top of the default
-	// font size.
 	vsFont( const vsString &filename );
 	~vsFont();
 
 	float			GetNativeSize() { return m_size; }
 
-	void			CreateStringInDisplayList( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
-	void			CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
-
-	vsDisplayList *	CreateString( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
-
-	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D& bounds, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
-	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
-
-	vsDisplayList *	CreateString_NoColor( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
-	vsDisplayList *	CreateCharacter( FontContext context, char letter, float size);
-
 	float			GetCharacterWidth(char letter, float size);
 	float			GetStringWidth(const vsString &string, float size);
-
-	float			GetKerningForSize(float size);
-
-
-
-	// convenience functions, for avoiding FontContext parameters
-	vsDisplayList *	CreateString2D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_2D, string, size, j, maxWidth ); }
-	vsDisplayList *	CreateCharacter2D( char letter, float size) { return CreateCharacter( FontContext_2D, letter, size ); }
-
-	vsDisplayList *	CreateString3D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_3D, string, size, j, maxWidth ); }
-	vsDisplayList *	CreateCharacter3D( char letter, float size) { return CreateCharacter( FontContext_3D, letter, size ); }
 
 	friend class vsFontRenderer;
 };

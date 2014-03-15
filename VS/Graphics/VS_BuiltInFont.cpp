@@ -329,7 +329,7 @@ vsBuiltInFont::CreateString_Internal(const char* string, float size, float capSi
 	return result;
 }
 
-//#define MAX_WRAPPED_LINES (50)
+#define MAX_WRAPPED_LINES (50)
 
 vsString	s_wrappedLine[MAX_WRAPPED_LINES];
 int			s_wrappedLineCount = 0;
