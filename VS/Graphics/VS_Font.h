@@ -66,7 +66,7 @@ class vsFont
 	void AppendCharacterToList( FontContext context, char c, vsDisplayList *list, vsVector2D &offset, float size );
 //	void			AppendCharacterToArrays( FontContext context, char c, vsVector3D *vertex, vsVector3D *texel, vsVector2D &offset, float size );
 	vsDisplayList * CreateString_Internal( FontContext context, const char* string, float size, JustificationType j, float maxWidth = -1.f);
-	vsFragment * CreateString_Fragment_Internal( FontContext context, const char* string, float size, JustificationType j, float maxWidth = -1.f);
+	vsFragment * CreateString_Fragment_Internal(FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D &bounds, const vsColor &color, const vsTransform3D &transform, bool withColor );
 
 	void		BuildDisplayListFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset = vsVector2D::Zero, const vsColor &color = c_white);
 	void		BuildDisplayListFromCharacter( FontContext context, vsDisplayList *list, char c, float size);
@@ -109,19 +109,9 @@ public:
 	void			CreateStringInDisplayList( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 	void			CreateStringInDisplayList_NoClear( FontContext context, vsDisplayList *list, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 
-
-	vsDisplayList *	CreateString2D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_2D, string, size, j, maxWidth ); }
-	vsDisplayList *	CreateCharacter2D( char letter, float size) { return CreateCharacter( FontContext_2D, letter, size ); }
-
-	vsDisplayList *	CreateString3D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_3D, string, size, j, maxWidth ); }
-	vsDisplayList *	CreateCharacter3D( char letter, float size) { return CreateCharacter( FontContext_3D, letter, size ); }
-
 	vsDisplayList *	CreateString( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white);
 
 	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D& bounds, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
-//	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, const vsBox2D& bounds);
-
-	vsFragment *	CreateString_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f, const vsColor &color = c_white, const vsTransform3D &transform = vsTransform3D::Identity );
 	vsFragment *	CreateString_NoColor_Fragment( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
 
 	vsDisplayList *	CreateString_NoColor( FontContext context, const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f);
@@ -131,6 +121,17 @@ public:
 	float			GetStringWidth(const vsString &string, float size);
 
 	float			GetKerningForSize(float size);
+
+
+
+	// convenience functions, for avoiding FontContext parameters
+	vsDisplayList *	CreateString2D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_2D, string, size, j, maxWidth ); }
+	vsDisplayList *	CreateCharacter2D( char letter, float size) { return CreateCharacter( FontContext_2D, letter, size ); }
+
+	vsDisplayList *	CreateString3D( const vsString &string, float size, JustificationType j = Justification_Left, float maxWidth = -1.f) { return CreateString( FontContext_3D, string, size, j, maxWidth ); }
+	vsDisplayList *	CreateCharacter3D( char letter, float size) { return CreateCharacter( FontContext_3D, letter, size ); }
+
+	friend class vsFontRenderer;
 };
 
 

@@ -56,6 +56,7 @@
 #include <VS/Graphics/VS_Fog.h>
 #include <VS/Graphics/VS_Fragment.h>
 #include <VS/Graphics/VS_Font.h>
+#include <VS/Graphics/VS_FontRenderer.h>
 #include <VS/Graphics/VS_Light.h>
 #include <VS/Graphics/VS_Material.h>
 #include <VS/Graphics/VS_Mesh.h>

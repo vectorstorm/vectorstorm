@@ -397,16 +397,15 @@ vsFont::CreateString( FontContext context, const vsString &string, float size, J
 	return result;
 }
 
-vsFragment *
-vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, float maxWidth, const vsColor &color, const vsTransform3D &transform )
-{
-	return CreateString_Fragment( context, string, size, j, vsBox2D::CenteredBox( vsVector2D(maxWidth, -1) ), color, transform );
-}
+// vsFragment *
+// vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, float maxWidth, const vsColor &color, const vsTransform3D &transform )
+// {
+// 	return CreateString_Fragment( context, string, size, j, vsBox2D::CenteredBox( vsVector2D(maxWidth, -1) ), color, transform );
+// }
 
 vsFragment *
 vsFont::CreateString_Fragment(FontContext context, const vsString &string, float size, JustificationType j, const vsBox2D &bounds, const vsColor &color, const vsTransform3D &transform )
 {
-	size *= 1.0f;
 	size_t stringLength = string.length();
 
 	if ( stringLength == 0 )
@@ -902,6 +901,4 @@ vsFont::GetCharacterWidth( char c, float size )
 
 	return width;
 }
-
-
 

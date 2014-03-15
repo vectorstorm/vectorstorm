@@ -113,6 +113,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Fog.h
 	VS/Graphics/VS_Font.cpp
 	VS/Graphics/VS_Font.h
+	VS/Graphics/VS_FontRenderer.cpp
+	VS/Graphics/VS_FontRenderer.h
 	VS/Graphics/VS_Fragment.cpp
 	VS/Graphics/VS_Fragment.h
 	VS/Graphics/VS_Light.cpp
