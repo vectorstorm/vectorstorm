@@ -12,7 +12,7 @@
 #include "VS_Heap.h"
 
 #include "VS_DisplayList.h"
-#include "VS_Font.h"
+#include "VS_BuiltInFont.h"
 #include "VS_MaterialManager.h"
 #include "VS_Preferences.h"
 #include "VS_Random.h"

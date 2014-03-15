@@ -97,6 +97,8 @@ set(FILES_SOURCES
 	VS/Files/VS_Token.h
 	)
 set(GRAPHICS_SOURCES
+	VS/Graphics/VS_BuiltInFont.cpp
+	VS/Graphics/VS_BuiltInFont.h
 	VS/Graphics/VS_Camera.cpp
 	VS/Graphics/VS_Camera.h
 	VS/Graphics/VS_Color.cpp

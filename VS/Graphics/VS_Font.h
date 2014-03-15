@@ -35,54 +35,6 @@ enum FontContext
 	FontContext_3D		// in 3D, fonts assume y-up
 };
 
-
-// TO ME:  CONSIDER THE FOLLOWING STRUCT BEFORE COMMITTING!
-
-struct vsFontDrawParameters		// font drawing should take one of these!!!
-{
-	FontContext			context;
-	JustificationType	justification;
-
-	vsColor				color;
-	bool				setColor;
-
-	float				maxWidth;
-
-	vsFontDrawParameters():
-		context(FontContext_2D),
-		justification(Justification_Left),
-		color(c_white),
-		setColor(true),
-		maxWidth(-1)
-	{
-	}
-};
-
-class vsBuiltInFont
-{
-	static void AppendCharacterToList( char c, vsDisplayList *list, const vsVector2D &offset, float size );
-	static vsDisplayList * CreateString_Internal(const char* string, float size, float capSize, JustificationType j, float maxWidth = -1.f);
-
-	static void		BuildDisplayListFromString(vsDisplayList * list, const char* string, float size, float capSize, JustificationType j, const vsVector2D &offset = vsVector2D::Zero);
-	static void		BuildDisplayListFromCharacter( vsDisplayList *list, char c, float size, float capSize);
-
-	static void		WrapLine(const vsString &string, float size, float capSize, JustificationType j, float maxWidth);
-
-public:
-
-	static void				Init();	// called internally
-
-	static void				CreateStringInDisplayList(vsDisplayList *list, const vsString &string, float size, float capSize=-1.f, JustificationType j = Justification_Left, float maxWidth = -1.f);
-
-	static vsDisplayList *	CreateString(const vsString &string, float size, float capSize=-1.f, JustificationType j = Justification_Left, float maxWidth = -1.f);
-	static vsDisplayList *	CreateCharacter(char letter, float size, float capSize=-1.f);
-
-	static float			GetCharacterWidth(char letter, float size, float capSize=-1.f);
-	static float			GetStringWidth(const vsString &string, float size, float capSize=-1.f);
-
-	static float			GetKerningForSize(float size);
-};
-
 struct vsGlyph
 {
 	int		glyph;
