@@ -1628,113 +1628,91 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 	}
 	else
 	{
-		//vsTransform2D currentTransform;
 		vsTransform2D	transformStack[20];
 		transformStack[0] = vsTransform2D::Zero;
 		int				transformStackLevel = 0;
 		vsVector3D		*currentVertexArray = NULL;
-		//int			currentVertexArraySize = 0;
+		vsRenderBuffer *currentVertexBuffer = NULL;
 
 		Rewind();
 		op *o = PopOp();
 
 		while(o)
 		{
-			if ( o->type == OpCode_PushTransform )
+			switch( o->type )
 			{
-				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.transform;
-				transformStackLevel++;
-			}
-			else if ( o->type == OpCode_PushTranslation )
-			{
-				vsTransform2D transform;
-				transform.SetTranslation( o->data.GetVector3D() );
-				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * transform;
-				transformStackLevel++;
-			}
-			else if ( o->type == OpCode_PopTransform )
-			{
-				transformStackLevel--;
-			}
-			else if ( o->type == OpCode_VertexArray )
-			{
-				vsVector3D pos;
-				int count = o->data.GetUInt();
-				float *shuttle = (float *) o->data.p;
-				currentVertexArray = (vsVector3D *)shuttle;
-				//currentVertexArraySize = count*3;
+				case OpCode_PushTransform:
+					transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.transform;
+					transformStackLevel++;
+					break;
+				case OpCode_PushTranslation:
+					{
+						vsTransform2D transform;
+						transform.SetTranslation( o->data.GetVector3D() );
+						transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * transform;
+						transformStackLevel++;
+						break;
+					}
+				case OpCode_PopTransform:
+					transformStackLevel--;
+					break;
+				case OpCode_VertexArray:
+					currentVertexBuffer = NULL;
+					currentVertexArray = (vsVector3D *)o->data.p;
+					break;
+				case OpCode_VertexBuffer:
+				case OpCode_BindBuffer:
+					currentVertexArray = NULL;
+					currentVertexBuffer = (vsRenderBuffer *)o->data.p;
+					break;
+				case OpCode_MoveTo:
+				case OpCode_LineTo:
+					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(o->data.GetVector3D()) );
+					break;
+				case OpCode_LineListBuffer:
+				case OpCode_LineStripBuffer:
+				case OpCode_TriangleListBuffer:
+				case OpCode_TriangleStripBuffer:
+				case OpCode_TriangleFanBuffer:
+					{
+						vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+						uint16_t *shuttle = buffer->GetIntArray();
 
-				for ( int i = 0; i < count; i++ )
-				{
-					pos.Set(shuttle[0],shuttle[1],shuttle[2]);
+						for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
+						{
+							uint16_t index = shuttle[i];
+							vsVector3D pos;
+							if ( currentVertexArray )
+								pos = currentVertexArray[index];
+							else
+								pos = currentVertexBuffer->GetPosition(index);
+							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
+						}
+						break;
+					}
+				case OpCode_LineList:
+				case OpCode_LineStrip:
+				case OpCode_TriangleList:
+				case OpCode_TriangleStrip:
+				case OpCode_TriangleFan:
+					{
+						uint16_t *shuttle = (uint16_t *)o->data.p;
+						int count = o->data.GetUInt();
 
-					box.ExpandToInclude( pos );
-
-					shuttle += 3;
-				}
-			}
-			else if ( o->type == OpCode_VertexBuffer )
-			{
-				vsVector3D pos;
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				currentVertexArray = buffer->GetVector3DArray();
-				//currentVertexArraySize = buffer->GetVector3DArraySize();
-
-				for ( int i = 0; i < buffer->GetVector3DArraySize(); i++ )
-				{
-					pos = buffer->GetVector3DArray()[i];
-
-					pos = transformStack[transformStackLevel].ApplyTo( pos );
-
-					box.ExpandToInclude( pos );
-				}
-			}
-			else if ( o->type == OpCode_BindBuffer )
-			{
-				vsVector3D pos;
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				int positionCount = buffer->GetPositionCount();
-
-				for ( int i = 0; i < positionCount; i++ )
-				{
-					pos = buffer->GetPosition(i);
-
-					pos = transformStack[transformStackLevel].ApplyTo( pos );
-
-					box.ExpandToInclude( pos );
-				}
-			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector3D pos = o->data.GetVector3D();
-				box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
-
-				/*topLeft.x = vsMin(topLeft.x,pos.x);
-				topLeft.y = vsMin(topLeft.y,pos.y);
-				bottomRight.x = vsMax(bottomRight.x,pos.x);
-				bottomRight.y = vsMax(bottomRight.y,pos.y);*/
-			}
-			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
-			{
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				uint16_t *shuttle = buffer->GetIntArray();
-
-				for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
-				{
-					uint16_t index = shuttle[i];
-					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
-				}
-			}
-			else if ( o->type == OpCode_LineStrip )
-			{
-				uint16_t *shuttle = (uint16_t *)o->data.p;
-				int count = o->data.GetUInt();
-
-				for ( int i = 0; i < count; i++ )
-				{
-					uint16_t index = shuttle[i];
-					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
-				}
+						for ( int i = 0; i < count; i++ )
+						{
+							uint16_t index = shuttle[i];
+							vsVector3D pos;
+							if ( currentVertexArray )
+								pos = currentVertexArray[index];
+							else
+								pos = currentVertexBuffer->GetPosition(index);
+							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
+						}
+						break;
+					}
+				default:
+					break;
 			}
 
 			o = PopOp();

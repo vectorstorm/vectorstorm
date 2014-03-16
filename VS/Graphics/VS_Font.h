@@ -42,11 +42,7 @@ struct vsGlyph
 	vsVector3D	vertex[4];        // our vertices
 	vsVector2D	texel[4];         // our texture coordinates
 
-	vsRenderBuffer	tlBuffer;     // my triangle list, referencing the global font pt-format VBO
-
-	vsRenderBuffer	ptBuffer;
-	vsRenderBuffer	vertexBuffer; // my vbo of vertex data.
-	vsRenderBuffer	texelBuffer;  // my vbo of texel data.
+	vsRenderBuffer	tsBuffer;     // my triangle list, referencing the global font pt-format VBO
 
 	vsVector2D	baseline;         // where do we start drawing from?
 	float		xAdvance;         // how far do we need to move our cursor, after drawing this glyph?

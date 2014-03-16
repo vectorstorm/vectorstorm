@@ -11,21 +11,10 @@
 #include "VS_DisplayList.h"
 #include "VS_Fragment.h"
 
-// #define USE_EXPLICIT_ARRAY	// if set, we'll use vertex/texel arrays, instead of VBOs.
 // #define FONTS_DRAW_FROM_BASE	// if set, fonts get drawn with their baseline at 0.  If not, the middle of the font goes there.
 
 static float s_globalFontScale = 1.f;
 static vsDisplayList s_tempFontList(1024*10);
-
-static float GetDisplayListWidth( vsDisplayList *list )
-{
-	vsVector2D topLeft, bottomRight;
-
-	list->GetBoundingBox(topLeft, bottomRight);
-	topLeft.x = 0.f;
-	float width = bottomRight.x - topLeft.x;
-	return width;
-}
 
 void
 vsFontRenderer::SetGlobalFontScale( float scale )
@@ -383,8 +372,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		s_tempFontList.Clear();
 
-		BuildDisplayListGeometryFromString( FontContext_2D, &s_tempFontList, string, size.x, Justification_Left, vsVector2D::Zero);
-		float width = GetDisplayListWidth(&s_tempFontList);
+		float width = m_font->GetStringWidth(string, size.x);
 
 		if ( j == Justification_Right )
 			offset.x = -width;
@@ -443,8 +431,7 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 
 	if ( j != Justification_Left )
 	{
-		BuildDisplayListGeometryFromString( context, list, string, size, Justification_Left, vsVector2D::Zero );
-		float width = GetDisplayListWidth(list);
+		float width = m_font->GetStringWidth(string, size);
 
 		if ( j == Justification_Right )
 			offset.x = -width;
@@ -464,14 +451,7 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	}
 	transform.SetScale( vsVector2D(size,ysize) );
 	list->PushTransform(transform);
-
-#if defined(USE_EXPLICIT_ARRAY)
-	vsVector3D *vertexArray = new vsVector3D[len*4];
-	vsVector2D *texelArray = new vsVector2D[len*4];
-	int *triangleListArray = new int[len*6];
-	int vertexCount = 0;
-	int triangleIndexCount = 0;
-#endif
+	list->BindBuffer( m_font->m_ptBuffer );
 
 	for ( size_t i = 0; i < len; i++ )
 	{
@@ -483,41 +463,14 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 		}
 		else
 		{
-#if defined(USE_EXPLICIT_ARRAY)
-			triangleListArray[triangleIndexCount++] = vertexCount;
-			triangleListArray[triangleIndexCount++] = vertexCount + 2;
-			triangleListArray[triangleIndexCount++] = vertexCount + 1;
-			triangleListArray[triangleIndexCount++] = vertexCount + 1;
-			triangleListArray[triangleIndexCount++] = vertexCount + 2;
-			triangleListArray[triangleIndexCount++] = vertexCount + 3;
-
-			for ( int vi = 0; vi < 4; vi++ )
-			{
-				vertexArray[vertexCount] = g->vertex[vi] + offset - g->baseline;
-				texelArray[vertexCount] = g->texel[vi];
-				vertexCount++;
-			}
-#else
 			list->PushTranslation(offset - g->baseline);
-			list->BindBuffer( &g->ptBuffer );
-			list->TriangleListBuffer( &m_font->m_glyphTriangleList );
-
+			list->TriangleStripBuffer( &g->tsBuffer );
 			list->PopTransform();
-#endif
 			offset.x += g->xAdvance;
 		}
 	}
-#if defined(USE_EXPLICIT_ARRAY)
-	list->VertexArray(vertexArray, vertexCount);
-	list->TexelArray(texelArray, vertexCount);
-	list->TriangleList(triangleListArray, triangleIndexCount);
-
-	vsDeleteArray(vertexArray);
-	vsDeleteArray(texelArray);
-	vsDeleteArray(triangleListArray);
-#endif
 
 	list->PopTransform();
-	list->SetMaterial( vsMaterial::White );
 	list->ClearArrays();
 }
+

@@ -134,18 +134,6 @@ vsFont::LoadOldFormat( vsFile *font )
 					chomping = false;
 				}
 			}
-
-			g->vertexBuffer.SetArray(g->vertex,4);
-			g->texelBuffer.SetArray(g->texel,4);
-
-			vsRenderBuffer::PT	pt[4];
-			for ( int i = 0; i < 4; i++ )
-			{
-				pt[i].position = g->vertex[i];
-				pt[i].texel = g->texel[i];
-			}
-			vsAssert(sizeof(pt) == 128,"Something's gone wrong??");
-			g->ptBuffer.SetArray(pt,4);
 		}
 	}
 
@@ -157,17 +145,17 @@ vsFont::LoadOldFormat( vsFile *font )
 	{
 		vsGlyph *glyph = &m_glyph[i];
 
-		uint16_t tlIndex[4];
+		uint16_t tsIndex[4];
 
 		for ( int j = 0; j < 4; j++ )
 		{
 			pt[i*4+j].position = glyph->vertex[j];
 			pt[i*4+j].texel = glyph->texel[i];
 
-			tlIndex[j] = i*4+j;
+			tsIndex[j] = i*4+j;
 		}
 
-		glyph->tlBuffer.SetArray(tlIndex,4);
+		glyph->tsBuffer.SetArray(tsIndex,4);
 	}
 	m_ptBuffer->SetArray(pt, m_glyphCount*4);
 
@@ -290,42 +278,30 @@ vsFont::LoadBMFont( vsFile *file )
 				m_glyph[i].texel[2].Set(l,t+h);
 				m_glyph[i].texel[3].Set(l+w,t+h);
 			}
-			vsGlyph *g = &m_glyph[i];
-			g->vertexBuffer.SetArray(g->vertex,4);
-			g->texelBuffer.SetArray(g->texel,4);
-
-			vsRenderBuffer::PT	pt[4];
-			for ( int j = 0; j < 4; j++ )
-			{
-				pt[j].position = g->vertex[j];
-				pt[j].texel = g->texel[j];
-			}
-			vsAssert(sizeof(pt) == 128,"Something's gone wrong??");
-			g->ptBuffer.SetArray(pt,4);
-
 			i++;
 		}
 	}
 
 	m_ptBuffer = new vsRenderBuffer;
 
-	vsRenderBuffer::PT	*pt = new vsRenderBuffer::PT[m_glyphCount*4];
+	vsRenderBuffer::PT *pt = new vsRenderBuffer::PT[m_glyphCount*4];
 
 	for ( int i = 0; i < m_glyphCount; i++ )
 	{
 		vsGlyph *glyph = &m_glyph[i];
 
-		uint16_t tlIndex[4];
+		uint16_t tsIndex[4];
 
 		for ( int j = 0; j < 4; j++ )
 		{
-			pt[i*4+j].position = glyph->vertex[j];
-			pt[i*4+j].texel = glyph->texel[i];
+			uint16_t index = i*4 + j;
+			pt[index].position = glyph->vertex[j];
+			pt[index].texel = glyph->texel[j];
 
-			tlIndex[j] = i*4+j;
+			tsIndex[j] = index;
 		}
 
-		glyph->tlBuffer.SetArray(tlIndex,4);
+		glyph->tsBuffer.SetArray(tsIndex,4);
 	}
 	m_ptBuffer->SetArray(pt, m_glyphCount*4);
 
