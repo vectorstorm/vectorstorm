@@ -67,6 +67,7 @@ private:
 
 	vsMaterialInternal * m_currentMaterial;
 	vsShader *           m_currentShader;
+	bool                 m_invalidateMaterial;
 
 	vsVector3D *         m_currentVertexArray;
 	vsVector3D *         m_currentNormalArray;

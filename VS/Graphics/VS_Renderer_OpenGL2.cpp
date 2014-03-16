@@ -63,6 +63,7 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
+	m_invalidateMaterial = false;
 
 #if !TARGET_OS_IPHONE
 	//const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
@@ -448,7 +449,10 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			{
 				const vsColor &nextColor = op->data.GetColor();
 				glColor4f( nextColor.r, nextColor.g, nextColor.b, nextColor.a );
-				// m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
+				// we explicitly set a color, that means our cached material no
+				// longer matches the OpenGL state, so set it again the next time
+				// someone sets it.
+				m_invalidateMaterial = true;
 				break;
 			}
 			case vsDisplayList::OpCode_SetSpecularColor:
@@ -982,10 +986,11 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 {
-	if ( material == m_currentMaterial )
+	if ( !m_invalidateMaterial && (material == m_currentMaterial) )
 	{
 		return;
 	}
+	m_invalidateMaterial = true;
 	m_currentMaterial = material;
 
     if ( m_currentSettings.writeColor )
