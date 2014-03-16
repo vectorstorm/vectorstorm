@@ -38,8 +38,8 @@ vsFontRenderer::vsFontRenderer( vsFont *font, JustificationType type ):
 	m_size(s_globalFontScale * font->GetNativeSize()),
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
-	m_color(),
-	m_hasColor(false)
+	m_color(c_white),
+	m_hasColor(true)
 {
 }
 
