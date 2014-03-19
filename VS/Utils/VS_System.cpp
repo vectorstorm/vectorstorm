@@ -43,6 +43,7 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 
 #define VS_VERSION ("0.0.1")
 
+
 vsSystem::vsSystem(size_t totalMemoryBytes):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
@@ -113,6 +114,7 @@ vsSystem::Init()
 	SDL_ShowCursor( m_showCursor );
 #endif
 	// Set requested GL context attributes
+	//initAttributes ();
 //#define IPHONELIKE
 	m_textureManager = new vsTextureManager;
 #if !defined(TARGET_OS_IPHONE) && defined(IPHONELIKE)
@@ -124,7 +126,6 @@ vsSystem::Init()
 #endif
 
 	vsBuiltInFont::Init();
-	// Get GL context attributes
 }
 
 void

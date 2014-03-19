@@ -192,7 +192,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->SetRenderTarget(m_pass[0]);
 	list->VertexArray(v,4);
 	list->TexelArray(t,4);
-	list->TriangleStrip(ind,4);
+	list->TriangleStripArray(ind,4);
 
 	// next, blit passes into each other.
 	//
@@ -207,12 +207,12 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		list->SetRenderTarget(m_pass2[i]);
 		list->ResolveRenderTarget(m_pass[i]);
 		list->SetMaterial(m_horizontalBlurMaterial[i]);
-		list->TriangleStrip(ind,4);
+		list->TriangleStripArray(ind,4);
 
 		list->SetRenderTarget(m_pass[i]);
 		list->ResolveRenderTarget(m_pass2[i]);
 		list->SetMaterial(m_verticalBlurMaterial[i]);
-		list->TriangleStrip(ind,4);
+		list->TriangleStripArray(ind,4);
 	}
 
 	// resolve all primary passes.
@@ -224,7 +224,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	// 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
 	list->SetMaterial(m_combineMaterial);
-	list->TriangleStrip(ind,4);
+	list->TriangleStripArray(ind,4);
 	list->ClearArrays();
 }
 

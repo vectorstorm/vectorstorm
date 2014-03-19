@@ -179,7 +179,7 @@ vsBox3D::DrawOutline( vsDisplayList *list )
 	};
 
 	list->VertexArray(corners,8);
-	list->LineList(array,24);
+	list->LineListArray(array,24);
 }
 
 void

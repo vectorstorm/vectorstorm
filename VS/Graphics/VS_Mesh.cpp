@@ -561,7 +561,7 @@ vsMesh::DrawNormals( vsDisplayList *list )
 	}
 
 	list->VertexArray( v, normalVertexCount );
-	list->LineList( ind, normalVertexCount );
+	list->LineListArray( ind, normalVertexCount );
 	list->ClearVertexArray();
 
 	vsDeleteArray(v);

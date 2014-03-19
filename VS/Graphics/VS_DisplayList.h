@@ -66,12 +66,12 @@ public:
 		OpCode_ClearColorArray,
 		OpCode_ClearArrays,	// clear them all!
 
-		OpCode_LineList,
-		OpCode_LineStrip,
-		OpCode_TriangleList,
-		OpCode_TriangleStrip,
-		OpCode_TriangleFan,
-		OpCode_Points,
+		OpCode_LineListArray,
+		OpCode_LineStripArray,
+		OpCode_TriangleListArray,
+		OpCode_TriangleStripArray,
+		OpCode_TriangleFanArray,
+		OpCode_PointsArray,
 
 		OpCode_LineListBuffer,
 		OpCode_LineStripBuffer,
@@ -239,13 +239,13 @@ public:
 	void	ClearBuffers() { ClearArrays(); }
 	void	ClearArrays();
 
-	void	LineList( int *idArray, int vertexCount );
-	void	LineStrip( uint16_t *idArray, int vertexCount );
-	void	LineStrip( int *idArray, int vertexCount );
-	void	TriangleList( int *idArray, int vertexCount );
-	void	TriangleStrip( int *idArray, int vertexCount );
-	void	TriangleFan( int *idArray, int vertexCount );
-	void	Points( int *idArray, int vertexCount );
+	void	LineListArray( int *idArray, int vertexCount );
+	void	LineStripArray( uint16_t *idArray, int vertexCount );
+	void	LineStripArray( int *idArray, int vertexCount );
+	void	TriangleListArray( int *idArray, int vertexCount );
+	void	TriangleStripArray( int *idArray, int vertexCount );
+	void	TriangleFanArray( int *idArray, int vertexCount );
+	void	PointsArray( int *idArray, int vertexCount );
 
 	void	TriangleStripBuffer( vsRenderBuffer *buffer );
 	void	TriangleListBuffer( vsRenderBuffer *buffer );

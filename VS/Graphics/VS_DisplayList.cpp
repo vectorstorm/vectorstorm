@@ -275,11 +275,12 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 					loader->ClearLights();
 					break;
 				}
-				case OpCode_LineList:
-				case OpCode_LineStrip:
-				case OpCode_TriangleList:
-				case OpCode_TriangleStrip:
-				case OpCode_TriangleFan:
+				case OpCode_LineListArray:
+				case OpCode_LineStripArray:
+				case OpCode_TriangleListArray:
+				case OpCode_TriangleStripArray:
+				case OpCode_TriangleFanArray:
+				case OpCode_PointsArray:
 				{
 					int arrayCount = r->GetTokenCount();
 					int *idarray = new int[arrayCount];
@@ -289,16 +290,16 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 						idarray[id] = r->GetToken(id).AsInteger();
 					}
 
-					if ( code == OpCode_LineList )
-						loader->LineList(idarray, arrayCount);
-					if ( code == OpCode_LineStrip )
-						loader->LineStrip(idarray, arrayCount);
-					if ( code == OpCode_TriangleList )
-						loader->TriangleList(idarray, arrayCount);
-					if ( code == OpCode_TriangleStrip )
-						loader->TriangleStrip(idarray, arrayCount);
-					if ( code == OpCode_TriangleFan )
-						loader->TriangleFan(idarray, arrayCount);
+					if ( code == OpCode_LineListArray )
+						loader->LineListArray(idarray, arrayCount);
+					if ( code == OpCode_LineStripArray )
+						loader->LineStripArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleListArray )
+						loader->TriangleListArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleStripArray )
+						loader->TriangleStripArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleFanArray )
+						loader->TriangleFanArray(idarray, arrayCount);
 
 					delete [] idarray;
 
@@ -360,7 +361,7 @@ vsDisplayList::Load_Obj( const vsString &filename )
 	}
 
 	loader->VertexArray( vertexPos, vertCount );
-	loader->TriangleList( triangleIndex, faceIndexCount );
+	loader->TriangleListArray( triangleIndex, faceIndexCount );
 
 	delete file;
 
@@ -563,7 +564,7 @@ vsDisplayList::LineTo( const vsVector3D &pos )
 	{
 		ColorArray(c,2);
 	}
-	LineList(i,2);
+	LineListArray(i,2);
 	if ( m_colorSet )
 	{
 		ClearColorArray();
@@ -579,7 +580,7 @@ vsDisplayList::DrawPoint( const vsVector3D &pos )
 {
 	int index = 0;
 	VertexArray(&pos, 1);
-	Points( &index, 1 );
+	PointsArray( &index, 1 );
 	ClearVertexArray();
 }
 
@@ -825,9 +826,9 @@ vsDisplayList::ColorArray( const vsColor *array, int arrayCount )
 }
 
 void
-vsDisplayList::LineList( int *idArray, int vertexCount )
+vsDisplayList::LineListArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineList );
+	m_fifo->WriteUint8( OpCode_LineListArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -836,9 +837,9 @@ vsDisplayList::LineList( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::LineStrip( uint16_t *idArray, int vertexCount )
+vsDisplayList::LineStripArray( uint16_t *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineStrip );
+	m_fifo->WriteUint8( OpCode_LineStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -847,9 +848,9 @@ vsDisplayList::LineStrip( uint16_t *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::LineStrip( int *idArray, int vertexCount )
+vsDisplayList::LineStripArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineStrip );
+	m_fifo->WriteUint8( OpCode_LineStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -858,9 +859,9 @@ vsDisplayList::LineStrip( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::TriangleList( int *idArray, int vertexCount )
+vsDisplayList::TriangleListArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleList );
+	m_fifo->WriteUint8( OpCode_TriangleListArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -869,9 +870,9 @@ vsDisplayList::TriangleList( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::TriangleStrip( int *idArray, int vertexCount )
+vsDisplayList::TriangleStripArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleStrip );
+	m_fifo->WriteUint8( OpCode_TriangleStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -915,9 +916,9 @@ vsDisplayList::LineStripBuffer( vsRenderBuffer *buffer )
 }
 
 void
-vsDisplayList::Points( int *idArray, int vertexCount )
+vsDisplayList::PointsArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_Points );
+	m_fifo->WriteUint8( OpCode_PointsArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -926,9 +927,9 @@ vsDisplayList::Points( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::TriangleFan( int *idArray, int vertexCount )
+vsDisplayList::TriangleFanArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleFan );
+	m_fifo->WriteUint8( OpCode_TriangleFanArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1151,12 +1152,12 @@ vsDisplayList::PopOp()
 //				}
 				break;
 			}
-			case OpCode_LineList:
-			case OpCode_LineStrip:
-			case OpCode_TriangleList:
-			case OpCode_TriangleStrip:
-			case OpCode_TriangleFan:
-			case OpCode_Points:
+			case OpCode_LineListArray:
+			case OpCode_LineStripArray:
+			case OpCode_TriangleListArray:
+			case OpCode_TriangleStripArray:
+			case OpCode_TriangleFanArray:
+			case OpCode_PointsArray:
 			{
 				int count = m_fifo->ReadUint32();
 				m_currentOp.data.Set( count );
@@ -1298,20 +1299,20 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_ClearArrays:
 			ClearArrays();
 			break;
-		case OpCode_LineList:
-			LineList( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_LineListArray:
+			LineListArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_LineStrip:
-			LineStrip( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_LineStripArray:
+			LineStripArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_TriangleList:
-			TriangleList( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleListArray:
+			TriangleListArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_TriangleStrip:
-			TriangleStrip( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleStripArray:
+			TriangleStripArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_Points:
-			Points( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_PointsArray:
+			PointsArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
 		case OpCode_LineListBuffer:
 			LineListBuffer( (vsRenderBuffer *)o->data.p );
@@ -1322,8 +1323,8 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_TriangleStripBuffer:
 			TriangleStripBuffer( (vsRenderBuffer *)o->data.p );
 			break;
-		case OpCode_TriangleFan:
-			TriangleFan( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleFanArray:
+			TriangleFanArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
 		case OpCode_PushTransform:
 			PushTransform( o->data.GetTransform() );
@@ -1505,12 +1506,12 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 						}
 						break;
 					}
-				case OpCode_LineList:
-				case OpCode_LineStrip:
-				case OpCode_TriangleList:
-				case OpCode_TriangleStrip:
-				case OpCode_TriangleFan:
-				case OpCode_Points:
+				case OpCode_LineListArray:
+				case OpCode_LineStripArray:
+				case OpCode_TriangleListArray:
+				case OpCode_TriangleStripArray:
+				case OpCode_TriangleFanArray:
+				case OpCode_PointsArray:
 					{
 						uint16_t *shuttle = (uint16_t *)o->data.p;
 						int count = o->data.GetUInt();
@@ -1632,7 +1633,7 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}
-			else if ( o->type == OpCode_LineStrip )
+			else if ( o->type == OpCode_LineStripArray )
 			{
 				uint16_t *shuttle = (uint16_t *)o->data.p;
 				int count = o->data.GetUInt();

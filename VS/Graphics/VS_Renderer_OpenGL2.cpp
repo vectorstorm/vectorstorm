@@ -692,25 +692,25 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				buffer->Unbind( &m_state );
 				break;
 			}
-			case vsDisplayList::OpCode_LineList:
+			case vsDisplayList::OpCode_LineListArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
-			case vsDisplayList::OpCode_LineStrip:
+			case vsDisplayList::OpCode_LineStripArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
-			case vsDisplayList::OpCode_TriangleList:
+			case vsDisplayList::OpCode_TriangleListArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
-			case vsDisplayList::OpCode_TriangleStrip:
+			case vsDisplayList::OpCode_TriangleStripArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
@@ -751,13 +751,13 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				ib->LineStripBuffer();
 				break;
 			}
-			case vsDisplayList::OpCode_TriangleFan:
+			case vsDisplayList::OpCode_TriangleFanArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
-			case vsDisplayList::OpCode_Points:
+			case vsDisplayList::OpCode_PointsArray:
 			{
 				FlushRenderState();
 				glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
