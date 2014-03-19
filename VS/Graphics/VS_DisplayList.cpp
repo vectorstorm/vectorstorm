@@ -26,10 +26,6 @@
 #include "SDL2/SDL_opengl.h"
 #endif
 
-vsDisplayList		s_compiledDisplayLists;
-
-bool vsDisplayList::s_compiling = false;
-
 static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
@@ -37,10 +33,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SetTexture",
 	"ClearTexture",
 
-	"MoveTo",
-	"LineTo",
 	"DrawPoint",
-	"CompiledDisplayList",
 	"PushTransform",
 	"PushTranslation",
 	"PushMatrix4x4",
@@ -176,18 +169,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 				{
 					vsColor color = r->Color();
 					loader->SetSpecularColor(color);
-					break;
-				}
-				case OpCode_MoveTo:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->MoveTo(pos);
-					break;
-				}
-				case OpCode_LineTo:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->LineTo(pos);
 					break;
 				}
 				case OpCode_DrawPoint:
@@ -467,7 +448,7 @@ vsDisplayList::Load( const vsString &filename )
 }
 
 vsDisplayList::vsDisplayList():
-	m_displayListId(0),
+	// m_displayListId(0),
 	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
@@ -508,8 +489,6 @@ vsDisplayList::vsDisplayList( size_t memSize ):
 vsDisplayList::~vsDisplayList()
 {
 	vsAssert( m_instanceCount == 0, "Deleted a display list while something was still referencing it!" );
-
-	ExtractFromCompiledList();
 
 	for ( int i = 0; i < m_materialCount; i++ )
 	{
@@ -565,91 +544,6 @@ void
 vsDisplayList::Rewind()
 {
 	m_fifo->Rewind();
-}
-
-void
-vsDisplayList::Mark()
-{
-#if 0
-	int vertexCount;
-	int lineCount;
-
-	m_fifo->SeekTo( m_mark );
-	op *o = PopOp();
-
-	while( o )
-	{
-		switch( o->type )
-		{
-			case vsDisplayList::OpCode_MoveTo:
-				lineCount++;	// intentionally give us an extra 'lineCount' for each new starting strip
-				/** falls through **/
-			case vsDisplayList::OpCode_LineTo:
-				vertexCount++;
-				lineCount++;
-				break;
-		}
-		o = PopOp();
-	}
-
-	vsVector3D *v = new vsVector3D[vertexCount];
-	int *index = new int[vertexCount];
-
-	m_fifo->SeekTo( m_mark );
-	o = PopOp();
-	int vertIndex = 0;
-	int lineIndex = 0;
-
-	while( o )
-	{
-		switch( o->type )
-		{
-			case vsDisplayList::OpCode_MoveTo:
-				index[lineIndex++] = vertIndex;	// intentionally give us a double, when we're starting a new line strip
-				/** falls through **/
-			case vsDisplayList::OpCode_LineTo:
-				index[lineIndex++] = vertIndex;
-				index[lineIndex++] = vertIndex;
-				v[vertIndex++] = o->data.GetVector3D();
-				break;
-		}
-		o = PopOp();
-	}
-
-	m_fifo->RewindWriteHeadTo( m_mark );
-	VertexArray(v, vertexCount);
-
-	int stripStart = 0;
-	int stripSize = 0;
-	for ( int i = 0; i < lineIndex; i++ )
-	{
-		if ( i < lineIndex-1 )	// check if the next item is the same as me;  if so, stop
-		{
-			if ( index[i] == index[i+1] )	// at the end, or starting a new strip
-			{
-				if ( stripSize > 1 )
-				{
-					LineStrip(&index[stripStart], stripSize);
-				}
-				i++;
-				stripStart = i;
-				stripSize = 1;
-			}
-		}
-		else
-		{
-			if ( stripSize > 1 )
-			{
-				LineStrip(&index[stripStart], stripSize);
-			}
-		}
-	}
-
-	vsDeleteArray(v);
-	vsDeleteArray(index);
-
-	m_mark = m_fifo->Length();
-#endif // 0
 }
 
 void
@@ -1241,14 +1135,9 @@ vsDisplayList::PopOp()
 			case OpCode_SetTexture:
 				m_currentOp.data.p = (char *)m_fifo->ReadVoidStar();
 				break;
-			case OpCode_MoveTo:
-			case OpCode_LineTo:
 			case OpCode_DrawPoint:
 			case OpCode_PushTranslation:
 				m_fifo->ReadVector3D(&m_currentOp.data.vector);
-				break;
-			case OpCode_CompiledDisplayList:
-				m_currentOp.data.Set( m_fifo->ReadUint32() );
 				break;
 			case OpCode_VertexArray:
 			{
@@ -1419,12 +1308,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_SetSpecularColor:
 			SetColor( o->data.GetColor() );
 			break;
-		case OpCode_MoveTo:
-			MoveTo( o->data.GetVector3D() );
-			break;
-		case OpCode_LineTo:
-			LineTo( o->data.GetVector3D() );
-			break;
 		case OpCode_DrawPoint:
 			DrawPoint( o->data.GetVector3D() );
 			break;
@@ -1587,15 +1470,6 @@ vsDisplayList::GetBoundingCircle(vsVector2D &center, float &radius)
 					shuttle += 3;
 				}
 			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector2D pos = o->data.GetVector3D();
-
-				max.x = vsMax( max.x, pos.x );
-				max.y = vsMax( max.y, pos.y );
-				min.x = vsMin( min.x, pos.x );
-				min.y = vsMin( min.y, pos.y );
-			}
 			o = PopOp();
 		}
 
@@ -1664,10 +1538,6 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 				case OpCode_BindBuffer:
 					currentVertexArray = NULL;
 					currentVertexBuffer = (vsRenderBuffer *)o->data.p;
-					break;
-				case OpCode_MoveTo:
-				case OpCode_LineTo:
-					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(o->data.GetVector3D()) );
 					break;
 				case OpCode_LineListBuffer:
 				case OpCode_LineStripBuffer:
@@ -1805,16 +1675,6 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 					box.ExpandToInclude( pos );
 				}
 			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector3D pos = o->data.GetVector3D();
-				box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
-
-				/*topLeft.x = vsMin(topLeft.x,pos.x);
-				 topLeft.y = vsMin(topLeft.y,pos.y);
-				 bottomRight.x = vsMax(bottomRight.x,pos.x);
-				 bottomRight.y = vsMax(bottomRight.y,pos.y);*/
-			}
 			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
 			{
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
@@ -1870,36 +1730,8 @@ vsDisplayList::ApplyOffset(const vsVector2D &offset)
 				shuttle += 3;
 			}
 		}
-		else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-		{
-			vsVector2D pos = o->data.GetVector3D();
-			pos += offset;
-			//ModifyOp(o);
-		}
 
 		o = PopOp();
 	}
-}
-
-
-void
-vsDisplayList::AppendToCompiledList( vsDisplayList *o )
-{
-	o->m_next = m_next;
-	o->m_prev = this;
-
-	m_next->m_prev = o;
-	m_next = o;
-}
-
-void
-vsDisplayList::ExtractFromCompiledList()
-{
-	if ( m_prev )
-		m_prev->m_next = m_next;
-	if ( m_next )
-		m_next->m_prev = m_prev;
-
-	m_prev = m_next = this;
 }
 

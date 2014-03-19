@@ -40,10 +40,7 @@ public:
 		OpCode_SetTexture,
 		OpCode_ClearTexture,
 
-		OpCode_MoveTo,
-		OpCode_LineTo,
 		OpCode_DrawPoint,
-		OpCode_CompiledDisplayList,
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
@@ -188,16 +185,7 @@ private:
 	vsColor			m_nextLineColor;
 	vsVector3D		m_cursorPos;
 
-	static bool		s_compiling;
 
-
-//	int		GetSize() const;
-//	int		GetSize() const { return m_instructionCount; }
-//	int		GetFreeOps() const { return m_maxInstructions - m_instructionCount; }
-
-//	op *	AddOp(OpCode type);
-
-//	static vsDisplayList *	Load_CVec(const vsString &);
 	static vsDisplayList *	Load_Vec( const vsString & );
 	static vsDisplayList *	Load_Vec( vsRecord *record );
 	static vsDisplayList *	Load_Obj(const vsString &);
@@ -213,7 +201,6 @@ public:
 
 			vsDisplayList();		// if no memory size is specified, we size dynamically, in 4kb chunks.
 			vsDisplayList(size_t memSize);
-//			vsDisplayList(const vsDisplayList &list);
 	virtual	~vsDisplayList();
 
 	vsStore *		GetFifo() { return m_fifo; }
@@ -225,13 +212,10 @@ public:
 	void	Clear();
 	void	Rewind();	// reset to the start of the display list
 
-	void		Mark();		// crunch from the last mark to the current position.
-
 	 //	The following functions do not draw primitives immediately;  instead, they add them to this display list.
 	 // Instructions given using these functions will be carried out when this vsDisplayList is passed to a vsRenderer,
 	 // using the DrawDisplayList() function.  (Normally, this happens automatically at the end of processing each frame)
 
-	//void	SetTexture( vsTexture *t );
 	void	SetColor( const vsColor &color );
 	void	SetSpecularColor( const vsColor &color );
 	void	MoveTo( const vsVector3D &pos );
@@ -284,8 +268,6 @@ public:
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );
 
-	//void	SetDrawMode( vsDrawMode mode );
-
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( vsMaterialInternal *material );
 	void	SetRenderTarget( vsRenderTarget *target );
@@ -332,14 +314,6 @@ public:
 	void	AppendOp(op *);
 
 	void operator= ( const vsDisplayList &list ) { Clear(); Append(list); }
-
-
-	vsDisplayList *	GetNextCompiled() { return m_next; }
-	vsDisplayList *	GetPrevCompiled() { return m_prev; }
-	void			AppendToCompiledList( vsDisplayList *next );
-	void			ExtractFromCompiledList();
-
-	static bool		IsCompiling() { return s_compiling; }
 
 	friend class vsSystem;
 };

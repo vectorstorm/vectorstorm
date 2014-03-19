@@ -462,14 +462,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				// m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
 				break;
 			}
-			case vsDisplayList::OpCode_MoveTo:
-			{
-				break;
-			}
-			case vsDisplayList::OpCode_LineTo:
-			{
-				break;
-			}
 			case vsDisplayList::OpCode_SetMaterial:
 			{
 				vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
