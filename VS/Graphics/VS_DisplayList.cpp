@@ -38,11 +38,11 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushTranslation",
 	"PushMatrix4x4",
 	"SetMatrix4x4",
+	"SetWorldToViewMatrix4x4",
 	"PopTransform",
 	"CameraTransform",
 	"3DProjection",
 	"SetProjectionMatrix4x4",
-	"CameraProjection",
 
 	"VertexArray",
 	"NormalArray",
@@ -75,11 +75,10 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"TriangleListBuffer",
 	"TriangleFanBuffer",
 
-	"SetDrawMode",
-
 	"SetMaterial",
 	"SetRenderTarget",
 	"ResolveRenderTarget",
+    "OpCode_BlitRenderTarget",
 
 	"Light",
 	"ClearLights",
@@ -92,7 +91,16 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"EnableStencil",
 	"DisableStencil",
-	"ClearStencil"
+	"ClearStencil",
+
+	"EnableScissor",
+	"DisableScissor",
+	"SetViewport",
+	"ClearViewport",
+
+	"SnapMatrix",
+
+	"Debug"
 };
 
 vsDisplayList *
@@ -311,12 +319,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 
 					break;
 				}
-					//					case OpCode_SetDrawMode:
-					//					{
-					//						loader->SetDrawMode( (vsDrawMode)r.GetToken(0).AsInteger() );
-					//						loader->SetMaterial( vsMaterial((vsDrawMode)r.GetToken(0).AsInteger(), c_white) );
-					//						break;
-					//					}
 				case OpCode_PushTransform:
 				case OpCode_PopTransform:
 				case OpCode_SetCameraTransform:
@@ -448,32 +450,20 @@ vsDisplayList::Load( const vsString &filename )
 }
 
 vsDisplayList::vsDisplayList():
-	// m_displayListId(0),
-	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
 	m_materialCount(0),
-	m_mark(0)
+	m_colorSet(false)
 {
-	m_next = m_prev = this;
-
-	m_colorSet = false;
-
 	Clear();
 }
 
 vsDisplayList::vsDisplayList( size_t memSize ):
-	m_displayListId(0),
-	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
 	m_materialCount(0),
-	m_mark(0)
+	m_colorSet(false)
 {
-	m_next = m_prev = this;
-
-	m_colorSet = false;
-
 	if ( memSize )
 	{
 		m_fifo = new vsStore(memSize);
@@ -537,7 +527,6 @@ vsDisplayList::Clear()
 		m_fifo->Clear();
 	}
 	m_colorSet = false;
-	m_modeSet = false;
 }
 
 void
@@ -962,19 +951,6 @@ vsDisplayList::TriangleFan( int *idArray, int vertexCount )
 		m_fifo->WriteUint16Native( idArray[i] );
 	}
 }
-/*
-void
-vsDisplayList::SetDrawMode( vsDrawMode mode )
-{
-	if ( !m_modeSet || m_currentMode != mode )
-	{
-		m_fifo->WriteUint8( OpCode_SetDrawMode );
-		m_fifo->WriteUint8( mode );
-
-		m_modeSet = true;
-		m_currentMode = mode;
-	}
-}*/
 
 void
 vsDisplayList::SetMaterial( vsMaterial *material )
@@ -1240,9 +1216,6 @@ vsDisplayList::PopOp()
 			case OpCode_SetProjectionMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
-			case OpCode_SetDrawMode:
-				m_currentOp.data.Set( m_fifo->ReadUint8() );
-				break;
 			case OpCode_SetMaterial:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
@@ -1423,9 +1396,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_Debug:
 			Debug( o->data.GetString() );
 			break;
-		//case OpCode_SetDrawMode:
-		//	SetDrawMode( (vsDrawMode)o->data.GetUInt() );
-		//	break;
 		default:
 			break;
 	}

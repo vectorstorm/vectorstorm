@@ -82,8 +82,6 @@ public:
 		OpCode_TriangleListBuffer,
 		OpCode_TriangleFanBuffer,
 
-		OpCode_SetDrawMode,
-
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
 		OpCode_ResolveRenderTarget,
@@ -108,7 +106,7 @@ public:
 		OpCode_SetViewport,
 		OpCode_ClearViewport,
 
-		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix set.
+		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix push.
 
 		OpCode_Debug,
 
@@ -165,21 +163,13 @@ private:
 
 	op  m_currentOp;
 
-	unsigned long	m_displayListId;
-	bool			m_ownFifo;
-
-	vsDisplayList *	m_next;					// if we're compiled, then we'll be put into a linked list of compiled display lists.
-	vsDisplayList *	m_prev;					// we use this linked list internally, so VectorStorm can recompile the display lists if our rendering context changes.  (For example, changing resolution or bitdepth)
-
 	vsDisplayList *	m_instanceParent;		// if set, I'm an instance of this other vsDisplayList, and contain no actual data myself
 	int				m_instanceCount;		// The number of instances that have been derived off of me.  If this value isn't zero, assert if someone tries to delete me.
 
 	vsMaterial *	m_material[MAX_OWNED_MATERIALS];
 	int				m_materialCount;
 
-	int				m_mark;
 	bool			m_colorSet;
-	bool			m_modeSet;
 
 	vsColor			m_cursorColor;
 	vsColor			m_nextLineColor;
@@ -314,8 +304,6 @@ public:
 	void	AppendOp(op *);
 
 	void operator= ( const vsDisplayList &list ) { Clear(); Append(list); }
-
-	friend class vsSystem;
 };
 
 #endif // VS_DISPLAYLIST
