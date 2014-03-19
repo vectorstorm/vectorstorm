@@ -115,19 +115,18 @@ public:
 
 	struct Data
 	{
-		uint32_t		i;
-		vsVector3D	vector;
-		vsBox2D		box2D;
-		vsColor		color;
+		uint32_t i;
+		vsVector3D vector;
+		vsBox2D box2D;
+		vsColor color;
 		vsTransform2D transform;
-		vsLight		light;
-		vsFog		fog;
-		//vsMaterial	material;
+		vsLight light;
+		vsFog fog;
 		vsMatrix4x4 matrix4x4;
-		vsString	string;
-		float		fov;
-		float		nearPlane;
-		float		farPlane;
+		vsString string;
+		float fov;
+		float nearPlane;
+		float farPlane;
 		char *p;
 		char *p2;
 
@@ -136,7 +135,6 @@ public:
 		void Set(const vsVector3D & in) {vector = in;}
 		void Set(const vsColor & in) {color = in;}
 		void Set(const vsTransform2D &t) {transform = t;}
-		//void Set(const vsMaterial &m) { material = m; }
 		void Set(const vsMatrix4x4 &m, float fov_in, float nearPlane_in, float farPlane_in) {matrix4x4 = m; fov = fov_in; nearPlane = nearPlane_in; farPlane = farPlane_in;}
 		void Set(const vsString &s) {string = s;}
 		void SetPointer(char *pointer) {p = pointer;}
@@ -146,8 +144,8 @@ public:
 		vsBox2D GetBox2D() {return box2D;}
 		vsVector3D GetVector3D() {return vector;}
 		vsColor GetColor() {return color; }
-		vsTransform2D	GetTransform() {return transform;}
-		vsMatrix4x4 &	GetMatrix4x4() {return matrix4x4;}
+		vsTransform2D GetTransform() {return transform;}
+		vsMatrix4x4 & GetMatrix4x4() {return matrix4x4;}
 		vsString GetString() {return string;}
 	};
 
