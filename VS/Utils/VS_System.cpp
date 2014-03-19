@@ -35,86 +35,13 @@
 #include <SDL2/SDL_mouse.h>
 #endif
 
-bool				vsSystem::s_initted			= false;
-vsSystem *			vsSystem::s_instance		= NULL;
+vsSystem * vsSystem::s_instance = NULL;
 
 extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use this when changing video modes etc.
 
 
 
 #define VS_VERSION ("0.0.1")
-
-
-static void initAttributes ()
-{
-#if !TARGET_OS_IPHONE
-    // Setup attributes we want for the OpenGL context
-
-    int value;
-
-    // Don't set color bit sizes (SDL_GL_RED_SIZE, etc)
-	//   TODO:  Investigate this.  SDL_OpenGL Seems to pick reasonable default values?
-
-    // 2D Vector graphics don't require a depth buffer, so don't bother allocating one.
-	//   If we actually were doing something 3D, we'd want the below lines during our
-	//   initialisation.
-#if 1
-    value = 32;
-    SDL_GL_SetAttribute (SDL_GL_DEPTH_SIZE, value);
-#endif
-
-    // Request double-buffered OpenGL
-    value = 1;
-    SDL_GL_SetAttribute (SDL_GL_DOUBLEBUFFER, value);
-
-    // Request 8 bits of red, green, blue, and alpha
-    value = 8;
-    SDL_GL_SetAttribute (SDL_GL_RED_SIZE, value);
-    SDL_GL_SetAttribute (SDL_GL_GREEN_SIZE, value);
-    SDL_GL_SetAttribute (SDL_GL_BLUE_SIZE, value);
-    SDL_GL_SetAttribute (SDL_GL_ALPHA_SIZE, value);
-
-#endif // !TARGET_OS_IPHONE
-}
-
-static void printAttributes ()
-{
-#if !TARGET_OS_IPHONE
-    // Print out attributes of the context we created
-    int nAttr;
-    int i;
-
-	vsLog("OpenGL Context:");
-	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
-	vsLog("  Renderer: %s", glGetString(GL_RENDERER));
-	vsLog("  Version: %s", glGetString(GL_VERSION));
-	if ( glGetString(GL_SHADING_LANGUAGE_VERSION) )
-	{
-		vsLog("  Shading Language Version:  %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	}
-	else
-	{
-		vsLog("  Shader Langugage Version:  None");
-	}
-
-    SDL_GLattr  attr[] = { SDL_GL_RED_SIZE, SDL_GL_BLUE_SIZE, SDL_GL_GREEN_SIZE,
-	SDL_GL_ALPHA_SIZE, SDL_GL_BUFFER_SIZE, SDL_GL_DEPTH_SIZE };
-
-    const char *desc[] = { "Red size: %d bits", "Blue size: %d bits", "Green size: %d bits",
-		"Alpha size: %d bits", "Color buffer size: %d bits", "Depth buffer size: %d bits" };
-
-    nAttr = sizeof(attr) / sizeof(int);
-
-    for (i = 0; i < nAttr; i++)
-	{
-        int value;
-        SDL_GL_GetAttribute (attr[i], &value);
-        vsLog(vsFormatString(desc[i], value));
-    }
-#endif // TARGET_OS_IPHONE
-}
-
-
 
 vsSystem::vsSystem(size_t totalMemoryBytes):
 	m_showCursor( true ),
@@ -186,7 +113,6 @@ vsSystem::Init()
 	SDL_ShowCursor( m_showCursor );
 #endif
 	// Set requested GL context attributes
-	//initAttributes ();
 //#define IPHONELIKE
 	m_textureManager = new vsTextureManager;
 #if !defined(TARGET_OS_IPHONE) && defined(IPHONELIKE)
@@ -199,7 +125,6 @@ vsSystem::Init()
 
 	vsBuiltInFont::Init();
 	// Get GL context attributes
-	printAttributes ();
 }
 
 void
@@ -270,15 +195,6 @@ vsSystem::UpdateVideoMode(int width, int height)
 	GetScreen()->UpdateVideoMode( width, height, 32, m_preferences->GetFullscreen() );
     //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
-	// Set GL context attributes
-	initAttributes ();
-
-#if !TARGET_OS_IPHONE
-	// Get GL context attributes
-	printAttributes ();
-
-	//SDL_WM_SetCaption("VectorStorm Engine",NULL);
-#endif
 	vsHeap::Pop(g_globalHeap);
 
 	// And now that we're back, let's re-compile all our display lists.

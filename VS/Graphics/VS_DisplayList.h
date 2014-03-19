@@ -36,11 +36,7 @@ public:
 	enum OpCode
 	{
 		OpCode_SetColor,
-		OpCode_SetSpecularColor,
-		OpCode_SetTexture,
-		OpCode_ClearTexture,
 
-		OpCode_DrawPoint,
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
@@ -75,6 +71,7 @@ public:
 		OpCode_TriangleList,
 		OpCode_TriangleStrip,
 		OpCode_TriangleFan,
+		OpCode_Points,
 
 		OpCode_LineListBuffer,
 		OpCode_LineStripBuffer,
@@ -205,7 +202,6 @@ public:
 	 // using the DrawDisplayList() function.  (Normally, this happens automatically at the end of processing each frame)
 
 	void	SetColor( const vsColor &color );
-	void	SetSpecularColor( const vsColor &color );
 	void	MoveTo( const vsVector3D &pos );
 	void	LineTo( const vsVector3D &pos );
 	void	DrawPoint( const vsVector3D &pos );
@@ -222,11 +218,11 @@ public:
 	void	Set3DProjection( float fov, float nearPlane, float farPlane );
 	void	SetProjectionMatrix4x4( const vsMatrix4x4 &m );
 
-	void	VertexArray( vsVector2D *vertexArray, int vertexCount );	// will automatically be promoted into vsVertex3Ds
-	void	VertexArray( vsVector3D *vertexArray, int vertexCount );
-	void	NormalArray( vsVector3D *normalArray, int normalCount );
-	void	TexelArray( vsVector2D *texelArray, int texelCount );
-	void	ColorArray( vsColor *colorArray, int colorCount );
+	void	VertexArray( const vsVector2D *vertexArray, int vertexCount );	// will automatically be promoted into vsVertex3Ds
+	void	VertexArray( const vsVector3D *vertexArray, int vertexCount );
+	void	NormalArray( const vsVector3D *normalArray, int normalCount );
+	void	TexelArray( const vsVector2D *texelArray, int texelCount );
+	void	ColorArray( const vsColor *colorArray, int colorCount );
 
 	void	VertexBuffer( vsRenderBuffer *buffer );	// old-style.  Buffer doesn't know what it contains;   different calls on display list to specify what's in the buffer.
 	void	NormalBuffer( vsRenderBuffer *buffer );
@@ -249,6 +245,7 @@ public:
 	void	TriangleList( int *idArray, int vertexCount );
 	void	TriangleStrip( int *idArray, int vertexCount );
 	void	TriangleFan( int *idArray, int vertexCount );
+	void	Points( int *idArray, int vertexCount );
 
 	void	TriangleStripBuffer( vsRenderBuffer *buffer );
 	void	TriangleListBuffer( vsRenderBuffer *buffer );

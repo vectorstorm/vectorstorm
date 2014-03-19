@@ -51,7 +51,6 @@ enum Orientation
 
 class vsSystem
 {
-	static bool s_initted;
 	static vsSystem *	s_instance;
 
 	bool				m_showCursor;

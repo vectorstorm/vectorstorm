@@ -46,6 +46,45 @@ void vsRenderDebug( const vsString &message )
 	vsLog("%s", message.c_str());
 }
 
+static void printAttributes ()
+{
+#if !TARGET_OS_IPHONE
+    // Print out attributes of the context we created
+    int nAttr;
+    int i;
+
+	vsLog("OpenGL Context:");
+	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
+	vsLog("  Renderer: %s", glGetString(GL_RENDERER));
+	vsLog("  Version: %s", glGetString(GL_VERSION));
+	if ( glGetString(GL_SHADING_LANGUAGE_VERSION) )
+	{
+		vsLog("  Shading Language Version:  %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	}
+	else
+	{
+		vsLog("  Shader Langugage Version:  None");
+	}
+
+    SDL_GLattr  attr[] = { SDL_GL_RED_SIZE, SDL_GL_BLUE_SIZE, SDL_GL_GREEN_SIZE,
+	SDL_GL_ALPHA_SIZE, SDL_GL_BUFFER_SIZE, SDL_GL_DEPTH_SIZE };
+
+    const char *desc[] = { "Red size: %d bits", "Blue size: %d bits", "Green size: %d bits",
+		"Alpha size: %d bits", "Color buffer size: %d bits", "Depth buffer size: %d bits" };
+
+    nAttr = sizeof(attr) / sizeof(int);
+
+    for (i = 0; i < nAttr; i++)
+	{
+        int value;
+        SDL_GL_GetAttribute (attr[i], &value);
+        vsLog(vsFormatString(desc[i], value));
+    }
+#endif // TARGET_OS_IPHONE
+}
+
+
+
 //static bool s_vertexBuffersSupported = false;
 
 vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int flags):
@@ -83,19 +122,6 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
 
-//#ifdef _DEBUG
-	//SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
-//#else
-	//SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );	// in release builds, lock our frames to vsynch.
-//#endif
-
-	// ATI cards misbehave if you request accelerated visuals, and NVidia cards do the right thing regardless.
-	// So comment it out!
-	//SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-
-	//SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-	//SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 8 );
-
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -104,15 +130,6 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-#ifdef __APPLE__
-/*	GLint swapInterval = 1;
-	CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &swapInterval);
-
-	// Enable the multi-threading
-	CGLEnable( CGLGetCurrentContext(), kCGLCEMPEngine);*/
-#endif // __APPLE__
-
-	//SDL_Surface *s = SDL_SetVideoMode( width, height, videoInfo->vfmt->BitsPerPixel, videoFlags );
 	SDL_CreateWindowAndRenderer(width, height, videoFlags, &m_sdlWindow, &m_sdlRenderer);
 
 	if ( !m_sdlWindow || !m_sdlRenderer  ){
@@ -203,16 +220,9 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	if ( !val )
 		vsLog("WARNING:  Failed to initialise double-buffering");
 
-	//SDL_GL_SetSwapInterval(1);
-	//SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &val );
-	//if ( !val )
-		//vsLog("WARNING:  Failed to initialise swap control");
 	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &val );
 	if ( !val )
 		vsLog("WARNING:  Failed to get stencil buffer bits");
-//	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &val );
-//	if ( !val )
-//		vsLog("WARNING:  Failed to initialise accelerated rendering");
 
 #endif // !TARGET_OS_IPHONE
 
@@ -222,10 +232,6 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 #if !TARGET_OS_IPHONE
 	glClearDepth( 1.0f );  // arbitrary large value
 #endif // !TARGET_OS_IPHONE
-
-	//glEnable( GL_TEXTURE_2D );		// no textures in vector graphics!
-	//glEnable( GL_DEPTH_TEST );		// no depth in vector graphics!
-	//glShadeModel( GL_SMOOTH );
 
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);							// Set The Blending Function For Additive
 	glEnable(GL_BLEND);											// Enable Blending
@@ -247,6 +253,7 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
+	printAttributes();
 }
 
 vsRenderer_OpenGL2::~vsRenderer_OpenGL2()
@@ -455,13 +462,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				m_invalidateMaterial = true;
 				break;
 			}
-			case vsDisplayList::OpCode_SetSpecularColor:
-			{
-				// const vsColor &nextColor = op->data.GetColor();
-				// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&nextColor );
-				// m_currentMaterial = NULL;	// explicitly set a color, that means our cached material no longer matches the OpenGL state.
-				break;
-			}
 			case vsDisplayList::OpCode_SetMaterial:
 			{
 				vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
@@ -488,35 +488,6 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				from->BlitTo(to);
 				break;
 			}
-			case vsDisplayList::OpCode_SetTexture:
-			{
-				vsTexture *t = (vsTexture *)op->data.p;
-				if ( t )
-				{
-					{
-						glEnable(GL_TEXTURE_2D);
-						glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-					}
-				}
-				else
-				{
-					glDisable(GL_TEXTURE_2D);
-				}
-				m_currentMaterial = NULL;	// explicitly set a texture, that means our cached material no longer matches the OpenGL state.
-				break;
-			}
-#if !TARGET_OS_IPHONE
-			case vsDisplayList::OpCode_DrawPoint:
-			{
-				FlushRenderState();
-				glBegin( GL_POINTS );
-					vsVector3D pos = op->data.GetVector3D();
-					glVertex3f( pos.x, pos.y, pos.z );
-				glEnd();
-
-				break;
-			}
-#endif // !TARGET_OS_IPHONE
 			case vsDisplayList::OpCode_PushTransform:
 			{
 				vsTransform2D t = op->data.GetTransform();
@@ -624,11 +595,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_ClearVertexArray:
 			{
-				if ( m_currentVertexBuffer )
-				{
-					//m_currentVertexBuffer->UnbindVertexBuffer();
-					m_currentVertexBuffer = NULL;
-				}
+				m_currentVertexBuffer = NULL;
 				m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 				m_currentVertexArray = NULL;
 				m_currentVertexArrayCount = 0;
@@ -636,11 +603,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_ClearNormalArray:
 			{
-				if ( m_currentNormalBuffer )
-				{
-					//m_currentNormalBuffer->UnbindNormalBuffer();
-					m_currentNormalBuffer = NULL;
-				}
+				m_currentNormalBuffer = NULL;
 				m_currentNormalArray = NULL;
 				m_currentNormalArrayCount = 0;
 				m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
@@ -662,11 +625,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 			}
 			case vsDisplayList::OpCode_ClearTexelArray:
 			{
-				if ( m_currentTexelBuffer )
-				{
-					//m_currentTexelBuffer->UnbindTexelBuffer();
-					m_currentTexelBuffer = NULL;
-				}
+				m_currentTexelBuffer = NULL;
 				m_currentTexelArray = NULL;
 				m_currentTexelArrayCount = 0;
 				m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
@@ -798,13 +757,12 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 				glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
 			}
-			/*case vsDisplayList::OpCode_SetDrawMode:
+			case vsDisplayList::OpCode_Points:
 			{
-				vsDrawMode newMode = (vsDrawMode)op->data.GetUInt();
-
-				SetDrawMode(newMode);
+				FlushRenderState();
+				glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 				break;
-			}*/
+			}
 			case vsDisplayList::OpCode_Light:
 			{
 				if ( m_lightCount < GL_MAX_LIGHTS - 1 )
@@ -956,23 +914,7 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 		}
 		CheckGLError("RenderOp");
 		op = list->PopOp();
-
-		//CheckGLError("Testing");
 	}
-
-	//SetUsingTexels(false);
-	//SetUsingColorArray(false);
-
-/*	if ( inLineStrip )
-	{
-		inLineStrip = false;
-		glEnd();
-	}
-	if ( inPointList )
-	{
-		inPointList = false;
-		glEnd();
-	}*/
 }
 
 void
@@ -1076,8 +1018,8 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 		}
 	}
 
-	/*static bool doIt = false;
-	if ( doIt )
+	/*static bool debugWireframe = false;
+	if ( debugWireframe )
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
@@ -1091,19 +1033,14 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 		glActiveTexture(GL_TEXTURE0 + i);
 		if ( t )
 		{
-			//glEnable(GL_BLEND);
-			//if ( !m_currentTexture || t->GetResource() != m_currentTexture->GetResource() )
-			{
-				glEnable(GL_TEXTURE_2D);
-				glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
 
-				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-			}
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 		}
 		else
 		{
-			//glDisable(GL_BLEND);
 			glDisable(GL_TEXTURE_2D);
 		}
 	}
@@ -1119,7 +1056,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 		glDepthFunc( GL_LEQUAL );
 	}
 
-	//glPolygonOffset( material->m_depthBiasConstant, material->m_depthBiasFactor );
 	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
 	{
 		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
@@ -1459,33 +1395,6 @@ vsRenderer_OpenGL2::SetRenderTarget( vsRenderTarget *target )
 		m_currentRenderTarget = m_scene;
 	}
 }
-
-/*
-bool
-vsRenderer_OpenGL2::PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target )
-{
-	m_currentSettings = s;
-	target->Bind();
-	if ( m_antialias )
-	{
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	}
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
-	glClearColor(0.f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	return true;
-}
-
-bool
-vsRenderer_OpenGL2::PostRenderTarget( vsRenderTarget *target )
-{
-	m_scene->Bind();
-	return true;
-}
-*/
 
 #ifdef CHECK_GL_ERRORS
 void

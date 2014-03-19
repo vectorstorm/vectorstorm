@@ -29,11 +29,7 @@
 static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
-	"SetSpecularColor",
-	"SetTexture",
-	"ClearTexture",
 
-	"DrawPoint",
 	"PushTransform",
 	"PushTranslation",
 	"PushMatrix4x4",
@@ -74,6 +70,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"TriangleStripBuffer",
 	"TriangleListBuffer",
 	"TriangleFanBuffer",
+	"PointBuffer",
 
 	"SetMaterial",
 	"SetRenderTarget",
@@ -171,18 +168,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 				{
 					vsColor color = r->Color();
 					loader->SetColor(color);
-					break;
-				}
-				case OpCode_SetSpecularColor:
-				{
-					vsColor color = r->Color();
-					loader->SetSpecularColor(color);
-					break;
-				}
-				case OpCode_DrawPoint:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->DrawPoint(pos);
 					break;
 				}
 				case OpCode_VertexArray:
@@ -545,20 +530,6 @@ vsDisplayList::SetColor( const vsColor &color )
 }
 
 void
-vsDisplayList::SetSpecularColor( const vsColor &color )
-{
-	m_fifo->WriteUint8( OpCode_SetSpecularColor );
-	m_fifo->WriteColor( color );
-}
-/*
-void
-vsDisplayList::SetTexture( vsTexture *t )
-{
-	m_fifo->WriteUint8( OpCode_SetTexture );
-	m_fifo->WriteVoidStar( t );
-}*/
-
-void
 vsDisplayList::MoveTo( const vsVector3D &pos )
 {
 	m_cursorPos = pos;
@@ -606,8 +577,10 @@ vsDisplayList::LineTo( const vsVector3D &pos )
 void
 vsDisplayList::DrawPoint( const vsVector3D &pos )
 {
-	m_fifo->WriteUint8( OpCode_DrawPoint );
-	m_fifo->WriteVector3D( pos );
+	int index = 0;
+	VertexArray(&pos, 1);
+	Points( &index, 1 );
+	ClearVertexArray();
 }
 
 void
@@ -715,7 +688,7 @@ vsDisplayList::PopTransform()
 }
 
 void
-vsDisplayList::VertexArray( vsVector2D *array, int arrayCount )
+vsDisplayList::VertexArray( const vsVector2D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_VertexArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -726,7 +699,7 @@ vsDisplayList::VertexArray( vsVector2D *array, int arrayCount )
 }
 
 void
-vsDisplayList::VertexArray( vsVector3D *array, int arrayCount )
+vsDisplayList::VertexArray( const vsVector3D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_VertexArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -747,7 +720,7 @@ vsDisplayList::VertexBuffer( vsRenderBuffer *buffer )
 }
 
 void
-vsDisplayList::NormalArray( vsVector3D *array, int arrayCount )
+vsDisplayList::NormalArray( const vsVector3D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_NormalArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -829,7 +802,7 @@ vsDisplayList::ClearArrays()
 }
 
 void
-vsDisplayList::TexelArray( vsVector2D *array, int arrayCount )
+vsDisplayList::TexelArray( const vsVector2D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_TexelArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -840,7 +813,7 @@ vsDisplayList::TexelArray( vsVector2D *array, int arrayCount )
 }
 
 void
-vsDisplayList::ColorArray( vsColor *array, int arrayCount )
+vsDisplayList::ColorArray( const vsColor *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_ColorArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -939,6 +912,17 @@ vsDisplayList::LineStripBuffer( vsRenderBuffer *buffer )
 {
 	m_fifo->WriteUint8( OpCode_LineStripBuffer );
 	m_fifo->WriteVoidStar(buffer);
+}
+
+void
+vsDisplayList::Points( int *idArray, int vertexCount )
+{
+	m_fifo->WriteUint8( OpCode_Points );
+	m_fifo->WriteUint32( vertexCount );
+	for ( int i = 0; i < vertexCount; i++ )
+	{
+		m_fifo->WriteUint16Native( idArray[i] );
+	}
 }
 
 void
@@ -1105,13 +1089,6 @@ vsDisplayList::PopOp()
 			case OpCode_SetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
-			case OpCode_SetSpecularColor:
-				m_fifo->ReadColor(&m_currentOp.data.color);
-				break;
-			case OpCode_SetTexture:
-				m_currentOp.data.p = (char *)m_fifo->ReadVoidStar();
-				break;
-			case OpCode_DrawPoint:
 			case OpCode_PushTranslation:
 				m_fifo->ReadVector3D(&m_currentOp.data.vector);
 				break;
@@ -1179,6 +1156,7 @@ vsDisplayList::PopOp()
 			case OpCode_TriangleList:
 			case OpCode_TriangleStrip:
 			case OpCode_TriangleFan:
+			case OpCode_Points:
 			{
 				int count = m_fifo->ReadUint32();
 				m_currentOp.data.Set( count );
@@ -1278,12 +1256,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_SetColor:
 			SetColor( o->data.GetColor() );
 			break;
-		case OpCode_SetSpecularColor:
-			SetColor( o->data.GetColor() );
-			break;
-		case OpCode_DrawPoint:
-			DrawPoint( o->data.GetVector3D() );
-			break;
 		case OpCode_VertexArray:
 			VertexArray( (vsVector3D *)o->data.p, o->data.GetUInt() );
 			break;
@@ -1337,6 +1309,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_TriangleStrip:
 			TriangleStrip( (int *)o->data.p, o->data.GetUInt() );
+			break;
+		case OpCode_Points:
+			Points( (int *)o->data.p, o->data.GetUInt() );
 			break;
 		case OpCode_LineListBuffer:
 			LineListBuffer( (vsRenderBuffer *)o->data.p );
@@ -1535,6 +1510,7 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 				case OpCode_TriangleList:
 				case OpCode_TriangleStrip:
 				case OpCode_TriangleFan:
+				case OpCode_Points:
 					{
 						uint16_t *shuttle = (uint16_t *)o->data.p;
 						int count = o->data.GetUInt();
