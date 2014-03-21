@@ -188,7 +188,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
-					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, (m_texture != NULL) );
+					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
 				}
 				else if ( label == "clampU" )
 				{
@@ -231,5 +231,16 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 			break;
 		}
 	}
+}
+
+bool
+vsMaterialInternal::HasAnyTextures() const
+{
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		if ( m_texture[i] != NULL )
+			return true;
+	}
+	return false;
 }
 
