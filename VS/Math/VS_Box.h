@@ -56,9 +56,11 @@ public:
 	bool operator!=(const vsBox2D &b) const { return( min!=b.min || max!=b.max ); }
 	vsBox2D operator+(const vsVector2D &v) const { return vsBox2D(min+v, max+v); }
 	vsBox2D operator-(const vsVector2D &v) const { return vsBox2D(min-v, max-v); }
+	vsBox2D operator*(float f) const { return vsBox2D(min*f, max*f); }
 
 	vsBox2D& operator+=(const vsVector2D &v) { min+=v; max+=v; return *this; }
 	vsBox2D& operator-=(const vsVector2D &v) { min-=v; max-=v; return *this; }
+	vsBox2D& operator*=(float f) { min*=f; max*=f; return *this; }
 };
 
 vsBox2D vsInterpolate( float alpha, const vsBox2D& a, const vsBox2D& b );
