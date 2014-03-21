@@ -56,7 +56,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_glow(false),
 	m_postGlow(false),
 	m_hasColor(true),
-	m_blend(false)
+	m_blend(true)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		m_texture[i] = NULL;
