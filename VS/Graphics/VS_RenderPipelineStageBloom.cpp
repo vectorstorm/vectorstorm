@@ -133,11 +133,15 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	{
 		float offset = 1.2f / m_pass[i]->GetWidth();
 		m_horizontalBlurMaterial[i] = new vsDynamicMaterial;
+		m_horizontalBlurMaterial[i]->SetClampU(true);
+		m_horizontalBlurMaterial[i]->SetClampV(true);
 		m_horizontalBlurMaterial[i]->SetDrawMode(DrawMode_Absolute);
 		m_horizontalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(offset, 0.f)));
 		m_horizontalBlurMaterial[i]->SetTexture(0,m_pass[i]->GetTexture());
 
 		m_verticalBlurMaterial[i] = new vsDynamicMaterial;
+		m_verticalBlurMaterial[i]->SetClampU(true);
+		m_verticalBlurMaterial[i]->SetClampV(true);
 		m_verticalBlurMaterial[i]->SetDrawMode(DrawMode_Absolute);
 		m_verticalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(0.f,offset)));
 		m_verticalBlurMaterial[i]->SetTexture(0,m_pass2[i]->GetTexture());
@@ -145,6 +149,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	m_combineMaterial = new vsDynamicMaterial;
 	m_combineMaterial->SetDrawMode(DrawMode_Absolute);
+	m_combineMaterial->SetClampU(true);
+	m_combineMaterial->SetClampV(true);
 	m_combineMaterial->SetShader(new vsBloomCombineShader);
 	m_combineMaterial->SetTexture(0, m_from->GetTexture());
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
@@ -214,6 +220,9 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		list->SetMaterial(m_verticalBlurMaterial[i]);
 		list->TriangleStripArray(ind,4);
 	}
+
+	// list->BlitRenderTarget( m_pass[1], m_to );
+	// return;
 
 	// resolve all primary passes.
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
