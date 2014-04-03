@@ -981,7 +981,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 			case DrawMode_Add:
 			case DrawMode_Subtract:
 			case DrawMode_Normal:
-			case DrawMode_Absolute:
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
@@ -1171,14 +1170,6 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 
 			glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
 			glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
-			break;
-		}
-		case DrawMode_Absolute:
-		{
-#if !TARGET_OS_IPHONE
-			glBlendEquation(GL_FUNC_ADD);
-#endif
-			glBlendFunc(GL_ONE,GL_ZERO);	// absolute, no alpha processing
 			break;
 		}
 		default:

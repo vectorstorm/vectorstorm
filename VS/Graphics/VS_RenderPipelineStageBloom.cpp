@@ -120,7 +120,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		kernel[c] *= (1.f / sum);
 
 	m_hipassMaterial = new vsDynamicMaterial;
-	m_hipassMaterial->SetDrawMode(DrawMode_Absolute);
+	m_hipassMaterial->SetBlend(false);
 	m_hipassMaterial->SetColor(c_white);
 	m_hipassMaterial->SetCullingType(Cull_None);
 	m_hipassMaterial->SetZRead(false);
@@ -135,20 +135,20 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_horizontalBlurMaterial[i] = new vsDynamicMaterial;
 		m_horizontalBlurMaterial[i]->SetClampU(true);
 		m_horizontalBlurMaterial[i]->SetClampV(true);
-		m_horizontalBlurMaterial[i]->SetDrawMode(DrawMode_Absolute);
+		m_horizontalBlurMaterial[i]->SetBlend(false);
 		m_horizontalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(offset, 0.f)));
 		m_horizontalBlurMaterial[i]->SetTexture(0,m_pass[i]->GetTexture());
 
 		m_verticalBlurMaterial[i] = new vsDynamicMaterial;
 		m_verticalBlurMaterial[i]->SetClampU(true);
 		m_verticalBlurMaterial[i]->SetClampV(true);
-		m_verticalBlurMaterial[i]->SetDrawMode(DrawMode_Absolute);
+		m_verticalBlurMaterial[i]->SetBlend(false);
 		m_verticalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(0.f,offset)));
 		m_verticalBlurMaterial[i]->SetTexture(0,m_pass2[i]->GetTexture());
 	}
 
 	m_combineMaterial = new vsDynamicMaterial;
-	m_combineMaterial->SetDrawMode(DrawMode_Absolute);
+	m_combineMaterial->SetBlend(false);
 	m_combineMaterial->SetClampU(true);
 	m_combineMaterial->SetClampV(true);
 	m_combineMaterial->SetShader(new vsBloomCombineShader);
@@ -159,7 +159,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	}
 
 	m_straight = new vsDynamicMaterial();
-	m_straight->SetDrawMode(DrawMode_Absolute);
+	m_straight->SetBlend(false);
 	m_straight->SetColor(c_white);
 	m_straight->SetCullingType(Cull_None);
 	m_straight->SetZRead(false);
