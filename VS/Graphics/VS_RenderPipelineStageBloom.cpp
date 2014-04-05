@@ -17,8 +17,8 @@
 
 extern const char *passv, *combine7f, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
-
-float kernel[KERNEL_SIZE] = { 4, 5, 4  };
+static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
+static bool kernel_normalised = false;
 
 #define BUFFER_HEIGHT (512)
 #define BUFFER_WIDTH  (512)
@@ -42,24 +42,17 @@ public:
 		glUniform1f(m_locOffsetX, m_offset.x);
 		glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
+
+		vsShader::Prepare();
 	}
 };
 
 class vsBloomCombineShader: public vsShader
 {
-	GLint m_sceneLoc;
-	GLint m_passInt[BLOOM_PASSES];
 public:
 	vsBloomCombineShader():
 		vsShader(passv, combine7f, false, false)
 	{
-		m_sceneLoc = glGetUniformLocation(m_shader, "Scene");
-		for ( int i = 0; i < BLOOM_PASSES; i++ )
-		{
-			char name[] = "Pass##";
-			sprintf(name, "Pass%d", i);
-			m_passInt[i] = glGetUniformLocation(m_shader, name);
-		}
 	}
 };
 
@@ -112,12 +105,16 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_pass2[i] = pipeline->RequestRenderTarget(req, this);
 	}
 
-	// Normalize kernel coefficients
-	float sum = 0;
-	for (int c = 0; c < KERNEL_SIZE; c++)
-		sum += kernel[c];
-	for (int c = 0; c < KERNEL_SIZE; c++)
-		kernel[c] *= (1.f / sum);
+	if ( !kernel_normalised )
+	{
+		// Normalize kernel coefficients
+		float sum = 0;
+		for (int c = 0; c < KERNEL_SIZE; c++)
+			sum += kernel[c];
+		for (int c = 0; c < KERNEL_SIZE; c++)
+			kernel[c] *= (1.f / sum);
+		kernel_normalised = true;
+	}
 
 	m_hipassMaterial = new vsDynamicMaterial;
 	m_hipassMaterial->SetBlend(false);
@@ -149,6 +146,11 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	m_combineMaterial = new vsDynamicMaterial;
 	m_combineMaterial->SetBlend(false);
+	m_combineMaterial->SetColor(c_white);
+	m_combineMaterial->SetCullingType(Cull_None);
+	m_combineMaterial->SetZRead(false);
+	m_combineMaterial->SetZWrite(false);
+	m_combineMaterial->SetGlow(false);
 	m_combineMaterial->SetClampU(true);
 	m_combineMaterial->SetClampV(true);
 	m_combineMaterial->SetShader(new vsBloomCombineShader);
@@ -247,8 +249,8 @@ const char *passv = STRINGIFY(
 		uniform mat4 viewToProjection;
 		void main(void)
 		{
-		gl_TexCoord[0] = gl_MultiTexCoord0;
-		gl_Position = viewToProjection * worldToView * localToWorld * gl_Vertex;
+			gl_TexCoord[0] = gl_MultiTexCoord0;
+			gl_Position = viewToProjection * worldToView * localToWorld * gl_Vertex;
 		}
 		);
 

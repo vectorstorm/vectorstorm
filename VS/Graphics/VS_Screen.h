@@ -43,6 +43,8 @@ class vsScreen
 	float				m_aspectRatio;
 	bool				m_fullscreen;
 
+	bool				m_resized;
+
 	vsRenderTarget *	m_currentRenderTarget;
     const vsRenderer::Settings *m_currentSettings;
 
@@ -57,6 +59,7 @@ public:
 	vsRenderTarget *	GetPresentTarget();
 
 	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
+	void			CheckVideoMode();
 
 	// The following width/height/aspect ratio functions operate in terms of
 	// window manager POINTS, which may or may not equal pixels.  If desired,
@@ -85,6 +88,9 @@ public:
 
 	// returns true if we are using a renderer that supports shaders
 	bool			SupportsShaders();
+
+	// Ugh.  Need a nicer interface for this.
+	bool			Resized() { return m_resized; }
 
 	void			CreateScenes(int count);
 	void			DestroyScenes();

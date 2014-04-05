@@ -562,11 +562,24 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_RESIZED:
 							{
+								vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
 								int windowWidth = event.window.data1;
 								int windowHeight = event.window.data2;
 								vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
 								break;
 							}
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+							vsLog("Size Changed event");
+							break;
+						case SDL_WINDOWEVENT_SHOWN:
+							vsLog("Shown");
+							break;
+						case SDL_WINDOWEVENT_HIDDEN:
+							vsLog("Hidden");
+							break;
+						case SDL_WINDOWEVENT_MOVED:
+							vsSystem::Instance()->CheckVideoMode();
+							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
 							vsSystem::Instance()->SetAppHasFocus( false );
 							break;
@@ -579,31 +592,13 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_LEAVE:
 							m_mouseIsInWindow = false;
 							break;
-//					{
-//						if ( event.active.state & SDL_APPINPUTFOCUS )
-//						{
-//							// turn off mouse capture when we lose focus, if it's on.
-//							if ( m_captureMouse )
-//							{
-//								if ( event.active.gain )
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_ON );
-//								}
-//								else
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_OFF );
-//								}
-//							}
-//							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
-//						}
-//						break;
-//					}
+						default:
+							vsLog("Unhandled window event:  %d", event.window.event);
+							break;
 					}
 					break;
 				case SDL_QUIT:
 					core::SetExit();
-					break;
-				default:
 					break;
 			}
 		}

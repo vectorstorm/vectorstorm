@@ -110,6 +110,7 @@ public:
 	vsRenderer_OpenGL2(int width, int height, int depth, int flags);
 	virtual ~vsRenderer_OpenGL2();
 
+	bool	CheckVideoMode();
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);
 
 	void	PreRender( const Settings &s );

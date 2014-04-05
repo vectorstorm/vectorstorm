@@ -73,6 +73,8 @@ public:
 	virtual void			Update( float timeStep ) {UNUSED(timeStep);}
     virtual void            DrawFrame();
 
+	virtual void			HandleResize() {}
+
 	void					SetExit() { m_exit = true; }
 	void					SetTimeStep(float timeStep) { m_timeStep = timeStep; }
 

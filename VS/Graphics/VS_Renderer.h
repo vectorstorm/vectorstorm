@@ -77,6 +77,7 @@ public:
 	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();
 
+	virtual bool	CheckVideoMode() = 0;
 	virtual void	UpdateVideoMode(int width, int height, int depth, bool fullscreen) = 0;
 
 	virtual void	PreRender( const Settings &s ) = 0;

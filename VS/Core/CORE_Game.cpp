@@ -161,6 +161,11 @@ coreGame::Go()
 		if ( m_system[i]->IsActive() )
 			m_system[i]->Update( m_timeStep );
 
+	if ( vsScreen::Instance()->Resized() )
+	{
+		HandleResize();
+	}
+
 	Update( m_timeStep );
 
 	if ( m_currentMode )

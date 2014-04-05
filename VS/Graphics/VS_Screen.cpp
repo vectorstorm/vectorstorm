@@ -33,8 +33,9 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_height(height),
 	m_depth(depth),
 	m_fullscreen(fullscreen),
+	m_resized(false),
 	m_currentRenderTarget(NULL),
-    m_currentSettings(NULL)
+	m_currentSettings(NULL)
 {
 	vsAssert(s_instance == NULL, "Tried to create a second vsScreen");
 	s_instance = this;
@@ -43,6 +44,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_Fullscreen;
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
+	// flags |= vsRenderer::Flag_Resizable;
 
 	m_renderer = new vsRenderer_OpenGL2(width, height, depth, flags);
 
@@ -84,7 +86,13 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
+	m_resized = true;
+}
 
+void
+vsScreen::CheckVideoMode()
+{
+	m_resized = m_renderer->CheckVideoMode();
 }
 
 void
@@ -141,6 +149,7 @@ vsScreen::DestroyScenes()
 void
 vsScreen::Update( float timeStep )
 {
+	m_resized = false;
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->Update( timeStep );

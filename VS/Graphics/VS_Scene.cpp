@@ -52,7 +52,6 @@ vsScene::~vsScene()
 	vsDelete( m_defaultCamera3D );
 	vsDelete( m_defaultCamera );
 	vsDelete( m_entityList );
-	//	delete m_displayList;
 }
 
 void
@@ -87,13 +86,23 @@ vsScene::GetFOV()
 void
 vsScene::UpdateVideoMode()
 {
-	if ( m_camera3D )
-	{
-		m_camera3D->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
-	}
-	if ( m_camera )
-	{
-	}
+	// TODO:  This is all really awkward;  it shouldn't be here.
+	//
+	// Cameras should *either* have an aspect ratio set on them explicitly by
+	// clients (if the clients know what they're doing), *or* automatically take
+	// the aspect ratio of the viewport they're rendering into.  We shouldn't
+	// change them automatically based upon a resize event, in the former case,
+	// and particularly shouldn't be changing them HERE in the latter case!
+	// (That should happen at the time of render)
+
+//	if ( m_camera3D )
+//	{
+//		m_camera3D->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
+//	}
+//	if ( m_camera )
+//	{
+//		m_camera->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
+//	}
 }
 
 void

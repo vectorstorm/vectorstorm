@@ -204,6 +204,20 @@ vsSystem::UpdateVideoMode(int width, int height)
 }
 
 void
+vsSystem::CheckVideoMode()
+{
+	// Since this function is being called post-initialisation, we need to switch back to our system heap.
+	// (So that potentially changing video mode doesn't get charged to the currently active game,
+	// and then treated as a memory leak)
+
+	vsHeap::Push(g_globalHeap);
+
+	GetScreen()->CheckVideoMode();
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsSystem::SetWindowCaption(const vsString &caption)
 {
 #if !TARGET_OS_IPHONE

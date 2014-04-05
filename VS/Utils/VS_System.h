@@ -87,6 +87,7 @@ public:
 
 	void UpdateVideoMode();
 	void UpdateVideoMode(int width, int height);
+	void CheckVideoMode();
 
 	void	ShowCursor(bool show);
 	void	HideCursor() { ShowCursor(false); }

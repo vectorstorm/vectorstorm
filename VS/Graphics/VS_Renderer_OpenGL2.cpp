@@ -38,7 +38,6 @@
 #endif
 
 static SDL_Window *m_sdlWindow = NULL;
-static SDL_Renderer *m_sdlRenderer = NULL;
 static SDL_GLContext m_sdlGlContext;
 
 void vsRenderDebug( const vsString &message )
@@ -100,6 +99,35 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 		"GL_EXT_framebuffer_blit"
 	};
 
+	int displayCount = SDL_GetNumVideoDisplays();
+	if (displayCount < 1)
+	{
+		fprintf(stderr, "%s\nExiting...\n", SDL_GetError());
+		SDL_Quit();
+		exit(1);
+	}
+	vsLog("Found %d displays:", displayCount);
+	for(int i = 0; i < displayCount; i++)
+	{
+		SDL_Rect bounds;
+		if(SDL_GetDisplayBounds(i, &bounds) == 0)
+			vsLog("Display #%d %s (%dx%d)\n", i, SDL_GetDisplayName(i), bounds.w , bounds.h );
+	}
+#ifdef _DEBUG
+	//SDL_DisplayMode mode;
+	//if ( displayCount > 1 )
+	//{
+	//	flags |= Flag_Fullscreen;
+	//	SDL_Rect bounds;
+	//	SDL_GetDesktopDisplayMode(1, &mode);
+	//	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
+	//	{
+	//		width = bounds.w;
+	//		height = bounds.h;
+	//	}
+	//}
+#endif
+
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
 	m_invalidateMaterial = false;
@@ -118,21 +146,22 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	else if ( flags & Flag_Resizable )
 		videoFlags |= SDL_WINDOW_RESIZABLE;
 
-
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
+	// SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	// no depth buffer on our output target -- we don't render into it directly.
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	SDL_CreateWindowAndRenderer(width, height, videoFlags, &m_sdlWindow, &m_sdlRenderer);
+	m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, videoFlags);
+	// SDL_SetWindowMinimumSize(m_sdlWindow, 1024, 768);
 
-	if ( !m_sdlWindow || !m_sdlRenderer  ){
+	if ( !m_sdlWindow ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
@@ -260,11 +289,9 @@ vsRenderer_OpenGL2::~vsRenderer_OpenGL2()
 {
 	vsDelete(m_window);
 	vsDelete(m_scene);
-	SDL_DestroyRenderer( m_sdlRenderer );
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_DestroyWindow( m_sdlWindow );
 	m_sdlWindow = NULL;
-	m_sdlRenderer = NULL;
 }
 
 void
@@ -280,13 +307,13 @@ vsRenderer_OpenGL2::Resize()
 	settings.height = GetHeightPixels();
 	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
 
-    // Create 3D Scene Surface
+	// Create 3D Scene Surface
 	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
 
-    settings.width = GetWidthPixels();
-    settings.height = GetHeightPixels();
+	settings.width = GetWidthPixels();
+	settings.height = GetHeightPixels();
 	settings.depth = true;
-    settings.linear = true;
+	settings.linear = true;
 	settings.mipMaps = false;
 	settings.stencil = true;
 
@@ -300,6 +327,21 @@ vsRenderer_OpenGL2::Resize()
 	}
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
+}
+
+bool
+vsRenderer_OpenGL2::CheckVideoMode()
+{
+#ifdef HIGHDPI_SUPPORTED
+	int nowWidthPixels, nowHeightPixels;
+	SDL_GL_GetDrawableSize(m_sdlWindow, &nowWidthPixels, &nowHeightPixels);
+	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
+	{
+		UpdateVideoMode( m_width, m_height, true, false );
+		return true;
+	}
+#endif
+	return false;
 }
 
 void
@@ -316,7 +358,7 @@ vsRenderer_OpenGL2::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_widthPixels = width;
 	m_heightPixels = height;
 #endif
-	// m_scheme->Resize();
+	Resize();
 }
 
 void
@@ -453,462 +495,462 @@ vsRenderer_OpenGL2::RawRenderDisplayList( vsDisplayList *list )
 		switch( op->type )
 		{
 			case vsDisplayList::OpCode_SetColor:
-			{
-				const vsColor &nextColor = op->data.GetColor();
-				glColor4f( nextColor.r, nextColor.g, nextColor.b, nextColor.a );
-				// we explicitly set a color, that means our cached material no
-				// longer matches the OpenGL state, so set it again the next time
-				// someone sets it.
-				m_invalidateMaterial = true;
-				break;
-			}
+				{
+					const vsColor &nextColor = op->data.GetColor();
+					glColor4f( nextColor.r, nextColor.g, nextColor.b, nextColor.a );
+					// we explicitly set a color, that means our cached material no
+					// longer matches the OpenGL state, so set it again the next time
+					// someone sets it.
+					m_invalidateMaterial = true;
+					break;
+				}
 			case vsDisplayList::OpCode_SetMaterial:
-			{
-				vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
-				SetMaterial( material );
-				break;
-			}
+				{
+					vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
+					SetMaterial( material );
+					break;
+				}
 			case vsDisplayList::OpCode_SetRenderTarget:
-			{
-				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-				SetRenderTarget(target);
-				break;
-			}
+				{
+					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+					SetRenderTarget(target);
+					break;
+				}
 			case vsDisplayList::OpCode_ResolveRenderTarget:
-			{
-				vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-				if ( target )
-					target->Resolve();
-				break;
-			}
+				{
+					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+					if ( target )
+						target->Resolve();
+					break;
+				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
-			{
-				vsRenderTarget *from = (vsRenderTarget*)op->data.p;
-				vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
-				from->BlitTo(to);
-				break;
-			}
+				{
+					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
+					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
+					from->BlitTo(to);
+					break;
+				}
 			case vsDisplayList::OpCode_PushTransform:
-			{
-				vsTransform2D t = op->data.GetTransform();
+				{
+					vsTransform2D t = op->data.GetTransform();
 
-				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
-				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
+					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
-				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				break;
-			}
+					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					break;
+				}
 			case vsDisplayList::OpCode_PushTranslation:
-			{
-				vsVector3D &v = op->data.vector;
+				{
+					vsVector3D &v = op->data.vector;
 
-				vsMatrix4x4 m;
-				m.SetTranslation(v);
-				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
-				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
-				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				break;
-			}
+					vsMatrix4x4 m;
+					m.SetTranslation(v);
+					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
+					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					break;
+				}
 			case vsDisplayList::OpCode_PushMatrix4x4:
-			{
-				vsMatrix4x4 m = op->data.GetMatrix4x4();
-				vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
-				m_transformStack[++m_currentTransformStackLevel] = localToWorld;
-				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				break;
-			}
+				{
+					vsMatrix4x4 m = op->data.GetMatrix4x4();
+					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
+					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					break;
+				}
 			case vsDisplayList::OpCode_SetMatrix4x4:
-			{
-				vsMatrix4x4 &m = op->data.GetMatrix4x4();
-				m_transformStack[++m_currentTransformStackLevel] = m;
-				m_currentLocalToWorld = m;
-				break;
-			}
+				{
+					vsMatrix4x4 &m = op->data.GetMatrix4x4();
+					m_transformStack[++m_currentTransformStackLevel] = m;
+					m_currentLocalToWorld = m;
+					break;
+				}
 			case vsDisplayList::OpCode_SnapMatrix:
-			{
-				vsMatrix4x4 m = m_transformStack[m_currentTransformStackLevel];
-				vsVector4D &t = m.w;
-				t.x = (int)t.x;
-				t.y = (int)t.y;
-				t.z = (int)t.z;
-				m_transformStack[++m_currentTransformStackLevel] = m;
-				m_currentLocalToWorld = m;
-				break;
-			}
+				{
+					vsMatrix4x4 m = m_transformStack[m_currentTransformStackLevel];
+					vsVector4D &t = m.w;
+					t.x = (int)t.x;
+					t.y = (int)t.y;
+					t.z = (int)t.z;
+					m_transformStack[++m_currentTransformStackLevel] = m;
+					m_currentLocalToWorld = m;
+					break;
+				}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
-			{
-				m_currentWorldToView = op->data.GetMatrix4x4();
-				if ( m_currentShader )
 				{
-					m_currentShader->SetWorldToView(m_currentWorldToView);
-				}
-				break;
-			}
-			case vsDisplayList::OpCode_PopTransform:
-			{
-				vsAssert(m_currentTransformStackLevel > 0, "Renderer transform stack underflow??");
-				m_currentTransformStackLevel--;
-				m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
-				break;
-			}
-			case vsDisplayList::OpCode_SetCameraTransform:
-			{
-				break;
-			}
-			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
-			{
-				glMatrixMode( GL_PROJECTION );
-				vsMatrix4x4 &m = op->data.GetMatrix4x4();
-				m_currentViewToProjection = m;
-				if ( m_currentShader )
-					m_currentShader->SetViewToProjection(m);
-				break;
-			}
-			case vsDisplayList::OpCode_VertexArray:
-			{
-				glVertexPointer( 3, GL_FLOAT, 0, op->data.p );
-				m_currentVertexArray = (vsVector3D *)op->data.p;
-				m_currentVertexArrayCount = op->data.i;
-				m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
-				break;
-			}
-			case vsDisplayList::OpCode_VertexBuffer:
-			{
-				m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
-				m_currentVertexBuffer->BindVertexBuffer( &m_state );
-				break;
-			}
-			case vsDisplayList::OpCode_NormalArray:
-			{
-				glNormalPointer( GL_FLOAT, 0, op->data.p );
-				m_currentNormalArray = (vsVector3D *)op->data.p;
-				m_currentNormalArrayCount = op->data.i;
-				m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
-				break;
-			}
-			case vsDisplayList::OpCode_NormalBuffer:
-			{
-				m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
-				m_currentNormalBuffer->BindNormalBuffer( &m_state );
-				m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
-				break;
-			}
-			case vsDisplayList::OpCode_ClearVertexArray:
-			{
-				m_currentVertexBuffer = NULL;
-				m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-				m_currentVertexArray = NULL;
-				m_currentVertexArrayCount = 0;
-				break;
-			}
-			case vsDisplayList::OpCode_ClearNormalArray:
-			{
-				m_currentNormalBuffer = NULL;
-				m_currentNormalArray = NULL;
-				m_currentNormalArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-				break;
-			}
-			case vsDisplayList::OpCode_TexelArray:
-			{
-				glTexCoordPointer( 2, GL_FLOAT, 0, op->data.p );
-				m_currentTexelArray = (vsVector2D *)op->data.p;
-				m_currentTexelArrayCount = op->data.i;
-				m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-				break;
-			}
-			case vsDisplayList::OpCode_TexelBuffer:
-			{
-				m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
-				m_currentTexelBuffer->BindTexelBuffer( &m_state );
-				break;
-			}
-			case vsDisplayList::OpCode_ClearTexelArray:
-			{
-				m_currentTexelBuffer = NULL;
-				m_currentTexelArray = NULL;
-				m_currentTexelArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-				break;
-			}
-			case vsDisplayList::OpCode_ColorArray:
-			{
-				glColorPointer( 4, GL_FLOAT, 0, op->data.p );
-				m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
-				m_currentColorArray = (vsColor *)op->data.p;
-				m_currentColorArrayCount = op->data.i;
-				break;
-			}
-			case vsDisplayList::OpCode_ColorBuffer:
-			{
-				m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
-				m_currentColorBuffer->BindColorBuffer( &m_state );
-				break;
-			}
-			case vsDisplayList::OpCode_ClearColorArray:
-			{
-				if ( m_currentColorBuffer )
-				{
-					//m_currentColorBuffer->UnbindColorBuffer();
-					m_currentColorBuffer = NULL;
-				}
-				m_currentColorArray = NULL;
-				m_currentColorArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-				break;
-			}
-			case vsDisplayList::OpCode_ClearArrays:
-			{
-				m_currentColorArray = NULL;
-				m_currentColorBuffer = NULL;
-				m_currentColorArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-
-				m_currentTexelBuffer = NULL;
-				m_currentTexelArray = NULL;
-				m_currentTexelArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-
-				m_currentNormalBuffer = NULL;
-				m_currentNormalArray = NULL;
-				m_currentNormalArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-
-				m_currentVertexBuffer = NULL;
-				m_currentVertexArray = NULL;
-				m_currentVertexArrayCount = 0;
-				m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-				break;
-			}
-			case vsDisplayList::OpCode_BindBuffer:
-			{
-				vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-				buffer->Bind( &m_state );
-				break;
-			}
-			case vsDisplayList::OpCode_UnbindBuffer:
-			{
-				vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-				buffer->Unbind( &m_state );
-				break;
-			}
-			case vsDisplayList::OpCode_LineListArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_LineStripArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleListArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleStripArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleStripBuffer:
-			{
-				FlushRenderState();
-				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-				ib->TriStripBuffer();
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleListBuffer:
-			{
-				FlushRenderState();
-				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-				ib->TriListBuffer();
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleFanBuffer:
-			{
-				FlushRenderState();
-				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-				ib->TriFanBuffer();
-				break;
-			}
-			case vsDisplayList::OpCode_LineListBuffer:
-			{
-				FlushRenderState();
-				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-				ib->LineListBuffer();
-				break;
-			}
-			case vsDisplayList::OpCode_LineStripBuffer:
-			{
-				FlushRenderState();
-				vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-				ib->LineStripBuffer();
-				break;
-			}
-			case vsDisplayList::OpCode_TriangleFanArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_PointsArray:
-			{
-				FlushRenderState();
-				glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-				break;
-			}
-			case vsDisplayList::OpCode_Light:
-			{
-				if ( m_lightCount < GL_MAX_LIGHTS - 1 )
-				{
-					GLfloat pos[4] = {0.f,0.f,0.f,0.f};
-					GLfloat whiteColor[4] = {1.f,1.f,1.f,1.f};
-					GLfloat blackColor[4] = {0.f,0.f,0.f,1.f};
-
-					vsLight &l = op->data.light;
-					int lightId = GL_LIGHT0 + m_lightCount;
-					glEnable(lightId);
-					if ( l.m_type == vsLight::Type_Ambient )
+					m_currentWorldToView = op->data.GetMatrix4x4();
+					if ( m_currentShader )
 					{
-						glLightfv(lightId, GL_AMBIENT, (float *)&l.m_color);
-						glLightfv(lightId, GL_DIFFUSE, (float *)&blackColor);
-						glLightfv(lightId, GL_SPECULAR, (float *)&blackColor);
+						m_currentShader->SetWorldToView(m_currentWorldToView);
+					}
+					break;
+				}
+			case vsDisplayList::OpCode_PopTransform:
+				{
+					vsAssert(m_currentTransformStackLevel > 0, "Renderer transform stack underflow??");
+					m_currentTransformStackLevel--;
+					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					break;
+				}
+			case vsDisplayList::OpCode_SetCameraTransform:
+				{
+					break;
+				}
+			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
+				{
+					glMatrixMode( GL_PROJECTION );
+					vsMatrix4x4 &m = op->data.GetMatrix4x4();
+					m_currentViewToProjection = m;
+					if ( m_currentShader )
+						m_currentShader->SetViewToProjection(m);
+					break;
+				}
+			case vsDisplayList::OpCode_VertexArray:
+				{
+					glVertexPointer( 3, GL_FLOAT, 0, op->data.p );
+					m_currentVertexArray = (vsVector3D *)op->data.p;
+					m_currentVertexArrayCount = op->data.i;
+					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
+					break;
+				}
+			case vsDisplayList::OpCode_VertexBuffer:
+				{
+					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentVertexBuffer->BindVertexBuffer( &m_state );
+					break;
+				}
+			case vsDisplayList::OpCode_NormalArray:
+				{
+					glNormalPointer( GL_FLOAT, 0, op->data.p );
+					m_currentNormalArray = (vsVector3D *)op->data.p;
+					m_currentNormalArrayCount = op->data.i;
+					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					break;
+				}
+			case vsDisplayList::OpCode_NormalBuffer:
+				{
+					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentNormalBuffer->BindNormalBuffer( &m_state );
+					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					break;
+				}
+			case vsDisplayList::OpCode_ClearVertexArray:
+				{
+					m_currentVertexBuffer = NULL;
+					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					m_currentVertexArray = NULL;
+					m_currentVertexArrayCount = 0;
+					break;
+				}
+			case vsDisplayList::OpCode_ClearNormalArray:
+				{
+					m_currentNormalBuffer = NULL;
+					m_currentNormalArray = NULL;
+					m_currentNormalArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+					break;
+				}
+			case vsDisplayList::OpCode_TexelArray:
+				{
+					glTexCoordPointer( 2, GL_FLOAT, 0, op->data.p );
+					m_currentTexelArray = (vsVector2D *)op->data.p;
+					m_currentTexelArrayCount = op->data.i;
+					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					break;
+				}
+			case vsDisplayList::OpCode_TexelBuffer:
+				{
+					m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentTexelBuffer->BindTexelBuffer( &m_state );
+					break;
+				}
+			case vsDisplayList::OpCode_ClearTexelArray:
+				{
+					m_currentTexelBuffer = NULL;
+					m_currentTexelArray = NULL;
+					m_currentTexelArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+					break;
+				}
+			case vsDisplayList::OpCode_ColorArray:
+				{
+					glColorPointer( 4, GL_FLOAT, 0, op->data.p );
+					m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+					m_currentColorArray = (vsColor *)op->data.p;
+					m_currentColorArrayCount = op->data.i;
+					break;
+				}
+			case vsDisplayList::OpCode_ColorBuffer:
+				{
+					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentColorBuffer->BindColorBuffer( &m_state );
+					break;
+				}
+			case vsDisplayList::OpCode_ClearColorArray:
+				{
+					if ( m_currentColorBuffer )
+					{
+						//m_currentColorBuffer->UnbindColorBuffer();
+						m_currentColorBuffer = NULL;
+					}
+					m_currentColorArray = NULL;
+					m_currentColorArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
+					break;
+				}
+			case vsDisplayList::OpCode_ClearArrays:
+				{
+					m_currentColorArray = NULL;
+					m_currentColorBuffer = NULL;
+					m_currentColorArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
+
+					m_currentTexelBuffer = NULL;
+					m_currentTexelArray = NULL;
+					m_currentTexelArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+
+					m_currentNormalBuffer = NULL;
+					m_currentNormalArray = NULL;
+					m_currentNormalArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+
+					m_currentVertexBuffer = NULL;
+					m_currentVertexArray = NULL;
+					m_currentVertexArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					break;
+				}
+			case vsDisplayList::OpCode_BindBuffer:
+				{
+					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
+					buffer->Bind( &m_state );
+					break;
+				}
+			case vsDisplayList::OpCode_UnbindBuffer:
+				{
+					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
+					buffer->Unbind( &m_state );
+					break;
+				}
+			case vsDisplayList::OpCode_LineListArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_LineStripArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleListArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleStripArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleStripBuffer:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					ib->TriStripBuffer();
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleListBuffer:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					ib->TriListBuffer();
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleFanBuffer:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					ib->TriFanBuffer();
+					break;
+				}
+			case vsDisplayList::OpCode_LineListBuffer:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					ib->LineListBuffer();
+					break;
+				}
+			case vsDisplayList::OpCode_LineStripBuffer:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					ib->LineStripBuffer();
+					break;
+				}
+			case vsDisplayList::OpCode_TriangleFanArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_PointsArray:
+				{
+					FlushRenderState();
+					glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					break;
+				}
+			case vsDisplayList::OpCode_Light:
+				{
+					if ( m_lightCount < GL_MAX_LIGHTS - 1 )
+					{
+						GLfloat pos[4] = {0.f,0.f,0.f,0.f};
+						GLfloat whiteColor[4] = {1.f,1.f,1.f,1.f};
+						GLfloat blackColor[4] = {0.f,0.f,0.f,1.f};
+
+						vsLight &l = op->data.light;
+						int lightId = GL_LIGHT0 + m_lightCount;
+						glEnable(lightId);
+						if ( l.m_type == vsLight::Type_Ambient )
+						{
+							glLightfv(lightId, GL_AMBIENT, (float *)&l.m_color);
+							glLightfv(lightId, GL_DIFFUSE, (float *)&blackColor);
+							glLightfv(lightId, GL_SPECULAR, (float *)&blackColor);
+						}
+						else
+						{
+							if ( l.m_type == vsLight::Type_Point )
+							{
+								pos[0] = l.m_position.x;
+								pos[1] = l.m_position.y;
+								pos[2] = l.m_position.z;
+								pos[3] = 1.f;
+								glLightfv(lightId, GL_POSITION, pos);
+							}
+							else if ( l.m_type == vsLight::Type_Directional )
+							{
+								pos[0] = l.m_direction.x;
+								pos[1] = l.m_direction.y;
+								pos[2] = l.m_direction.z;
+								pos[3] = 0.f;
+								glLightfv(lightId, GL_POSITION, pos);
+							}
+							glLightfv(lightId, GL_AMBIENT, (float *)&l.m_ambient);
+							glLightfv(lightId, GL_DIFFUSE, (float *)&l.m_color);
+							glLightfv(lightId, GL_SPECULAR, (float *)&whiteColor);
+
+							glLightf(lightId, GL_LINEAR_ATTENUATION, 0.05f);
+							glLightf(lightId, GL_QUADRATIC_ATTENUATION, 0.01f);
+						}
+
+
+						m_lightCount++;
+					}
+					break;
+				}
+			case vsDisplayList::OpCode_ClearLights:
+				{
+					for ( int i = 0; i < m_lightCount; i++ )
+					{
+						glDisable( GL_LIGHT0 + i );
+					}
+					m_lightCount = 0;
+					break;
+				}
+			case vsDisplayList::OpCode_Fog:
+				{
+					vsColor fogColor = op->data.fog.GetColor();
+					glFogfv(GL_FOG_COLOR, (GLfloat*)&fogColor);
+
+					if ( op->data.fog.IsLinear() )
+					{
+						glFogi(GL_FOG_MODE, GL_LINEAR);
+						glFogf(GL_FOG_START, op->data.fog.GetStart() );
+						glFogf(GL_FOG_END, op->data.fog.GetEnd() );
 					}
 					else
 					{
-						if ( l.m_type == vsLight::Type_Point )
-						{
-							pos[0] = l.m_position.x;
-							pos[1] = l.m_position.y;
-							pos[2] = l.m_position.z;
-							pos[3] = 1.f;
-							glLightfv(lightId, GL_POSITION, pos);
-						}
-						else if ( l.m_type == vsLight::Type_Directional )
-						{
-							pos[0] = l.m_direction.x;
-							pos[1] = l.m_direction.y;
-							pos[2] = l.m_direction.z;
-							pos[3] = 0.f;
-							glLightfv(lightId, GL_POSITION, pos);
-						}
-						glLightfv(lightId, GL_AMBIENT, (float *)&l.m_ambient);
-						glLightfv(lightId, GL_DIFFUSE, (float *)&l.m_color);
-						glLightfv(lightId, GL_SPECULAR, (float *)&whiteColor);
-
-						glLightf(lightId, GL_LINEAR_ATTENUATION, 0.05f);
-						glLightf(lightId, GL_QUADRATIC_ATTENUATION, 0.01f);
+						glFogi(GL_FOG_MODE, GL_EXP2);
+						glFogf(GL_FOG_DENSITY, op->data.fog.GetDensity() );
 					}
 
-
-					m_lightCount++;
+					break;
 				}
-				break;
-			}
-			case vsDisplayList::OpCode_ClearLights:
-			{
-				for ( int i = 0; i < m_lightCount; i++ )
-				{
-					glDisable( GL_LIGHT0 + i );
-				}
-				m_lightCount = 0;
-				break;
-			}
-			case vsDisplayList::OpCode_Fog:
-			{
-				vsColor fogColor = op->data.fog.GetColor();
-				glFogfv(GL_FOG_COLOR, (GLfloat*)&fogColor);
-
-				if ( op->data.fog.IsLinear() )
-				{
-					glFogi(GL_FOG_MODE, GL_LINEAR);
-					glFogf(GL_FOG_START, op->data.fog.GetStart() );
-					glFogf(GL_FOG_END, op->data.fog.GetEnd() );
-				}
-				else
-				{
-					glFogi(GL_FOG_MODE, GL_EXP2);
-					glFogf(GL_FOG_DENSITY, op->data.fog.GetDensity() );
-				}
-
-				break;
-			}
 			case vsDisplayList::OpCode_ClearFog:
-			{
-				glFogf(GL_FOG_DENSITY, 0.f );
-				break;
-			}
+				{
+					glFogf(GL_FOG_DENSITY, 0.f );
+					break;
+				}
 			case vsDisplayList::OpCode_FlatShading:
-			{
-				glShadeModel( GL_FLAT );
-				break;
-			}
+				{
+					glShadeModel( GL_FLAT );
+					break;
+				}
 			case vsDisplayList::OpCode_SmoothShading:
-			{
-				glShadeModel( GL_SMOOTH );
-				break;
-			}
+				{
+					glShadeModel( GL_SMOOTH );
+					break;
+				}
 			case vsDisplayList::OpCode_EnableStencil:
-			{
-				glStencilFunc(GL_EQUAL, 0x1, 0x1);
-				break;
-			}
+				{
+					glStencilFunc(GL_EQUAL, 0x1, 0x1);
+					break;
+				}
 			case vsDisplayList::OpCode_DisableStencil:
-			{
-				//m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-				glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-				break;
-			}
+				{
+					//m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+					glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+					break;
+				}
 			case vsDisplayList::OpCode_ClearStencil:
-			{
-				glClearStencil(0);
-				glClear(GL_STENCIL_BUFFER_BIT);
-				break;
-			}
+				{
+					glClearStencil(0);
+					glClear(GL_STENCIL_BUFFER_BIT);
+					break;
+				}
 			case vsDisplayList::OpCode_EnableScissor:
-			{
-				m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
-				const vsBox2D& box = op->data.box2D;
-				glScissor( box.GetMin().x * m_viewportWidthPixels,
-						box.GetMin().y * m_viewportHeightPixels,
-						box.Width() * m_viewportWidthPixels,
-						box.Height() * m_viewportHeightPixels );
-				break;
-			}
+				{
+					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
+					const vsBox2D& box = op->data.box2D;
+					glScissor( box.GetMin().x * m_viewportWidthPixels,
+							box.GetMin().y * m_viewportHeightPixels,
+							box.Width() * m_viewportWidthPixels,
+							box.Height() * m_viewportHeightPixels );
+					break;
+				}
 			case vsDisplayList::OpCode_DisableScissor:
-			{
-				m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-				break;
-			}
+				{
+					m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
+					break;
+				}
 			case vsDisplayList::OpCode_SetViewport:
-			{
-				const vsBox2D& box = op->data.box2D;
-				glViewport( box.GetMin().x * m_viewportWidthPixels,
-						box.GetMin().y * m_viewportHeightPixels,
-						box.Width() * m_viewportWidthPixels,
-						box.Height() * m_viewportHeightPixels );
-				//glViewport( box.GetMin().x,
-						//box.GetMin().y,
-						//box.Width(),
-						//box.Height());
-				break;
-			}
+				{
+					const vsBox2D& box = op->data.box2D;
+					glViewport( box.GetMin().x * m_viewportWidthPixels,
+							box.GetMin().y * m_viewportHeightPixels,
+							box.Width() * m_viewportWidthPixels,
+							box.Height() * m_viewportHeightPixels );
+					//glViewport( box.GetMin().x,
+					//box.GetMin().y,
+					//box.Width(),
+					//box.Height());
+					break;
+				}
 			case vsDisplayList::OpCode_ClearViewport:
-			{
-				glViewport( 0, 0, (GLsizei)m_viewportWidthPixels, (GLsizei)m_viewportHeightPixels );
-				break;
-			}
+				{
+					glViewport( 0, 0, (GLsizei)m_viewportWidthPixels, (GLsizei)m_viewportHeightPixels );
+					break;
+				}
 			case vsDisplayList::OpCode_Debug:
-			{
-				vsRenderDebug( op->data.string );
-				break;
-			}
+				{
+					vsRenderDebug( op->data.string );
+					break;
+				}
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
@@ -927,22 +969,22 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 	m_invalidateMaterial = true;
 	m_currentMaterial = material;
 
-    if ( m_currentSettings.writeColor )
-    {
-        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
-    }
-    else
-    {
-        glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-    }
-    if ( m_currentSettings.writeDepth )
-    {
-        m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
-    }
-    else
-    {
-        m_state.SetBool( vsRendererState::Bool_DepthMask, false );
-    }
+	if ( m_currentSettings.writeColor )
+	{
+		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
+	}
+	else
+	{
+		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+	}
+	if ( m_currentSettings.writeDepth )
+	{
+		m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
+	}
+	else
+	{
+		m_state.SetBool( vsRendererState::Bool_DepthMask, false );
+	}
 
 	switch ( material->m_stencil )
 	{
@@ -972,7 +1014,7 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 	m_currentShader = NULL;
 	if ( material->m_shader )
 	{
-        m_currentShader = material->m_shader;
+		m_currentShader = material->m_shader;
 	}
 	else
 	{
@@ -984,14 +1026,14 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
+						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
 					else
 						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
 				}
 				else
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
+						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
 					else
 						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
 				}
@@ -1000,14 +1042,14 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
+						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
 					else
 						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
 				}
 				else
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
-                        m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
+						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
 					else
 						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
 				}
@@ -1018,14 +1060,14 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 	}
 
 	/*static bool debugWireframe = false;
-	if ( debugWireframe )
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-	else
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}*/
+	  if ( debugWireframe )
+	  {
+	  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	  }
+	  else
+	  {
+	  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	  }*/
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		vsTexture *t = material->GetTexture(i);
@@ -1122,56 +1164,56 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 	switch( material->m_drawMode )
 	{
 		case DrawMode_Add:
-		{
+			{
 #if !TARGET_OS_IPHONE
-			glBlendEquation(GL_FUNC_ADD);
+				glBlendEquation(GL_FUNC_ADD);
 #endif
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
-			m_state.SetBool( vsRendererState::Bool_Lighting, false );
-			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			break;
-		}
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
+				m_state.SetBool( vsRendererState::Bool_Lighting, false );
+				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				break;
+			}
 		case DrawMode_Subtract:
-		{
+			{
 #if !TARGET_OS_IPHONE
-			glBlendEquation(GL_FUNC_SUBTRACT);
+				glBlendEquation(GL_FUNC_SUBTRACT);
 #endif
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-			m_state.SetBool( vsRendererState::Bool_Lighting, false );
-			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			break;
-		}
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				m_state.SetBool( vsRendererState::Bool_Lighting, false );
+				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				break;
+			}
 		case DrawMode_Normal:
-		{
+			{
 #if !TARGET_OS_IPHONE
-			glBlendEquation(GL_FUNC_ADD);
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+				glBlendEquation(GL_FUNC_ADD);
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
-			glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+				glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-			m_state.SetBool( vsRendererState::Bool_Lighting, false );
-			m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-			break;
-		}
+				m_state.SetBool( vsRendererState::Bool_Lighting, false );
+				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				break;
+			}
 		case DrawMode_Lit:
-		{
+			{
 #if !TARGET_OS_IPHONE
-			glBlendEquation(GL_FUNC_ADD);
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+				glBlendEquation(GL_FUNC_ADD);
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
-			glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+				glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-			m_state.SetBool( vsRendererState::Bool_Lighting, true );
-			m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
+				m_state.SetBool( vsRendererState::Bool_Lighting, true );
+				m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
 #if !TARGET_OS_IPHONE
-			glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
+				glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
 #endif
-			float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
+				float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
 
-			glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
-			glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
-			break;
-		}
+				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
+				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
+				break;
+			}
 		default:
 			vsAssert(0, "Unknown draw mode requested!");
 	}
@@ -1192,9 +1234,9 @@ vsRenderer_OpenGL2::SetMaterial(vsMaterialInternal *material)
 GLuint
 vsRenderer_OpenGL2::Compile(const char *vert, const char *frag, int vLength, int fLength )
 {
-    GLchar buf[256];
-    GLuint vertShader, fragShader, program;
-    GLint success;
+	GLchar buf[256];
+	GLuint vertShader, fragShader, program;
+	GLint success;
 
 	GLint *vLengthPtr = NULL;
 	GLint *fLengthPtr = NULL;
@@ -1204,46 +1246,46 @@ vsRenderer_OpenGL2::Compile(const char *vert, const char *frag, int vLength, int
 	if ( fLength > 0 )
 		fLengthPtr = (GLint*)&fLength;
 
-    vertShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertShader, 1, (const GLchar**) &vert, vLengthPtr);
-    glCompileShader(vertShader);
-    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-        vsLog(buf);
-        vsAssert(success,"Unable to compile vertex shader.\n");
-    }
+	vertShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertShader, 1, (const GLchar**) &vert, vLengthPtr);
+	glCompileShader(vertShader);
+	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
+		vsLog(buf);
+		vsAssert(success,"Unable to compile vertex shader.\n");
+	}
 
-    fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
-    glCompileShader(fragShader);
-    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-        vsLog(buf);
-        vsAssert(success,"Unable to compile fragment shader.\n");
-    }
+	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
+	glCompileShader(fragShader);
+	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
+		vsLog(buf);
+		vsAssert(success,"Unable to compile fragment shader.\n");
+	}
 
-    program = glCreateProgram();
-    glAttachShader(program, vertShader);
-    glAttachShader(program, fragShader);
+	program = glCreateProgram();
+	glAttachShader(program, vertShader);
+	glAttachShader(program, fragShader);
 
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(program, sizeof(buf), 0, buf);
-        vsLog(buf);
-        vsAssert(success,"Unable to link shaders.\n");
-    }
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(program, sizeof(buf), 0, buf);
+		vsLog(buf);
+		vsAssert(success,"Unable to link shaders.\n");
+	}
 	glDetachShader(program,vertShader);
 	glDetachShader(program,fragShader);
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
 
-    return program;
+	return program;
 }
 
 void
@@ -1391,25 +1433,25 @@ vsRenderer_OpenGL2::SetRenderTarget( vsRenderTarget *target )
 void
 vsRenderer_OpenGL2::CheckGLError(const char* string)
 {
-    char enums[][20] =
-    {
-        "invalid enumeration", // GL_INVALID_ENUM
-        "invalid value",       // GL_INVALID_VALUE
-        "invalid operation",   // GL_INVALID_OPERATION
-        "stack overflow",      // GL_STACK_OVERFLOW
-        "stack underflow",     // GL_STACK_UNDERFLOW
-        "out of memory"        // GL_OUT_OF_MEMORY
-    };
+	char enums[][20] =
+	{
+		"invalid enumeration", // GL_INVALID_ENUM
+		"invalid value",       // GL_INVALID_VALUE
+		"invalid operation",   // GL_INVALID_OPERATION
+		"stack overflow",      // GL_STACK_OVERFLOW
+		"stack underflow",     // GL_STACK_UNDERFLOW
+		"out of memory"        // GL_OUT_OF_MEMORY
+	};
 
-    GLenum errcode = glGetError();
-    if (errcode == GL_NO_ERROR)
-        return;
+	GLenum errcode = glGetError();
+	if (errcode == GL_NO_ERROR)
+		return;
 
-    errcode -= GL_INVALID_ENUM;
+	errcode -= GL_INVALID_ENUM;
 
 	vsString errString = vsFormatString("OpenGL %s in '%s'", enums[errcode], call);
 	vsLog(errString);
-    vsAssert(false,errString);
+	vsAssert(false,errString);
 }
 #endif
 
