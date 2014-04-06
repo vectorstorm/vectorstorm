@@ -8,6 +8,7 @@
  */
 
 #include "VS_Font.h"
+#include "VS_FontRenderer.h"
 
 #include "VS_DisplayList.h"
 #include "VS_DynamicMaterial.h"
@@ -15,6 +16,8 @@
 #include "VS_Vector.h"
 
 #include "VS_RenderBuffer.h"
+#include "VS_RenderTarget.h"
+#include "VS_Screen.h"
 
 #include "VS_Texture.h"
 #include "VS_TextureManager.h"
@@ -22,7 +25,7 @@
 #include "VS_File.h"
 #include "VS_Record.h"
 
-vsFont::vsFont( const vsString &filename ):
+vsFontSize::vsFontSize( const vsString &filename ):
 	m_glyph(NULL),
 	m_glyphCount(0)
 {
@@ -41,7 +44,7 @@ vsFont::vsFont( const vsString &filename ):
 	}
 }
 
-vsFont::~vsFont()
+vsFontSize::~vsFontSize()
 {
 	vsDeleteArray( m_glyph );
 	vsDelete( m_material );
@@ -49,7 +52,7 @@ vsFont::~vsFont()
 }
 
 void
-vsFont::LoadOldFormat( vsFile *font )
+vsFontSize::LoadOldFormat( vsFile *font )
 {
 	m_size = 1.f;
 	m_lineSpacing = 0.4f;
@@ -204,7 +207,7 @@ int GetBMFontValue_Integer( vsRecord *r, const vsString& label )
 }
 
 void
-vsFont::LoadBMFont( vsFile *file )
+vsFontSize::LoadBMFont( vsFile *file )
 {
 	vsFile &fontData = *file;
 	vsRecord r;
@@ -309,7 +312,7 @@ vsFont::LoadBMFont( vsFile *file )
 }
 
 vsGlyph *
-vsFont::FindGlyphForCharacter(char letter)
+vsFontSize::FindGlyphForCharacter(char letter)
 {
 	for ( int i = 0; i < m_glyphCount; i++ )
 	{
@@ -322,7 +325,7 @@ vsFont::FindGlyphForCharacter(char letter)
 }
 
 float
-vsFont::GetStringWidth( const vsString &string, float size )
+vsFontSize::GetStringWidth( const vsString &string, float size )
 {
 	float width = 0.f;
 	size_t length = string.size();
@@ -334,7 +337,7 @@ vsFont::GetStringWidth( const vsString &string, float size )
 }
 
 float
-vsFont::GetCharacterWidth( char c, float size )
+vsFontSize::GetCharacterWidth( char c, float size )
 {
 	float width = 0.f;
 
@@ -345,5 +348,78 @@ vsFont::GetCharacterWidth( char c, float size )
 	}
 
 	return width * size;
+}
+
+vsFont::vsFont(const vsString& filename)
+{
+	vsFile file(filename);
+	vsRecord r;
+	while ( file.Record(&r) )
+	{
+		if ( r.GetLabel().AsString() == "Size" )
+		{
+			vsString name = r.GetToken(0).AsString();
+			vsFontSize *fRecord = new vsFontSize(name);
+			m_size.AddItem(fRecord);
+		}
+	}
+}
+
+vsFont::~vsFont()
+{
+	// iterate across all our fragments, cutting them loose so they don't try
+	// to unregister themselves later.  (There shouldn't be any remaining,
+	// actually, since they probably reference data held by the vsFontSize
+	// instances?)
+
+	int fragmentCount = m_fragment.ItemCount();
+	for ( int i = 0; i < fragmentCount; i++ )
+	{
+		m_fragment[i]->Detach();
+	}
+}
+
+vsFontSize *
+vsFont::Size(float size)
+{
+	if ( vsScreen::Instance()->GetTrueWidth() <
+			vsScreen::Instance()->GetMainRenderTarget()->GetWidth() )
+	{
+		float factor = vsScreen::Instance()->GetMainRenderTarget()->GetWidth() / vsScreen::Instance()->GetTrueWidth();
+		size *= factor;
+	}
+
+	int sizeCount = m_size.ItemCount();
+	for ( int i = 0; i < sizeCount; i++ )
+	{
+		if ( m_size[i]->GetNativeSize() >= size )
+		{
+			return m_size[i];
+		}
+	}
+	return m_size[sizeCount-1];
+}
+
+void
+vsFont::RegisterFragment( vsFontFragment *fragment )
+{
+	m_fragment.AddItem(fragment);
+}
+
+void
+vsFont::RemoveFragment( vsFontFragment *fragment )
+{
+	m_fragment.RemoveItem(fragment);
+}
+
+void
+vsFont::RebuildFragments()
+{
+	int fragmentCount = m_fragment.ItemCount();
+	for ( int i = 0; i < fragmentCount; i++ )
+	{
+		vsFontFragment *fragment = m_fragment[i];
+		fragment->Rebuild();
+	}
 }
 

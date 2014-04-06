@@ -14,6 +14,8 @@
 #include "VS/Math/VS_Transform.h"
 #include "VS_RenderBuffer.h"
 #include "VS/Math/VS_Box.h"
+#include "VS/Utils/VS_Array.h"
+#include "VS/Utils/VS_ArrayStore.h"
 
 class vsDisplayList;
 class vsFragment;
@@ -21,6 +23,8 @@ class vsMaterial;
 class vsFile;
 
 #include "VS/Math/VS_Vector.h"
+
+class vsFontFragment;
 
 enum JustificationType
 {
@@ -48,7 +52,7 @@ struct vsGlyph
 	float		xAdvance;         // how far do we need to move our cursor, after drawing this glyph?
 };
 
-class vsFont
+class vsFontSize
 {
 	vsRenderBuffer * m_ptBuffer;
 	vsMaterial *     m_material;
@@ -65,8 +69,8 @@ class vsFont
 	void LoadBMFont(vsFile *file);
 public:
 
-	vsFont( const vsString &filename );
-	~vsFont();
+	vsFontSize( const vsString &filename );
+	~vsFontSize();
 
 	float			GetNativeSize() { return m_size; }
 
@@ -74,6 +78,22 @@ public:
 	float			GetStringWidth(const vsString &string, float size);
 
 	friend class vsFontRenderer;
+};
+
+class vsFont
+{
+	vsArrayStore<vsFontSize> m_size;
+	vsArray<vsFontFragment*> m_fragment;
+public:
+	vsFont( const vsString &filename );
+	~vsFont();
+
+	vsFontSize* Size(float size);
+
+	void RegisterFragment( vsFontFragment *fragment );
+	void RemoveFragment( vsFontFragment *fragment );
+
+	void RebuildFragments();
 };
 
 
