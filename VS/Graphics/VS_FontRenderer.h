@@ -11,12 +11,13 @@
 #define VS_FONTRENDERER_H
 
 #include "VS/Graphics/VS_Font.h"
+#include "VS/Graphics/VS_Fragment.h"
 
 class vsFontRenderer
 {
 	struct FragmentConstructor
 	{
-		vsRenderBuffer::PT *		ptArray;
+		vsRenderBuffer::PT *ptArray;
 		uint16_t *			tlArray;
 
 		int					ptIndex;
@@ -39,13 +40,13 @@ class vsFontRenderer
 
 	void		WrapStringSizeTop(const vsString &string, float *size_out, float *top_out);
 	void		WrapLine(const vsString &string, float size);
-	vsFragment* CreateString_Fragment( FontContext context, const vsString& string );
+	// vsFragment* CreateString_Fragment( FontContext context, const vsString& string );
+	void		CreateString_InFragment( FontContext context, vsFontFragment *fragment, const vsString& string );
 	void		CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string );
 	void		AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, const char* string, const vsVector2D &size, JustificationType type, const vsVector2D &offset);
 	void		BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType type, const vsVector2D &offset);
 
 public:
-	vsFontRenderer( vsFont *font, JustificationType type = Justification_Left );
 	vsFontRenderer( vsFont *font, float size, JustificationType type = Justification_Left );
 
 	// useful for supporting HighDPI displays, where you may want to inform
@@ -83,6 +84,24 @@ public:
 
 	void DisplayList2D( vsDisplayList *list, const vsString& string );
 	void DisplayList3D( vsDisplayList *list, const vsString& string );
+
+	friend class vsFontFragment;
+};
+
+class vsFontFragment: public vsFragment
+{
+	vsFontRenderer m_renderer;
+	FontContext m_context;
+	vsString m_string;
+	bool m_attached;
+public:
+	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string );
+	virtual ~vsFontFragment();
+
+	// detach makes the fragment aware that its font no longer exists.  It will
+	// no longer attempt to rebuild or to alert its font that it's being destroyed.
+	void Detach();
+	void Rebuild();
 };
 
 

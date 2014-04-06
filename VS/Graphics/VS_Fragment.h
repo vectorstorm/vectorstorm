@@ -29,12 +29,13 @@ public:
 	static vsFragment *	Load( vsRecord *record );
 
 	vsFragment();
-	~vsFragment();
+	virtual ~vsFragment();
 
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( const vsString &name );
 	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; }
 	void	AddBuffer( vsRenderBuffer *buffer );
+	void	Clear();
 
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }

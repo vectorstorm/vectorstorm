@@ -44,7 +44,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_Fullscreen;
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
-	// flags |= vsRenderer::Flag_Resizable;
+	flags |= vsRenderer::Flag_Resizable;
 
 	m_renderer = new vsRenderer_OpenGL2(width, height, depth, flags);
 
@@ -93,6 +93,14 @@ void
 vsScreen::CheckVideoMode()
 {
 	m_resized = m_renderer->CheckVideoMode();
+
+	if ( m_resized )
+	{
+		// okay.  If we resized here, it means that we underwent an underlying
+		// resolution change.  So we have the same number of window manager
+		// points, but a different number of pixels, now.  Since fonts care about
+		// that sort of thing, let's let them know.
+	}
 }
 
 void

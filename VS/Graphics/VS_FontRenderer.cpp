@@ -22,19 +22,9 @@ vsFontRenderer::SetGlobalFontScale( float scale )
 	s_globalFontScale = scale;
 }
 
-vsFontRenderer::vsFontRenderer( vsFont *font, JustificationType type ):
-	m_font(font),
-	m_size(s_globalFontScale * font->GetNativeSize()),
-	m_bounds(-1.f,-1.f),
-	m_justification(type),
-	m_color(c_white),
-	m_hasColor(true)
-{
-}
-
 vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type ):
 	m_font(font),
-	m_size(s_globalFontScale * size),
+	m_size(size),
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
 	m_color(),
@@ -98,7 +88,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	bool fits = false;
 
 	float lineHeight = 1.f;
-	float lineMargin = m_font->m_lineSpacing;
+	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
 
 	while ( !fits )
 	{
@@ -124,14 +114,16 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	*top_out = topLinePosition;
 }
 
-vsFragment*
-vsFontRenderer::CreateString_Fragment( FontContext context, const vsString& string )
+void
+vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fragment, const vsString& string )
 {
+	fragment->Clear();
+
 	size_t stringLength = string.length();
 	float size = m_size;
 
 	if ( stringLength == 0 )
-		return NULL;
+		return;
 
 	size_t requiredSize = stringLength * 4;      // we need a maximum of four verts for each character in the string.
 	size_t requiredTriangles = stringLength * 6; // three indices per triangle, two triangles per character, max.
@@ -174,7 +166,7 @@ vsFontRenderer::CreateString_Fragment( FontContext context, const vsString& stri
 #endif
 
 	float lineHeight = 1.f;
-	float lineMargin = lineHeight * m_font->m_lineSpacing;
+	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
@@ -185,9 +177,7 @@ vsFontRenderer::CreateString_Fragment( FontContext context, const vsString& stri
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
 	tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
 
-	vsFragment *fragment = new vsFragment;
-
-	fragment->SetMaterial( m_font->m_material );
+	fragment->SetMaterial( m_font->Size(m_size)->m_material );
 	fragment->AddBuffer( ptBuffer );
 	fragment->AddBuffer( tlBuffer );
 
@@ -202,6 +192,8 @@ vsFontRenderer::CreateString_Fragment( FontContext context, const vsString& stri
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
 	list->PopTransform();
+	if ( m_hasColor )
+		list->SetColor( c_white );
 	if ( m_transform != vsTransform3D::Identity )
 		list->PopTransform();
 
@@ -209,25 +201,24 @@ vsFontRenderer::CreateString_Fragment( FontContext context, const vsString& stri
 
 	vsDeleteArray( ptArray );
 	vsDeleteArray( tlArray );
-
-	return fragment;
 }
 
 void
 vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string )
 {
-	list->SetMaterial( m_font->m_material );
+	list->SetMaterial( m_font->Size(m_size)->m_material );
 	if ( m_hasColor )
 		list->SetColor( m_color );
 
 	if ( m_transform != vsTransform3D::Identity )
 		list->PushTransform( m_transform );
+	list->SnapMatrix();
 
 	float size, topLinePosition;
 	WrapStringSizeTop(string, &size, &topLinePosition);
 
 	float lineHeight = 1.f;
-	float lineMargin = m_font->m_lineSpacing;
+	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
 
 	vsVector2D offset(0.f,topLinePosition);
 
@@ -239,6 +230,10 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 		list->Append(s_tempFontList);
 	}
 
+	if ( m_hasColor )
+		list->SetColor( c_white );
+
+	list->PopTransform();
 	if ( m_transform != vsTransform3D::Identity )
 		list->PopTransform();
 }
@@ -246,13 +241,19 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 vsFragment*
 vsFontRenderer::Fragment2D( const vsString& string )
 {
-	return CreateString_Fragment(FontContext_2D, string);
+	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
+	CreateString_InFragment(FontContext_2D, fragment, string);
+	m_font->RegisterFragment(fragment);
+	return fragment;
 }
 
 vsFragment*
 vsFontRenderer::Fragment3D( const vsString& string )
 {
-	return CreateString_Fragment(FontContext_3D, string);
+	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
+	CreateString_InFragment(FontContext_3D, fragment, string);
+	m_font->RegisterFragment(fragment);
+	return fragment;
 }
 
 vsDisplayList*
@@ -326,7 +327,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		}
 
 		// check if we want to do a line break here!
-		bool outOfSpace = (maxWidth > 0.f && m_font->GetStringWidth(line, size) > maxWidth && lineEnd > 0) ;
+		bool outOfSpace = (maxWidth > 0.f && m_font->Size(m_size)->GetStringWidth(line, size) > maxWidth && lineEnd > 0) ;
 		bool wrapping = outOfSpace;
 		if ( seekPosition != vsString::npos )
 		{
@@ -372,7 +373,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		s_tempFontList.Clear();
 
-		float width = m_font->GetStringWidth(string, size.x);
+		float width = m_font->Size(m_size)->GetStringWidth(string, size.x);
 
 		if ( j == Justification_Right )
 			offset.x = -width;
@@ -388,7 +389,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 	for ( size_t i = 0; i < len; i++ )
 	{
-		vsGlyph *g = m_font->FindGlyphForCharacter( string[i] );
+		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( string[i] );
 
 		if ( !g )
 		{
@@ -431,7 +432,7 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 
 	if ( j != Justification_Left )
 	{
-		float width = m_font->GetStringWidth(string, size);
+		float width = m_font->Size(m_size)->GetStringWidth(string, size);
 
 		if ( j == Justification_Right )
 			offset.x = -width;
@@ -451,11 +452,11 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	}
 	transform.SetScale( vsVector2D(size,ysize) );
 	list->PushTransform(transform);
-	list->BindBuffer( m_font->m_ptBuffer );
+	list->BindBuffer( m_font->Size(m_size)->m_ptBuffer );
 
 	for ( size_t i = 0; i < len; i++ )
 	{
-		vsGlyph *g = m_font->FindGlyphForCharacter( string[i] );
+		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( string[i] );
 
 		if ( !g )
 		{
@@ -472,5 +473,35 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 
 	list->PopTransform();
 	list->ClearArrays();
+}
+
+vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string ):
+	m_renderer(renderer),
+	m_context(fc),
+	m_string(string),
+	m_attached(true)
+{
+}
+
+vsFontFragment::~vsFontFragment()
+{
+	if ( m_attached )
+		m_renderer.m_font->RemoveFragment(this);
+}
+
+void
+vsFontFragment::Rebuild()
+{
+	if ( m_attached )
+	{
+		Clear();
+		m_renderer.CreateString_InFragment( m_context, this, m_string );
+	}
+}
+
+void
+vsFontFragment::Detach()
+{
+	m_attached = false;
 }
 

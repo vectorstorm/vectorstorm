@@ -132,6 +132,14 @@ vsFragment::AddBuffer( vsRenderBuffer *buffer )
 }
 
 void
+vsFragment::Clear()
+{
+	vsDelete(m_material);
+	vsDelete(m_displayList);
+	m_bufferList.Clear();
+}
+
+void
 vsFragment::Draw( vsDisplayList *list )
 {
 	if ( m_displayList )
