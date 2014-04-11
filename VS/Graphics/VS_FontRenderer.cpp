@@ -244,6 +244,11 @@ vsFontRenderer::Fragment2D( const vsString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
 	CreateString_InFragment(FontContext_2D, fragment, string);
 	m_font->RegisterFragment(fragment);
+	if ( fragment->GetDisplayList() == NULL )
+	{
+		vsDelete(fragment);
+		return NULL;
+	}
 	return fragment;
 }
 
@@ -253,6 +258,11 @@ vsFontRenderer::Fragment3D( const vsString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
 	CreateString_InFragment(FontContext_3D, fragment, string);
 	m_font->RegisterFragment(fragment);
+	if ( fragment->GetDisplayList() == NULL )
+	{
+		vsDelete(fragment);
+		return NULL;
+	}
 	return fragment;
 }
 
