@@ -158,6 +158,10 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
 	m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, videoFlags);
 	// SDL_SetWindowMinimumSize(m_sdlWindow, 1024, 768);
 
@@ -188,7 +192,9 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 		exit(1);
 	}
 
+	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
+	printAttributes();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
 	if ( !GL_VERSION_2_1 )
 	{
@@ -282,7 +288,6 @@ vsRenderer_OpenGL2::vsRenderer_OpenGL2(int width, int height, int depth, int fla
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
-	printAttributes();
 }
 
 vsRenderer_OpenGL2::~vsRenderer_OpenGL2()
