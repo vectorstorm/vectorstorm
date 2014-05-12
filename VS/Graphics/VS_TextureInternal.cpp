@@ -211,13 +211,19 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 
 	/* Create an OpenGL texture for the image */
 	GLuint t;
+	CheckGLError("Texture");
 	glGenTextures(1, &t);
+	CheckGLError("Texture");
 	m_texture = t;
 
 	glBindTexture(GL_TEXTURE_2D, m_texture);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	CheckGLError("Texture");
+	// glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	// CheckGLError("Texture");
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
 			GL_RGBA,
@@ -226,6 +232,9 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
 			image->pixels);
+	CheckGLError("Texture");
+	glGenerateMipmap(GL_TEXTURE_2D);
+	CheckGLError("Texture");
 
 #if 0
 	/*	if ( 0 )
@@ -253,6 +262,7 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 	{
 		unsigned char *imageData = new unsigned char[w*h*4];
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, imageData);
+		CheckGLError("Texture");
 
 		for ( int i = 0; i < w*h; i++ )
 		{
@@ -280,6 +290,7 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 	}
 	//#endif //0
 	SDL_FreeSurface(image); /* No longer needed */
+	CheckGLError("Texture");
 }
 
 vsTextureInternal::~vsTextureInternal()
@@ -294,16 +305,22 @@ void
 vsTextureInternal::SetNearestSampling()
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	CheckGLError("Texture");
 }
 
 void
 vsTextureInternal::SetLinearSampling()
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	CheckGLError("Texture");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	CheckGLError("Texture");
 }
 
 #endif // TARGET_OS_IPHONE

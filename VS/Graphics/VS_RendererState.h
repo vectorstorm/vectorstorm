@@ -96,13 +96,13 @@ class vsRendererState
 public:
 	enum Bool
 	{
-		Bool_AlphaTest,
+		// Bool_AlphaTest,
 		Bool_Blend,
 		Bool_ColorMaterial,
 		Bool_CullFace,
 		Bool_DepthTest,
-		Bool_Fog,
-		Bool_Lighting,
+		// Bool_Fog,
+		// Bool_Lighting,
 		Bool_Multisample,
 		Bool_PolygonOffsetFill,
 		Bool_StencilTest,
@@ -118,7 +118,6 @@ public:
 	};
 	enum Float
 	{
-		Float_AlphaThreshhold,
 		FLOAT_COUNT
 	};
 	enum Float2

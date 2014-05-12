@@ -25,29 +25,29 @@ void main(void)
 
 #ifdef LIT
 	/* The ambient term will always be present */
-	color *= ambient;
-
-	vec3 n;
-	vec3 halfV;
-	float NdotL;
-	float NdotHV;
-
-	/* a fragment shader can't write a varying variable, hence we need
-	   a new variable to store the normalized interpolated normal */
-	n = normalize(normal);
-
-	/* compute the dot product between normal and ldir */
-	//NdotL = max(dot(n,lightDir),0.0);
-	NdotL = max(dot(n,lightDir)+1.0,0.0) * 0.5;
-	color += gl_Color * NdotL;
-
-	if (gl_FrontMaterial.shininess > 0.0 && NdotL > 0.0) {
-		halfV = normalize(halfVector);
-		NdotHV = max(dot(n,halfV),0.0);
-		color.rgb += gl_FrontMaterial.specular.rgb *
-			gl_LightSource[0].specular.rgb *
-			pow(NdotHV, gl_FrontMaterial.shininess);
-	}
+	// color *= ambient;
+    //
+	// vec3 n;
+	// vec3 halfV;
+	// float NdotL;
+	// float NdotHV;
+    //
+	// /* a fragment shader can't write a varying variable, hence we need
+	//    a new variable to store the normalized interpolated normal */
+	// n = normalize(normal);
+    //
+	// /* compute the dot product between normal and ldir */
+	// //NdotL = max(dot(n,lightDir),0.0);
+	// NdotL = max(dot(n,lightDir)+1.0,0.0) * 0.5;
+	// color += gl_Color * NdotL;
+    //
+	// if (gl_FrontMaterial.shininess > 0.0 && NdotL > 0.0) {
+	// 	halfV = normalize(halfVector);
+	// 	NdotHV = max(dot(n,halfV),0.0);
+	// 	color.rgb += gl_FrontMaterial.specular.rgb *
+	// 		gl_LightSource[0].specular.rgb *
+	// 		pow(NdotHV, gl_FrontMaterial.shininess);
+	// }
 #endif // LIT
 
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb, fogFactor );

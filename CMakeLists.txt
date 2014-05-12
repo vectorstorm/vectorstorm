@@ -137,8 +137,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
-	VS/Graphics/VS_Renderer_OpenGL2.cpp
-	VS/Graphics/VS_Renderer_OpenGL2.h
+	VS/Graphics/VS_Renderer_OpenGL3.cpp
+	VS/Graphics/VS_Renderer_OpenGL3.h
 	VS/Graphics/VS_RenderPipeline.cpp
 	VS/Graphics/VS_RenderPipeline.h
 	VS/Graphics/VS_RenderPipelineStage.cpp
@@ -317,6 +317,7 @@ set(UTILS_SOURCES
 set(SOURCES
 	VS/VS_Headers.h
 	VS/VS_OpenGL.h
+	VS/VS_OpenGL.cpp
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
 	)

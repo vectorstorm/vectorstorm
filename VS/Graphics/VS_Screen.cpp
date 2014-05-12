@@ -13,7 +13,7 @@
 #include "VS_RenderPipelineStage.h"
 #include "VS_RenderPipelineStageBlit.h"
 #include "VS_RenderPipelineStageScenes.h"
-#include "VS_Renderer_OpenGL2.h"
+#include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 #include "VS_System.h"
@@ -46,7 +46,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_VSync;
 	flags |= vsRenderer::Flag_Resizable;
 
-	m_renderer = new vsRenderer_OpenGL2(width, height, depth, flags);
+	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -57,6 +57,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 
 vsScreen::~vsScreen()
 {
+	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
 	vsDelete( m_subfifo );

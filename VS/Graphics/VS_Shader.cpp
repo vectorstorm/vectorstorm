@@ -15,12 +15,12 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
-#include "VS_Renderer_OpenGL2.h"
+#include "VS_Renderer_OpenGL3.h"
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
-	if ( vsRenderer_OpenGL2::Exists() )
+	if ( vsRenderer_OpenGL3::Exists() )
 	{
 		vsString version;
 
@@ -70,15 +70,18 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		fString = version + fString;
 
 #if !TARGET_OS_IPHONE
-		m_shader = vsRenderer_OpenGL2::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+		m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
 		//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
         m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
+		m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 		m_fogLoc = glGetUniformLocation(m_shader, "fog");
+		m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
+		m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
 		m_textureLoc = glGetUniformLocation(m_shader, "texture");
 		m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
@@ -89,7 +92,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
-	vsRenderer_OpenGL2::DestroyShader(m_shader);
+	vsRenderer_OpenGL3::DestroyShader(m_shader);
 }
 
 vsShader *
@@ -127,11 +130,28 @@ vsShader::SetAlphaRef( float aref )
 }
 
 void
-vsShader::SetFog( bool fog )
+vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
 	if ( m_fogLoc >= 0 )
 	{
 		glUniform1i( m_fogLoc, fog );
+	}
+	if ( m_fogColorLoc >= 0 )
+	{
+		glUniform3f( m_fogColorLoc, color.r, color.g, color.b );
+	}
+	if ( m_fogDensityLoc >= 0 )
+	{
+		glUniform1f( m_fogDensityLoc, density );
+	}
+}
+
+void
+vsShader::SetColor( const vsColor& color )
+{
+	if ( m_colorLoc >= 0 )
+	{
+		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
 	}
 }
 
@@ -166,10 +186,12 @@ vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 void
 vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 {
+	CheckGLError("SetProjectMatrix");
 	if ( m_viewToProjectionLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
+	CheckGLError("SetProjectMatrix");
 }
 
 void

@@ -46,11 +46,13 @@ public:
 	{
 		if ( m_value )
 		{
-			glEnableClientState(m_type);
+			// glEnableClientState(m_type);
+			glEnableVertexAttribArray(m_type);
 		}
 		else
 		{
-			glDisableClientState(m_type);
+			// glDisableClientState(m_type);
+			glDisableVertexAttribArray(m_type);
 		}
 	}
 };
@@ -114,15 +116,15 @@ public:
 
 vsRendererState::vsRendererState()
 {
-	m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );
+	// m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );
 	m_boolState[Bool_Blend] =			new glEnableSetter( GL_BLEND, false );
 	m_boolState[Bool_ColorMaterial] =	new glEnableSetter( GL_COLOR_MATERIAL, false );
 	m_boolState[Bool_CullFace] =		new glEnableSetter( GL_CULL_FACE, false );
 	m_boolState[Bool_DepthTest] =		new glEnableSetter( GL_DEPTH_TEST, false );
 	m_boolState[Bool_StencilTest] =		new glEnableSetter( GL_STENCIL_TEST, false );
 	m_boolState[Bool_ScissorTest] =		new glEnableSetter( GL_SCISSOR_TEST, false );
-	m_boolState[Bool_Fog] =				new glEnableSetter( GL_FOG, false );
-	m_boolState[Bool_Lighting] =		new glEnableSetter( GL_LIGHTING, false );
+	// m_boolState[Bool_Fog] =				new glEnableSetter( GL_FOG, false );
+	// m_boolState[Bool_Lighting] =		new glEnableSetter( GL_LIGHTING, false );
 	m_boolState[Bool_Multisample] =		new glEnableSetter( GL_MULTISAMPLE, false );
 	m_boolState[Bool_PolygonOffsetFill] = new glEnableSetter( GL_POLYGON_OFFSET_FILL, false );
 	//m_boolState[Bool_Smooth] =			new glEnableSetter( GL_SMOOTH, false );
@@ -130,12 +132,12 @@ vsRendererState::vsRendererState()
 
 	m_boolState[Bool_DepthMask] =		new glDepthMaskSetter( false );
 
-	m_boolState[ClientBool_VertexArray] =				new glClientStateSetter( GL_VERTEX_ARRAY, false );
-	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( GL_NORMAL_ARRAY, false );
-	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( GL_COLOR_ARRAY, false );
-	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( GL_TEXTURE_COORD_ARRAY, false );
+	m_boolState[ClientBool_VertexArray] =				new glClientStateSetter( 0, false );
+	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( 1, false );
+	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( 2, false );
+	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( 3, false );
 
-	m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
+	// m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
 	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
 
 	m_intState[Int_CullFace] = new glCullFaceSetter(0);
@@ -192,19 +194,27 @@ vsRendererState::Flush()
 {
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
+		CheckGLError("Flush");
 		m_boolState[i]->Flush();
+		CheckGLError("Flush");
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
+		CheckGLError("Flush");
         m_intState[i]->Flush();
+		CheckGLError("Flush");
     }
 	for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
+		CheckGLError("Flush");
 		m_floatState[i]->Flush();
+		CheckGLError("Flush");
 	}
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
+		CheckGLError("Flush");
 		m_float2State[i]->Flush();
+		CheckGLError("Flush");
 	}
 }
 

@@ -20,10 +20,13 @@ class vsMatrix4x4;
 class vsShader
 {
 	int32_t m_alphaRefLoc;
+	int32_t m_colorLoc;
 	int32_t m_resolutionLoc;
 	int32_t m_globalTimeLoc;
 	int32_t m_mouseLoc;
 	int32_t m_fogLoc;
+	int32_t m_fogColorLoc;
+	int32_t m_fogDensityLoc;
 	int32_t m_textureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_worldToViewLoc;
@@ -42,7 +45,8 @@ public:
 	uint32_t GetShaderId() { return m_shader; }
 
     void SetAlphaRef( float aref );
-	void SetFog( bool fog );
+	void SetFog( bool fog, const vsColor& color, float fogDensity );
+	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4& localToWorld );
 	void SetWorldToView( const vsMatrix4x4& worldToView );

@@ -65,10 +65,9 @@ vsImage::vsImage( vsTexture * texture )
     // have allocated the exact size needed for the image so we have to use 1-byte alignment
     // (otherwise glReadPixels would write out of bounds)
     glActiveTexture( GL_TEXTURE0 );
-    glEnable( GL_TEXTURE_2D );
+	CheckGLError("vsImage");
     glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
 
     if ( depthTexture )
     {
@@ -125,6 +124,7 @@ vsImage::vsImage( vsTexture * texture )
         vsDeleteArray( pixels );
     }
 
+	CheckGLError("vsImage");
 }
 
 vsImage::~vsImage()

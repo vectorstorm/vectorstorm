@@ -13,6 +13,12 @@
 
 #include "VS_OpenGL.h"
 
+
+#define POS_ATTRIBUTE (0)
+#define TEXCOORD_ATTRIBUTE (1)
+#define NORMAL_ATTRIBUTE (2)
+#define COLOR_ATTRIBUTE (3)
+
 static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 {
 	0,
@@ -113,7 +119,7 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 #if TARGET_OS_IPHONE
 			char *ptr = (char *)glMapBufferOES(bindPoint, GL_WRITE_ONLY_OES);
 #else
-			char *ptr = (char *)glMapBufferARB(bindPoint, GL_WRITE_ONLY_ARB);
+			char *ptr = (char *)glMapBuffer(bindPoint, GL_WRITE_ONLY);
 #endif
 
 			if ( ptr )
@@ -124,7 +130,7 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 #if TARGET_OS_IPHONE
 				glUnmapBufferOES(bindPoint);
 #else
-				glUnmapBufferARB(bindPoint);
+				glUnmapBuffer(bindPoint);
 #endif
 			}
 		}
@@ -273,12 +279,12 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexPointer( 3, GL_FLOAT, 0, 0 );
+		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glVertexPointer( 3, GL_FLOAT, 0, m_array );
+		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -296,12 +302,12 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glNormalPointer( GL_FLOAT, 0, 0 );
+		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glNormalPointer( GL_FLOAT, 0, m_array );
+		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -319,12 +325,12 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glTexCoordPointer( 2, GL_FLOAT, 0, 0 );
+		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glTexCoordPointer( 2, GL_FLOAT, 0, m_array );
+		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -342,12 +348,12 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glColorPointer( 4, GL_FLOAT, 0, 0 );
+		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	else
 	{
-		glColorPointer( 4, GL_FLOAT, 0, m_array );
+		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -371,13 +377,12 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			if ( m_vbo )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
 			}
 			break;
 		}
@@ -395,14 +400,14 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glColorPointer( 4, GL_FLOAT, stride, cStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glColorPointer( 4, GL_FLOAT, stride, &((PC*)m_array)[0].color );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PC*)m_array)[0].color );
 			}
 			break;
 		}
@@ -420,14 +425,14 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glTexCoordPointer( 2, GL_FLOAT, stride, tStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glTexCoordPointer( 2, GL_FLOAT, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -445,15 +450,15 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glNormalPointer( GL_FLOAT, stride, nStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glNormalPointer( GL_FLOAT, stride, &((PN*)m_array)[0].normal );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PN*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -474,17 +479,17 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glTexCoordPointer( 2, GL_FLOAT, stride, tStartPtr );
-				glNormalPointer( GL_FLOAT, stride, nStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glTexCoordPointer( 2, GL_FLOAT, stride, &((PNT*)m_array)[0].texel );
-				glNormalPointer( GL_FLOAT, stride, &((PNT*)m_array)[0].normal );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -508,19 +513,19 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glTexCoordPointer( 2, GL_FLOAT, stride, tStartPtr );
-				glNormalPointer( GL_FLOAT, stride, nStartPtr );
-				glColorPointer( 4, GL_FLOAT, stride, cStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glTexCoordPointer( 2, GL_FLOAT, stride, &((PCNT*)m_array)[0].texel );
-				glNormalPointer( GL_FLOAT, stride, &((PCNT*)m_array)[0].normal );
-				glColorPointer( 4, GL_FLOAT, stride, &((PCNT*)m_array)[0].color );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].color );
 			}
 			break;
 		}
@@ -541,17 +546,17 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glNormalPointer( GL_FLOAT, stride, nStartPtr );
-				glColorPointer( 4, GL_FLOAT, stride, cStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glNormalPointer( GL_FLOAT, stride, &((PCN*)m_array)[0].normal );
-				glColorPointer( 4, GL_FLOAT, stride, &((PCN*)m_array)[0].color );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].color );
 			}
 			break;
 		}
@@ -572,17 +577,17 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
-				glVertexPointer( 3, GL_FLOAT, stride, 0 );
-				glTexCoordPointer( 2, GL_FLOAT, stride, tStartPtr );
-				glColorPointer( 4, GL_FLOAT, stride, cStartPtr );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
-				glVertexPointer( 3, GL_FLOAT, stride, m_array );
-				glTexCoordPointer( 2, GL_FLOAT, stride, &((PCT*)m_array)[0].texel );
-				glColorPointer( 4, GL_FLOAT, stride, &((PCT*)m_array)[0].color );
+				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].color );
 			}
 			break;
 		}
@@ -862,10 +867,14 @@ vsRenderBuffer::TriListBuffer()
 {
 	if ( m_vbo )
 	{
+	CheckGLError("TriList");
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+	CheckGLError("TriList");
 		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+	CheckGLError("TriList");
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	CheckGLError("TriList");
 	}
 	else
 	{

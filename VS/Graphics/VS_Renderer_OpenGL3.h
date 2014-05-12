@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef VS_RENDERER_OPENGL2_H
-#define VS_RENDERER_OPENGL2_H
+#ifndef VS_RENDERER_OPENGL3_H
+#define VS_RENDERER_OPENGL3_H
 
 #include "VS/Graphics/VS_Texture.h"
 
@@ -32,8 +32,9 @@ class vsVector2D;
 struct SDL_Surface;
 
 #define MAX_STACK_LEVEL (30)
+#define CHECK_GL_ERRORS
 
-class vsRenderer_OpenGL2: public vsRenderer, public vsSingleton<vsRenderer_OpenGL2>
+class vsRenderer_OpenGL3: public vsRenderer, public vsSingleton<vsRenderer_OpenGL3>
 {
 private:
 
@@ -58,6 +59,10 @@ private:
 	vsMatrix4x4			m_currentLocalToWorld;
 	vsMatrix4x4			m_currentWorldToView;
 	vsMatrix4x4			m_currentViewToProjection;
+
+	vsColor				m_currentColor;
+	vsColor				m_currentFogColor;
+	float				m_currentFogDensity;
 
 	vsRenderTarget *     m_window;
 	vsRenderTarget *     m_scene;
@@ -90,6 +95,10 @@ private:
 	bool                 m_usingNormalArray;
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
+	uint32_t			m_vao;	// temporary -- for our global VAO.
+	// VAOs should really be integrated more nicely somewhere, but for now,
+	// we'll treat our rendering like OpenGL2 and just continually reconfigure
+	// a single global Vertex Array Object..
 
 	void				FlushRenderState();
 	virtual void		SetMaterial(vsMaterialInternal *material);
@@ -107,8 +116,8 @@ public:
 		Flag_VSync = BIT(1),
 		Flag_Resizable = BIT(2)
 	};
-	vsRenderer_OpenGL2(int width, int height, int depth, int flags);
-	virtual ~vsRenderer_OpenGL2();
+	vsRenderer_OpenGL3(int width, int height, int depth, int flags);
+	virtual ~vsRenderer_OpenGL3();
 
 	bool	CheckVideoMode();
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);
@@ -134,16 +143,10 @@ public:
 	vsImage*	ScreenshotDepth();
 	vsImage*	ScreenshotAlpha();
 
-#ifdef CHECK_GL_ERRORS
-	void			CheckGLError(const char* string);
-#else
-	inline void			CheckGLError(const char* string) {}
-#endif
-
 	static GLuint		Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
 	static void			DestroyShader(GLuint shader);
 
 };
 
-#endif // VS_RENDERER_OPENGL2_H
+#endif // VS_RENDERER_OPENGL3_H
 
