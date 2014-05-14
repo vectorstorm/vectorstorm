@@ -284,7 +284,8 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 	}
 	else
 	{
-		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
+		vsRenderBuffer::BindVertexArray( state, m_array, m_arrayBytes/sizeof(vsVector3D) );
+		// glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -330,7 +331,8 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 	}
 	else
 	{
-		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
+		BindTexelArray( state, m_array, m_arrayBytes / sizeof(vsVector2D) );
+		// glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
@@ -965,5 +967,54 @@ vsRenderBuffer::MapAll()
 		}
 	}
 #endif
+}
+
+#define VBO_SIZE (1024 * 1024)
+static GLuint g_vbo = 0xffffffff;
+static int g_vboCursor = VBO_SIZE;
+
+void
+vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount )
+{
+	if ( g_vbo == 0xffffffff )
+	{
+		glGenBuffers(1, &g_vbo);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+
+	if ( g_vboCursor + bufferSize >= VBO_SIZE )
+	{
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_STREAM_DRAW);
+		g_vboCursor = 0;
+	}
+	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
+
+	glVertexAttribPointer( attribute, elementCount, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid*>(g_vboCursor) );
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	g_vboCursor += bufferSize;
+	g_vboCursor = (g_vboCursor + 255) & 0xffffff00;
+}
+
+void
+vsRenderBuffer::BindVertexArray( vsRendererState *state, void* buffer, int vertexCount )
+{
+	int bufferSize = vertexCount * sizeof(vsVector3D);
+	BindArrayToAttribute(buffer,bufferSize,POS_ATTRIBUTE,3);
+}
+
+void
+vsRenderBuffer::BindColorArray( vsRendererState *state, void* buffer, int vertexCount )
+{
+	int bufferSize = vertexCount * sizeof(vsColor);
+	BindArrayToAttribute(buffer,bufferSize,COLOR_ATTRIBUTE,4);
+}
+
+void
+vsRenderBuffer::BindTexelArray( vsRendererState *state, void* buffer, int count )
+{
+	int bufferSize = count * sizeof(vsVector2D);
+	BindArrayToAttribute(buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 

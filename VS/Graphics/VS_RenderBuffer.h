@@ -195,11 +195,18 @@ public:
 	void	Bind( vsRendererState *state );		// for non-custom types
 	void	Unbind( vsRendererState *state );	// for non-custom types
 
+	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
+	static void BindVertexArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindTexelArray( vsRendererState *state, void* buffer, int vertexCount );
+
 	void	TriStripBuffer();
 	void	TriListBuffer();
 	void	TriFanBuffer();
 	void	LineStripBuffer();
 	void	LineListBuffer();
+
+	const bool IsVBO() { return m_vbo; }
 };
 
 

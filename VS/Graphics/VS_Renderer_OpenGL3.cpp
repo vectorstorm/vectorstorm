@@ -289,6 +289,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glBindVertexArray(m_vao);
 	CheckGLError("Initialising OpenGL rendering");
 
+	glEnableVertexAttribArray(3);
+
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
@@ -632,10 +634,11 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_VertexArray:
 				{
+					vsRenderBuffer::BindVertexArray( &m_state, op->data.p, op->data.i );
+					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 					// glVertexPointer( 3, GL_FLOAT, 0, op->data.p );
 					// m_currentVertexArray = (vsVector3D *)op->data.p;
 					// m_currentVertexArrayCount = op->data.i;
-					// m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_VertexBuffer:
@@ -677,10 +680,11 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TexelArray:
 				{
+					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
 					// glTexCoordPointer( 2, GL_FLOAT, 0, op->data.p );
 					// m_currentTexelArray = (vsVector2D *)op->data.p;
 					// m_currentTexelArrayCount = op->data.i;
-					// m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelBuffer:
@@ -700,7 +704,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ColorArray:
 				{
 					// glColorPointer( 4, GL_FLOAT, 0, op->data.p );
-					// // m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+					vsRenderBuffer::BindColorArray( &m_state, op->data.p, op->data.i );
+					m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
 					// m_currentColorArray = (vsColor *)op->data.p;
 					// m_currentColorArrayCount = op->data.i;
 					break;
@@ -762,23 +767,31 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					FlushRenderState();
 					// glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt() );
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
 					FlushRenderState();
 					// glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt() );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListArray:
 				{
 					FlushRenderState();
+
+					DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripArray:
 				{
+					CheckGLError("PreTriangleStripArray");
 					FlushRenderState();
+					CheckGLError("PreTriangleStripArray");
+					DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt() );
+					CheckGLError("PostTriangleStripArray");
 					// glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
@@ -820,12 +833,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleFanArray:
 				{
 					FlushRenderState();
+					DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
 			case vsDisplayList::OpCode_PointsArray:
 				{
 					FlushRenderState();
+					DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
@@ -971,6 +986,35 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 		CheckGLError("RenderOp");
 		op = list->PopOp();
 	}
+}
+
+#define EVBO_SIZE (1024 * 1024)
+static GLuint g_evbo = 0xffffffff;
+static int g_evboCursor = EVBO_SIZE;
+
+void
+vsRenderer_OpenGL3::DrawElementsImmediate( int type, void* buffer, int count )
+{
+	int bufferSize = count * sizeof(uint16_t);
+	if ( g_evbo == 0xffffffff )
+	{
+		glGenBuffers(1, &g_evbo);
+	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
+
+	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
+	{
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, EVBO_SIZE, NULL, GL_STREAM_DRAW);
+		g_evboCursor = 0;
+	}
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
+
+	glDrawElements(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor) );
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	g_evboCursor += bufferSize;
 }
 
 void
@@ -1226,6 +1270,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 
 	if ( material->m_hasColor )
 	{
+		m_currentColor = material->m_color;
 		// const vsColor &c = material->m_color;
 		// glColor4f( c.r, c.g, c.b, c.a );
 
@@ -1234,6 +1279,10 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			// const vsColor &specColor = material->m_specularColor;
 			// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
 		}
+	}
+	else
+	{
+		m_currentColor = c_white;
 	}
 	CheckGLError("Material");
 }
@@ -1265,7 +1314,8 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	if (!success)
 	{
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-	CheckGLError("Compiling");
+		CheckGLError("Compiling");
+		vsLog("%s",vert);
 		vsLog(buf);
 		vsAssert(success,"Unable to compile vertex shader.\n");
 	}
@@ -1282,6 +1332,7 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	{
 		glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
 	CheckGLError("Compiling");
+		vsLog("%s",frag);
 		vsLog(buf);
 		vsAssert(success,"Unable to compile fragment shader.\n");
 	}

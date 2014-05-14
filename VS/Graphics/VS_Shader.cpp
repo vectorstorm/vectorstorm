@@ -123,6 +123,7 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 void
 vsShader::SetAlphaRef( float aref )
 {
+	CheckGLError("PreSetAlphaRef");
 	if ( m_alphaRefLoc >= 0 )
 	{
 		glUniform1f( m_alphaRefLoc, aref );
@@ -132,6 +133,7 @@ vsShader::SetAlphaRef( float aref )
 void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
+	CheckGLError("PreSetFog");
 	if ( m_fogLoc >= 0 )
 	{
 		glUniform1i( m_fogLoc, fog );
@@ -149,15 +151,18 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 void
 vsShader::SetColor( const vsColor& color )
 {
+	CheckGLError("PreSetColor");
 	if ( m_colorLoc >= 0 )
 	{
 		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
 	}
+	glVertexAttrib4f( 3, color.r, color.g, color.b, color.a );
 }
 
 void
 vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
+	CheckGLError("PreSetTextures");
 	if ( m_textureLoc >= 0 )
 	{
 		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -168,6 +173,7 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 void
 vsShader::SetLocalToWorld( const vsMatrix4x4& localToWorld )
 {
+	CheckGLError("PreSetLocalToWorld");
 	if ( m_localToWorldLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&localToWorld );
@@ -177,16 +183,18 @@ vsShader::SetLocalToWorld( const vsMatrix4x4& localToWorld )
 void
 vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 {
+	CheckGLError("PreSetWorldToView");
 	if ( m_worldToViewLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
 	}
+	CheckGLError("SetWorldToView");
 }
 
 void
 vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 {
-	CheckGLError("SetProjectMatrix");
+	CheckGLError("PreSetProjectMatrix");
 	if ( m_viewToProjectionLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );

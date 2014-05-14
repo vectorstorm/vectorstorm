@@ -106,6 +106,7 @@ private:
 
 	void Resize();
 
+	static void DrawElementsImmediate( int type, void* buffer, int count );
 	void	SetRenderTarget( vsRenderTarget *target );
 
 public:

@@ -194,8 +194,6 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 	list->SetMaterial(m_hipassMaterial);
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
-	list->SetWorldToViewMatrix4x4(vsMatrix4x4::Identity);
-	list->SetMatrix4x4(vsMatrix4x4::Identity);
 	list->ResolveRenderTarget(m_from);
 	list->SetRenderTarget(m_pass[0]);
 	list->VertexArray(v,4);
@@ -222,17 +220,18 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		list->SetMaterial(m_verticalBlurMaterial[i]);
 		list->TriangleStripArray(ind,4);
 	}
-
-	// list->BlitRenderTarget( m_pass[1], m_to );
-	// return;
-
+    //
 	// resolve all primary passes.
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		list->ResolveRenderTarget(m_pass[i]);
 		// list->ResolveRenderTarget(m_pass2[i]);
 	}
-	// 	// Now do the final combining of our stuff
+
+	// list->BlitRenderTarget( m_pass[0], m_to );
+	// return;
+
+	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
 	list->SetMaterial(m_combineMaterial);
 	list->TriangleStripArray(ind,4);
@@ -243,66 +242,73 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 #define STRINGIFY(A)  #A
 
 
-const char *passv = STRINGIFY(
-		uniform mat4 localToWorld;
-		uniform mat4 worldToView;
-		uniform mat4 viewToProjection;
-		void main(void)
-		{
-			gl_TexCoord[0] = gl_MultiTexCoord0;
-			gl_Position = viewToProjection * worldToView * localToWorld * gl_Vertex;
-		}
+const char *passv = STRINGIFY( #version 330\n
+		uniform mat4 viewToProjection;\n
+		in vec4 vertex;\n
+		in vec2 texcoord;\n
+		out vec2 fragment_texcoord;\n
+		void main(void)\n
+		{\n
+			fragment_texcoord = texcoord;\n
+			gl_Position = viewToProjection * vertex;\n
+		}\n
 		);
 
-	const char *combine7f = STRINGIFY(
-			uniform sampler2D texture[8];
+	const char *combine7f = STRINGIFY( #version 330\n
+			uniform sampler2D textures[8];
+			in vec2 fragment_texcoord;
+			out vec4 fragment_color;
 
 			void main(void)
 			{
-				vec4 c = texture2D(texture[0], gl_TexCoord[0].st);
+				vec4 c = texture(textures[0], fragment_texcoord);
 				vec4 glow = vec4(0);
 				for ( int i = 1; i < 7; i++ )
 				{
-					glow += texture2D(texture[i], gl_TexCoord[0].st);
+					glow += texture(textures[i], fragment_texcoord);
 				}
-				gl_FragColor = c + 0.6 * glow;
+				fragment_color = c + 0.6 * glow;
 			}
 			);
 
-	const char *row3f = STRINGIFY(
-			uniform sampler2D texture[8];
+	const char *row3f = STRINGIFY( #version 330\n
+			uniform sampler2D textures[8];
 			uniform float coefficients[3];
 			uniform float offsetx;
 			uniform float offsety;
+			in vec2 fragment_texcoord;
+			out vec4 fragment_color;
 
 			void main(void)
 			{
 			vec4 c;
-			vec2 tc = gl_TexCoord[0].st;
+			vec2 tc = fragment_texcoord;
 			vec2 offset = vec2(offsetx, offsety);
 
-			c = coefficients[0] * texture2D(texture[0], tc - offset);
-			c += coefficients[1] * texture2D(texture[0], tc);
-			c += coefficients[2] * texture2D(texture[0], tc + offset);
+			c = coefficients[0] * texture(textures[0], tc - offset);
+			c += coefficients[1] * texture(textures[0], tc);
+			c += coefficients[2] * texture(textures[0], tc + offset);
 
-			gl_FragColor = c;
+			fragment_color = c;
 			}
 			);
 
-	const char *normalf = STRINGIFY(
-			uniform sampler2D texture[8];
+	const char *normalf = STRINGIFY( #version 330\n
+			uniform sampler2D textures[8];\n
+			in vec2 fragment_texcoord;\n
+			out vec4 fragment_color;\n
 
-			void main(void)
-			{
-			vec4 color = texture2D(texture[0], gl_TexCoord[0].st);
+			void main(void)\n
+			{\n
+			vec4 color = texture(textures[0], fragment_texcoord);\n
 
-			float bloom = color.a;
+			float bloom = color.a;\n
 
-			color.xyz *= bloom;
-			color.a = 1.0;
+			color.xyz *= bloom;\n
+			color.a = 1.0;\n
 
-			gl_FragColor = color;
-			}
+			fragment_color = color;\n
+			}\n
 			);
 
 
