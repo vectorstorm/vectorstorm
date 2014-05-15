@@ -82,7 +82,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_fogLoc = glGetUniformLocation(m_shader, "fog");
 		m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
 		m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
-		m_textureLoc = glGetUniformLocation(m_shader, "texture");
+		m_textureLoc = glGetUniformLocation(m_shader, "textures");
 		m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
