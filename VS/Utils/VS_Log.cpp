@@ -13,15 +13,15 @@
 
 void vsLog(const char *format, ...)
 {
-	char sz[1024];
+	char sz[1024*10];
 	va_list marker;
-	
+
 	va_start(marker, format);
 	vsprintf(sz, format, marker);
 	va_end(marker);
-	
+
 	vsString str = sz;
-	
+
 	vsLog(str);
 }
 
@@ -32,15 +32,15 @@ void vsLog(const vsString &str)
 
 void vsErrorLog(const char *format, ...)
 {
-	char sz[1024];
+	char sz[1024*10];
 	va_list marker;
-	
+
 	va_start(marker, format);
 	vsprintf(sz, format, marker);
 	va_end(marker);
-	
+
 	vsString str = sz;
-	
+
 	vsErrorLog(str);
 }
 
