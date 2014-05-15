@@ -482,6 +482,13 @@ vsRenderer_OpenGL3::FlushRenderState()
 		m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+		for ( int i = 0; i < MAX_LIGHTS; i++ )
+		{
+			vsVector3D halfVector;
+			m_currentShader->SetLight( i, m_lightStatus[i].ambient, m_lightStatus[i].diffuse,
+					m_lightStatus[i].specular, m_lightStatus[i].position,
+					halfVector);
+		}
 	CheckGLError("TriList");
 	}
 	else
@@ -846,49 +853,28 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_Light:
 				{
-					if ( m_lightCount < GL_MAX_LIGHTS - 1 )
+					if ( m_lightCount < MAX_LIGHTS - 1 )
 					{
-						// GLfloat pos[4] = {0.f,0.f,0.f,0.f};
-						// GLfloat whiteColor[4] = {1.f,1.f,1.f,1.f};
-						// GLfloat blackColor[4] = {0.f,0.f,0.f,1.f};
-                        //
-						// vsLight &l = op->data.light;
-						// int lightId = GL_LIGHT0 + m_lightCount;
-						// glEnable(lightId);
-						// if ( l.m_type == vsLight::Type_Ambient )
-						// {
-						// 	glLightfv(lightId, GL_AMBIENT, (float *)&l.m_color);
-						// 	glLightfv(lightId, GL_DIFFUSE, (float *)&blackColor);
-						// 	glLightfv(lightId, GL_SPECULAR, (float *)&blackColor);
-						// }
-						// else
-						// {
-						// 	if ( l.m_type == vsLight::Type_Point )
-						// 	{
-						// 		pos[0] = l.m_position.x;
-						// 		pos[1] = l.m_position.y;
-						// 		pos[2] = l.m_position.z;
-						// 		pos[3] = 1.f;
-						// 		glLightfv(lightId, GL_POSITION, pos);
-						// 	}
-						// 	else if ( l.m_type == vsLight::Type_Directional )
-						// 	{
-						// 		pos[0] = l.m_direction.x;
-						// 		pos[1] = l.m_direction.y;
-						// 		pos[2] = l.m_direction.z;
-						// 		pos[3] = 0.f;
-						// 		glLightfv(lightId, GL_POSITION, pos);
-						// 	}
-						// 	glLightfv(lightId, GL_AMBIENT, (float *)&l.m_ambient);
-						// 	glLightfv(lightId, GL_DIFFUSE, (float *)&l.m_color);
-						// 	glLightfv(lightId, GL_SPECULAR, (float *)&whiteColor);
-                        //
-						// 	glLightf(lightId, GL_LINEAR_ATTENUATION, 0.05f);
-						// 	glLightf(lightId, GL_QUADRATIC_ATTENUATION, 0.01f);
-						// }
-                        //
-                        //
-						// m_lightCount++;
+						vsLight &l = op->data.light;
+						if ( l.m_type == vsLight::Type_Ambient )
+						{
+							m_lightStatus[m_lightCount].type = 1;
+						}
+						if ( l.m_type == vsLight::Type_Directional )
+						{
+							m_lightStatus[m_lightCount].type = 2;
+							m_lightStatus[m_lightCount].position = l.m_direction;
+						}
+						if ( l.m_type == vsLight::Type_Point )
+						{
+							m_lightStatus[m_lightCount].type = 3;
+							m_lightStatus[m_lightCount].position = l.m_position;
+						}
+						m_lightStatus[m_lightCount].ambient = l.m_ambient;
+						m_lightStatus[m_lightCount].diffuse = l.m_color;
+						m_lightStatus[m_lightCount].specular = c_white;
+
+						m_lightCount++;
 					}
 					break;
 				}
@@ -896,7 +882,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					for ( int i = 0; i < m_lightCount; i++ )
 					{
-						glDisable( GL_LIGHT0 + i );
+						m_lightStatus[i].type = 0;
 					}
 					m_lightCount = 0;
 					break;
@@ -1315,8 +1301,8 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	{
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
 		CheckGLError("Compiling");
-		vsLog("%s",vert);
-		vsLog(buf);
+		// vsLog("%s",vert);
+		vsLog("%s",buf);
 		vsAssert(success,"Unable to compile vertex shader.\n");
 	}
 

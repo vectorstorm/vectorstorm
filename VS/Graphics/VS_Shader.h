@@ -32,6 +32,12 @@ class vsShader
 	int32_t m_worldToViewLoc;
 	int32_t m_viewToProjectionLoc;
 
+	int32_t m_lightAmbientLoc;
+	int32_t m_lightDiffuseLoc;
+	int32_t m_lightSpecularLoc;
+	int32_t m_lightPositionLoc;
+	int32_t m_lightHalfVectorLoc;
+
 protected:
 	uint32_t m_shader;
 
@@ -51,6 +57,10 @@ public:
 	void SetLocalToWorld( const vsMatrix4x4& localToWorld );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
+
+	void SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
+			const vsColor& specular, const vsVector3D& position,
+			const vsVector3D& halfVector );
 
 	virtual void Prepare(); // called before we start rendering something with this shader
 };

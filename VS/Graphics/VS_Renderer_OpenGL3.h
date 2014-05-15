@@ -84,6 +84,16 @@ private:
 	vsRenderBuffer *     m_currentTexelBuffer;
 	vsRenderBuffer *     m_currentColorBuffer;
 
+#define MAX_LIGHTS (4)
+	struct lightStatus
+	{
+		int type;
+		vsVector3D position;
+		vsColor ambient;
+		vsColor diffuse;
+		vsColor specular;
+	};
+
 	vsMatrix4x4          m_transformStack[MAX_STACK_LEVEL];
 	int                  m_currentTransformStackLevel;
 	int                  m_currentVertexArrayCount;
@@ -91,6 +101,7 @@ private:
 	int                  m_currentTexelArrayCount;
 	int                  m_currentColorArrayCount;
 	int                  m_lightCount;
+	lightStatus          m_lightStatus[MAX_LIGHTS];
 	bool                 m_inOverlay;
 	bool                 m_usingNormalArray;
 	bool                 m_usingTexelArray;

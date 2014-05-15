@@ -74,7 +74,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
-        m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
+		m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
 		m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
@@ -87,6 +87,16 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 
+		// for ( int i = 0; i < 4; i++ )
+		// {
+			// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
+			// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
+		// }
+		m_lightAmbientLoc = glGetUniformLocation(m_shader, "lightSource[0].ambient");
+		m_lightDiffuseLoc = glGetUniformLocation(m_shader, "lightSource[0].diffuse");;
+		m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
+		m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
+		m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
 	}
 }
 
@@ -200,6 +210,46 @@ vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
 	CheckGLError("SetProjectMatrix");
+}
+
+void
+vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
+			const vsColor& specular, const vsVector3D& position,
+			const vsVector3D& halfVector )
+{
+	CheckGLError("SetLight");
+	if ( id != 0 )
+		return;
+	if ( m_lightAmbientLoc >= 0 )
+	{
+	CheckGLError("SetLight");
+		glUniform4fv( m_lightAmbientLoc, 1, (GLfloat*)&ambient );
+	CheckGLError("SetLight");
+	}
+	if ( m_lightDiffuseLoc >= 0 )
+	{
+	CheckGLError("SetLight");
+		glUniform4fv( m_lightDiffuseLoc, 1, (GLfloat*)&diffuse );
+	CheckGLError("SetLight");
+	}
+	if ( m_lightSpecularLoc >= 0 )
+	{
+	CheckGLError("SetLight");
+		glUniform4fv( m_lightSpecularLoc, 1, (GLfloat*)&specular );
+	CheckGLError("SetLight");
+	}
+	if ( m_lightPositionLoc >= 0 )
+	{
+	CheckGLError("SetLight");
+		glUniform3fv( m_lightPositionLoc, 1, (GLfloat*)&position );
+	CheckGLError("SetLight");
+	}
+	if ( m_lightHalfVectorLoc >= 0 )
+	{
+	CheckGLError("SetLight");
+		glUniform3fv( m_lightHalfVectorLoc, 1, (GLfloat*)&halfVector );
+	CheckGLError("SetLight");
+	}
 }
 
 void
