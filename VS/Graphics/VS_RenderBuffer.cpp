@@ -994,7 +994,6 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	g_vboCursor += bufferSize;
-	g_vboCursor = (g_vboCursor + 255) & 0xffffff00;
 }
 
 void
