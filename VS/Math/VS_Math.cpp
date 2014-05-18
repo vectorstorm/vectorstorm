@@ -182,23 +182,41 @@ float vsInterpolate( float alpha, float a, float b )
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
-float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB )
+float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA, vsVector3D *closestB )
 {
-  vsVector3D deltaA = endA - startA;
-  vsVector3D deltaB = endB - startB;
+	vsVector3D deltaA = endA - startA;
+	vsVector3D deltaB = endB - startB;
 
-  // perpendicular
-  vsVector3D perp = deltaA.Cross(deltaB);
+	// perpendicular
+	vsVector3D perp = deltaA.Cross(deltaB);
 
-  float timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
-  float timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+	// if perpendicular == 0, it means that our line segments are parallel.
 
-  vsVector3D closestPointA = startA + timeA * deltaA;
-  vsVector3D closestPointB = startB + timeB * deltaB;
+	float timeA, timeB;
 
-  float distance = (closestPointB-closestPointA).SqLength();
+	if ( perp == vsVector3D::Zero )
+	{
+		// since our line segments are parallel, let's just
+		timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp), 0.f, 1.f );
+		timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp), 0.f, 1.f );
+	}
+	else
+	{
+		timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+		timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+	}
 
-  return distance;
+	vsVector3D closestPointA = startA + timeA * deltaA;
+	vsVector3D closestPointB = startB + timeB * deltaB;
+
+	if ( closestA )
+		*closestA = closestPointA;
+	if ( closestB )
+		*closestB = closestPointB;
+
+	float distance = (closestPointB-closestPointA).SqLength();
+
+	return distance;
 }
 
 

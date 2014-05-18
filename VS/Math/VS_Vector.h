@@ -91,6 +91,7 @@ public:
 	inline float	Length() const { return vsSqrt( SqLength() ); }
 	inline float	SqLength() const { return (x*x+y*y+z*z); }
 	void	Normalise();
+	void	NormaliseSafe();
 
 	vsVector3D	Cross( const vsVector3D &b ) const { return vsVector3D( y*b.z - z*b.y,
 														   z*b.x - x*b.z,

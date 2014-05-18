@@ -146,6 +146,8 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 		int preI = midI-1;
 		int postI = midI+1;
 
+		// float widthHere = m_width;
+
 		if ( postI >= strip->m_length )
 		{
 			postI = strip->m_length-1;
@@ -155,38 +157,61 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 			preI = 0;
 		}
 
-		dirOfTravel = ( strip->m_vertex[postI] - strip->m_vertex[preI] );
-
-		if ( dirOfTravel.SqLength() > 0.f )
-		{
-			dirOfTravel.Normalise();
-		}
-		else
-		{
-			dirOfTravel = vsVector3D::XAxis;
-		}
 		vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
-		if ( cameraForward.SqLength() > 0.f )
+		cameraForward.NormaliseSafe();
+
+		vsVector3D dirOfTravelPre = strip->m_vertex[midI] - strip->m_vertex[preI];
+		vsVector3D dirOfTravelPost = strip->m_vertex[postI] - strip->m_vertex[midI];
+		dirOfTravelPre.NormaliseSafe();
+		dirOfTravelPost.NormaliseSafe();
+
+		vsVector3D offsetPre = dirOfTravelPre.Cross( cameraForward );
+		vsVector3D offsetPost = dirOfTravelPost.Cross( cameraForward );
+		offsetPre.NormaliseSafe();
+		offsetPost.NormaliseSafe();
+
+		vsVector3D vertexPosition;
+		if ( offsetPre != offsetPost )
 		{
-			cameraForward.Normalise();
+			vsVector3D closestPre, closestPost;
+			vsVector3D insidePre = strip->m_vertex[preI] - (offsetPre * m_width);
+			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * m_width);
+
+			vsSqDistanceBetweenLineSegments( insidePre,
+					insidePre + dirOfTravelPre * 20000.f,
+					insidePost,
+					insidePost - dirOfTravelPost * 20000.f,
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			cameraForward = vsVector3D::ZAxis;
+			vertexPosition = strip->m_vertex[midI] - offsetPre * m_width;
 		}
-		vsVector3D bestOffsetDirection = dirOfTravel.Cross( cameraForward );
-		if ( bestOffsetDirection.SqLength() < 0.001f )
+
+		va[m_vertexCursor] = vertexPosition;
+
+		if ( offsetPre != offsetPost )
 		{
-			bestOffsetDirection = vsVector3D::XAxis;
+			vsVector3D closestPre, closestPost;
+			vsVector3D outsidePre = strip->m_vertex[preI] + (offsetPre * m_width);
+			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * m_width);
+
+			vsSqDistanceBetweenLineSegments( outsidePre,
+					outsidePre + dirOfTravelPre * 20000.f,
+					outsidePost,
+					outsidePost - dirOfTravelPost * 20000.f,
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
-		bestOffsetDirection.Normalise();
-		//		bestOffsetDirection = dirOfTravel.Cross( bestOffsetDirection );
+		else
+		{
+			vertexPosition = strip->m_vertex[midI] + offsetPre * m_width;
+		}
 
-		// od is "offset distance"
-		float od = s_widthFactor * m_width * 0.5f;
-
-		va[m_vertexCursor] = strip->m_vertex[midI] + bestOffsetDirection * od;
-		va[m_vertexCursor+1] = strip->m_vertex[midI] - bestOffsetDirection * od;
+		va[m_vertexCursor+1] = vertexPosition;
 
 		if ( postI != midI ) // not at the end of the strip
 		{
