@@ -119,6 +119,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Fragment.h
 	VS/Graphics/VS_Light.cpp
 	VS/Graphics/VS_Light.h
+	VS/Graphics/VS_Lines.cpp
+	VS/Graphics/VS_Lines.h
 	VS/Graphics/VS_Material.cpp
 	VS/Graphics/VS_Material.h
 	VS/Graphics/VS_MaterialInternal.cpp

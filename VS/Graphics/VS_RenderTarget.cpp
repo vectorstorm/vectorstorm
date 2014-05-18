@@ -73,7 +73,7 @@ vsRenderTarget::Resolve()
 			//Let's say I want to copy the entire surface
 			//Let's say I only want to copy the color buffer only
 			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimensions
-			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 			//Consider:  Re-generate mipmaps on the texture now?
 

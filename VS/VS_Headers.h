@@ -58,6 +58,7 @@
 #include <VS/Graphics/VS_Font.h>
 #include <VS/Graphics/VS_FontRenderer.h>
 #include <VS/Graphics/VS_Light.h>
+#include <VS/Graphics/VS_Lines.h>
 #include <VS/Graphics/VS_Material.h>
 #include <VS/Graphics/VS_Mesh.h>
 #include <VS/Graphics/VS_Model.h>

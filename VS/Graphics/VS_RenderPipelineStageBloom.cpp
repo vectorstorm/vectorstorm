@@ -20,9 +20,6 @@ extern const char *passv, *combine7f, *row3f, *normalf;
 static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 static bool kernel_normalised = false;
 
-#define BUFFER_HEIGHT (512)
-#define BUFFER_WIDTH  (512)
-
 class vsBloomBlurShader: public vsShader
 {
 	vsVector2D m_offset;
@@ -200,6 +197,9 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->TexelArray(t,4);
 	list->TriangleStripArray(ind,4);
 
+	// list->BlitRenderTarget( m_pass[0], m_to );
+	// return;
+
 	// next, blit passes into each other.
 	//
 	for ( int i = 0; i < BLOOM_PASSES-1; i++ )
@@ -227,9 +227,6 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		list->ResolveRenderTarget(m_pass[i]);
 		// list->ResolveRenderTarget(m_pass2[i]);
 	}
-
-	// list->BlitRenderTarget( m_pass[0], m_to );
-	// return;
 
 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);

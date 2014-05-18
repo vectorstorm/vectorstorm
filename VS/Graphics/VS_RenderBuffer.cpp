@@ -880,7 +880,8 @@ vsRenderBuffer::TriListBuffer()
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t) );
 	}
 }
 
@@ -1017,3 +1018,31 @@ vsRenderBuffer::BindTexelArray( vsRendererState *state, void* buffer, int count 
 	BindArrayToAttribute(buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 
+#define EVBO_SIZE (1024 * 1024)
+static GLuint g_evbo = 0xffffffff;
+static int g_evboCursor = EVBO_SIZE;
+
+void
+vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count )
+{
+	int bufferSize = count * sizeof(uint16_t);
+	if ( g_evbo == 0xffffffff )
+	{
+		glGenBuffers(1, &g_evbo);
+	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
+
+	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
+	{
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, EVBO_SIZE, NULL, GL_STREAM_DRAW);
+		g_evboCursor = 0;
+	}
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
+
+	glDrawElements(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor) );
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	g_evboCursor += bufferSize;
+}

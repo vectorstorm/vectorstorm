@@ -160,7 +160,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, videoFlags);
@@ -229,8 +229,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		}
 	}
 
-	// m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
-	m_antialias = false;
+	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
+	// m_antialias = false;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 	{
@@ -774,21 +774,21 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					FlushRenderState();
 					// glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-					DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt() );
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
 					FlushRenderState();
 					// glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
-					DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt() );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListArray:
 				{
 					FlushRenderState();
 
-					DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
@@ -797,7 +797,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					CheckGLError("PreTriangleStripArray");
 					FlushRenderState();
 					CheckGLError("PreTriangleStripArray");
-					DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt() );
 					CheckGLError("PostTriangleStripArray");
 					// glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
@@ -840,14 +840,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleFanArray:
 				{
 					FlushRenderState();
-					DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
 			case vsDisplayList::OpCode_PointsArray:
 				{
 					FlushRenderState();
-					DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt() );
+					vsRenderBuffer::DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt() );
 					// glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
@@ -972,35 +972,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 		CheckGLError("RenderOp");
 		op = list->PopOp();
 	}
-}
-
-#define EVBO_SIZE (1024 * 1024)
-static GLuint g_evbo = 0xffffffff;
-static int g_evboCursor = EVBO_SIZE;
-
-void
-vsRenderer_OpenGL3::DrawElementsImmediate( int type, void* buffer, int count )
-{
-	int bufferSize = count * sizeof(uint16_t);
-	if ( g_evbo == 0xffffffff )
-	{
-		glGenBuffers(1, &g_evbo);
-	}
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
-
-	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
-	{
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, EVBO_SIZE, NULL, GL_STREAM_DRAW);
-		g_evboCursor = 0;
-	}
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
-
-	glDrawElements(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor) );
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	g_evboCursor += bufferSize;
 }
 
 void

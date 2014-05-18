@@ -200,6 +200,8 @@ public:
 	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );
 	static void BindTexelArray( vsRendererState *state, void* buffer, int vertexCount );
 
+	static void DrawElementsImmediate( int type, void* buffer, int count );
+
 	void	TriStripBuffer();
 	void	TriListBuffer();
 	void	TriFanBuffer();
