@@ -12,11 +12,12 @@
 
 #include "VS/Math/VS_Vector.h"
 #include "VS/Graphics/VS_RenderBuffer.h"
+#include "VS/Graphics/VS_Model.h"
 
 class vsMaterial;
 class vsRenderQueue;
 
-class vsLines
+class vsLines3D: public vsModel
 {
 	class Strip;
 	Strip **m_strip;
@@ -33,14 +34,14 @@ class vsLines
 	int m_vertexCursor;
 	int m_indexCursor;
 
-	void DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *material );
+	void DrawStrip( vsRenderQueue *queue, Strip *strip );
 
 	size_t GetFinalVertexCount();
 	size_t GetFinalIndexCount();
 
 public:
-	vsLines( int maxStrips, float width = 1.f );
-	~vsLines();
+	vsLines3D( int maxStrips, float width = 1.f );
+	~vsLines3D();
 
 	void SetWidth(float width);
 
@@ -49,9 +50,7 @@ public:
 	void AddStrip( vsVector3D *array, int arraySize );
 	void AddLoop( vsVector3D *array, int arraySize );
 
-	void DrawWithMaterial( vsRenderQueue *queue, vsMaterial *material );
-
-	// vsFragment * BakeFragment();
+	void DynamicDraw( vsRenderQueue *queue );
 
 	static void SetWidthFactor(float factor) { s_widthFactor = factor; }
 };

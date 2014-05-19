@@ -12,9 +12,9 @@
 #include "VS_Scene.h"
 #include "VS_Camera.h"
 
-float vsLines::s_widthFactor = 1.f;
+float vsLines3D::s_widthFactor = 1.f;
 
-class vsLines::Strip
+class vsLines3D::Strip
 {
 public:
 	vsVector3D *m_vertex;
@@ -37,7 +37,7 @@ public:
 	}
 };
 
-vsLines::vsLines( int maxStrips, float width ):
+vsLines3D::vsLines3D( int maxStrips, float width ):
 	m_strip( new Strip*[maxStrips] ),
 	m_stripCount( 0 ),
 	m_maxStripCount( maxStrips ),
@@ -47,14 +47,14 @@ vsLines::vsLines( int maxStrips, float width ):
 {
 }
 
-vsLines::~vsLines()
+vsLines3D::~vsLines3D()
 {
 	Clear();
 	vsDeleteArray( m_strip );
 }
 
 void
-vsLines::Clear()
+vsLines3D::Clear()
 {
 	for ( int i = 0; i < m_stripCount; i++ )
 	{
@@ -64,25 +64,25 @@ vsLines::Clear()
 }
 
 void
-vsLines::AddLine( vsVector3D &a, vsVector3D &b )
+vsLines3D::AddLine( vsVector3D &a, vsVector3D &b )
 {
 	vsVector3D vert[2] = { a, b };
 	AddStrip(vert, 2);
 }
 
 void
-vsLines::AddStrip( vsVector3D *array, int arraySize )
+vsLines3D::AddStrip( vsVector3D *array, int arraySize )
 {
-	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines" );
+	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines3D" );
 	int i = m_stripCount++;
 
 	m_strip[i] = new Strip(array, arraySize);
 }
 
 void
-vsLines::AddLoop( vsVector3D *array, int arraySize )
+vsLines3D::AddLoop( vsVector3D *array, int arraySize )
 {
-	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines" );
+	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines3D" );
 	int i = m_stripCount++;
 
 	m_strip[i] = new Strip(array, arraySize);
@@ -90,7 +90,7 @@ vsLines::AddLoop( vsVector3D *array, int arraySize )
 }
 
 size_t
-vsLines::GetFinalVertexCount()
+vsLines3D::GetFinalVertexCount()
 {
 	size_t result = 0;
 	for ( int i = 0; i < m_stripCount; i++ )
@@ -102,7 +102,7 @@ vsLines::GetFinalVertexCount()
 }
 
 size_t
-vsLines::GetFinalIndexCount()
+vsLines3D::GetFinalIndexCount()
 {
 	size_t result = 0;
 	for ( int i = 0; i < m_stripCount; i++ )
@@ -118,7 +118,7 @@ vsLines::GetFinalIndexCount()
 }
 
 void
-vsLines::DrawWithMaterial( vsRenderQueue *queue, vsMaterial *material )
+vsLines3D::DynamicDraw( vsRenderQueue *queue )
 {
 	m_vertexCursor = 0;
 	m_indexCursor = 0;
@@ -130,20 +130,20 @@ vsLines::DrawWithMaterial( vsRenderQueue *queue, vsMaterial *material )
 
 	for ( int i = 0; i < m_stripCount; i++ )
 	{
-		DrawStripWithMaterial( queue, m_strip[i], material );
+		DrawStrip( queue, m_strip[i] );
 	}
 
 	m_vertices.BakeArray();
 	m_indices.BakeArray();
 
-	vsDisplayList *	list = queue->MakeTemporaryBatchList( material, queue->GetMatrix(), 1024 );
+	vsDisplayList *	list = queue->MakeTemporaryBatchList( GetMaterial(), queue->GetMatrix(), 1024 );
 	list->VertexBuffer(&m_vertices);
 	list->TriangleListBuffer(&m_indices);
 	list->ClearBuffers();
 }
 
 void
-vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *material )
+vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
 	const vsVector3D &camPos = (queue->GetWorldToViewMatrix() * queue->GetMatrix()).w;
 	// const vsVector3D &camPos = queue->GetScene()->GetCamera3D()->GetPosition();
@@ -182,6 +182,8 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 
 		vsVector3D dirOfTravelPre = strip->m_vertex[midI] - strip->m_vertex[preI];
 		vsVector3D dirOfTravelPost = strip->m_vertex[postI] - strip->m_vertex[midI];
+		float distanceOfTravelPre = dirOfTravelPre.Length();
+		float distanceOfTravelPost = dirOfTravelPost.Length();
 		dirOfTravelPre.NormaliseSafe();
 		dirOfTravelPost.NormaliseSafe();
 
@@ -198,9 +200,9 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * m_width);
 
 			vsSqDistanceBetweenLineSegments( insidePre,
-					insidePre + dirOfTravelPre * 20000.f,
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * m_width),
 					insidePost,
-					insidePost - dirOfTravelPost * 20000.f,
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * m_width),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
@@ -219,9 +221,9 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * m_width);
 
 			vsSqDistanceBetweenLineSegments( outsidePre,
-					outsidePre + dirOfTravelPre * 20000.f,
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * m_width),
 					outsidePost,
-					outsidePost - dirOfTravelPost * 20000.f,
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * m_width),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
