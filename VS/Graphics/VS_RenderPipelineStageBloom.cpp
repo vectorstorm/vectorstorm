@@ -15,7 +15,7 @@
 #include "VS_RenderTarget.h"
 #include "VS_Shader.h"
 
-extern const char *passv, *combine7f, *row3f, *normalf;
+extern const char *passv, *passf, *combine7f, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
 static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 static bool kernel_normalised = false;
@@ -44,6 +44,15 @@ public:
 	}
 };
 
+class vsBloomPassShader: public vsShader
+{
+public:
+	vsBloomPassShader():
+		vsShader(passv, passf, false, false)
+	{
+	}
+};
+
 class vsBloomCombineShader: public vsShader
 {
 public:
@@ -56,8 +65,7 @@ public:
 vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims ):
 	m_dims(dims),
 	m_hipassMaterial(NULL),
-	m_combineMaterial(NULL),
-	m_straight(NULL),
+	m_fromMaterial(NULL),
 	m_from(from),
 	m_to(to)
 {
@@ -67,6 +75,7 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 		m_pass2[i] = NULL;
 		m_horizontalBlurMaterial[i] = NULL;
 		m_verticalBlurMaterial[i] = NULL;
+		m_combinePassMaterial[i] = NULL;
 	}
 }
 
@@ -77,9 +86,9 @@ vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 	{
 		vsDelete( m_horizontalBlurMaterial[i] );
 		vsDelete( m_verticalBlurMaterial[i] );
+		vsDelete( m_combinePassMaterial[i] );
 	}
-	vsDelete( m_combineMaterial );
-	vsDelete( m_straight );
+	vsDelete( m_fromMaterial );
 }
 
 void
@@ -139,32 +148,32 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_verticalBlurMaterial[i]->SetBlend(false);
 		m_verticalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(0.f,offset)));
 		m_verticalBlurMaterial[i]->SetTexture(0,m_pass2[i]->GetTexture());
+
+		m_combinePassMaterial[i] = new vsDynamicMaterial;
+		m_combinePassMaterial[i]->SetBlend(true);
+		m_combinePassMaterial[i]->SetColor(c_white);
+		m_combinePassMaterial[i]->SetCullingType(Cull_None);
+		m_combinePassMaterial[i]->SetZRead(false);
+		m_combinePassMaterial[i]->SetZWrite(false);
+		m_combinePassMaterial[i]->SetDrawMode(DrawMode_Add);
+		m_combinePassMaterial[i]->SetGlow(false);
+		m_combinePassMaterial[i]->SetClampU(true);
+		m_combinePassMaterial[i]->SetClampV(true);
+		m_combinePassMaterial[i]->SetShader(new vsBloomPassShader);
+		m_combinePassMaterial[i]->SetTexture(0, m_pass[i]->GetTexture());
 	}
 
-	m_combineMaterial = new vsDynamicMaterial;
-	m_combineMaterial->SetBlend(false);
-	m_combineMaterial->SetColor(c_white);
-	m_combineMaterial->SetCullingType(Cull_None);
-	m_combineMaterial->SetZRead(false);
-	m_combineMaterial->SetZWrite(false);
-	m_combineMaterial->SetGlow(false);
-	m_combineMaterial->SetClampU(true);
-	m_combineMaterial->SetClampV(true);
-	m_combineMaterial->SetShader(new vsBloomCombineShader);
-	m_combineMaterial->SetTexture(0, m_from->GetTexture());
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
-	{
-		m_combineMaterial->SetTexture(1+i, m_pass[i]->GetTexture());
-	}
-
-	m_straight = new vsDynamicMaterial();
-	m_straight->SetBlend(false);
-	m_straight->SetColor(c_white);
-	m_straight->SetCullingType(Cull_None);
-	m_straight->SetZRead(false);
-	m_straight->SetZWrite(false);
-	m_straight->SetGlow(false);
-	m_straight->SetTexture(0, m_from->GetTexture());
+	m_fromMaterial = new vsDynamicMaterial;
+	m_fromMaterial->SetBlend(false);
+	m_fromMaterial->SetColor(c_white);
+	m_fromMaterial->SetCullingType(Cull_None);
+	m_fromMaterial->SetZRead(false);
+	m_fromMaterial->SetZWrite(false);
+	m_fromMaterial->SetGlow(false);
+	m_fromMaterial->SetClampU(true);
+	m_fromMaterial->SetClampV(true);
+	m_fromMaterial->SetShader(new vsBloomPassShader);
+	m_fromMaterial->SetTexture(0, m_from->GetTexture());
 }
 
 void
@@ -189,6 +198,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	};
 	int ind[4] = { 0, 1, 2, 3 };
 
+	list->ClearArrays();
 	list->SetMaterial(m_hipassMaterial);
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
 	list->ResolveRenderTarget(m_from);
@@ -230,8 +240,14 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
-	list->SetMaterial(m_combineMaterial);
+	list->SetMaterial(m_fromMaterial);
 	list->TriangleStripArray(ind,4);
+
+	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	{
+		list->SetMaterial(m_combinePassMaterial[i]);
+		list->TriangleStripArray(ind,4);
+	}
 	list->ClearArrays();
 }
 
@@ -251,6 +267,17 @@ const char *passv = STRINGIFY( #version 330\n
 		}\n
 		);
 
+	const char *passf = STRINGIFY( #version 330\n
+			uniform sampler2D textures[8];
+			in vec2 fragment_texcoord;
+			out vec4 fragment_color;
+
+			void main(void)
+			{
+				fragment_color = texture(textures[0], fragment_texcoord);
+			}
+			);
+
 	const char *combine7f = STRINGIFY( #version 330\n
 			uniform sampler2D textures[8];
 			in vec2 fragment_texcoord;
@@ -260,10 +287,10 @@ const char *passv = STRINGIFY( #version 330\n
 			{
 				vec4 c = texture(textures[0], fragment_texcoord);
 				vec4 glow = vec4(0);
-				for ( int i = 1; i < 7; i++ )
-				{
-					glow += texture(textures[i], fragment_texcoord);
-				}
+				// for ( int i = 1; i < 7; i++ )
+				// {
+				// 	glow += texture(textures[i], fragment_texcoord);
+				// }
 				fragment_color = c + 0.6 * glow;
 			}
 			);

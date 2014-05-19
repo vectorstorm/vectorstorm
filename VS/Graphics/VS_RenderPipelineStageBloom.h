@@ -25,8 +25,8 @@ class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 	vsDynamicMaterial *m_hipassMaterial;
 	vsDynamicMaterial *m_horizontalBlurMaterial[BLOOM_PASSES];
 	vsDynamicMaterial *m_verticalBlurMaterial[BLOOM_PASSES];
-	vsDynamicMaterial *m_combineMaterial;
-	vsDynamicMaterial *m_straight;
+	vsDynamicMaterial *m_combinePassMaterial[BLOOM_PASSES];
+	vsDynamicMaterial *m_fromMaterial;
 	vsRenderTarget *m_from;
 	vsRenderTarget *m_to;
 	vsRenderTarget *m_pass[BLOOM_PASSES];
