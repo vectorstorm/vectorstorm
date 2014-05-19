@@ -19,10 +19,12 @@ class vsLines::Strip
 public:
 	vsVector3D *m_vertex;
 	int m_length;
+	bool m_loop;
 
 	Strip( vsVector3D *array, int length ):
 		m_vertex( new vsVector3D[length] ),
-		m_length( length )
+		m_length( length ),
+		m_loop(false)
 	{
 		for ( int i = 0; i < length; i++ )
 		{
@@ -77,6 +79,16 @@ vsLines::AddStrip( vsVector3D *array, int arraySize )
 	m_strip[i] = new Strip(array, arraySize);
 }
 
+void
+vsLines::AddLoop( vsVector3D *array, int arraySize )
+{
+	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines" );
+	int i = m_stripCount++;
+
+	m_strip[i] = new Strip(array, arraySize);
+	m_strip[i]->m_loop = true;
+}
+
 size_t
 vsLines::GetFinalVertexCount()
 {
@@ -99,6 +111,8 @@ vsLines::GetFinalIndexCount()
 		// to emit one quad for each strip vertex, except for the last one
 		// of each strip.  ('n' vertices means 'n-1' quads)
 		result += (m_strip[i]->m_length-1) * 6;
+		if ( m_strip[i]->m_loop )
+			result += 6;	// six more indices if we're looping, as we connect end->start
 	}
 	return result;
 }
@@ -150,11 +164,17 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 
 		if ( postI >= strip->m_length )
 		{
-			postI = strip->m_length-1;
+			if ( strip->m_loop )
+				postI = 0;
+			else
+				postI = strip->m_length-1;
 		}
 		if ( preI < 0 )
 		{
-			preI = 0;
+			if ( strip->m_loop )
+				preI = strip->m_length-1;
+			else
+				preI = 0;
 		}
 
 		vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
@@ -213,7 +233,7 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 
 		va[m_vertexCursor+1] = vertexPosition;
 
-		if ( postI != midI ) // not at the end of the strip
+		if ( i != strip->m_length - 1 ) // not at the end of the strip
 		{
 			ia[m_indexCursor] = m_vertexCursor;
 			ia[m_indexCursor+1] = m_vertexCursor+1;
@@ -224,6 +244,18 @@ vsLines::DrawStripWithMaterial( vsRenderQueue *queue, Strip *strip, vsMaterial *
 			m_indexCursor += 6;
 		}
 		m_vertexCursor += 2;
+	}
+
+	if ( strip->m_loop )
+	{
+		// and join up the end to the start.
+		ia[m_indexCursor] = m_vertexCursor-2;
+		ia[m_indexCursor+1] = m_vertexCursor-1;
+		ia[m_indexCursor+2] = 0;
+		ia[m_indexCursor+3] = 0;
+		ia[m_indexCursor+4] = m_vertexCursor-1;
+		ia[m_indexCursor+5] = 1;
+		m_indexCursor += 6;
 	}
 }
 

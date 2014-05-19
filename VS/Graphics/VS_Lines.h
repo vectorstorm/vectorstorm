@@ -47,6 +47,7 @@ public:
 	void Clear();
 	void AddLine( vsVector3D &a, vsVector3D &b );
 	void AddStrip( vsVector3D *array, int arraySize );
+	void AddLoop( vsVector3D *array, int arraySize );
 
 	void DrawWithMaterial( vsRenderQueue *queue, vsMaterial *material );
 
