@@ -28,7 +28,9 @@ vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
 	m_color(),
-	m_hasColor(false)
+	m_hasColor(false),
+	m_snap(false),
+	m_hasSnap(false)
 {
 }
 
@@ -182,16 +184,20 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	fragment->AddBuffer( tlBuffer );
 
 	vsDisplayList *list = new vsDisplayList(60);
+	bool doSnap = (m_hasSnap && m_snap) ||
+		(!m_hasSnap && context == FontContext_2D);
 
 	if ( m_transform != vsTransform3D::Identity )
 		list->PushTransform( m_transform );
-	list->SnapMatrix();
+	if ( doSnap )
+		list->SnapMatrix();
 	if ( m_hasColor )
 		list->SetColor( m_color );
 	list->BindBuffer( ptBuffer );
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
-	list->PopTransform();
+	if ( doSnap )
+		list->PopTransform();
 	if ( m_hasColor )
 		list->SetColor( c_white );
 	if ( m_transform != vsTransform3D::Identity )
@@ -206,13 +212,17 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 void
 vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string )
 {
+	bool doSnap = (m_hasSnap && m_snap) ||
+		(!m_hasSnap && context == FontContext_2D);
+
 	list->SetMaterial( m_font->Size(m_size)->m_material );
 	if ( m_hasColor )
 		list->SetColor( m_color );
 
 	if ( m_transform != vsTransform3D::Identity )
 		list->PushTransform( m_transform );
-	list->SnapMatrix();
+	if ( doSnap )
+		list->SnapMatrix();
 
 	float size, topLinePosition;
 	WrapStringSizeTop(string, &size, &topLinePosition);
@@ -233,7 +243,8 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 	if ( m_hasColor )
 		list->SetColor( c_white );
 
-	list->PopTransform();
+	if ( doSnap )
+		list->PopTransform();
 	if ( m_transform != vsTransform3D::Identity )
 		list->PopTransform();
 }

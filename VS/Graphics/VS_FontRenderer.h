@@ -33,6 +33,8 @@ class vsFontRenderer
 	vsTransform3D m_transform;
 	vsColor m_color;
 	bool m_hasColor;
+	bool m_snap;
+	bool m_hasSnap;
 
 #define MAX_WRAPPED_LINES (50)
 	vsString	m_wrappedLine[MAX_WRAPPED_LINES];
@@ -65,6 +67,11 @@ public:
 	// color is in the sprite font will show through unmodified.
 	void SetColor( const vsColor& color );
 	void SetNoColor();
+
+	// if true, the text will snap to integer coordinates.  If false, it won't.
+	// If not set either way, the text will snap in a 2D context, and won't snap
+	// in a 3D context.
+	void SetSnap( bool snap ) { m_hasSnap = true; m_snap = snap; }
 
 	// the 'fragment' approach is ideal for long-lived strings, as it produces a
 	// single renderable chunk of geometry which can be drawn in a single draw call,
