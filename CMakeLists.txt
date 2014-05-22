@@ -29,6 +29,25 @@ find_path(BOX2D_INCLUDE_DIR Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D )
 
+if(WINDOWS)
+	find_file(GLEW_DLL glew32.dll REQUIRED
+		PATH ../../buildzone/bin/Release/Win32 )
+	find_file(PNG_DLL libpng16-16.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(ZLIB_DLL zlib1.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_DLL SDL2.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+
+	set(VS_PLATFORM_DLLS ${GLEW_DLL} ${PNG_DLL}
+		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
+		${SDL2_MIXER_DLL})
+endif()
+
 # Check our build environment and set any variables
 # which need setting
 set(CMAKE_REQUIRED_LIBRARIES ${SDL_LIBRARY})
