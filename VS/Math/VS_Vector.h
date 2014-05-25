@@ -71,10 +71,10 @@ public:
 	float y;
 	float z;
 
-	vsVector3D() {x=0;y=0;z=0;}
-	vsVector3D(const vsVector2D &b) {x=b.x;y=b.y;z=0;}
+	vsVector3D(): x(0.f),y(0.f),z(0.f) {}
+	vsVector3D(const vsVector2D &b): x(b.x), y(b.y), z(0.f) {}
 	vsVector3D(const vsVector4D &b);
-	vsVector3D(float x_in, float y_in, float z_in) { x = x_in; y = y_in; z = z_in; }
+	vsVector3D(float x_in, float y_in, float z_in): x(x_in), y(y_in), z(z_in) {}
 
 	inline vsVector3D&	operator=( const vsVector3D &b ) {x=b.x; y=b.y; z = b.z; return *this;}
 	inline vsVector3D  operator+( const vsVector3D &b ) const {return vsVector3D(x+b.x, y+b.y, z+b.z);}
