@@ -39,10 +39,11 @@ vsSpline2D::PositionAtTime( float t )
 	float c = -2.f * tCubed + 3.f * tSquared;		// -2t^3 + 3t^2
 	float d = tCubed - tSquared;					// t^3 - t^2
 
-	vsVector2D result = (a * m_start) +
-						(b * m_startVelocity) +
-						(c * m_end) +
-						(d * m_endVelocity);
+	vsVector2D result =
+		(a * m_start) +
+		(b * m_startVelocity) +
+		(c * m_end) +
+		(d * m_endVelocity);
 
 	return result;
 }
@@ -57,10 +58,11 @@ vsSpline2D::VelocityAtTime( float t )
 	float c = -6.f * tSquared + 6.f * t;			// -6t^2 + 6t
 	float d = 3.f * tSquared - 2.f * t;				// 3t^2 - 2t
 
-	vsVector2D result = (a * m_start) +
-	(b * m_startVelocity) +
-	(c * m_end) +
-	(d * m_endVelocity);
+	vsVector2D result =
+		(a * m_start) +
+		(b * m_startVelocity) +
+		(c * m_end) +
+		(d * m_endVelocity);
 
 	return result;
 }
@@ -121,8 +123,8 @@ vsSpline3D::VelocityAtTime( float t ) const
 	return result;
 }
 
-vsVector3D
-vsSpline3D::ClosestPointTo( const vsVector3D& position )
+float
+vsSpline3D::ClosestTimeTo( const vsVector3D& position )
 {
 	//lastBestT is a composite value;
 	//the whole part is the "before" knot, and the fraction
@@ -144,11 +146,16 @@ vsSpline3D::ClosestPointTo( const vsVector3D& position )
 		float move = lastBestTangent.Dot(delta) / lastBestTangent.SqLength();
 
 		move = vsClamp(move, -lastMove*scale, lastMove*scale);
-		lastBestT += move;
+		lastBestT = vsClamp( lastBestT+move, 0.f, 1.f );
 		lastMove = vsFabs(move);
 		iterations++;
 	}
-	return lastBestPoint;
+	return lastBestT;
+}
+vsVector3D
+vsSpline3D::ClosestPointTo( const vsVector3D& position )
+{
+	return PositionAtTime( ClosestTimeTo(position) );
 }
 
 vsSplineColor::vsSplineColor()

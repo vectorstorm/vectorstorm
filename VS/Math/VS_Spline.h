@@ -59,10 +59,14 @@ public:
     const vsVector3D & GetStartVelocity() const { return m_startVelocity; }
     const vsVector3D & GetEndVelocity() const { return m_endVelocity; }
 
-	vsVector3D	PositionAtTime( float t ) const;
-	vsVector3D	VelocityAtTime( float t ) const;
+	vsVector3D PositionAtTime( float t ) const;
+	vsVector3D VelocityAtTime( float t ) const;
 
-	vsVector3D	ClosestPointTo( const vsVector3D& position );
+	// Note:  In general, use ClosestTimeTo in preference to ClosestPointTo,
+	// as these are expensive functions, and once you have the time you can
+	// get the position or whatever else you want.
+	float ClosestTimeTo( const vsVector3D& position );
+	vsVector3D ClosestPointTo( const vsVector3D& position );
 };
 
 
