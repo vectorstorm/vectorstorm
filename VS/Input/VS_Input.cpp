@@ -1002,8 +1002,7 @@ vsInput::GetMouseMotion(int scene)
 	vsVector2D scale = t.GetScale();
 	scale.y *= 0.5f;
 	scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
-	t.SetScale(scale);
-	vsVector2D mousePos = t.ApplyTo( m_mouseMotion );
+	vsVector2D mousePos = vsVector2D( m_mouseMotion.x * scale.x, m_mouseMotion.y * scale.y );
 
 	return mousePos;
 }
