@@ -561,3 +561,93 @@ vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b )
 	return vsBox3D( vsInterpolate( alpha, a.GetMin(), b.GetMin() ), vsInterpolate( alpha, a.GetMax(), b.GetMax() ) );
 }
 
+vsOrientedBox3D::vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform ):
+	m_box(box),
+	m_transform(transform)
+{
+	for ( int i = 0; i < 8; i++ )
+	{
+		m_corner[i] = transform.ApplyTo(box.Corner(i));
+	}
+}
+
+bool
+vsOrientedBox3D::Intersects( const vsOrientedBox3D& other )
+{
+	// we're going to check a whole heap of directions to see whether we can
+	// find one which doesn't result in our vertices intersecting.  If we can
+	// find any direction on which our vertices don't mingle, then our two
+	// objects cannot be intersecting!
+	//
+	const vsVector3D &ax = m_transform.GetMatrix().x;
+	const vsVector3D &ay = m_transform.GetMatrix().y;
+	const vsVector3D &az = m_transform.GetMatrix().z;
+	const vsVector3D &bx = other.m_transform.GetMatrix().x;
+	const vsVector3D &by = other.m_transform.GetMatrix().y;
+	const vsVector3D &bz = other.m_transform.GetMatrix().z;
+	if (
+			!SAT_Intersects( other, ax ) ||
+			!SAT_Intersects( other, ay ) ||
+			!SAT_Intersects( other, az ) ||
+			!SAT_Intersects( other, bx ) ||
+			!SAT_Intersects( other, by ) ||
+			!SAT_Intersects( other, bz )
+	   )
+	{
+		return false;
+	}
+	if ( ax != bx && !SAT_Intersects( other, ax.Cross(bx) ) )
+		return false;
+	if ( ax != by && !SAT_Intersects( other, ax.Cross(by) ) )
+		return false;
+	if ( ax != bz && !SAT_Intersects( other, ax.Cross(bz) ) )
+		return false;
+	if ( ay != bx && !SAT_Intersects( other, ay.Cross(bx) ) )
+		return false;
+	if ( ay != by && !SAT_Intersects( other, ay.Cross(by) ) )
+		return false;
+	if ( ay != bz && !SAT_Intersects( other, ay.Cross(bz) ) )
+		return false;
+	if ( az != bx && !SAT_Intersects( other, az.Cross(bx) ) )
+		return false;
+	if ( az != by && !SAT_Intersects( other, az.Cross(by) ) )
+		return false;
+	if ( az != bz && !SAT_Intersects( other, az.Cross(bz) ) )
+		return false;
+
+	return true;
+}
+
+bool
+vsOrientedBox3D::SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis )
+{
+	// we're going to project each of MY corners onto this axis and get the 1D range
+	// of distances.
+	//
+	// next, we'll project each of OTHER's corners onto this same axis, and get
+	// its range of distances along the axis.
+	//
+	// Then we check for overlap between those ranges.
+
+	float aMin, aMax, bMin, bMax;
+	aMin = aMax = m_corner[0].Dot(axis);
+	bMin = bMax = other.m_corner[0].Dot(axis);
+	for ( int i = 1; i < 8; i++ )
+	{
+		float distance = m_corner[i].Dot(axis);
+		aMin = vsMin( aMin, distance );
+		aMax = vsMax( aMax, distance );
+	}
+	for ( int i = 1; i < 8; i++ )
+	{
+		float distance = other.m_corner[i].Dot(axis);
+		bMin = vsMin( bMin, distance );
+		bMax = vsMax( bMax, distance );
+	}
+
+	if ( aMax < bMin || aMin > bMax )
+		return false;
+
+	return true;
+}
+

@@ -11,6 +11,7 @@
 #define VS_BOX_H
 
 #include "VS/Math/VS_Vector.h"
+#include "VS/Math/VS_Transform.h"
 
 class vsDisplayList;
 
@@ -130,6 +131,25 @@ public:
 
 	vsBox3D		operator*(const float b) const { return vsBox3D(min*b, max*b); }
 	vsBox3D &	operator*=(const float b) { min *= b; max *= b; return *this; }
+};
+
+class vsOrientedBox3D
+{
+	vsBox3D m_box;
+	vsTransform3D m_transform;
+	// As an optimisation, we're going to apply the orientation store the
+	// vertices directly, here.  Note that our intersection test is customised
+	// for boxes -- this isn't a generalised convex hull collision test
+	// implementation!  (Although it shouldn't be too hard to write one based on
+	// this general approach.  Might do that someday if/when I need one)
+	vsVector3D m_corner[8];
+
+	// run a single Separating Axis Theorem test, along the proposed axis
+	bool SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis );
+public:
+	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
+
+	bool Intersects( const vsOrientedBox3D& other );
 };
 
 vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b );
