@@ -123,7 +123,7 @@ static vsString s_cidName[CID_MAX] =
 	"CID_Right",
 
 	"CID_Exit",
-	"CID_ExitApplication",
+	"CID_Escape",
 
 	"CID_A",
 	"CID_B",
@@ -441,7 +441,7 @@ vsInput::Update(float timeStep)
 									{
 										core::SetExit();
 									}
-									m_keyControlState[CID_ExitApplication] = 1.0f;
+									m_keyControlState[CID_Escape] = 1.0f;
 									break;
 								case SDLK_w:
 								case SDLK_UP:
@@ -501,7 +501,7 @@ vsInput::Update(float timeStep)
 								m_keyControlState[CID_Exit] = 0.0f;
 								break;
 							case SDLK_ESCAPE:
-								m_keyControlState[CID_ExitApplication] = 0.0f;
+								m_keyControlState[CID_Escape] = 0.0f;
 								break;
 							case SDLK_w:
 							case SDLK_UP:
