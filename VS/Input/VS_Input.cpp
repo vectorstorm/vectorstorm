@@ -776,6 +776,15 @@ vsInput::ReadMouseButton( int buttonID )
 		if ( keymod & KMOD_LGUI )
 			buttonDown = !!(buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
 	}
+	if ( buttonID == SDL_BUTTON_LEFT )
+	{
+		// turn off left button if alt is down;  we're treating
+		// that combo as the right mouse button.
+
+		SDL_Keymod keymod = SDL_GetModState();
+		if ( keymod & KMOD_LGUI )
+			buttonDown = false;
+	}
 #endif // __APPLE_CC__
 
 	return buttonDown?1.0f:0.0f;
