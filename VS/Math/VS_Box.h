@@ -147,9 +147,14 @@ class vsOrientedBox3D
 	// run a single Separating Axis Theorem test, along the proposed axis
 	bool SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis );
 	bool SAT_Intersects( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
+
+	// run a single test for containment, along the proposed axis
+	bool SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis );
+	bool SAT_Contains( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
 public:
 	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
 
+	bool Contains( const vsOrientedBox3D& other );
 	bool Intersects( const vsOrientedBox3D& other );
 	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius );
 	bool IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius );

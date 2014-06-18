@@ -572,6 +572,18 @@ vsOrientedBox3D::vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& trans
 }
 
 bool
+vsOrientedBox3D::Contains( const vsOrientedBox3D& other )
+{
+	const vsVector3D &ax = m_transform.GetMatrix().x;
+	const vsVector3D &ay = m_transform.GetMatrix().y;
+	const vsVector3D &az = m_transform.GetMatrix().z;
+	return (
+			SAT_Contains( other, ax ) &&
+			SAT_Contains( other, ay ) &&
+			SAT_Contains( other, az ) );
+}
+
+bool
 vsOrientedBox3D::Intersects( const vsOrientedBox3D& other )
 {
 	// we're going to check a whole heap of directions to see whether we can
@@ -618,6 +630,44 @@ vsOrientedBox3D::Intersects( const vsOrientedBox3D& other )
 	return true;
 }
 
+bool
+vsOrientedBox3D::SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis )
+{
+	return SAT_Contains( other.m_corner, 8, axis );
+}
+
+bool
+vsOrientedBox3D::SAT_Contains( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius )
+{
+	// we're going to project each of MY corners onto this axis and get the 1D range
+	// of distances.
+	//
+	// next, we'll project each of the provided points onto this same axis, and get
+	// its range of distances along the axis.
+	//
+	// Then we check that I have BOTH the minimum and maximum points.
+
+	float aMin, aMax, bMin, bMax;
+	aMin = aMax = m_corner[0].Dot(axis);
+	bMin = bMax = points[0].Dot(axis);
+	for ( int i = 1; i < 8; i++ )
+	{
+		float distance = m_corner[i].Dot(axis);
+		aMin = vsMin( aMin, distance );
+		aMax = vsMax( aMax, distance );
+	}
+	for ( int i = 1; i < pointCount; i++ )
+	{
+		float distance = points[i].Dot(axis);
+		bMin = vsMin( bMin, distance - otherRadius );
+		bMax = vsMax( bMax, distance + otherRadius );
+	}
+
+	if ( aMax > bMax && aMin < bMin )
+		return true;
+
+	return false;
+}
 bool
 vsOrientedBox3D::SAT_Intersects( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius )
 {
