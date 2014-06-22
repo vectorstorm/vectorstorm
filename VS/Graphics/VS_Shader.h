@@ -30,6 +30,7 @@ class vsShader
 	int32_t m_textureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_worldToViewLoc;
+	int32_t m_worldToViewAttributeLoc;
 	int32_t m_viewToProjectionLoc;
 
 	int32_t m_lightAmbientLoc;

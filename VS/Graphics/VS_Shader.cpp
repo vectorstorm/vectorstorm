@@ -87,6 +87,8 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 
+		m_worldToViewAttributeLoc = glGetAttribLocation(m_shader, "worldToViewAttrib");
+
 		// for ( int i = 0; i < 4; i++ )
 		// {
 			// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
@@ -198,6 +200,41 @@ vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 	{
 		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
 	}
+	if ( m_worldToViewAttributeLoc >= 0 )
+	{
+		glEnableVertexAttribArray(m_worldToViewAttributeLoc);
+	CheckGLError("SetWorldToView");
+		glEnableVertexAttribArray(m_worldToViewAttributeLoc+1);
+	CheckGLError("SetWorldToView");
+		glEnableVertexAttribArray(m_worldToViewAttributeLoc+2);
+	CheckGLError("SetWorldToView");
+		glEnableVertexAttribArray(m_worldToViewAttributeLoc+3);
+	CheckGLError("SetWorldToView");
+
+	// this could be a lot smarter.
+	static GLuint g_vbo = 0xffffffff;
+	if ( g_vbo == 0xffffffff )
+	{
+		glGenBuffers(1, &g_vbo);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vsMatrix4x4), &worldToView, GL_STREAM_DRAW);
+	glVertexAttribPointer(m_worldToViewAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+	glVertexAttribPointer(m_worldToViewAttributeLoc+1, 4, GL_FLOAT, 0, 0, (void*)16);
+	glVertexAttribPointer(m_worldToViewAttributeLoc+2, 4, GL_FLOAT, 0, 0, (void*)32);
+	glVertexAttribPointer(m_worldToViewAttributeLoc+3, 4, GL_FLOAT, 0, 0, (void*)48);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glVertexAttribDivisor(m_worldToViewAttributeLoc, 1);
+	CheckGLError("SetWorldToView");
+		glVertexAttribDivisor(m_worldToViewAttributeLoc+1, 1);
+	CheckGLError("SetWorldToView");
+		glVertexAttribDivisor(m_worldToViewAttributeLoc+2, 1);
+	CheckGLError("SetWorldToView");
+		glVertexAttribDivisor(m_worldToViewAttributeLoc+3, 1);
+	CheckGLError("SetWorldToView");
+	}
+
 	CheckGLError("SetWorldToView");
 }
 
