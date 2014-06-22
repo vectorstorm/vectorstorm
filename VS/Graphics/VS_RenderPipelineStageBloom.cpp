@@ -15,7 +15,7 @@
 #include "VS_RenderTarget.h"
 #include "VS_Shader.h"
 
-extern const char *passv, *passf, *combine7f, *row3f, *normalf;
+extern const char *passv, *passf, *combinef, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
 static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 static bool kernel_normalised = false;
@@ -44,20 +44,20 @@ public:
 	}
 };
 
+class vsBloomCombineShader: public vsShader
+{
+public:
+	vsBloomCombineShader():
+		vsShader(passv, combinef, false, false)
+	{
+	}
+};
+
 class vsBloomPassShader: public vsShader
 {
 public:
 	vsBloomPassShader():
 		vsShader(passv, passf, false, false)
-	{
-	}
-};
-
-class vsBloomCombineShader: public vsShader
-{
-public:
-	vsBloomCombineShader():
-		vsShader(passv, combine7f, false, false)
 	{
 	}
 };
@@ -124,6 +124,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	m_hipassMaterial = new vsDynamicMaterial;
 	m_hipassMaterial->SetBlend(false);
+	m_hipassMaterial->SetDrawMode(DrawMode_Absolute);
 	m_hipassMaterial->SetColor(c_white);
 	m_hipassMaterial->SetCullingType(Cull_None);
 	m_hipassMaterial->SetZRead(false);
@@ -159,7 +160,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_combinePassMaterial[i]->SetGlow(false);
 		m_combinePassMaterial[i]->SetClampU(true);
 		m_combinePassMaterial[i]->SetClampV(true);
-		m_combinePassMaterial[i]->SetShader(new vsBloomPassShader);
+		m_combinePassMaterial[i]->SetShader(new vsBloomCombineShader);
 		m_combinePassMaterial[i]->SetTexture(0, m_pass[i]->GetTexture());
 	}
 
@@ -278,20 +279,14 @@ const char *passv = STRINGIFY( #version 330\n
 			}
 			);
 
-	const char *combine7f = STRINGIFY( #version 330\n
+	const char *combinef = STRINGIFY( #version 330\n
 			uniform sampler2D textures[8];
 			in vec2 fragment_texcoord;
 			out vec4 fragment_color;
 
 			void main(void)
 			{
-				vec4 c = texture(textures[0], fragment_texcoord);
-				vec4 glow = vec4(0);
-				// for ( int i = 1; i < 7; i++ )
-				// {
-				// 	glow += texture(textures[i], fragment_texcoord);
-				// }
-				fragment_color = c + 0.6 * glow;
+				fragment_color = vec4(texture(textures[0], fragment_texcoord).rgb, 1.0);
 			}
 			);
 

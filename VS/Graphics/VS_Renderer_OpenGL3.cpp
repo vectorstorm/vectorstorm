@@ -1042,6 +1042,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			case DrawMode_Add:
 			case DrawMode_Subtract:
 			case DrawMode_Normal:
+			case DrawMode_Absolute:
 				if ( material->m_texture[0] )
 				{
 					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
@@ -1185,6 +1186,14 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 	CheckGLError("Material");
+				break;
+			}
+		case DrawMode_Absolute:
+			{
+#if !TARGET_OS_IPHONE
+				glBlendEquation(GL_FUNC_ADD);
+#endif
+				glBlendFunc(GL_ONE,GL_ZERO);	// absolute
 				break;
 			}
 		case DrawMode_Normal:

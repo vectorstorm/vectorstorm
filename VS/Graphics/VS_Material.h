@@ -17,6 +17,7 @@
 
 enum vsDrawMode
 {
+	DrawMode_Absolute,
 	DrawMode_Normal,
 	DrawMode_Lit,
 	DrawMode_Add,
