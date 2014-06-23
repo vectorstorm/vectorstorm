@@ -40,7 +40,7 @@ public:
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
-		OpCode_SetMatrix4x4,
+		OpCode_SetMatrices4x4,
 		OpCode_SetWorldToViewMatrix4x4,
 		OpCode_PopTransform,
 		OpCode_SetCameraTransform,
@@ -77,7 +77,6 @@ public:
 		OpCode_LineStripBuffer,
 		OpCode_TriangleStripBuffer,
 		OpCode_TriangleListBuffer,
-		OpCode_TriangleListBuffer_Instanced, // draw 'n' copies of this buffer, using the array of matrices above.
 		OpCode_TriangleFanBuffer,
 
 		OpCode_SetMaterial,
@@ -212,6 +211,7 @@ public:
 	void	PushTranslation( const vsVector3D &translation );
 	void	PushMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
+	void	SetMatrices4x4( const vsMatrix4x4 *m, int count );
 	void	SnapMatrix();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
@@ -250,7 +250,6 @@ public:
 
 	void	TriangleStripBuffer( vsRenderBuffer *buffer );
 	void	TriangleListBuffer( vsRenderBuffer *buffer );
-	void	TriangleListBuffer_Instanced( vsRenderBuffer *buffer, vsMatrix4x4 *mat, int matCount );
 	void	TriangleFanBuffer( vsRenderBuffer *buffer );
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );

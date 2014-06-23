@@ -56,7 +56,8 @@ private:
 	vsVector3D           m_currentCameraPosition;
 	Settings             m_currentSettings;
 
-	vsMatrix4x4			m_currentLocalToWorld;
+	vsMatrix4x4			*m_currentLocalToWorld;
+	int					m_currentLocalToWorldCount;
 	vsMatrix4x4			m_currentWorldToView;
 	vsMatrix4x4			m_currentViewToProjection;
 

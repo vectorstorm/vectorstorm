@@ -55,8 +55,7 @@ public:
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
-	void SetLocalToWorld( const vsMatrix4x4& localToWorld );
-	void SetLocalToWorld_Instanced( const vsMatrix4x4* localToWorld, int matCount );
+	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 

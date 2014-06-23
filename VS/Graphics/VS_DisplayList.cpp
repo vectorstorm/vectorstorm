@@ -33,7 +33,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushTransform",
 	"PushTranslation",
 	"PushMatrix4x4",
-	"SetMatrix4x4",
+	"SetMatrices4x4",
 	"SetWorldToViewMatrix4x4",
 	"PopTransform",
 	"CameraTransform",
@@ -69,7 +69,6 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"LineStripBuffer",
 	"TriangleStripBuffer",
 	"TriangleListBuffer",
-	"TriangleListBuffer_Instanced",
 	"TriangleFanBuffer",
 	"PointBuffer",
 
@@ -636,8 +635,18 @@ vsDisplayList::PushMatrix4x4( const vsMatrix4x4 &m )
 void
 vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 {
-	m_fifo->WriteUint8( OpCode_SetMatrix4x4 );
-	m_fifo->WriteMatrix4x4( m );
+	SetMatrices4x4(&m, 1);
+}
+
+void
+vsDisplayList::SetMatrices4x4( const vsMatrix4x4 *m, int count )
+{
+	m_fifo->WriteUint8( OpCode_SetMatrices4x4 );
+	m_fifo->WriteUint32( count );
+	for ( int i = 0; i < count; i++ )
+	{
+		m_fifo->WriteMatrix4x4( m[i] );
+	}
 }
 
 void
@@ -893,15 +902,6 @@ vsDisplayList::TriangleListBuffer( vsRenderBuffer *buffer )
 {
 	m_fifo->WriteUint8( OpCode_TriangleListBuffer );
 	m_fifo->WriteVoidStar(buffer);
-}
-
-void
-vsDisplayList::TriangleListBuffer_Instanced( vsRenderBuffer *buffer, vsMatrix4x4 *mat, int matCount )
-{
-	m_fifo->WriteUint8( OpCode_TriangleListBuffer_Instanced );
-	m_fifo->WriteVoidStar(buffer);
-	m_fifo->WriteVoidStar(mat);
-	m_fifo->WriteUint32(matCount);
 }
 
 void
@@ -1188,22 +1188,23 @@ vsDisplayList::PopOp()
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			}
-			case OpCode_TriangleListBuffer_Instanced:
-			{
-				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
-				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
-				m_currentOp.data.Set( m_fifo->ReadUint32() );
-				break;
-			}
 			case OpCode_PushTransform:
 			case OpCode_SetCameraTransform:
 				m_fifo->ReadTransform2D( &m_currentOp.data.transform );
 				break;
 			case OpCode_PushMatrix4x4:
-			case OpCode_SetMatrix4x4:
 			case OpCode_SetWorldToViewMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
+			case OpCode_SetMatrices4x4:
+				{
+					int count = m_fifo->ReadUint32();
+					vsMatrix4x4* mat = reinterpret_cast<vsMatrix4x4*>(m_fifo->GetReadHead());
+					m_currentOp.data.SetPointer( (char*)mat );
+					m_currentOp.data.i = count;
+					m_fifo->AdvanceReadHead( sizeof(vsMatrix4x4) * count );
+					break;
+				}
 			case OpCode_Set3DProjection:
 				m_currentOp.data.fov = m_fifo->ReadFloat();
 				m_currentOp.data.nearPlane = m_fifo->ReadFloat();
@@ -1352,9 +1353,11 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_PushMatrix4x4:
 			PushMatrix4x4( o->data.GetMatrix4x4() );
 			break;
-		case OpCode_SetMatrix4x4:
+		case OpCode_SetMatrices4x4:
+			SetMatrices4x4( (vsMatrix4x4*)o->data.p, o->data.i );
+			break;
 		case OpCode_SetWorldToViewMatrix4x4:
-			SetMatrix4x4( o->data.GetMatrix4x4() );
+			SetWorldToViewMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_Set3DProjection:
 			Set3DProjection( o->data.fov, o->data.nearPlane, o->data.farPlane );
@@ -1584,9 +1587,10 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.matrix4x4;
 				transformStackLevel++;
 			}
-			else if ( o->type == OpCode_SetMatrix4x4 )
+			else if ( o->type == OpCode_SetMatrices4x4 )
 			{
-				transformStack[transformStackLevel] = o->data.matrix4x4;
+				vsMatrix4x4 *mat = (vsMatrix4x4*)o->data.p;
+				transformStack[transformStackLevel] = *mat;
 			}
 			else if ( o->type == OpCode_PopTransform )
 			{

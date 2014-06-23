@@ -202,12 +202,11 @@ public:
 
 	static void DrawElementsImmediate( int type, void* buffer, int count );
 
-	void	TriStripBuffer();
-	void	TriListBuffer();
-	void	TriListBuffer_Instanced( int instanceCount );
-	void	TriFanBuffer();
-	void	LineStripBuffer();
-	void	LineListBuffer();
+	void	TriStripBuffer(int instanceCount);
+	void	TriListBuffer(int instanceCount);
+	void	TriFanBuffer(int instanceCount);
+	void	LineStripBuffer(int instanceCount);
+	void	LineListBuffer(int instanceCount);
 
 	const bool IsVBO() { return m_vbo; }
 };

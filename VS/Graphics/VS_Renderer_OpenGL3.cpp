@@ -479,7 +479,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		m_currentShader->SetColor( m_currentColor );
 		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterial->m_texture );
-		m_currentShader->SetLocalToWorld( m_currentLocalToWorld );
+		m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
 		for ( int i = 0; i < MAX_LIGHTS; i++ )
@@ -576,7 +576,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
 					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 
-					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorldCount = 1;
 					break;
 				}
 			case vsDisplayList::OpCode_PushTranslation:
@@ -587,7 +588,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m.SetTranslation(v);
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
-					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorldCount = 1;
 					break;
 				}
 			case vsDisplayList::OpCode_PushMatrix4x4:
@@ -595,14 +597,18 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsMatrix4x4 m = op->data.GetMatrix4x4();
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
 					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
-					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorldCount = 1;
 					break;
 				}
-			case vsDisplayList::OpCode_SetMatrix4x4:
+			case vsDisplayList::OpCode_SetMatrices4x4:
 				{
-					vsMatrix4x4 &m = op->data.GetMatrix4x4();
-					m_transformStack[++m_currentTransformStackLevel] = m;
+		CheckGLError("SetMatrices");
+					vsMatrix4x4 *m = (vsMatrix4x4*)op->data.p;
+					int count = op->data.i;
+					m_transformStack[++m_currentTransformStackLevel] = m[0];
 					m_currentLocalToWorld = m;
+					m_currentLocalToWorldCount = count;
 					break;
 				}
 			case vsDisplayList::OpCode_SnapMatrix:
@@ -612,8 +618,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					t.x = (int)t.x;
 					t.y = (int)t.y;
 					t.z = (int)t.z;
-					m_transformStack[++m_currentTransformStackLevel] = m;
-					m_currentLocalToWorld = m;
+					m_transformStack[m_currentTransformStackLevel] = m;
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentTransformStackLevel++;
 					break;
 				}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
@@ -625,7 +632,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsAssert(m_currentTransformStackLevel > 0, "Renderer transform stack underflow??");
 					m_currentTransformStackLevel--;
-					m_currentLocalToWorld = m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorldCount = 1;
 					break;
 				}
 			case vsDisplayList::OpCode_SetCameraTransform:
@@ -806,45 +814,35 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriStripBuffer();
+					ib->TriStripBuffer(m_currentLocalToWorldCount);
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
 				{
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriListBuffer();
-					break;
-				}
-			case vsDisplayList::OpCode_TriangleListBuffer_Instanced:
-				{
-					FlushRenderState();
-					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					vsMatrix4x4 *mat = (vsMatrix4x4 *)op->data.p2;
-					int matCount = op->data.i;
-					m_currentShader->SetLocalToWorld_Instanced(mat, matCount);
-					ib->TriListBuffer_Instanced(matCount);
+					ib->TriListBuffer(m_currentLocalToWorldCount);
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriFanBuffer();
+					ib->TriFanBuffer(m_currentLocalToWorldCount);
 					break;
 				}
 			case vsDisplayList::OpCode_LineListBuffer:
 				{
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineListBuffer();
+					ib->LineListBuffer(m_currentLocalToWorldCount);
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripBuffer:
 				{
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineStripBuffer();
+					ib->LineStripBuffer(m_currentLocalToWorldCount);
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanArray:

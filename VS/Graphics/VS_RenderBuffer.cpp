@@ -849,13 +849,14 @@ vsRenderBuffer::GetColor(int i)
 
 
 void
-vsRenderBuffer::TriStripBuffer()
+vsRenderBuffer::TriStripBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
-		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
+		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
+		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
@@ -865,28 +866,7 @@ vsRenderBuffer::TriStripBuffer()
 }
 
 void
-vsRenderBuffer::TriListBuffer()
-{
-	if ( m_vbo )
-	{
-	CheckGLError("TriList");
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-	CheckGLError("TriList");
-		glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-	CheckGLError("TriList");
-		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	CheckGLError("TriList");
-	}
-	else
-	{
-		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t) );
-	}
-}
-
-void
-vsRenderBuffer::TriListBuffer_Instanced( int instanceCount )
+vsRenderBuffer::TriListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
@@ -902,19 +882,19 @@ vsRenderBuffer::TriListBuffer_Instanced( int instanceCount )
 	}
 	else
 	{
-		vsLog("Tried to do instanced draw of non-vbo");
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		// DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t) );
+		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t) );
 	}
 }
 
 void
-vsRenderBuffer::TriFanBuffer()
+vsRenderBuffer::TriFanBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
@@ -924,7 +904,7 @@ vsRenderBuffer::TriFanBuffer()
 }
 
 void
-vsRenderBuffer::LineStripBuffer()
+vsRenderBuffer::LineStripBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
@@ -939,7 +919,7 @@ vsRenderBuffer::LineStripBuffer()
 }
 
 void
-vsRenderBuffer::LineListBuffer()
+vsRenderBuffer::LineListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{

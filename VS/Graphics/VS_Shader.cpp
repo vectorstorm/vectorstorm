@@ -183,14 +183,7 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
-vsShader::SetLocalToWorld( const vsMatrix4x4& localToWorld )
-{
-	SetLocalToWorld_Instanced( &localToWorld, 1 );
-	return;
-}
-
-void
-vsShader::SetLocalToWorld_Instanced( const vsMatrix4x4* localToWorld, int matCount )
+vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 {
 	CheckGLError("PreSetLocalToWorld");
 	if ( m_localToWorldLoc >= 0 )

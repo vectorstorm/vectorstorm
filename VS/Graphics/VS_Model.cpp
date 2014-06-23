@@ -77,8 +77,8 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(NULL),
-	m_displayList(list),
-	m_instanceOf(NULL)
+	m_displayList(list)
+	// m_instanceOf(NULL)
 {
 }
 
@@ -91,22 +91,22 @@ vsModel::~vsModel()
 	vsDelete( m_material );
 }
 
-vsModel *
-vsModel::MakeInstance()
-{
-	vsModel *model = new vsModel;
-	model->m_instanceOf = this;
-	model->SetBoundingBox( GetBoundingBox() );
-	m_instance.AddItem(model);
-	return model;
-}
-
-void
-vsModel::RemoveInstance( vsModel *model )
-{
-	m_instance.RemoveItem(model);
-}
-
+// vsModel *
+// vsModel::MakeInstance()
+// {
+// 	vsModel *model = new vsModel;
+// 	model->m_instanceOf = this;
+// 	model->SetBoundingBox( GetBoundingBox() );
+// 	m_instance.AddItem(model);
+// 	return model;
+// }
+//
+// void
+// vsModel::RemoveInstance( vsModel *model )
+// {
+// 	m_instance.RemoveItem(model);
+// }
+//
 void
 vsModel::SetDisplayList( vsDisplayList *list )
 {
