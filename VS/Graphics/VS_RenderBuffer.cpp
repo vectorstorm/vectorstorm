@@ -861,7 +861,8 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		DrawElementsImmediate( GL_TRIANGLE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -883,7 +884,7 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 	else
 	{
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t) );
+		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -899,7 +900,8 @@ vsRenderBuffer::TriFanBuffer(int instanceCount)
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		DrawElementsImmediate( GL_TRIANGLE_FAN, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -914,7 +916,8 @@ vsRenderBuffer::LineStripBuffer(int instanceCount)
 	}
 	else
 	{
-		glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		// glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		DrawElementsImmediate( GL_LINE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -929,7 +932,8 @@ vsRenderBuffer::LineListBuffer(int instanceCount)
 	}
 	else
 	{
-		glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		// glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
+		DrawElementsImmediate( GL_LINES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -1026,7 +1030,7 @@ static GLuint g_evbo = 0xffffffff;
 static int g_evboCursor = EVBO_SIZE;
 
 void
-vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count )
+vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int instanceCount )
 {
 	int bufferSize = count * sizeof(uint16_t);
 	if ( g_evbo == 0xffffffff )
@@ -1043,7 +1047,7 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count )
 	}
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
 
-	glDrawElements(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor) );
+	glDrawElementsInstanced(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor), instanceCount );
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 

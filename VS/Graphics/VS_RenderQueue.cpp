@@ -48,6 +48,8 @@ vsRenderQueueStage::~vsRenderQueueStage()
 	{
 		BatchElement *e = m_batchElementPool;
 		m_batchElementPool = m_batchElementPool->next;
+		if ( e->instanceMatrix )
+			vsDeleteArray( e->instanceMatrix );
 		vsDelete(e);
 	}
 }
@@ -122,13 +124,34 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	if ( !m_batchElementPool )
 	{
 		m_batchElementPool = new BatchElement;
-		m_batchElementPool->next = NULL;
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
 	element->next = NULL;
 
 	element->matrix = matrix;
+	element->list = batchList;
+
+	element->next = batch->elementList;
+	batch->elementList = element;
+}
+
+void
+vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batchList )
+{
+	Batch *batch = FindBatch(material);
+
+	if ( !m_batchElementPool )
+	{
+		m_batchElementPool = new BatchElement;
+	}
+	BatchElement *element = m_batchElementPool;
+	m_batchElementPool = element->next;
+	element->next = NULL;
+
+	element->instanceMatrixCount = matrixCount;
+	element->instanceMatrix = new vsMatrix4x4[matrixCount];
+	memcpy(element->instanceMatrix, matrix, sizeof(vsMatrix4x4)*matrixCount);
 	element->list = batchList;
 
 	element->next = batch->elementList;
@@ -143,7 +166,6 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 	if ( m_batchElementPool == NULL )
 	{
 		m_batchElementPool = new BatchElement;
-		m_batchElementPool->next = NULL;
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = m_batchElementPool->next;
@@ -178,19 +200,13 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
-			bool hasTransform = true;//e->matrix != vsMatrix4x4::Identity;
-
-			if ( hasTransform )
-			{
+			if ( e->instanceMatrixCount == 0 )
 				list->SetMatrix4x4( e->matrix );
-			}
+			else
+				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
 
 			list->Append( *e->list );
-
-			if ( hasTransform )
-			{
-				list->PopTransform();
-			}
+			list->PopTransform();
 		}
 	}
 }
@@ -206,7 +222,17 @@ vsRenderQueueStage::EndRender()
 		BatchElement *lastElement = b->elementList;
 		while ( lastElement->next )
 		{
+			if ( lastElement->instanceMatrix )
+			{
+				vsDeleteArray(lastElement->instanceMatrix);
+				lastElement->instanceMatrixCount = 0;
+			}
 			lastElement = lastElement->next;
+		}
+		if ( lastElement->instanceMatrix )
+		{
+			vsDeleteArray(lastElement->instanceMatrix);
+			lastElement->instanceMatrixCount = 0;
 		}
 		lastElement->next = m_batchElementPool;
 		m_batchElementPool = b->elementList;
@@ -379,9 +405,22 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 }
 
 void
+vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch )
+{
+	int stageId = PickStageForMaterial( material );
+	m_stage[stageId].AddInstanceBatch( material, matrix, instanceCount, batch );
+}
+
+void
 vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
 {
 	AddBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetDisplayList() );
+}
+
+void
+vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount )
+{
+	AddInstanceBatch( fragment->GetMaterial(), matrix, instanceCount, fragment->GetDisplayList() );
 }
 
 vsDisplayList *

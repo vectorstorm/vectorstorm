@@ -31,8 +31,18 @@ class vsRenderQueueStage
 	struct BatchElement
 	{
 		vsMatrix4x4		matrix;
+		vsMatrix4x4 *	instanceMatrix;
+		int				instanceMatrixCount;
 		vsDisplayList *	list;
 		BatchElement *	next;
+
+		BatchElement():
+			instanceMatrix(NULL),
+			instanceMatrixCount(0),
+			list(NULL),
+			next(NULL)
+		{
+		}
 	};
 	struct Batch
 	{
@@ -64,11 +74,9 @@ public:
 	void			Draw( vsDisplayList *list );	// write our batches into here.
 	void			EndRender();
 
-	// usual way to add a batch
-//	void			AddBatch( vsMaterial *material, vsDisplayList *batch ) { AddBatch( material, vsMatrix4x4::Identity, batch ); }
-
-	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
+	// Add a batch to this stage
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
@@ -112,14 +120,18 @@ public:
 
 	vsScene *		GetScene() { return m_parent; }
 
-	// usual way to add a batch
+	// Usual way to add a batch
+	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+
+	// Identity-matrix batches.
 	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
 
-	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
-	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	// batches which will draw in multiple places.
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
 
 	// ultra-convenience for fragments.
 	void			AddFragmentBatch( vsFragment *fragment );
+	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );
