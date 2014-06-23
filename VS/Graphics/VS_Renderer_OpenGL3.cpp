@@ -816,6 +816,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					ib->TriListBuffer();
 					break;
 				}
+			case vsDisplayList::OpCode_TriangleListBuffer_Instanced:
+				{
+					FlushRenderState();
+					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
+					vsMatrix4x4 *mat = (vsMatrix4x4 *)op->data.p2;
+					int matCount = op->data.i;
+					m_currentShader->SetLocalToWorld_Instanced(mat, matCount);
+					ib->TriListBuffer_Instanced(matCount);
+					break;
+				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
 					FlushRenderState();

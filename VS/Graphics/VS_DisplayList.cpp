@@ -69,6 +69,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"LineStripBuffer",
 	"TriangleStripBuffer",
 	"TriangleListBuffer",
+	"TriangleListBuffer_Instanced",
 	"TriangleFanBuffer",
 	"PointBuffer",
 
@@ -895,6 +896,15 @@ vsDisplayList::TriangleListBuffer( vsRenderBuffer *buffer )
 }
 
 void
+vsDisplayList::TriangleListBuffer_Instanced( vsRenderBuffer *buffer, vsMatrix4x4 *mat, int matCount )
+{
+	m_fifo->WriteUint8( OpCode_TriangleListBuffer_Instanced );
+	m_fifo->WriteVoidStar(buffer);
+	m_fifo->WriteVoidStar(mat);
+	m_fifo->WriteUint32(matCount);
+}
+
+void
 vsDisplayList::TriangleFanBuffer( vsRenderBuffer *buffer )
 {
 	m_fifo->WriteUint8( OpCode_TriangleFanBuffer );
@@ -1176,6 +1186,13 @@ vsDisplayList::PopOp()
 			case OpCode_TriangleFanBuffer:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			}
+			case OpCode_TriangleListBuffer_Instanced:
+			{
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.Set( m_fifo->ReadUint32() );
 				break;
 			}
 			case OpCode_PushTransform:

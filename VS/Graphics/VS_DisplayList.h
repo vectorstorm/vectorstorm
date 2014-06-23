@@ -77,6 +77,7 @@ public:
 		OpCode_LineStripBuffer,
 		OpCode_TriangleStripBuffer,
 		OpCode_TriangleListBuffer,
+		OpCode_TriangleListBuffer_Instanced, // draw 'n' copies of this buffer, using the array of matrices above.
 		OpCode_TriangleFanBuffer,
 
 		OpCode_SetMaterial,
@@ -249,6 +250,7 @@ public:
 
 	void	TriangleStripBuffer( vsRenderBuffer *buffer );
 	void	TriangleListBuffer( vsRenderBuffer *buffer );
+	void	TriangleListBuffer_Instanced( vsRenderBuffer *buffer, vsMatrix4x4 *mat, int matCount );
 	void	TriangleFanBuffer( vsRenderBuffer *buffer );
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );

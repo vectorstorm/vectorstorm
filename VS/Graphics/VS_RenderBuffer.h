@@ -204,6 +204,7 @@ public:
 
 	void	TriStripBuffer();
 	void	TriListBuffer();
+	void	TriListBuffer_Instanced( int instanceCount );
 	void	TriFanBuffer();
 	void	LineStripBuffer();
 	void	LineListBuffer();

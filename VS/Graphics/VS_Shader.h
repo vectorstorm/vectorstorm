@@ -29,8 +29,8 @@ class vsShader
 	int32_t m_fogDensityLoc;
 	int32_t m_textureLoc;
 	int32_t m_localToWorldLoc;
+	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
-	int32_t m_worldToViewAttributeLoc;
 	int32_t m_viewToProjectionLoc;
 
 	int32_t m_lightAmbientLoc;
@@ -56,6 +56,7 @@ public:
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4& localToWorld );
+	void SetLocalToWorld_Instanced( const vsMatrix4x4* localToWorld, int matCount );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 

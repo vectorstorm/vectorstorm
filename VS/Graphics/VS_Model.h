@@ -17,6 +17,7 @@
 #include "VS/Graphics/VS_Material.h"
 #include "VS/Math/VS_Box.h"
 #include "VS/Math/VS_Transform.h"
+#include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
 
 class vsModel : public vsEntity
@@ -34,9 +35,13 @@ protected:
 
 	vsLinkedListStore<vsFragment>	m_fragment;	// new-style rendering
 
+	vsModel *m_instanceOf;						// extremely new-style rendering
+	vsLinkedList<vsModel*> m_instance;
+
 	vsTransform3D	m_transform;
 
 	void LoadFrom( vsRecord *record );
+	void RemoveInstance( vsModel *model );
 
 public:
 
@@ -44,6 +49,8 @@ public:
 
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
+
+	vsModel *		MakeInstance();		// create an instance of me.
 
 	void			SetMaterial( const vsString &name ) { vsDelete( m_material ); m_material = new vsMaterial(name); }
 	void			SetMaterial( vsMaterial *material ) { vsDelete( m_material ); m_material = material; }
