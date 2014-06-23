@@ -48,8 +48,6 @@ vsRenderQueueStage::~vsRenderQueueStage()
 	{
 		BatchElement *e = m_batchElementPool;
 		m_batchElementPool = m_batchElementPool->next;
-		if ( e->instanceMatrix )
-			vsDeleteArray( e->instanceMatrix );
 		vsDelete(e);
 	}
 }
@@ -150,8 +148,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	element->next = NULL;
 
 	element->instanceMatrixCount = matrixCount;
-	element->instanceMatrix = new vsMatrix4x4[matrixCount];
-	memcpy(element->instanceMatrix, matrix, sizeof(vsMatrix4x4)*matrixCount);
+	element->instanceMatrix = matrix;
 	element->list = batchList;
 
 	element->next = batch->elementList;
@@ -222,18 +219,12 @@ vsRenderQueueStage::EndRender()
 		BatchElement *lastElement = b->elementList;
 		while ( lastElement->next )
 		{
-			if ( lastElement->instanceMatrix )
-			{
-				vsDeleteArray(lastElement->instanceMatrix);
-				lastElement->instanceMatrixCount = 0;
-			}
+			lastElement->instanceMatrix = NULL;
+			lastElement->instanceMatrixCount = 0;
 			lastElement = lastElement->next;
 		}
-		if ( lastElement->instanceMatrix )
-		{
-			vsDeleteArray(lastElement->instanceMatrix);
-			lastElement->instanceMatrixCount = 0;
-		}
+		lastElement->instanceMatrix = NULL;
+		lastElement->instanceMatrixCount = 0;
 		lastElement->next = m_batchElementPool;
 		m_batchElementPool = b->elementList;
 		b->elementList = NULL;

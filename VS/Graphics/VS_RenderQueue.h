@@ -31,7 +31,7 @@ class vsRenderQueueStage
 	struct BatchElement
 	{
 		vsMatrix4x4		matrix;
-		vsMatrix4x4 *	instanceMatrix;
+		const vsMatrix4x4 *	instanceMatrix;
 		int				instanceMatrixCount;
 		vsDisplayList *	list;
 		BatchElement *	next;
@@ -127,10 +127,13 @@ public:
 	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
 
 	// batches which will draw in multiple places.
+	// Note that the passed array of matrices must exist until the Draw phase ends!
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
 
 	// ultra-convenience for fragments.
 	void			AddFragmentBatch( vsFragment *fragment );
+	// For fragments using instancing.
+	// Note that the passed array of matrices must exist until the Draw phase ends!
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.

@@ -643,10 +643,7 @@ vsDisplayList::SetMatrices4x4( const vsMatrix4x4 *m, int count )
 {
 	m_fifo->WriteUint8( OpCode_SetMatrices4x4 );
 	m_fifo->WriteUint32( count );
-	for ( int i = 0; i < count; i++ )
-	{
-		m_fifo->WriteMatrix4x4( m[i] );
-	}
+	m_fifo->WriteVoidStar( (char*)m );
 }
 
 void
@@ -1199,10 +1196,8 @@ vsDisplayList::PopOp()
 			case OpCode_SetMatrices4x4:
 				{
 					int count = m_fifo->ReadUint32();
-					vsMatrix4x4* mat = reinterpret_cast<vsMatrix4x4*>(m_fifo->GetReadHead());
-					m_currentOp.data.SetPointer( (char*)mat );
+					m_currentOp.data.SetPointer( (char*)m_fifo->ReadVoidStar() );
 					m_currentOp.data.i = count;
-					m_fifo->AdvanceReadHead( sizeof(vsMatrix4x4) * count );
 					break;
 				}
 			case OpCode_Set3DProjection:
