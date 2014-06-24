@@ -20,9 +20,27 @@
 #include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
 
+class vsModel;
+
+struct vsModelInstance
+{
+private:
+	vsModel *model;
+	int index;       // our ID within the instance array.
+	int matrixIndex; // our ID within the matrix array.
+	friend class vsModel;
+};
+
 class vsModel : public vsEntity
 {
 	typedef vsEntity Parent;
+
+	struct InstanceData
+	{
+		vsArray<vsMatrix4x4> matrix;
+		vsArray<int> matrixInstanceId;
+		vsArray<vsModelInstance*> instance;
+	};
 
 	vsMaterial *	m_material;
 
@@ -35,14 +53,12 @@ protected:
 
 	vsLinkedListStore<vsFragment>	m_fragment;	// new-style rendering
 
-	vsModel *m_instanceOf;						// extremely new-style rendering
-	vsArray<vsMatrix4x4> *m_instanceMat;
+	// m_instanceMat and m_instance may not be in the same order.
+	struct InstanceData *m_instanceData;
 
-	vsTransform3D	m_transform;
+	vsTransform3D m_transform;
 
 	void LoadFrom( vsRecord *record );
-	void RemoveInstance( vsModel *model );
-	void QueueInstance( vsModel *model );
 
 public:
 
@@ -51,7 +67,9 @@ public:
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
 
-	vsModel *		MakeInstance();		// create an instance of me.
+	vsModelInstance * MakeInstance();		// create an instance of me.
+	void RemoveInstance( vsModelInstance *model );
+	void			UpdateInstance( vsModelInstance *, const vsMatrix4x4& matrix, bool show = true ); // must be called to change the matrix on this instance
 
 	void			SetMaterial( const vsString &name ) { vsDelete( m_material ); m_material = new vsMaterial(name); }
 	void			SetMaterial( vsMaterial *material ) { vsDelete( m_material ); m_material = material; }

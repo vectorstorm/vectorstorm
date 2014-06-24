@@ -84,6 +84,11 @@ public:
 		m_arrayLength = 0;
 	}
 
+	virtual void	PopBack()
+	{
+		m_arrayLength--;
+	}
+
 	void	AddItem( const T &item )
 	{
 		if ( m_arrayLength < m_arrayStorage )
