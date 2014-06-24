@@ -24,10 +24,6 @@ class vsModel;
 
 struct vsModelInstance
 {
-
-	void SetVisible( bool visible );
-	void SetMatrix( const vsMatrix4x4& mat );
-
 private:
 	vsMatrix4x4 matrix;
 	vsModel *model;
@@ -35,6 +31,18 @@ private:
 	int matrixIndex; // our ID within the matrix array.
 	bool visible;
 	friend class vsModel;
+
+public:
+	vsModelInstance() {}
+	~vsModelInstance();
+
+	void SetVisible( bool visible );
+	void SetMatrix( const vsMatrix4x4& mat );
+
+	vsModel * GetModel() { return model; }
+	const vsVector4D& GetPosition() { return matrix.w; }
+	const vsMatrix4x4& GetMatrix() { return matrix; }
+
 };
 
 class vsModel : public vsEntity

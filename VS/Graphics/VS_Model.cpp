@@ -290,6 +290,11 @@ vsModel::Draw( vsRenderQueue *queue )
 	}
 }
 
+vsModelInstance::~vsModelInstance()
+{
+	model->RemoveInstance(this);
+}
+
 void
 vsModelInstance::SetVisible( bool v )
 {
