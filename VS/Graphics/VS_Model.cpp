@@ -101,6 +101,7 @@ vsModel::MakeInstance()
 	}
 	vsModelInstance *inst = new vsModelInstance;
 	inst->model = this;
+	inst->visible = false;
 	inst->index = m_instanceData->instance.ItemCount();
 	inst->matrixIndex = -1;
 	m_instanceData->instance.AddItem(inst);
@@ -108,19 +109,19 @@ vsModel::MakeInstance()
 }
 
 void
-vsModel::UpdateInstance( vsModelInstance *inst, const vsMatrix4x4& matrix, bool show )
+vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 {
 	if ( show )
 	{
 		if ( inst->matrixIndex < 0 ) // we've come into view!
 		{
 			inst->matrixIndex = m_instanceData->matrix.ItemCount();
-			m_instanceData->matrix.AddItem( matrix );
+			m_instanceData->matrix.AddItem( inst->matrix );
 			m_instanceData->matrixInstanceId.AddItem( inst->index );
 		}
 		else // we were already in view;  just update our matrix
 		{
-			m_instanceData->matrix[inst->matrixIndex] = matrix;
+			m_instanceData->matrix[inst->matrixIndex] = inst->matrix;
 		}
 	}
 	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
@@ -145,7 +146,7 @@ vsModel::RemoveInstance( vsModelInstance *inst )
 {
 	// FIRST, update this instance to not be visible.  That gets it out of our
 	// matrix and matrixInstanceId arrays, if it had been visible.
-	UpdateInstance( inst, vsMatrix4x4::Identity, false );
+	UpdateInstance( inst, false );
 
 	// NOW, I want to swap this instance into last position in the instance
 	// array.
@@ -285,6 +286,29 @@ vsModel::Draw( vsRenderQueue *queue )
 				queue->PopMatrix();
 			}
 			list->PopTransform();
+		}
+	}
+}
+
+void
+vsModelInstance::SetVisible( bool v )
+{
+	if ( visible != v )
+	{
+		visible = v;
+		model->UpdateInstance( this, visible );
+	}
+}
+
+void
+vsModelInstance::SetMatrix( const vsMatrix4x4& mat )
+{
+	if ( matrix != mat )
+	{
+		matrix = mat;
+		if ( visible )
+		{
+			model->UpdateInstance( this, visible );
 		}
 	}
 }

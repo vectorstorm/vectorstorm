@@ -24,10 +24,16 @@ class vsModel;
 
 struct vsModelInstance
 {
+
+	void SetVisible( bool visible );
+	void SetMatrix( const vsMatrix4x4& mat );
+
 private:
+	vsMatrix4x4 matrix;
 	vsModel *model;
 	int index;       // our ID within the instance array.
 	int matrixIndex; // our ID within the matrix array.
+	bool visible;
 	friend class vsModel;
 };
 
@@ -69,7 +75,7 @@ public:
 
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void RemoveInstance( vsModelInstance *model );
-	void			UpdateInstance( vsModelInstance *, const vsMatrix4x4& matrix, bool show = true ); // must be called to change the matrix on this instance
+	void			UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
 
 	void			SetMaterial( const vsString &name ) { vsDelete( m_material ); m_material = new vsMaterial(name); }
 	void			SetMaterial( vsMaterial *material ) { vsDelete( m_material ); m_material = material; }
