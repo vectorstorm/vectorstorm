@@ -26,9 +26,9 @@ public:
 	float x;
 	float y;
 
-	vsVector2D() {x=0;y=0;}
+	vsVector2D(): x(0.f), y(0.f) {}
 	vsVector2D(const vsVector3D &b);
-	vsVector2D(float x_in, float y_in) { x = x_in; y = y_in; }
+	vsVector2D(float x_in, float y_in): x(x_in), y(y_in) {}
 
 	//vsVector2D	operator=( const vsVector2D &b ) {x=b.x; y=b.y; return *this;}
 	vsVector2D  operator+( const vsVector2D &b ) const {return vsVector2D(x+b.x, y+b.y);}
@@ -76,7 +76,6 @@ public:
 	vsVector3D(const vsVector4D &b);
 	vsVector3D(float x_in, float y_in, float z_in): x(x_in), y(y_in), z(z_in) {}
 
-	inline vsVector3D&	operator=( const vsVector3D &b ) {x=b.x; y=b.y; z = b.z; return *this;}
 	inline vsVector3D  operator+( const vsVector3D &b ) const {return vsVector3D(x+b.x, y+b.y, z+b.z);}
 	inline vsVector3D  operator-( const vsVector3D &b ) const {return vsVector3D(x-b.x, y-b.y, z-b.z);}
 	inline vsVector3D  operator*( float b ) const {return vsVector3D(x*b,y*b,z*b);}
@@ -132,11 +131,11 @@ public:
 	float z;
 	float w;
 
-	vsVector4D() {x=0;y=0;z=0;w=0;}
-	vsVector4D(const vsVector3D &b) {x=b.x;y=b.y;z=b.z;w=0;}
-	vsVector4D(float x_in, float y_in, float z_in, float w_in) { x = x_in; y = y_in; z = z_in; w = w_in;}
+	vsVector4D(): x(0.f), y(0.f), z(0.f), w(0.f) {}
+	vsVector4D(const vsVector3D &b): x(b.x), y(b.y), z(b.z), w(0.f) {}
+	vsVector4D(const vsVector4D &b): x(b.x), y(b.y), z(b.z), w(b.w) {}
+	vsVector4D(float x_in, float y_in, float z_in, float w_in): x(x_in), y(y_in), z(z_in), w(w_in) {}
 
-	vsVector4D	operator=( const vsVector4D &b ) {x=b.x; y=b.y; z = b.z; w = b.w; return *this;}
 	vsVector4D  operator+( const vsVector4D &b ) const {return vsVector4D(x+b.x, y+b.y, z+b.z, w+b.w);}
 	vsVector4D  operator-( const vsVector4D &b ) const {return vsVector4D(x-b.x, y-b.y, z-b.z, w-b.w);}
 	vsVector4D  operator*( float b ) const {return vsVector4D(x*b,y*b,z*b,w*b);}

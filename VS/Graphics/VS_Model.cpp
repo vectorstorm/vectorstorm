@@ -77,8 +77,9 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(NULL),
-	m_displayList(list)
-	// m_instanceOf(NULL)
+	m_displayList(list),
+	m_instanceOf(NULL),
+	m_instanceMat(NULL)
 {
 }
 
@@ -89,24 +90,27 @@ vsModel::~vsModel()
 	if ( m_displayList )
 		vsDelete(m_displayList);
 	vsDelete( m_material );
+	vsDelete( m_instanceMat );
 }
 
-// vsModel *
-// vsModel::MakeInstance()
-// {
-// 	vsModel *model = new vsModel;
-// 	model->m_instanceOf = this;
-// 	model->SetBoundingBox( GetBoundingBox() );
-// 	m_instance.AddItem(model);
-// 	return model;
-// }
-//
-// void
-// vsModel::RemoveInstance( vsModel *model )
-// {
-// 	m_instance.RemoveItem(model);
-// }
-//
+vsModel *
+vsModel::MakeInstance()
+{
+	if ( !m_instanceMat )
+	{
+		m_instanceMat = new vsArray<vsMatrix4x4>;
+	}
+	vsModel *model = new vsModel;
+	model->m_instanceOf = this;
+	model->SetBoundingBox( GetBoundingBox() );
+	return model;
+}
+
+void
+vsModel::RemoveInstance( vsModel *model )
+{
+}
+
 void
 vsModel::SetDisplayList( vsDisplayList *list )
 {
@@ -163,51 +167,77 @@ vsModel::BuildBoundingBox()
 	SetBoundingBox( boundingBox );
 }
 
-
-
 void
 vsModel::Draw( vsRenderQueue *queue )
 {
 	if ( GetVisible() )
 	{
-		vsDisplayList *list = queue->GetGenericList();
-		if ( m_material )
+		if ( m_instanceOf )
 		{
-			list->SetMaterial( m_material );
-		}
-
-		bool hasTransform = (m_transform != vsTransform3D::Identity);
-
-		if ( hasTransform )
-		{
-			queue->PushMatrix( m_transform.GetMatrix() );
-		}
-		list->SetMatrix4x4( queue->GetMatrix() );
-
-		if ( m_displayList )
-		{
-			list->Append( *m_displayList );
+			m_instanceOf->QueueInstance(this);
 		}
 		else
 		{
-			DynamicDraw( queue );
-		}
-
-		if ( !m_fragment.IsEmpty() )
-		{
-			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			if ( m_instanceMat )
 			{
-				queue->AddFragmentBatch( *iter );
+				if ( m_instanceMat->IsEmpty() )
+					return;
+
+				for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+				{
+					queue->AddFragmentInstanceBatch( *iter, &(*m_instanceMat)[0], m_instanceMat->ItemCount() );
+				}
+				m_instanceMat->Clear();
+			}
+			else
+			{
+				vsDisplayList *list = queue->GetGenericList();
+				if ( m_material )
+				{
+					list->SetMaterial( m_material );
+				}
+
+				bool hasTransform = (m_transform != vsTransform3D::Identity);
+
+				if ( hasTransform )
+				{
+					queue->PushMatrix( m_transform.GetMatrix() );
+				}
+				list->SetMatrix4x4( queue->GetMatrix() );
+
+				if ( m_displayList )
+				{
+					list->Append( *m_displayList );
+				}
+				else
+				{
+					DynamicDraw( queue );
+				}
+
+				if ( !m_fragment.IsEmpty() )
+				{
+					for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+					{
+						queue->AddFragmentBatch( *iter );
+					}
+				}
+
+				//		Parent::Draw(list);
+				DrawChildren(queue);
+
+				if ( hasTransform )
+				{
+					queue->PopMatrix();
+				}
+				list->PopTransform();
 			}
 		}
-
-		//		Parent::Draw(list);
-		DrawChildren(queue);
-
-		if ( hasTransform )
-		{
-			queue->PopMatrix();
-		}
-		list->PopTransform();
 	}
+}
+
+void
+vsModel::QueueInstance( vsModel *model )
+{
+	vsAssert( m_instanceMat, "No instance mat array on instance model?" );
+	m_instanceMat->AddItem( model->GetTransform().GetMatrix() );
 }
