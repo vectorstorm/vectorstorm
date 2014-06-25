@@ -41,6 +41,7 @@ public:
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
 		OpCode_SetMatrices4x4,
+		OpCode_SetMatrices4x4Buffer,
 		OpCode_SetWorldToViewMatrix4x4,
 		OpCode_PopTransform,
 		OpCode_SetCameraTransform,
@@ -212,6 +213,7 @@ public:
 	void	PushMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrices4x4( const vsMatrix4x4 *m, int count );
+	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();

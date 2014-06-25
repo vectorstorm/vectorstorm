@@ -11,6 +11,7 @@
 #define VS_SHADER_H
 
 class vsDisplayList;
+class vsRenderBuffer;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
@@ -56,6 +57,7 @@ public:
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
+	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 

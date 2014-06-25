@@ -54,6 +54,13 @@ class vsModel : public vsEntity
 		vsArray<vsMatrix4x4> matrix;
 		vsArray<int> matrixInstanceId;
 		vsArray<vsModelInstance*> instance;
+		vsRenderBuffer matrixBuffer;
+		bool bufferIsDirty;
+
+		InstanceData():
+			matrixBuffer(vsRenderBuffer::Type_Dynamic)
+		{
+		}
 	};
 
 	vsMaterial *	m_material;

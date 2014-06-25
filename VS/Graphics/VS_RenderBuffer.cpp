@@ -210,6 +210,13 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCNT *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const vsMatrix4x4 *array, int size )
+{
+	m_contentType = ContentType_Matrix;
+	SetArray_Internal((char *)array, size*sizeof(vsMatrix4x4), false);
+}
+
+void
 vsRenderBuffer::SetArray( const vsVector3D *array, int size )
 {
 	m_contentType = ContentType_P;
@@ -270,6 +277,23 @@ vsRenderBuffer::BakeIndexArray()
 	SetArray_Internal( m_array, m_activeBytes, true );
 }
 
+void
+vsRenderBuffer::BindAsAttribute( int attributeId )
+{
+	if ( m_contentType == ContentType_Matrix && m_vbo )
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 64, 0);
+		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, 0, 64, (void*)16);
+		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, 0, 64, (void*)32);
+		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, 0, 64, (void*)48);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	else
+	{
+		vsAssert(0, "Not yet implemented");
+	}
+}
 
 void
 vsRenderBuffer::BindVertexBuffer( vsRendererState *state )

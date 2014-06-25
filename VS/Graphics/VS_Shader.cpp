@@ -11,11 +11,12 @@
 
 #include "VS_File.h"
 #include "VS_Input.h"
-#include "VS_Store.h"
+#include "VS_RenderBuffer.h"
+#include "VS_Renderer_OpenGL3.h"
 #include "VS_Screen.h"
+#include "VS_Store.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
-#include "VS_Renderer_OpenGL3.h"
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
@@ -183,6 +184,27 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
+vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
+{
+	if ( m_localToWorldAttributeLoc >= 0 )
+	{
+		glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+		glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+		glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+		glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+	CheckGLError("SetLocalToWorld");
+
+	buffer->BindAsAttribute( m_localToWorldAttributeLoc );
+
+		glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+		glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+		glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+		glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
+	CheckGLError("SetLocalToWorld");
+	}
+}
+
+void
 vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 {
 	CheckGLError("PreSetLocalToWorld");
@@ -192,39 +214,47 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 	}
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-	CheckGLError("SetLocalToWorld");
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-	CheckGLError("SetLocalToWorld");
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-	CheckGLError("SetLocalToWorld");
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-	CheckGLError("SetLocalToWorld");
+		if ( matCount == 1 )
+		{
+			glDisableVertexAttribArray(m_localToWorldAttributeLoc);
+			glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
+			glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
+			glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
 
-	static GLuint g_vbo = 0xffffffff;
-	// this could be a lot smarter.
-	if ( g_vbo == 0xffffffff )
-	{
-		glGenBuffers(1, &g_vbo);
-	}
-	vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-	glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vsMatrix4x4) * matCount, localToWorld, GL_STREAM_DRAW);
-	glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
-	glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
-	glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
-	glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
+			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
+			glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
+			glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
+		}
+		else
+		{
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
 
-		glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-	CheckGLError("SetLocalToWorld");
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-	CheckGLError("SetLocalToWorld");
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-	CheckGLError("SetLocalToWorld");
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-	CheckGLError("SetLocalToWorld");
+			static GLuint g_vbo = 0xffffffff;
+			// this could be a lot smarter.
+			if ( g_vbo == 0xffffffff )
+			{
+				glGenBuffers(1, &g_vbo);
+			}
+			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
+			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vsMatrix4x4) * matCount, localToWorld, GL_STREAM_DRAW);
+			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
+			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
+			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
+			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
+		}
 	}
+	CheckGLError("SetLocalToWorld");
 }
 
 void

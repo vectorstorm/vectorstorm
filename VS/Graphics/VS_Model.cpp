@@ -139,6 +139,9 @@ vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 		swapper->matrixIndex = swapTo;
 		inst->matrixIndex = -1;
 	}
+
+	if ( !m_instanceData->matrix.IsEmpty() )
+		m_instanceData->bufferIsDirty = true;
 }
 
 void
@@ -241,6 +244,11 @@ vsModel::Draw( vsRenderQueue *queue )
 			if ( m_instanceData->matrix.IsEmpty() )
 				return;
 
+			if ( m_instanceData->bufferIsDirty )
+			{
+				m_instanceData->matrixBuffer.SetArray( &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
+				m_instanceData->bufferIsDirty = false;
+			}
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
 				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );

@@ -34,6 +34,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushTranslation",
 	"PushMatrix4x4",
 	"SetMatrices4x4",
+	"SetMatrices4x4Buffer",
 	"SetWorldToViewMatrix4x4",
 	"PopTransform",
 	"CameraTransform",
@@ -635,7 +636,7 @@ vsDisplayList::PushMatrix4x4( const vsMatrix4x4 &m )
 void
 vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 {
-	SetMatrices4x4(&m, 1);
+	SetMatrices4x4( &m, 1 );
 }
 
 void
@@ -644,6 +645,13 @@ vsDisplayList::SetMatrices4x4( const vsMatrix4x4 *m, int count )
 	m_fifo->WriteUint8( OpCode_SetMatrices4x4 );
 	m_fifo->WriteUint32( count );
 	m_fifo->WriteVoidStar( (char*)m );
+}
+
+void
+vsDisplayList::SetMatrices4x4Buffer( vsRenderBuffer *buffer )
+{
+	m_fifo->WriteUint8( OpCode_SetMatrices4x4Buffer );
+	m_fifo->WriteVoidStar( (char*)buffer );
 }
 
 void
@@ -1200,6 +1208,11 @@ vsDisplayList::PopOp()
 					m_currentOp.data.i = count;
 					break;
 				}
+			case OpCode_SetMatrices4x4Buffer:
+				{
+					m_currentOp.data.SetPointer( (char*)m_fifo->ReadVoidStar() );
+					break;
+				}
 			case OpCode_Set3DProjection:
 				m_currentOp.data.fov = m_fifo->ReadFloat();
 				m_currentOp.data.nearPlane = m_fifo->ReadFloat();
@@ -1350,6 +1363,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_SetMatrices4x4:
 			SetMatrices4x4( (vsMatrix4x4*)o->data.p, o->data.i );
+			break;
+		case OpCode_SetMatrices4x4Buffer:
+			SetMatrices4x4Buffer( (vsRenderBuffer*)o->data.p );
 			break;
 		case OpCode_SetWorldToViewMatrix4x4:
 			SetWorldToViewMatrix4x4( o->data.GetMatrix4x4() );

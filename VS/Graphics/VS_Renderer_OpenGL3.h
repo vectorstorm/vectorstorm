@@ -57,6 +57,7 @@ private:
 	Settings             m_currentSettings;
 
 	vsMatrix4x4			*m_currentLocalToWorld;
+	vsRenderBuffer		*m_currentLocalToWorldBuffer;
 	int					m_currentLocalToWorldCount;
 	vsMatrix4x4			m_currentWorldToView;
 	vsMatrix4x4			m_currentViewToProjection;

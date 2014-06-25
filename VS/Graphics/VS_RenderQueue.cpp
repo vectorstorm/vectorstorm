@@ -197,10 +197,12 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
-			if ( e->instanceMatrixCount == 0 )
-				list->SetMatrix4x4( e->matrix );
-			else
+			if ( e->instanceMatrixBuffer )
+				list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
+			else if ( e->instanceMatrix )
 				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
+			else
+				list->SetMatrix4x4( e->matrix );
 
 			list->Append( *e->list );
 			list->PopTransform();
