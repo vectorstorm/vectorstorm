@@ -577,9 +577,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsTransform2D t = op->data.GetTransform();
 
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * t.GetMatrix();
-					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					m_transformStack[m_currentTransformStackLevel] = localToWorld;
 
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					++m_currentTransformStackLevel;
 					m_currentLocalToWorldCount = 1;
 					m_currentLocalToWorldBuffer = NULL;
 					break;
@@ -591,8 +592,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsMatrix4x4 m;
 					m.SetTranslation(v);
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
-					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					m_transformStack[m_currentTransformStackLevel] = localToWorld;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					++m_currentTransformStackLevel;
 					m_currentLocalToWorldCount = 1;
 					m_currentLocalToWorldBuffer = NULL;
 					break;
@@ -601,8 +603,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsMatrix4x4 m = op->data.GetMatrix4x4();
 					vsMatrix4x4 localToWorld = m_transformStack[m_currentTransformStackLevel] * m;
-					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
+					m_transformStack[m_currentTransformStackLevel] = localToWorld;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					++m_currentLocalToWorld;
 					m_currentLocalToWorldCount = 1;
 					m_currentLocalToWorldBuffer = NULL;
 					break;
