@@ -92,13 +92,19 @@ vsModel::~vsModel()
 	vsDelete( m_instanceData );
 }
 
-vsModelInstance *
-vsModel::MakeInstance()
+void
+vsModel::SetAsInstanceModel()
 {
 	if ( !m_instanceData )
 	{
 		m_instanceData = new InstanceData;
 	}
+}
+
+vsModelInstance *
+vsModel::MakeInstance()
+{
+	SetAsInstanceModel();
 	vsModelInstance *inst = new vsModelInstance;
 	inst->model = this;
 	inst->visible = false;

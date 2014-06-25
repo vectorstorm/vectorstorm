@@ -88,6 +88,8 @@ public:
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
 
+	void SetAsInstanceModel(); // if set, this model won't be drawn;  only instances will.
+
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void RemoveInstance( vsModelInstance *model );
 	void			UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
