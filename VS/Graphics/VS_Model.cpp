@@ -163,6 +163,7 @@ vsModel::RemoveInstance( vsModelInstance *inst )
 		// instance is visible), the modelInstanceId array which tells where
 		// it can be found in the instance array.
 		m_instanceData->instance[ inst->index ] = last;
+		last->index = inst->index;
 
 		if ( last->matrixIndex >= 0 )
 		{
