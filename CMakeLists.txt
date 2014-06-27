@@ -9,13 +9,13 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
 
 
 if(UNIX)
+	find_package(PNG REQUIRED)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()

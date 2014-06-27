@@ -22,7 +22,9 @@
 #endif
 #endif
 
+#ifdef _DEBUG
 #define CHECK_GL_ERRORS
+#endif
 #ifdef CHECK_GL_ERRORS
 	void			CheckGLError(const char* string);
 #else

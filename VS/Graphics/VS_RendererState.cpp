@@ -153,10 +153,10 @@ vsRendererState::~vsRendererState()
     {
         delete m_intState[i];
     }
-	for ( int i = 0; i < FLOAT_COUNT; i++ )
+	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		delete m_floatState[i];
-	}
+	}*/
 }
 
 void
@@ -167,13 +167,13 @@ vsRendererState::SetBool( vsRendererState::Bool key, bool value )
 	//Flush();
 }
 
-void
+/*void
 vsRendererState::SetFloat( vsRendererState::Float key, float value )
 {
 	m_floatState[key]->Set(value);
 
 	//Flush();
-}
+}*/
 
 void
 vsRendererState::SetFloat2( vsRendererState::Float2 key, float valueA, float valueB )
@@ -204,12 +204,12 @@ vsRendererState::Flush()
         m_intState[i]->Flush();
 		CheckGLError("Flush");
     }
-	for ( int i = 0; i < FLOAT_COUNT; i++ )
+	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		CheckGLError("Flush");
 		m_floatState[i]->Flush();
 		CheckGLError("Flush");
-	}
+	}*/
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
 		CheckGLError("Flush");
@@ -230,10 +230,10 @@ vsRendererState::Force()
     {
         m_intState[i]->Force();
     }
-	for ( int i = 0; i < FLOAT_COUNT; i++ )
+	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		m_floatState[i]->Force();
-	}
+	}*/
 }
 
 
