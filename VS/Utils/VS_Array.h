@@ -62,7 +62,7 @@ public:
 
 	typedef vsArrayIterator<T> Iterator;
 
-	vsArray( int initialStorage = 32 )
+	vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
 		m_arrayLength = 0;

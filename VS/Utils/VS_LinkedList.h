@@ -124,7 +124,7 @@ public:
 	typedef vsListIterator<T> Iterator;
 
 	vsLinkedList():
-		m_entry(32, vsPool<vsListEntry<T> >::Type_Expandable)
+		m_entry(4, vsPool<vsListEntry<T> >::Type_Expandable)
 	{
 		m_listEntry = m_entry.Borrow();
 		m_tail = m_entry.Borrow();
