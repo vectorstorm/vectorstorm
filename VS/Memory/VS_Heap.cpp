@@ -23,6 +23,7 @@ static vsHeap *	s_stack[MAX_HEAP_STACK] = {NULL,NULL,NULL,NULL};
 vsHeap::vsHeap(vsString name, size_t size):
 	m_name(name)
 {
+#ifdef VS_OVERLOAD_ALLOCATORS
 	if ( s_current )
 		m_startOfMemory = s_current->Alloc(size, __FILE__, __LINE__, Type_Heap);
 	else
@@ -58,6 +59,7 @@ vsHeap::vsHeap(vsString name, size_t size):
 	iniBlock->m_prevBlock = NULL;
 
 	m_unusedBlockList.Append( iniBlock );
+#endif // VS_OVERLOAD_ALLOCATORS
 }
 
 vsHeap::~vsHeap()
@@ -458,6 +460,7 @@ void MyFree(void *p, int allocType)
 	}
 }
 
+#ifdef VS_OVERLOAD_ALLOCATORS
 void* operator new(std::size_t n, const char* file, size_t line)
 {
 	if (n == 0) n = 1;
@@ -509,3 +512,4 @@ void operator delete[](void* p, std::nothrow_t const&) throw()
 	::operator delete[](p);
 }
 
+#endif //VS_OVERLOAD_ALLOCATORS
