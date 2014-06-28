@@ -292,6 +292,7 @@ vsHeap::Free(void *p, int allocType)
 void
 vsHeap::PrintStatus()
 {
+#ifdef VS_OVERLOAD_ALLOCATORS
 	printf(" >> MEMORY STATUS\n");
 	printf(" >> Heap current usage %zu / %zu (%0.2f%% usage)\n", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
 	printf(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)\n", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
@@ -310,6 +311,8 @@ vsHeap::PrintStatus()
 	}
 
 	printf(" >> Heap largest free block %zu / %zu bytes free (%0.2f%% fragmentation)\n", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
+#endif // VS_OVERLOAD_ALLOCATORS
+
 }
 
 void
