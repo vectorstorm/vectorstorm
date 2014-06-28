@@ -51,6 +51,7 @@ vsInput::Init()
 	{
 		m_lastControlState[i] = 0.f;
 		m_controlState[i] = 0.f;
+		m_keyControlState[i] = 0.f;
 	}
 
 #if !TARGET_OS_IPHONE
@@ -311,7 +312,9 @@ vsInput::Update(float timeStep)
 	m_keyControlState[CID_MouseWheel] = 0.f;
 
 	for ( int i = 0; i < CID_MAX; i++ )
+	{
 		m_lastControlState[i] = m_controlState[i];
+	}
 
 	m_mouseMotion = vsVector2D::Zero;
 
