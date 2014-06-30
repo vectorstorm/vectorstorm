@@ -76,7 +76,6 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 	size_t vertexCount = count * 2;
 	size_t indexCount = count * 6;
 
-
 	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
@@ -162,14 +161,17 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 
 		va[vertexCursor+1].position = vertexPosition;
 
-		if ( i != count - 1 ) // not at the end of the strip
+		if ( loop || i != count - 1 ) // not at the end of the strip
 		{
+			int otherSide = vertexCursor+2;
+			if ( i == count-1 )
+				otherSide = 0;
 			ia[indexCursor] = vertexCursor;
 			ia[indexCursor+1] = vertexCursor+1;
-			ia[indexCursor+2] = vertexCursor+2;
-			ia[indexCursor+3] = vertexCursor+2;
+			ia[indexCursor+2] = otherSide;
+			ia[indexCursor+3] = otherSide;
 			ia[indexCursor+4] = vertexCursor+1;
-			ia[indexCursor+5] = vertexCursor+3;
+			ia[indexCursor+5] = otherSide+1;
 			indexCursor += 6;
 		}
 		vertexCursor += 2;
