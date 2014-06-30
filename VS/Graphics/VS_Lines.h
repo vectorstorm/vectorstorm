@@ -17,6 +17,12 @@
 class vsMaterial;
 class vsRenderQueue;
 
+// for a 2D line set, we can just spit out a static fragment.  Not like
+// 3D where we need to check the camera position and recreate our
+// renderable model each frame.
+vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
+vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
+
 class vsLines3D: public vsModel
 {
 	class Strip;
