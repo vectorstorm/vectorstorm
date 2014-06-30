@@ -62,6 +62,9 @@ public:
 	vsVector3D PositionAtTime( float t ) const;
 	vsVector3D VelocityAtTime( float t ) const;
 
+	float Length();
+	float TimeAtLength(float distance);
+
 	// Note:  In general, use ClosestTimeTo in preference to ClosestPointTo,
 	// as these are expensive functions, and once you have the time you can
 	// get the position or whatever else you want.
