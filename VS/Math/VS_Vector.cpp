@@ -51,6 +51,13 @@ vsVector2D::Normalise()
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y), "Error, NaN!" );
 }
 
+void
+vsVector2D::NormaliseSafe()
+{
+	if ( SqLength() > 0.f )
+		Normalise();
+}
+
 vsVector3D::vsVector3D( const vsVector4D &b ):
 	x(b.x),
 	y(b.y),
