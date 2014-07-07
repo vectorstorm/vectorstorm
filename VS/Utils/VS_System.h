@@ -82,7 +82,8 @@ public:
 	void		DeinitGameData();	// game has exitted, kill anything else we know about that it might have been using.
 
 	time_t		GetTime();
-	void		MakeVsTime( vsTime *t, time_t time );	//
+	void		MakeVsTime( vsTime *t, time_t time );	// correct for local time zone
+	void		MakeVsTime_UTC( vsTime *t, time_t time );	// give time in UTC
 	vsString	MakeTimeString(uint32_t time);
 
 	void UpdateVideoMode();

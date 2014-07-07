@@ -245,6 +245,20 @@ vsSystem::MakeVsTime(vsTime *t, time_t rawTime)
 	t->wday =	(Weekday)timeStruct->tm_wday;
 }
 
+void
+vsSystem::MakeVsTime_UTC(vsTime *t, time_t rawTime)
+{
+	tm *timeStruct = gmtime( &rawTime );
+
+	t->second = timeStruct->tm_sec;
+	t->minute = timeStruct->tm_min;
+	t->hour =	timeStruct->tm_hour;
+	t->day =	timeStruct->tm_mday;
+	t->month =	timeStruct->tm_mon;
+	t->year =	timeStruct->tm_year + 1900;
+	t->wday =	(Weekday)timeStruct->tm_wday;
+}
+
 vsString
 vsSystem::MakeTimeString(uint32_t time)
 {
