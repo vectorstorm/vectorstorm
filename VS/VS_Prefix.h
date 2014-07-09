@@ -73,7 +73,7 @@
 #define vsDelete(x) { if ( x ) { delete x; x = NULL; } }
 #define vsDeleteArray(x) { if ( x ) { delete [] x; x = NULL; } }
 
-// #define VS_OVERLOAD_ALLOCATORS
+#define VS_OVERLOAD_ALLOCATORS
 #ifdef VS_OVERLOAD_ALLOCATORS
 void * MyMalloc(size_t size, const char*fileName, int lineNumber, int allocType = 1);	// 1 == Malloc type.  We can ignore this.  :)
 void MyFree(void *p, int allocType = 1);
