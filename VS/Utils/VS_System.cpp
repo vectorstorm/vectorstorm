@@ -29,6 +29,7 @@
 #else
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 #endif
 
 #if !TARGET_OS_IPHONE
@@ -305,7 +306,7 @@ vsSystem::GetNumberOfCores()
 		}
 	}
 #else
-
+	 numCPU = sysconf( _SC_NPROCESSORS_ONLN );
 #endif
 
 	return numCPU;
