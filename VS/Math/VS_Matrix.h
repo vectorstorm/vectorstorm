@@ -77,6 +77,7 @@ public:
 	void			Set( const vsVector4D &x, const vsVector4D &y, const vsVector4D &z, const vsVector4D &t );
 
 	vsVector3D		ApplyTo( const vsVector3D &v ) const;
+	vsVector4D		ApplyTo( const vsVector4D &v ) const;
 	vsVector3D		ApplyRotationTo( const vsVector3D &v ) const;
 	vsVector3D		ApplyInverseTo( const vsVector3D &v ) const;
 

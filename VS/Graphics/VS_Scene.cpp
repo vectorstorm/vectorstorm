@@ -167,6 +167,8 @@ vsScene::Draw( vsDisplayList *list )
 	if ( m_is3d )
 	{
 		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
+		m_queue->SetProjectionMatrix(  m_camera3D->GetProjectionMatrix() );
+		m_queue->SetFOV( m_camera3D->GetFieldOfView() );
 		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
 		// list->SetCameraTransform( m_camera3D->GetTransform() );
 
@@ -188,6 +190,7 @@ vsScene::Draw( vsDisplayList *list )
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
 		list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
+		m_queue->SetProjectionMatrix(  m_camera->GetProjectionMatrix() );
 	}
 	list->SetWorldToViewMatrix4x4( m_queue->GetWorldToViewMatrix() );
 

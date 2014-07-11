@@ -96,9 +96,12 @@ class vsRenderQueue
 	vsRenderQueueStage *	m_stage;
 	int						m_stageCount;
 
+	vsMatrix4x4				m_projection;
 	vsMatrix4x4				m_worldToView;
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
 	int						m_transformStackLevel;
+
+	float m_fov;
 
 	int				PickStageForMaterial( vsMaterial *material );
 
@@ -120,6 +123,11 @@ public:
 	void			PopMatrix();
 	const vsMatrix4x4&		GetMatrix();
 	const vsMatrix4x4&		GetWorldToViewMatrix();
+	const vsMatrix4x4&		GetProjectionMatrix() { return m_projection; }
+	float			GetFOV() { return m_fov; }
+	void			SetFOV( float fov ) { m_fov = fov; }
+
+	void SetProjectionMatrix( const vsMatrix4x4& mat ) { m_projection = mat; }
 
 	vsScene *		GetScene() { return m_parent; }
 

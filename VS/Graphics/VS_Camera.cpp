@@ -155,12 +155,30 @@ vsCamera3D::GetProjectionMatrix()
 				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane) ),
 				vsVector4D( 0.f, 0.f, -1.f, 0.f )
 				);*/
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -2.f*(m_farPlane*m_nearPlane)/(m_farPlane-m_nearPlane) ),
+		// 		vsVector4D( 0.f, 0.f, -1, 0.f )
+		// 		);
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -1.f ),
+		// 		vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
+		// 		);
 		vsMatrix4x4 m(
-                      vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-                      vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-                      vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), -1.f ),
-                      vsVector4D( 0.f, 0.f, (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane), 0.f )
-                      );
+				vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+				vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), 1.f ),
+				vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
+				);
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), -1.f ),
+		// 		vsVector4D( 0.f, 0.f, (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane), 0.f )
+		// 		);
 
 		return m;
 	}

@@ -23,6 +23,7 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, int count
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
+	float halfWidth = width * 0.5f;
 
 	for ( int i = 0; i < count; i+=2 )
 	{
@@ -36,10 +37,10 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, int count
 		vsVector2D offsetPre( dirOfTravel.y, -dirOfTravel.x );
 		offsetPre.NormaliseSafe();
 
-		va[vertexCursor].position = point[preI] - (offsetPre * width);
-		va[vertexCursor+1].position = point[preI] + (offsetPre * width);
-		va[vertexCursor+2].position = point[postI] - (offsetPre * width);
-		va[vertexCursor+3].position = point[postI] + (offsetPre * width);
+		va[vertexCursor].position = point[preI] - (offsetPre * halfWidth);
+		va[vertexCursor+1].position = point[preI] + (offsetPre * halfWidth);
+		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
+		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
 
 		ia[indexCursor] = vertexCursor;
 		ia[indexCursor+1] = vertexCursor+1;
@@ -75,6 +76,8 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 {
 	size_t vertexCount = count * 2;
 	size_t indexCount = count * 6;
+
+	float halfWidth = width * 0.5f;
 
 	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
@@ -122,20 +125,20 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D insidePre = point[preI] - (offsetPre * width);
-			vsVector3D insidePost = point[postI] - (offsetPost * width);
+			vsVector3D insidePre = point[preI] - (offsetPre * halfWidth);
+			vsVector3D insidePost = point[postI] - (offsetPost * halfWidth);
 
 			vsSqDistanceBetweenLineSegments( insidePre,
-					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * width),
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
 					insidePost,
-					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * width),
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = point[midI] - offsetPre * width;
+			vertexPosition = point[midI] - offsetPre * halfWidth;
 		}
 
 		va[vertexCursor].position = vertexPosition;
@@ -143,20 +146,20 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D outsidePre = point[preI] + (offsetPre * width);
-			vsVector3D outsidePost = point[postI] + (offsetPost * width);
+			vsVector3D outsidePre = point[preI] + (offsetPre * halfWidth);
+			vsVector3D outsidePost = point[postI] + (offsetPost * halfWidth);
 
 			vsSqDistanceBetweenLineSegments( outsidePre,
-					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * width),
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
 					outsidePost,
-					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * width),
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = point[midI] + offsetPre * width;
+			vertexPosition = point[midI] + offsetPre * halfWidth;
 		}
 
 		va[vertexCursor+1].position = vertexPosition;
@@ -220,11 +223,12 @@ public:
 	}
 };
 
-vsLines3D::vsLines3D( int maxStrips, float width ):
+vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_strip( new Strip*[maxStrips] ),
 	m_stripCount( 0 ),
 	m_maxStripCount( maxStrips ),
 	m_width( width ),
+	m_widthInScreenspace( screenspace ),
 	m_vertices( vsRenderBuffer::Type_Stream ),
 	m_indices( vsRenderBuffer::Type_Stream )
 {
@@ -308,6 +312,9 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 
 	size_t vertexCount = GetFinalVertexCount();
 	size_t indexCount = GetFinalIndexCount();
+	if ( vertexCount == 0 || indexCount == 0 )
+		return;
+
 	m_vertices.ResizeArray( sizeof(vsVector3D) * vertexCount );
 	m_indices.ResizeArray( sizeof(uint16_t) * indexCount );
 
@@ -328,9 +335,13 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 void
 vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
-	const vsVector3D &camPos = (queue->GetWorldToViewMatrix() * queue->GetMatrix()).w;
-	// const vsVector3D &camPos = queue->GetScene()->GetCamera3D()->GetPosition();
-	// const vsVector3D &camPos = vsVector3D::Zero;
+	float fullFov = queue->GetFOV();
+	float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
+	float tanHalfFovPerPixel = 2.f * vsTan( 0.5f * fovPerPixel );
+
+	vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
+	vsMatrix4x4 viewToLocal = localToView.Inverse();
+	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
 	vsVector3D *va = m_vertices.GetVector3DArray();
 	uint16_t *ia = m_indices.GetIntArray();
@@ -375,24 +386,32 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		offsetPre.NormaliseSafe();
 		offsetPost.NormaliseSafe();
 
+		float widthHere = m_width;
+		if ( m_widthInScreenspace )
+		{
+			vsVector3D viewPos = localToView.ApplyTo( vsVector4D(strip->m_vertex[midI],1.f) );
+			widthHere *= tanHalfFovPerPixel * viewPos.z;
+		}
+		float halfWidthHere = widthHere * 0.5f;
+
 		vsVector3D vertexPosition;
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D insidePre = strip->m_vertex[preI] - (offsetPre * m_width);
-			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * m_width);
+			vsVector3D insidePre = strip->m_vertex[preI] - (offsetPre * halfWidthHere);
+			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * halfWidthHere);
 
 			vsSqDistanceBetweenLineSegments( insidePre,
-					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * m_width),
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidthHere),
 					insidePost,
-					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * m_width),
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidthHere),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = strip->m_vertex[midI] - offsetPre * m_width;
+			vertexPosition = strip->m_vertex[midI] - offsetPre * halfWidthHere;
 		}
 
 		va[m_vertexCursor] = vertexPosition;
@@ -400,20 +419,20 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D outsidePre = strip->m_vertex[preI] + (offsetPre * m_width);
-			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * m_width);
+			vsVector3D outsidePre = strip->m_vertex[preI] + (offsetPre * halfWidthHere);
+			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * halfWidthHere);
 
 			vsSqDistanceBetweenLineSegments( outsidePre,
-					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * m_width),
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidthHere),
 					outsidePost,
-					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * m_width),
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidthHere),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = strip->m_vertex[midI] + offsetPre * m_width;
+			vertexPosition = strip->m_vertex[midI] + offsetPre * halfWidthHere;
 		}
 
 		va[m_vertexCursor+1] = vertexPosition;

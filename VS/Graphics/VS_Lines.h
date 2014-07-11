@@ -32,6 +32,7 @@ class vsLines3D: public vsModel
 
 	static float s_widthFactor;
 	float m_width;
+	bool m_widthInScreenspace;
 
 	vsVector3D *m_va;
 
@@ -46,7 +47,7 @@ class vsLines3D: public vsModel
 	size_t GetFinalIndexCount();
 
 public:
-	vsLines3D( int maxStrips, float width = 1.f );
+	vsLines3D( int maxStrips, float width = 1.f, bool screenSpaceWidth = true );
 	~vsLines3D();
 
 	void SetWidth(float width);

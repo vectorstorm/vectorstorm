@@ -331,7 +331,7 @@ vsRenderQueue::InitialiseTransformStack()
 
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
-		cameraMatrix.z = -forward;
+		cameraMatrix.z = forward;
 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 

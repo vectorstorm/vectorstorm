@@ -134,6 +134,7 @@ public:
 
 	vsVector4D(): x(0.f), y(0.f), z(0.f), w(0.f) {}
 	vsVector4D(const vsVector3D &b): x(b.x), y(b.y), z(b.z), w(0.f) {}
+	vsVector4D(const vsVector3D &b, float w_in): x(b.x), y(b.y), z(b.z), w(w_in) {}
 	vsVector4D(const vsVector4D &b): x(b.x), y(b.y), z(b.z), w(b.w) {}
 	vsVector4D(float x_in, float y_in, float z_in, float w_in): x(x_in), y(y_in), z(z_in), w(w_in) {}
 
