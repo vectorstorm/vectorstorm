@@ -1,23 +1,35 @@
+#version 330
 #ifdef TEXTURE
-uniform sampler2D texture[4];
+uniform sampler2D textures[8];
+in vec2 texcoord_out;
 uniform float alphaRef;
 #endif // TEXTURE
 
-varying float fogFactor;
+in float fogFactor;
+uniform vec3 fogColor;
 
 #ifdef LIT
-varying vec4 diffuse;
-varying vec4 ambient;
-varying vec3 normal;
-varying vec3 lightDir;
-varying vec3 halfVector;
+struct lightSourceParameters
+{
+	vec4 ambient;              // Aclarri
+	vec4 diffuse;              // Dcli
+	vec4 specular;             // Scli
+	vec3 position;             // Ppli
+	vec3 halfVector;           // Derived: Hi
+}; 
+
+uniform lightSourceParameters lightSource[4];
+in vec3 fragNormal;
 #endif // LIT
+
+in vec4 frontColor;
+out vec4 fragColor;
 
 void main(void)
 {
-	vec4 color = gl_Color;
+	vec4 color = frontColor;
 #ifdef TEXTURE
-	vec4 textureSample = texture2D(texture[0], gl_TexCoord[0].st);
+	vec4 textureSample = texture(textures[0], texcoord_out.st);
 	if ( textureSample.a < alphaRef )
 		discard;
 	color *= textureSample;
@@ -25,31 +37,34 @@ void main(void)
 
 #ifdef LIT
 	/* The ambient term will always be present */
-	// color *= ambient;
-    //
-	// vec3 n;
+	vec4 ambientPart = color * lightSource[0].ambient;
+
+	vec3 n;
 	// vec3 halfV;
-	// float NdotL;
+	float NdotL;
 	// float NdotHV;
-    //
-	// /* a fragment shader can't write a varying variable, hence we need
-	//    a new variable to store the normalized interpolated normal */
-	// n = normalize(normal);
-    //
-	// /* compute the dot product between normal and ldir */
-	// //NdotL = max(dot(n,lightDir),0.0);
-	// NdotL = max(dot(n,lightDir)+1.0,0.0) * 0.5;
-	// color += gl_Color * NdotL;
-    //
-	// if (gl_FrontMaterial.shininess > 0.0 && NdotL > 0.0) {
+
+	/* re-normalise, since the normal may have gone out-of-whack during
+	   vertex interpolation */
+	n = normalize(fragNormal);
+
+	/* compute the dot product between normal and ldir */
+	// NdotL = max(dot(n,lightDir),0.0);
+	NdotL = max(dot(n,lightSource[0].position)+1.0,0.0) * 0.5;
+	vec4 diffusePart = color * lightSource[0].diffuse * NdotL;
+
+	// if (shininess > 0.0 && NdotL > 0.0) {
 	// 	halfV = normalize(halfVector);
 	// 	NdotHV = max(dot(n,halfV),0.0);
-	// 	color.rgb += gl_FrontMaterial.specular.rgb *
-	// 		gl_LightSource[0].specular.rgb *
-	// 		pow(NdotHV, gl_FrontMaterial.shininess);
+	// 	color.rgb += specular.rgb *
+	// 		lightSource[0].specular.rgb *
+	// 		pow(NdotHV, shininess);
 	// }
+	color = ambientPart + diffusePart;
 #endif // LIT
 
-	gl_FragColor.rgb = mix(gl_Fog.color.rgb, color.rgb, fogFactor );
-	gl_FragColor.a = color.a;
+	fragColor.rgb = mix(fogColor.rgb, color.rgb, fogFactor );
+	fragColor.a = color.a;
+	// fragColor = vec4(1.0,0.0,0.0,1.0);
 }
+
