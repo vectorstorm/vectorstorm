@@ -339,7 +339,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
 	float tanHalfFovPerPixel = 2.f * vsTan( 0.5f * fovPerPixel );
 
-	vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
+	// vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
+	vsMatrix4x4 localToView = queue->GetWorldToViewMatrix() * queue->GetMatrix() ;
 	vsMatrix4x4 viewToLocal = localToView.Inverse();
 	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
@@ -376,6 +377,10 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 
 		vsVector3D dirOfTravelPre = strip->m_vertex[midI] - strip->m_vertex[preI];
 		vsVector3D dirOfTravelPost = strip->m_vertex[postI] - strip->m_vertex[midI];
+		if ( midI == preI )
+			dirOfTravelPre = dirOfTravelPost;
+		if ( midI == postI )
+			dirOfTravelPost = dirOfTravelPre;
 		float distanceOfTravelPre = dirOfTravelPre.Length();
 		float distanceOfTravelPost = dirOfTravelPost.Length();
 		dirOfTravelPre.NormaliseSafe();
