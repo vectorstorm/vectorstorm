@@ -11,6 +11,7 @@
 #define VS_GPU_BUFFER_H
 
 #include "VS/Math/VS_Vector.h"
+#include "VS/Math/VS_Matrix.h"
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
@@ -41,7 +42,8 @@ public:
 		ContentType_PCN,
 		ContentType_PCT,
 		ContentType_PNT,
-		ContentType_PCNT
+		ContentType_PCNT,
+		ContentType_Matrix
 	};
 private:
 
@@ -137,6 +139,7 @@ public:
 	void	SetArray( const PCN *array, int size );
 	void	SetArray( const PCT *array, int size );
 	void	SetArray( const PCNT *array, int size );
+	void	SetArray( const vsMatrix4x4 *array, int size );
 	void	SetArray( const vsVector3D *array, int size );
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
@@ -180,6 +183,8 @@ public:
 	// functions are being called, for our known buffer types.
 	ContentType	GetContentType() { return m_contentType; }
 
+	void	BindAsAttribute( int attributeId );
+
 	void	BindVertexBuffer( vsRendererState *state );
 	void	UnbindVertexBuffer( vsRendererState *state );
 
@@ -195,11 +200,20 @@ public:
 	void	Bind( vsRendererState *state );		// for non-custom types
 	void	Unbind( vsRendererState *state );	// for non-custom types
 
-	void	TriStripBuffer();
-	void	TriListBuffer();
-	void	TriFanBuffer();
-	void	LineStripBuffer();
-	void	LineListBuffer();
+	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
+	static void BindVertexArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindTexelArray( vsRendererState *state, void* buffer, int vertexCount );
+
+	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
+
+	void	TriStripBuffer(int instanceCount);
+	void	TriListBuffer(int instanceCount);
+	void	TriFanBuffer(int instanceCount);
+	void	LineStripBuffer(int instanceCount);
+	void	LineListBuffer(int instanceCount);
+
+	const bool IsVBO() { return m_vbo; }
 };
 
 

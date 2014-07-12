@@ -20,32 +20,32 @@ void
 vsDynamicMaterial::SetShader( vsShader *shader )
 {
 	GetResource()->m_shader = shader;
-	if ( GetResource()->m_alphaTest )
-		shader->SetAlphaRef( GetResource()->m_alphaRef );
 }
 
 void
 vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 {
-	GetResource()->m_shader = new vsShader(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, GetResource()->m_texture != NULL);
-	if ( GetResource()->m_alphaTest )
-		GetResource()->m_shader->SetAlphaRef( GetResource()->m_alphaRef );
+	GetResource()->m_shader = vsShader::Load(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, GetResource()->m_texture != NULL);
 }
 
 void
-vsDynamicMaterial::SetTexture( int i, vsTexture *texture )
+vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
 	vsDelete(GetResource()->m_texture[i]);
 	GetResource()->m_texture[i] = new vsTexture(texture);
+	if ( !linear )
+		GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
 }
 
 void
-vsDynamicMaterial::SetTexture( int i, const vsString &texture )
+vsDynamicMaterial::SetTexture( int i, const vsString &texture, bool linear )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
 	vsDelete(GetResource()->m_texture[i]);
 	GetResource()->m_texture[i] = new vsTexture(texture);
+	if ( !linear )
+		GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
 }
 
 void

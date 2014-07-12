@@ -19,11 +19,11 @@
 
 static const vsString s_modeString[DRAWMODE_MAX] =
 {
+	"absolute",	//DrawMode_Absolute,
 	"normal",	//DrawMode_Normal,
 	"lit",		//DrawMode_Lit,
 	"add",		//DrawMode_Add,
-	"subtract",	//DrawMode_Subtract,
-	"absolute", //DrawMode_Absolute
+	"subtract"	//DrawMode_Subtract,
 };
 
 static const vsString s_cullString[CULL_MAX] =
@@ -56,7 +56,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_glow(false),
 	m_postGlow(false),
 	m_hasColor(true),
-	m_blend(false)
+	m_blend(true)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		m_texture[i] = NULL;
@@ -171,16 +171,24 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "texture" )
 				{
-					vsAssert( sr->GetTokenCount() == 1, "Texture directive with more than one token??" );
+					vsAssert( sr->GetTokenCount() >= 1, "Texture directive with more than one token??" );
 					vsString textureString = sr->String();
-					m_texture[m_textureCount++] = new vsTexture( textureString );
+					m_texture[m_textureCount] = new vsTexture( textureString );
+
+					if ( sr->GetTokenCount() == 2 )
+					{
+						vsString textureMode = sr->GetToken(1).AsString();
+						if ( textureMode == "nearest" )
+							m_texture[m_textureCount]->GetResource()->SetNearestSampling();
+					}
+					m_textureCount++;
 				}
 				else if ( label == "shader" )
 				{
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
-					m_shader = new vsShader( vString, fString, m_drawMode == DrawMode_Lit, (m_texture != NULL) );
+					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
 				}
 				else if ( label == "clampU" )
 				{
@@ -223,5 +231,16 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 			break;
 		}
 	}
+}
+
+bool
+vsMaterialInternal::HasAnyTextures() const
+{
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		if ( m_texture[i] != NULL )
+			return true;
+	}
+	return false;
 }
 

@@ -153,7 +153,7 @@ vsEntity::Update( float timeStep )
 void
 vsEntity::RegisterOnScene(int scene)
 {
-	vsSystem::GetScreen()->GetScene(scene)->RegisterEntityOnTop(this);
+	vsScreen::Instance()->GetScene(scene)->RegisterEntityOnTop(this);
 }
 
 vsEntity *
@@ -204,7 +204,7 @@ vsEntity::FindEntityAtPosition(const vsVector2D &pos)
 void
 vsEntity::RegisterOnDebugScene()
 {
-	vsSystem::GetScreen()->GetDebugScene()->RegisterEntityOnTop(this);
+	vsScreen::Instance()->GetDebugScene()->RegisterEntityOnTop(this);
 }
 
 #endif // _DEBUG

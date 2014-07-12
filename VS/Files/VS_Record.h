@@ -11,8 +11,8 @@
 #define FS_RECORD_H
 
 //#define MAX_LABEL_LENGTH (64)
-#define MAX_PARAMETERS   (64)
-#define MAX_CHILDRECORDS (64)
+#define MAX_PARAMETERS   (128)
+#define MAX_CHILDRECORDS (128)
 
 #include "VS/Utils/VS_LinkedListStore.h"
 

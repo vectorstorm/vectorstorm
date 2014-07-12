@@ -49,8 +49,6 @@ class vsScene
 	bool			m_hasViewport;
 	bool			m_enabled;	// if false, we won't automatically draw this scene
 
-	static vsScene *s_current;
-
 public:
 
 	vsScene();
@@ -103,8 +101,6 @@ public:
 	void			SetStencilTest( bool enableTest ) { m_stencilTest = enableTest; }
 
 	vsEntity *		FindEntityAtPosition( const vsVector2D &pos );	// returns which entity is at the passed position (if any)
-
-	static vsScene *	GetCurrent() { return s_current; }
 };
 
 #endif // VS_SCENE_H

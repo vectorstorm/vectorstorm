@@ -358,7 +358,7 @@ vsFile::GetFullFilename(const vsString &filename_in)
 #if defined(__APPLE_CC__)
 		char *hd = getenv("HOME");
 		vsAssert(hd, "No home directory set??");
-		dirName = vsFormatString("%s/Library/Application Support/MMORPG Tycoon", hd);
+		dirName = vsFormatString("%s/Library/Application Support/MMORPG Tycoon/", hd);
 		fileIsInAppBundle = false;
 
 		DIR * dir = opendir(dirName.c_str());
@@ -368,16 +368,19 @@ vsFile::GetFullFilename(const vsString &filename_in)
 		}
 
 #else
-		dirName = "Saves";
+		dirName = "Saves/";
 #endif
 	}
 	else if ( filename_in == "Version.txt" )
 	{
-		dirName = "Version";
+		dirName = "Version/";
 	}
 	else
 	{
 		dirName = core::GetGameName();
+		if ( !dirName.empty() )
+			dirName += "/";
+
 	}
 
 #if defined(__APPLE_CC__) && !defined(CMAKE_BUILD)
@@ -390,7 +393,7 @@ vsFile::GetFullFilename(const vsString &filename_in)
 		//#if defined(_DEBUG)
 		result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
 #else
-		result = vsFormatString("Contents/Resources/Data/%s/%s", dirName.c_str(), fileName.c_str());
+		result = vsFormatString("Contents/Resources/Data/%s%s", dirName.c_str(), fileName.c_str());
 #endif
 	}
 	else

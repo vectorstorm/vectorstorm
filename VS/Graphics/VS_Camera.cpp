@@ -17,30 +17,38 @@ vsCamera2D::vsCamera2D()
 	SetPosition( vsVector2D::Zero );
 	SetAngle( vsAngle::Zero );
 	SetFOV( 1000.f );
+	if ( vsScreen::Instance() )
+		m_aspectRatio = vsScreen::Instance()->GetAspectRatio();
+	else
+		m_aspectRatio = 1.66f;
 }
 
 vsCamera2D::~vsCamera2D()
 {
 }
-/*
+
 vsMatrix4x4
-vsCamera2D::GetProjectionMatrix( float aspectRatio )
+vsCamera2D::GetProjectionMatrix()
 {
-	float hh = vsTan(m_fov * .5f) * m_nearPlane;
-	float hw = hh * aspectRatio;
+	float hh = m_transform.GetScale().x * -.5f;
+	float hw = -hh * m_aspectRatio;
+	float n, f;
+	n = -1000.f;
+	f = 1000.f;
 
 	vsMatrix4x4 m(
-			vsVector4D( 2.f*m_nearPlane / (hw * 2.0f), 0.f, 0.f, 0.f ),
-			vsVector4D( 0.f, 2.f*m_nearPlane / (hh * 2.0f), 0.f, 0.f ),
-			vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane) ),
-			vsVector4D( 0.f, 0.f, -1.f, 0.f )
+			vsVector4D( 1.f / hw, 0.f, 0.f, 0.f ),
+			vsVector4D( 0.f, 1.f / hh, 0.f, 0.f ),
+			vsVector4D( 0.f, 0.f, -2.f / (f-n), -(f+n) / (f-n) ),
+			vsVector4D( 0.f, 0.f, 0.f, 1.f )
 			);
-}*/
+
+	return m;
+}
 
 bool
 vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )
 {
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
 	vsVector2D finalPos = pos;
 
 	if ( GetAngle().Get() != 0.f )
@@ -52,7 +60,7 @@ vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )
 	finalPos -= GetPosition();
 
 	float halfFov = GetFOV() * 0.5f;
-	float halfHoriFov = aspectRatio * halfFov;
+	float halfHoriFov = m_aspectRatio * halfFov;
 	bool visible = true;
 
 	if ( finalPos.y - r > halfFov || finalPos.y + r < -halfFov )
@@ -66,7 +74,6 @@ vsCamera2D::IsPositionVisible( const vsVector2D &pos, float r )
 bool
 vsCamera2D::WrapAround( vsVector2D &pos_in, float r )
 {
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
 	vsVector2D finalPos = pos_in;
 
 	finalPos -= GetPosition();
@@ -77,7 +84,7 @@ vsCamera2D::WrapAround( vsVector2D &pos_in, float r )
 		finalPos = reverseAngle.ApplyRotationTo(finalPos);
 	}
 
-	float horiFov = aspectRatio * GetFOV();
+	float horiFov = m_aspectRatio * GetFOV();
 	float halfFov = GetFOV() * 0.5f;
 	float halfHoriFov = horiFov * 0.5f;
 
@@ -127,7 +134,7 @@ vsCamera3D::vsCamera3D(ProjectionType type)
 	m_nearPlane = 1.f;
 	m_farPlane = 2000.f;
 	m_type = type;
-	m_aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	m_aspectRatio = vsScreen::Instance()->GetAspectRatio();
 }
 
 vsCamera3D::~vsCamera3D()
@@ -148,12 +155,30 @@ vsCamera3D::GetProjectionMatrix()
 				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane) ),
 				vsVector4D( 0.f, 0.f, -1.f, 0.f )
 				);*/
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -2.f*(m_farPlane*m_nearPlane)/(m_farPlane-m_nearPlane) ),
+		// 		vsVector4D( 0.f, 0.f, -1, 0.f )
+		// 		);
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -1.f ),
+		// 		vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
+		// 		);
 		vsMatrix4x4 m(
-                      vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-                      vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-                      vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), -1.f ),
-                      vsVector4D( 0.f, 0.f, (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane), 0.f )
-                      );
+				vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+				vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), 1.f ),
+				vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
+				);
+		// vsMatrix4x4 m(
+		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), -1.f ),
+		// 		vsVector4D( 0.f, 0.f, (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane), 0.f )
+		// 		);
 
 		return m;
 	}
@@ -161,11 +186,16 @@ vsCamera3D::GetProjectionMatrix()
 	{
 		float height = m_fov;
 		float width = height * m_aspectRatio;
+		float hh = 0.5f * height;
+		float hw = 0.5f * width;
+		float f = m_farPlane;
+		float n = m_nearPlane;
+
 		vsMatrix4x4 m(
-				vsVector4D( -2.f / width, 0.f, 0.f, 0.f ),
-				vsVector4D( 0.f, -2.f / height, 0.f, 0.f ),
-				vsVector4D( 0.f, 0.f, -2.f / (m_farPlane - m_nearPlane), 0.f ),
-				vsVector4D( 0.f, 0.f,  -1.f * ((m_farPlane + m_nearPlane) / (m_farPlane - m_nearPlane)), 1.f )
+				vsVector4D( 1.f / hw, 0.f, 0.f, 0.f ),
+				vsVector4D( 0.f, 1.f / hh, 0.f, 0.f ),
+				vsVector4D( 0.f, 0.f, -2.f / (f-n), -(f+n) / (f-n) ),
+				vsVector4D( 0.f, 0.f, 0.f, 1.f )
 				);
 
 		return m;

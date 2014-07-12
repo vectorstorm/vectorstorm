@@ -31,8 +31,20 @@ class vsRenderQueueStage
 	struct BatchElement
 	{
 		vsMatrix4x4		matrix;
+		const vsMatrix4x4 *	instanceMatrix;
+		int				instanceMatrixCount;
+		vsRenderBuffer *instanceMatrixBuffer;
 		vsDisplayList *	list;
 		BatchElement *	next;
+
+		BatchElement():
+			instanceMatrix(NULL),
+			instanceMatrixCount(0),
+			instanceMatrixBuffer(NULL),
+			list(NULL),
+			next(NULL)
+		{
+		}
 	};
 	struct Batch
 	{
@@ -64,11 +76,10 @@ public:
 	void			Draw( vsDisplayList *list );	// write our batches into here.
 	void			EndRender();
 
-	// usual way to add a batch
-//	void			AddBatch( vsMaterial *material, vsDisplayList *batch ) { AddBatch( material, vsMatrix4x4::Identity, batch ); }
-
-	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
+	// Add a batch to this stage
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
@@ -85,8 +96,12 @@ class vsRenderQueue
 	vsRenderQueueStage *	m_stage;
 	int						m_stageCount;
 
+	vsMatrix4x4				m_projection;
+	vsMatrix4x4				m_worldToView;
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
 	int						m_transformStackLevel;
+
+	float m_fov;
 
 	int				PickStageForMaterial( vsMaterial *material );
 
@@ -107,18 +122,32 @@ public:
 
 	void			PopMatrix();
 	const vsMatrix4x4&		GetMatrix();
-	const vsMatrix4x4&		GetTopMatrix();
+	const vsMatrix4x4&		GetWorldToViewMatrix();
+	const vsMatrix4x4&		GetProjectionMatrix() { return m_projection; }
+	float			GetFOV() { return m_fov; }
+	void			SetFOV( float fov ) { m_fov = fov; }
+
+	void SetProjectionMatrix( const vsMatrix4x4& mat ) { m_projection = mat; }
 
 	vsScene *		GetScene() { return m_parent; }
 
-	// usual way to add a batch
+	// Usual way to add a batch
+	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+
+	// Identity-matrix batches.
 	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
 
-	// convenience for fragments, so they don't need to stuff the matrix into the display list -- we'll do it for them.
-	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	// batches which will draw in multiple places.
+	// Note that the passed array of matrices must exist until the Draw phase ends!
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
 
 	// ultra-convenience for fragments.
 	void			AddFragmentBatch( vsFragment *fragment );
+	// For fragments using instancing.
+	// Note that the passed array of matrices must exist until the Draw phase ends!
+	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
+	void			AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );

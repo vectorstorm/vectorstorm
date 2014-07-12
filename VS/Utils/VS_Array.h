@@ -62,7 +62,7 @@ public:
 
 	typedef vsArrayIterator<T> Iterator;
 
-	vsArray( int initialStorage = 32 )
+	vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
 		m_arrayLength = 0;
@@ -82,6 +82,11 @@ public:
 	virtual void	Clear()
 	{
 		m_arrayLength = 0;
+	}
+
+	virtual void	PopBack()
+	{
+		m_arrayLength--;
 	}
 
 	void	AddItem( const T &item )

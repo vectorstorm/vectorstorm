@@ -7,6 +7,9 @@
  *
  */
 
+#ifndef VS_OPENGL_H
+#define VS_OPENGL_H
+
 #if TARGET_OS_IPHONE
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
@@ -18,3 +21,14 @@
 #include <GL/glew.h>
 #endif
 #endif
+
+#ifdef _DEBUG
+#define CHECK_GL_ERRORS
+#endif
+#ifdef CHECK_GL_ERRORS
+	void			CheckGLError(const char* string);
+#else
+	inline void			CheckGLError(const char* string) {}
+#endif
+
+#endif //VS_OPENGL_H

@@ -9,13 +9,13 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
 
 
 if(UNIX)
+	find_package(PNG REQUIRED)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
@@ -28,6 +28,25 @@ find_library(BOX2D_LIBRARY Box2D REQUIRED
 find_path(BOX2D_INCLUDE_DIR Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D )
+
+if(WINDOWS)
+	find_file(GLEW_DLL glew32.dll REQUIRED
+		PATH ../../buildzone/bin/Release/Win32 )
+	find_file(PNG_DLL libpng16-16.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(ZLIB_DLL zlib1.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_DLL SDL2.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+	find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
+
+	set(VS_PLATFORM_DLLS ${GLEW_DLL} ${PNG_DLL}
+		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
+		${SDL2_MIXER_DLL})
+endif()
 
 # Check our build environment and set any variables
 # which need setting
@@ -97,6 +116,8 @@ set(FILES_SOURCES
 	VS/Files/VS_Token.h
 	)
 set(GRAPHICS_SOURCES
+	VS/Graphics/VS_BuiltInFont.cpp
+	VS/Graphics/VS_BuiltInFont.h
 	VS/Graphics/VS_Camera.cpp
 	VS/Graphics/VS_Camera.h
 	VS/Graphics/VS_Color.cpp
@@ -111,10 +132,14 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Fog.h
 	VS/Graphics/VS_Font.cpp
 	VS/Graphics/VS_Font.h
+	VS/Graphics/VS_FontRenderer.cpp
+	VS/Graphics/VS_FontRenderer.h
 	VS/Graphics/VS_Fragment.cpp
 	VS/Graphics/VS_Fragment.h
 	VS/Graphics/VS_Light.cpp
 	VS/Graphics/VS_Light.h
+	VS/Graphics/VS_Lines.cpp
+	VS/Graphics/VS_Lines.h
 	VS/Graphics/VS_Material.cpp
 	VS/Graphics/VS_Material.h
 	VS/Graphics/VS_MaterialInternal.cpp
@@ -133,10 +158,22 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_RenderTarget.h
 	VS/Graphics/VS_Renderer.cpp
 	VS/Graphics/VS_Renderer.h
-	VS/Graphics/VS_RenderScheme.cpp
-	VS/Graphics/VS_RenderSchemeFixedFunction.cpp
-	VS/Graphics/VS_RenderSchemeBloom.cpp
-	VS/Graphics/VS_RenderSchemeShader.cpp
+	VS/Graphics/VS_Renderer_OpenGL3.cpp
+	VS/Graphics/VS_Renderer_OpenGL3.h
+	VS/Graphics/VS_RenderPipeline.cpp
+	VS/Graphics/VS_RenderPipeline.h
+	VS/Graphics/VS_RenderPipelineStage.cpp
+	VS/Graphics/VS_RenderPipelineStage.h
+	VS/Graphics/VS_RenderPipelineStageBlit.cpp
+	VS/Graphics/VS_RenderPipelineStageBlit.h
+	VS/Graphics/VS_RenderPipelineStageBloom.cpp
+	VS/Graphics/VS_RenderPipelineStageBloom.h
+	VS/Graphics/VS_RenderPipelineStageScenes.cpp
+	VS/Graphics/VS_RenderPipelineStageScenes.h
+	# VS/Graphics/VS_RenderScheme.cpp
+	# VS/Graphics/VS_RenderSchemeFixedFunction.cpp
+	# VS/Graphics/VS_RenderSchemeBloom.cpp
+	# VS/Graphics/VS_RenderSchemeShader.cpp
 	VS/Graphics/VS_RendererState.cpp
 	VS/Graphics/VS_RendererState.h
 	VS/Graphics/VS_Scene.cpp
@@ -301,6 +338,7 @@ set(UTILS_SOURCES
 set(SOURCES
 	VS/VS_Headers.h
 	VS/VS_OpenGL.h
+	VS/VS_OpenGL.cpp
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
 	)
@@ -328,9 +366,9 @@ include_directories(
 	)
 
 	if (UNIX)
-		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_DEBUG}" )
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELEASE}" )
+		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_DEBUG}" )
+		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
+		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
 	else ()
 		add_definitions("/FI\"VS_Prefix.h\"")
 	endif()

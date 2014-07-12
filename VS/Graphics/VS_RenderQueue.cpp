@@ -122,13 +122,33 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	if ( !m_batchElementPool )
 	{
 		m_batchElementPool = new BatchElement;
-		m_batchElementPool->next = NULL;
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
 	element->next = NULL;
 
 	element->matrix = matrix;
+	element->list = batchList;
+
+	element->next = batch->elementList;
+	batch->elementList = element;
+}
+
+void
+vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batchList )
+{
+	Batch *batch = FindBatch(material);
+
+	if ( !m_batchElementPool )
+	{
+		m_batchElementPool = new BatchElement;
+	}
+	BatchElement *element = m_batchElementPool;
+	m_batchElementPool = element->next;
+	element->next = NULL;
+
+	element->instanceMatrixCount = matrixCount;
+	element->instanceMatrix = matrix;
 	element->list = batchList;
 
 	element->next = batch->elementList;
@@ -143,7 +163,6 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 	if ( m_batchElementPool == NULL )
 	{
 		m_batchElementPool = new BatchElement;
-		m_batchElementPool->next = NULL;
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = m_batchElementPool->next;
@@ -178,19 +197,15 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
-			bool hasTransform = true;//e->matrix != vsMatrix4x4::Identity;
-
-			if ( hasTransform )
-			{
+			if ( e->instanceMatrixBuffer )
+				list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
+			else if ( e->instanceMatrix )
+				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
+			else
 				list->SetMatrix4x4( e->matrix );
-			}
 
 			list->Append( *e->list );
-
-			if ( hasTransform )
-			{
-				list->PopTransform();
-			}
+			list->PopTransform();
 		}
 	}
 }
@@ -206,8 +221,12 @@ vsRenderQueueStage::EndRender()
 		BatchElement *lastElement = b->elementList;
 		while ( lastElement->next )
 		{
+			lastElement->instanceMatrix = NULL;
+			lastElement->instanceMatrixCount = 0;
 			lastElement = lastElement->next;
 		}
+		lastElement->instanceMatrix = NULL;
+		lastElement->instanceMatrixCount = 0;
 		lastElement->next = m_batchElementPool;
 		m_batchElementPool = b->elementList;
 		b->elementList = NULL;
@@ -295,8 +314,6 @@ vsRenderQueue::InitialiseTransformStack()
 				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
 				break;
 		}
-		//
-//		startingTransform.SetTranslation( vsVector3D(0.f, 0.0f, 0.f) );
 		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
 
 		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
@@ -314,13 +331,14 @@ vsRenderQueue::InitialiseTransformStack()
 
 		cameraMatrix.x = side;
 		cameraMatrix.y = up;
-		cameraMatrix.z = -forward;
+		cameraMatrix.z = forward;
 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
 		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
 
-		m_transformStack[0] = cameraMatrix * requestedMatrix;
+		m_worldToView = cameraMatrix * requestedMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 	else
@@ -350,8 +368,10 @@ vsRenderQueue::InitialiseTransformStack()
 		// transform, not the MODELVIEW transform, which is all we care about here..
 		cameraTransform.SetScale(vsVector2D(1.f,1.f));
 		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
+		cameraMatrix.Invert();
 
-		m_transformStack[0] = cameraMatrix * startingMatrix;
+		m_worldToView = cameraMatrix * startingMatrix;
+		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
 }
@@ -378,9 +398,22 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 }
 
 void
+vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch )
+{
+	int stageId = PickStageForMaterial( material );
+	m_stage[stageId].AddInstanceBatch( material, matrix, instanceCount, batch );
+}
+
+void
 vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
 {
 	AddBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetDisplayList() );
+}
+
+void
+vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount )
+{
+	AddInstanceBatch( fragment->GetMaterial(), matrix, instanceCount, fragment->GetDisplayList() );
 }
 
 vsDisplayList *
@@ -436,8 +469,8 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 
 	if ( m_transformStackLevel < MAX_SCENE_STACK )
 	{
-        vsMatrix4x4 matrix = transform.GetMatrix();
-        matrix.SetTranslation( -1.f * matrix.w );
+		vsMatrix4x4 matrix = transform.GetMatrix();
+		// matrix.SetTranslation( -1.f * matrix.w );
 		m_transformStack[m_transformStackLevel] = m_transformStack[m_transformStackLevel-1] * matrix;
 		m_transformStackLevel++;
 	}
@@ -470,11 +503,9 @@ vsRenderQueue::GetMatrix()
 }
 
 const vsMatrix4x4&
-vsRenderQueue::GetTopMatrix()
+vsRenderQueue::GetWorldToViewMatrix()
 {
-	vsAssert( m_transformStackLevel > 0, "Nothing in the transform stack!" );
-
-	return m_transformStack[0];
+	return m_worldToView;
 }
 
 int

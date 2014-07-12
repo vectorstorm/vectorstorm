@@ -170,7 +170,7 @@ vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, vsMaterial *material, vsColor
 	}
 	list->VertexArray(va,4);
 //	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
@@ -209,7 +209,7 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsCo
 	}
 	list->VertexArray(va,4);
 	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 	list->ClearTexelArray();
 
@@ -248,7 +248,7 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material,
 	}
 	list->VertexArray(va,4);
 	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 	list->ClearTexelArray();
 
@@ -280,7 +280,7 @@ vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsCol
 		list->SetColor( *colorOverride );
 	}
 	list->VertexArray(va,4);
-	list->LineStrip(ls,5);
+	list->LineStripArray(ls,5);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
@@ -371,7 +371,7 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor
 		list->SetColor( *colorOverride );
 	}
 	list->BindBuffer(buffer);
-	list->TriangleList(triList,36);
+	list->TriangleListArray(triList,36);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
@@ -473,7 +473,7 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsCo
 		list->SetColor( *colorOverride );
 	}
 	list->BindBuffer(buffer);
-	list->TriangleList(triList,36);
+	list->TriangleListArray(triList,36);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
@@ -529,7 +529,7 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsCol
 		list->SetColor( *colorOverride );
 	}
 	list->VertexArray(va,8);
-	list->LineList(ll,24);
+	list->LineListArray(ll,24);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
@@ -568,7 +568,7 @@ vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsC
 	}
 	list->VertexArray(va,4);
 //	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
@@ -607,7 +607,7 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 	}
 	list->VertexArray(va,4);
 	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 	list->ClearTexelArray();
 
@@ -646,7 +646,7 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &mater
 	}
 	list->VertexArray(va,4);
 	list->TexelArray(tex,4);
-	list->TriangleStrip(ts,4);
+	list->TriangleStripArray(ts,4);
 	list->ClearVertexArray();
 	list->ClearTexelArray();
 
@@ -678,7 +678,7 @@ vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, v
 		list->SetColor( *colorOverride );
 	}
 	list->VertexArray(va,4);
-	list->LineStrip(ls,5);
+	list->LineStripArray(ls,5);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
@@ -769,7 +769,7 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsC
 		list->SetColor( *colorOverride );
 	}
 	list->BindBuffer(buffer);
-	list->TriangleList(triList,36);
+	list->TriangleListArray(triList,36);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
@@ -871,7 +871,7 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, 
 		list->SetColor( *colorOverride );
 	}
 	list->BindBuffer(buffer);
-	list->TriangleList(triList,36);
+	list->TriangleListArray(triList,36);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
@@ -927,7 +927,7 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, v
 		list->SetColor( *colorOverride );
 	}
 	list->VertexArray(va,8);
-	list->LineList(ll,24);
+	list->LineListArray(ll,24);
 	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;

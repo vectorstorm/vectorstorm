@@ -28,10 +28,10 @@ vsShaderSuite::~vsShaderSuite()
 void
 vsShaderSuite::InitShaders(const vsString &vertexShader, const vsString &fragmentShader)
 {
-	m_shader[Normal] = new vsShader(vertexShader, fragmentShader, false, false);
-	m_shader[NormalTex] = new vsShader(vertexShader, fragmentShader, false, true);
-	m_shader[Lit] = new vsShader(vertexShader, fragmentShader, true, false);
-	m_shader[LitTex] = new vsShader(vertexShader, fragmentShader, true, true);
+	m_shader[Normal] = vsShader::Load(vertexShader, fragmentShader, false, false);
+	m_shader[NormalTex] = vsShader::Load(vertexShader, fragmentShader, false, true);
+	m_shader[Lit] = vsShader::Load(vertexShader, fragmentShader, true, false);
+	m_shader[LitTex] = vsShader::Load(vertexShader, fragmentShader, true, true);
 }
 
 vsShader *

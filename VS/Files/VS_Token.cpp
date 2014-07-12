@@ -260,6 +260,12 @@ vsToken::ExtractFrom( vsString &string )
 			// comment!
 			string = vsEmptyString;
 		}
+		else if ( string[0] == '=' )
+		{
+			m_type = Type_Equals;
+			string.erase(0,1);
+			return true;
+		}
 		else
 		{
 			// no clue what it was!  Just treat it as a string, breaking at the next whitespace
@@ -301,6 +307,9 @@ vsToken::AsString()
 			break;
 		case Type_Integer:
 			result = vsFormatString("%d", m_int);
+			break;
+		case Type_Equals:
+			result = "=";
 			break;
 		default:
 			break;

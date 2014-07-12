@@ -104,7 +104,7 @@ class vsLinkedList
 	vsListEntry<T>		*m_listEntry;
 	vsListEntry<T>		*m_tail;
 
-	vsListEntry<T> *	FindEntry( T item )
+	vsListEntry<T> *	FindEntry( T item ) const
 	{
 		vsListEntry<T> *ent = m_listEntry->m_next;
 
@@ -124,7 +124,7 @@ public:
 	typedef vsListIterator<T> Iterator;
 
 	vsLinkedList():
-		m_entry(32, vsPool<vsListEntry<T> >::Type_Expandable)
+		m_entry(4, vsPool<vsListEntry<T> >::Type_Expandable)
 	{
 		m_listEntry = m_entry.Borrow();
 		m_tail = m_entry.Borrow();
@@ -194,19 +194,19 @@ public:
 		iter.GetEntry()->Prepend( ent );
 	}
 
-	bool	Contains( T item )
+	bool	Contains( T item ) const
 	{
 		return (NULL != FindEntry(item));
 	}
 
-	bool	IsEmpty()
+	bool	IsEmpty() const
 	{
 		vsListIterator<T> it(m_listEntry);
 
 		return ( m_listEntry->m_next == m_tail );
 	}
 
-	int		ItemCount()
+	int		ItemCount() const
 	{
 		int count = 0;
 

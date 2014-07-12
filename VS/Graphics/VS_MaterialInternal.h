@@ -17,7 +17,7 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 
-#define MAX_TEXTURE_SLOTS (4)
+#define MAX_TEXTURE_SLOTS (8)
 //class vsTexture;
 class vsFile;
 class vsShader;
@@ -77,6 +77,7 @@ public:
 	void		LoadFromFile( vsFile *file );
 
 	vsTexture *	GetTexture(int i = 0) const { return m_texture[i]; }
+	bool HasAnyTextures() const;
 
 	void operator=(const vsMaterialInternal &b);
 	bool operator==(const vsMaterialInternal &b) const { return (m_color==b.m_color && m_drawMode==b.m_drawMode); }

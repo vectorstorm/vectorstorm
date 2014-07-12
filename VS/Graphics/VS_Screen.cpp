@@ -9,7 +9,11 @@
 
 #include "VS_Screen.h"
 #include "VS_DisplayList.h"
-#include "VS_Renderer.h"
+#include "VS_RenderPipeline.h"
+#include "VS_RenderPipelineStage.h"
+#include "VS_RenderPipelineStageBlit.h"
+#include "VS_RenderPipelineStageScenes.h"
+#include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 #include "VS_System.h"
@@ -17,25 +21,32 @@
 
 #include "VS_TimerSystem.h"
 
-const int c_fifoSize = 1024 * 500;		// 200k for our FIFO display list
+const int c_fifoSize = 1024 * 200;		// 200kb for our FIFO display list
+vsScreen *	vsScreen::s_instance = NULL;
 
 vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync):
+	m_renderer(NULL),
+	m_pipeline(NULL),
 	m_scene(NULL),
 	m_sceneCount(0),
 	m_width(width),
 	m_height(height),
 	m_depth(depth),
 	m_fullscreen(fullscreen),
+	m_resized(false),
 	m_currentRenderTarget(NULL),
-    m_currentSettings(NULL)
+	m_currentSettings(NULL)
 {
+	vsAssert(s_instance == NULL, "Tried to create a second vsScreen");
+	s_instance = this;
 	int flags = 0;
 	if ( fullscreen )
 		flags |= vsRenderer::Flag_Fullscreen;
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
+	flags |= vsRenderer::Flag_Resizable;
 
-	m_renderer = new vsRenderer(width, height, depth, flags);
+	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -46,9 +57,11 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 
 vsScreen::~vsScreen()
 {
+	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
 	vsDelete( m_subfifo );
+	s_instance = NULL;
 }
 
 void
@@ -74,7 +87,21 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
+	m_resized = true;
+}
 
+void
+vsScreen::CheckVideoMode()
+{
+	m_resized = m_renderer->CheckVideoMode();
+
+	if ( m_resized )
+	{
+		// okay.  If we resized here, it means that we underwent an underlying
+		// resolution change.  So we have the same number of window manager
+		// points, but a different number of pixels, now.  Since fonts care about
+		// that sort of thing, let's let them know.
+	}
 }
 
 void
@@ -91,20 +118,37 @@ vsScreen::CreateScenes(int count)
 		m_scene[i] = new vsScene;
 	m_sceneCount = count;
 
+	m_pipeline = new vsRenderPipeline(2);
+	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
+	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 
 #if defined(DEBUG_SCENE)
 	m_scene[m_sceneCount-1]->SetDebugCamera();
 #endif // DEBUG_SCENE
 }
 
+vsRenderTarget *
+vsScreen::GetMainRenderTarget()
+{
+	return m_renderer->GetMainRenderTarget();
+}
+
+vsRenderTarget *
+vsScreen::GetPresentTarget()
+{
+	return m_renderer->GetPresentTarget();
+}
+
 void
 vsScreen::DestroyScenes()
 {
+	if ( m_pipeline )
+		vsDelete( m_pipeline );
 	if ( m_scene )
 	{
 		for ( int i = 0; i < m_sceneCount; i++ )
-			delete m_scene[i];
-		delete [] m_scene;
+			vsDelete( m_scene[i] );
+		vsDeleteArray( m_scene );
 
 		m_scene = NULL;
 	}
@@ -114,80 +158,39 @@ vsScreen::DestroyScenes()
 void
 vsScreen::Update( float timeStep )
 {
+	m_resized = false;
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->Update( timeStep );
 	}
 }
 
-static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us about how much display list we're using until we're at least half full
+// static size_t s_fifoHighWaterMark = c_fifoSize / 2;	// don't start warning us about how much display list we're using until we're at least half full
 //static long s_fifoHighWaterMark = 0;	// don't start warning us about how much display list we're using until we're at least half full
 
 void
 vsScreen::Draw()
 {
-    DrawWithSettings( m_defaultRenderSettings );
+	DrawPipeline(m_pipeline);
 }
 
 void
-vsScreen::DrawWithSettings( const vsRenderer::Settings &s )
+vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 {
-    m_currentSettings = &s;
-	if ( m_scene == NULL )
-		return;
+	m_currentSettings = &m_defaultRenderSettings;
 
-	m_renderer->PreRender(s);
-
-	for ( int i = 0; i < m_sceneCount; i++ )
-	{
-		if ( m_scene[i]->IsEnabled() )
-		{
-			m_fifo->Clear();
-			m_scene[i]->Draw( m_fifo );
-			m_renderer->RenderDisplayList(m_fifo);
-
-			if ( m_fifo->GetSize() > s_fifoHighWaterMark )
-			{
-				printf("New FIFO high water mark:  Layer %d, %0.2fk/%0.2fkk\n", i, m_fifo->GetSize()/1024.f, m_fifo->GetMaxSize()/1024.f);
-				s_fifoHighWaterMark = m_fifo->GetSize();
-			}
-		}
-	}
-
+	m_renderer->PreRender(m_defaultRenderSettings);
+	m_fifo->Clear();
+	pipeline->Draw(m_fifo);
+#ifdef DEBUG_SCENE
+	m_renderer->RenderDisplayList(m_fifo);
+	m_fifo->Clear();
+	m_scene[m_sceneCount-1]->Draw(m_fifo);
+#endif
+	m_renderer->RenderDisplayList(m_fifo);
 	m_renderer->PostRender();
-    m_currentSettings = NULL;
-}
 
-bool
-vsScreen::DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target )
-{
-	return DrawSceneRangeToTarget( s, scene, scene, target );
-}
-
-bool
-vsScreen::DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target )
-{
-    m_currentSettings = &s;
-	bool rendered = false;
-	if ( m_scene )
-	{
-		m_subfifo->Clear();
-
-		m_currentRenderTarget = target;
-		if ( m_renderer->PreRenderTarget( s, target ) )
-		{
-			for ( int i = firstScene; i <= lastScene; i++ )
-			{
-				m_scene[i]->Draw( m_subfifo );
-				m_renderer->RenderDisplayList( m_subfifo );
-			}
-			m_renderer->PostRenderTarget( target );
-			rendered = true;
-		}
-		m_currentRenderTarget = NULL;
-	}
-    m_currentSettings = NULL;
-	return rendered;
+	m_currentSettings = NULL;
 }
 
 vsScene *
@@ -211,14 +214,14 @@ vsScreen::GetTrueAspectRatio()
 {
 	if ( m_currentRenderTarget )
 	{
-        if ( m_currentSettings && m_currentSettings->useCustomAspectRatio )
-        {
-            return m_currentSettings->aspectRatio;
-        }
-        else
-        {
-            return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
-        }
+		if ( m_currentSettings && m_currentSettings->useCustomAspectRatio )
+		{
+			return m_currentSettings->aspectRatio;
+		}
+		else
+		{
+			return m_currentRenderTarget->GetWidth() / float(m_currentRenderTarget->GetHeight());
+		}
 	}
 
 	return m_aspectRatio;
@@ -272,14 +275,7 @@ vsScreen::GetAspectRatio()
 bool
 vsScreen::SupportsShaders()
 {
-	return m_renderer->SupportsShaders();
-}
-
-
-void
-vsScreen::RenderDisplayList( vsDisplayList *list )
-{
-	m_renderer->RawRenderDisplayList(list);
+	return true;
 }
 
 vsImage *

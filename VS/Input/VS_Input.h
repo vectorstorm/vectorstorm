@@ -44,7 +44,7 @@ enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN
 	CID_Right,
 
 	CID_Exit,
-	CID_ExitApplication,
+	CID_Escape,
 
 	CID_A,
 	CID_B,

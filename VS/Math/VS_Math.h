@@ -47,12 +47,11 @@ bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, cons
 float vsInterpolate( float alpha, float a, float b );
 float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
 
-float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB );
-inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB )
+float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
+inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL )
 {
-	return vsSqrt( vsSqDistanceBetweenLineSegments( startA, endA, startB, endB ) );
+	return vsSqrt( vsSqDistanceBetweenLineSegments( startA, endA, startB, endB, closestA, closestB ) );
 }
-
 
 #endif // VS_MATH_H
 

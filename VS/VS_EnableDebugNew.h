@@ -1,1 +1,1 @@
-//#define new INGAME_NEW
+#define new DEBUG_NEW

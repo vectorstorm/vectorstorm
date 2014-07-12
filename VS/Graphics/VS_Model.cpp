@@ -77,7 +77,8 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(NULL),
-	m_displayList(list)
+	m_displayList(list),
+	m_instanceData(NULL)
 {
 }
 
@@ -88,6 +89,99 @@ vsModel::~vsModel()
 	if ( m_displayList )
 		vsDelete(m_displayList);
 	vsDelete( m_material );
+	vsDelete( m_instanceData );
+}
+
+void
+vsModel::SetAsInstanceModel()
+{
+	if ( !m_instanceData )
+	{
+		m_instanceData = new InstanceData;
+	}
+}
+
+vsModelInstance *
+vsModel::MakeInstance()
+{
+	SetAsInstanceModel();
+	vsModelInstance *inst = new vsModelInstance;
+	inst->model = this;
+	inst->visible = false;
+	inst->index = m_instanceData->instance.ItemCount();
+	inst->matrixIndex = -1;
+	m_instanceData->instance.AddItem(inst);
+	return inst;
+}
+
+void
+vsModel::UpdateInstance( vsModelInstance *inst, bool show )
+{
+	if ( show )
+	{
+		if ( inst->matrixIndex < 0 ) // we've come into view!
+		{
+			inst->matrixIndex = m_instanceData->matrix.ItemCount();
+			m_instanceData->matrix.AddItem( inst->matrix );
+			m_instanceData->matrixInstanceId.AddItem( inst->index );
+		}
+		else // we were already in view;  just update our matrix
+		{
+			m_instanceData->matrix[inst->matrixIndex] = inst->matrix;
+		}
+	}
+	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
+	{
+		int swapFrom = m_instanceData->matrix.ItemCount() - 1;
+		int swapTo = inst->matrixIndex;
+
+		int swapperInstanceId = m_instanceData->matrixInstanceId[swapFrom];
+		vsModelInstance *swapper = m_instanceData->instance[swapperInstanceId];
+
+		m_instanceData->matrix[swapTo] = m_instanceData->matrix[swapFrom];
+		m_instanceData->matrixInstanceId[swapTo] = m_instanceData->matrixInstanceId[swapFrom];
+		m_instanceData->matrix.PopBack();
+		m_instanceData->matrixInstanceId.PopBack();
+		swapper->matrixIndex = swapTo;
+		inst->matrixIndex = -1;
+	}
+
+	if ( !m_instanceData->matrix.IsEmpty() )
+		m_instanceData->bufferIsDirty = true;
+}
+
+void
+vsModel::RemoveInstance( vsModelInstance *inst )
+{
+	// FIRST, update this instance to not be visible.  That gets it out of our
+	// matrix and matrixInstanceId arrays, if it had been visible.
+	UpdateInstance( inst, false );
+
+	// NOW, I want to swap this instance into last position in the instance
+	// array.
+
+	// Check whether I'm already in last position.
+	int lastIndex = m_instanceData->instance.ItemCount()-1;
+	if ( inst->index != lastIndex )
+	{
+		// Not in last position, so swap that last item into my current spot.
+		vsModelInstance *last = m_instanceData->instance[ lastIndex ];
+
+		// To do this swap, I potentially need to update two references to the
+		// 'last' item being swapped:  the instance array, and (if the 'last'
+		// instance is visible), the modelInstanceId array which tells where
+		// it can be found in the instance array.
+		m_instanceData->instance[ inst->index ] = last;
+		last->index = inst->index;
+
+		if ( last->matrixIndex >= 0 )
+		{
+			m_instanceData->matrixInstanceId[ last->matrixIndex ] = inst->index;
+		}
+	}
+
+	// Finally, drop that last position.
+	m_instanceData->instance.PopBack();
 }
 
 void
@@ -146,51 +240,96 @@ vsModel::BuildBoundingBox()
 	SetBoundingBox( boundingBox );
 }
 
-
-
 void
 vsModel::Draw( vsRenderQueue *queue )
 {
 	if ( GetVisible() )
 	{
-		vsDisplayList *list = queue->GetGenericList();
-		if ( m_material )
+		if ( m_instanceData )
 		{
-			list->SetMaterial( m_material );
-		}
+			if ( m_instanceData->matrix.IsEmpty() )
+				return;
 
-		bool hasTransform = (m_transform != vsTransform3D::Identity);
-
-		if ( hasTransform )
-		{
-			queue->PushMatrix( m_transform.GetMatrix() );
-		}
-		list->SetMatrix4x4( queue->GetMatrix() );
-
-		if ( m_displayList )
-		{
-			list->Append( *m_displayList );
+			if ( m_instanceData->bufferIsDirty )
+			{
+				m_instanceData->matrixBuffer.SetArray( &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
+				m_instanceData->bufferIsDirty = false;
+			}
+			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			{
+				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
+			}
 		}
 		else
 		{
-			DynamicDraw( queue );
-		}
-
-		if ( !m_fragment.IsEmpty() )
-		{
-			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			vsDisplayList *list = queue->GetGenericList();
+			if ( m_material )
 			{
-				queue->AddFragmentBatch( *iter );
+				list->SetMaterial( m_material );
 			}
-		}
 
-		//		Parent::Draw(list);
-		DrawChildren(queue);
+			bool hasTransform = (m_transform != vsTransform3D::Identity);
 
-		if ( hasTransform )
-		{
-			queue->PopMatrix();
+			if ( hasTransform )
+			{
+				queue->PushMatrix( m_transform.GetMatrix() );
+			}
+			list->SetMatrix4x4( queue->GetMatrix() );
+
+			if ( m_displayList )
+			{
+				list->Append( *m_displayList );
+			}
+			else
+			{
+				DynamicDraw( queue );
+			}
+
+			if ( !m_fragment.IsEmpty() )
+			{
+				for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+				{
+					queue->AddFragmentBatch( *iter );
+				}
+			}
+
+			//		Parent::Draw(list);
+			DrawChildren(queue);
+
+			if ( hasTransform )
+			{
+				queue->PopMatrix();
+			}
+			list->PopTransform();
 		}
-		list->PopTransform();
 	}
 }
+
+vsModelInstance::~vsModelInstance()
+{
+	model->RemoveInstance(this);
+}
+
+void
+vsModelInstance::SetVisible( bool v )
+{
+	if ( visible != v )
+	{
+		visible = v;
+		model->UpdateInstance( this, visible );
+	}
+}
+
+void
+vsModelInstance::SetMatrix( const vsMatrix4x4& mat )
+{
+	if ( matrix != mat )
+	{
+		matrix = mat;
+		if ( visible )
+		{
+			model->UpdateInstance( this, visible );
+		}
+	}
+}
+

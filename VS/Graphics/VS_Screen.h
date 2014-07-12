@@ -18,6 +18,7 @@
 #include "Utils/VS_Singleton.h"
 
 class vsDisplayList;
+class vsRenderPipeline;
 class vsScene;
 class vsRenderTarget;
 class vsImage;
@@ -25,7 +26,9 @@ class vsImage;
 
 class vsScreen
 {
+	static vsScreen *	s_instance;
 	vsRenderer *		m_renderer;		// our renderer
+	vsRenderPipeline *	m_pipeline;		// our default pipeline
 	vsScene **			m_scene;		// our draw scenes
     vsRenderer::Settings    m_defaultRenderSettings;
 
@@ -40,16 +43,41 @@ class vsScreen
 	float				m_aspectRatio;
 	bool				m_fullscreen;
 
+	bool				m_resized;
+
 	vsRenderTarget *	m_currentRenderTarget;
     const vsRenderer::Settings *m_currentSettings;
 
 public:
 
+	static vsScreen *	Instance() { return s_instance; }
+
 	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
 	~vsScreen();
 
-	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
+	vsRenderTarget *	GetMainRenderTarget();
+	vsRenderTarget *	GetPresentTarget();
 
+	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen);
+	void			CheckVideoMode();
+
+	// The following width/height/aspect ratio functions operate in terms of
+	// window manager POINTS, which may or may not equal pixels.  If desired,
+	// you can get the actual number of pixels from the MainRenderTarget, above.
+	//
+	// 'true width' and 'true height' return the actual width and height of the
+	// rendering area in its native orientation, whereas the 'width' and 'height'
+	// accessors below will correct for screen orientation.  (So if the screen is
+	// rotated 90 degrees, GetWidth() will return the 'width' in the rotated
+	// context -- for example, GetWidth() == GetTrueHeight(), in that situation.)
+	//
+	// In general, you want to use GetWidth(), GetHeight(), and GetAspectRatio()
+	// instead of these 'True' functions, unless you have some special effect in
+	// mind which is going to avoid VectorStorm's built-in orientation
+	// adjustments.  (This generally implies that you're avoiding using the
+	// vsRenderQueue's matrix stack, which implicitly includes those
+	// orientation adjustments)
+	//
 	int				GetTrueWidth() { return m_width; }
 	int				GetTrueHeight() { return m_height; }
 	float			GetTrueAspectRatio();
@@ -57,18 +85,19 @@ public:
 	int				GetWidth();
 	int				GetHeight();
 	float			GetAspectRatio();
-	bool			SupportsShaders();	// returns true if we are using a renderer that supports shaders
 
-	void			RenderDisplayList( vsDisplayList *list );	// used to pipe our display list to the renderer, for creating compiled display lists.
+	// returns true if we are using a renderer that supports shaders
+	bool			SupportsShaders();
+
+	// Ugh.  Need a nicer interface for this.
+	bool			Resized() { return m_resized; }
 
 	void			CreateScenes(int count);
 	void			DestroyScenes();
 
 	void			Update( float timeStep );
 	void			Draw();
-	void			DrawWithSettings(const vsRenderer::Settings &s);
-	bool			DrawSceneToTarget( const vsRenderer::Settings &s, int scene, vsRenderTarget *target );
-	bool			DrawSceneRangeToTarget( const vsRenderer::Settings &s, int firstScene, int lastScene, vsRenderTarget *target );
+	void			DrawPipeline( vsRenderPipeline *pipeline );
 
 	vsImage *       Screenshot();
 	vsImage *       ScreenshotDepth();

@@ -507,6 +507,19 @@ vsMatrix4x4::ApplyTo( const vsVector3D &v ) const
 	return result;
 }
 
+vsVector4D
+vsMatrix4x4::ApplyTo( const vsVector4D &v ) const
+{
+	vsVector4D result;
+
+	result.x = v.x * x.x + v.y * y.x + v.z * z.x + v.w * w.x;
+	result.y = v.x * x.y + v.y * y.y + v.z * z.y + v.w * w.y;
+	result.z = v.x * x.z + v.y * y.z + v.z * z.z + v.w * w.z;
+	result.w = v.x * x.w + v.y * y.w + v.z * z.w + v.w * w.w;
+
+	return result;
+}
+
 vsVector3D
 vsMatrix4x4::ApplyRotationTo( const vsVector3D &v ) const
 {

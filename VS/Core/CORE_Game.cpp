@@ -44,7 +44,7 @@ coreGame::Init()
 	printf(" -- Initialising game \"%s\"\n", name.c_str());
 	vsSystem::Instance()->SetWindowCaption( name );
 	vsSystem::Instance()->InitGameData();
-	vsSystem::GetScreen()->CreateScenes(m_sceneCount);	// just one layer for now
+	vsScreen::Instance()->CreateScenes(m_sceneCount);	// just one layer for now
 
 	ConfigureGameSystems();
 	InitGameSystems();
@@ -61,7 +61,7 @@ coreGame::Deinit()
 	printf(" -- Deinitialising game \"%s\"\n", name.c_str());
 	DeinitGameSystems();
 
-	vsSystem::GetScreen()->DestroyScenes();
+	vsScreen::Instance()->DestroyScenes();
 	vsSystem::Instance()->DeinitGameData();
 	printf(" -- Exitting game \"%s\"\n", name.c_str());
 }
@@ -161,12 +161,17 @@ coreGame::Go()
 		if ( m_system[i]->IsActive() )
 			m_system[i]->Update( m_timeStep );
 
+	if ( vsScreen::Instance()->Resized() )
+	{
+		HandleResize();
+	}
+
 	Update( m_timeStep );
 
 	if ( m_currentMode )
 		m_currentMode->Update( m_timeStep );
 
-	vsSystem::GetScreen()->Update( m_timeStep );
+	vsScreen::Instance()->Update( m_timeStep );
 
 	for ( int i = 0; i < GameSystem_MAX; i++ )
 		if ( m_system[i]->IsActive() )
@@ -178,7 +183,7 @@ coreGame::Go()
 void
 coreGame::DrawFrame()
 {
-    vsSystem::GetScreen()->Draw();
+	vsScreen::Instance()->Draw();
 }
 
 vsInput *

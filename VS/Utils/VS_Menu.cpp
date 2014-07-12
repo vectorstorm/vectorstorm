@@ -10,7 +10,7 @@
 #include "VS_Menu.h"
 
 #include "VS_DisplayList.h"
-#include "VS_Font.h"
+#include "VS_BuiltInFont.h"
 #include "VS_Sprite.h"
 
 #include "Core.h"

@@ -30,7 +30,8 @@ vsVector2D::vsVector2D( const vsVector3D &b )
 	y = b.y;
 }
 
-float vsVector2D::ApproximateLength() const
+float
+vsVector2D::ApproximateLength() const
 {
 	const float factor = (1.0f + 1.0f/(4.0f-2.0f*SQRT_TWO))/2.0f;
 
@@ -40,13 +41,21 @@ float vsVector2D::ApproximateLength() const
 	return factor * vsMin((1.0f / SQRT_TWO)*(ax+ay), vsMax(ax, ay));
 }
 
-void vsVector2D::Normalise()
+void
+vsVector2D::Normalise()
 {
 	float length = Length();
 
 	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
 	*this *= (1.0f/length);
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y), "Error, NaN!" );
+}
+
+void
+vsVector2D::NormaliseSafe()
+{
+	if ( SqLength() > 0.f )
+		Normalise();
 }
 
 vsVector3D::vsVector3D( const vsVector4D &b ):
@@ -56,7 +65,8 @@ vsVector3D::vsVector3D( const vsVector4D &b ):
 {
 }
 
-void vsVector3D::Normalise()
+void
+vsVector3D::Normalise()
 {
 	float length = Length();
 
@@ -65,14 +75,25 @@ void vsVector3D::Normalise()
 	vsAssert( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN!" );
 }
 
-void vsVector3D::Floor()
+void
+vsVector3D::NormaliseSafe()
+{
+	if ( SqLength() > 0.f )
+	{
+		Normalise();
+	}
+}
+
+void
+vsVector3D::Floor()
 {
     x = vsFloor(x);
     y = vsFloor(y);
     z = vsFloor(z);
 }
 
-float vsVector3D::operator[](int n) const
+float
+vsVector3D::operator[](int n) const
 {
 	if ( n == 0 )
 		return x;

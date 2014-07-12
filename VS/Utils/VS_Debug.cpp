@@ -18,11 +18,16 @@
 #include <assert.h>
 
 #if defined(_WIN32)
-#include <Windows.h>
-#define __thread
-#endif
-#if defined(__APPLE_CC__)
-#include <execinfo.h>
+	#include <Windows.h>
+	#define __thread
+	#define DEBUG_BREAK __debugbreak()
+#elif defined(__APPLE_CC__)
+	#include <execinfo.h>
+	#include <signal.h>
+	#define DEBUG_BREAK raise(SIGTRAP)
+#else
+	#include <signal.h>
+	#define DEBUG_BREAK raise(SIGTRAP)
 #endif
 
 //#if defined(_DEBUG)
@@ -51,25 +56,16 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
 			MessageBoxA(NULL, mbString.c_str(), NULL, MB_OK);
 #endif
-#if defined(__APPLE_CC__)
-			void* callstack[128];
-			int i, frames = backtrace(callstack, 128);
-			char** strs = backtrace_symbols(callstack, frames);
-			for (i = 0; i < frames; ++i) {
-				vsLog("%s\n", strs[i]);
-			}
-			free(strs);
-#endif
-
-		// Now we intentionally try to write to NULL, to trigger debuggers to stop,
-		// so we can perhaps try to debug whatever went wrong.
-		//
-		// If there's no debugger running, then this will probably yield a segfault.
-		// If we're running on something primitive enough that it doesn't even segfault,
-		// then just explicitly exit.
-			char *ptr = NULL;
-			*ptr = 0;
-
+// #if defined(__APPLE_CC__)
+// 			void* callstack[128];
+// 			int i, frames = backtrace(callstack, 128);
+// 			char** strs = backtrace_symbols(callstack, frames);
+// 			for (i = 0; i < frames; ++i) {
+// 				vsLog("%s\n", strs[i]);
+// 			}
+// 			free(strs);
+// #endif
+			DEBUG_BREAK;
 			exit(1);
 		}
 	}

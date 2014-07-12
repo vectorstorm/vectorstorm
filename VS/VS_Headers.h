@@ -47,6 +47,7 @@
 #include <Utils/VS_Timer.h>
 #include <Utils/VS_Tween.h>
 
+#include <VS/Graphics/VS_BuiltInFont.h>
 #include <VS/Graphics/VS_Camera.h>
 #include <VS/Graphics/VS_Color.h>
 #include <VS/Graphics/VS_DisplayList.h>
@@ -55,11 +56,18 @@
 #include <VS/Graphics/VS_Fog.h>
 #include <VS/Graphics/VS_Fragment.h>
 #include <VS/Graphics/VS_Font.h>
+#include <VS/Graphics/VS_FontRenderer.h>
 #include <VS/Graphics/VS_Light.h>
+#include <VS/Graphics/VS_Lines.h>
 #include <VS/Graphics/VS_Material.h>
 #include <VS/Graphics/VS_Mesh.h>
 #include <VS/Graphics/VS_Model.h>
 #include <VS/Graphics/VS_RenderBuffer.h>
+#include <VS/Graphics/VS_RenderPipeline.h>
+#include <VS/Graphics/VS_RenderPipelineStage.h>
+#include <VS/Graphics/VS_RenderPipelineStageBlit.h>
+#include <VS/Graphics/VS_RenderPipelineStageBloom.h>
+#include <VS/Graphics/VS_RenderPipelineStageScenes.h>
 #include <VS/Graphics/VS_RenderQueue.h>
 #include <VS/Graphics/VS_RenderTarget.h>
 #include <VS/Graphics/VS_Renderer.h>

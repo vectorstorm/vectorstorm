@@ -57,6 +57,11 @@ public:
 		{
 			m_tweening = false;
 		}
+		else if ( time == 0.f )
+		{
+			m_start = m_end = m_current = value;
+			m_tweening = false;
+		}
 		else if ( !m_tweening || value != m_end )
 		{
 			// don't re-start tweening to a value we were already tweening to.

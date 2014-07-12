@@ -26,30 +26,20 @@
 #include "SDL2/SDL_opengl.h"
 #endif
 
-vsDisplayList		s_compiledDisplayLists;
-
-bool vsDisplayList::s_compiling = false;
-
 static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
-	"SetSpecularColor",
-	"SetTexture",
-	"ClearTexture",
 
-	"MoveTo",
-	"LineTo",
-	"DrawPoint",
-	"CompiledDisplayList",
 	"PushTransform",
 	"PushTranslation",
 	"PushMatrix4x4",
-	"SetMatrix4x4",
+	"SetMatrices4x4",
+	"SetMatrices4x4Buffer",
+	"SetWorldToViewMatrix4x4",
 	"PopTransform",
 	"CameraTransform",
 	"3DProjection",
 	"SetProjectionMatrix4x4",
-	"CameraProjection",
 
 	"VertexArray",
 	"NormalArray",
@@ -81,10 +71,12 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"TriangleStripBuffer",
 	"TriangleListBuffer",
 	"TriangleFanBuffer",
-
-	"SetDrawMode",
+	"PointBuffer",
 
 	"SetMaterial",
+	"SetRenderTarget",
+	"ResolveRenderTarget",
+    "OpCode_BlitRenderTarget",
 
 	"Light",
 	"ClearLights",
@@ -97,7 +89,16 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"EnableStencil",
 	"DisableStencil",
-	"ClearStencil"
+	"ClearStencil",
+
+	"EnableScissor",
+	"DisableScissor",
+	"SetViewport",
+	"ClearViewport",
+
+	"SnapMatrix",
+
+	"Debug"
 };
 
 vsDisplayList *
@@ -168,30 +169,6 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 				{
 					vsColor color = r->Color();
 					loader->SetColor(color);
-					break;
-				}
-				case OpCode_SetSpecularColor:
-				{
-					vsColor color = r->Color();
-					loader->SetSpecularColor(color);
-					break;
-				}
-				case OpCode_MoveTo:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->MoveTo(pos);
-					break;
-				}
-				case OpCode_LineTo:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->LineTo(pos);
-					break;
-				}
-				case OpCode_DrawPoint:
-				{
-					vsVector2D pos = r->Vector2D();
-					loader->DrawPoint(pos);
 					break;
 				}
 				case OpCode_VertexArray:
@@ -299,11 +276,12 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 					loader->ClearLights();
 					break;
 				}
-				case OpCode_LineList:
-				case OpCode_LineStrip:
-				case OpCode_TriangleList:
-				case OpCode_TriangleStrip:
-				case OpCode_TriangleFan:
+				case OpCode_LineListArray:
+				case OpCode_LineStripArray:
+				case OpCode_TriangleListArray:
+				case OpCode_TriangleStripArray:
+				case OpCode_TriangleFanArray:
+				case OpCode_PointsArray:
 				{
 					int arrayCount = r->GetTokenCount();
 					int *idarray = new int[arrayCount];
@@ -313,27 +291,21 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 						idarray[id] = r->GetToken(id).AsInteger();
 					}
 
-					if ( code == OpCode_LineList )
-						loader->LineList(idarray, arrayCount);
-					if ( code == OpCode_LineStrip )
-						loader->LineStrip(idarray, arrayCount);
-					if ( code == OpCode_TriangleList )
-						loader->TriangleList(idarray, arrayCount);
-					if ( code == OpCode_TriangleStrip )
-						loader->TriangleStrip(idarray, arrayCount);
-					if ( code == OpCode_TriangleFan )
-						loader->TriangleFan(idarray, arrayCount);
+					if ( code == OpCode_LineListArray )
+						loader->LineListArray(idarray, arrayCount);
+					if ( code == OpCode_LineStripArray )
+						loader->LineStripArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleListArray )
+						loader->TriangleListArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleStripArray )
+						loader->TriangleStripArray(idarray, arrayCount);
+					if ( code == OpCode_TriangleFanArray )
+						loader->TriangleFanArray(idarray, arrayCount);
 
 					delete [] idarray;
 
 					break;
 				}
-					//					case OpCode_SetDrawMode:
-					//					{
-					//						loader->SetDrawMode( (vsDrawMode)r.GetToken(0).AsInteger() );
-					//						loader->SetMaterial( vsMaterial((vsDrawMode)r.GetToken(0).AsInteger(), c_white) );
-					//						break;
-					//					}
 				case OpCode_PushTransform:
 				case OpCode_PopTransform:
 				case OpCode_SetCameraTransform:
@@ -390,7 +362,7 @@ vsDisplayList::Load_Obj( const vsString &filename )
 	}
 
 	loader->VertexArray( vertexPos, vertCount );
-	loader->TriangleList( triangleIndex, faceIndexCount );
+	loader->TriangleListArray( triangleIndex, faceIndexCount );
 
 	delete file;
 
@@ -464,45 +436,21 @@ vsDisplayList::Load( const vsString &filename )
 	return result;
 }
 
-vsDisplayList *
-vsDisplayList::Compile( const vsString &filename )
-{
-	vsDisplayList *result = vsDisplayList::Load(filename);
-	result->Compile();
-
-	return result;
-}
-
-
 vsDisplayList::vsDisplayList():
-	m_displayListId(0),
-	m_compiled(false),
-	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
 	m_materialCount(0),
-	m_mark(0)
+	m_colorSet(false)
 {
-	m_next = m_prev = this;
-
-	m_colorSet = false;
-
 	Clear();
 }
 
 vsDisplayList::vsDisplayList( size_t memSize ):
-	m_displayListId(0),
-	m_compiled(false),
-	m_ownFifo(false),
 	m_instanceParent(NULL),
 	m_instanceCount(0),
 	m_materialCount(0),
-	m_mark(0)
+	m_colorSet(false)
 {
-	m_next = m_prev = this;
-
-	m_colorSet = false;
-
 	if ( memSize )
 	{
 		m_fifo = new vsStore(memSize);
@@ -519,8 +467,6 @@ vsDisplayList::~vsDisplayList()
 {
 	vsAssert( m_instanceCount == 0, "Deleted a display list while something was still referencing it!" );
 
-	ExtractFromCompiledList();
-
 	for ( int i = 0; i < m_materialCount; i++ )
 	{
 		vsDelete( m_material[i] );
@@ -535,13 +481,6 @@ vsDisplayList::~vsDisplayList()
 	{
 		m_instanceParent->m_instanceCount--;
 	}
-
-#if !TARGET_OS_IPHONE
-	if ( m_compiled )
-	{
-		glDeleteLists(m_displayListId,1);
-	}
-#endif // !TARGET_OS_IPHONE
 }
 
 vsDisplayList *
@@ -575,170 +514,12 @@ vsDisplayList::Clear()
 		m_fifo->Clear();
 	}
 	m_colorSet = false;
-	m_modeSet = false;
 }
 
 void
 vsDisplayList::Rewind()
 {
 	m_fifo->Rewind();
-}
-
-void
-vsDisplayList::Uncompile()
-{
-	if ( m_compiled )
-	{
-		ExtractFromCompiledList();
-		Uncompile_Internal();
-	}
-}
-
-void
-vsDisplayList::Uncompile_Internal()
-{
-#if !TARGET_OS_IPHONE
-	glDeleteLists(m_displayListId,1);
-#endif // TARGET_OS_IPHONE
-	m_compiled = false;
-}
-
-void
-vsDisplayList::Compile()
-{
-	if ( m_compiled )
-	{
-		Uncompile();
-	}
-	//Compile_Internal();
-
-	//s_compiledDisplayLists.AppendToCompiledList(this);
-}
-
-void
-vsDisplayList::Mark()
-{
-#if 0
-	int vertexCount;
-	int lineCount;
-
-	m_fifo->SeekTo( m_mark );
-	op *o = PopOp();
-
-	while( o )
-	{
-		switch( o->type )
-		{
-			case vsDisplayList::OpCode_MoveTo:
-				lineCount++;	// intentionally give us an extra 'lineCount' for each new starting strip
-				/** falls through **/
-			case vsDisplayList::OpCode_LineTo:
-				vertexCount++;
-				lineCount++;
-				break;
-		}
-		o = PopOp();
-	}
-
-	vsVector3D *v = new vsVector3D[vertexCount];
-	int *index = new int[vertexCount];
-
-	m_fifo->SeekTo( m_mark );
-	o = PopOp();
-	int vertIndex = 0;
-	int lineIndex = 0;
-
-	while( o )
-	{
-		switch( o->type )
-		{
-			case vsDisplayList::OpCode_MoveTo:
-				index[lineIndex++] = vertIndex;	// intentionally give us a double, when we're starting a new line strip
-				/** falls through **/
-			case vsDisplayList::OpCode_LineTo:
-				index[lineIndex++] = vertIndex;
-				index[lineIndex++] = vertIndex;
-				v[vertIndex++] = o->data.GetVector3D();
-				break;
-		}
-		o = PopOp();
-	}
-
-	m_fifo->RewindWriteHeadTo( m_mark );
-	VertexArray(v, vertexCount);
-
-	int stripStart = 0;
-	int stripSize = 0;
-	for ( int i = 0; i < lineIndex; i++ )
-	{
-		if ( i < lineIndex-1 )	// check if the next item is the same as me;  if so, stop
-		{
-			if ( index[i] == index[i+1] )	// at the end, or starting a new strip
-			{
-				if ( stripSize > 1 )
-				{
-					LineStrip(&index[stripStart], stripSize);
-				}
-				i++;
-				stripStart = i;
-				stripSize = 1;
-			}
-		}
-		else
-		{
-			if ( stripSize > 1 )
-			{
-				LineStrip(&index[stripStart], stripSize);
-			}
-		}
-	}
-
-	vsDeleteArray(v);
-	vsDeleteArray(index);
-
-	m_mark = m_fifo->Length();
-#endif // 0
-}
-
-void
-vsDisplayList::Compile_Internal()
-{
-#if !TARGET_OS_IPHONE
-	s_compiling = true;
-
-	m_displayListId = glGenLists(1);
-	glNewList(m_displayListId,GL_COMPILE);
-	Rewind();
-	vsSystem::GetScreen()->RenderDisplayList(this);
-	glEndList();
-	m_compiled = true;
-
-	s_compiling = false;
-#endif // TARGET_OS_IPHONE
-}
-
-void
-vsDisplayList::CompileAll()
-{
-	vsDisplayList *shuttle = s_compiledDisplayLists.GetNextCompiled();
-
-	while ( shuttle != &s_compiledDisplayLists )
-	{
-		shuttle->Compile_Internal();
-		shuttle = shuttle->GetNextCompiled();
-	}
-}
-
-void
-vsDisplayList::UncompileAll()
-{
-	vsDisplayList *shuttle = s_compiledDisplayLists.GetNextCompiled();
-
-	while ( shuttle != &s_compiledDisplayLists )
-	{
-		shuttle->Uncompile_Internal();
-		shuttle = shuttle->GetNextCompiled();
-	}
 }
 
 void
@@ -749,20 +530,6 @@ vsDisplayList::SetColor( const vsColor &color )
 	m_nextLineColor = color;
 	m_colorSet = true;
 }
-
-void
-vsDisplayList::SetSpecularColor( const vsColor &color )
-{
-	m_fifo->WriteUint8( OpCode_SetSpecularColor );
-	m_fifo->WriteColor( color );
-}
-/*
-void
-vsDisplayList::SetTexture( vsTexture *t )
-{
-	m_fifo->WriteUint8( OpCode_SetTexture );
-	m_fifo->WriteVoidStar( t );
-}*/
 
 void
 vsDisplayList::MoveTo( const vsVector3D &pos )
@@ -798,7 +565,7 @@ vsDisplayList::LineTo( const vsVector3D &pos )
 	{
 		ColorArray(c,2);
 	}
-	LineList(i,2);
+	LineListArray(i,2);
 	if ( m_colorSet )
 	{
 		ClearColorArray();
@@ -812,25 +579,16 @@ vsDisplayList::LineTo( const vsVector3D &pos )
 void
 vsDisplayList::DrawPoint( const vsVector3D &pos )
 {
-	m_fifo->WriteUint8( OpCode_DrawPoint );
-	m_fifo->WriteVector3D( pos );
-}
-
-void
-vsDisplayList::DrawCompiledDisplayList( unsigned int displayListId )
-{
-	m_fifo->WriteUint8( OpCode_CompiledDisplayList );
-	m_fifo->WriteUint32( displayListId );
+	int index = 0;
+	VertexArray(&pos, 1);
+	PointsArray( &index, 1 );
+	ClearVertexArray();
 }
 
 void
 vsDisplayList::Append( const vsDisplayList &list )
 {
-	if ( list.m_compiled )
-	{
-		DrawCompiledDisplayList( list.m_displayListId );
-	}
-	else if ( list.m_instanceParent )
+	if ( list.m_instanceParent )
 	{
 		Append( *list.m_instanceParent );
 	}
@@ -878,7 +636,34 @@ vsDisplayList::PushMatrix4x4( const vsMatrix4x4 &m )
 void
 vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 {
-	m_fifo->WriteUint8( OpCode_SetMatrix4x4 );
+	SetMatrices4x4( &m, 1 );
+}
+
+void
+vsDisplayList::SetMatrices4x4( const vsMatrix4x4 *m, int count )
+{
+	m_fifo->WriteUint8( OpCode_SetMatrices4x4 );
+	m_fifo->WriteUint32( count );
+	m_fifo->WriteVoidStar( (char*)m );
+}
+
+void
+vsDisplayList::SetMatrices4x4Buffer( vsRenderBuffer *buffer )
+{
+	m_fifo->WriteUint8( OpCode_SetMatrices4x4Buffer );
+	m_fifo->WriteVoidStar( (char*)buffer );
+}
+
+void
+vsDisplayList::SnapMatrix()
+{
+	m_fifo->WriteUint8( OpCode_SnapMatrix );
+}
+
+void
+vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
+{
+	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
 	m_fifo->WriteMatrix4x4( m );
 }
 
@@ -912,20 +697,6 @@ vsDisplayList::SetProjectionMatrix4x4( const vsMatrix4x4 &m )
 	m_fifo->WriteMatrix4x4( m );
 }
 
-
-void
-vsDisplayList::SetCameraProjection( const vsTransform3D &t )
-{
-	SetCameraProjection(t.GetMatrix());
-}
-
-void
-vsDisplayList::SetCameraProjection( const vsMatrix4x4 &m )
-{
-	m_fifo->WriteUint8( OpCode_SetCameraProjection );
-	m_fifo->WriteMatrix4x4( m );
-}
-
 void
 vsDisplayList::PopTransform()
 {
@@ -933,7 +704,7 @@ vsDisplayList::PopTransform()
 }
 
 void
-vsDisplayList::VertexArray( vsVector2D *array, int arrayCount )
+vsDisplayList::VertexArray( const vsVector2D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_VertexArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -944,7 +715,7 @@ vsDisplayList::VertexArray( vsVector2D *array, int arrayCount )
 }
 
 void
-vsDisplayList::VertexArray( vsVector3D *array, int arrayCount )
+vsDisplayList::VertexArray( const vsVector3D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_VertexArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -965,7 +736,7 @@ vsDisplayList::VertexBuffer( vsRenderBuffer *buffer )
 }
 
 void
-vsDisplayList::NormalArray( vsVector3D *array, int arrayCount )
+vsDisplayList::NormalArray( const vsVector3D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_NormalArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -1047,7 +818,7 @@ vsDisplayList::ClearArrays()
 }
 
 void
-vsDisplayList::TexelArray( vsVector2D *array, int arrayCount )
+vsDisplayList::TexelArray( const vsVector2D *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_TexelArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -1058,7 +829,7 @@ vsDisplayList::TexelArray( vsVector2D *array, int arrayCount )
 }
 
 void
-vsDisplayList::ColorArray( vsColor *array, int arrayCount )
+vsDisplayList::ColorArray( const vsColor *array, int arrayCount )
 {
 	m_fifo->WriteUint8( OpCode_ColorArray );
 	m_fifo->WriteUint32( arrayCount );
@@ -1070,9 +841,9 @@ vsDisplayList::ColorArray( vsColor *array, int arrayCount )
 }
 
 void
-vsDisplayList::LineList( int *idArray, int vertexCount )
+vsDisplayList::LineListArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineList );
+	m_fifo->WriteUint8( OpCode_LineListArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1081,9 +852,9 @@ vsDisplayList::LineList( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::LineStrip( uint16_t *idArray, int vertexCount )
+vsDisplayList::LineStripArray( uint16_t *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineStrip );
+	m_fifo->WriteUint8( OpCode_LineStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1092,9 +863,9 @@ vsDisplayList::LineStrip( uint16_t *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::LineStrip( int *idArray, int vertexCount )
+vsDisplayList::LineStripArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_LineStrip );
+	m_fifo->WriteUint8( OpCode_LineStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1103,9 +874,9 @@ vsDisplayList::LineStrip( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::TriangleList( int *idArray, int vertexCount )
+vsDisplayList::TriangleListArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleList );
+	m_fifo->WriteUint8( OpCode_TriangleListArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1114,9 +885,9 @@ vsDisplayList::TriangleList( int *idArray, int vertexCount )
 }
 
 void
-vsDisplayList::TriangleStrip( int *idArray, int vertexCount )
+vsDisplayList::TriangleStripArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleStrip );
+	m_fifo->WriteUint8( OpCode_TriangleStripArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
@@ -1160,28 +931,26 @@ vsDisplayList::LineStripBuffer( vsRenderBuffer *buffer )
 }
 
 void
-vsDisplayList::TriangleFan( int *idArray, int vertexCount )
+vsDisplayList::PointsArray( int *idArray, int vertexCount )
 {
-	m_fifo->WriteUint8( OpCode_TriangleFan );
+	m_fifo->WriteUint8( OpCode_PointsArray );
 	m_fifo->WriteUint32( vertexCount );
 	for ( int i = 0; i < vertexCount; i++ )
 	{
 		m_fifo->WriteUint16Native( idArray[i] );
 	}
 }
-/*
-void
-vsDisplayList::SetDrawMode( vsDrawMode mode )
-{
-	if ( !m_modeSet || m_currentMode != mode )
-	{
-		m_fifo->WriteUint8( OpCode_SetDrawMode );
-		m_fifo->WriteUint8( mode );
 
-		m_modeSet = true;
-		m_currentMode = mode;
+void
+vsDisplayList::TriangleFanArray( int *idArray, int vertexCount )
+{
+	m_fifo->WriteUint8( OpCode_TriangleFanArray );
+	m_fifo->WriteUint32( vertexCount );
+	for ( int i = 0; i < vertexCount; i++ )
+	{
+		m_fifo->WriteUint16Native( idArray[i] );
 	}
-}*/
+}
 
 void
 vsDisplayList::SetMaterial( vsMaterial *material )
@@ -1194,6 +963,28 @@ vsDisplayList::SetMaterial( vsMaterialInternal *material )
 {
 	m_fifo->WriteUint8( OpCode_SetMaterial );
 	m_fifo->WriteVoidStar( material );
+}
+
+void
+vsDisplayList::SetRenderTarget( vsRenderTarget *target )
+{
+	m_fifo->WriteUint8( OpCode_SetRenderTarget );
+	m_fifo->WriteVoidStar( target );
+}
+
+void
+vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
+{
+	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
+	m_fifo->WriteVoidStar( target );
+}
+
+void
+vsDisplayList::BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to )
+{
+	m_fifo->WriteUint8( OpCode_BlitRenderTarget );
+	m_fifo->WriteVoidStar( from );
+	m_fifo->WriteVoidStar( to );
 }
 
 void
@@ -1314,20 +1105,8 @@ vsDisplayList::PopOp()
 			case OpCode_SetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
-			case OpCode_SetSpecularColor:
-				m_fifo->ReadColor(&m_currentOp.data.color);
-				break;
-			case OpCode_SetTexture:
-				m_currentOp.data.p = (char *)m_fifo->ReadVoidStar();
-				break;
-			case OpCode_MoveTo:
-			case OpCode_LineTo:
-			case OpCode_DrawPoint:
 			case OpCode_PushTranslation:
 				m_fifo->ReadVector3D(&m_currentOp.data.vector);
-				break;
-			case OpCode_CompiledDisplayList:
-				m_currentOp.data.Set( m_fifo->ReadUint32() );
 				break;
 			case OpCode_VertexArray:
 			{
@@ -1388,11 +1167,12 @@ vsDisplayList::PopOp()
 //				}
 				break;
 			}
-			case OpCode_LineList:
-			case OpCode_LineStrip:
-			case OpCode_TriangleList:
-			case OpCode_TriangleStrip:
-			case OpCode_TriangleFan:
+			case OpCode_LineListArray:
+			case OpCode_LineStripArray:
+			case OpCode_TriangleListArray:
+			case OpCode_TriangleStripArray:
+			case OpCode_TriangleFanArray:
+			case OpCode_PointsArray:
 			{
 				int count = m_fifo->ReadUint32();
 				m_currentOp.data.Set( count );
@@ -1418,9 +1198,21 @@ vsDisplayList::PopOp()
 				m_fifo->ReadTransform2D( &m_currentOp.data.transform );
 				break;
 			case OpCode_PushMatrix4x4:
-			case OpCode_SetMatrix4x4:
+			case OpCode_SetWorldToViewMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
+			case OpCode_SetMatrices4x4:
+				{
+					int count = m_fifo->ReadUint32();
+					m_currentOp.data.SetPointer( (char*)m_fifo->ReadVoidStar() );
+					m_currentOp.data.i = count;
+					break;
+				}
+			case OpCode_SetMatrices4x4Buffer:
+				{
+					m_currentOp.data.SetPointer( (char*)m_fifo->ReadVoidStar() );
+					break;
+				}
 			case OpCode_Set3DProjection:
 				m_currentOp.data.fov = m_fifo->ReadFloat();
 				m_currentOp.data.nearPlane = m_fifo->ReadFloat();
@@ -1429,14 +1221,18 @@ vsDisplayList::PopOp()
 			case OpCode_SetProjectionMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
-			case OpCode_SetCameraProjection:
-				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
-				break;
-			case OpCode_SetDrawMode:
-				m_currentOp.data.Set( m_fifo->ReadUint8() );
-				break;
 			case OpCode_SetMaterial:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_SetRenderTarget:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_ResolveRenderTarget:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_BlitRenderTarget:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_Light:
 				m_fifo->ReadLight( &m_currentOp.data.light );
@@ -1487,21 +1283,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_SetColor:
 			SetColor( o->data.GetColor() );
 			break;
-		case OpCode_SetSpecularColor:
-			SetColor( o->data.GetColor() );
-			break;
-		case OpCode_MoveTo:
-			MoveTo( o->data.GetVector3D() );
-			break;
-		case OpCode_LineTo:
-			LineTo( o->data.GetVector3D() );
-			break;
-		case OpCode_DrawPoint:
-			DrawPoint( o->data.GetVector3D() );
-			break;
-		case OpCode_CompiledDisplayList:
-			DrawCompiledDisplayList( o->data.GetUInt() );
-			break;
 		case OpCode_VertexArray:
 			VertexArray( (vsVector3D *)o->data.p, o->data.GetUInt() );
 			break;
@@ -1544,17 +1325,20 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_ClearArrays:
 			ClearArrays();
 			break;
-		case OpCode_LineList:
-			LineList( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_LineListArray:
+			LineListArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_LineStrip:
-			LineStrip( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_LineStripArray:
+			LineStripArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_TriangleList:
-			TriangleList( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleListArray:
+			TriangleListArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
-		case OpCode_TriangleStrip:
-			TriangleStrip( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleStripArray:
+			TriangleStripArray( (int *)o->data.p, o->data.GetUInt() );
+			break;
+		case OpCode_PointsArray:
+			PointsArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
 		case OpCode_LineListBuffer:
 			LineListBuffer( (vsRenderBuffer *)o->data.p );
@@ -1565,8 +1349,8 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_TriangleStripBuffer:
 			TriangleStripBuffer( (vsRenderBuffer *)o->data.p );
 			break;
-		case OpCode_TriangleFan:
-			TriangleFan( (int *)o->data.p, o->data.GetUInt() );
+		case OpCode_TriangleFanArray:
+			TriangleFanArray( (int *)o->data.p, o->data.GetUInt() );
 			break;
 		case OpCode_PushTransform:
 			PushTransform( o->data.GetTransform() );
@@ -1577,17 +1361,20 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_PushMatrix4x4:
 			PushMatrix4x4( o->data.GetMatrix4x4() );
 			break;
-		case OpCode_SetMatrix4x4:
-			SetMatrix4x4( o->data.GetMatrix4x4() );
+		case OpCode_SetMatrices4x4:
+			SetMatrices4x4( (vsMatrix4x4*)o->data.p, o->data.i );
+			break;
+		case OpCode_SetMatrices4x4Buffer:
+			SetMatrices4x4Buffer( (vsRenderBuffer*)o->data.p );
+			break;
+		case OpCode_SetWorldToViewMatrix4x4:
+			SetWorldToViewMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_Set3DProjection:
 			Set3DProjection( o->data.fov, o->data.nearPlane, o->data.farPlane );
 			break;
 		case OpCode_SetProjectionMatrix4x4:
 			SetProjectionMatrix4x4( o->data.GetMatrix4x4() );
-			break;
-		case OpCode_SetCameraProjection:
-			SetCameraProjection( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_PopTransform:
 			PopTransform();
@@ -1616,9 +1403,6 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_Debug:
 			Debug( o->data.GetString() );
 			break;
-		//case OpCode_SetDrawMode:
-		//	SetDrawMode( (vsDrawMode)o->data.GetUInt() );
-		//	break;
 		default:
 			break;
 	}
@@ -1663,15 +1447,6 @@ vsDisplayList::GetBoundingCircle(vsVector2D &center, float &radius)
 					shuttle += 3;
 				}
 			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector2D pos = o->data.GetVector3D();
-
-				max.x = vsMax( max.x, pos.x );
-				max.y = vsMax( max.y, pos.y );
-				min.x = vsMin( min.x, pos.x );
-				min.y = vsMin( min.y, pos.y );
-			}
 			o = PopOp();
 		}
 
@@ -1704,113 +1479,88 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 	}
 	else
 	{
-		//vsTransform2D currentTransform;
 		vsTransform2D	transformStack[20];
 		transformStack[0] = vsTransform2D::Zero;
 		int				transformStackLevel = 0;
 		vsVector3D		*currentVertexArray = NULL;
-		//int			currentVertexArraySize = 0;
+		vsRenderBuffer *currentVertexBuffer = NULL;
 
 		Rewind();
 		op *o = PopOp();
 
 		while(o)
 		{
-			if ( o->type == OpCode_PushTransform )
+			switch( o->type )
 			{
-				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.transform;
-				transformStackLevel++;
-			}
-			else if ( o->type == OpCode_PushTranslation )
-			{
-				vsTransform2D transform;
-				transform.SetTranslation( o->data.GetVector3D() );
-				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * transform;
-				transformStackLevel++;
-			}
-			else if ( o->type == OpCode_PopTransform )
-			{
-				transformStackLevel--;
-			}
-			else if ( o->type == OpCode_VertexArray )
-			{
-				vsVector3D pos;
-				int count = o->data.GetUInt();
-				float *shuttle = (float *) o->data.p;
-				currentVertexArray = (vsVector3D *)shuttle;
-				//currentVertexArraySize = count*3;
+				case OpCode_PushTransform:
+					transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.transform;
+					transformStackLevel++;
+					break;
+				case OpCode_PushTranslation:
+					{
+						vsTransform2D transform;
+						transform.SetTranslation( o->data.GetVector3D() );
+						transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * transform;
+						transformStackLevel++;
+						break;
+					}
+				case OpCode_PopTransform:
+					transformStackLevel--;
+					break;
+				case OpCode_VertexArray:
+					currentVertexBuffer = NULL;
+					currentVertexArray = (vsVector3D *)o->data.p;
+					break;
+				case OpCode_VertexBuffer:
+				case OpCode_BindBuffer:
+					currentVertexArray = NULL;
+					currentVertexBuffer = (vsRenderBuffer *)o->data.p;
+					break;
+				case OpCode_LineListBuffer:
+				case OpCode_LineStripBuffer:
+				case OpCode_TriangleListBuffer:
+				case OpCode_TriangleStripBuffer:
+				case OpCode_TriangleFanBuffer:
+					{
+						vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+						uint16_t *shuttle = buffer->GetIntArray();
 
-				for ( int i = 0; i < count; i++ )
-				{
-					pos.Set(shuttle[0],shuttle[1],shuttle[2]);
+						for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
+						{
+							uint16_t index = shuttle[i];
+							vsVector3D pos;
+							if ( currentVertexArray )
+								pos = currentVertexArray[index];
+							else
+								pos = currentVertexBuffer->GetPosition(index);
+							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
+						}
+						break;
+					}
+				case OpCode_LineListArray:
+				case OpCode_LineStripArray:
+				case OpCode_TriangleListArray:
+				case OpCode_TriangleStripArray:
+				case OpCode_TriangleFanArray:
+				case OpCode_PointsArray:
+					{
+						uint16_t *shuttle = (uint16_t *)o->data.p;
+						int count = o->data.GetUInt();
 
-					box.ExpandToInclude( pos );
-
-					shuttle += 3;
-				}
-			}
-			else if ( o->type == OpCode_VertexBuffer )
-			{
-				vsVector3D pos;
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				currentVertexArray = buffer->GetVector3DArray();
-				//currentVertexArraySize = buffer->GetVector3DArraySize();
-
-				for ( int i = 0; i < buffer->GetVector3DArraySize(); i++ )
-				{
-					pos = buffer->GetVector3DArray()[i];
-
-					pos = transformStack[transformStackLevel].ApplyTo( pos );
-
-					box.ExpandToInclude( pos );
-				}
-			}
-			else if ( o->type == OpCode_BindBuffer )
-			{
-				vsVector3D pos;
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				int positionCount = buffer->GetPositionCount();
-
-				for ( int i = 0; i < positionCount; i++ )
-				{
-					pos = buffer->GetPosition(i);
-
-					pos = transformStack[transformStackLevel].ApplyTo( pos );
-
-					box.ExpandToInclude( pos );
-				}
-			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector3D pos = o->data.GetVector3D();
-				box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
-
-				/*topLeft.x = vsMin(topLeft.x,pos.x);
-				topLeft.y = vsMin(topLeft.y,pos.y);
-				bottomRight.x = vsMax(bottomRight.x,pos.x);
-				bottomRight.y = vsMax(bottomRight.y,pos.y);*/
-			}
-			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
-			{
-				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				uint16_t *shuttle = buffer->GetIntArray();
-
-				for ( int i = 0; i < buffer->GetIntArraySize(); i++ )
-				{
-					uint16_t index = shuttle[i];
-					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
-				}
-			}
-			else if ( o->type == OpCode_LineStrip )
-			{
-				uint16_t *shuttle = (uint16_t *)o->data.p;
-				int count = o->data.GetUInt();
-
-				for ( int i = 0; i < count; i++ )
-				{
-					uint16_t index = shuttle[i];
-					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
-				}
+						for ( int i = 0; i < count; i++ )
+						{
+							uint16_t index = shuttle[i];
+							vsVector3D pos;
+							if ( currentVertexArray )
+								pos = currentVertexArray[index];
+							else
+								pos = currentVertexBuffer->GetPosition(index);
+							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
+						}
+						break;
+					}
+				default:
+					break;
 			}
 
 			o = PopOp();
@@ -1848,9 +1598,10 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.matrix4x4;
 				transformStackLevel++;
 			}
-			else if ( o->type == OpCode_SetMatrix4x4 )
+			else if ( o->type == OpCode_SetMatrices4x4 )
 			{
-				transformStack[transformStackLevel] = o->data.matrix4x4;
+				vsMatrix4x4 *mat = (vsMatrix4x4*)o->data.p;
+				transformStack[transformStackLevel] = *mat;
 			}
 			else if ( o->type == OpCode_PopTransform )
 			{
@@ -1903,16 +1654,6 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 					box.ExpandToInclude( pos );
 				}
 			}
-			else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-			{
-				vsVector3D pos = o->data.GetVector3D();
-				box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
-
-				/*topLeft.x = vsMin(topLeft.x,pos.x);
-				 topLeft.y = vsMin(topLeft.y,pos.y);
-				 bottomRight.x = vsMax(bottomRight.x,pos.x);
-				 bottomRight.y = vsMax(bottomRight.y,pos.y);*/
-			}
 			else if ( o->type == OpCode_LineListBuffer || o->type == OpCode_LineStripBuffer )
 			{
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
@@ -1924,7 +1665,7 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 					box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo( currentVertexArray[index] ) );
 				}
 			}
-			else if ( o->type == OpCode_LineStrip )
+			else if ( o->type == OpCode_LineStripArray )
 			{
 				uint16_t *shuttle = (uint16_t *)o->data.p;
 				int count = o->data.GetUInt();
@@ -1968,36 +1709,8 @@ vsDisplayList::ApplyOffset(const vsVector2D &offset)
 				shuttle += 3;
 			}
 		}
-		else if ( o->type == OpCode_MoveTo || o->type == OpCode_LineTo )
-		{
-			vsVector2D pos = o->data.GetVector3D();
-			pos += offset;
-			//ModifyOp(o);
-		}
 
 		o = PopOp();
 	}
-}
-
-
-void
-vsDisplayList::AppendToCompiledList( vsDisplayList *o )
-{
-	o->m_next = m_next;
-	o->m_prev = this;
-
-	m_next->m_prev = o;
-	m_next = o;
-}
-
-void
-vsDisplayList::ExtractFromCompiledList()
-{
-	if ( m_prev )
-		m_prev->m_next = m_next;
-	if ( m_next )
-		m_next->m_prev = m_prev;
-
-	m_prev = m_next = this;
 }
 

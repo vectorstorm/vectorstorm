@@ -21,8 +21,6 @@
 
 vsTransform2D	g_drawingCameraTransform = vsTransform2D::Zero;
 
-vsScene *		vsScene::s_current = NULL;
-
 vsScene::vsScene():
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
@@ -54,7 +52,6 @@ vsScene::~vsScene()
 	vsDelete( m_defaultCamera3D );
 	vsDelete( m_defaultCamera );
 	vsDelete( m_entityList );
-	//	delete m_displayList;
 }
 
 void
@@ -89,13 +86,23 @@ vsScene::GetFOV()
 void
 vsScene::UpdateVideoMode()
 {
-	if ( m_camera3D )
-	{
-		m_camera3D->SetAspectRatio( vsSystem::GetScreen()->GetAspectRatio() );
-	}
-	if ( m_camera )
-	{
-	}
+	// TODO:  This is all really awkward;  it shouldn't be here.
+	//
+	// Cameras should *either* have an aspect ratio set on them explicitly by
+	// clients (if the clients know what they're doing), *or* automatically take
+	// the aspect ratio of the viewport they're rendering into.  We shouldn't
+	// change them automatically based upon a resize event, in the former case,
+	// and particularly shouldn't be changing them HERE in the latter case!
+	// (That should happen at the time of render)
+
+//	if ( m_camera3D )
+//	{
+//		m_camera3D->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
+//	}
+//	if ( m_camera )
+//	{
+//		m_camera->SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
+//	}
 }
 
 void
@@ -114,8 +121,6 @@ vsScene::ClearViewport()
 void
 vsScene::Update( float timeStep )
 {
-	s_current = this;
-
 	vsEntity *entity = m_entityList->GetNext();
 	vsEntity *next;
 	while ( entity != m_entityList )
@@ -138,17 +143,11 @@ vsScene::Update( float timeStep )
 	{
 		m_camera3D->Update( timeStep );
 	}
-
-	s_current = NULL;
 }
 
 void
 vsScene::Draw( vsDisplayList *list )
 {
-	s_current = this;
-
-	//	m_displayList->Clear();
-
 	if ( m_flatShading )
 	{
 		list->FlatShading();
@@ -163,11 +162,15 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetViewport( m_viewport );
 	}
 
+	m_queue->StartRender(this);
+
 	if ( m_is3d )
 	{
 		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
+		m_queue->SetProjectionMatrix(  m_camera3D->GetProjectionMatrix() );
+		m_queue->SetFOV( m_camera3D->GetFieldOfView() );
 		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
-		list->SetCameraProjection( m_camera3D->GetTransform() );
+		// list->SetCameraTransform( m_camera3D->GetTransform() );
 
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
@@ -186,17 +189,16 @@ vsScene::Draw( vsDisplayList *list )
 	else
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
-		//list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
-		list->SetCameraTransform( m_camera->GetCameraTransform() );
+		list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
+		m_queue->SetProjectionMatrix(  m_camera->GetProjectionMatrix() );
 	}
+	list->SetWorldToViewMatrix4x4( m_queue->GetWorldToViewMatrix() );
 
 	if ( m_stencilTest )
 	{
 		//list->ClearStencil();
 		list->EnableStencil();
 	}
-
-	m_queue->StartRender(this);
 
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
@@ -224,8 +226,6 @@ vsScene::Draw( vsDisplayList *list )
 	list->ClearLights();
 	list->ClearFog();
 	list->SetMaterial(vsMaterial::White);
-
-	s_current = NULL;
 }
 
 void
@@ -316,7 +316,7 @@ vsScene::GetCorner(bool bottom, bool right)
 		pos.y = -halfFov;
 
 	// now, to figure out where the edge is, we need to know our screen aspect ratio, which is the ratio of horizontal pixels to vertical pixels.
-	float aspectRatio = vsSystem::GetScreen()->GetAspectRatio();
+	float aspectRatio = vsScreen::Instance()->GetAspectRatio();
 
 	if ( right )
 		pos.x = halfFov * aspectRatio;
@@ -348,7 +348,7 @@ public:
 	void				Init()
 	{
 		SetFOV( 1.0f );
-		SetPosition( vsVector2D(0.5f * vsSystem::GetScreen()->GetAspectRatio() , 0.5f) );
+		SetPosition( vsVector2D(0.5f * vsScreen::Instance()->GetAspectRatio() , 0.5f) );
 	}
 };
 

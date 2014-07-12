@@ -175,7 +175,6 @@ vsSprite::Draw( vsRenderQueue *queue )
 		else
 		{
 			DynamicDraw( queue );
-			list->Mark();
 		}
 
 		if ( !m_fragment.IsEmpty() )
@@ -200,10 +199,6 @@ void
 vsSprite::SetDisplayList( vsDisplayList *list )
 {
 	m_displayList = list;
-	if ( m_displayList )
-	{
-		m_displayList->Mark();
-	}
 	CalculateBoundingRadius();
 }
 

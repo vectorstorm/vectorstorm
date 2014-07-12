@@ -51,6 +51,7 @@ vsInput::Init()
 	{
 		m_lastControlState[i] = 0.f;
 		m_controlState[i] = 0.f;
+		m_keyControlState[i] = 0.f;
 	}
 
 #if !TARGET_OS_IPHONE
@@ -123,7 +124,7 @@ static vsString s_cidName[CID_MAX] =
 	"CID_Right",
 
 	"CID_Exit",
-	"CID_ExitApplication",
+	"CID_Escape",
 
 	"CID_A",
 	"CID_B",
@@ -311,7 +312,9 @@ vsInput::Update(float timeStep)
 	m_keyControlState[CID_MouseWheel] = 0.f;
 
 	for ( int i = 0; i < CID_MAX; i++ )
+	{
 		m_lastControlState[i] = m_controlState[i];
+	}
 
 	m_mouseMotion = vsVector2D::Zero;
 
@@ -326,8 +329,8 @@ vsInput::Update(float timeStep)
 
 	m_mousePos = vsVector2D(GetTouchX(0),GetTouchY(0));
 
-	m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-	m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+	m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+	m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 	m_mousePos -= vsVector2D(1.f,1.f);
 
 	m_mousePos = Correct2DInputForOrientation( m_mousePos );
@@ -384,8 +387,8 @@ vsInput::Update(float timeStep)
 					{
 						m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
 
-						m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-						m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+						m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+						m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 						m_mousePos -= vsVector2D(1.f,1.f);
 
 						if ( m_suppressFirstMotion )
@@ -396,8 +399,8 @@ vsInput::Update(float timeStep)
 						{
 							m_mouseMotion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
 
-							m_mouseMotion.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-							m_mouseMotion.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+							m_mouseMotion.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+							m_mouseMotion.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 							// TODO:  CORRECT FOR ORIENTATION ON IOS DEVICES
 						}
 						break;
@@ -441,7 +444,7 @@ vsInput::Update(float timeStep)
 									{
 										core::SetExit();
 									}
-									m_keyControlState[CID_ExitApplication] = 1.0f;
+									m_keyControlState[CID_Escape] = 1.0f;
 									break;
 								case SDLK_w:
 								case SDLK_UP:
@@ -501,7 +504,7 @@ vsInput::Update(float timeStep)
 								m_keyControlState[CID_Exit] = 0.0f;
 								break;
 							case SDLK_ESCAPE:
-								m_keyControlState[CID_ExitApplication] = 0.0f;
+								m_keyControlState[CID_Escape] = 0.0f;
 								break;
 							case SDLK_w:
 							case SDLK_UP:
@@ -562,11 +565,24 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_RESIZED:
 							{
+								vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
 								int windowWidth = event.window.data1;
 								int windowHeight = event.window.data2;
 								vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
 								break;
 							}
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+							vsLog("Size Changed event");
+							break;
+						case SDL_WINDOWEVENT_SHOWN:
+							vsLog("Shown");
+							break;
+						case SDL_WINDOWEVENT_HIDDEN:
+							vsLog("Hidden");
+							break;
+						case SDL_WINDOWEVENT_MOVED:
+							vsSystem::Instance()->CheckVideoMode();
+							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
 							vsSystem::Instance()->SetAppHasFocus( false );
 							break;
@@ -579,31 +595,13 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_LEAVE:
 							m_mouseIsInWindow = false;
 							break;
-//					{
-//						if ( event.active.state & SDL_APPINPUTFOCUS )
-//						{
-//							// turn off mouse capture when we lose focus, if it's on.
-//							if ( m_captureMouse )
-//							{
-//								if ( event.active.gain )
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_ON );
-//								}
-//								else
-//								{
-//									SDL_WM_GrabInput( SDL_GRAB_OFF );
-//								}
-//							}
-//							vsSystem::Instance()->SetAppHasFocus( event.active.gain );
-//						}
-//						break;
-//					}
+						default:
+							vsLog("Unhandled window event:  %d", event.window.event);
+							break;
 					}
 					break;
 				case SDL_QUIT:
 					core::SetExit();
-					break;
-				default:
 					break;
 			}
 		}
@@ -745,8 +743,8 @@ vsInput::Update(float timeStep)
 		// this is based on the window size.  (0,0 .. width,height)
 		m_mousePos = vsVector2D((float)x,(float)y);
 
-		m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-		m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+		m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+		m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 		m_mousePos -= vsVector2D(1.f,1.f);
 
 		m_mousePos = Correct2DInputForOrientation( m_mousePos );*/
@@ -755,8 +753,8 @@ vsInput::Update(float timeStep)
 
 		if ( m_captureMouse )
 		{
-			//SDL_WarpMouse( vsSystem::GetScreen()->GetTrueWidth() >> 1,
-			//			  vsSystem::GetScreen()->GetTrueHeight() >> 1 );
+			//SDL_WarpMouse( vsScreen::Instance()->GetTrueWidth() >> 1,
+			//			  vsScreen::Instance()->GetTrueHeight() >> 1 );
 		}
 	}
 
@@ -780,6 +778,15 @@ vsInput::ReadMouseButton( int buttonID )
 		SDL_Keymod keymod = SDL_GetModState();
 		if ( keymod & KMOD_LGUI )
 			buttonDown = !!(buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
+	}
+	if ( buttonID == SDL_BUTTON_LEFT )
+	{
+		// turn off left button if alt is down;  we're treating
+		// that combo as the right mouse button.
+
+		SDL_Keymod keymod = SDL_GetModState();
+		if ( keymod & KMOD_LGUI )
+			buttonDown = false;
 	}
 #endif // __APPLE_CC__
 
@@ -952,8 +959,8 @@ vsInput::GetWindowMousePosition()
 {
 	vsVector2D retval = m_mousePos;
 	retval += vsVector2D::One;
-	retval.x *= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-	retval.y *= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+	retval.x *= (.5f * vsScreen::Instance()->GetTrueWidth());
+	retval.y *= (.5f * vsScreen::Instance()->GetTrueHeight());
 
 	return retval;
 }
@@ -968,13 +975,13 @@ vsInput::GetMousePosition(int scene)
 	// this is based on the window size.  (0,0 .. width,height)
 	vsVector2D mousePos = vsVector2D((float)x,(float)y);
 
-	mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-	mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+	mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+	mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 	mousePos -= vsVector2D(1.f,1.f);
 	*/
 	// now mousePos is going from (-1,-1 .. 1,1) as we go from top left to bottom right corner of the window
 
-	vsScene *s = vsSystem::GetScreen()->GetScene(scene);
+	vsScene *s = vsScreen::Instance()->GetScene(scene);
 	if ( s->Is3D() )
 	{
 		return m_mousePos;
@@ -985,7 +992,7 @@ vsInput::GetMousePosition(int scene)
 	vsTransform2D t = c->GetCameraTransform();
 	vsVector2D scale = t.GetScale();
 	scale.y *= 0.5f;
-	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
+	scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
 	t.SetScale(scale);
 	vsVector2D mousePos = t.ApplyTo( m_mousePos );
 
@@ -995,7 +1002,7 @@ vsInput::GetMousePosition(int scene)
 vsVector2D
 vsInput::GetMouseMotion(int scene)
 {
-	vsScene *s = vsSystem::GetScreen()->GetScene(scene);
+	vsScene *s = vsScreen::Instance()->GetScene(scene);
 	if ( s->Is3D() )
 	{
 		return m_mouseMotion;
@@ -1006,9 +1013,8 @@ vsInput::GetMouseMotion(int scene)
 	vsTransform2D t = c->GetCameraTransform();
 	vsVector2D scale = t.GetScale();
 	scale.y *= 0.5f;
-	scale.x = scale.y * vsSystem::GetScreen()->GetAspectRatio();
-	t.SetScale(scale);
-	vsVector2D mousePos = t.ApplyTo( m_mouseMotion );
+	scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
+	vsVector2D mousePos = vsVector2D( m_mouseMotion.x * scale.x, m_mouseMotion.y * scale.y );
 
 	return mousePos;
 }
@@ -1038,11 +1044,11 @@ vsInput::GetTouchPosition(int touchID, int scene)
 {
 #if TARGET_OS_IPHONE
 
-	vsScene *s = vsSystem::GetScreen()->GetScene(scene);
+	vsScene *s = vsScreen::Instance()->GetScene(scene);
 	vsVector2D touchPos( GetTouchX(touchID), GetTouchY(touchID) );
 
-	touchPos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-	touchPos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+	touchPos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+	touchPos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 	touchPos -= vsVector2D(1.f,1.f);
 
 	touchPos = Correct2DInputForOrientation( touchPos );
@@ -1056,7 +1062,7 @@ vsInput::GetTouchPosition(int touchID, int scene)
 
 	vsTransform2D t = c->GetCameraTransform();
 	t.m_scale.y *= 0.5f;
-	t.m_scale.x = t.m_scale.y * vsSystem::GetScreen()->GetAspectRatio();
+	t.m_scale.x = t.m_scale.y * vsScreen::Instance()->GetAspectRatio();
 	touchPos = t.ApplyTo( touchPos );
 
 	return touchPos;
@@ -1079,8 +1085,8 @@ vsInput::CaptureMouse( bool capture )
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
 			SDL_SetRelativeMouseMode(SDL_TRUE);
-			//SDL_WarpMouse( (uint16_t)(.5f * vsSystem::GetScreen()->GetTrueWidth()),
-			//	(uint16_t)(.5f * vsSystem::GetScreen()->GetTrueHeight()) );
+			//SDL_WarpMouse( (uint16_t)(.5f * vsScreen::Instance()->GetTrueWidth()),
+			//	(uint16_t)(.5f * vsScreen::Instance()->GetTrueHeight()) );
 			m_mousePos = vsVector2D::Zero;
 			m_mouseMotion = vsVector2D::Zero;
 			m_suppressFirstMotion = true;
@@ -1091,8 +1097,8 @@ vsInput::CaptureMouse( bool capture )
 
 			m_mousePos = vsVector2D((float)m_capturedMouseX,(float)m_capturedMouseY);
 
-			m_mousePos.x /= (.5f * vsSystem::GetScreen()->GetTrueWidth());
-			m_mousePos.y /= (.5f * vsSystem::GetScreen()->GetTrueHeight());
+			m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+			m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 			m_mousePos -= vsVector2D(1.f,1.f);
 
 			m_mousePos = Correct2DInputForOrientation( m_mousePos );

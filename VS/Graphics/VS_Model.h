@@ -17,11 +17,51 @@
 #include "VS/Graphics/VS_Material.h"
 #include "VS/Math/VS_Box.h"
 #include "VS/Math/VS_Transform.h"
+#include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
+
+class vsModel;
+
+struct vsModelInstance
+{
+private:
+	vsMatrix4x4 matrix;
+	vsModel *model;
+	int index;       // our ID within the instance array.
+	int matrixIndex; // our ID within the matrix array.
+	bool visible;
+	friend class vsModel;
+
+public:
+	vsModelInstance() {}
+	~vsModelInstance();
+
+	void SetVisible( bool visible );
+	void SetMatrix( const vsMatrix4x4& mat );
+
+	vsModel * GetModel() { return model; }
+	const vsVector4D& GetPosition() { return matrix.w; }
+	const vsMatrix4x4& GetMatrix() { return matrix; }
+
+};
 
 class vsModel : public vsEntity
 {
 	typedef vsEntity Parent;
+
+	struct InstanceData
+	{
+		vsArray<vsMatrix4x4> matrix;
+		vsArray<int> matrixInstanceId;
+		vsArray<vsModelInstance*> instance;
+		vsRenderBuffer matrixBuffer;
+		bool bufferIsDirty;
+
+		InstanceData():
+			matrixBuffer(vsRenderBuffer::Type_Dynamic)
+		{
+		}
+	};
 
 	vsMaterial *	m_material;
 
@@ -34,7 +74,10 @@ protected:
 
 	vsLinkedListStore<vsFragment>	m_fragment;	// new-style rendering
 
-	vsTransform3D	m_transform;
+	// m_instanceMat and m_instance may not be in the same order.
+	struct InstanceData *m_instanceData;
+
+	vsTransform3D m_transform;
 
 	void LoadFrom( vsRecord *record );
 
@@ -44,6 +87,12 @@ public:
 
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
+
+	void SetAsInstanceModel(); // if set, this model won't be drawn;  only instances will.
+
+	vsModelInstance * MakeInstance();		// create an instance of me.
+	void RemoveInstance( vsModelInstance *model );
+	void			UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
 
 	void			SetMaterial( const vsString &name ) { vsDelete( m_material ); m_material = new vsMaterial(name); }
 	void			SetMaterial( vsMaterial *material ) { vsDelete( m_material ); m_material = material; }

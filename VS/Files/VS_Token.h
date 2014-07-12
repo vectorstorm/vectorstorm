@@ -22,6 +22,7 @@ public:
 		Type_Integer,
 		Type_OpenBrace,
 		Type_CloseBrace,
+		Type_Equals,
 		Type_NewLine,
 
 		TYPE_MAX

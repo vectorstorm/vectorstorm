@@ -11,7 +11,7 @@
 #include "VS_PhysicsSprite.h"
 
 #include "VS_DisableDebugNew.h"
-#include <Box2D.h>
+#include <Box2D/Box2D.h>
 #include "VS_EnableDebugNew.h"
 
 #include "VS_Vector.h"

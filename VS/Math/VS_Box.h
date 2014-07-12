@@ -11,6 +11,7 @@
 #define VS_BOX_H
 
 #include "VS/Math/VS_Vector.h"
+#include "VS/Math/VS_Transform.h"
 
 class vsDisplayList;
 
@@ -56,9 +57,11 @@ public:
 	bool operator!=(const vsBox2D &b) const { return( min!=b.min || max!=b.max ); }
 	vsBox2D operator+(const vsVector2D &v) const { return vsBox2D(min+v, max+v); }
 	vsBox2D operator-(const vsVector2D &v) const { return vsBox2D(min-v, max-v); }
+	vsBox2D operator*(float f) const { return vsBox2D(min*f, max*f); }
 
 	vsBox2D& operator+=(const vsVector2D &v) { min+=v; max+=v; return *this; }
 	vsBox2D& operator-=(const vsVector2D &v) { min-=v; max-=v; return *this; }
+	vsBox2D& operator*=(float f) { min*=f; max*=f; return *this; }
 };
 
 vsBox2D vsInterpolate( float alpha, const vsBox2D& a, const vsBox2D& b );
@@ -128,6 +131,33 @@ public:
 
 	vsBox3D		operator*(const float b) const { return vsBox3D(min*b, max*b); }
 	vsBox3D &	operator*=(const float b) { min *= b; max *= b; return *this; }
+};
+
+class vsOrientedBox3D
+{
+	vsBox3D m_box;
+	vsTransform3D m_transform;
+	// As an optimisation, we're going to apply the orientation store the
+	// vertices directly, here.  Note that our intersection test is customised
+	// for boxes -- this isn't a generalised convex hull collision test
+	// implementation!  (Although it shouldn't be too hard to write one based on
+	// this general approach.  Might do that someday if/when I need one)
+	vsVector3D m_corner[8];
+
+	// run a single Separating Axis Theorem test, along the proposed axis
+	bool SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis );
+	bool SAT_Intersects( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
+
+	// run a single test for containment, along the proposed axis
+	bool SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis );
+	bool SAT_Contains( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
+public:
+	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
+
+	bool Contains( const vsOrientedBox3D& other );
+	bool Intersects( const vsOrientedBox3D& other );
+	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius );
+	bool IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius );
 };
 
 vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b );
