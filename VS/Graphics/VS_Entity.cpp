@@ -70,6 +70,8 @@ vsEntity::Prepend( vsEntity *sprite )
 void
 vsEntity::AddChild( vsEntity *sprite )
 {
+	sprite->Extract();
+
 	sprite->m_parent = this;
 	sprite->m_next = m_child;
 	sprite->m_prev = NULL;
@@ -83,6 +85,7 @@ vsEntity::AddChild( vsEntity *sprite )
 void
 vsEntity::RemoveChild( vsEntity *sprite )
 {
+	vsAssert( sprite->m_parent == this, "Entity isn't a child of me?" );
 	if ( m_child == sprite )
 	{
 		m_child = m_child->m_next;
