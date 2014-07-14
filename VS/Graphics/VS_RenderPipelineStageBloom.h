@@ -17,7 +17,7 @@ class vsMaterial;
 class vsRenderTarget;
 class vsShader;
 
-#define BLOOM_PASSES (6)
+#define BLOOM_PASSES (7)
 
 class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 {
@@ -33,7 +33,7 @@ class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 	vsRenderTarget *m_pass2[BLOOM_PASSES];
 public:
 	// 'dims' is how large our largest blur buffer should be.
-	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims = 512 );
+	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims = 1024 );
 	virtual ~vsRenderPipelineStageBloom();
 
 	virtual void PreparePipeline( vsRenderPipeline *pipeline );
