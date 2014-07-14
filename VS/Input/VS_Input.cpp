@@ -258,6 +258,7 @@ vsInput::SetStringMode(bool mode)
 			SDL_StartTextInput();
 			m_stringMode = true;
 			m_stringModeString.clear();
+			m_stringModeSelectAll = false;
 
 			//Enable Unicode
 			//SDL_EnableUNICODE( SDL_ENABLE );
@@ -266,6 +267,7 @@ vsInput::SetStringMode(bool mode)
 		{
 			SDL_StopTextInput();
 			m_stringMode = false;
+			m_stringModeSelectAll = false;
 
 			//Disable Unicode
 			//SDL_EnableUNICODE( SDL_DISABLE );
@@ -352,7 +354,15 @@ vsInput::Update(float timeStep)
 					}
 					break;
 				case SDL_TEXTINPUT:
-					m_stringModeString += event.text.text;
+					if ( m_stringModeSelectAll )
+					{
+						m_stringModeString = event.text.text;
+						m_stringModeSelectAll = false;
+					}
+					else
+					{
+						m_stringModeString += event.text.text;
+					}
 					break;
 				case SDL_TEXTEDITING:
 					// This event is for partial, in-progress code points
@@ -414,8 +424,17 @@ vsInput::Update(float timeStep)
 								case SDLK_BACKSPACE:
 									if ( m_stringMode && m_stringModeString.length() != 0 )
 									{
-										//Remove a character from the end
-										m_stringModeString.erase( m_stringModeString.length() - 1 );
+										if ( m_stringModeSelectAll )
+										{
+											// we're in "select all" mode, so remove the whole string.
+											m_stringModeString = "";
+											m_stringModeSelectAll = false;
+										}
+										else
+										{
+											//Remove a character from the end
+											m_stringModeString.erase( m_stringModeString.length() - 1 );
+										}
 									}
 									break;
 								case SDLK_RETURN:

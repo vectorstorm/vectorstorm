@@ -142,6 +142,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 
 	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
+	bool			m_stringModeSelectAll;				// if true, hitting 'backspace' or 'delete' will completely clear the string.
 
 	bool			m_mouseIsInWindow;
 
@@ -200,6 +201,8 @@ public:
 	bool			InStringMode() { return m_stringMode; }
 	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
 	vsString		GetStringModeString() { return m_stringModeString; }
+	void			SetStringModeSelectAll( bool selectAll ) { m_stringModeSelectAll = selectAll; }
+	bool			GetStringModeSelectAll() { return m_stringModeSelectAll; }
 
 	void			StartPollingForDeviceControl() { m_preparingToPoll = true; }
 	bool			IsPolling() { return m_pollingForDeviceControl || m_preparingToPoll; }
