@@ -335,6 +335,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 void
 vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
+	int startOfStripVertexCursor = m_vertexCursor;
 	float fullFov = queue->GetFOV();
 	float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
 	float tanHalfFovPerPixel = 2.f * vsTan( 0.5f * fovPerPixel );
@@ -460,10 +461,10 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		// and join up the end to the start.
 		ia[m_indexCursor] = m_vertexCursor-2;
 		ia[m_indexCursor+1] = m_vertexCursor-1;
-		ia[m_indexCursor+2] = 0;
-		ia[m_indexCursor+3] = 0;
+		ia[m_indexCursor+2] = startOfStripVertexCursor;
+		ia[m_indexCursor+3] = startOfStripVertexCursor;
 		ia[m_indexCursor+4] = m_vertexCursor-1;
-		ia[m_indexCursor+5] = 1;
+		ia[m_indexCursor+5] = startOfStripVertexCursor + 1;
 		m_indexCursor += 6;
 	}
 }
