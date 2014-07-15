@@ -9,9 +9,12 @@ project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL REQUIRED)
-find_library(SDL_LIBRARY SDL2 REQUIRED)
-find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED)
-find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED)
+find_library(SDL_LIBRARY SDL2 REQUIRED
+	PATH C:/src/buildzone/lib/x86/)
+find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
+	PATH C:/src/buildzone/lib/x86/)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
+	PATH C:/src/buildzone/lib/x86/)
 
 
 if(UNIX)
@@ -19,15 +22,19 @@ if(UNIX)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
-	find_library(GLEW_LIBRARY GLEW32 REQUIRED)
+	find_library(GLEW_LIBRARY GLEW32 REQUIRED
+		PATH c:/src/buildzone/lib/Release/Win32)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
-	PATH /usr/include/GL /usr/local/include/GL )
+	PATH /usr/include/GL /usr/local/include/GL
+	c:/src/buildzone/include/GL )
 find_library(BOX2D_LIBRARY Box2D REQUIRED
-	PATH /usr/lib /usr/local/lib )
+	PATH /usr/lib /usr/local/lib ../
+	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
 find_path(BOX2D_INCLUDE_DIR Box2D.h
 	PATH /usr/include /usr/local/include
-	/usr/include/Box2D /usr/local/include/Box2D )
+	/usr/include/Box2D /usr/local/include/Box2D
+	c:/src/buildzone/Box2D/Box2D )
 
 if(WINDOWS)
 	find_file(GLEW_DLL glew32.dll REQUIRED
