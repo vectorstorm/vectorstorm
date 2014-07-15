@@ -15,6 +15,8 @@ find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
 	PATH C:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH C:/src/buildzone/lib/x86/)
+find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
+	PATH C:/src/buildzone/include)
 
 
 if(UNIX)
@@ -31,12 +33,12 @@ find_path(GLEW_INCLUDE_DIR glew.h
 find_library(BOX2D_LIBRARY Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
 	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
-find_path(BOX2D_INCLUDE_DIR Box2D.h
+find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D
-	c:/src/buildzone/Box2D/Box2D )
+	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 
-if(WINDOWS)
+if(WIN32)
 	find_file(GLEW_DLL glew32.dll REQUIRED
 		PATH ../../buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16-16.dll REQUIRED
@@ -52,7 +54,7 @@ if(WINDOWS)
 
 	set(VS_PLATFORM_DLLS ${GLEW_DLL} ${PNG_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
-		${SDL2_MIXER_DLL})
+		${SDL2_MIXER_DLL} PARENT_SCOPE)
 endif()
 
 # Check our build environment and set any variables
