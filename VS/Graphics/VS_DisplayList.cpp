@@ -37,8 +37,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SetMatrices4x4Buffer",
 	"SetWorldToViewMatrix4x4",
 	"PopTransform",
-	"CameraTransform",
-	"3DProjection",
+	"SetCameraTransform",
+	"Set3DProjection",
 	"SetProjectionMatrix4x4",
 
 	"VertexArray",
@@ -60,23 +60,23 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"ClearColorArray",
 	"ClearArrays",
 
-	"LineList",
-	"LineStrip",
-	"TriangleList",
-	"TriangleStrip",
-	"TriangleFan",
+	"LineListArray",
+	"LineStripArray",
+	"TriangleListArray",
+	"TriangleStripArray",
+	"TriangleFanArray",
+	"PointsArray",
 
 	"LineListBuffer",
 	"LineStripBuffer",
 	"TriangleStripBuffer",
 	"TriangleListBuffer",
 	"TriangleFanBuffer",
-	"PointBuffer",
 
 	"SetMaterial",
 	"SetRenderTarget",
 	"ResolveRenderTarget",
-    "OpCode_BlitRenderTarget",
+	"BlitRenderTarget",
 
 	"Light",
 	"ClearLights",
@@ -93,6 +93,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"EnableScissor",
 	"DisableScissor",
+
 	"SetViewport",
 	"ClearViewport",
 
@@ -100,6 +101,12 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"Debug"
 };
+
+const vsString&
+vsDisplayList::GetOpCodeString( OpCode code )
+{
+	return g_opCodeName[code];
+}
 
 vsDisplayList *
 vsDisplayList::Load_Vec( const vsString &filename )

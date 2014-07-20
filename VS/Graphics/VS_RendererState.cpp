@@ -118,7 +118,7 @@ vsRendererState::vsRendererState()
 {
 	// m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );
 	m_boolState[Bool_Blend] =			new glEnableSetter( GL_BLEND, false );
-	m_boolState[Bool_ColorMaterial] =	new glEnableSetter( GL_COLOR_MATERIAL, false );
+	// m_boolState[Bool_ColorMaterial] =	new glEnableSetter( GL_COLOR_MATERIAL, false );
 	m_boolState[Bool_CullFace] =		new glEnableSetter( GL_CULL_FACE, false );
 	m_boolState[Bool_DepthTest] =		new glEnableSetter( GL_DEPTH_TEST, false );
 	m_boolState[Bool_StencilTest] =		new glEnableSetter( GL_STENCIL_TEST, false );
@@ -140,7 +140,7 @@ vsRendererState::vsRendererState()
 	// m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
 	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
 
-	m_intState[Int_CullFace] = new glCullFaceSetter(0);
+	m_intState[Int_CullFace] = new glCullFaceSetter( GL_BACK );
 }
 
 vsRendererState::~vsRendererState()
