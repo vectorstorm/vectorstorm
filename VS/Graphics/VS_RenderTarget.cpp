@@ -48,7 +48,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	for ( int i = 0; i < settings.buffers; i++ )
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
-		vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, (t == Type_Depth));
+		vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, i, (t == Type_Depth));
 		vsTextureManager::Instance()->Add(ti);
 		m_texture[i] = new vsTexture(name);
 	}
@@ -78,10 +78,12 @@ vsRenderTarget::Resolve(int id)
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 			//Bind the standard FBO
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
-			//Let's say I want to copy the entire surface
-			//Let's say I only want to copy the color buffer only
-			//Let's say I don't need the GPU to do filtering since both surfaces have the same dimensions
-			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			for ( int i = 0; i < m_bufferCount; i++ )
+			{
+				glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+				glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			}
 
 			//Consider:  Re-generate mipmaps on the texture now?
 
@@ -114,6 +116,19 @@ vsRenderTarget::Bind()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
+	if ( m_type == Type_Texture || m_type == Type_Multisample )
+	{
+		GLenum buffers[6] =
+		{
+			GL_COLOR_ATTACHMENT0_EXT,
+			GL_COLOR_ATTACHMENT1_EXT,
+			GL_COLOR_ATTACHMENT2_EXT,
+			GL_COLOR_ATTACHMENT3_EXT,
+			GL_COLOR_ATTACHMENT4_EXT,
+			GL_COLOR_ATTACHMENT5_EXT
+		};
+		glDrawBuffers(m_bufferCount,buffers);
+	}
 	glViewport(0,0,m_viewportWidth, m_viewportHeight);
 	CheckGLError("RenderTarget");
 }
@@ -123,11 +138,7 @@ vsRenderTarget::Clear()
 {
 	CheckGLError("RenderTarget");
 	GLbitfield bits = GL_COLOR_BUFFER_BIT;
-	vsSurface *surface = m_textureSurface;
-	if ( m_renderBufferSurface )
-	{
-		surface = m_renderBufferSurface;
-	}
+	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
 	if ( surface->m_depth )
 	{
 		bits |= GL_DEPTH_BUFFER_BIT;

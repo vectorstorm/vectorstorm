@@ -332,6 +332,7 @@ vsRenderer_OpenGL3::Resize()
 	settings.linear = true;
 	settings.mipMaps = false;
 	settings.stencil = true;
+	settings.buffers = 2;	// one for opaque color, one for glow color.  TODO:  Set only one buffer if we're not doing a glow pass!
 
 	CheckGLError("Resizing");
 	if ( m_antialias )
@@ -476,6 +477,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		glUseProgram( m_currentShader->GetShaderId() );
 		m_currentShader->Prepare();
 		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
+		m_currentShader->SetGlow( m_currentMaterial->m_glow );
 		m_currentShader->SetColor( m_currentColor );
 		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterial->m_texture );
@@ -1014,7 +1016,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	CheckGLError("glReadPixels");
 	if ( m_currentSettings.writeColor )
 	{
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
+		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	}
 	else
 	{

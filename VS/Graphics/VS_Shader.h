@@ -33,6 +33,7 @@ class vsShader
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
 	int32_t m_viewToProjectionLoc;
+	int32_t m_glowLoc;
 
 	int32_t m_lightAmbientLoc;
 	int32_t m_lightDiffuseLoc;
@@ -60,6 +61,7 @@ public:
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
+	void SetGlow( float glowAlpha );
 
 	void SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
