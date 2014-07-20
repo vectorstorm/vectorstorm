@@ -320,12 +320,6 @@ const char *passv = STRINGIFY( #version 330\n
 			void main(void)\n
 			{\n
 			vec4 color = texture(textures[0], fragment_texcoord);\n
-
-			float bloom = color.a;\n
-
-			color.xyz *= bloom;\n
-			color.a = 1.0;\n
-
 			fragment_color = color;\n
 			}\n
 			);
