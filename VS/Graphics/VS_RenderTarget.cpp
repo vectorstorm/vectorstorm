@@ -19,8 +19,6 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 {
 	CheckGLError("RenderTarget");
 	vsSurface::Settings settings = settings_in;
-	vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount);
-	s_renderTargetCount += 1;
 
 	if ( m_type == Type_Window )
 	{
@@ -45,22 +43,32 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	m_viewportWidth = settings.width;
 	m_viewportHeight = settings.height;
 
-	vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, (t == Type_Depth));
-	vsTextureManager::Instance()->Add(ti);
-	m_texture = new vsTexture(name);
+	m_bufferCount = settings.buffers;
+	m_texture = new vsTexture*[m_bufferCount];
+	for ( int i = 0; i < settings.buffers; i++ )
+	{
+		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
+		vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, (t == Type_Depth));
+		vsTextureManager::Instance()->Add(ti);
+		m_texture[i] = new vsTexture(name);
+	}
 
 	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
 {
-	vsDelete( m_texture );
+	for ( int i = 0; i < m_bufferCount; i++ )
+	{
+		vsDelete( m_texture[i] );
+	}
+	vsDeleteArray( m_texture );
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
 }
 
 vsTexture *
-vsRenderTarget::Resolve()
+vsRenderTarget::Resolve(int id)
 {
 	CheckGLError("RenderTarget");
 	if ( m_renderBufferSurface )	// need to copy from the render buffer surface to the regular texture.
@@ -77,7 +85,7 @@ vsRenderTarget::Resolve()
 
 			//Consider:  Re-generate mipmaps on the texture now?
 
-			return GetTexture();
+			return GetTexture(id);
 		}
 		else
 		{
@@ -87,7 +95,7 @@ vsRenderTarget::Resolve()
 	}
 	else if ( m_textureSurface )	// don't need to do anything special;  just give them our texture.  We were rendering straight into it anyway.
 	{
-		return m_texture;
+		return GetTexture(id);
 	}
 
 	CheckGLError("RenderTarget");
@@ -161,6 +169,8 @@ vsSurface::vsSurface( int width, int height ):
 	m_fbo(0),
 	m_isRenderbuffer(false)
 {
+	m_texture = new GLuint[1];
+	m_texture[0] = 0;
 }
 
 
@@ -191,89 +201,61 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_width(settings.width),
 	m_height(settings.height),
 	m_texture(0),
+	m_textureCount(settings.buffers),
 	m_depth(0),
 	m_fbo(0),
 	m_isRenderbuffer(false)
 {
+	CheckGLError("vsSurface");
+
 	GLenum internalFormat = GL_RGBA8;
 	GLenum pixelFormat = GL_RGBA;
 	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
 	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;
 
-	CheckGLError("vsSurface");
 	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
-	CheckGLError("vsSurface");
-	CheckGLError("vsSurface");
 
 	// create FBO
 	glGenFramebuffers(1, &m_fbo);
-	CheckGLError("vsSurface");
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-	CheckGLError("vsSurface");
+
+	m_texture = new GLuint[m_textureCount];
 
 	if ( depthOnly )
 	{
 		glDrawBuffer(GL_NONE);
-	CheckGLError("vsSurface");
 		glReadBuffer(GL_NONE);
-	CheckGLError("vsSurface");
 	}
 	else
 	{
-		if (multisample)
+		for ( int i = 0; i < m_textureCount; i++ )
 		{
-			glGenRenderbuffers(1, &m_texture);
-	CheckGLError("vsSurface");
-			glBindRenderbuffer( GL_RENDERBUFFER, m_texture );
-	CheckGLError("vsSurface");
-			glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, pixelFormat, m_width, m_height );
-	CheckGLError("vsSurface");
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_texture);
-	CheckGLError("vsSurface");
-			m_isRenderbuffer = true;
-		}
-		else
-		{
-			glGenTextures(1, &m_texture);
-	CheckGLError("vsSurface");
-			glBindTexture(GL_TEXTURE_2D, m_texture);
-	CheckGLError("vsSurface");
-	CheckGLError("vsSurface");
-			m_isRenderbuffer = false;
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
-	CheckGLError("vsSurface");
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture, 0);
-	CheckGLError("vsSurface");
-			if ( settings.mipMaps )
+			if (multisample)
 			{
-				int wid = m_width;
-				int hei = m_height;
-				int mapMapId = 1;
-
-				while ( wid > 32 || hei > 32 )
-				{
-					wid = wid >> 1;
-					hei = hei >> 1;
-					glTexImage2D(GL_TEXTURE_2D, mapMapId++, internalFormat, wid, hei, 0, pixelFormat, type, 0);
-	CheckGLError("vsSurface");
-				}
+				glGenRenderbuffers(1, &m_texture[i]);
+				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, pixelFormat, m_width, m_height );
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_RENDERBUFFER, m_texture[i]);
+				m_isRenderbuffer = true;
 			}
-			glBindTexture(GL_TEXTURE_2D, m_texture);
-	CheckGLError("vsSurface");
-	CheckGLError("vsSurface");
-			glGenerateMipmap(GL_TEXTURE_2D);
-	CheckGLError("vsSurface");
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	CheckGLError("vsSurface");
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	CheckGLError("vsSurface");
-			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	CheckGLError("vsSurface");
-			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	CheckGLError("vsSurface");
-			glBindTexture(GL_TEXTURE_2D, 0);
-	CheckGLError("vsSurface");
+			else
+			{
+				glGenTextures(1, &m_texture[i]);
+				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
+				m_isRenderbuffer = false;
+				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, m_texture[i], 0);
+				if ( settings.mipMaps )
+				{
+					glGenerateMipmap(GL_TEXTURE_2D);
+				}
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
 		}
 	}
 
@@ -282,91 +264,76 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		if ( multisample )
 		{
 			glGenRenderbuffers(1, &m_depth);
-	CheckGLError("vsSurface");
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-	CheckGLError("vsSurface");
 			if ( settings.stencil )
 			{
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, m_width, m_height );
-	CheckGLError("vsSurface");
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
-	CheckGLError("vsSurface");
 			}
 			else
 			{
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT24, m_width, m_height );
-	CheckGLError("vsSurface");
 			}
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth);
-	CheckGLError("vsSurface");
 		}
 		else
 		{
 			glGenTextures(1, &m_depth);
-	CheckGLError("vsSurface");
 			glBindTexture(GL_TEXTURE_2D, m_depth);
-	CheckGLError("vsSurface");
-			//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	CheckGLError("vsSurface");
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	CheckGLError("vsSurface");
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	CheckGLError("vsSurface");
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	CheckGLError("vsSurface");
-	CheckGLError("vsSurface");
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
 			//if ( stencil )
 			//{
-				//glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+			//glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
 			//}
 			//else
 			{
 				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-	CheckGLError("vsSurface");
 			}
 			glBindTexture(GL_TEXTURE_2D, 0);
-	CheckGLError("vsSurface");
 			glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-	CheckGLError("vsSurface");
 		}
-		//CheckGLError("Creation of the depth renderbuffer for the FBO");
 	}
 
 	CheckFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	CheckGLError("vsSurface");
-
-	//CheckGLError("Creation of the FBO itself");
 }
 
 vsSurface::~vsSurface()
 {
-	if ( m_isRenderbuffer )
+	for ( int i = 0; i < m_textureCount; i++ )
 	{
-		glDeleteRenderbuffers(1, &m_texture);
-	CheckGLError("vsSurface");
-	}
-	else
-	{
-		// really shouldn't delete this;  we have a texture that's using this and will delete it itself.
-		//glDeleteTextures(1, &m_texture);
+		if ( m_isRenderbuffer )
+		{
+			glDeleteRenderbuffers(1, &m_texture[i]);
+			CheckGLError("vsSurface");
+		}
+		else
+		{
+			// really shouldn't delete this;  we have a texture that's using this and will delete it itself.
+			//glDeleteTextures(1, &m_texture[i]);
+		}
 	}
 	if ( m_depth )
 	{
 		glDeleteRenderbuffers(1, &m_depth);
-	CheckGLError("vsSurface");
+		CheckGLError("vsSurface");
 	}
 	glDeleteFramebuffers(1, &m_fbo);
 	CheckGLError("vsSurface");
+	vsDeleteArray(m_texture);
 }
 
 
