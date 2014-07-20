@@ -1049,6 +1049,13 @@ vsRenderBuffer::BindTexelArray( vsRendererState *state, void* buffer, int count 
 	BindArrayToAttribute(buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 
+void
+vsRenderBuffer::BindNormalArray( vsRendererState *state, void* buffer, int count )
+{
+	int bufferSize = count * sizeof(vsVector3D);
+	BindArrayToAttribute(buffer,bufferSize,NORMAL_ATTRIBUTE,3);
+}
+
 #define EVBO_SIZE (1024 * 1024)
 static GLuint g_evbo = 0xffffffff;
 static int g_evboCursor = EVBO_SIZE;
