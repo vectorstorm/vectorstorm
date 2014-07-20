@@ -154,12 +154,8 @@ vsSprite::Draw( vsRenderQueue *queue )
 
 		if ( m_useColor )
 			list->SetColor( m_color );
-
 		if ( m_material )
-		{
 			list->SetMaterial( m_material );
-		}
-
 		list->PushTransform( m_transform );
 		queue->PushTransform2D( m_transform );
 
@@ -170,7 +166,18 @@ vsSprite::Draw( vsRenderQueue *queue )
 
 		if ( m_displayList )
 		{
+			// TODO:  Move the PushTransform2D/PopTransform functionality to here,
+			// using the full local-to-world matrix we've already calculated.
+			//
+			// Annoyingly, I have some test cases that don't work this way, but
+			// I haven't quite been able to work out why they don't.  Should
+			// always work, as long as nobody overrides ::Draw() or ::DynamicDraw
+			// and expects that there'll be an up-to-date transform stack in
+			// the generic list.
+			//
+			// list->SetMatrix4x4( queue->GetMatrix() );
 			list->Append( *m_displayList );
+			// list->PopTransform();
 		}
 		else
 		{

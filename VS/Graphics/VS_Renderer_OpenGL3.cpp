@@ -162,6 +162,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+#ifdef _DEBUG
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif // _DEBUG
 
 	m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, videoFlags);
 	// SDL_SetWindowMinimumSize(m_sdlWindow, 1024, 768);
@@ -237,6 +240,11 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("Couldn't set vsync");
 	}
 
+	if ( glDebugMessageCallback )
+	{
+		vsLog("DebugMessageCallback:  SUPPORTED");
+	}
+
 	vsLog( "VSync: %s", SDL_GL_GetSwapInterval() > 0 ? "ENABLED" : "DISABLED" );
 
 	int MaxVertexTextureImageUnits;
@@ -294,6 +302,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
+
+	// now set our OpenGL state to our expected defaults.
+	m_state.Force();
+
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -392,7 +404,6 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	CheckGLError("PreRender");
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 
-	CheckGLError("PreRender");
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
 	m_currentShader = NULL;
@@ -405,25 +416,18 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	{
 		m_state.SetBool( vsRendererState::Bool_Multisample, true );
 	}
-	CheckGLError("PreRender");
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 
-	CheckGLError("PreRender");
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.Flush();
-	CheckGLError("PreRender");
 
 	glClearColor(0.0f,0.f,0.f,0.f);
-	CheckGLError("PreRender");
 	glClearDepth(1.f);
-	CheckGLError("PreRender");
 	glClearStencil(0);
-	CheckGLError("PreRender");
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-	CheckGLError("PreRender");
 
 	// our baseline size is 1024x768.  We want single-pixel lines at that size.
 	// float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
@@ -483,8 +487,10 @@ vsRenderer_OpenGL3::FlushRenderState()
 		m_currentShader->SetTextures( m_currentMaterial->m_texture );
 		if ( m_currentLocalToWorldBuffer )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
-		else
+		else if ( m_currentLocalToWorldCount > 0 )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
+		else
+			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
 		for ( int i = 0; i < MAX_LIGHTS; i++ )
@@ -526,6 +532,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_usingTexelArray = false;
 	m_lightCount = 0;
 
+	m_currentLocalToWorld = NULL;
+	m_currentLocalToWorldCount = 0;
+	m_currentLocalToWorldBuffer = NULL;
 	m_currentVertexArray = NULL;
 	m_currentVertexBuffer = NULL;
 	m_currentTexelArray = NULL;
@@ -541,6 +550,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 
 	while(op)
 	{
+// #define LOG_OPS
+#ifdef LOG_OPS
+		vsLog("%s", vsDisplayList::GetOpCodeString(op->type).c_str());
+#endif // LOG_OPS
 		switch( op->type )
 		{
 			case vsDisplayList::OpCode_SetColor:
@@ -1201,7 +1214,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 #endif
 				glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 	CheckGLError("Material");
 				break;
 			}
@@ -1212,7 +1225,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 #endif
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 	CheckGLError("Material");
 				break;
 			}
@@ -1233,7 +1246,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 				glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 	CheckGLError("Material");
 				break;
 			}
@@ -1505,6 +1518,7 @@ vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 	{
 		m_scene->Bind();
 		m_currentRenderTarget = m_scene;
+		m_scene->Clear();
 	}
 }
 

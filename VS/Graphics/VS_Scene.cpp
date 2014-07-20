@@ -148,14 +148,14 @@ vsScene::Update( float timeStep )
 void
 vsScene::Draw( vsDisplayList *list )
 {
-	if ( m_flatShading )
-	{
-		list->FlatShading();
-	}
-	else
-	{
-		list->SmoothShading();
-	}
+	// if ( m_flatShading )
+	// {
+	// 	list->FlatShading();
+	// }
+	// else
+	// {
+	// 	list->SmoothShading();
+	// }
 
 	if ( m_hasViewport )
 	{
@@ -225,7 +225,7 @@ vsScene::Draw( vsDisplayList *list )
 
 	list->ClearLights();
 	list->ClearFog();
-	list->SetMaterial(vsMaterial::White);
+	// list->SetMaterial(vsMaterial::White);
 }
 
 void

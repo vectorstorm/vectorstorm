@@ -301,6 +301,8 @@ public:
 	op *	PopOp();
 	void	AppendOp(op *);
 
+	static const vsString& GetOpCodeString( OpCode code );
+
 	void operator= ( const vsDisplayList &list ) { Clear(); Append(list); }
 };
 

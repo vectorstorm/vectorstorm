@@ -98,7 +98,7 @@ public:
 	{
 		// Bool_AlphaTest,
 		Bool_Blend,
-		Bool_ColorMaterial,
+		// Bool_ColorMaterial,
 		Bool_CullFace,
 		Bool_DepthTest,
 		// Bool_Fog,
