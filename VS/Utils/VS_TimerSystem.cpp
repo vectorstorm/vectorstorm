@@ -12,6 +12,7 @@
 #include "Core.h"
 
 #include "VS_DisplayList.h"
+#include "VS_RenderBuffer.h"
 #include "VS_RenderQueue.h"
 #include "VS_Scene.h"
 #include "VS_Screen.h"
@@ -38,67 +39,92 @@ static LARGE_INTEGER g_liCurrent;
 
 #endif
 
-vsTimerSystemEntity::vsTimerSystemEntity()
+vsTimerSystemSprite::vsTimerSystemSprite():
+	m_vertices( new vsRenderBuffer(vsRenderBuffer::Type_Stream) ),
+	m_indices( new vsRenderBuffer(vsRenderBuffer::Type_Static) )
 {
-	m_material = new vsMaterial( "White" );
+	SetMaterial( new vsMaterial( "White" ) );
+
+	// we're going to draw five lines, in this format:
+	//                (4)           (5)
+	//  (1)--(2)--(3)--|             |
+	//
+	// 1: CPU time taken
+	// 2: Renderer time taken
+	// 3: GPU time taken
+	// 4: 60fps marker.  (if 1+2+3 reach to here, we're running at 60fps)
+	// 5: 30fps marker.  (if 1+2+3 reach to here, we're running at 30fps)
+	//
+	// Our ten indices remain the same, so we put them in a static buffer.  Our
+	// vertices will change every frame, so we'll put them in a streaming
+	// buffer, and update their values in our 'Update()' call each frame.
+	//
+	const int c_indexCount = 10;
+	uint16_t indices[c_indexCount] =
+	{
+		0, 1,
+		2, 3,
+		4, 5,
+		6, 7,
+		8, 9
+	};
+	m_indices->SetArray( indices, c_indexCount );
+	m_vertices->ResizeArray( sizeof(vsRenderBuffer::PC) * c_indexCount );
+
+	vsFragment *frag = new vsFragment;
+	frag->SetMaterial("White");
+	vsDisplayList *list = new vsDisplayList(64);
+	list->BindBuffer(m_vertices);
+	list->LineListBuffer(m_indices);
+	list->ClearArrays();
+	frag->SetDisplayList(list);
+	AddFragment(frag);
 }
 
-vsTimerSystemEntity::~vsTimerSystemEntity()
+vsTimerSystemSprite::~vsTimerSystemSprite()
 {
-	vsDelete(m_material);
+	vsDelete( m_vertices );
+	vsDelete( m_indices );
 }
 
 void
-vsTimerSystemEntity::Draw( vsRenderQueue *queue )
+vsTimerSystemSprite::Update( float timeStep )
 {
-	vsDisplayList *list = queue->GetGenericList();
+	const float offsetPerMilli = 10.f;
+	const int c_vertexCount = 10;
+	vsRenderBuffer::PC verts[c_vertexCount];
 
-	// TODO:  Fix, so we're not casting to floats any more;  should be able to do this entirely with
-	// integers.  (Used to use float timing, but now it's done with integers;  need to update the
-	// vsTimerSystemEntity to render using the new integer method)
-	float offsetPerMilli = 0.01f;
-	vsVector2D startPoint(0.1f, 0.9f);
-	vsVector2D cpuPos(offsetPerMilli, 0.0f);
-	cpuPos *= (float)vsTimerSystem::Instance()->GetCPUTime();
-	cpuPos += startPoint;
-	vsVector2D renderPos(offsetPerMilli, 0.0f);
-	renderPos *= (float)vsTimerSystem::Instance()->GetRenderTime();
-	renderPos += cpuPos;
-	vsVector2D gpuPos(offsetPerMilli, 0.0f);
-	gpuPos *= (float)vsTimerSystem::Instance()->GetGPUTime();
-	gpuPos += renderPos;
+	vsTimerSystem *ts = vsTimerSystem::Instance();
 
-	list->SetMaterial( m_material );
-	list->SetColor( c_blue );
-	list->MoveTo( startPoint );
-	list->LineTo( cpuPos );
+	verts[0].position.Set(0.f,0.f,0.f);
+	verts[1].position.Set(offsetPerMilli * ts->GetCPUTime(), 0.f, 0.f);
+	verts[0].color = c_blue;
+	verts[1].color = c_blue;
 
-	list->SetColor( c_green );
-	list->MoveTo( cpuPos );
-	list->LineTo( renderPos );
+	verts[2].position = verts[1].position;
+	verts[3].position = verts[2].position + vsVector2D(offsetPerMilli * ts->GetRenderTime(), 0.f);
+	verts[2].color = c_green;
+	verts[3].color = c_green;
 
-	list->SetColor( c_red );
-	list->MoveTo( renderPos );
-	list->LineTo( gpuPos );
+	verts[4].position = verts[3].position;
+	verts[5].position = verts[4].position + vsVector2D(offsetPerMilli * ts->GetGPUTime(), 0.f);
+	verts[4].color = c_red;
+	verts[5].color = c_red;
 
-	vsVector2D sixtyUp( offsetPerMilli * 16.666f, -0.02f );
-	vsVector2D thirtyUp( offsetPerMilli * 33.333f, -0.02f );
+	verts[6].position.Set( offsetPerMilli * 16.666f, -10.f, 0.f );
+	verts[7].position.Set( offsetPerMilli * 16.666f, 10.f, 0.f );
+	verts[8].position.Set( offsetPerMilli * 33.333f, -10.f, 0.f );
+	verts[9].position.Set( offsetPerMilli * 33.333f, 10.f, 0.f );
+	for (int i = 6; i < 10; i++ )
+		verts[i].color = c_blue;
 
-	vsVector2D sixtyDown( sixtyUp.x, 0.02f );
-	vsVector2D thirtyDown( thirtyUp.x, 0.02f );
-
-	list->SetColor( c_blue );
-	list->MoveTo( sixtyUp + startPoint );
-	list->LineTo( sixtyDown + startPoint );
-
-	list->MoveTo( thirtyUp + startPoint );
-	list->LineTo( thirtyDown + startPoint );
+	m_vertices->SetArray(verts, c_vertexCount);
 }
 
 vsTimerSystem::vsTimerSystem()
 {
 #if defined(DEBUG_TIMING_BAR)
-	m_entity = NULL;
+	m_sprite = NULL;
 #endif // DEBUG_TIMING_BAR
 
 	s_instance = this;
@@ -126,10 +152,10 @@ vsTimerSystem::Init()
 	m_firstFrame = true;
 
 #if defined(DEBUG_TIMING_BAR)
-	if ( !m_entity )	// we get 'initted' multiple times;  make sure we don't re-allocate this!
+	if ( !m_sprite )	// we get 'initted' multiple times;  make sure we don't re-allocate this!
 	{
-		m_entity = new vsTimerSystemEntity;
-		vsScreen::Instance()->GetDebugScene()->RegisterEntityOnTop( m_entity );
+		m_sprite = new vsTimerSystemSprite;
+		vsScreen::Instance()->GetDebugScene()->RegisterEntityOnTop( m_sprite );
 	}
 #endif // DEBUG_TIMING_BAR
 }
@@ -138,7 +164,7 @@ void
 vsTimerSystem::Deinit()
 {
 #if defined(DEBUG_TIMING_BAR)
-	vsDelete(m_entity);
+	vsDelete(m_sprite);
 #endif // DEBUG_TIMING_BAR
 }
 
@@ -171,6 +197,11 @@ void
 vsTimerSystem::Update( float timeStep )
 {
 	UNUSED(timeStep);
+
+#if defined(DEBUG_TIMING_BAR)
+	vsVector2D bl = vsScreen::Instance()->GetDebugScene()->GetBottomLeftCorner();
+	m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
+#endif // DEBUG_TIMING_BAR
 
 	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();

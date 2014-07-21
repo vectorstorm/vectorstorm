@@ -13,22 +13,25 @@
 #include "Core/CORE_GameSystem.h"
 #include "Utils/VS_Singleton.h"
 
-#include "VS/Graphics/VS_Entity.h"
+#include "VS/Graphics/VS_Sprite.h"
 #include "VS/Graphics/VS_Screen.h"
 
 class vsMaterial;
+class vsRenderBuffer;
 
 #if defined(DEBUG_SCENE)
 #define DEBUG_TIMING_BAR
 #endif
 
-class vsTimerSystemEntity : public vsEntity
+class vsTimerSystemSprite : public vsSprite
 {
-	vsMaterial *		m_material;
+	vsRenderBuffer *m_vertices;
+	vsRenderBuffer *m_indices;
 public:
-	vsTimerSystemEntity();
-	virtual ~vsTimerSystemEntity();
-	virtual void Draw( vsRenderQueue *queue );
+	vsTimerSystemSprite();
+	virtual ~vsTimerSystemSprite();
+	virtual void Update( float timeStep );
+	// virtual void DynamicDraw( vsRenderQueue *queue );
 };
 
 class vsTimerSystem : public coreGameSystem
@@ -47,7 +50,7 @@ class vsTimerSystem : public coreGameSystem
 	unsigned long		m_cpuTime;
 
 #if defined(DEBUG_TIMING_BAR)
-	vsTimerSystemEntity *	m_entity;
+	vsTimerSystemSprite *	m_sprite;
 #endif // DEBUG_TIMING_BAR
 
 	bool				m_firstFrame;

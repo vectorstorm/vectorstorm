@@ -21,6 +21,35 @@
 
 vsTransform2D	g_drawingCameraTransform = vsTransform2D::Zero;
 
+#if defined(DEBUG_SCENE)
+
+class vsDebugCamera : public vsCamera2D
+{
+public:
+	vsDebugCamera() : vsCamera2D()
+	{
+	}
+
+	void				Init()
+	{
+		SetFOV( vsScreen::Instance()->GetHeight() );
+		SetPosition( vsVector2D( vsScreen::Instance()->GetWidth() * 0.5f,
+					vsScreen::Instance()->GetHeight() * 0.5f ) );
+	}
+};
+static vsDebugCamera s_debugCamera;
+
+void
+vsScene::SetDebugCamera()
+{
+	s_debugCamera.Init();
+	s_debugCamera.SetAspectRatio( vsScreen::Instance()->GetAspectRatio() );
+	SetCamera2D( &s_debugCamera );
+}
+
+#endif // DEBUG_SCENE
+
+
 vsScene::vsScene():
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
@@ -94,6 +123,14 @@ vsScene::UpdateVideoMode()
 	// change them automatically based upon a resize event, in the former case,
 	// and particularly shouldn't be changing them HERE in the latter case!
 	// (That should happen at the time of render)
+
+#if defined(DEBUG_SCENE)
+	if ( m_camera == &s_debugCamera )
+	{
+		// reset debug camera parameters, to match new resolution.
+		SetDebugCamera();
+	}
+#endif // DEBUG_SCENE
 
 //	if ( m_camera3D )
 //	{
@@ -335,32 +372,5 @@ vsScene::GetCorner(bool bottom, bool right)
 
 	return pos;
 }
-
-#if defined(DEBUG_SCENE)
-
-class vsDebugCamera : public vsCamera2D
-{
-public:
-	vsDebugCamera() : vsCamera2D()
-	{
-	}
-
-	void				Init()
-	{
-		SetFOV( 1.0f );
-		SetPosition( vsVector2D(0.5f * vsScreen::Instance()->GetAspectRatio() , 0.5f) );
-	}
-};
-
-static vsDebugCamera s_debugCamera;
-
-void
-vsScene::SetDebugCamera()
-{
-	s_debugCamera.Init();
-	SetCamera2D( &s_debugCamera );
-}
-
-#endif // DEBUG_SCENE
 
 
