@@ -87,10 +87,11 @@ static void printAttributes ()
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags):
+vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
 	m_window(NULL),
-	m_scene(NULL)
+	m_scene(NULL),
+	m_bufferCount(bufferCount)
 {
 	const char* c_capabilityString[vsRenderer_OpenGL3::CAP_MAX] =
 	{
@@ -363,7 +364,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 	SDL_GL_GetDrawableSize(m_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 	{
-		UpdateVideoMode( m_width, m_height, true, false );
+		UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
 		return true;
 	}
 #endif
@@ -371,7 +372,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount)
 {
 	UNUSED(depth);
 	UNUSED(fullscreen);
@@ -379,6 +380,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
+	m_bufferCount = bufferCount;
 #ifdef HIGHDPI_SUPPORTED
 	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
 #else
