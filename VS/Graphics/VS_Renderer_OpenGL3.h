@@ -103,6 +103,7 @@ private:
 	int                  m_currentTexelArrayCount;
 	int                  m_currentColorArrayCount;
 	int                  m_lightCount;
+	int                  m_bufferCount;
 	lightStatus          m_lightStatus[MAX_LIGHTS];
 	bool                 m_inOverlay;
 	bool                 m_usingNormalArray;
@@ -129,11 +130,11 @@ public:
 		Flag_VSync = BIT(1),
 		Flag_Resizable = BIT(2)
 	};
-	vsRenderer_OpenGL3(int width, int height, int depth, int flags);
+	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
 
 	bool	CheckVideoMode();
-	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen);
+	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount);
 
 	void	PreRender( const Settings &s );
 	void	RenderDisplayList( vsDisplayList *list );

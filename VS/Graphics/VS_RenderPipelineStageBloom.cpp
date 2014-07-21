@@ -130,7 +130,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_hipassMaterial->SetZRead(false);
 	m_hipassMaterial->SetZWrite(false);
 	m_hipassMaterial->SetGlow(false);
-	m_hipassMaterial->SetTexture(0, m_from->GetTexture());
+	m_hipassMaterial->SetTexture(0, m_from->GetTexture(1));
 	m_hipassMaterial->SetShader(new vsShader(passv, normalf, false, false));
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
@@ -200,9 +200,9 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	int ind[4] = { 0, 1, 2, 3 };
 
 	list->ClearArrays();
-	list->SetMaterial(m_hipassMaterial);
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
 	list->ResolveRenderTarget(m_from);
+	list->SetMaterial(m_hipassMaterial);
 	list->SetRenderTarget(m_pass[0]);
 	list->VertexArray(v,4);
 	list->TexelArray(t,4);
@@ -320,12 +320,6 @@ const char *passv = STRINGIFY( #version 330\n
 			void main(void)\n
 			{\n
 			vec4 color = texture(textures[0], fragment_texcoord);\n
-
-			float bloom = color.a;\n
-
-			color.xyz *= bloom;\n
-			color.a = 1.0;\n
-
 			fragment_color = color;\n
 			}\n
 			);

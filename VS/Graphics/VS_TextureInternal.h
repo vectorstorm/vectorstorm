@@ -38,7 +38,7 @@ public:
 
 	vsTextureInternal( const vsString &string );
 	vsTextureInternal( const vsString &name, vsImage *image );
-	vsTextureInternal( const vsString &name, vsSurface *surface, bool depth=false );
+	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
 	~vsTextureInternal();
 
 	void		SetNearestSampling();

@@ -87,10 +87,11 @@ static void printAttributes ()
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags):
+vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
 	m_window(NULL),
-	m_scene(NULL)
+	m_scene(NULL),
+	m_bufferCount(bufferCount)
 {
 	const char* c_capabilityString[vsRenderer_OpenGL3::CAP_MAX] =
 	{
@@ -297,8 +298,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glBindVertexArray(m_vao);
 	CheckGLError("Initialising OpenGL rendering");
 
-	glEnableVertexAttribArray(3);
-
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
@@ -321,19 +320,16 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 void
 vsRenderer_OpenGL3::Resize()
 {
+	CheckGLError("Resizing");
 	vsDelete( m_window );
-	CheckGLError("Resizing");
 	vsDelete( m_scene );
-	CheckGLError("Resizing");
 
 	// Create Window Surface
 	vsSurface::Settings settings;
 	settings.depth = 0;
 	settings.width = GetWidthPixels();
 	settings.height = GetHeightPixels();
-	CheckGLError("Resizing");
 	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
-	CheckGLError("Resizing");
 
 	// Create 3D Scene Surface
 	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
@@ -344,8 +340,8 @@ vsRenderer_OpenGL3::Resize()
 	settings.linear = true;
 	settings.mipMaps = false;
 	settings.stencil = true;
+	settings.buffers = 2;	// one for opaque color, one for glow color.  TODO:  Set only one buffer if we're not doing a glow pass!
 
-	CheckGLError("Resizing");
 	if ( m_antialias )
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
@@ -354,9 +350,7 @@ vsRenderer_OpenGL3::Resize()
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
-	CheckGLError("Resizing");
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
-	CheckGLError("Resizing");
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
 	CheckGLError("Resizing");
 }
@@ -370,7 +364,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 	SDL_GL_GetDrawableSize(m_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 	{
-		UpdateVideoMode( m_width, m_height, true, false );
+		UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
 		return true;
 	}
 #endif
@@ -378,7 +372,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount)
 {
 	UNUSED(depth);
 	UNUSED(fullscreen);
@@ -386,13 +380,13 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
+	m_bufferCount = bufferCount;
 #ifdef HIGHDPI_SUPPORTED
 	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
 #else
 	m_widthPixels = width;
 	m_heightPixels = height;
 #endif
-	CheckGLError("UpdateVideoMode");
 	Resize();
 	CheckGLError("UpdateVideoMode");
 }
@@ -439,26 +433,19 @@ void
 vsRenderer_OpenGL3::PostRender()
 {
 	CheckGLError("PostRender");
-	// m_scene->Resolve();
-	// m_scene->BlitTo(m_window);
 
 	vsTimerSystem::Instance()->EndRenderTime();
-	//glFinish();
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(m_sdlWindow);
 #endif
 	vsTimerSystem::Instance()->EndGPUTime();
+
 	CheckGLError("PostRender");
 }
 
 void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
-	// vsTransform2D defCamera;
-	// defCamera.SetTranslation( vsVector2D::Zero );
-	// defCamera.SetAngle( vsAngle::Zero );
-	// defCamera.SetScale( vsVector2D(1000.0f,1000.0f) );
-	// SetCameraTransform(defCamera);
 	CheckGLError("RenderDisplayList");
 
 	m_currentMaterial = NULL;
@@ -471,15 +458,14 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
-	CheckGLError("TriList");
+	CheckGLError("FlushRenderState");
 	m_state.Flush();
-	CheckGLError("TriList");
 	if ( m_currentShader )
 	{
-	CheckGLError("TriList");
 		glUseProgram( m_currentShader->GetShaderId() );
 		m_currentShader->Prepare();
 		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
+		m_currentShader->SetGlow( m_currentMaterial->m_glow );
 		m_currentShader->SetColor( m_currentColor );
 		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterial->m_texture );
@@ -498,14 +484,12 @@ vsRenderer_OpenGL3::FlushRenderState()
 					m_lightStatus[i].specular, m_lightStatus[i].position,
 					halfVector);
 		}
-	CheckGLError("TriList");
 	}
 	else
 	{
-	CheckGLError("TriList");
 		glUseProgram( 0 );
-	CheckGLError("TriList");
 	}
+	CheckGLError("FlushRenderState");
 }
 
 void
@@ -622,7 +606,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetMatrices4x4:
 				{
-		CheckGLError("SetMatrices");
 					vsMatrix4x4 *m = (vsMatrix4x4*)op->data.p;
 					int count = op->data.i;
 					m_transformStack[++m_currentTransformStackLevel] = m[0];
@@ -633,7 +616,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetMatrices4x4Buffer:
 				{
-		CheckGLError("SetMatrices");
 					vsRenderBuffer *b = (vsRenderBuffer*)op->data.p;
 					m_transformStack[++m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 					m_currentLocalToWorld = NULL;
@@ -673,7 +655,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetProjectionMatrix4x4:
 				{
-					CheckGLError("SetProjectMatrix");
 					vsMatrix4x4 &m = op->data.GetMatrix4x4();
 					m_currentViewToProjection = m;
 					break;
@@ -682,9 +663,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsRenderBuffer::BindVertexArray( &m_state, op->data.p, op->data.i );
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
-					// glVertexPointer( 3, GL_FLOAT, 0, op->data.p );
-					// m_currentVertexArray = (vsVector3D *)op->data.p;
-					// m_currentVertexArrayCount = op->data.i;
 					break;
 				}
 			case vsDisplayList::OpCode_VertexBuffer:
@@ -695,10 +673,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_NormalArray:
 				{
-					// glNormalPointer( GL_FLOAT, 0, op->data.p );
-					// m_currentNormalArray = (vsVector3D *)op->data.p;
-					// m_currentNormalArrayCount = op->data.i;
-					// m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					vsRenderBuffer::BindNormalArray( &m_state, op->data.p, op->data.i );
+					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalBuffer:
@@ -727,9 +703,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TexelArray:
 				{
 					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
-					// glTexCoordPointer( 2, GL_FLOAT, 0, op->data.p );
-					// m_currentTexelArray = (vsVector2D *)op->data.p;
-					// m_currentTexelArrayCount = op->data.i;
 					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 					break;
 				}
@@ -741,19 +714,13 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
 				{
-					// m_currentTexelBuffer = NULL;
-					// m_currentTexelArray = NULL;
-					// m_currentTexelArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorArray:
 				{
-					// glColorPointer( 4, GL_FLOAT, 0, op->data.p );
 					vsRenderBuffer::BindColorArray( &m_state, op->data.p, op->data.i );
 					m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
-					// m_currentColorArray = (vsColor *)op->data.p;
-					// m_currentColorArrayCount = op->data.i;
 					break;
 				}
 			case vsDisplayList::OpCode_ColorBuffer:
@@ -812,14 +779,12 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_LineListArray:
 				{
 					FlushRenderState();
-					// glDrawElements( GL_LINES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
 					FlushRenderState();
-					// glDrawElements( GL_LINE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
 				}
@@ -828,17 +793,12 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
-					// glDrawElements( GL_TRIANGLES, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripArray:
 				{
-					CheckGLError("PreTriangleStripArray");
 					FlushRenderState();
-					CheckGLError("PreTriangleStripArray");
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
-					CheckGLError("PostTriangleStripArray");
-					// glDrawElements( GL_TRIANGLE_STRIP, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
@@ -1027,7 +987,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	CheckGLError("glReadPixels");
 	if ( m_currentSettings.writeColor )
 	{
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,material->m_glow);
+		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	}
 	else
 	{

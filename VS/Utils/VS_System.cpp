@@ -194,7 +194,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 #if !TARGET_OS_IPHONE
 	SDL_ShowCursor( m_showCursor );
 #endif
-	GetScreen()->UpdateVideoMode( width, height, 32, m_preferences->GetFullscreen() );
+	int bufferCount = 1;
+	if ( m_preferences->GetBloom() )
+		bufferCount = 2;
+	GetScreen()->UpdateVideoMode( width, height, 32, m_preferences->GetFullscreen(), bufferCount );
     //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
 	vsHeap::Pop(g_globalHeap);

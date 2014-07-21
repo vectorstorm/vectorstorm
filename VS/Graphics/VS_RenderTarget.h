@@ -24,6 +24,7 @@ public:
 		Settings():
 			width(512),
 			height(512),
+			buffers(1),
 			depth(true),
 			linear(true),
 			mipMaps(false),
@@ -32,6 +33,7 @@ public:
 		}
 		int		width;
 		int		height;
+		int		buffers;
 		bool	depth;
 		bool	linear;
 		bool	mipMaps;
@@ -41,7 +43,8 @@ public:
 
 	GLsizei m_width;
 	GLsizei m_height;
-	GLuint	m_texture;
+	GLuint	*m_texture;
+	int		m_textureCount;
 	GLuint	m_depth;
 	GLuint	m_stencil;
 	GLuint	m_fbo;
@@ -70,7 +73,8 @@ private:
 
 
 
-	vsTexture *	m_texture;
+	vsTexture **m_texture;
+	int			m_bufferCount;
 
 	vsSurface *	m_renderBufferSurface;
 	vsSurface *	m_textureSurface;
@@ -93,8 +97,8 @@ public:
 	 */
 
 	void		Bind();
-	vsTexture *	Resolve();
-	vsTexture *	GetTexture() { return m_texture; }
+	vsTexture *	Resolve(int id=0);
+	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 
 	void		Clear();
 	void		BlitTo( vsRenderTarget *other );

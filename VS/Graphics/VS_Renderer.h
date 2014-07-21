@@ -78,7 +78,7 @@ public:
 	virtual ~vsRenderer();
 
 	virtual bool	CheckVideoMode() = 0;
-	virtual void	UpdateVideoMode(int width, int height, int depth, bool fullscreen) = 0;
+	virtual void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount) = 0;
 
 	virtual void	PreRender( const Settings &s ) = 0;
 	virtual void	RenderDisplayList( vsDisplayList *list ) = 0;

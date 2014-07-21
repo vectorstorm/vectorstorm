@@ -142,9 +142,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	SDL_FreeSurface(surface);
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
+vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer, bool depth ):
 	vsResource(name),
-	m_texture((depth) ? surface->m_depth : surface->m_texture),
+	m_texture((depth) ? surface->m_depth : surface->m_texture[surfaceBuffer] ),
 	m_glTextureWidth(surface->m_width),
 	m_glTextureHeight(surface->m_height),
 	m_width(surface->m_width),

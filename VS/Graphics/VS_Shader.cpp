@@ -87,6 +87,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
+		m_glowLoc = glGetUniformLocation(m_shader, "glow");
 
 		m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
@@ -278,6 +279,17 @@ vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
 	CheckGLError("SetProjectMatrix");
+}
+
+void
+vsShader::SetGlow( float glowAlpha )
+{
+	CheckGLError("PreSetGlow");
+	if ( m_glowLoc >= 0 )
+	{
+		glUniform1f( m_glowLoc, glowAlpha );
+	}
+	CheckGLError("SetGlow");
 }
 
 void

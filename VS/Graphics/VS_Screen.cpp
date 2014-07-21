@@ -46,7 +46,9 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_VSync;
 	flags |= vsRenderer::Flag_Resizable;
 
-	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags);
+	int bufferCount = 2;
+
+	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags, bufferCount);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
@@ -65,7 +67,7 @@ vsScreen::~vsScreen()
 }
 
 void
-vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
+vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount)
 {
 	if ( width == m_width && height == m_height && depth == m_depth && fullscreen == m_fullscreen )
 		return;
@@ -75,7 +77,7 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen)
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
 	m_fullscreen = fullscreen;
-	m_renderer->UpdateVideoMode(width, height, depth, fullscreen);
+	m_renderer->UpdateVideoMode(width, height, depth, fullscreen, bufferCount);
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->UpdateVideoMode();

@@ -7,6 +7,7 @@ uniform float alphaRef;
 
 in float fogFactor;
 uniform vec3 fogColor;
+uniform float glow;
 
 #ifdef LIT
 struct lightSourceParameters
@@ -23,7 +24,7 @@ in vec3 fragNormal;
 #endif // LIT
 
 in vec4 frontColor;
-out vec4 fragColor;
+out vec4 fragColor[2];
 
 void main(void)
 {
@@ -63,8 +64,9 @@ void main(void)
 	color = ambientPart + diffusePart;
 #endif // LIT
 
-	fragColor.rgb = mix(fogColor.rgb, color.rgb, fogFactor );
-	fragColor.a = color.a;
+	vec3 finalColor = mix(fogColor.rgb, color.rgb, fogFactor );
+	fragColor[0].rgba = vec4(finalColor, color.a);
+	fragColor[1].rgba = vec4(finalColor * glow, 1.0);
 	// fragColor = vec4(1.0,0.0,0.0,1.0);
 }
 
