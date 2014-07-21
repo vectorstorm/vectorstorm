@@ -297,8 +297,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glBindVertexArray(m_vao);
 	CheckGLError("Initialising OpenGL rendering");
 
-	glEnableVertexAttribArray(3);
-
 	Resize();
 
 	CheckGLError("Initialising OpenGL rendering");
