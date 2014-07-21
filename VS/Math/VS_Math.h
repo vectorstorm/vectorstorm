@@ -17,10 +17,8 @@
 #define vsClamp(a,min,max) ( vsMin( (max), vsMax( (min), (a) ) ) )
 
 inline bool	vsIsNaN(float x) { volatile float o_x = x; return (x != o_x); }	// NaN != NaN.  Any number which doesn't equal itself must be NaN!
-
 inline float vsFabs( float in ) { return (in >= 0.f)?in:-in; }
-
-float vsSqrt( float in );
+inline float vsSqrt( float in ) { return sqrtf(in); }
 
 float vsCos( float theta );
 float vsSin( float theta );
