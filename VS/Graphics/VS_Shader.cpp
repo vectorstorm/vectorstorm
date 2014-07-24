@@ -18,6 +18,9 @@
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
 
+static bool m_localToWorldAttribIsActive = false;
+
+
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
@@ -189,18 +192,21 @@ vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
 {
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-		glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-	CheckGLError("SetLocalToWorld");
+		if ( !m_localToWorldAttribIsActive )
+		{
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+			m_localToWorldAttribIsActive = true;
+		}
 
 	buffer->BindAsAttribute( m_localToWorldAttributeLoc );
+	glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+	glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+	glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+	glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
 
-		glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-		glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
 	CheckGLError("SetLocalToWorld");
 	}
 }
@@ -217,10 +223,14 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 	{
 		if ( matCount == 1 )
 		{
-			glDisableVertexAttribArray(m_localToWorldAttributeLoc);
-			glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
-			glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
-			glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
+			if ( m_localToWorldAttribIsActive )
+			{
+				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
+				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
+				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
+				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
+				m_localToWorldAttribIsActive = false;
+			}
 
 			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
 			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
@@ -229,10 +239,18 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 		}
 		else
 		{
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+			if ( !m_localToWorldAttribIsActive )
+			{
+				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
+				m_localToWorldAttribIsActive = true;
+			}
 
 			static GLuint g_vbo = 0xffffffff;
 			// this could be a lot smarter.
@@ -248,11 +266,6 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
 		}
 	}
 	CheckGLError("SetLocalToWorld");
