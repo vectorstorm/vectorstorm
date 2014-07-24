@@ -124,12 +124,6 @@ private:
 
 public:
 
-	enum
-	{
-		Flag_Fullscreen = BIT(0),
-		Flag_VSync = BIT(1),
-		Flag_Resizable = BIT(2)
-	};
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
 

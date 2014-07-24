@@ -233,7 +233,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		}
 	}
 
-	m_antialias = (glRenderbufferStorageMultisample != NULL);
+	m_antialias = flags & Flag_Antialias;
 	// m_antialias = false;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )

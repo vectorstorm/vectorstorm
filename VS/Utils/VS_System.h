@@ -140,6 +140,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_fullscreen;
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
+	vsPreferenceObject *	m_antialias;
 
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
@@ -172,6 +173,9 @@ public:
 
 	bool			GetBloom();
 	void			SetBloom(bool enabled);
+
+	bool			GetAntialias();
+	void			SetAntialias(bool enabled);
 
 	// Sound preferences
 	int				GetEffectVolume();

@@ -52,7 +52,7 @@ public:
 
 	static vsScreen *	Instance() { return s_instance; }
 
-	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync);
+	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias);
 	~vsScreen();
 
 	vsRenderTarget *	GetMainRenderTarget();
