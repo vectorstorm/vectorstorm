@@ -141,11 +141,11 @@ vsPreferenceObject::vsPreferenceObject():
 void
 vsPreferenceObject::Insert( vsPreferenceObject *next )
 {
-	next->m_next = m_next;
-	next->m_prev = this;
+	next->m_next = this;
+	next->m_prev = m_prev;
 
-	m_next->m_prev = next;
-	m_next = next;
+	m_prev->m_next = next;
+	m_prev = next;
 }
 
 void
