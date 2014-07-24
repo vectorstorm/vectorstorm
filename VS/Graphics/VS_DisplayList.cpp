@@ -75,6 +75,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"SetMaterial",
 	"SetRenderTarget",
+	"ClearRenderTarget",
 	"ResolveRenderTarget",
 	"BlitRenderTarget",
 
@@ -980,6 +981,12 @@ vsDisplayList::SetRenderTarget( vsRenderTarget *target )
 }
 
 void
+vsDisplayList::ClearRenderTarget()
+{
+	m_fifo->WriteUint8( OpCode_ClearRenderTarget );
+}
+
+void
 vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 {
 	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
@@ -1256,6 +1263,7 @@ vsDisplayList::PopOp()
 			case OpCode_EnableScissor:
 				m_fifo->ReadBox2D( &m_currentOp.data.box2D );
 				break;
+			case OpCode_ClearRenderTarget:
 			case OpCode_ClearLights:
 			case OpCode_PopTransform:
 			case OpCode_ClearVertexArray:

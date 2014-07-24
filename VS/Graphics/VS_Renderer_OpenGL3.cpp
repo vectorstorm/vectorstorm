@@ -233,7 +233,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		}
 	}
 
-	m_antialias = (glRenderbufferStorageMultisampleEXT != NULL);
+	m_antialias = (glRenderbufferStorageMultisample != NULL);
 	// m_antialias = false;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
@@ -555,6 +555,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					SetRenderTarget(target);
 					break;
 				}
+			case vsDisplayList::OpCode_ClearRenderTarget:
+				{
+					m_currentRenderTarget->Clear();
+				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
@@ -1090,9 +1094,9 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		vsTexture *t = material->GetTexture(i);
-		glActiveTexture(GL_TEXTURE0 + i);
 		if ( t )
 		{
+			glActiveTexture(GL_TEXTURE0 + i);
 			// glEnable(GL_TEXTURE_2D);
 			glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
 
@@ -1470,13 +1474,12 @@ vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 	{
 		target->Bind();
 		m_currentRenderTarget = target;
-		target->Clear();// this doesn't belong here.  Separate display list call?
 	}
 	else
 	{
 		m_scene->Bind();
 		m_currentRenderTarget = m_scene;
-		m_scene->Clear();
+		// m_scene->Clear();
 	}
 }
 

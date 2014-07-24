@@ -82,6 +82,7 @@ public:
 
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
+		OpCode_ClearRenderTarget,
 		OpCode_ResolveRenderTarget,
 		OpCode_BlitRenderTarget,
 
@@ -259,6 +260,7 @@ public:
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( vsMaterialInternal *material );
 	void	SetRenderTarget( vsRenderTarget *target );
+	void	ClearRenderTarget(); // clears the currently set render target.
 	void	ResolveRenderTarget( vsRenderTarget *target );
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
 
