@@ -358,7 +358,6 @@ vsRenderer_OpenGL3::Resize()
 bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
-	CheckGLError("CheckVideoMode");
 #ifdef HIGHDPI_SUPPORTED
 	int nowWidthPixels, nowHeightPixels;
 	SDL_GL_GetDrawableSize(m_sdlWindow, &nowWidthPixels, &nowHeightPixels);
@@ -394,7 +393,6 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
-	CheckGLError("PreRender");
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
@@ -425,44 +423,40 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	// our baseline size is 1024x768.  We want single-pixel lines at that size.
 	// float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
 	// glLineWidth( lineScaleFactor );
-
-	CheckGLError("PreRender");
 }
 
 void
 vsRenderer_OpenGL3::PostRender()
 {
-	CheckGLError("PostRender");
-
 	vsTimerSystem::Instance()->EndRenderTime();
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(m_sdlWindow);
 #endif
 	vsTimerSystem::Instance()->EndGPUTime();
-
-	CheckGLError("PostRender");
 }
 
 void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
 	CheckGLError("RenderDisplayList");
-
 	m_currentMaterial = NULL;
 	m_currentShader = NULL;
 	RawRenderDisplayList(list);
 
-	CheckGLError("RenderDisplayList");
+	// CheckGLError("RenderDisplayList");
 }
 
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
-	CheckGLError("FlushRenderState");
+	static int s_lastShaderId = 0;
 	m_state.Flush();
 	if ( m_currentShader )
 	{
-		glUseProgram( m_currentShader->GetShaderId() );
+		if ( s_lastShaderId != m_currentShader->GetShaderId() )
+			glUseProgram( m_currentShader->GetShaderId() );
+		s_lastShaderId = m_currentShader->GetShaderId();
+
 		m_currentShader->Prepare();
 		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
 		m_currentShader->SetGlow( m_currentMaterial->m_glow );
@@ -489,7 +483,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 	{
 		glUseProgram( 0 );
 	}
-	CheckGLError("FlushRenderState");
 }
 
 void
@@ -972,7 +965,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
-		CheckGLError("RenderOp");
+		//CheckGLError("RenderOp");
 		op = list->PopOp();
 	}
 }
@@ -980,7 +973,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 {
-	CheckGLError("Material");
 	if ( !m_invalidateMaterial && (material == m_currentMaterial) )
 	{
 		return;
@@ -988,7 +980,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	m_invalidateMaterial = true;
 	m_currentMaterial = material;
 
-	CheckGLError("glReadPixels");
 	if ( m_currentSettings.writeColor )
 	{
 		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -1005,7 +996,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	{
 		m_state.SetBool( vsRendererState::Bool_DepthMask, false );
 	}
-	CheckGLError("glReadPixels");
 
 	switch ( material->m_stencil )
 	{
@@ -1030,7 +1020,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 		default:
 			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
-	CheckGLError("glReadPixels");
 
 	vsAssert( m_currentMaterial != NULL, "In SetMaterial() with no material?" );
 	m_currentShader = NULL;
@@ -1108,21 +1097,17 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			// glDisable(GL_TEXTURE_2D);
 		}
 	}
-	CheckGLError("Material");
 	glActiveTexture(GL_TEXTURE0);
-	CheckGLError("Material");
 
 	if ( material->m_alphaTest )
 	{
 		// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
 	}
 
-	CheckGLError("Material");
 	if ( material->m_zRead )
 	{
 		glDepthFunc( GL_LEQUAL );
 	}
-	CheckGLError("Material");
 
 	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
 	{
@@ -1139,7 +1124,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
 	// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
 
-	CheckGLError("Material");
 	if ( material->m_cullingType == Cull_None )
 	{
 		m_state.SetBool( vsRendererState::Bool_CullFace, false );
@@ -1163,10 +1147,8 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			m_state.SetInt( vsRendererState::Int_CullFace, GL_FRONT );
 		}
 	}
-	CheckGLError("Material");
 
 	m_state.SetBool( vsRendererState::Bool_Blend, material->m_blend );
-	CheckGLError("Material");
 	switch( material->m_drawMode )
 	{
 		case DrawMode_Add:
@@ -1177,7 +1159,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 				glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-	CheckGLError("Material");
 				break;
 			}
 		case DrawMode_Subtract:
@@ -1188,7 +1169,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-	CheckGLError("Material");
 				break;
 			}
 		case DrawMode_Absolute:
@@ -1209,7 +1189,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 #endif
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-	CheckGLError("Material");
 				break;
 			}
 		case DrawMode_Lit:
@@ -1229,13 +1208,11 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 //
 // 				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
 // 				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
-	CheckGLError("Material");
 				break;
 			}
 		default:
 			vsAssert(0, "Unknown draw mode requested!");
 	}
-	CheckGLError("Material");
 
 	if ( material->m_hasColor )
 	{
@@ -1253,7 +1230,6 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 	{
 		m_currentColor = c_white;
 	}
-	CheckGLError("Material");
 }
 
 GLuint
@@ -1263,7 +1239,6 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	GLuint vertShader, fragShader, program;
 	GLint success;
 
-	CheckGLError("Compiling");
 	GLint *vLengthPtr = NULL;
 	GLint *fLengthPtr = NULL;
 
@@ -1273,34 +1248,24 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 		fLengthPtr = (GLint*)&fLength;
 
 	vertShader = glCreateShader(GL_VERTEX_SHADER);
-	CheckGLError("Compiling");
 	glShaderSource(vertShader, 1, (const GLchar**) &vert, vLengthPtr);
-	CheckGLError("Compiling");
 	glCompileShader(vertShader);
-	CheckGLError("Compiling");
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-	CheckGLError("Compiling");
 	if (!success)
 	{
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-		CheckGLError("Compiling");
 		// vsLog("%s",vert);
 		vsLog("%s",buf);
 		vsAssert(success,"Unable to compile vertex shader.\n");
 	}
 
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	CheckGLError("Compiling");
 	glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
-	CheckGLError("Compiling");
 	glCompileShader(fragShader);
-	CheckGLError("Compiling");
 	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-	CheckGLError("Compiling");
 	if (!success)
 	{
 		glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-	CheckGLError("Compiling");
 		vsLog("%s",frag);
 		vsLog(buf);
 		vsAssert(success,"Unable to compile fragment shader.\n");
@@ -1308,35 +1273,25 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 
 	program = glCreateProgram();
 	glAttachShader(program, vertShader);
-	CheckGLError("Compiling");
 	glAttachShader(program, fragShader);
-	CheckGLError("Compiling");
 
 	glBindAttribLocation(program, 0, "vertex");
 	glBindAttribLocation(program, 1, "texcoord");
 	glBindAttribLocation(program, 2, "normal");
 	glBindAttribLocation(program, 3, "color");
-	CheckGLError("Compiling");
 
 	glLinkProgram(program);
-	CheckGLError("Compiling");
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	CheckGLError("Compiling");
 	if (!success)
 	{
 		glGetProgramInfoLog(program, sizeof(buf), 0, buf);
-	CheckGLError("Compiling");
 		vsLog(buf);
 		vsAssert(success,"Unable to link shaders.\n");
 	}
 	glDetachShader(program,vertShader);
-	CheckGLError("Compiling");
 	glDetachShader(program,fragShader);
-	CheckGLError("Compiling");
 	glDeleteShader(vertShader);
-	CheckGLError("Compiling");
 	glDeleteShader(fragShader);
-	CheckGLError("Compiling");
 
 	return program;
 }
@@ -1345,7 +1300,6 @@ void
 vsRenderer_OpenGL3::DestroyShader(GLuint shader)
 {
 	glDeleteProgram(shader);
-	CheckGLError("DeleteProgram");
 }
 
 

@@ -70,7 +70,6 @@ vsRenderTarget::~vsRenderTarget()
 vsTexture *
 vsRenderTarget::Resolve(int id)
 {
-	CheckGLError("RenderTarget");
 	if ( m_renderBufferSurface )	// need to copy from the render buffer surface to the regular texture.
 	{
 		if ( glBindFramebuffer && glBlitFramebuffer )
@@ -100,14 +99,12 @@ vsRenderTarget::Resolve(int id)
 		return GetTexture(id);
 	}
 
-	CheckGLError("RenderTarget");
 	return NULL;
 }
 
 void
 vsRenderTarget::Bind()
 {
-	CheckGLError("RenderTarget");
 	if ( m_renderBufferSurface )
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
@@ -130,13 +127,11 @@ vsRenderTarget::Bind()
 		glDrawBuffers(m_bufferCount,buffers);
 	}
 	glViewport(0,0,m_viewportWidth, m_viewportHeight);
-	CheckGLError("RenderTarget");
 }
 
 void
 vsRenderTarget::Clear()
 {
-	CheckGLError("RenderTarget");
 	GLbitfield bits = GL_COLOR_BUFFER_BIT;
 	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
 	if ( surface->m_depth )
@@ -150,13 +145,11 @@ vsRenderTarget::Clear()
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
 	glClear(bits);
-	CheckGLError("RenderTarget");
 }
 
 void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
-	CheckGLError("RenderTarget");
 	if ( m_renderBufferSurface )
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 	else
@@ -168,7 +161,6 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
 
 	glBlitFramebuffer(0, 0, m_viewportWidth, m_viewportHeight, 0, 0, other->m_viewportWidth, other->m_viewportHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	CheckGLError("RenderTarget");
 }
 
 vsSurface::vsSurface( int width, int height ):

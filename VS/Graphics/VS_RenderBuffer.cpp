@@ -895,15 +895,11 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-	CheckGLError("TriList");
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-	CheckGLError("TriList");
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glDrawElementsInstanced(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-	CheckGLError("TriList");
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	CheckGLError("TriList");
 	}
 	else
 	{

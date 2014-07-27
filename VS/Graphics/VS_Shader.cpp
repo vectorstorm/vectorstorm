@@ -140,7 +140,6 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 void
 vsShader::SetAlphaRef( float aref )
 {
-	CheckGLError("PreSetAlphaRef");
 	if ( m_alphaRefLoc >= 0 )
 	{
 		glUniform1f( m_alphaRefLoc, aref );
@@ -150,7 +149,6 @@ vsShader::SetAlphaRef( float aref )
 void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
-	CheckGLError("PreSetFog");
 	if ( m_fogLoc >= 0 )
 	{
 		glUniform1i( m_fogLoc, fog );
@@ -168,7 +166,6 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 void
 vsShader::SetColor( const vsColor& color )
 {
-	CheckGLError("PreSetColor");
 	if ( m_colorLoc >= 0 )
 	{
 		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
@@ -179,7 +176,6 @@ vsShader::SetColor( const vsColor& color )
 void
 vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
-	CheckGLError("PreSetTextures");
 	if ( m_textureLoc >= 0 )
 	{
 		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -198,23 +194,20 @@ vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
 			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
 			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
 			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
 			m_localToWorldAttribIsActive = true;
 		}
 
-	buffer->BindAsAttribute( m_localToWorldAttributeLoc );
-	glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-	glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-	glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-	glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-
-	CheckGLError("SetLocalToWorld");
+		buffer->BindAsAttribute( m_localToWorldAttributeLoc );
 	}
 }
 
 void
 vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 {
-	CheckGLError("PreSetLocalToWorld");
 	if ( m_localToWorldLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
@@ -268,41 +261,33 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 	}
-	CheckGLError("SetLocalToWorld");
 }
 
 void
 vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 {
-	CheckGLError("PreSetWorldToView");
 	if ( m_worldToViewLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
 	}
-
-	CheckGLError("SetWorldToView");
 }
 
 void
 vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 {
-	CheckGLError("PreSetProjectMatrix");
 	if ( m_viewToProjectionLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
-	CheckGLError("SetProjectMatrix");
 }
 
 void
 vsShader::SetGlow( float glowAlpha )
 {
-	CheckGLError("PreSetGlow");
 	if ( m_glowLoc >= 0 )
 	{
 		glUniform1f( m_glowLoc, glowAlpha );
 	}
-	CheckGLError("SetGlow");
 }
 
 void
@@ -310,38 +295,27 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector )
 {
-	CheckGLError("SetLight");
 	if ( id != 0 )
 		return;
 	if ( m_lightAmbientLoc >= 0 )
 	{
-	CheckGLError("SetLight");
 		glUniform4fv( m_lightAmbientLoc, 1, (GLfloat*)&ambient );
-	CheckGLError("SetLight");
 	}
 	if ( m_lightDiffuseLoc >= 0 )
 	{
-	CheckGLError("SetLight");
 		glUniform4fv( m_lightDiffuseLoc, 1, (GLfloat*)&diffuse );
-	CheckGLError("SetLight");
 	}
 	if ( m_lightSpecularLoc >= 0 )
 	{
-	CheckGLError("SetLight");
 		glUniform4fv( m_lightSpecularLoc, 1, (GLfloat*)&specular );
-	CheckGLError("SetLight");
 	}
 	if ( m_lightPositionLoc >= 0 )
 	{
-	CheckGLError("SetLight");
 		glUniform3fv( m_lightPositionLoc, 1, (GLfloat*)&position );
-	CheckGLError("SetLight");
 	}
 	if ( m_lightHalfVectorLoc >= 0 )
 	{
-	CheckGLError("SetLight");
 		glUniform3fv( m_lightHalfVectorLoc, 1, (GLfloat*)&halfVector );
-	CheckGLError("SetLight");
 	}
 }
 

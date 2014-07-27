@@ -194,27 +194,19 @@ vsRendererState::Flush()
 {
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
-		CheckGLError("Flush");
 		m_boolState[i]->Flush();
-		CheckGLError("Flush");
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
-		CheckGLError("Flush");
         m_intState[i]->Flush();
-		CheckGLError("Flush");
     }
 	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
-		CheckGLError("Flush");
 		m_floatState[i]->Flush();
-		CheckGLError("Flush");
 	}*/
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
-		CheckGLError("Flush");
 		m_float2State[i]->Flush();
-		CheckGLError("Flush");
 	}
 }
 
