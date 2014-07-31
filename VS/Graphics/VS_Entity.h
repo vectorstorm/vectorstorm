@@ -65,6 +65,9 @@ public:
 	void			AddChild( vsEntity *sprite );
 	void			RemoveChild( vsEntity *sprite );
 
+	vsEntity *		FirstChild() { return m_child; }
+	vsEntity *		Sibling() { return m_next; }
+
 	void			SetName( const vsString &name ) { m_name = name; }
 	const vsString&	GetName() { return m_name; }
 	vsEntity *		Find( const vsString &name );
