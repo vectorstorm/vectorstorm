@@ -107,7 +107,7 @@ vsWeakPointer<T>::operator=( const vsWeakPointer &sp )
 	// get the new reference
 	if( sp.Target() )
 	{
-		sp.Target()->addReference( this );
+		sp.Target()->AddReference( this );
 	}
 
 	return *this;
