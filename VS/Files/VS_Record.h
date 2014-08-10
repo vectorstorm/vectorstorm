@@ -15,10 +15,10 @@
 #define MAX_CHILDRECORDS (128)
 
 #include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Math/VS_Quaternion.h"
 
 class vsVector2D;
 class vsColor;
-class vsOverlay;
 class vsFile;
 
 #include "VS_Token.h"
@@ -71,7 +71,7 @@ public:
 	vsColor				Color();
 	vsVector2D			Vector2D();
 	vsVector3D			Vector3D();
-	vsOverlay			Overlay();
+	vsQuaternion		Quaternion();
 
 	void				SetRect(float x, float y, float width, float height);
 	void				SetInt(int value);

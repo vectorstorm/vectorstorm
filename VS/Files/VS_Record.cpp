@@ -389,3 +389,14 @@ vsRecord::Vector3D()
 					  GetToken(2).AsFloat() );
 }
 
+vsQuaternion
+vsRecord::Quaternion()
+{
+	vsAssert(m_tokenCount == 4, "Wrong number of tokens to read a Quaternion!");
+
+	return vsQuaternion( GetToken(0).AsFloat(),
+					  GetToken(1).AsFloat(),
+					  GetToken(2).AsFloat(),
+					  GetToken(3).AsFloat() );
+}
+

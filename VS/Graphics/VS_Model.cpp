@@ -54,6 +54,10 @@ vsModel::LoadFrom( vsRecord *record )
 		{
 			SetPosition( sr->Vector3D() );
 		}
+		else if ( srLabel == "rotation" )
+		{
+			SetOrientation( sr->Quaternion() );
+		}
 		else if ( srLabel == "Model" )
 		{
 			vsModel *child = new vsModel;
