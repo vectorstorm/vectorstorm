@@ -21,32 +21,33 @@
 class vsAngle
 {
 	float m_angle;
-	
+
 	mutable float m_cosValue;
 	mutable float m_sinValue;
 	mutable bool  m_trigCalculated;
-	
+
 	void	CalculateTrig() const;
-	
+
 public:
 	static vsAngle Zero;
 	static vsAngle FromForwardVector( const vsVector2D &forward );
-		
-			vsAngle(float angle_in=0.f);
-	
+
+	vsAngle(float angle_in=0.f);
+	vsAngle(const vsAngle& o);
+
 	void	Set(float angle_in);
 	void	Rotate(float rotation);
-	
+
 	bool	IsIdentity() { return (Get() == 0.0f); }
-	
+
 	float	Get() const { return m_angle; }
-	float	GetDegrees() const { return TO_DEGREES(m_angle); } 
+	float	GetDegrees() const { return TO_DEGREES(m_angle); }
 	float	Cos() const;
 	float	Sin() const;
-	
+
 	vsVector2D	ApplyRotationTo( const vsVector2D &in ) const;
 	vsVector2D	GetForwardVector() const { return ApplyRotationTo( vsVector2D(0.0f,-1.0f) ); }
-	
+
 	vsAngle		operator*(float s) const { return vsAngle(Get()*s); }
 
 	vsAngle		operator+(const vsAngle &b) const { return vsAngle(Get()+b.Get()); }

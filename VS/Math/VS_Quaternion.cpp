@@ -29,8 +29,9 @@ vsQuaternion::vsQuaternion(float x_in, float y_in, float z_in, float w_in):
 {
 }
 
-vsQuaternion::vsQuaternion( const vsVector3D &axis, float angle )
+vsQuaternion::vsQuaternion( const vsVector3D &axis, float angle_in )
 {
+	vsAngle angle( angle_in );
 	vsAngle halfAngle( angle * 0.5f );
 
 	w = halfAngle.Cos();
