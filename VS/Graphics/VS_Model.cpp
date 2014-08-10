@@ -11,6 +11,7 @@
 
 #include "VS_DisplayList.h"
 #include "VS_RenderQueue.h"
+#include "VS_EulerAngles.h"
 
 #include "VS_File.h"
 #include "VS_Record.h"
@@ -57,6 +58,17 @@ vsModel::LoadFrom( vsRecord *record )
 		else if ( srLabel == "rotation" )
 		{
 			SetOrientation( sr->Quaternion() );
+		}
+		else if ( srLabel == "rotationXYZDegrees" )
+		{
+			// for convenience, allow the rotation to be set as euler angles,
+			// using degrees.
+			vsVector3D xyz = sr->Vector3D();
+			SetOrientation( vsQuaternion( vsEulerAngles(
+							DEGREES(xyz.x),
+							DEGREES(xyz.y),
+							DEGREES(xyz.z)
+							) ) );
 		}
 		else if ( srLabel == "Model" )
 		{
