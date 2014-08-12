@@ -40,8 +40,8 @@ public:
 	void SetMatrix( const vsMatrix4x4& mat );
 
 	vsModel * GetModel() { return model; }
-	const vsVector4D& GetPosition() { return matrix.w; }
-	const vsMatrix4x4& GetMatrix() { return matrix; }
+	const vsVector4D& GetPosition() const { return matrix.w; }
+	const vsMatrix4x4& GetMatrix() const { return matrix; }
 
 };
 
@@ -99,25 +99,25 @@ public:
 	vsMaterial *	GetMaterial() { return m_material; }
 
 	virtual void		SetPosition( const vsVector3D &pos ) { m_transform.SetTranslation( pos ); }
-	const vsVector3D &	GetPosition() { return m_transform.GetTranslation(); }
+	const vsVector3D &	GetPosition() const { return m_transform.GetTranslation(); }
 
 	virtual void			SetOrientation( const vsQuaternion &quat ) { m_transform.SetRotation( quat ); }
-	const vsQuaternion &	GetOrientation() { return m_transform.GetRotation(); }
+	const vsQuaternion &	GetOrientation() const { return m_transform.GetRotation(); }
 
-	const vsMatrix4x4 &		GetMatrix() { return m_transform.GetMatrix(); }
+	const vsMatrix4x4 &		GetMatrix() const { return m_transform.GetMatrix(); }
 
-	const vsVector3D &		GetScale() { return m_transform.GetScale(); }
+	const vsVector3D &		GetScale() const { return m_transform.GetScale(); }
 	void					SetScale( const vsVector3D &s ) { m_transform.SetScale(s); }
 	void					SetScale( float s ) { m_transform.SetScale(s); }
 
-	const vsBox3D &			GetBoundingBox() { return m_boundingBox; }
+	const vsBox3D &			GetBoundingBox() const { return m_boundingBox; }
 	void					SetBoundingBox(const vsBox3D &box) { m_boundingBox = box; }
 	void					BuildBoundingBox();
 
 	float					GetBoundingRadius() { return m_boundingRadius; }
 
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; }
-	const vsTransform3D&	GetTransform() { return m_transform; }
+	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
 	void			AddFragment( vsFragment *fragment );
