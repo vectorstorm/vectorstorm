@@ -393,8 +393,6 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
-	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
-
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
 	m_currentShader = NULL;
