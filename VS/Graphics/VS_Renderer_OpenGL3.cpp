@@ -447,7 +447,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
-	static int s_lastShaderId = 0;
+	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	if ( m_currentShader )
 	{
