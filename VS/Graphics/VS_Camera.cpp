@@ -188,15 +188,21 @@ vsCamera3D::GetProjectionMatrix()
 		float width = height * m_aspectRatio;
 		float hh = 0.5f * height;
 		float hw = 0.5f * width;
-		float f = m_farPlane;
-		float n = m_nearPlane;
+		float f = m_nearPlane;
+		float n = m_farPlane;
 
 		vsMatrix4x4 m(
 				vsVector4D( 1.f / hw, 0.f, 0.f, 0.f ),
 				vsVector4D( 0.f, 1.f / hh, 0.f, 0.f ),
-				vsVector4D( 0.f, 0.f, -2.f / (f-n), -(f+n) / (f-n) ),
+				vsVector4D( 0.f, 0.f, -2.f / (f-n), 0.f ),
 				vsVector4D( 0.f, 0.f, 0.f, 1.f )
 				);
+		// vsMatrix4x4 m(
+		// 		vsVector4D( 1.f / hw, 0.f, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 1.f / hh, 0.f, 0.f ),
+		// 		vsVector4D( 0.f, 0.f, -2.f / (f-n), -(f+n) / (f-n) ),
+		// 		vsVector4D( 0.f, 0.f, 0.f, 1.f )
+		// 		);
 
 		return m;
 	}

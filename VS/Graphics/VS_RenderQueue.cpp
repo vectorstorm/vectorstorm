@@ -247,7 +247,8 @@ vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
 	m_stage(new vsRenderQueueStage[stageCount]),
 	m_stageCount(stageCount),
 	m_transformStack(),
-	m_transformStackLevel(0)
+	m_transformStackLevel(0),
+	m_orthographic(true)
 {
 }
 
@@ -319,10 +320,10 @@ vsRenderQueue::InitialiseTransformStack()
 		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
 
 		requestedMatrix.w -= m_parent->GetCamera3D()->GetPosition();
-
+        //
 		vsMatrix4x4 myIdentity;
 		myIdentity.x *= -1.f;
-
+        //
 		vsMatrix4x4 cameraMatrix = m_parent->GetCamera3D()->GetTransform().GetMatrix();
 
 		vsVector3D forward = cameraMatrix.z;
@@ -335,6 +336,8 @@ vsRenderQueue::InitialiseTransformStack()
 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
 		cameraMatrix.Invert();
 
+		// vsMatrix4x4 cameraMatrix = m_parent->GetCamera3D()->GetTransform().GetMatrix();
+		// cameraMatrix.Invert();
 		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
 
 		m_worldToView = cameraMatrix * requestedMatrix;
@@ -374,6 +377,17 @@ vsRenderQueue::InitialiseTransformStack()
 		m_transformStack[0] = vsMatrix4x4::Identity;
 		m_transformStackLevel = 1;
 	}
+}
+
+bool
+vsRenderQueue::IsOrthographic()
+{
+	if ( m_parent->Is3D() )
+	{
+		if ( m_parent->GetCamera3D()->GetProjectionType() == vsCamera3D::PT_Perspective )
+			return false;
+	}
+	return true;
 }
 
 void

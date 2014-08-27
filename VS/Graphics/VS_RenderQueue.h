@@ -102,6 +102,7 @@ class vsRenderQueue
 	int						m_transformStackLevel;
 
 	float m_fov;
+	bool m_orthographic;
 
 	int				PickStageForMaterial( vsMaterial *material );
 
@@ -126,6 +127,7 @@ public:
 	const vsMatrix4x4&		GetProjectionMatrix() { return m_projection; }
 	float			GetFOV() { return m_fov; }
 	void			SetFOV( float fov ) { m_fov = fov; }
+	bool			IsOrthographic();
 
 	void SetProjectionMatrix( const vsMatrix4x4& mat ) { m_projection = mat; }
 

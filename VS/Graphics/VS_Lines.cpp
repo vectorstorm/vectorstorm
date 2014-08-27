@@ -395,8 +395,18 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		float widthHere = m_width;
 		if ( m_widthInScreenspace )
 		{
-			vsVector3D viewPos = localToView.ApplyTo( vsVector4D(strip->m_vertex[midI],1.f) );
-			widthHere *= tanHalfFovPerPixel * viewPos.z;
+			if ( queue->IsOrthographic() )
+			{
+				// TODO:  Figure out conversion factor between screen pixels
+				// and meters in ortho.
+
+				widthHere *= fovPerPixel;
+			}
+			else
+			{
+				vsVector3D viewPos = localToView.ApplyTo( vsVector4D(strip->m_vertex[midI],1.f) );
+				widthHere *= tanHalfFovPerPixel * viewPos.z;
+			}
 		}
 		float halfWidthHere = widthHere * 0.5f;
 
