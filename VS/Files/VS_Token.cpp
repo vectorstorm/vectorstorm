@@ -44,7 +44,7 @@ static bool IsAlpha( char c )
 
 static bool IsNumeric( char c )
 {
-	return ( c == '.' || c == '-' ||
+	return ( c == '.' || c == '-' || c == '+' ||
 			(c >= '0' && c <= '9') );
 }
 
