@@ -119,5 +119,6 @@
 #include <VS/Utils/VS_SingletonManager.h>
 #include <VS/Utils/VS_String.h>
 #include <VS/Utils/VS_System.h>
+#include <VS/Utils/VS_VolatileArray.h>
 
 #endif // VS_HEADERS
