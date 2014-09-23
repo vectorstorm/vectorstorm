@@ -29,7 +29,7 @@ public:
 
 	vsVolatileArrayIterator( const vsVolatileArray<T> *array, int initial ): m_parent(array), m_current(initial) {}
 
-	T				Get() { return m_parent->Get(*this); }
+	T&				Get() { return m_parent->Get(*this); }
 
 	bool			Next() { m_current++; return (m_current < m_parent->ItemCount() ); }
 	bool			Prev() { m_current--; return (m_current >= 0); }
@@ -44,7 +44,7 @@ public:
 	friend class vsVolatileArray<T>;
 };
 
-template<class T>T	operator*(vsVolatileArrayIterator<T> i) { return i.Get(); }
+template<class T>T&	operator*(vsVolatileArrayIterator<T> i) { return i.Get(); }
 
 template<class T>
 class vsVolatileArray
@@ -80,7 +80,7 @@ public:
 		vsDeleteArray( m_array );
 	}
 
-	T		Get( const vsVolatileArrayIterator<T> &iter ) const
+	T&		Get( const vsVolatileArrayIterator<T> &iter ) const
 	{
 		return m_array[ iter.m_current ];
 	}
