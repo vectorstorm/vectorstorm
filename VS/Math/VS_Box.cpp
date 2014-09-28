@@ -748,3 +748,15 @@ vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b
 	return true;
 }
 
+bool
+vsOrientedBox3D::Contains( const vsVector3D& point )
+{
+	const vsVector3D &ax = m_transform.GetMatrix().x;
+	const vsVector3D &ay = m_transform.GetMatrix().y;
+	const vsVector3D &az = m_transform.GetMatrix().z;
+	return (
+			SAT_Contains( &point, 1, ax ) &&
+			SAT_Contains( &point, 1, ay ) &&
+			SAT_Contains( &point, 1, az ) );
+}
+

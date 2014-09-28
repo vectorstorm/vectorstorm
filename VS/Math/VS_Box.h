@@ -158,6 +158,7 @@ public:
 	bool Intersects( const vsOrientedBox3D& other );
 	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius );
 	bool IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius );
+	bool Contains( const vsVector3D& point );
 };
 
 vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b );
