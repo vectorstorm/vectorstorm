@@ -749,7 +749,21 @@ vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b
 }
 
 bool
-vsOrientedBox3D::Contains( const vsVector3D& point )
+vsOrientedBox3D::IntersectsSphere( const vsVector3D& center, float radius )
+{
+	if ( ContainsPoint( center ) )
+		return true;
+
+	const vsVector3D &ax = m_transform.GetMatrix().x;
+	const vsVector3D &ay = m_transform.GetMatrix().y;
+	const vsVector3D &az = m_transform.GetMatrix().z;
+	return (SAT_Intersects( &center, 1, ax, radius ) &&
+			SAT_Intersects( &center, 1, ay, radius ) &&
+			SAT_Intersects( &center, 1, az, radius ) );
+}
+
+bool
+vsOrientedBox3D::ContainsPoint( const vsVector3D& point )
 {
 	const vsVector3D &ax = m_transform.GetMatrix().x;
 	const vsVector3D &ay = m_transform.GetMatrix().y;
@@ -759,4 +773,5 @@ vsOrientedBox3D::Contains( const vsVector3D& point )
 			SAT_Contains( &point, 1, ay ) &&
 			SAT_Contains( &point, 1, az ) );
 }
+
 
