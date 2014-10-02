@@ -649,7 +649,8 @@ vsOrientedBox3D::SAT_Contains( const vsVector3D* points, int pointCount, const v
 
 	float aMin, aMax, bMin, bMax;
 	aMin = aMax = m_corner[0].Dot(axis);
-	bMin = bMax = points[0].Dot(axis);
+	bMin = points[0].Dot(axis) - otherRadius;
+	bMax = points[0].Dot(axis) + otherRadius;
 	for ( int i = 1; i < 8; i++ )
 	{
 		float distance = m_corner[i].Dot(axis);
@@ -681,7 +682,8 @@ vsOrientedBox3D::SAT_Intersects( const vsVector3D* points, int pointCount, const
 
 	float aMin, aMax, bMin, bMax;
 	aMin = aMax = m_corner[0].Dot(axis);
-	bMin = bMax = points[0].Dot(axis);
+	bMin = points[0].Dot(axis) - otherRadius;
+	bMax = points[0].Dot(axis) + otherRadius;
 	for ( int i = 1; i < 8; i++ )
 	{
 		float distance = m_corner[i].Dot(axis);
