@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <pwd.h>
+#include <unistd.h>
 #endif // UNIX
 
 #include <errno.h>

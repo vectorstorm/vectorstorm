@@ -99,7 +99,7 @@ if(APPLE)
 	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
 	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
 	#string(REGEX REPLACE "(\r?\n)+$" "" CMAKE_OSX_SYSROOT "${CMAKE_OSX_SYSROOT}")
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7")
+	# set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7")
 endif ()
 
 # find . -type d
