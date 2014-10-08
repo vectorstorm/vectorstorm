@@ -40,11 +40,12 @@ public:
 
 	vsVolatileArrayIterator<T>&		operator--() { Prev(); return *this; }
 	vsVolatileArrayIterator<T>		operator--(int postFix) { vsVolatileArrayIterator<T> other(m_parent, m_current); Prev(); return other; }
+	T* operator->() { return &Get(); }
 
 	friend class vsVolatileArray<T>;
 };
 
-template<class T>T&	operator*(vsVolatileArrayIterator<T> i) { return i.Get(); }
+template<class T>T& operator*(vsVolatileArrayIterator<T>& i) { return i.Get(); }
 
 template<class T>
 class vsVolatileArray

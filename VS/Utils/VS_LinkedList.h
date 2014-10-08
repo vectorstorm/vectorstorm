@@ -80,6 +80,7 @@ public:
 
 	vsListIterator<T>&		operator--() { Prev(); return *this; }
 	vsListIterator<T>		operator--(int postFix) { vsListIterator<T> other(m_current); Prev(); return other; }
+	T* operator->() { return &Get(); }
 
 	vsListEntry<T> * GetEntry() { return m_current; }
 	//void	Append( T item )

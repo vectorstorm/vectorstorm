@@ -34,6 +34,7 @@ public:
 
 	vsArrayStoreIterator<T>&	operator--() { Prev(); return *this; }
 	vsArrayStoreIterator<T>		operator--(int postFix) { vsArrayStoreIterator<T> other(m_parent, m_current); Prev(); return other; }
+	T* operator->() { return &Get(); }
 
 	friend class vsArrayStore<T>;
 };
