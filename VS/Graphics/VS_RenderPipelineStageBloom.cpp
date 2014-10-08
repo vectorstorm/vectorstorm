@@ -15,7 +15,7 @@
 #include "VS_RenderTarget.h"
 #include "VS_Shader.h"
 
-extern const char *passv, *passf, *combinef, *row3f, *normalf;
+extern const char *passv, *passf, *combinef, *row3v, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
 static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
 static bool kernel_normalised = false;
@@ -26,7 +26,7 @@ class vsBloomBlurShader: public vsShader
 	GLint m_locCoefficients, m_locOffsetX, m_locOffsetY;
 public:
 	vsBloomBlurShader( const vsVector2D& offset ):
-		vsShader(passv, row3f, false, false),
+		vsShader(row3v, row3f, false, false),
 		m_offset(offset)
 	{
 		m_locCoefficients = glGetUniformLocation(m_shader, "coefficients");
@@ -290,23 +290,35 @@ const char *passv = STRINGIFY( #version 330\n
 			}
 			);
 
+const char *row3v = STRINGIFY( #version 330\n
+		uniform mat4 viewToProjection;\n
+		uniform float offsetx;
+		uniform float offsety;
+		in vec4 vertex;\n
+		in vec2 texcoord;\n
+		out vec2 fragment_texcoord[3];\n
+		void main(void)\n
+		{\n
+			fragment_texcoord[0] = texcoord - vec2(offsetx, offsety);\n
+			fragment_texcoord[1] = texcoord;\n
+			fragment_texcoord[2] = texcoord + vec2(offsetx, offsety);\n
+			gl_Position = viewToProjection * vertex;\n
+		}\n
+		);
+
 	const char *row3f = STRINGIFY( #version 330\n
 			uniform sampler2D textures[8];
 			uniform float coefficients[3];
-			uniform float offsetx;
-			uniform float offsety;
-			in vec2 fragment_texcoord;
+			in vec2 fragment_texcoord[3];
 			out vec4 fragment_color;
 
 			void main(void)
 			{
 			vec4 c;
-			vec2 tc = fragment_texcoord;
-			vec2 offset = vec2(offsetx, offsety);
 
-			c = coefficients[0] * texture(textures[0], tc - offset);
-			c += coefficients[1] * texture(textures[0], tc);
-			c += coefficients[2] * texture(textures[0], tc + offset);
+			c = coefficients[0] * texture(textures[0], fragment_texcoord[0]);
+			c += coefficients[1] * texture(textures[0], fragment_texcoord[1]);
+			c += coefficients[2] * texture(textures[0], fragment_texcoord[2]);
 
 			fragment_color = c;
 			}
