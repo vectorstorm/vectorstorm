@@ -323,7 +323,7 @@ vsSystemPreferences::vsSystemPreferences()
 
 	m_resolution = NULL;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 0, 0, 1);
-	m_vsync = m_preferences->GetPreference("VSync", 0, 0, 1);
+	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
