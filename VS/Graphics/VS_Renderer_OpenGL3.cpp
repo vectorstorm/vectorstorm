@@ -115,19 +115,26 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		if(SDL_GetDisplayBounds(i, &bounds) == 0)
 			vsLog("Display #%d %s (%dx%d)\n", i, SDL_GetDisplayName(i), bounds.w , bounds.h );
 	}
+
+	int x = SDL_WINDOWPOS_UNDEFINED;
+	int y = SDL_WINDOWPOS_UNDEFINED;
 #ifdef _DEBUG
-	//SDL_DisplayMode mode;
-	//if ( displayCount > 1 )
-	//{
-	//	flags |= Flag_Fullscreen;
-	//	SDL_Rect bounds;
-	//	SDL_GetDesktopDisplayMode(1, &mode);
-	//	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
-	//	{
-	//		width = bounds.w;
-	//		height = bounds.h;
-	//	}
-	//}
+	if ( displayCount > 1 )
+	{
+		// flags |= Flag_Fullscreen;
+		x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// SDL_DisplayMode mode;
+		// SDL_Rect bounds;
+		// SDL_GetDesktopDisplayMode(1, &mode);
+		// if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
+		// {
+		// 	x = bounds.x;
+		// 	y = bounds.y;
+		// 	width = bounds.w;
+		// 	height = bounds.h;
+		// }
+	}
 #endif
 
 	m_viewportWidth = m_width = width;
@@ -167,7 +174,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // _DEBUG
 
-	m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, videoFlags);
+	m_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	// SDL_SetWindowMinimumSize(m_sdlWindow, 1024, 768);
 
 	if ( !m_sdlWindow ){
@@ -175,12 +182,12 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
-#ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
-#else
 	m_widthPixels = width;
 	m_heightPixels = height;
+#ifdef HIGHDPI_SUPPORTED
+	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
+
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
 	if ( m_viewportWidthPixels != m_widthPixels ||
@@ -441,7 +448,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	m_currentShader = NULL;
 	RawRenderDisplayList(list);
 
-	// CheckGLError("RenderDisplayList");
+	CheckGLError("RenderDisplayList");
 }
 
 void
@@ -963,7 +970,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
-		//CheckGLError("RenderOp");
+		CheckGLError("RenderOp");
 		op = list->PopOp();
 	}
 }
