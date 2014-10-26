@@ -752,31 +752,6 @@ vsInput::Update(float timeStep)
 
 	m_controlState[CID_MouseWheel] = m_controlState[CID_MouseWheelDown] - m_controlState[CID_MouseWheelUp];
 
-
-	// mouse warping
-	{
-		/*int x,y;
-
-		  SDL_GetMouseState(&x,&y);
-
-		// this is based on the window size.  (0,0 .. width,height)
-		m_mousePos = vsVector2D((float)x,(float)y);
-
-		m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
-		m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
-		m_mousePos -= vsVector2D(1.f,1.f);
-
-		m_mousePos = Correct2DInputForOrientation( m_mousePos );*/
-
-		// now m_mousePos is [-1..1]
-
-		if ( m_captureMouse )
-		{
-			//SDL_WarpMouse( vsScreen::Instance()->GetTrueWidth() >> 1,
-			//			  vsScreen::Instance()->GetTrueHeight() >> 1 );
-		}
-	}
-
 #endif
 }
 
@@ -1092,6 +1067,10 @@ vsInput::GetTouchPosition(int touchID, int scene)
 }
 
 
+#ifdef __APPLE_CC__
+extern SDL_Window *g_sdlWindow;
+#endif
+
 void
 vsInput::CaptureMouse( bool capture )
 {
@@ -1104,8 +1083,6 @@ vsInput::CaptureMouse( bool capture )
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
 			SDL_SetRelativeMouseMode(SDL_TRUE);
-			//SDL_WarpMouse( (uint16_t)(.5f * vsScreen::Instance()->GetTrueWidth()),
-			//	(uint16_t)(.5f * vsScreen::Instance()->GetTrueHeight()) );
 			m_mousePos = vsVector2D::Zero;
 			m_mouseMotion = vsVector2D::Zero;
 			m_suppressFirstMotion = true;
@@ -1113,6 +1090,14 @@ vsInput::CaptureMouse( bool capture )
 		else
 		{
 			SDL_SetRelativeMouseMode(SDL_FALSE);
+#ifdef __APPLE_CC__
+			// Bug in SDL2 on OSX:  Relative mouse mode moves the cursor to the
+			// middle of the window, even though the function documentation says
+			// that it's not supposed to do that.  Workaround:  On OSX, explicitly
+			// warp the cursor back to its correct position, when we turn off
+			// mouse capture.
+			SDL_WarpMouseInWindow( g_sdlWindow, m_capturedMouseX, m_capturedMouseY );
+#endif
 
 			m_mousePos = vsVector2D((float)m_capturedMouseX,(float)m_capturedMouseY);
 

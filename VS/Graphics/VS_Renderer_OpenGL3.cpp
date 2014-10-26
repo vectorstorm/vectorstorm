@@ -38,7 +38,7 @@
 
 #endif
 
-static SDL_Window *m_sdlWindow = NULL;
+SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
 
 void vsRenderDebug( const vsString &message )
@@ -174,10 +174,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // _DEBUG
 
-	m_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
-	// SDL_SetWindowMinimumSize(m_sdlWindow, 1024, 768);
+	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
+	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
 
-	if ( !m_sdlWindow ){
+	if ( !g_sdlWindow ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
@@ -185,7 +185,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_widthPixels = width;
 	m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
+	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 
 	m_viewportWidthPixels = m_widthPixels;
@@ -197,7 +197,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("High DPI backing store is: %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
 	}
 
-	m_sdlGlContext = SDL_GL_CreateContext(m_sdlWindow);
+	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
 	{
 		vsLog("Failed to create OpenGL context??");
@@ -320,8 +320,8 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	vsDelete(m_scene);
 	CheckGLError("Initialising OpenGL rendering");
 	SDL_GL_DeleteContext( m_sdlGlContext );
-	SDL_DestroyWindow( m_sdlWindow );
-	m_sdlWindow = NULL;
+	SDL_DestroyWindow( g_sdlWindow );
+	g_sdlWindow = NULL;
 }
 
 void
@@ -367,7 +367,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 {
 #ifdef HIGHDPI_SUPPORTED
 	int nowWidthPixels, nowHeightPixels;
-	SDL_GL_GetDrawableSize(m_sdlWindow, &nowWidthPixels, &nowHeightPixels);
+	SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 	{
 		UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
@@ -388,7 +388,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
 #ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(m_sdlWindow, &m_widthPixels, &m_heightPixels);
+	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #else
 	m_widthPixels = width;
 	m_heightPixels = height;
@@ -435,7 +435,7 @@ vsRenderer_OpenGL3::PostRender()
 {
 	vsTimerSystem::Instance()->EndRenderTime();
 #if !TARGET_OS_IPHONE
-	SDL_GL_SwapWindow(m_sdlWindow);
+	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
 	vsTimerSystem::Instance()->EndGPUTime();
 }
