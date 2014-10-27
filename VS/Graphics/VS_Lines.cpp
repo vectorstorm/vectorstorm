@@ -227,7 +227,8 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_strip( new Strip*[maxStrips] ),
 	m_stripCount( 0 ),
 	m_maxStripCount( maxStrips ),
-	m_width( width ),
+	m_leftWidth( width * 0.5f ),
+	m_rightWidth( width * 0.5f ),
 	m_widthInScreenspace( screenspace ),
 	m_vertices( vsRenderBuffer::Type_Stream ),
 	m_indices( vsRenderBuffer::Type_Stream )
@@ -343,7 +344,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	// vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
 	vsMatrix4x4 localToView = queue->GetWorldToViewMatrix() * queue->GetMatrix() ;
 	vsMatrix4x4 viewToLocal = localToView.Inverse();
-	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
+	// vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
 	vsVector3D *va = m_vertices.GetVector3DArray();
 	uint16_t *ia = m_indices.GetIntArray();
@@ -355,8 +356,6 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		int midI = i;
 		int preI = midI-1;
 		int postI = midI+1;
-
-		// float widthHere = m_width;
 
 		if ( postI >= strip->m_length )
 		{
@@ -373,7 +372,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 				preI = 0;
 		}
 
-		vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
+		// vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
+		vsVector3D cameraForward = viewToLocal.z;
 		cameraForward.NormaliseSafe();
 
 		vsVector3D dirOfTravelPre = strip->m_vertex[midI] - strip->m_vertex[preI];
@@ -392,7 +392,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		offsetPre.NormaliseSafe();
 		offsetPost.NormaliseSafe();
 
-		float widthHere = m_width;
+		float leftWidthHere = m_leftWidth;
+		float rightWidthHere = m_rightWidth;
 		if ( m_widthInScreenspace )
 		{
 			if ( queue->IsOrthographic() )
@@ -400,34 +401,35 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 				// TODO:  Figure out conversion factor between screen pixels
 				// and meters in ortho.
 
-				widthHere *= fovPerPixel;
+				leftWidthHere *= fovPerPixel;
+				rightWidthHere *= fovPerPixel;
 			}
 			else
 			{
 				vsVector3D viewPos = localToView.ApplyTo( vsVector4D(strip->m_vertex[midI],1.f) );
-				widthHere *= tanHalfFovPerPixel * viewPos.z;
+				leftWidthHere *= tanHalfFovPerPixel * viewPos.z;
+				rightWidthHere *= tanHalfFovPerPixel * viewPos.z;
 			}
 		}
-		float halfWidthHere = widthHere * 0.5f;
 
 		vsVector3D vertexPosition;
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D insidePre = strip->m_vertex[preI] - (offsetPre * halfWidthHere);
-			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * halfWidthHere);
+			vsVector3D insidePre = strip->m_vertex[preI] - (offsetPre * rightWidthHere);
+			vsVector3D insidePost = strip->m_vertex[postI] - (offsetPost * rightWidthHere);
 
 			vsSqDistanceBetweenLineSegments( insidePre,
-					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidthHere),
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * rightWidthHere),
 					insidePost,
-					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidthHere),
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * rightWidthHere),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = strip->m_vertex[midI] - offsetPre * halfWidthHere;
+			vertexPosition = strip->m_vertex[midI] - offsetPre * rightWidthHere;
 		}
 
 		va[m_vertexCursor] = vertexPosition;
@@ -435,20 +437,20 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		if ( offsetPre != offsetPost )
 		{
 			vsVector3D closestPre, closestPost;
-			vsVector3D outsidePre = strip->m_vertex[preI] + (offsetPre * halfWidthHere);
-			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * halfWidthHere);
+			vsVector3D outsidePre = strip->m_vertex[preI] + (offsetPre * leftWidthHere);
+			vsVector3D outsidePost = strip->m_vertex[postI] + (offsetPost * leftWidthHere);
 
 			vsSqDistanceBetweenLineSegments( outsidePre,
-					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidthHere),
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * leftWidthHere),
 					outsidePost,
-					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidthHere),
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * leftWidthHere),
 					&closestPre, &closestPost );
 
 			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
 		}
 		else
 		{
-			vertexPosition = strip->m_vertex[midI] + offsetPre * halfWidthHere;
+			vertexPosition = strip->m_vertex[midI] + offsetPre * leftWidthHere;
 		}
 
 		va[m_vertexCursor+1] = vertexPosition;

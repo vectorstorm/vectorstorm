@@ -31,10 +31,9 @@ class vsLines3D: public vsModel
 	int m_maxStripCount;
 
 	static float s_widthFactor;
-	float m_width;
+	float m_leftWidth;
+	float m_rightWidth;
 	bool m_widthInScreenspace;
-
-	vsVector3D *m_va;
 
 	vsRenderBuffer m_vertices;
 	vsRenderBuffer m_indices;
@@ -50,7 +49,8 @@ public:
 	vsLines3D( int maxStrips, float width = 1.f, bool screenSpaceWidth = true );
 	~vsLines3D();
 
-	void SetWidth(float width);
+	void SetLeftRightWidths(float left, float right) { m_leftWidth = left; m_rightWidth = right; }
+	void SetWidth(float width) { SetLeftRightWidths( width * 0.5f, width * 0.5f ); }
 
 	void Clear();
 	void AddLine( vsVector3D &a, vsVector3D &b );
