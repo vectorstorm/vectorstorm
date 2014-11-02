@@ -70,32 +70,31 @@ vsRenderTarget::~vsRenderTarget()
 vsTexture *
 vsRenderTarget::Resolve(int id)
 {
-	if ( m_renderBufferSurface )	// need to copy from the render buffer surface to the regular texture.
+	if ( m_renderBufferSurface )
 	{
-		if ( glBindFramebuffer && glBlitFramebuffer )
+		// need to copy from the render buffer surface to the regular texture.
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+		for ( int i = 0; i < m_bufferCount; i++ )
 		{
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
-			//Bind the standard FBO
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
-			for ( int i = 0; i < m_bufferCount; i++ )
-			{
-				glReadBuffer(GL_COLOR_ATTACHMENT0+i);
-				glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
-				glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-			}
-
-			//Consider:  Re-generate mipmaps on the texture now?
-
-			return GetTexture(id);
-		}
-		else
-		{
-			// other, non-glBlitFramebuffer-based implementation goes here
-			assert(0);
+			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 		}
 	}
-	else if ( m_textureSurface )	// don't need to do anything special;  just give them our texture.  We were rendering straight into it anyway.
+	if ( m_textureSurface )
 	{
+		// TODO:  Consider whether to re-generate mipmaps on the textures,
+		// since somebody's asked for them, such as with the following
+		// (commented-out) code.
+		//
+		// for ( int i = 0; i < m_bufferCount; i++ )
+		// {
+		// 	glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
+		// 	glGenerateMipmap(GL_TEXTURE_2D);
+		// 	glBindTexture(GL_TEXTURE_2D, 0);
+		// }
+
 		return GetTexture(id);
 	}
 
