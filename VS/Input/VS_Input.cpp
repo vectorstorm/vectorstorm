@@ -381,7 +381,7 @@ vsInput::Update(float timeStep)
 						// responsive mouse wheel.  Let's slow it down to match
 						// everybody else, until those clever SDL folks figure
 						// out how to make wheel scrolling speeds similar.
-						wheelAmt *= 0.10f;
+						// wheelAmt *= 0.10f;
 						#endif
 						if ( wheelAmt > 0 )
 						{
