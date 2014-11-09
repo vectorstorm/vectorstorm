@@ -121,9 +121,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 #ifdef _DEBUG
 	if ( displayCount > 1 )
 	{
+		// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
+		// object, maybe?  Or alternately, the host game could tell us where to
+		// put the window, maybe?
+		//
 		// flags |= Flag_Fullscreen;
-		x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
 		// SDL_DisplayMode mode;
 		// SDL_Rect bounds;
 		// SDL_GetDesktopDisplayMode(1, &mode);
