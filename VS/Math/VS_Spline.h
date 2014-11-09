@@ -36,6 +36,21 @@ public:
 
 	vsVector2D	PositionAtTime( float t );
 	vsVector2D	VelocityAtTime( float t );		// TODO:  IMPLEMENT THIS!  It will be important later!
+
+	bool operator==(const vsSpline2D& b) const
+	{
+		return ( m_start == b.m_start &&
+				m_startVelocity == b.m_startVelocity &&
+				m_end == b.m_end &&
+				m_endVelocity == b.m_endVelocity );
+	}
+	bool operator!=(const vsSpline2D& b) const
+	{
+		return ( m_start != b.m_start ||
+				m_startVelocity != b.m_startVelocity ||
+				m_end != b.m_end ||
+				m_endVelocity != b.m_endVelocity );
+	}
 };
 
 class vsSpline3D
@@ -70,6 +85,21 @@ public:
 	// get the position or whatever else you want.
 	float ClosestTimeTo( const vsVector3D& position );
 	vsVector3D ClosestPointTo( const vsVector3D& position );
+
+	bool operator==(const vsSpline3D& b) const
+	{
+		return ( m_start == b.m_start &&
+				m_startVelocity == b.m_startVelocity &&
+				m_end == b.m_end &&
+				m_endVelocity == b.m_endVelocity );
+	}
+	bool operator!=(const vsSpline3D& b) const
+	{
+		return ( m_start != b.m_start ||
+				m_startVelocity != b.m_startVelocity ||
+				m_end != b.m_end ||
+				m_endVelocity != b.m_endVelocity );
+	}
 };
 
 
@@ -92,6 +122,21 @@ public:
 
 	vsColor	ColorAtTime( float t ) const;
 	vsColor	VelocityAtTime( float t ) const;
+
+	bool operator==(const vsSplineColor& b) const
+	{
+		return ( m_start == b.m_start &&
+				m_startVelocity == b.m_startVelocity &&
+				m_end == b.m_end &&
+				m_endVelocity == b.m_endVelocity );
+	}
+	bool operator!=(const vsSplineColor& b) const
+	{
+		return ( m_start != b.m_start ||
+				m_startVelocity != b.m_startVelocity ||
+				m_end != b.m_end ||
+				m_endVelocity != b.m_endVelocity );
+	}
 };
 
 
