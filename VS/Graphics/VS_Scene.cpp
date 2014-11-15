@@ -352,8 +352,13 @@ vsScene::GetCorner(bool bottom, bool right)
 	else	// top
 		pos.y = -halfFov;
 
-	// now, to figure out where the edge is, we need to know our screen aspect ratio, which is the ratio of horizontal pixels to vertical pixels.
-	float aspectRatio = vsScreen::Instance()->GetAspectRatio();
+	// now, to figure out where the edge is, we need to know our screen aspect
+	// ratio, which is the ratio of horizontal pixels to vertical pixels.  Note
+	// that we're going to use the CAMERA's recorded aspect ratio, not the ACTUAL
+	// aspect ratio, since the two may differ.  When we tell people corner coordinates,
+	// though, they're likely to want to use them for rendering from our current
+	// camera, so let's return values in that coordinate space.
+	float aspectRatio = m_camera->GetAspectRatio();
 
 	if ( right )
 		pos.x = halfFov * aspectRatio;
