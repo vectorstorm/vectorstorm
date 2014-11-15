@@ -582,6 +582,9 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_CLOSE:
 							core::SetExit();
 							break;
+						case SDL_WINDOWEVENT_EXPOSED:
+							vsLog("Exposed");
+							break;
 						case SDL_WINDOWEVENT_RESIZED:
 							{
 								vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
@@ -592,6 +595,7 @@ vsInput::Update(float timeStep)
 							}
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 							vsLog("Size Changed event");
+							vsSystem::Instance()->CheckVideoMode();
 							break;
 						case SDL_WINDOWEVENT_SHOWN:
 							vsLog("Shown");
@@ -600,6 +604,8 @@ vsInput::Update(float timeStep)
 							vsLog("Hidden");
 							break;
 						case SDL_WINDOWEVENT_MOVED:
+							// check video mode, in case we've been moved to a
+							// display with a different DPI.
 							vsSystem::Instance()->CheckVideoMode();
 							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
