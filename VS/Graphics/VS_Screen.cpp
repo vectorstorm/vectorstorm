@@ -97,7 +97,9 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int
 void
 vsScreen::CheckVideoMode()
 {
-	m_resized = m_renderer->CheckVideoMode();
+	// note that we might move and resize at the same time.  We don't ever
+	// want to set 'm_resized' to false, except in 'Update'!
+	m_resized |= m_renderer->CheckVideoMode();
 
 	if ( m_resized )
 	{
