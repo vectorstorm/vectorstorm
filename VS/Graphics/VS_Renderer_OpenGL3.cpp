@@ -1344,7 +1344,7 @@ vsRenderer_OpenGL3::Screenshot()
 			int gVal = pixels[gInd];
 			int bVal = pixels[bInd];
 
-			image->Pixel(x,y).Set( rVal/255.f, gVal/255.f, bVal/255.f, 1.0f );
+			image->SetPixel(x,y, vsColor::FromBytes(rVal, gVal, bVal, 255) );
 		}
 	}
 
@@ -1381,7 +1381,7 @@ vsRenderer_OpenGL3::ScreenshotDepth()
 
 			float val = pixels[ind];
 
-			image->Pixel(x,y).Set( val, val, val, 1.0f );
+			image->SetPixel(x,y, vsColor(val, val, val, 1.0f) );
 		}
 	}
 
@@ -1420,7 +1420,7 @@ vsRenderer_OpenGL3::ScreenshotAlpha()
 
 			float val = pixels[ind];
 
-			image->Pixel(x,y).Set( val, val, val, 1.0f );
+			image->SetPixel(x,y, vsColor(val, val, val, 1.0f) );
 		}
 	}
 

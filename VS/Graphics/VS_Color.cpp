@@ -31,6 +31,14 @@ vsColor::FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned c
 }
 
 vsColor
+vsColor::FromUInt32(uint32_t c)
+{
+	uint8_t *cp = reinterpret_cast<uint8_t*>(&c);
+
+	return FromBytes(cp[0], cp[1], cp[2], cp[3]);
+}
+
+vsColor
 vsColor::FromHSV(float hue, float saturation, float value)
 {
 	float chroma = value * saturation;
@@ -114,6 +122,18 @@ float
 vsColor::GetValue() const
 {
 	return 0.3333f * (r+g+b);
+}
+
+uint32_t
+vsColor::AsUInt32() const
+{
+	uint32_t rgba =
+		static_cast<uint8_t>(r * 255.f) |
+		static_cast<uint8_t>(g * 255.f) << 8 |
+		static_cast<uint8_t>(b * 255.f) << 16 |
+		static_cast<uint8_t>(a * 255.f) << 24;
+
+	return rgba;
 }
 
 vsColor  operator*( float scalar, const vsColor &color ) {return color * scalar;}

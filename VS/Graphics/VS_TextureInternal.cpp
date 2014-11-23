@@ -101,45 +101,40 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	int w = image->GetWidth();
 	int h = image->GetHeight();
 
-	SDL_Surface *surface = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	// BOOKMARK
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
 			w, h,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(surface, "Error??");
-	int err = SDL_LockSurface( surface );
-	vsAssert(!err, "Couldn't lock surface??");
-	vsAssert(surface->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
-	for ( int v = 0; v < h; v++ )
-	{
-		for ( int u = 0; u < w; u++ )
-		{
-			vsColor t = image->Pixel(u,v);
-			char *pixel = (char *)surface->pixels;
-			pixel += (v*surface->pitch);
-			pixel += (u*surface->format->BytesPerPixel);
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8_REV,
+			image->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
 
-			uint32_t color = SDL_MapRGBA( surface->format , (uint8_t)(t.r * 255) , (uint8_t)(t.g * 255) , (uint8_t)(t.b * 255), (uint8_t)(t.a * 255) );
-			memcpy( pixel, &color, sizeof(color) );
-
-		}
-	}
-	SDL_UnlockSurface( surface );
-
-	ProcessSurface(surface);
-
-	SDL_FreeSurface(surface);
+void
+vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
+{
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexSubImage2D(GL_TEXTURE_2D,
+			0,
+			where.x, where.y,
+			image->GetWidth(), image->GetHeight(),
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8_REV,
+			image->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer, bool depth ):

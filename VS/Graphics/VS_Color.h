@@ -10,6 +10,8 @@
 #ifndef VS_COLOR_H
 #define VS_COLOR_H
 
+#include "Math/VS_Math.h"
+
 class vsColor
 {
 public:
@@ -19,9 +21,11 @@ public:
 
 	static vsColor FromHSV(float hue, float saturation, float value);
 	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+	static vsColor FromUInt32(uint32_t rgba);
 	float GetHue() const;
 	float GetSaturation() const;
 	float GetValue() const;
+	uint32_t AsUInt32() const;
 
 	vsColor  operator+( const vsColor &o ) const {return vsColor(r+o.r,g+o.g,b+o.b,a+o.a);}
 	vsColor  operator-( const vsColor &o ) const {return vsColor(r-o.r,g-o.g,b-o.b,a-o.a);}

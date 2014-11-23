@@ -17,7 +17,7 @@ class vsColor;
 
 class vsImage
 {
-	vsColor *		m_pixel;
+	uint32_t*		m_pixel;
 	int				m_pixelCount;
 
 	unsigned int				m_width;
@@ -25,7 +25,7 @@ class vsImage
 
 	static int		m_textureMakerCount;
 
-	int				PixelIndex(int u, int v) { return u + (v*m_width); }
+	int				PixelIndex(int u, int v) const { return u + (v*m_width); }
 
     void            LoadFromSurface( SDL_Surface *source );
 
@@ -39,12 +39,15 @@ public:
 	int				GetWidth() { return m_width; }
 	int				GetHeight() { return m_height; }
 
-	vsColor &		Pixel(unsigned int u, unsigned int v);
+	vsColor			GetPixel(unsigned int u, unsigned int v) const;
+	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
 
 	void			Clear( const vsColor &clearColor );
 
 	vsTexture *		Bake();
+
 	vsStore *		BakePNG(int compression);
+	void *			RawData() { return m_pixel; }
 };
 
 #endif // VS_IMAGE_H
