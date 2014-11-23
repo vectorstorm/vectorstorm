@@ -133,19 +133,30 @@ vsImage::~vsImage()
 	vsDeleteArray( m_pixel );
 }
 
+uint32_t
+vsImage::GetRawPixel(unsigned int u, unsigned int v) const
+{
+	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
+	return m_pixel[ PixelIndex(u,v) ];
+}
+
+void
+vsImage::SetRawPixel(unsigned int u, unsigned int v, uint32_t c)
+{
+	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
+	m_pixel[ PixelIndex(u,v) ] = c;
+}
+
 vsColor
 vsImage::GetPixel(unsigned int u, unsigned int v) const
 {
-	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
-	uint32_t c = m_pixel[ PixelIndex(u,v) ];
-	return vsColor::FromUInt32(c);
+	return vsColor::FromUInt32(GetRawPixel(u,v));
 }
 
 void
 vsImage::SetPixel(unsigned int u, unsigned int v, const vsColor &c)
 {
-	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
-	m_pixel[ PixelIndex(u,v) ] = c.AsUInt32();
+	SetRawPixel(u,v,c.AsUInt32());
 }
 
 void

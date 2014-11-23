@@ -42,6 +42,9 @@ public:
 	vsColor			GetPixel(unsigned int u, unsigned int v) const;
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
 
+	uint32_t		GetRawPixel(unsigned int u, unsigned int v) const;
+	void			SetRawPixel(unsigned int u, unsigned int v, uint32_t c);
+
 	void			Clear( const vsColor &clearColor );
 
 	vsTexture *		Bake();
