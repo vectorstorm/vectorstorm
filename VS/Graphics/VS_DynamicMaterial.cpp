@@ -33,9 +33,16 @@ vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
 	vsDelete(GetResource()->m_texture[i]);
-	GetResource()->m_texture[i] = new vsTexture(texture);
-	if ( !linear )
-		GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
+	if ( texture )
+	{
+		GetResource()->m_texture[i] = new vsTexture(texture);
+		if ( !linear )
+			GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
+	}
+	else
+	{
+		vsDelete( GetResource()->m_texture[i] );
+	}
 }
 
 void
