@@ -188,11 +188,16 @@ public:
 		return false;
 	}
 
-	void	Remove( vsListStoreIterator<T> &iter )
+	vsListStoreIterator<T> Remove( vsListStoreIterator<T> &iter )
 	{
+		vsListStoreIterator<T> next = iter;
+		next.Next();
+
 		vsListStoreEntry<T> *ent = iter.GetEntry();
 		ent->Extract();
 		vsDelete(ent);
+
+		return next;
 	}
 
 

@@ -182,11 +182,16 @@ public:
 		return ent != NULL;
 	}
 
-	void	Remove( vsListIterator<T> &iter )
+	vsListIterator<T> Remove( vsListIterator<T> &iter )
 	{
+		vsListIterator<T> next = iter;
+		next.Next();
+
 		vsListEntry<T> *ent = iter.GetEntry();
 		ent->Extract();
-		m_entry.Return(ent);
+		vsDelete(ent);
+
+		return next;
 	}
 
 	void	Prepend( vsListIterator<T> &iter, const T &item )
