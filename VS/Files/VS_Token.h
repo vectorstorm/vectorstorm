@@ -36,6 +36,7 @@ public:
 
 	vsToken();
 	vsToken(Type t);
+	vsToken(const vsToken& other);
 
 	bool		ExtractFrom( vsString &string );
 	vsString	BackToString();			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)

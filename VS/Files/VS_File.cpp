@@ -213,13 +213,14 @@ vsFile::Record( vsRecord *r )
 bool
 vsFile::ReadLine( vsString *line )
 {
-	char buf[1024];
+	const int c_bufSize = 1024*1024;
+	char buf[c_bufSize];
 
-	if ( !AtEnd() && fgets(buf, 1023, m_file) )
+	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
 	{
-		buf[1023] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
+		buf[c_bufSize-1] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
 
-		for ( int i = 0; i < 1024; i++ )
+		for ( int i = 0; i < c_bufSize; i++ )
 		{
 			if ( buf[i] == 0 ||
 				buf[i] == '\n' ||
@@ -240,17 +241,18 @@ vsFile::ReadLine( vsString *line )
 bool
 vsFile::PeekLine( vsString *line )
 {
-	char buf[1024];
+	const int c_bufSize = 1024*1024;
+	char buf[c_bufSize];
 
 	long filePos = ftell(m_file);
 
-	if ( !AtEnd() && fgets(buf, 1023, m_file) )
+	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
 	{
 		fseek(m_file, filePos, SEEK_SET);
 
-		buf[1023] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
+		buf[c_bufSize-1] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
 
-		for ( int i = 0; i < 1024; i++ )
+		for ( int i = 0; i < c_bufSize; i++ )
 		{
 			if ( buf[i] == 0 ||
 				buf[i] == '\n' ||

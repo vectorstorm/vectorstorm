@@ -195,6 +195,14 @@ vsToken::vsToken( vsToken::Type t ):
 {
 }
 
+vsToken::vsToken(const vsToken& other):
+	m_type(other.m_type),
+	m_string(other.m_string),
+	m_float(other.m_float),
+	m_int(other.m_int)
+{
+}
+
 bool
 vsToken::ExtractFrom( vsString &string )
 {

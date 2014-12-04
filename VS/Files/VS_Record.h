@@ -10,10 +10,7 @@
 #ifndef FS_RECORD_H
 #define FS_RECORD_H
 
-//#define MAX_LABEL_LENGTH (64)
-#define MAX_PARAMETERS   (128)
-#define MAX_CHILDRECORDS (128)
-
+#include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_LinkedListStore.h"
 #include "VS/Math/VS_Quaternion.h"
 
@@ -27,8 +24,7 @@ class vsRecord
 {
 	vsToken		m_label;
 
-	vsToken		m_token[MAX_PARAMETERS];
-	int			m_tokenCount;
+	vsArray<vsToken>	m_token;
 
 	vsLinkedListStore<vsRecord>	m_childList;
 	vsRecord *	m_lastChild;
@@ -56,7 +52,7 @@ public:
 	void				SetLabel(const vsString &label);
 
 	vsToken &			GetToken(int i);
-	int					GetTokenCount() { return m_tokenCount; }
+	int					GetTokenCount() { return m_token.ItemCount(); }
 	void				SetTokenCount( int count );
 
 	vsRecord *			GetChild(int i);

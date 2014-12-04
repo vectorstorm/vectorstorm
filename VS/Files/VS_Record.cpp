@@ -32,12 +32,11 @@ void
 vsRecord::Init()
 {
 	m_childList.Clear();
-	m_tokenCount = 0;
+	m_token.Clear();
 	m_inBlock = false;
 	m_hasLabel = false;
 	m_lineIsOpen = true;
 	m_lastChild = NULL;
-
 }
 
 vsString
@@ -55,7 +54,7 @@ vsRecord::ToString( int childLevel )
 
 	result += tabbing + m_label.BackToString();
 
-	for ( int i = 0; i < m_tokenCount; i++ )
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
 	{
 		result += " ";
 		result += m_token[i].BackToString();
@@ -82,7 +81,7 @@ vsRecord::ToString( int childLevel )
 vsToken &
 vsRecord::GetToken(int id)
 {
-	vsAssert( id >= 0 && id < m_tokenCount,  "Requested token with too high a token ID number!" );
+	vsAssert( id >= 0 && id < m_token.ItemCount(),  "Requested token with too high a token ID number!" );
 
 	return m_token[id];
 }
@@ -90,36 +89,15 @@ vsRecord::GetToken(int id)
 void
 vsRecord::SetTokenCount(int count)
 {
-	vsAssert( count < MAX_PARAMETERS, "Too many tokens requested!  Increase MAX_PARAMETERS!" );
-
-	m_tokenCount = count;
-}
-/*
-void
-vsRecord::SetChildCount(int count)
-{
-	vsAssert( count < MAX_CHILDRECORDS, "Too many children requested!  Increase MAX_CHILDRECORDS!" );
-
-	m_childCount = count;
-
-	for ( int i = 0; i < MAX_CHILDRECORDS; i++ )
+	while ( m_token.ItemCount() > count )
 	{
-		if ( i < m_childCount )
-		{
-			if ( m_child[i] == NULL )
-			{
-				m_child[i] = new vsRecord;
-			}
-		}
-		else
-		{
-			if ( m_child[i] )
-			{
-				vsDelete( m_child[i] );
-			}
-		}
+		m_token.RemoveItem( --m_token.End() );
 	}
-}*/
+	while ( m_token.ItemCount() < count )
+	{
+		m_token.AddItem( vsToken() );
+	}
+}
 
 vsRecord *
 vsRecord::GetChild(int i)
@@ -234,7 +212,7 @@ vsRecord::AppendToken( const vsToken &t )
 
 	if ( !m_inBlock )	// I'm not in a block, therefore, add this to my main line.
 	{
-		if ( m_tokenCount == 0 && m_hasLabel == false && t.GetType() == vsToken::Type_Label )
+		if ( m_token.IsEmpty() && m_hasLabel == false && t.GetType() == vsToken::Type_Label )
 		{
 			m_label = t;
 			m_hasLabel = true;
@@ -249,7 +227,7 @@ vsRecord::AppendToken( const vsToken &t )
 		}
 		else if ( t.GetType() == vsToken::Type_NewLine )
 		{
-			if ( m_tokenCount > 0 )
+			if ( !m_token.IsEmpty() )
 			{
 				if ( m_lineIsOpen )
 				{
@@ -263,8 +241,7 @@ vsRecord::AppendToken( const vsToken &t )
 		{
 			// regular token type;  add it to me, or to my child?
 
-			vsAssert(m_tokenCount < MAX_PARAMETERS, "Too many tokens in this record!");
-			m_token[m_tokenCount++] = t;
+			m_token.AddItem(t);
 		}
 		else
 		{
@@ -356,7 +333,7 @@ vsRecord::Int()
 vsColor
 vsRecord::Color()
 {
-	vsAssert(m_tokenCount == 4, "Wrong number of tokens to read a color!");
+	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a color!");
 
 	return vsColor( GetToken(0).AsFloat(),
 				   GetToken(1).AsFloat(),
@@ -373,7 +350,7 @@ vsRecord::String()
 vsVector2D
 vsRecord::Vector2D()
 {
-	vsAssert(m_tokenCount == 2, "Wrong number of tokens to read a Vector2D!");
+	vsAssert(GetTokenCount() == 2, "Wrong number of tokens to read a Vector2D!");
 
 	return vsVector2D( GetToken(0).AsFloat(),
 					  GetToken(1).AsFloat() );
@@ -382,7 +359,7 @@ vsRecord::Vector2D()
 vsVector3D
 vsRecord::Vector3D()
 {
-	vsAssert(m_tokenCount == 3, "Wrong number of tokens to read a Vector3D!");
+	vsAssert(GetTokenCount() == 3, "Wrong number of tokens to read a Vector3D!");
 
 	return vsVector3D( GetToken(0).AsFloat(),
 					  GetToken(1).AsFloat(),
@@ -392,7 +369,7 @@ vsRecord::Vector3D()
 vsQuaternion
 vsRecord::Quaternion()
 {
-	vsAssert(m_tokenCount == 4, "Wrong number of tokens to read a Quaternion!");
+	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a Quaternion!");
 
 	return vsQuaternion( GetToken(0).AsFloat(),
 					  GetToken(1).AsFloat(),
