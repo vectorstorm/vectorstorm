@@ -213,7 +213,7 @@ vsFile::Record( vsRecord *r )
 bool
 vsFile::ReadLine( vsString *line )
 {
-	const int c_bufSize = 1024*1024;
+	const int c_bufSize = 1024;
 	char buf[c_bufSize];
 
 	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
@@ -241,7 +241,7 @@ vsFile::ReadLine( vsString *line )
 bool
 vsFile::PeekLine( vsString *line )
 {
-	const int c_bufSize = 1024*1024;
+	const int c_bufSize = 1024;
 	char buf[c_bufSize];
 
 	long filePos = ftell(m_file);
