@@ -11,6 +11,7 @@
 #include "VS_Record.h"
 #include "VS_Store.h"
 #include "Core.h"
+#include "CORE_Game.h"
 
 #if defined(UNIX)
 #include <dirent.h>
@@ -19,6 +20,8 @@
 #include <pwd.h>
 #include <unistd.h>
 #endif // UNIX
+
+#include <SDL2/SDL_filesystem.h>
 
 #include <errno.h>
 
@@ -326,9 +329,7 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	vsString fileName = filename_in;
 	vsString dirName;
 
-#if defined(__APPLE_CC__)
-	bool	fileIsInAppBundle = true;
-#endif
+	bool	fileIsInternal = true;
 	// check if filename_in is a preferences file, and if so, then look in the preferences directory, instead of in the usual directory.
 	vsString prefsSuffix(".prefs");
 	size_t prefsIndex = filename_in.find(prefsSuffix);
@@ -339,40 +340,13 @@ vsFile::GetFullFilename(const vsString &filename_in)
 
 	if ( prefsIndex != vsString::npos && prefsIndex == filename_in.length() - prefsSuffix.length() )
 	{
-#if defined(__APPLE_CC__)
-		char *hd = getenv("HOME");
-
-		if( !hd )
-		{
-			struct passwd* pwd = getpwuid(getuid());
-			if (pwd)
-				hd = pwd->pw_dir;
-		}
-		vsAssert(hd, "No home directory set??");
-		dirName = vsFormatString("%s/Library/Preferences", hd);
-		fileName = vsFormatString("VectorStorm.%s", filename_in.c_str());
-		fileIsInAppBundle = false;
-#else
-		dirName = "Preferences";
-#endif
+		fileIsInternal = false;
+		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
 	}
 	else if ( savIndex != vsString::npos && savIndex == filename_in.length() - savSuffix.length() )
 	{
-#if defined(__APPLE_CC__)
-		char *hd = getenv("HOME");
-		vsAssert(hd, "No home directory set??");
-		dirName = vsFormatString("%s/Library/Application Support/MMORPG Tycoon/", hd);
-		fileIsInAppBundle = false;
-
-		DIR * dir = opendir(dirName.c_str());
-		if ( !dir )
-		{
-			mkdir(dirName.c_str(),S_IRWXU|S_IRWXG|S_IRWXO);
-		}
-
-#else
-		dirName = "Saves/";
-#endif
+		fileIsInternal = false;
+		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
 	}
 	else if ( filename_in == "Version.txt" )
 	{
@@ -386,26 +360,20 @@ vsFile::GetFullFilename(const vsString &filename_in)
 
 	}
 
-#if defined(__APPLE_CC__) && !defined(CMAKE_BUILD)
-
 	vsString result;
 
-	if ( fileIsInAppBundle )
+	if ( fileIsInternal )
 	{
-#if 0
-		//#if defined(_DEBUG)
-		result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
-#else
+#if defined(__APPLE_CC__)
 		result = vsFormatString("Contents/Resources/Data/%s%s", dirName.c_str(), fileName.c_str());
+#else
+		result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
 #endif
 	}
 	else
 	{
 		result = vsFormatString("%s/%s",dirName.c_str(),fileName.c_str());
 	}
-#else // !__APPLE_CC__
-	vsString result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
-#endif // __APPLE_CC__
 
 	return result;
 #endif
