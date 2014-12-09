@@ -30,9 +30,12 @@ endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
 	c:/src/buildzone/include/GL )
-find_library(BOX2D_LIBRARY Box2D REQUIRED
+find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
 	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
+find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
+	PATH /usr/lib /usr/local/lib ../
+	c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D
@@ -42,8 +45,6 @@ if(WIN32)
 	find_file(GLEW_DLL glew32.dll REQUIRED
 		PATH ../../buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16-16.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
-	find_file(ZLIB_DLL zlib1.dll REQUIRED
 		PATH ../../buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
 		PATH ../../buildzone/lib/x86 )
@@ -67,17 +68,27 @@ include_directories("${PROJECT_BINARY_DIR}/config")
 configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
 
-set(VS_LIBRARIES
+set(VS_DEBUG_LIBRARIES
 	${OPENGL_LIBRARIES}
 	${PNG_LIBRARY}
 	${SDL_LIBRARY}
 	${SDL_IMAGE_LIBRARY}
 	${SDL_MIXER_LIBRARY}
 	${GLEW_LIBRARY}
-	${BOX2D_LIBRARY}
+	${BOX2D_LIBRARY_DEBUG}
 	${PTHREAD_LIBRARY}
 	)
 
+set(VS_RELEASE_LIBRARIES
+	${OPENGL_LIBRARIES}
+	${PNG_LIBRARY}
+	${SDL_LIBRARY}
+	${SDL_IMAGE_LIBRARY}
+	${SDL_MIXER_LIBRARY}
+	${GLEW_LIBRARY}
+	${BOX2D_LIBRARY_RELEASE}
+	${PTHREAD_LIBRARY}
+	)
 
 include_directories(
 	${SDL_INCLUDE_DIR}
@@ -94,7 +105,7 @@ if(APPLE)
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )
 	set(GUI_TYPE MACOSX_BUNDLE)
 	add_definitions("-D__apple_cc__")
-	mark_as_advanced(BOX2D_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARY)
+	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARY)
 	include_directories(${GLEW_INCLUDE_DIR} ${BOX2D_INCLUDE_DIR})
 	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
 	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
@@ -379,6 +390,7 @@ include_directories(
 		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
 	else ()
+		set(CMAKE_CXX_FLAGS "/MP ${CMAKE_CXX_FLAGS}")
 		add_definitions("/FI\"VS_Prefix.h\"")
 	endif()
 
@@ -401,7 +413,15 @@ include_directories(
 		)
 
 	target_link_libraries( vectorstorm
-		${VS_LIBRARIES}
+		${OPENGL_LIBRARIES}
+		${PNG_LIBRARY}
+		${SDL_LIBRARY}
+		${SDL_IMAGE_LIBRARY}
+		${SDL_MIXER_LIBRARY}
+		${GLEW_LIBRARY}
+		debug ${BOX2D_LIBRARY_DEBUG}
+		optimized ${BOX2D_LIBRARY_RELEASE}
+		${PTHREAD_LIBRARY}
 		)
 
 	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3
