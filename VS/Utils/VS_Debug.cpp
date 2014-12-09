@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+#include <SDL2/SDL_messagebox.h>
+
 #if defined(_WIN32)
 	#include <Windows.h>
 	#define __thread
@@ -52,10 +54,9 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		vsLog("at %s:%d", trimmedFile.c_str(), line);
 
 		{
-#if defined(_WIN32)
+
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
-			MessageBoxA(NULL, mbString.c_str(), NULL, MB_OK);
-#endif
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
 // #if defined(__APPLE_CC__)
 // 			void* callstack[128];
 // 			int i, frames = backtrace(callstack, 128);
@@ -65,7 +66,9 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 // 			}
 // 			free(strs);
 // #endif
+#if defined(_DEBUG)
 			DEBUG_BREAK;
+#endif
 			exit(1);
 		}
 	}
