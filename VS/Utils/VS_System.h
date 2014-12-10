@@ -68,15 +68,22 @@ class vsSystem
 
 	vsSystemPreferences *m_preferences;
 
+	vsString m_dataDirectory;
+	void InitPhysFS(int argc, char* argv[]);
+	void DeinitPhysFS();
+
 public:
 
 	static vsSystem *	Instance() { return s_instance; }
 
-	vsSystem( size_t totalMemoryBytes = 1024*1024*64 );
+	vsSystem( int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64 );
 	~vsSystem();
 
 	void Init();
 	void Deinit();
+
+	void		EnableGameDirectory( const vsString &directory );
+	void		DisableGameDirectory( const vsString &directory );
 
 	void		InitGameData();	// game has exitted, kill anything else we know about that it might have been using.
 	void		DeinitGameData();	// game has exitted, kill anything else we know about that it might have been using.

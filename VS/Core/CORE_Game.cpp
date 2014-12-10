@@ -42,6 +42,7 @@ coreGame::Init()
 {
 	const vsString &name = coreGameRegistry::GetGameName(this);
 	printf(" -- Initialising game \"%s\"\n", name.c_str());
+	vsSystem::Instance()->EnableGameDirectory( name );
 	vsSystem::Instance()->SetWindowCaption( name );
 	vsSystem::Instance()->InitGameData();
 	vsScreen::Instance()->CreateScenes(m_sceneCount);	// just one layer for now
@@ -63,6 +64,7 @@ coreGame::Deinit()
 
 	vsScreen::Instance()->DestroyScenes();
 	vsSystem::Instance()->DeinitGameData();
+	vsSystem::Instance()->DisableGameDirectory( name );
 	printf(" -- Exitting game \"%s\"\n", name.c_str());
 }
 

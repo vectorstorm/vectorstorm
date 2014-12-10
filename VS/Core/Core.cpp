@@ -225,6 +225,12 @@ core::SetExit()
 	s_exit = true;
 }
 
+const vsString &
+core::GetMainGameName()
+{
+	return coreGameRegistry::GetMainGameName();
+}
+
 /**
  * core::GetGameName()
  *

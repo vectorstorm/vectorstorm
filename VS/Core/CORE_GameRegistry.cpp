@@ -94,5 +94,11 @@ coreGameRegistry::GetGameName( coreGame *game )
 	// if we're passed NULL, or anything else we don't know about,
 	// just report the name of our main game.
 	return s_mainMenu->m_name;
-
 }
+
+const vsString &
+coreGameRegistry::GetMainGameName()
+{
+	return s_mainMenu->m_name;
+}
+

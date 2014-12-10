@@ -20,8 +20,10 @@
 #include "VS_TextureManager.h"
 
 #include "VS_OpenGL.h"
+#include "Core.h"
 
 #include <time.h>
+#include <SDL2/SDL_filesystem.h>
 
 #if defined(_WIN32)
 //#include <shellapi.h>
@@ -47,7 +49,7 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 #define VS_VERSION ("0.0.1")
 
 
-vsSystem::vsSystem(size_t totalMemoryBytes):
+vsSystem::vsSystem(int argc, char* argv[], size_t totalMemoryBytes):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
@@ -64,6 +66,8 @@ vsSystem::vsSystem(size_t totalMemoryBytes):
 	// Perform some basic initialisation
 	vsRandom::Init();
 	vsLog("VectorStorm engine version %s\n",VS_VERSION);
+
+	InitPhysFS(argc,argv);
 
 	vsLog("Loading preferences...\n");
 	m_preferences = new vsSystemPreferences;
@@ -97,6 +101,8 @@ vsSystem::~vsSystem()
 	vsDelete( m_screen );
 
 	delete vsSingletonManager::Instance();
+
+	DeinitPhysFS();
 
 #if !TARGET_OS_IPHONE
 	SDL_Quit();
@@ -151,6 +157,65 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
+}
+
+void
+vsSystem::InitPhysFS(int argc, char* argv[])
+{
+	vsLog("====== Initialising file system");
+	PHYSFS_init(argv[0]);
+	int success = PHYSFS_setWriteDir( SDL_GetPrefPath("VectorStorm", core::GetMainGameName().c_str()) );
+	if ( !success )
+	{
+		vsLog("SetWriteDir failed!", success);
+		exit(1);
+	}
+
+	vsLog("UserDir: %s", PHYSFS_getUserDir());
+	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
+
+#if defined(__APPLE_CC__)
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
+#else
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
+#endif
+	// std::string mmoDir = dataDir + "/MMORPG";
+	// success = PHYSFS_mount(mmoDir.c_str(), NULL, 0);
+	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
+	if ( !success )
+	{
+		vsLog("Failed to mount %s", m_dataDirectory.c_str());
+		exit(1);
+	}
+
+	char** searchPath = PHYSFS_getSearchPath();
+	int pathId = 0;
+	while ( searchPath[pathId] )
+	{
+		vsLog("Search path: %s",searchPath[pathId]);
+		pathId++;
+	}
+}
+
+void
+vsSystem::EnableGameDirectory( const vsString &directory )
+{
+	std::string d = m_dataDirectory + "/" + directory;
+	PHYSFS_mount(d.c_str(), NULL, 1);
+}
+
+void
+vsSystem::DisableGameDirectory( const vsString &directory )
+{
+	std::string d = m_dataDirectory + "/" + directory;
+	PHYSFS_removeFromSearchPath(d.c_str());
+}
+
+void
+vsSystem::DeinitPhysFS()
+{
+	PHYSFS_deinit();
 }
 
 void

@@ -29,21 +29,22 @@ public:
 class coreGameRegistry
 {
 #define MAX_GAMES (10)
-	
+
 	static	coreGameEntry *	s_mainMenu;
-	
+
 	static	coreGameEntry *	s_game[MAX_GAMES];
 	static  int				s_gameEntries;
 public:
-	
+
 	static coreGame *	GetMainMenu() { return s_mainMenu->m_game; }
-		
+
 	static void			RegisterGame( coreGameEntry *entry, bool mainGame );
 	static coreGame *	FindGame( const vsString &name );
 	static coreGame *	GetGame(int i);
 	static const vsString &	GetGameName(int i);
 	static const vsString &	GetGameName( coreGame *game );
-	
+	static const vsString &	GetMainGameName();
+
 	static int			GetGameCount() { return s_gameEntries; }
 };
 
