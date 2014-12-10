@@ -198,28 +198,6 @@ vsFile::ReadLine( vsString *line )
 		return true;
 	}
 	return false;
-#if 0
-	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
-	{
-		buf[c_bufSize-1] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
-
-		for ( int i = 0; i < c_bufSize; i++ )
-		{
-			if ( buf[i] == 0 ||
-				buf[i] == '\n' ||
-				buf[i] == '\r' )
-			{
-				buf[i] = 0;
-				break;
-			}
-		}
-
-		*line = buf;
-
-		return true;
-	}
-	return false;
-#endif
 }
 
 bool
@@ -295,3 +273,4 @@ vsFile::AtEnd()
 {
 	return !m_file || PHYSFS_eof( m_file );
 }
+
