@@ -36,6 +36,8 @@
 #include <SDL2/SDL_mouse.h>
 #endif
 
+#include <physfs.h>
+
 vsSystem * vsSystem::s_instance = NULL;
 
 extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use this when changing video modes etc.
