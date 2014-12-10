@@ -284,56 +284,8 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	return result;
 #else
 
-	vsString fileName = filename_in;
-	vsString dirName;
-
-	bool	fileIsInternal = true;
-	// check if filename_in is a preferences file, and if so, then look in the preferences directory, instead of in the usual directory.
-	vsString prefsSuffix(".prefs");
-	size_t prefsIndex = filename_in.find(prefsSuffix);
-
-	// check if filename_in is a save file, and if so, then look in the save directory, instead of in the usual directory.
-	vsString savSuffix(".sav");
-	size_t savIndex = filename_in.find(savSuffix);
-
-	if ( prefsIndex != vsString::npos && prefsIndex == filename_in.length() - prefsSuffix.length() )
-	{
-		fileIsInternal = false;
-		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
-	}
-	else if ( savIndex != vsString::npos && savIndex == filename_in.length() - savSuffix.length() )
-	{
-		fileIsInternal = false;
-		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
-	}
-	else if ( filename_in == "Version.txt" )
-	{
-		dirName = "Version/";
-	}
-	else
-	{
-		dirName = core::GetGameName();
-		if ( !dirName.empty() )
-			dirName += "/";
-
-	}
-
-	vsString result;
-
-	if ( fileIsInternal )
-	{
-#if defined(__APPLE_CC__)
-		result = vsFormatString("Contents/Resources/Data/%s%s", dirName.c_str(), fileName.c_str());
-#else
-		result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
-#endif
-	}
-	else
-	{
-		result = vsFormatString("%s/%s",dirName.c_str(),fileName.c_str());
-	}
-
-	return result;
+	vsString dir = PHYSFS_getRealDir( filename_in.c_str() );
+	return dir + "/" + filename_in;
 #endif
 }
 
