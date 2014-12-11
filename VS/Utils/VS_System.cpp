@@ -49,7 +49,7 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 #define VS_VERSION ("0.0.1")
 
 
-vsSystem::vsSystem(int argc, char* argv[], size_t totalMemoryBytes):
+vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
@@ -67,7 +67,7 @@ vsSystem::vsSystem(int argc, char* argv[], size_t totalMemoryBytes):
 	vsRandom::Init();
 	vsLog("VectorStorm engine version %s\n",VS_VERSION);
 
-	InitPhysFS(argc,argv);
+	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...\n");
 	m_preferences = new vsSystemPreferences;
@@ -160,11 +160,11 @@ vsSystem::Deinit()
 }
 
 void
-vsSystem::InitPhysFS(int argc, char* argv[])
+vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
 {
 	vsLog("====== Initialising file system");
 	PHYSFS_init(argv[0]);
-	int success = PHYSFS_setWriteDir( SDL_GetPrefPath("VectorStorm", core::GetMainGameName().c_str()) );
+	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
 	if ( !success )
 	{
 		vsLog("SetWriteDir failed!", success);
@@ -175,14 +175,15 @@ vsSystem::InitPhysFS(int argc, char* argv[])
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
 #if defined(__APPLE_CC__)
+	// loading out of an app bundle, so use that data directory
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
 #elif defined(_WIN32)
-	// Under Win32, Visual Studio likes to put debug and release builds into a directory 
+
+	// Under Win32, Visual Studio likes to put debug and release builds into a directory
 	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
 	// but it means that the executable location isn't in the same place as our Data
 	// directory.  So we need to detect that situation, and if it happens, move our
 	// data directory up by one.
-
 	vsString baseDirectory = PHYSFS_getBaseDir();
 	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
@@ -190,11 +191,9 @@ vsSystem::InitPhysFS(int argc, char* argv[])
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
 	m_dataDirectory = baseDirectory + "\\Data";
 #else
-	// generic UNIX.  Assume data is right next to the executable.
+	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
 #endif
-	// std::string mmoDir = dataDir + "/MMORPG";
-	// success = PHYSFS_mount(mmoDir.c_str(), NULL, 0);
 	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 	if ( !success )
