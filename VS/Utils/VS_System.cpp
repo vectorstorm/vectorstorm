@@ -176,7 +176,21 @@ vsSystem::InitPhysFS(int argc, char* argv[])
 
 #if defined(__APPLE_CC__)
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
+#elif defined(_WIN32)
+	// Under Win32, Visual Studio likes to put debug and release builds into a directory 
+	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
+	// but it means that the executable location isn't in the same place as our Data
+	// directory.  So we need to detect that situation, and if it happens, move our
+	// data directory up by one.
+
+	vsString baseDirectory = PHYSFS_getBaseDir();
+	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
+		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
+	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
+		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
+	m_dataDirectory = baseDirectory + "\\Data";
 #else
+	// generic UNIX.  Assume data is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
 #endif
 	// std::string mmoDir = dataDir + "/MMORPG";
