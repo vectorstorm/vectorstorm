@@ -180,19 +180,24 @@ vsFile::ReadLine( vsString *line )
 	long filePos = PHYSFS_tell(m_file);
 	char peekChar = 'a';
 
-	while ( !AtEnd() && peekChar != '\r' && peekChar != '\n' && peekChar != 0 )
+	while ( !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
 		PHYSFS_read(m_file, &peekChar, 1, 1);
 	}
 	long afterFilePos = PHYSFS_tell(m_file);
-	PHYSFS_seek(m_file, filePos);
 	long bytes = afterFilePos - filePos;
+	PHYSFS_seek(m_file, filePos);
 	if ( bytes > 0 )
 	{
 		char* buffer = (char*)malloc(bytes+1);
 		PHYSFS_read(m_file, buffer, 1, bytes);
 		buffer[bytes-1] = 0;
+
 		*line = buffer;
+		while (line->find('\r') != vsString::npos)
+		{
+			line->erase( line->find('\r') );
+		}
 		free(buffer);
 
 		return true;
