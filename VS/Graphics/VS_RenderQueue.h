@@ -32,6 +32,7 @@ class vsRenderQueueStage
 	{
 		vsMatrix4x4		matrix;
 		const vsMatrix4x4 *	instanceMatrix;
+		const vsColor *	instanceColor;
 		int				instanceMatrixCount;
 		vsRenderBuffer *instanceMatrixBuffer;
 		vsDisplayList *	list;
@@ -39,6 +40,7 @@ class vsRenderQueueStage
 
 		BatchElement():
 			instanceMatrix(NULL),
+			instanceColor(NULL),
 			instanceMatrixCount(0),
 			instanceMatrixBuffer(NULL),
 			list(NULL),
@@ -51,6 +53,7 @@ class vsRenderQueueStage
 			instanceMatrix = NULL;
 			instanceMatrixCount = 0;
 			instanceMatrixBuffer = NULL;
+			instanceColor = NULL;
 			list = NULL;
 		}
 	};
@@ -86,6 +89,7 @@ public:
 
 	// Add a batch to this stage
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
 
@@ -149,6 +153,7 @@ public:
 
 	// batches which will draw in multiple places.
 	// Note that the passed array of matrices must exist until the Draw phase ends!
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
 
@@ -156,6 +161,7 @@ public:
 	void			AddFragmentBatch( vsFragment *fragment );
 	// For fragments using instancing.
 	// Note that the passed array of matrices must exist until the Draw phase ends!
+	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount );
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
 	void			AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer );
 

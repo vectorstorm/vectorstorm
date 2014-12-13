@@ -20,7 +20,7 @@
 #include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
 
-#define INSTANCED_MODEL_USES_LOCAL_BUFFER
+// #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 class vsModel;
 
@@ -28,6 +28,7 @@ struct vsModelInstance
 {
 private:
 	vsMatrix4x4 matrix;
+	vsColor color;
 	vsModel *model;
 	int index;       // our ID within the instance array.
 	int matrixIndex; // our ID within the matrix array.
@@ -40,6 +41,7 @@ public:
 
 	void SetVisible( bool visible );
 	void SetMatrix( const vsMatrix4x4& mat );
+	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
 
 	vsModel * GetModel() { return model; }
 	const vsVector4D& GetPosition() const { return matrix.w; }
@@ -54,16 +56,19 @@ class vsModel : public vsEntity
 	struct InstanceData
 	{
 		vsArray<vsMatrix4x4> matrix;
+		vsArray<vsColor> color;
 		vsArray<int> matrixInstanceId;
 		vsArray<vsModelInstance*> instance;
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 		vsRenderBuffer matrixBuffer;
+		vsRenderBuffer colorBuffer;
 		bool bufferIsDirty;
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 		InstanceData() :
 			matrixBuffer(vsRenderBuffer::Type_Dynamic),
+			colorBuffer(vsRenderBuffer::Type_Dynamic),
 			bufferIsDirty(false)
 		{
 		}

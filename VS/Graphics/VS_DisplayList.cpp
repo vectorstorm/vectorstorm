@@ -29,6 +29,7 @@
 static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 {
 	"SetColor",
+	"SetColors",
 
 	"PushTransform",
 	"PushTranslation",
@@ -663,6 +664,14 @@ vsDisplayList::SetMatrices4x4Buffer( vsRenderBuffer *buffer )
 }
 
 void
+vsDisplayList::SetColors( const vsColor *c, int count )
+{
+	m_fifo->WriteUint8( OpCode_SetColors );
+	m_fifo->WriteUint32( count );
+	m_fifo->WriteVoidStar( (char*)c );
+}
+
+void
 vsDisplayList::SnapMatrix()
 {
 	m_fifo->WriteUint8( OpCode_SnapMatrix );
@@ -1119,6 +1128,13 @@ vsDisplayList::PopOp()
 			case OpCode_SetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
+			case OpCode_SetColors:
+				{
+					int count = m_fifo->ReadUint32();
+					m_currentOp.data.Set( count );
+					m_currentOp.data.SetPointer( (char*)m_fifo->ReadVoidStar() );
+					break;
+				}
 			case OpCode_PushTranslation:
 				m_fifo->ReadVector3D(&m_currentOp.data.vector);
 				break;
@@ -1298,6 +1314,8 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_SetColor:
 			SetColor( o->data.GetColor() );
 			break;
+		case OpCode_SetColors:
+			SetColors( (vsColor*)o->data.p, o->data.GetUInt() );
 		case OpCode_VertexArray:
 			VertexArray( (vsVector3D *)o->data.p, o->data.GetUInt() );
 			break;
