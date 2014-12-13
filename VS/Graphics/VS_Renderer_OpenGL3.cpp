@@ -560,6 +560,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ClearRenderTarget:
 				{
 					m_currentRenderTarget->Clear();
+					break;
 				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
@@ -625,7 +626,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderBuffer *b = (vsRenderBuffer*)op->data.p;
 					m_transformStack[++m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 					m_currentLocalToWorld = NULL;
-					m_currentLocalToWorldCount = 0;
+					m_currentLocalToWorldCount = b->GetMatrix4x4ArraySize();
 					m_currentLocalToWorldBuffer = b;
 					break;
 				}
@@ -653,6 +654,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentTransformStackLevel--;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
+					m_currentLocalToWorldBuffer = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetCameraTransform:

@@ -126,9 +126,12 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
 	element->next = NULL;
+	element->Clear();
 
 	element->matrix = matrix;
 	element->list = batchList;
+	element->instanceMatrix = NULL;
+	element->instanceMatrixBuffer = NULL;
 
 	element->next = batch->elementList;
 	batch->elementList = element;
@@ -146,9 +149,32 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
 	element->next = NULL;
+	element->Clear();
 
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
+	element->instanceMatrixBuffer = NULL;
+	element->list = batchList;
+
+	element->next = batch->elementList;
+	batch->elementList = element;
+}
+
+void
+vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batchList )
+{
+	Batch *batch = FindBatch(material);
+
+	if ( !m_batchElementPool )
+	{
+		m_batchElementPool = new BatchElement;
+	}
+	BatchElement *element = m_batchElementPool;
+	m_batchElementPool = element->next;
+	element->next = NULL;
+	element->Clear();
+
+	element->instanceMatrixBuffer = matrixBuffer;
 	element->list = batchList;
 
 	element->next = batch->elementList;
@@ -167,6 +193,7 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = m_batchElementPool->next;
 	element->next = NULL;
+	element->Clear();
 
 	element->matrix = matrix;
 	element->list = new vsDisplayList(size);
@@ -247,8 +274,8 @@ vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
 	m_stage(new vsRenderQueueStage[stageCount]),
 	m_stageCount(stageCount),
 	m_transformStack(),
-	m_transformStackLevel(0),
-	m_orthographic(true)
+	m_transformStackLevel(0)
+	// m_orthographic(true)
 {
 }
 
@@ -412,6 +439,13 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 }
 
 void
+vsRenderQueue::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch )
+{
+	int stageId = PickStageForMaterial( material );
+	m_stage[stageId].AddInstanceBatch( material, matrixBuffer, batch );
+}
+
+void
 vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch )
 {
 	int stageId = PickStageForMaterial( material );
@@ -428,6 +462,12 @@ void
 vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount )
 {
 	AddInstanceBatch( fragment->GetMaterial(), matrix, instanceCount, fragment->GetDisplayList() );
+}
+
+void
+vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer )
+{
+	AddInstanceBatch( fragment->GetMaterial(), matrixBuffer, fragment->GetDisplayList() );
 }
 
 vsDisplayList *

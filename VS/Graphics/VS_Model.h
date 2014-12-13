@@ -20,6 +20,8 @@
 #include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
 
+#define INSTANCED_MODEL_USES_LOCAL_BUFFER
+
 class vsModel;
 
 struct vsModelInstance
@@ -54,13 +56,20 @@ class vsModel : public vsEntity
 		vsArray<vsMatrix4x4> matrix;
 		vsArray<int> matrixInstanceId;
 		vsArray<vsModelInstance*> instance;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 		vsRenderBuffer matrixBuffer;
 		bool bufferIsDirty;
+#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 
-		InstanceData():
-			matrixBuffer(vsRenderBuffer::Type_Dynamic)
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+		InstanceData() :
+			matrixBuffer(vsRenderBuffer::Type_Dynamic),
+			bufferIsDirty(false)
 		{
 		}
+#else
+		InstanceData() {}
+#endif
 	};
 
 	vsMaterial *	m_material;

@@ -140,10 +140,12 @@ vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 			inst->matrixIndex = m_instanceData->matrix.ItemCount();
 			m_instanceData->matrix.AddItem( inst->matrix );
 			m_instanceData->matrixInstanceId.AddItem( inst->index );
+			m_instanceData->bufferIsDirty = true;
 		}
 		else // we were already in view;  just update our matrix
 		{
 			m_instanceData->matrix[inst->matrixIndex] = inst->matrix;
+			m_instanceData->bufferIsDirty = true;
 		}
 	}
 	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
@@ -151,19 +153,21 @@ vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 		int swapFrom = m_instanceData->matrix.ItemCount() - 1;
 		int swapTo = inst->matrixIndex;
 
-		int swapperInstanceId = m_instanceData->matrixInstanceId[swapFrom];
-		vsModelInstance *swapper = m_instanceData->instance[swapperInstanceId];
+		// We don't need to swap if we were already the last thing in the list.
+		if ( swapFrom != swapTo )
+		{
+			int swapperInstanceId = m_instanceData->matrixInstanceId[swapFrom];
+			vsModelInstance *swapper = m_instanceData->instance[swapperInstanceId];
 
-		m_instanceData->matrix[swapTo] = m_instanceData->matrix[swapFrom];
-		m_instanceData->matrixInstanceId[swapTo] = m_instanceData->matrixInstanceId[swapFrom];
+			m_instanceData->matrix[swapTo] = m_instanceData->matrix[swapFrom];
+			m_instanceData->matrixInstanceId[swapTo] = m_instanceData->matrixInstanceId[swapFrom];
+			swapper->matrixIndex = swapTo;
+			m_instanceData->bufferIsDirty = true;
+		}
 		m_instanceData->matrix.PopBack();
 		m_instanceData->matrixInstanceId.PopBack();
-		swapper->matrixIndex = swapTo;
 		inst->matrixIndex = -1;
 	}
-
-	if ( !m_instanceData->matrix.IsEmpty() )
-		m_instanceData->bufferIsDirty = true;
 }
 
 void
@@ -266,14 +270,20 @@ vsModel::Draw( vsRenderQueue *queue )
 			if ( m_instanceData->matrix.IsEmpty() )
 				return;
 
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 			if ( m_instanceData->bufferIsDirty )
 			{
 				m_instanceData->matrixBuffer.SetArray( &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
 				m_instanceData->bufferIsDirty = false;
 			}
+#endif
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrixBuffer );
+#else
 				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
+#endif
 			}
 		}
 		else

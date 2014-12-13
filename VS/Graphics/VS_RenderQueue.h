@@ -45,6 +45,14 @@ class vsRenderQueueStage
 			next(NULL)
 		{
 		}
+
+		void Clear()
+		{
+			instanceMatrix = NULL;
+			instanceMatrixCount = 0;
+			instanceMatrixBuffer = NULL;
+			list = NULL;
+		}
 	};
 	struct Batch
 	{
@@ -102,7 +110,7 @@ class vsRenderQueue
 	int						m_transformStackLevel;
 
 	float m_fov;
-	bool m_orthographic;
+	// bool m_orthographic;
 
 	int				PickStageForMaterial( vsMaterial *material );
 

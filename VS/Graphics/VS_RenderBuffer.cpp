@@ -115,23 +115,12 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 		}
 		else
 		{
-			glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
-#if TARGET_OS_IPHONE
-			char *ptr = (char *)glMapBufferOES(bindPoint, GL_WRITE_ONLY_OES);
-#else
-			char *ptr = (char *)glMapBuffer(bindPoint, GL_WRITE_ONLY);
-#endif
+			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 			if ( ptr )
 			{
 				memcpy(ptr, data, size);
-				/*for ( int i = 0; i < size; i++ )
-					ptr[i] = data[i];*/
-#if TARGET_OS_IPHONE
-				glUnmapBufferOES(bindPoint);
-#else
 				glUnmapBuffer(bindPoint);
-#endif
 			}
 		}
 
