@@ -20,8 +20,10 @@
 #include "VS_TextureManager.h"
 
 #include "VS_OpenGL.h"
+#include "Core.h"
 
 #include <time.h>
+#include <SDL2/SDL_filesystem.h>
 
 #if defined(_WIN32)
 //#include <shellapi.h>
@@ -36,6 +38,8 @@
 #include <SDL2/SDL_mouse.h>
 #endif
 
+#include <physfs.h>
+
 vsSystem * vsSystem::s_instance = NULL;
 
 extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use this when changing video modes etc.
@@ -45,7 +49,7 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 #define VS_VERSION ("0.0.1")
 
 
-vsSystem::vsSystem(size_t totalMemoryBytes):
+vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
@@ -62,6 +66,8 @@ vsSystem::vsSystem(size_t totalMemoryBytes):
 	// Perform some basic initialisation
 	vsRandom::Init();
 	vsLog("VectorStorm engine version %s\n",VS_VERSION);
+
+	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...\n");
 	m_preferences = new vsSystemPreferences;
@@ -95,6 +101,8 @@ vsSystem::~vsSystem()
 	vsDelete( m_screen );
 
 	delete vsSingletonManager::Instance();
+
+	DeinitPhysFS();
 
 #if !TARGET_OS_IPHONE
 	SDL_Quit();
@@ -149,6 +157,78 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
+}
+
+void
+vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
+{
+	vsLog("====== Initialising file system");
+	PHYSFS_init(argv[0]);
+	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
+	if ( !success )
+	{
+		vsLog("SetWriteDir failed!", success);
+		exit(1);
+	}
+
+	vsLog("UserDir: %s", PHYSFS_getUserDir());
+	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
+
+#if defined(__APPLE_CC__)
+	// loading out of an app bundle, so use that data directory
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
+#elif defined(_WIN32)
+
+	// Under Win32, Visual Studio likes to put debug and release builds into a directory
+	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
+	// but it means that the executable location isn't in the same place as our Data
+	// directory.  So we need to detect that situation, and if it happens, move our
+	// data directory up by one.
+	vsString baseDirectory = PHYSFS_getBaseDir();
+	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
+		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
+	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
+		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
+	m_dataDirectory = baseDirectory + "\\Data";
+#else
+	// generic UNIX.  Assume data directory is right next to the executable.
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
+#endif
+	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
+	if ( !success )
+	{
+		vsLog("Failed to mount %s", m_dataDirectory.c_str());
+		exit(1);
+	}
+
+	char** searchPath = PHYSFS_getSearchPath();
+	int pathId = 0;
+	while ( searchPath[pathId] )
+	{
+		vsLog("Search path: %s",searchPath[pathId]);
+		pathId++;
+	}
+}
+
+void
+vsSystem::EnableGameDirectory( const vsString &directory )
+{
+	std::string d = m_dataDirectory + "/" + directory;
+	PHYSFS_mount(d.c_str(), NULL, 1);
+}
+
+void
+vsSystem::DisableGameDirectory( const vsString &directory )
+{
+	std::string d = m_dataDirectory + "/" + directory;
+	PHYSFS_removeFromSearchPath(d.c_str());
+}
+
+void
+vsSystem::DeinitPhysFS()
+{
+	PHYSFS_deinit();
 }
 
 void

@@ -31,6 +31,7 @@ public:
 
 	static void			SetGame( coreGame *game );		// this sets the game which will be activated NEXT FRAME.
 	static coreGame *	GetGame( );						// get the current game
+	static const vsString &		GetMainGameName( );				// get the name of the main game
 	static const vsString &		GetGameName( );					// get the name of the current game
 
 	static void PreGoOneFrame();

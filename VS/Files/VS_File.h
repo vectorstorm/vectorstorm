@@ -10,6 +10,8 @@
 #ifndef FS_FILE_H
 #define FS_FILE_H
 
+struct PHYSFS_File;
+
 class vsRecord;
 class vsStore;
 
@@ -25,7 +27,7 @@ public:
 	};
 
 private:
-	FILE *		m_file;
+	PHYSFS_File *	m_file;
 
 	Mode		m_mode;
 

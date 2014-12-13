@@ -24,55 +24,25 @@
 #include <SDL2/SDL_filesystem.h>
 
 #include <errno.h>
+#include <physfs.h>
 
 
-vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode )
+vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 {
 	m_mode = mode;
 
-	vsString filename = GetFullFilename( filename_in.c_str() );
-
-	vsString modeStr[vsFile::MODE_MAX] =
-	{
-		"rb",	// MODE_Read
-		"wb"		// MODE_Write
-	};
-
-	m_file = fopen(filename.c_str(), modeStr[m_mode].c_str());
+	if ( mode == MODE_Read )
+		m_file = PHYSFS_openRead( filename.c_str() );
+	else
+		m_file = PHYSFS_openWrite( filename.c_str() );
 
 	if ( m_file )
 	{
-		fseek(m_file, 0, SEEK_END);
-		m_length = ftell(m_file);
-		rewind(m_file);
+		m_length = PHYSFS_fileLength(m_file);
 	}
 	else
 	{
-#if defined(__APPLE_CC__)
-		vsString dirName = filename;
-		size_t slashIndex = dirName.rfind('/');
-		if ( slashIndex != dirName.npos )
-		{
-			dirName.erase(slashIndex,dirName.npos);
-		}
-
-		DIR * dir = opendir(dirName.c_str());
-		if ( !dir )
-			vsLog("No such directory: %s", dirName.c_str());
-		else
-		{
-			dirent *dent = readdir(dir);
-
-			while( dent )
-			{
-				vsLog("File: %s", dent->d_name);
-
-				dent = readdir(dir);
-			}
-
-			closedir(dir);
-		}
-#endif // __APPLE_CC__
+		vsLog("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError());
 	}
 
 	int e = errno;
@@ -132,31 +102,19 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode )
 vsFile::~vsFile()
 {
 	if ( m_file )
-		fclose(m_file);
+		PHYSFS_close(m_file);
 }
 
 bool
-vsFile::Exists( const vsString &filename_in )		// static member!
+vsFile::Exists( const vsString &filename )		// static member!
 {
-	bool exists = false;
-	vsString filename = GetFullFilename( filename_in.c_str() );
-	FILE *file = fopen(filename.c_str(), "r");
-	if ( file )
-	{
-		fclose(file);
-		exists = true;
-	}
-
-	return exists;
+	return PHYSFS_exists(filename.c_str()) != 0;
 }
 
 bool
-vsFile::Delete( const vsString &filename_in )		// static member!
+vsFile::Delete( const vsString &filename )		// static member!
 {
-	vsString filename = GetFullFilename( filename_in.c_str() );
-	int retval = remove(filename.c_str());
-
-	return (retval == 0);
+	return PHYSFS_delete(filename.c_str()) != 0;
 }
 
 bool
@@ -176,11 +134,11 @@ vsFile::PeekRecord( vsRecord *r )
 
 		r->Init();
 
-		long filePos = ftell(m_file);
+		long filePos = PHYSFS_tell(m_file);
 		if ( r->Parse(this) )
 			succeeded = true;
 
-		fseek(m_file, filePos, SEEK_SET);
+		PHYSFS_seek(m_file, filePos);
 
 		return succeeded;
 	}
@@ -197,7 +155,7 @@ vsFile::Record( vsRecord *r )
 	{
 		vsString recordString = r->ToString();
 
-		fprintf( m_file, "%s", recordString.c_str() );
+		PHYSFS_write( m_file, recordString.c_str(), 1, recordString.size() );
 
 		return true;
 	}
@@ -216,25 +174,31 @@ vsFile::Record( vsRecord *r )
 bool
 vsFile::ReadLine( vsString *line )
 {
-	const int c_bufSize = 1024;
-	char buf[c_bufSize];
+	// const int c_bufSize = 1024;
+	// char buf[c_bufSize];
 
-	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
+	long filePos = PHYSFS_tell(m_file);
+	char peekChar = 'a';
+
+	while ( !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
-		buf[c_bufSize-1] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
+		PHYSFS_read(m_file, &peekChar, 1, 1);
+	}
+	long afterFilePos = PHYSFS_tell(m_file);
+	long bytes = afterFilePos - filePos;
+	PHYSFS_seek(m_file, filePos);
+	if ( bytes > 0 )
+	{
+		char* buffer = (char*)malloc(bytes+1);
+		PHYSFS_read(m_file, buffer, 1, bytes);
+		buffer[bytes-1] = 0;
 
-		for ( int i = 0; i < c_bufSize; i++ )
+		*line = buffer;
+		while (line->find('\r') != vsString::npos)
 		{
-			if ( buf[i] == 0 ||
-				buf[i] == '\n' ||
-				buf[i] == '\r' )
-			{
-				buf[i] = 0;
-				break;
-			}
+			line->erase( line->find('\r') );
 		}
-
-		*line = buf;
+		free(buffer);
 
 		return true;
 	}
@@ -244,39 +208,16 @@ vsFile::ReadLine( vsString *line )
 bool
 vsFile::PeekLine( vsString *line )
 {
-	const int c_bufSize = 1024;
-	char buf[c_bufSize];
-
-	long filePos = ftell(m_file);
-
-	if ( !AtEnd() && fgets(buf, c_bufSize-1, m_file) )
-	{
-		fseek(m_file, filePos, SEEK_SET);
-
-		buf[c_bufSize-1] = 0;	// force a terminator on the end, just in case we receive a line of >= 1024 characters.
-
-		for ( int i = 0; i < c_bufSize; i++ )
-		{
-			if ( buf[i] == 0 ||
-				buf[i] == '\n' ||
-				buf[i] == '\r' )
-			{
-				buf[i] = 0;
-				break;
-			}
-		}
-
-		*line = buf;
-
-		return true;
-	}
-	return false;
+	long filePos = PHYSFS_tell(m_file);
+	bool result = ReadLine(line);
+	PHYSFS_seek(m_file, filePos);
+	return result;
 }
 
 void
 vsFile::Rewind()
 {
-	fseek(m_file, 0, SEEK_SET);
+	PHYSFS_seek(m_file, 0);
 }
 
 void
@@ -285,12 +226,12 @@ vsFile::Store( vsStore *s )
 	if ( m_mode == MODE_Write )
 	{
 		s->Rewind();
-		fwrite(s->GetReadHead(), 1, s->Length(), m_file );
+		PHYSFS_write( m_file, s->GetReadHead(), 1, s->Length() );
 	}
 	else
 	{
 		s->Rewind();
-		size_t n = fread(s->GetWriteHead(), 1, s->BufferLength(), m_file );
+		size_t n = PHYSFS_read( m_file, s->GetWriteHead(), 1, s->BufferLength() );
 		s->SetLength(n);
 	}
 }
@@ -300,11 +241,11 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 {
 	if ( m_mode == MODE_Write )
 	{
-		fwrite(s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()), m_file );
+		PHYSFS_write( m_file, s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()) );
 	}
 	else
 	{
-		size_t n = fread(s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()), m_file );
+		size_t n = PHYSFS_read( m_file, s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()) );
 		s->AdvanceWriteHead(n);
 	}
 }
@@ -326,56 +267,8 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	return result;
 #else
 
-	vsString fileName = filename_in;
-	vsString dirName;
-
-	bool	fileIsInternal = true;
-	// check if filename_in is a preferences file, and if so, then look in the preferences directory, instead of in the usual directory.
-	vsString prefsSuffix(".prefs");
-	size_t prefsIndex = filename_in.find(prefsSuffix);
-
-	// check if filename_in is a save file, and if so, then look in the save directory, instead of in the usual directory.
-	vsString savSuffix(".sav");
-	size_t savIndex = filename_in.find(savSuffix);
-
-	if ( prefsIndex != vsString::npos && prefsIndex == filename_in.length() - prefsSuffix.length() )
-	{
-		fileIsInternal = false;
-		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
-	}
-	else if ( savIndex != vsString::npos && savIndex == filename_in.length() - savSuffix.length() )
-	{
-		fileIsInternal = false;
-		dirName = SDL_GetPrefPath("VectorStorm", core::GetGameName().c_str());
-	}
-	else if ( filename_in == "Version.txt" )
-	{
-		dirName = "Version/";
-	}
-	else
-	{
-		dirName = core::GetGameName();
-		if ( !dirName.empty() )
-			dirName += "/";
-
-	}
-
-	vsString result;
-
-	if ( fileIsInternal )
-	{
-#if defined(__APPLE_CC__)
-		result = vsFormatString("Contents/Resources/Data/%s%s", dirName.c_str(), fileName.c_str());
-#else
-		result = vsFormatString("Data/%s/%s", dirName.c_str(), fileName.c_str());
-#endif
-	}
-	else
-	{
-		result = vsFormatString("%s/%s",dirName.c_str(),fileName.c_str());
-	}
-
-	return result;
+	vsString dir = PHYSFS_getRealDir( filename_in.c_str() );
+	return dir + "/" + filename_in;
 #endif
 }
 
@@ -383,5 +276,6 @@ vsFile::GetFullFilename(const vsString &filename_in)
 bool
 vsFile::AtEnd()
 {
-	return !m_file || feof( m_file );
+	return !m_file || PHYSFS_eof( m_file );
 }
+

@@ -17,6 +17,7 @@ find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH C:/src/buildzone/lib/x86/)
 find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
 	PATH C:/src/buildzone/include)
+find_package(PhysFS REQUIRED)
 
 
 if(UNIX)
@@ -70,30 +71,6 @@ include_directories("${PROJECT_BINARY_DIR}/config")
 configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
 
-set(VS_DEBUG_LIBRARIES
-	${OPENGL_LIBRARIES}
-	${PNG_LIBRARY}
-	${SDL_LIBRARY}
-	${SDL_IMAGE_LIBRARY}
-	${SDL_MIXER_LIBRARY}
-	${SDLMAIN_LIBRARY}
-	${GLEW_LIBRARY}
-	${BOX2D_LIBRARY_DEBUG}
-	${PTHREAD_LIBRARY}
-	)
-
-set(VS_RELEASE_LIBRARIES
-	${OPENGL_LIBRARIES}
-	${PNG_LIBRARY}
-	${SDL_LIBRARY}
-	${SDL_IMAGE_LIBRARY}
-	${SDL_MIXER_LIBRARY}
-	${SDLMAIN_LIBRARY}
-	${GLEW_LIBRARY}
-	${BOX2D_LIBRARY_RELEASE}
-	${PTHREAD_LIBRARY}
-	)
-
 include_directories(
 	${SDL_INCLUDE_DIR}
 	${SDLMIXER_INCLUDE_DIR}
@@ -101,6 +78,7 @@ include_directories(
 	${ZLIB_INCLUDE_DIRS}
 	${GLEW_INCLUDE_DIR}
 	${BOX2D_INCLUDE_DIR}
+	${PHYSFS_INCLUDE_DIR}
 	#/usr/local/include
 	)
 
@@ -426,6 +404,7 @@ include_directories(
 		debug ${BOX2D_LIBRARY_DEBUG}
 		optimized ${BOX2D_LIBRARY_RELEASE}
 		${PTHREAD_LIBRARY}
+		${PHYSFS_LIBRARY}
 		)
 
 	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3
