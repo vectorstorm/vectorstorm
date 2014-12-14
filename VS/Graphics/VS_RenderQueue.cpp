@@ -193,6 +193,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
 	element->next = NULL;
+	element->Clear();
 
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
