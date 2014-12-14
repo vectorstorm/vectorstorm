@@ -486,10 +486,11 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
 	CheckGLError("FlushRenderState");
 
+		m_currentShader->SetColor( m_currentColor );
 		if ( m_currentColors )
-			m_currentShader->SetColors( m_currentColors, m_currentLocalToWorldCount );
+			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
 		else
-			m_currentShader->SetColor( m_currentColor );
+			m_currentShader->SetInstanceColors( &c_white, 1 );
 	CheckGLError("FlushRenderState");
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 	CheckGLError("FlushRenderState");
@@ -1316,7 +1317,7 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	glBindAttribLocation(program, 2, "normal");
 	glBindAttribLocation(program, 3, "color");
 	glBindAttribLocation(program, 5, "localToWorldAttrib");
-	glBindAttribLocation(program, 4, "universalColorAttrib");
+	glBindAttribLocation(program, 4, "instanceColorAttrib");
 
 	glLinkProgram(program);
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
