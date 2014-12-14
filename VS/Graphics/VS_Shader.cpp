@@ -19,6 +19,7 @@
 #include "VS_TimerSystem.h"
 
 static bool m_localToWorldAttribIsActive = false;
+static bool m_colorAttribIsActive = false;
 
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
@@ -80,6 +81,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 		m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
 		m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
+		m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
 		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
@@ -170,8 +172,57 @@ vsShader::SetColor( const vsColor& color )
 	{
 		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
 	}
+
 	glVertexAttrib4f( 3, color.r, color.g, color.b, color.a );
 }
+
+void
+vsShader::SetInstanceColors( const vsColor* color, int matCount )
+{
+	if ( matCount <= 0 )
+		return;
+	CheckGLError("SetInstanceColors");
+	// if ( m_colorLoc >= 0 )
+	// {
+	// 	glUniform4f( m_colorLoc, color[0].r, color[0].g, color[0].b, color[0].a );
+	// }
+	// glVertexAttrib4f( 3, color[0].r, color[0].g, color[0].b, color[0].a );
+	if ( m_instanceColorAttributeLoc >= 0 )
+	{
+		if ( matCount == 1 )
+		{
+			if ( m_colorAttribIsActive )
+			{
+				glDisableVertexAttribArray(m_instanceColorAttributeLoc);
+				m_colorAttribIsActive = false;
+			}
+
+			glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
+		}
+		else
+		{
+			if ( !m_colorAttribIsActive )
+			{
+				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+				m_colorAttribIsActive = true;
+			}
+
+			static GLuint g_vbo = 0xffffffff;
+			// this could be a lot smarter.
+			if ( g_vbo == 0xffffffff )
+			{
+				glGenBuffers(1, &g_vbo);
+			}
+			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, color, GL_STREAM_DRAW);
+			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+	}
+	CheckGLError("SetColors");
+}
+
 
 void
 vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )

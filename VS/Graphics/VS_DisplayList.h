@@ -36,6 +36,7 @@ public:
 	enum OpCode
 	{
 		OpCode_SetColor,
+		OpCode_SetColors,
 
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
@@ -214,6 +215,7 @@ public:
 	void	PushMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrices4x4( const vsMatrix4x4 *m, int count );
+	void	SetColors( const vsColor *c, int count );
 	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );

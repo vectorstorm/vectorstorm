@@ -139,13 +139,19 @@ vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 		{
 			inst->matrixIndex = m_instanceData->matrix.ItemCount();
 			m_instanceData->matrix.AddItem( inst->matrix );
+			m_instanceData->color.AddItem( inst->color );
 			m_instanceData->matrixInstanceId.AddItem( inst->index );
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 			m_instanceData->bufferIsDirty = true;
+#endif
 		}
 		else // we were already in view;  just update our matrix
 		{
 			m_instanceData->matrix[inst->matrixIndex] = inst->matrix;
+			m_instanceData->color[inst->matrixIndex] = inst->color;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 			m_instanceData->bufferIsDirty = true;
+#endif
 		}
 	}
 	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
@@ -160,11 +166,15 @@ vsModel::UpdateInstance( vsModelInstance *inst, bool show )
 			vsModelInstance *swapper = m_instanceData->instance[swapperInstanceId];
 
 			m_instanceData->matrix[swapTo] = m_instanceData->matrix[swapFrom];
+			m_instanceData->color[swapTo] = m_instanceData->color[swapFrom];
 			m_instanceData->matrixInstanceId[swapTo] = m_instanceData->matrixInstanceId[swapFrom];
 			swapper->matrixIndex = swapTo;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 			m_instanceData->bufferIsDirty = true;
+#endif
 		}
 		m_instanceData->matrix.PopBack();
+		m_instanceData->color.PopBack();
 		m_instanceData->matrixInstanceId.PopBack();
 		inst->matrixIndex = -1;
 	}
@@ -274,16 +284,17 @@ vsModel::Draw( vsRenderQueue *queue )
 			if ( m_instanceData->bufferIsDirty )
 			{
 				m_instanceData->matrixBuffer.SetArray( &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
+				m_instanceData->colorBuffer.SetArray( &m_instanceData->color[0], m_instanceData->color.ItemCount() );
 				m_instanceData->bufferIsDirty = false;
 			}
 #endif
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrixBuffer );
-#else
-				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrix[0], m_instanceData->matrix.ItemCount() );
-#endif
+// #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+// 				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrixBuffer );
+// #else
+				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrix[0], &m_instanceData->color[0], m_instanceData->matrix.ItemCount() );
+// #endif
 			}
 		}
 		else
@@ -349,9 +360,16 @@ vsModelInstance::SetVisible( bool v )
 void
 vsModelInstance::SetMatrix( const vsMatrix4x4& mat )
 {
-	if ( matrix != mat )
+	SetMatrix( mat, c_white );
+}
+
+void
+vsModelInstance::SetMatrix( const vsMatrix4x4& mat, const vsColor &c )
+{
+	if ( matrix != mat || color != c)
 	{
 		matrix = mat;
+		color = c;
 		if ( visible )
 		{
 			model->UpdateInstance( this, visible );

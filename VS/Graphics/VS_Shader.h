@@ -22,6 +22,7 @@ class vsShader
 {
 	int32_t m_alphaRefLoc;
 	int32_t m_colorLoc;
+	int32_t m_instanceColorAttributeLoc;
 	int32_t m_resolutionLoc;
 	int32_t m_globalTimeLoc;
 	int32_t m_mouseLoc;
@@ -58,6 +59,7 @@ public:
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
+	void SetInstanceColors( const vsColor* color, int matCount );
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );

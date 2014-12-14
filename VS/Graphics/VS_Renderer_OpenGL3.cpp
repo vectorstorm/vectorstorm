@@ -458,6 +458,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	CheckGLError("FlushRenderState");
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	if ( m_currentShader )
@@ -466,20 +467,35 @@ vsRenderer_OpenGL3::FlushRenderState()
 			glUseProgram( m_currentShader->GetShaderId() );
 		s_lastShaderId = m_currentShader->GetShaderId();
 
+	CheckGLError("FlushRenderState");
 		m_currentShader->Prepare();
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetGlow( m_currentMaterial->m_glow );
-		m_currentShader->SetColor( m_currentColor );
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetTextures( m_currentMaterial->m_texture );
+	CheckGLError("FlushRenderState");
 		if ( m_currentLocalToWorldBuffer )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
 		else if ( m_currentLocalToWorldCount > 0 )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
 		else
 			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
+	CheckGLError("FlushRenderState");
+
+		m_currentShader->SetColor( m_currentColor );
+		if ( m_currentColors )
+			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
+		else
+			m_currentShader->SetInstanceColors( &c_white, 1 );
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetWorldToView( m_currentWorldToView );
+	CheckGLError("FlushRenderState");
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+	CheckGLError("FlushRenderState");
 		for ( int i = 0; i < MAX_LIGHTS; i++ )
 		{
 			vsVector3D halfVector;
@@ -487,11 +503,13 @@ vsRenderer_OpenGL3::FlushRenderState()
 					m_lightStatus[i].specular, m_lightStatus[i].position,
 					halfVector);
 		}
+	CheckGLError("FlushRenderState");
 	}
 	else
 	{
 		glUseProgram( 0 );
 	}
+	CheckGLError("FlushRenderState");
 }
 
 void
@@ -518,6 +536,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 
 	m_currentLocalToWorld = NULL;
 	m_currentLocalToWorldCount = 0;
+	m_currentColors = NULL;
 	m_currentLocalToWorldBuffer = NULL;
 	m_currentVertexArray = NULL;
 	m_currentVertexBuffer = NULL;
@@ -543,12 +562,19 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetColor:
 				{
 					m_currentColor = op->data.GetColor();
+					m_currentColors = NULL;
+					break;
+				}
+			case vsDisplayList::OpCode_SetColors:
+				{
+					m_currentColors = (vsColor*)op->data.p;
 					break;
 				}
 			case vsDisplayList::OpCode_SetMaterial:
 				{
 					vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
 					SetMaterial( material );
+					m_currentColors = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetRenderTarget:
@@ -1290,6 +1316,8 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	glBindAttribLocation(program, 1, "texcoord");
 	glBindAttribLocation(program, 2, "normal");
 	glBindAttribLocation(program, 3, "color");
+	glBindAttribLocation(program, 5, "localToWorldAttrib");
+	glBindAttribLocation(program, 4, "instanceColorAttrib");
 
 	glLinkProgram(program);
 	glGetProgramiv(program, GL_LINK_STATUS, &success);

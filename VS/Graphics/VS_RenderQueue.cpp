@@ -181,6 +181,29 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matr
 	batch->elementList = element;
 }
 
+void
+vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batchList )
+{
+	Batch *batch = FindBatch(material);
+
+	if ( !m_batchElementPool )
+	{
+		m_batchElementPool = new BatchElement;
+	}
+	BatchElement *element = m_batchElementPool;
+	m_batchElementPool = element->next;
+	element->next = NULL;
+	element->Clear();
+
+	element->instanceMatrixCount = matrixCount;
+	element->instanceMatrix = matrix;
+	element->instanceColor = color;
+	element->list = batchList;
+
+	element->next = batch->elementList;
+	batch->elementList = element;
+}
+
 vsDisplayList *
 vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size )
 {
@@ -230,6 +253,10 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
 			else
 				list->SetMatrix4x4( e->matrix );
+			// if ( e->instanceColorBuffer )
+			// 	list->SetColorBuffer( e->instanceColorBuffer );
+			if ( e->instanceColor )
+				list->SetColors( e->instanceColor, e->instanceMatrixCount );
 
 			list->Append( *e->list );
 			list->PopTransform();
@@ -446,6 +473,13 @@ vsRenderQueue::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuf
 }
 
 void
+vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch )
+{
+	int stageId = PickStageForMaterial( material );
+	m_stage[stageId].AddInstanceBatch( material, matrix, color, instanceCount, batch );
+}
+
+void
 vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch )
 {
 	int stageId = PickStageForMaterial( material );
@@ -456,6 +490,12 @@ void
 vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
 {
 	AddBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetDisplayList() );
+}
+
+void
+vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount )
+{
+	AddInstanceBatch( fragment->GetMaterial(), matrix, color, instanceCount, fragment->GetDisplayList() );
 }
 
 void

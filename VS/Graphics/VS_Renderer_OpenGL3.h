@@ -63,6 +63,7 @@ private:
 	vsMatrix4x4			m_currentViewToProjection;
 
 	vsColor				m_currentColor;
+	vsColor *			m_currentColors;
 	vsColor				m_currentFogColor;
 	float				m_currentFogDensity;
 
