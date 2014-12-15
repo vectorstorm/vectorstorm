@@ -313,7 +313,6 @@ vsBuiltInFont::BuildDisplayListFromString( vsDisplayList *list, const char *stri
 vsDisplayList *
 vsBuiltInFont::CreateString_Internal(const char* string, float size, float capSize, JustificationType j, float maxWidth)
 {
-	size *= 2.f;
 	vsDisplayList *result = NULL;
 	vsDisplayList loader(1024 * 10);
 
