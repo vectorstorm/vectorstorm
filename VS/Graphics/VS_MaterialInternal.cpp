@@ -56,7 +56,9 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_glow(false),
 	m_postGlow(false),
 	m_hasColor(true),
-	m_blend(true)
+	m_blend(true),
+	m_hasUniformValue(NULL),
+	m_uniformValue(NULL)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		m_texture[i] = NULL;
@@ -68,6 +70,8 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 		vsFile materialFile(fileName);
 		LoadFromFile( &materialFile );
 	}
+
+	SetUpShaderStorage();
 }
 
 vsMaterialInternal::~vsMaterialInternal()
@@ -75,6 +79,36 @@ vsMaterialInternal::~vsMaterialInternal()
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		vsDelete( m_texture[i] );
 	vsDelete( m_shader );
+	vsDeleteArray( m_hasUniformValue );
+	vsDeleteArray( m_uniformValue );
+}
+
+void
+vsMaterialInternal::SetUpShaderStorage()
+{
+	if ( m_shader )
+	{
+		m_hasUniformValue = new bool[m_shader->GetUniformCount()];
+		m_uniformValue = new float[m_shader->GetUniformCount()];
+		memset(m_hasUniformValue, 0, m_shader->GetUniformCount());
+	}
+}
+
+void
+vsMaterialInternal::SetUniformValue(const vsString& name, float value)
+{
+	if ( m_shader == NULL )
+		return;
+
+	for ( int i = 0; i < m_shader->GetUniformCount(); i++ )
+	{
+		if ( m_shader->GetUniform(i)->name == name )
+		{
+			m_hasUniformValue[i] = true;
+			m_uniformValue[i] = value;
+			break;
+		}
+	}
 }
 
 void

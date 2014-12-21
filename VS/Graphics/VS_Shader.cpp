@@ -25,93 +25,128 @@ static bool m_colorAttribIsActive = false;
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
-	if ( vsRenderer_OpenGL3::Exists() )
+	if ( !vsRenderer_OpenGL3::Exists() )
 	{
-		vsString version;
+		// TODO:  This should probably be a fatal error
+		return;
+	}
 
-		vsString vString = vertexShader;
-		vsString fString = fragmentShader;
+	vsString version;
 
-		// check whether each shader begins with a #version statement.
-		// If so, let's remove and remember it, then re-insert it into
-		// the final version of the shader.  (We check on both vertex
-		// and fragment shaders, and insert the same value into both)
-		if ( vString.find("#version") == 0 )
+	vsString vString = vertexShader;
+	vsString fString = fragmentShader;
+
+	// check whether each shader begins with a #version statement.
+	// If so, let's remove and remember it, then re-insert it into
+	// the final version of the shader.  (We check on both vertex
+	// and fragment shaders, and insert the same value into both)
+	if ( vString.find("#version") == 0 )
+	{
+		size_t pos = vString.find('\n');
+		if ( pos != vsString::npos )
 		{
-			size_t pos = vString.find('\n');
-			if ( pos != vsString::npos )
-			{
-				version = std::string("#version ") + vString.substr(9, pos-9) + "\n";
-				vString.erase(0,pos);
-			}
+			version = std::string("#version ") + vString.substr(9, pos-9) + "\n";
+			vString.erase(0,pos);
 		}
-		if ( fString.find("#version") == 0 )
+	}
+	if ( fString.find("#version") == 0 )
+	{
+		size_t pos = fString.find('\n');
+		if ( pos != vsString::npos )
 		{
-			size_t pos = fString.find('\n');
-			if ( pos != vsString::npos )
-			{
-				std::string fVersion = std::string("#version ") + fString.substr(9, pos-9) + "\n";
-				if ( version == vsEmptyString )
-					version = fVersion;
-				else
-					vsAssert( version == fVersion, "Non-matching #version statements in vertex and fragment shaders" );
+			std::string fVersion = std::string("#version ") + fString.substr(9, pos-9) + "\n";
+			if ( version == vsEmptyString )
+				version = fVersion;
+			else
+				vsAssert( version == fVersion, "Non-matching #version statements in vertex and fragment shaders" );
 
-				fString.erase(0,pos);
-			}
+			fString.erase(0,pos);
 		}
+	}
 
-		if ( lit )
-		{
-			vString = "#define LIT 1\n" + vString;
-			fString = "#define LIT 1\n" + fString;
-		}
-		if ( texture )
-		{
-			vString = "#define TEXTURE 1\n" + vString;
-			fString = "#define TEXTURE 1\n" + fString;
-		}
+	if ( lit )
+	{
+		vString = "#define LIT 1\n" + vString;
+		fString = "#define LIT 1\n" + fString;
+	}
+	if ( texture )
+	{
+		vString = "#define TEXTURE 1\n" + vString;
+		fString = "#define TEXTURE 1\n" + fString;
+	}
 
-		vString = version + vString;
-		fString = version + fString;
+	vString = version + vString;
+	fString = version + fString;
 
 #if !TARGET_OS_IPHONE
-		m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
-		//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
+	m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+	//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
-		m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
-		m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
-		m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
-		m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
-		m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
-		m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
-		m_fogLoc = glGetUniformLocation(m_shader, "fog");
-		m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
-		m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
-		m_textureLoc = glGetUniformLocation(m_shader, "textures");
-		m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
-		m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
-		m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
-		m_glowLoc = glGetUniformLocation(m_shader, "glow");
+	m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
+	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
+	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
+	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
+	m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
+	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
+	m_fogLoc = glGetUniformLocation(m_shader, "fog");
+	m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
+	m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
+	m_textureLoc = glGetUniformLocation(m_shader, "textures");
+	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
+	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
+	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
+	m_glowLoc = glGetUniformLocation(m_shader, "glow");
 
-		m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
+	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
-		// for ( int i = 0; i < 4; i++ )
-		// {
-			// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
-			// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
-		// }
-		m_lightAmbientLoc = glGetUniformLocation(m_shader, "lightSource[0].ambient");
-		m_lightDiffuseLoc = glGetUniformLocation(m_shader, "lightSource[0].diffuse");;
-		m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
-		m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
-		m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
+	// for ( int i = 0; i < 4; i++ )
+	// {
+	// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
+	// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
+	// }
+	m_lightAmbientLoc = glGetUniformLocation(m_shader, "lightSource[0].ambient");
+	m_lightDiffuseLoc = glGetUniformLocation(m_shader, "lightSource[0].diffuse");;
+	m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
+	m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
+	m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
+	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &m_uniformCount );
+	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
+
+	m_uniform = new Uniform[m_uniformCount];
+	m_attribute = new Attribute[m_attributeCount];
+
+	const int c_maxNameLength = 256;
+	char nameBuffer[c_maxNameLength];
+	for ( GLuint i = 0; i < m_uniformCount; i++ )
+	{
+		GLint arraySize = 0;
+		GLenum type = 0;
+		GLsizei actualLength = 0;
+		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
+		m_uniform[i].name = vsString(nameBuffer);
+		m_uniform[i].loc = glGetUniformLocation(m_shader, m_uniform[i].name.c_str());
+		m_uniform[i].type = type;
+		m_uniform[i].arraySize = arraySize;
+	}
+	for ( GLuint i = 0; i < m_attributeCount; i++ )
+	{
+		GLint arraySize = 0;
+		GLenum type = 0;
+		GLsizei actualLength = 0;
+		glGetActiveAttrib(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
+		m_attribute[i].name = vsString(nameBuffer);
+		m_attribute[i].loc = glGetAttribLocation(m_shader, m_attribute[i].name.c_str());
+		m_attribute[i].type = type;
+		m_attribute[i].arraySize = arraySize;
 	}
 }
 
 vsShader::~vsShader()
 {
 	vsRenderer_OpenGL3::DestroyShader(m_shader);
+	vsDeleteArray( m_uniform );
+	vsDeleteArray( m_attribute );
 }
 
 vsShader *
@@ -371,8 +406,9 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 }
 
 void
-vsShader::Prepare()
+vsShader::Prepare( vsMaterialInternal *material )
 {
+	CheckGLError("Prepare");
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
@@ -393,5 +429,20 @@ vsShader::Prepare()
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
+
+	for ( int i = 0; i < m_uniformCount; i++ )
+	{
+		if ( material->HasValueForUniform(i) )
+		{
+			SetUniformValue( i, material->GetValueForUniform(i) );
+		}
+	}
+	CheckGLError("Prepare");
+}
+
+void
+vsShader::SetUniformValue( int i, float value )
+{
+	glUniform1f( m_uniform[i].loc, value );
 }
 

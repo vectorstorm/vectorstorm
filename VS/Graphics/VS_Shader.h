@@ -20,6 +20,23 @@ class vsMatrix4x4;
 
 class vsShader
 {
+public:
+	struct Uniform
+	{
+		vsString name;
+		int32_t loc;
+		int32_t type;
+		int32_t arraySize;
+	};
+	struct Attribute
+	{
+		vsString name;
+		int32_t loc;
+		int32_t type;
+		int32_t arraySize;
+	};
+
+private:
 	int32_t m_alphaRefLoc;
 	int32_t m_colorLoc;
 	int32_t m_instanceColorAttributeLoc;
@@ -41,6 +58,14 @@ class vsShader
 	int32_t m_lightSpecularLoc;
 	int32_t m_lightPositionLoc;
 	int32_t m_lightHalfVectorLoc;
+
+	Uniform *m_uniform;
+	Attribute *m_attribute;
+
+	int32_t m_uniformCount;
+	int32_t m_attributeCount;
+
+	void SetUniformValue( int i, float value );
 
 protected:
 	uint32_t m_shader;
@@ -64,12 +89,17 @@ public:
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 	void SetGlow( float glowAlpha );
+	void SetCustomUniform( const vsString& name, float value );
+
+	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
+	int32_t GetUniformCount() const { return m_uniformCount; }
+	int32_t GetAttributeCount() const { return m_attributeCount; }
 
 	void SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare(); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterialInternal *activeMaterial ); // called before we start rendering something with this shader
 };
 
 
