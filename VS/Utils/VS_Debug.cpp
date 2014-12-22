@@ -62,7 +62,7 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 // 			int i, frames = backtrace(callstack, 128);
 // 			char** strs = backtrace_symbols(callstack, frames);
 // 			for (i = 0; i < frames; ++i) {
-// 				vsLog("%s\n", strs[i]);
+// 				vsLog("%s", strs[i]);
 // 			}
 // 			free(strs);
 // #endif

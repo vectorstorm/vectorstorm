@@ -65,11 +65,11 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	// Perform some basic initialisation
 	vsRandom::Init();
-	vsLog("VectorStorm engine version %s\n",VS_VERSION);
+	vsLog("VectorStorm engine version %s",VS_VERSION);
 
 	InitPhysFS( argc, argv, companyName, title );
 
-	vsLog("Loading preferences...\n");
+	vsLog("Loading preferences...");
 	m_preferences = new vsSystemPreferences;
 
 #if !TARGET_OS_IPHONE
@@ -116,7 +116,7 @@ vsSystem::Init()
 	m_preferences->CheckResolutions();
 	Resolution *res = m_preferences->GetResolution();
 
-	vsLog("Initialising [%dx%d] resolution...\n", res->width, res->height);
+	vsLog("Initialising [%dx%d] resolution...", res->width, res->height);
 
 #if !TARGET_OS_IPHONE
 	m_showCursor = !m_preferences->GetFullscreen();
@@ -265,7 +265,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 
 	vsHeap::Push(g_globalHeap);
 
-	vsLog("Initialising [%dx%d] resolution...\n", width, height);
+	vsLog("Initialising [%dx%d] resolution...", width, height);
 
 	if ( !m_showCursorOverridden )
 	{
@@ -419,7 +419,7 @@ void
 vsSystemPreferences::CheckResolutions()
 {
 #if !TARGET_OS_IPHONE
-	vsLog("Checking supported resolutions...\n");
+	vsLog("Checking supported resolutions...");
 
 	SDL_DisplayMode *modes;
 	int modeCount;
@@ -436,7 +436,7 @@ vsSystemPreferences::CheckResolutions()
 
 	/* Check if there are any modes available */
 	if(modeCount <= 0){
-		vsLog("No modes available!\n");
+		vsLog("No modes available!");
 		exit(-1);
 	}
 
@@ -444,7 +444,7 @@ vsSystemPreferences::CheckResolutions()
 	{
 		m_supportedResolutionCount = modeCount;
 		/* Print valid modes */
-		vsLog("Available Modes\n");
+		vsLog("Available Modes");
 
 		m_supportedResolution = new Resolution[m_supportedResolutionCount];
 

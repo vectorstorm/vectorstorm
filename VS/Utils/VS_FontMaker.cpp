@@ -197,7 +197,7 @@ vsFontMaker::MakeFont( const vsString &name, float pointSize )
 void
 vsFontMaker::HandleTTFError( const vsString &context )
 {
-	vsLog("%s: %s\n", context.c_str(), TTF_GetError());
+	vsLog("%s: %s", context.c_str(), TTF_GetError());
 }
 #endif // _DEBUG
 
