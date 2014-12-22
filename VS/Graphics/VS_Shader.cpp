@@ -118,7 +118,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 	const int c_maxNameLength = 256;
 	char nameBuffer[c_maxNameLength];
-	for ( GLuint i = 0; i < m_uniformCount; i++ )
+	for ( GLint i = 0; i < m_uniformCount; i++ )
 	{
 		GLint arraySize = 0;
 		GLenum type = 0;
@@ -129,7 +129,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_uniform[i].type = type;
 		m_uniform[i].arraySize = arraySize;
 	}
-	for ( GLuint i = 0; i < m_attributeCount; i++ )
+	for ( GLint i = 0; i < m_attributeCount; i++ )
 	{
 		GLint arraySize = 0;
 		GLenum type = 0;
