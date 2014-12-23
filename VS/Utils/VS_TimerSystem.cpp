@@ -22,8 +22,6 @@
 #include <SDL2/SDL.h>
 #endif
 
-#define TICK_INTERVAL (1)	// 16 ticks per frame;  slightly over 60fps
-
 vsTimerSystem *	vsTimerSystem::s_instance = NULL;
 
 #if defined(_WIN32)
@@ -211,7 +209,8 @@ vsTimerSystem::Update( float timeStep )
 
 	unsigned long roundTime = now - m_startCpu;
 
-	if ( !vsSystem::Instance()->AppHasFocus() )
+	// show down our frame rate by a lot, if our window isn't visible.
+	if ( !vsSystem::Instance()->AppIsVisible() )
 	{
 		minTicksPerRound = 160000;
 		desiredTicksPerRound = 160000;
