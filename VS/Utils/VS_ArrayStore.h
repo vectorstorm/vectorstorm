@@ -34,12 +34,11 @@ public:
 
 	vsArrayStoreIterator<T>&	operator--() { Prev(); return *this; }
 	vsArrayStoreIterator<T>		operator--(int postFix) { vsArrayStoreIterator<T> other(m_parent, m_current); Prev(); return other; }
-	T* operator->() { return &Get(); }
+	T* operator->() { return Get(); }
+	T* operator*() { return Get(); }
 
 	friend class vsArrayStore<T>;
 };
-
-template<class T>T*	operator*(vsArrayStoreIterator<T> i) { return i.Get(); }
 
 template<class T>
 class vsArrayStore
