@@ -103,6 +103,7 @@
 #include <VS/Utils/VS_ArrayStore.h>
 #include <VS/Utils/VS_Debug.h>
 #include <VS/Utils/VS_Factory.h>
+#include <VS/Utils/VS_FloatImage.h>
 #include <VS/Utils/VS_HashTable.h>
 #include <VS/Utils/VS_HashTableStore.h>
 #include <VS/Utils/VS_Image.h>

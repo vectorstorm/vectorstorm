@@ -1,23 +1,23 @@
 /*
- *  VS_Image.h
- *  MMORPG2
+ *  VS_FloatImage.h
+ *  VectorStorm
  *
- *  Created by Trevor Powell on 01-02-2012.
- *  Copyright 2012 Trevor Powell.  All rights reserved.
+ *  Created by Trevor Powell on 24/12/2014
+ *  Copyright 2014 Trevor Powell.  All rights reserved.
  *
  */
 
-#ifndef VS_IMAGE_H
-#define VS_IMAGE_H
+#ifndef VS_FLOATIMAGE_H
+#define VS_FLOATIMAGE_H
 
 #include "VS/Graphics/VS_Texture.h"
 
 class vsStore;
 class vsColor;
 
-class vsImage
+class vsFloatImage
 {
-	uint32_t*		m_pixel;
+	vsColor*		m_pixel;
 	int				m_pixelCount;
 
 	unsigned int	m_width;
@@ -31,19 +31,16 @@ class vsImage
 
 public:
 
-	vsImage( unsigned int width, unsigned int height );
-    vsImage( const vsString &filename_in );
-    vsImage( vsTexture *texture );
-	~vsImage();
+	vsFloatImage( unsigned int width, unsigned int height );
+    vsFloatImage( const vsString &filename_in );
+    vsFloatImage( vsTexture *texture );
+	~vsFloatImage();
 
 	int				GetWidth() { return m_width; }
 	int				GetHeight() { return m_height; }
 
 	vsColor			GetPixel(unsigned int u, unsigned int v) const;
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
-
-	uint32_t		GetRawPixel(unsigned int u, unsigned int v) const;
-	void			SetRawPixel(unsigned int u, unsigned int v, uint32_t c);
 
 	void			Clear( const vsColor &clearColor );
 
@@ -53,5 +50,5 @@ public:
 	void *			RawData() { return m_pixel; }
 };
 
-#endif // VS_IMAGE_H
+#endif // VS_FLOATIMAGE_H
 
