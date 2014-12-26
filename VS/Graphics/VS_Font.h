@@ -28,9 +28,17 @@ class vsFontFragment;
 
 enum JustificationType
 {
+	Justification_TopLeft,
+	Justification_TopRight,
+	Justification_TopCenter,
+
 	Justification_Left,
 	Justification_Right,
-	Justification_Center
+	Justification_Center,
+
+	Justification_BottomLeft,
+	Justification_BottomRight,
+	Justification_BottomCenter
 };
 
 enum FontContext

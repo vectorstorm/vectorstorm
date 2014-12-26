@@ -11,8 +11,6 @@
 #include "VS_DisplayList.h"
 #include "VS_Fragment.h"
 
-// #define FONTS_DRAW_FROM_BASE	// if set, fonts get drawn with their baseline at 0.  If not, the middle of the font goes there.
-
 static float s_globalFontScale = 1.f;
 static vsDisplayList s_tempFontList(1024*10);
 
@@ -109,7 +107,30 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	}
 
 	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
-	float baseOffsetDown = totalHeight * 0.5f;
+	float baseOffsetDown = 0.f;
+
+
+
+	// by default, we CENTER our
+	if ( m_justification == Justification_BottomLeft || m_justification == Justification_BottomRight || m_justification == Justification_BottomCenter )
+	{
+		// If we're justifying the bottom of our text to this point, we need to
+		// move our text up far enough so that the BASELINE of the BOTTOM LINE
+		// of the wrapped text sits here.
+		baseOffsetDown = 0.f;
+	}
+	else if ( m_justification == Justification_TopLeft || m_justification == Justification_TopRight || m_justification == Justification_TopCenter )
+	{
+		// If we're justifying the top of our text to this point, we need to
+		// move our text up far enough so that the TOP of the FIRST LINE
+		// of the wrapped text sits here.
+		baseOffsetDown = totalHeight;
+	}
+	else
+	{
+		// We're centering the MIDDLE of our text to this point.
+		baseOffsetDown = totalHeight * 0.5f;
+	}
 	float topLinePosition = baseOffsetDown - totalHeight + lineHeight;
 
 	*size_out = size;
@@ -152,20 +173,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	}
 
 	vsVector2D offset(0.f,topLinePosition);
-#ifdef FONTS_DRAW_FROM_BASE
-	// TODO:  This seems sensible, but it gets complicated when strings wrap --
-	// do we move the top line in that case?  Maybe this needs to be (yet) more
-	// configurable settings for the font drawing code?
-	float totalHeight = lineHeight * m_size;
-	if ( m_wrappedLineCount > 1 )
-	{
-		totalHeight += (lineHeight + lineMargin) * (m_wrappedLineCount-1);
-	}
-	float totalExtraHeight = totalHeight - (lineHeight * m_size);
-	float baseOffsetDown = vsFloor(totalExtraHeight * 0.5f);
-	float topLinePosition = baseOffsetDown - totalExtraHeight;
-	vsVector2D offset(0.f,topLinePosition / m_size);
-#endif
+
 
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
@@ -390,15 +398,15 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	vsVector2D offset = offset_in;
 	size_t len = strlen(string);
 
-	if ( j != Justification_Left )
+	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
 		s_tempFontList.Clear();
 
 		float width = m_font->Size(m_size)->GetStringWidth(string, size.x);
 
-		if ( j == Justification_Right )
+		if ( j == Justification_Right || j == Justification_TopRight || j == Justification_BottomRight )
 			offset.x = -width;
-		if ( j == Justification_Center )
+		else if ( j == Justification_Center || j == Justification_TopCenter || j == Justification_BottomCenter )
 			offset.x = -(width*0.5f);
 
 		offset.x *= (1.f / size.x);
@@ -451,13 +459,13 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	vsVector2D offset = offset_in;
 	size_t len = strlen(string);
 
-	if ( j != Justification_Left )
+	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
 		float width = m_font->Size(m_size)->GetStringWidth(string, size);
 
-		if ( j == Justification_Right )
+		if ( j == Justification_Right || j == Justification_TopRight || j == Justification_BottomRight )
 			offset.x = -width;
-		if ( j == Justification_Center )
+		else if ( j == Justification_Center || j == Justification_TopCenter || j == Justification_BottomCenter )
 			offset.x = -(width*0.5f);
 
 		offset.x *= (1.f / size);
