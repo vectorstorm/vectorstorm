@@ -70,7 +70,7 @@ public:
 	{
 	}
 
-	T				Get() { return m_current->m_item; }
+	T&				Get() { return m_current->m_item; }
 	bool			Next() { m_current = m_current->m_next; return (m_current != NULL); }
 	bool			Prev() { m_current = m_current->m_prev; return (m_current != NULL); }
 	bool						operator==( const vsListIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
@@ -81,6 +81,7 @@ public:
 	vsListIterator<T>&		operator--() { Prev(); return *this; }
 	vsListIterator<T>		operator--(int postFix) { vsListIterator<T> other(m_current); Prev(); return other; }
 	T* operator->() { return &Get(); }
+	T& operator*() { return Get(); }
 
 	vsListEntry<T> * GetEntry() { return m_current; }
 	//void	Append( T item )
@@ -95,8 +96,6 @@ public:
 		//m_current->Prepend( ent );
 	/*}*/
 };
-
-template<class T>T	operator*(vsListIterator<T> i) { return i.Get(); }
 
 template<class T>
 class vsLinkedList

@@ -69,7 +69,7 @@ public:
 
 	vsListStoreIterator( vsListStoreEntry<T> *initial ): m_current(initial) {}
 
-	T *				Get()
+	T*				Get()
 	{
 		if ( m_current )
 		{
@@ -110,7 +110,8 @@ public:
 	vsListStoreIterator<T>		operator++(int postFix) { vsListStoreIterator<T> other(m_current); Next(); return other; }
 	vsListStoreIterator<T>&		operator--() { Previous(); return *this; }
 	vsListStoreIterator<T>		operator--(int postFix) { vsListStoreIterator<T> other(m_current); Previous(); return other; }
-	T* operator->() { return &Get(); }
+	T* operator->() { return Get(); }
+	T* operator*() { return Get(); }
 };
 
 template<class T>T*	operator*(vsListStoreIterator<T> i) { return i.Get(); }

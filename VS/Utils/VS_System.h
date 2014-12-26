@@ -56,6 +56,7 @@ class vsSystem
 	bool				m_showCursor;
 	bool				m_showCursorOverridden;
 	bool				m_focused;
+	bool				m_visible;
 	bool				m_exitGameKeyEnabled;
 	bool				m_exitApplicationKeyEnabled;
 
@@ -102,6 +103,8 @@ public:
 	void	SetWindowCaption(const vsString &caption);
 	bool	AppHasFocus() { return m_focused; }
 	void	SetAppHasFocus( bool focus ) { m_focused = focus; }
+	bool	AppIsVisible() { return m_visible; }
+	void	SetAppIsVisible( bool visible ) { m_visible = visible; } // called internally, to inform us when the window is visible.
 
 	void	SetOrientation( Orientation orient ) { m_orientation = orient; }
 	Orientation	GetOrientation() { return m_orientation; }

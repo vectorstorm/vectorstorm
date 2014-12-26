@@ -15,6 +15,7 @@ struct SDL_Surface;
 #include "VS/Math/VS_Box.h"
 #include "VS/Utils/VS_Cache.h"
 
+class vsFloatImage;
 class vsImage;
 class vsRenderTarget;
 class vsSurface;
@@ -39,10 +40,12 @@ public:
 
 	vsTextureInternal( const vsString &string );
 	vsTextureInternal( const vsString &name, vsImage *image );
+	vsTextureInternal( const vsString &name, vsFloatImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
 	~vsTextureInternal();
 
 	void		Blit( vsImage *image, const vsVector2D& where);
+	void		Blit( vsFloatImage *image, const vsVector2D& where);
 
 	void		SetNearestSampling();
 	void		SetLinearSampling();

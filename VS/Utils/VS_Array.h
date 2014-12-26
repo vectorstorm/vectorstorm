@@ -23,7 +23,7 @@ public:
 
 	vsArrayIterator( const vsArray<T> *array, int initial ): m_parent(array), m_current(initial) {}
 
-	T				Get() { return m_parent->Get(*this); }
+	T&				Get() { return m_parent->Get(*this); }
 
 	bool			Next() { m_current++; return (m_current < m_parent->ItemCount() ); }
 	bool			Prev() { m_current--; return (m_current >= 0); }
@@ -34,12 +34,11 @@ public:
 
 	vsArrayIterator<T>&		operator--() { Prev(); return *this; }
 	vsArrayIterator<T>		operator--(int postFix) { vsArrayIterator<T> other(m_parent, m_current); Prev(); return other; }
+	T& operator*() { return Get(); }
 	T* operator->() { return &Get(); }
 
 	friend class vsArray<T>;
 };
-
-template<class T>T	operator*(vsArrayIterator<T> i) { return i.Get(); }
 
 template<class T>
 class vsArray
@@ -75,7 +74,7 @@ public:
 		vsDeleteArray( m_array );
 	}
 
-	T		Get( const vsArrayIterator<T> &iter ) const
+	T&		Get( const vsArrayIterator<T> &iter ) const
 	{
 		return m_array[ iter.m_current ];
 	}

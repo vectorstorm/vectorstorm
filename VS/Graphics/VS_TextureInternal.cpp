@@ -10,6 +10,7 @@
 #include "VS_TextureInternal.h"
 
 #include "VS_Color.h"
+#include "VS_FloatImage.h"
 #include "VS_Image.h"
 #include "VS_RenderTarget.h"	// for vsSurface.  Should move into its own file.
 
@@ -111,7 +112,6 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	// BOOKMARK
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
 			GL_RGBA,
@@ -119,6 +119,36 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
+			image->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false)
+{
+	int w = image->GetWidth();
+	int h = image->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA16F,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_FLOAT,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -133,6 +163,20 @@ vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
 			image->GetWidth(), image->GetHeight(),
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
+			image->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void
+vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
+{
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexSubImage2D(GL_TEXTURE_2D,
+			0,
+			where.x, where.y,
+			image->GetWidth(), image->GetHeight(),
+			GL_RGBA,
+			GL_FLOAT,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
 }

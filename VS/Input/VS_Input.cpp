@@ -594,14 +594,16 @@ vsInput::Update(float timeStep)
 								break;
 							}
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							vsLog("Size Changed event");
+							vsLog("Size Changed");
 							vsSystem::Instance()->CheckVideoMode();
 							break;
 						case SDL_WINDOWEVENT_SHOWN:
 							vsLog("Shown");
+							vsSystem::Instance()->SetAppIsVisible( true );
 							break;
 						case SDL_WINDOWEVENT_HIDDEN:
 							vsLog("Hidden");
+							vsSystem::Instance()->SetAppIsVisible( false );
 							break;
 						case SDL_WINDOWEVENT_MOVED:
 							// check video mode, in case we've been moved to a
@@ -619,6 +621,15 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_LEAVE:
 							m_mouseIsInWindow = false;
+							break;
+						case SDL_WINDOWEVENT_MINIMIZED:
+							vsLog("Minimized");
+							break;
+						case SDL_WINDOWEVENT_MAXIMIZED:
+							vsLog("Maximized");
+							break;
+						case SDL_WINDOWEVENT_RESTORED:
+							vsLog("Restored");
 							break;
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);
