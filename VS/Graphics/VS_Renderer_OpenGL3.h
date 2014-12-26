@@ -34,9 +34,9 @@ struct SDL_Surface;
 #define MAX_STACK_LEVEL (30)
 #define CHECK_GL_ERRORS
 
-class vsRenderer_OpenGL3: public vsRenderer, public vsSingleton<vsRenderer_OpenGL3>
+class vsRenderer_OpenGL3: public vsRenderer
 {
-private:
+	static vsRenderer_OpenGL3 *	s_instance;
 
 	enum
 	{ // if I extend this, be sure to update the string array in the .cpp!
@@ -128,6 +128,8 @@ public:
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
 
+	static vsRenderer_OpenGL3* Instance() { return s_instance; }
+
 	bool	CheckVideoMode();
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount);
 
@@ -138,6 +140,11 @@ public:
 
 	virtual vsRenderTarget *GetMainRenderTarget() { return m_scene; }
 	virtual vsRenderTarget *GetPresentTarget() { return m_window; }
+
+	// sets an OpenGL context on the calling thread, for the purposes
+	// of loading data in the background.
+	void	SetLoadingContext();
+	void	ClearLoadingContext();
 
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }

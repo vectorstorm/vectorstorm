@@ -40,6 +40,9 @@
 
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
+static SDL_GLContext m_loadingGlContext;
+
+vsRenderer_OpenGL3* vsRenderer_OpenGL3::s_instance = NULL;
 
 void vsRenderDebug( const vsString &message )
 {
@@ -93,6 +96,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_scene(NULL),
 	m_bufferCount(bufferCount)
 {
+	vsAssert( s_instance == NULL, "Multiple renderers??" );
+	s_instance = this;
 	const char* c_capabilityString[vsRenderer_OpenGL3::CAP_MAX] =
 	{
 		"GL_ARB_framebuffer_object",
@@ -174,10 +179,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
 #ifdef _DEBUG
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // _DEBUG
 
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+	// int shareVal;
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
 
@@ -192,6 +200,15 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 
+	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
+	// if ( shareVal )
+	// {
+	// 	vsLog("Supports loading context!");
+	// }
+	// else
+	// {
+	// 	vsAssert(0, "No shared context supported");
+	// }
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
 	if ( m_viewportWidthPixels != m_widthPixels ||
@@ -207,6 +224,14 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("Failed to create OpenGL context??");
 		exit(1);
 	}
+
+	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
+	if ( !m_loadingGlContext )
+	{
+		vsLog("Failed to create OpenGL context for loading??");
+		exit(1);
+	}
+	SDL_GL_MakeCurrent( g_sdlWindow, m_sdlGlContext);
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
@@ -320,10 +345,12 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
+	s_instance = NULL;
 	vsDelete(m_window);
 	vsDelete(m_scene);
 	CheckGLError("Initialising OpenGL rendering");
 	SDL_GL_DeleteContext( m_sdlGlContext );
+	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = NULL;
 }
@@ -1461,5 +1488,27 @@ vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 		m_currentRenderTarget = m_scene;
 		// m_scene->Clear();
 	}
+}
+
+void
+vsRenderer_OpenGL3::SetLoadingContext()
+{
+	SDL_GL_MakeCurrent( g_sdlWindow, m_loadingGlContext);
+	CheckGLError("SetLoadingContext");
+}
+
+void
+vsRenderer_OpenGL3::ClearLoadingContext()
+{
+	CheckGLError("ClearLoadingContext");
+	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+	GLenum result;
+	while(true)
+	{
+		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
+		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+	}
+	CheckGLError("ClearLoadingContext");
+	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
 }
 

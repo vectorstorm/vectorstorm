@@ -25,12 +25,6 @@ static bool m_colorAttribIsActive = false;
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
 {
-	if ( !vsRenderer_OpenGL3::Exists() )
-	{
-		// TODO:  This should probably be a fatal error
-		return;
-	}
-
 	vsString version;
 
 	vsString vString = vertexShader;
