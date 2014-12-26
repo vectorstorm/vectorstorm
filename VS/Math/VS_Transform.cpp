@@ -132,9 +132,10 @@ vsTransform2D::GetMatrix() const
 		vsMatrix3x3 m;
 		m.Set( vsQuaternion( vsVector3D::ZAxis, m_angle.Get() ) );
 
+		m.x *= m_scale.x;
+		m.y *= m_scale.y;
 		m_matrix.SetRotationMatrix( m );
 		m_matrix.SetTranslation( m_position );
-		m_matrix.Scale( vsVector3D(m_scale.x, m_scale.y, 1.f) );
 	}
 
 	return m_matrix;
