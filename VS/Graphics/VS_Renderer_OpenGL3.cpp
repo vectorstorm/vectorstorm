@@ -25,6 +25,8 @@
 #include "VS_Texture.h"
 #include "VS_TextureInternal.h"
 
+#include "VS_Mutex.h"
+
 #include "VS_OpenGL.h"
 
 #include "VS_TimerSystem.h"
@@ -41,6 +43,7 @@
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
+static vsMutex m_loadingGlContextMutex;
 
 vsRenderer_OpenGL3* vsRenderer_OpenGL3::s_instance = NULL;
 
@@ -1493,6 +1496,7 @@ vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 void
 vsRenderer_OpenGL3::SetLoadingContext()
 {
+	m_loadingGlContextMutex.Lock();
 	SDL_GL_MakeCurrent( g_sdlWindow, m_loadingGlContext);
 	CheckGLError("SetLoadingContext");
 }
@@ -1510,5 +1514,6 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 	}
 	CheckGLError("ClearLoadingContext");
 	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
+	m_loadingGlContextMutex.Unlock();
 }
 
