@@ -158,6 +158,9 @@ vsScene::ClearViewport()
 void
 vsScene::Update( float timeStep )
 {
+	if ( !IsEnabled() )
+		return;
+
 	vsEntity *entity = m_entityList->GetNext();
 	vsEntity *next;
 	while ( entity != m_entityList )
@@ -185,6 +188,8 @@ vsScene::Update( float timeStep )
 void
 vsScene::Draw( vsDisplayList *list )
 {
+	if ( !IsEnabled() )
+		return;
 	// if ( m_flatShading )
 	// {
 	// 	list->FlatShading();
@@ -324,6 +329,8 @@ vsScene::RemoveLight( vsLight *light )
 vsEntity *
 vsScene::FindEntityAtPosition( const vsVector2D &pos )
 {
+	if ( !IsEnabled() )
+		return NULL;
 	vsEntity *result = NULL;
 
 	vsEntity *entity = m_entityList->GetPrev();
