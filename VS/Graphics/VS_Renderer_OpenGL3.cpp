@@ -656,6 +656,15 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentLocalToWorldBuffer = NULL;
 					break;
 				}
+			case vsDisplayList::OpCode_SetMatrix4x4:
+				{
+					const vsMatrix4x4& m = op->data.matrix4x4;
+					m_transformStack[++m_currentTransformStackLevel] = m;
+					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
+					m_currentLocalToWorldCount = 1;
+					m_currentLocalToWorldBuffer = NULL;
+					break;
+				}
 			case vsDisplayList::OpCode_SetMatrices4x4:
 				{
 					vsMatrix4x4 *m = (vsMatrix4x4*)op->data.p;

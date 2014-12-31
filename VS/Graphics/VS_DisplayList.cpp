@@ -34,6 +34,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushTransform",
 	"PushTranslation",
 	"PushMatrix4x4",
+	"SetMatrix4x4",
 	"SetMatrices4x4",
 	"SetMatrices4x4Buffer",
 	"SetWorldToViewMatrix4x4",
@@ -645,7 +646,8 @@ vsDisplayList::PushMatrix4x4( const vsMatrix4x4 &m )
 void
 vsDisplayList::SetMatrix4x4( const vsMatrix4x4 &m )
 {
-	SetMatrices4x4( &m, 1 );
+	m_fifo->WriteUint8( OpCode_SetMatrix4x4 );
+	m_fifo->WriteMatrix4x4( m );
 }
 
 void
@@ -1228,6 +1230,7 @@ vsDisplayList::PopOp()
 				m_fifo->ReadTransform2D( &m_currentOp.data.transform );
 				break;
 			case OpCode_PushMatrix4x4:
+			case OpCode_SetMatrix4x4:
 			case OpCode_SetWorldToViewMatrix4x4:
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
@@ -1390,6 +1393,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_SetCameraTransform:
 			SetCameraTransform( o->data.GetTransform() );
+			break;
+		case OpCode_SetMatrix4x4:
+			SetMatrix4x4( o->data.GetMatrix4x4() );
 			break;
 		case OpCode_PushMatrix4x4:
 			PushMatrix4x4( o->data.GetMatrix4x4() );
@@ -1631,10 +1637,14 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.matrix4x4;
 				transformStackLevel++;
 			}
+			if ( o->type == OpCode_SetMatrix4x4 )
+			{
+				transformStack[++transformStackLevel] = o->data.matrix4x4;
+			}
 			else if ( o->type == OpCode_SetMatrices4x4 )
 			{
 				vsMatrix4x4 *mat = (vsMatrix4x4*)o->data.p;
-				transformStack[transformStackLevel] = *mat;
+				transformStack[++transformStackLevel] = *mat;
 			}
 			else if ( o->type == OpCode_PopTransform )
 			{

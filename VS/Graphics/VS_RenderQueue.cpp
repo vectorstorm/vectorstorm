@@ -323,7 +323,22 @@ vsRenderQueue::StartRender(vsScene *parent)
 		m_stage[i].StartRender();
 	}
 	m_genericList->Clear();
+}
 
+void
+vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix)
+{
+	m_parent = NULL;
+	m_projection = projection;
+	m_worldToView = worldToView;
+	m_transformStack[0] = iniMatrix;
+	m_transformStackLevel = 1;
+
+	for ( int i = 0; i < m_stageCount; i++ )
+	{
+		m_stage[i].StartRender();
+	}
+	m_genericList->Clear();
 }
 
 void
@@ -447,14 +462,7 @@ vsRenderQueue::IsOrthographic()
 void
 vsRenderQueue::DeinitialiseTransformStack()
 {
-	if ( m_parent->Is3D() )
-	{
-		m_transformStackLevel--;
-	}
-	else
-	{
-		m_transformStackLevel--;
-	}
+	m_transformStackLevel--;
 }
 
 void

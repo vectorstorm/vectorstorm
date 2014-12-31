@@ -41,6 +41,7 @@ public:
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
 		OpCode_PushMatrix4x4,
+		OpCode_SetMatrix4x4,
 		OpCode_SetMatrices4x4,
 		OpCode_SetMatrices4x4Buffer,
 		OpCode_SetWorldToViewMatrix4x4,

@@ -126,6 +126,7 @@ public:
 	~vsRenderQueue();
 
 	void			StartRender( vsScene *scene );
+	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix);
 	void			Draw( vsDisplayList *list );	// write our queue contents into here.  Called internally.
 	void			EndRender();
 
