@@ -214,11 +214,11 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// }
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
-	if ( m_viewportWidthPixels != m_widthPixels ||
-			m_viewportHeightPixels != m_heightPixels )
+	if ( m_width != m_widthPixels ||
+			m_height != m_heightPixels )
 	{
 		vsLog("High DPI Rendering enabled");
-		vsLog("High DPI backing store is: %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
+		vsLog("High DPI backing store is: %dx%d", m_widthPixels, m_heightPixels);
 	}
 
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
@@ -427,6 +427,8 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_widthPixels = width;
 	m_heightPixels = height;
 #endif
+	m_viewportWidthPixels = m_widthPixels;
+	m_viewportHeightPixels = m_heightPixels;
 	Resize();
 	CheckGLError("UpdateVideoMode");
 }
