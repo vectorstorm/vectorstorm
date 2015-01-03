@@ -126,6 +126,7 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 
 		glBindBuffer(bindPoint, 0);
 	}
+	m_activeBytes = size;
 
 	if ( data != m_array )
 	{
