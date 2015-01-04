@@ -29,6 +29,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_pipeline(NULL),
 	m_scene(NULL),
 	m_sceneCount(0),
+	m_fifoHighWater(0),
 	m_width(width),
 	m_height(height),
 	m_depth(depth),
@@ -61,6 +62,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 
 vsScreen::~vsScreen()
 {
+	vsLog(" >> FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
 	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
@@ -188,6 +190,7 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
 	pipeline->Draw(m_fifo);
+	m_fifoHighWater = vsMax( m_fifoHighWater, m_fifo->GetSize() );
 #ifdef DEBUG_SCENE
 	m_renderer->RenderDisplayList(m_fifo);
 	m_fifo->Clear();

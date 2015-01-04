@@ -33,6 +33,7 @@ class vsScreen
     vsRenderer::Settings    m_defaultRenderSettings;
 
 	int					m_sceneCount;	// how many layers we have
+	size_t				m_fifoHighWater;
 
 	vsDisplayList *		m_fifo;			// our FIFO display list, for rendering
 	vsDisplayList *		m_subfifo;			// our FIFO display list, for rendering
