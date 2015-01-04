@@ -165,6 +165,8 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	// figure out our wrapping and final render size
 	float topLinePosition;
 	WrapStringSizeTop(string, &size, &topLinePosition);
+	if ( ShouldSnap( context ) )
+		topLinePosition = (int)topLinePosition;
 
 	vsVector2D size_vec(size, size);
 	if ( context == FontContext_3D )
@@ -177,11 +179,13 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
+	if ( ShouldSnap( context ) )
+		lineMargin = (int)lineMargin;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
-		AppendStringToArrays( &constructor, m_wrappedLine[i].c_str(), size_vec, m_justification, offset );
+		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset );
 	}
 
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
@@ -192,8 +196,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	fragment->AddBuffer( tlBuffer );
 
 	vsDisplayList *list = new vsDisplayList(60);
-	bool doSnap = (m_hasSnap && m_snap) ||
-		(!m_hasSnap && context == FontContext_2D);
+	bool doSnap = ShouldSnap( context );
 
 	if ( m_transform != vsTransform3D::Identity )
 		list->PushTransform( m_transform );
@@ -217,11 +220,17 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	vsDeleteArray( tlArray );
 }
 
+bool
+vsFontRenderer::ShouldSnap( FontContext context )
+{
+	return (m_hasSnap && m_snap) ||
+		(!m_hasSnap && context == FontContext_2D);
+}
+
 void
 vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string )
 {
-	bool doSnap = (m_hasSnap && m_snap) ||
-		(!m_hasSnap && context == FontContext_2D);
+	bool doSnap = ShouldSnap( context );
 
 	list->SetMaterial( m_font->Size(m_size)->m_material );
 	if ( m_hasColor )
@@ -393,7 +402,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 }
 
 void
-vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in)
+vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in)
 {
 	vsVector2D offset = offset_in;
 	size_t len = strlen(string);
@@ -409,6 +418,11 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 		else if ( j == Justification_Center || j == Justification_TopCenter || j == Justification_BottomCenter )
 			offset.x = -(width*0.5f);
 
+		if ( ShouldSnap( context ) )
+		{
+			// snap our offsets!
+			offset.x = (int)(offset.x);
+		}
 		offset.x *= (1.f / size.x);
 
 		s_tempFontList.Clear();
