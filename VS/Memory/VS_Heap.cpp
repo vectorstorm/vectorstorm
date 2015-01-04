@@ -239,8 +239,8 @@ vsHeap::Free(void *p, int allocType)
 				"delete",
 				"delete []"
 			};
-			printf("Error:  Allocation from %s line %d was allocated using %s\n", block->m_filename, block->m_line, allocFunction[(int)block->m_allocType]);
-			printf("Error:   but was freed using %s;  should have been %s!\n", freeFunction[allocType], freeFunction[(int)block->m_allocType]);
+			vsLog("Error:  Allocation from %s line %d was allocated using %s", block->m_filename, block->m_line, allocFunction[(int)block->m_allocType]);
+			vsLog("Error:   but was freed using %s;  should have been %s!", freeFunction[allocType], freeFunction[(int)block->m_allocType]);
 		}
 
 		// check if we can merge together with the prev or the next block.
@@ -293,9 +293,9 @@ void
 vsHeap::PrintStatus()
 {
 #ifdef VS_OVERLOAD_ALLOCATORS
-	printf(" >> MEMORY STATUS\n");
-	printf(" >> Heap current usage %zu / %zu (%0.2f%% usage)\n", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
-	printf(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)\n", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
+	vsLog(" >> MEMORY STATUS");
+	vsLog(" >> Heap current usage %zu / %zu (%0.2f%% usage)", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
+	vsLog(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
 
 	size_t bytesFree = m_memorySize - m_memoryUsed;
 	size_t largestBlock = 0;
@@ -310,7 +310,7 @@ vsHeap::PrintStatus()
 		block = block->m_next;
 	}
 
-	printf(" >> Heap largest free block %zu / %zu bytes free (%0.2f%% fragmentation)\n", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
+	vsLog(" >> Heap largest free block %zu / %zu bytes free (%0.2f%% fragmentation)", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
 #endif // VS_OVERLOAD_ALLOCATORS
 
 }
@@ -362,7 +362,7 @@ vsHeap::PrintBlockList()
 
 	while ( block )
 	{
-		printf("[%d] %s:%d : %zu bytes\n", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+		vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
 		block = block->m_next;
 	}
 }
@@ -429,7 +429,7 @@ void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType
 	if ( vsHeap::GetCurrent() )
 	{
 		result = vsHeap::GetCurrent()->Alloc(size, fileName, lineNumber, allocType);
-		//		printf("Allocating %s:%d, 0x%x\n", fileName, lineNumber, (unsigned int)result);
+		// vsLog("Allocating %s:%d, 0x%x", fileName, lineNumber, (unsigned int)result);
 		return result;
 	}
 	return malloc(size);
@@ -437,8 +437,8 @@ void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType
 
 void MyFree(void *p, int allocType)
 {
-	//	vsAssert( (int)p != 0xcdcdcdcd, "Tried to free an uninitialised pointer?");
-	//	printf("Deallocating 0x%x\n", (unsigned int)p);
+	// vsAssert( (int)p != 0xcdcdcdcd, "Tried to free an uninitialised pointer?");
+	// vsLog("Deallocating 0x%x", (unsigned int)p);
 	if ( vsHeap::GetCurrent() )
 	{
 		if ( vsHeap::GetCurrent()->Contains(p) )
