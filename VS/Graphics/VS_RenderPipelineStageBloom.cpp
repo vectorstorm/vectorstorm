@@ -11,9 +11,11 @@
 #include "VS_Camera.h"
 #include "VS_DisplayList.h"
 #include "VS_DynamicMaterial.h"
+#include "VS_RenderBuffer.h"
 #include "VS_RenderPipeline.h"
 #include "VS_RenderTarget.h"
 #include "VS_Shader.h"
+#include "VS_Screen.h"
 
 extern const char *passv, *passf, *combinef, *row3v, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
@@ -67,7 +69,9 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	m_hipassMaterial(NULL),
 	m_fromMaterial(NULL),
 	m_from(from),
-	m_to(to)
+	m_to(to),
+	m_vertices(NULL),
+	m_indices(NULL)
 {
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
@@ -89,6 +93,8 @@ vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 		vsDelete( m_combinePassMaterial[i] );
 	}
 	vsDelete( m_fromMaterial );
+	vsDelete( m_vertices );
+	vsDelete( m_indices );
 }
 
 void
@@ -175,16 +181,11 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_fromMaterial->SetClampV(true);
 	m_fromMaterial->SetShader(new vsBloomPassShader);
 	m_fromMaterial->SetTexture(0, m_from->GetTexture());
-}
 
-void
-vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
-{
-	// first thing is that I need to hipass 'from' into the top 'pass'.
-	vsCamera2D cam;
-	cam.SetFieldOfView(2.f);
+	m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 
-	float ar = cam.GetAspectRatio();
+	float ar = vsScreen::Instance()->GetAspectRatio();
 	vsVector3D v[4] = {
 		vsVector3D(-ar,-1.f,0.f),
 		vsVector3D(-ar,1.f,0.f),
@@ -197,16 +198,34 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		vsVector2D(1.f,1.f),
 		vsVector2D(1.f,0.f)
 	};
-	int ind[4] = { 0, 1, 2, 3 };
+	uint16_t ind[4] = { 0, 1, 2, 3 };
+
+	vsRenderBuffer::PT pt[4];
+	for ( int i = 0; i < 4; i++ )
+	{
+		pt[i].position = v[i];
+		pt[i].texel = t[i];
+	}
+	m_vertices->SetArray(pt,4);
+	m_indices->SetArray(ind,4);
+}
+
+void
+vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
+{
+	// first thing is that I need to hipass 'from' into the top 'pass'.
+	vsCamera2D cam;
+	cam.SetFieldOfView(2.f);
+
+	// float ar = cam.GetAspectRatio();
 
 	list->ClearArrays();
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
 	list->ResolveRenderTarget(m_from);
 	list->SetMaterial(m_hipassMaterial);
 	list->SetRenderTarget(m_pass[0]);
-	list->VertexArray(v,4);
-	list->TexelArray(t,4);
-	list->TriangleStripArray(ind,4);
+	list->BindBuffer(m_vertices);
+	list->TriangleStripBuffer(m_indices);
 
 	// list->BlitRenderTarget( m_pass[0], m_to );
 	// return;
@@ -224,12 +243,12 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 		list->SetRenderTarget(m_pass2[i]);
 		list->ResolveRenderTarget(m_pass[i]);
 		list->SetMaterial(m_horizontalBlurMaterial[i]);
-		list->TriangleStripArray(ind,4);
+		list->TriangleStripBuffer(m_indices);
 
 		list->SetRenderTarget(m_pass[i]);
 		list->ResolveRenderTarget(m_pass2[i]);
 		list->SetMaterial(m_verticalBlurMaterial[i]);
-		list->TriangleStripArray(ind,4);
+		list->TriangleStripBuffer(m_indices);
 	}
     //
 	// resolve all primary passes.
@@ -242,12 +261,12 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
 	list->SetMaterial(m_fromMaterial);
-	list->TriangleStripArray(ind,4);
+	list->TriangleStripBuffer(m_indices);
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		list->SetMaterial(m_combinePassMaterial[i]);
-		list->TriangleStripArray(ind,4);
+		list->TriangleStripBuffer(m_indices);
 	}
 	list->ClearArrays();
 }
