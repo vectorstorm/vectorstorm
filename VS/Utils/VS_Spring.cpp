@@ -11,7 +11,10 @@
 
 vsSpring::vsSpring(float stiffness, float damping):
 	m_stiffness(stiffness),
-	m_damping(damping)
+	m_damping(damping),
+	m_center(0.f),
+	m_position(0.f),
+	m_velocity(0.f)
 {
 }
 

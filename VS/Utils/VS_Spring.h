@@ -1,6 +1,6 @@
 /*
- *  UT_Spring.h
- *  MMORPG
+ *  VS_Spring.h
+ *  VectorStorm
  *
  *  Created by Trevor Powell on 16/10/08.
  *  Copyright 2008 Trevor Powell. All rights reserved.
@@ -11,6 +11,23 @@
 #define UT_SPRING_H
 
 #include <VS/Math/VS_Vector.h>
+
+// Just for reference, I'll mention:
+//
+// To get a critically damped spring (one which doesn't "overshoot" the desired
+// 'center' position), use a damping coefficient equal to:
+//
+//  2.0 * sqrt( mass * stiffness )
+//
+// In our case, all of these spring classes are treated as having a mass of 1,
+// so you can ignore that factor.
+//
+// Damping values lower than this will yield a spring which oscillates, and
+// values higher than this will yield a very sluggish spring.
+//
+// Note that as all these springs are implemented using euler integrations,
+// large differences between 'center' and 'position' values may make them
+// behave eratically when timesteps are large.
 
 class vsSpring
 {
