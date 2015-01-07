@@ -109,8 +109,6 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
 	float baseOffsetDown = 0.f;
 
-
-
 	// by default, we CENTER our
 	if ( m_justification == Justification_BottomLeft || m_justification == Justification_BottomRight || m_justification == Justification_BottomCenter )
 	{
@@ -166,7 +164,10 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	float topLinePosition;
 	WrapStringSizeTop(string, &size, &topLinePosition);
 	if ( ShouldSnap( context ) )
-		topLinePosition = (int)topLinePosition;
+	{
+		int positionInPixels = (int)(topLinePosition * m_size);
+		topLinePosition = positionInPixels / m_size;
+	}
 
 	vsVector2D size_vec(size, size);
 	if ( context == FontContext_3D )
