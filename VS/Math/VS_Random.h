@@ -18,9 +18,7 @@
 
 class vsRandomSource
 {
-	uint32_t m_Q[4096];
-	uint32_t m_c;
-	uint32_t m_i;
+	uint32_t x, y, z, w;
 
 	uint32_t Int32();
 public:

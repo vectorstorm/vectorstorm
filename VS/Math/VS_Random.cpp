@@ -42,15 +42,10 @@ vsRandomSource::Init()
 void
 vsRandomSource::InitWithSeed( uint32_t seed )
 {
-	m_i = 4095;
-	m_c = 362436;
-	memset(m_Q,0,sizeof(m_Q));
-	m_Q[0] = seed;
-	m_Q[1] = seed + PHI;
-	m_Q[2] = seed + PHI + PHI;
-
-	for (int i = 3; i < 4096; i++)
-		m_Q[i] = m_Q[i - 3] ^ m_Q[i - 2] ^ PHI ^ i;
+	x = seed;
+	y = seed + PHI;
+	z = y + PHI;
+	w = x ^ y ^ PHI;
 }
 
 void
@@ -83,14 +78,13 @@ vsRandomSource::GetFloat(float min, float max)
 uint32_t
 vsRandomSource::Int32()
 {
-	uint64_t t;
+	uint32_t t = x ^ (x << 11);
 
-	m_i = (m_i + 1) & 4095;
-	t = (18705ULL * m_Q[m_i]) + m_c;
-	m_c = t >> 32;
-	m_Q[m_i] = 0xfffffffe - t;
+	x = y;
+	y = z;
+	z = w;
 
-	return m_Q[m_i];
+	return w = w ^ (w >> 19) ^ t ^ (t >> 8);
 }
 
 int
