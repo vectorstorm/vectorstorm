@@ -16,69 +16,91 @@
 #include "VS_Vector.h"
 #include "VS_Debug.h"
 
-#include "MT/SFMT.h"
-
 #include <time.h>
 
+#include <stdint.h>
+
+#define PHI 0x9e3779b9
+
+vsRandomSource vsRandom::s_source;
+
+vsRandomSource::vsRandomSource()
+{
+	Init();
+}
+
+vsRandomSource::~vsRandomSource()
+{
+}
+
 void
-vsRandom::Init()
+vsRandomSource::Init()
 {
 	InitWithSeed( (uint32_t)time(NULL) );
 }
 
 void
-vsRandom::InitWithSeed( uint32_t seed )
+vsRandomSource::InitWithSeed( uint32_t seed )
 {
-	init_gen_rand( seed );
+	m_i = 4095;
+	m_c = 362436;
+	memset(m_Q,0,sizeof(m_Q));
+	m_Q[0] = seed;
+	m_Q[1] = seed + PHI;
+	m_Q[2] = seed + PHI + PHI;
 
-	int n = vsRandom::GetInt(2000);		// generate a bunch of random numbers, just to prime the random number generator.
-
-	for ( int i = 0; i < n; i++ )
-	{
-		vsRandom::GetInt(10);		// generate a bunch of random numbers, just to prime the random number generator.
-	}
+	for (int i = 3; i < 4096; i++)
+		m_Q[i] = m_Q[i - 3] ^ m_Q[i - 2] ^ PHI ^ i;
 }
 
 void
-vsRandom::InitWithSeed( const vsString &seed )
+vsRandomSource::InitWithSeed( const vsString &seed )
 {
-	size_t len = seed.length();
-	size_t paddingNeeded = len % 4;
-
-	vsString paddedString = seed;
-
-	for ( size_t i = 0; i < paddingNeeded; i++ )
-		paddedString += " ";
-
-	len = paddedString.length();
-
-	init_by_array( (uint32_t*)paddedString.c_str(), (int)(len / 4) );
+	uint32_t val = 0;
+	for ( int i = 0; i < seed.size(); i++ )
+	{
+		val += seed[0];
+	}
+	InitWithSeed(val);
 }
 
 float
-vsRandom::GetFloat(float maxValue)
+vsRandomSource::GetFloat(float maxValue)
 {
-	float result = gen_rand32() / (float)0xffffffff;
+	float result = Int32() / (float)0xffffffff;
 	result *= maxValue;
 	return result;
 }
 
 float
-vsRandom::GetFloat(float min, float max)
+vsRandomSource::GetFloat(float min, float max)
 {
 	float delta = max - min;
 
 	return GetFloat(delta) + min;
 }
 
-int
-vsRandom::GetInt(int maxValue)
+uint32_t
+vsRandomSource::Int32()
 {
-	return gen_rand32() % maxValue;
+	uint64_t t;
+
+	m_i = (m_i + 1) & 4095;
+	t = (18705ULL * m_Q[m_i]) + m_c;
+	m_c = t >> 32;
+	m_Q[m_i] = 0xfffffffe - t;
+
+	return m_Q[m_i];
 }
 
 int
-vsRandom::GetInt(int min, int max)
+vsRandomSource::GetInt(int maxValue)
+{
+	return Int32() % maxValue;
+}
+
+int
+vsRandomSource::GetInt(int min, int max)
 {
 	int delta = (max - min)+1;
 
@@ -87,13 +109,13 @@ vsRandom::GetInt(int min, int max)
 
 
 vsVector2D
-vsRandom::GetVector2D(float maxLength)
+vsRandomSource::GetVector2D(float maxLength)
 {
 	return GetVector2D(0.f, maxLength);
 }
 
 vsVector2D
-vsRandom::GetVector2D(float minLength, float maxLength)
+vsRandomSource::GetVector2D(float minLength, float maxLength)
 {
 	vsAngle a( GetFloat(TWOPI) );
 
@@ -105,7 +127,7 @@ vsRandom::GetVector2D(float minLength, float maxLength)
 }
 
 vsVector2D
-vsRandom::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight)
+vsRandomSource::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight)
 {
 	vsVector2D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y) );
 
@@ -113,7 +135,7 @@ vsRandom::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight)
 }
 
 vsVector3D
-vsRandom::GetVector3D(float minLength, float maxLength)
+vsRandomSource::GetVector3D(float minLength, float maxLength)
 {
 	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
 
@@ -125,7 +147,7 @@ vsRandom::GetVector3D(float minLength, float maxLength)
 }
 
 vsVector3D
-vsRandom::GetVector3D(float maxLength)
+vsRandomSource::GetVector3D(float maxLength)
 {
 	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
 
@@ -138,7 +160,7 @@ vsRandom::GetVector3D(float maxLength)
 }
 
 vsVector3D
-vsRandom::GetVector3D(const vsVector3D &topLeft, const vsVector3D &bottomRight)
+vsRandomSource::GetVector3D(const vsVector3D &topLeft, const vsVector3D &bottomRight)
 {
 	vsVector3D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y), GetFloat(topLeft.z,bottomRight.z) );
 
@@ -146,20 +168,20 @@ vsRandom::GetVector3D(const vsVector3D &topLeft, const vsVector3D &bottomRight)
 }
 
 vsVector2D
-vsRandom::GetVector2D(const vsBox2D &box)
+vsRandomSource::GetVector2D(const vsBox2D &box)
 {
 	return GetVector2D( box.GetMin(), box.GetMax() );
 }
 
 vsVector3D
-vsRandom::GetVector3D(const vsBox3D &box)
+vsRandomSource::GetVector3D(const vsBox3D &box)
 {
 	return GetVector3D( box.GetMin(), box.GetMax() );
 }
 
 
 vsColor
-vsRandom::GetColor(float min, float max)
+vsRandomSource::GetColor(float min, float max)
 {
 	vsVector3D result( GetFloat(0.f,100.f), GetFloat(0.f,100.f), GetFloat(0.f,100.f) );
 
@@ -171,3 +193,5 @@ vsRandom::GetColor(float min, float max)
 
 	return vsColor( result.x, result.y, result.z, 1.0f );
 }
+
+

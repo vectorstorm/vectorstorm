@@ -201,19 +201,6 @@ set(INPUT_SOURCES
 	VS/Input/VS_Input.h
 	)
 set(MATH_SOURCES
-	VS/Math/MT/SFMT-params.h
-	VS/Math/MT/SFMT-params11213.h
-	VS/Math/MT/SFMT-params1279.h
-	VS/Math/MT/SFMT-params132049.h
-	VS/Math/MT/SFMT-params19937.h
-	VS/Math/MT/SFMT-params216091.h
-	VS/Math/MT/SFMT-params2281.h
-	VS/Math/MT/SFMT-params4253.h
-	VS/Math/MT/SFMT-params44497.h
-	VS/Math/MT/SFMT-params607.h
-	VS/Math/MT/SFMT-params86243.h
-	VS/Math/MT/SFMT.cpp
-	VS/Math/MT/SFMT.h
 	VS/Math/VS_Angle.cpp
 	VS/Math/VS_Angle.h
 	VS/Math/VS_Box.cpp
