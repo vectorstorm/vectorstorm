@@ -357,7 +357,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 	while ( remainingString != vsEmptyString )
 	{
 		vsString line = remainingString;
-		seekPosition = remainingString.find_first_of(" \n",seekPosition+1);
+		seekPosition = remainingString.find_first_of(" \n",seekPosition);
 //		newlinePosition = remainingString.find('\n',newlinePosition+1);
 
 		if ( seekPosition != vsString::npos )
@@ -398,6 +398,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		else
 		{
 			lineEnd = seekPosition;
+			seekPosition++;
 		}
 	}
 }
