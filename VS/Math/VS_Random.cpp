@@ -19,8 +19,7 @@
 #include <time.h>
 
 #include <stdint.h>
-
-#define PHI 0x9e3779b9
+#include <limits>
 
 vsRandomSource vsRandom::s_source;
 
@@ -34,35 +33,94 @@ vsRandomSource::~vsRandomSource()
 }
 
 void
-vsRandomSource::Init()
+vsRandomSource::InitWithSeed( uint64_t seed )
 {
-	InitWithSeed( (uint32_t)time(NULL) );
+	// our Xorshift pseudo-random number generators need a non-zero seed in
+	// order to produce useful output, so if we've been given a zero seed,
+	// let's set it to some other arbitrary (but repeatable) value.
+
+	if ( seed == 0 )
+	{
+		seed = 4; // chosen by fair dice roll.
+				  // guaranteed to be random.
+	}
+
+	// We actually need a lot more state data than just this 64 bits -- we're
+	// going to be using Xorshift1024*, which requires 1024 bits of state.  So
+	// we're going to use our 64 bits of seed data as the state of an
+	// Xorshift64* PRNG, and use that to generate the initial state for our
+	// real, full PRNG.
+	//
+	// This Xorshift64* implementation is adapted from here:
+	//
+	// http://xorshift.di.unimi.it/xorshift64star.c
+
+	for ( int i = 0; i < 16; i++ )
+	{
+		seed ^= seed >> 12; // a
+		seed ^= seed << 25; // b
+		seed ^= seed >> 27; // c
+		s[i] = seed * 2685821657736338717LL;
+	}
+	p = 0;
+}
+
+uint64_t
+vsRandomSource::Next()
+{
+	// This is the core of our pseudo-random number generation.  This function
+	// generates 64 bits of pseudo-random data, which can then be consumed by
+	// the other (externally visible) functions on this class.
+	//
+	// What follows is an implementation of xorshift1024*;  an xorshift-based
+	// PRNG which uses 1024 bits of state, adapted from the implementation
+	// here:
+	//
+	// http://xorshift.di.unimi.it/xorshift1024star.c.
+
+	uint64_t s0 = s[ p ];
+	uint64_t s1 = s[ p = ( p + 1 ) & 15 ];
+	s1 ^= s1 << 31; // a
+	s1 ^= s1 >> 11; // b
+	s0 ^= s0 >> 30; // c
+	return ( s[ p ] = s0 ^ s1 ) * 1181783497276652981LL;
 }
 
 void
-vsRandomSource::InitWithSeed( uint32_t seed )
+vsRandomSource::Init()
 {
-	x = seed;
-	y = seed + PHI;
-	z = y + PHI;
-	w = x ^ y ^ PHI;
+	InitWithSeed( (uint64_t)time(NULL) );
 }
 
 void
 vsRandomSource::InitWithSeed( const vsString &seed )
 {
 	uint32_t val = 0;
-	for ( int i = 0; i < seed.size(); i++ )
+	for ( size_t i = 0; i < seed.size(); i++ )
 	{
 		val += seed[0];
 	}
 	InitWithSeed(val);
 }
 
+int
+vsRandomSource::GetInt(int maxValue)
+{
+	return Next() % maxValue;
+}
+
+int
+vsRandomSource::GetInt(int min, int max)
+{
+	int delta = (max - min)+1;
+
+	return GetInt(delta) + min;
+}
+
 float
 vsRandomSource::GetFloat(float maxValue)
 {
-	float result = Int32() / (float)0xffffffff;
+	float result = Next() / (float)std::numeric_limits<uint64_t>::max();
 	result *= maxValue;
 	return result;
 }
@@ -74,33 +132,6 @@ vsRandomSource::GetFloat(float min, float max)
 
 	return GetFloat(delta) + min;
 }
-
-uint32_t
-vsRandomSource::Int32()
-{
-	uint32_t t = x ^ (x << 11);
-
-	x = y;
-	y = z;
-	z = w;
-
-	return w = w ^ (w >> 19) ^ t ^ (t >> 8);
-}
-
-int
-vsRandomSource::GetInt(int maxValue)
-{
-	return Int32() % maxValue;
-}
-
-int
-vsRandomSource::GetInt(int min, int max)
-{
-	int delta = (max - min)+1;
-
-	return GetInt(delta) + min;
-}
-
 
 vsVector2D
 vsRandomSource::GetVector2D(float maxLength)

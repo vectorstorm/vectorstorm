@@ -18,15 +18,16 @@
 
 class vsRandomSource
 {
-	uint32_t x, y, z, w;
+	uint64_t s[16];
+	int p;
 
-	uint32_t Int32();
+	uint64_t Next();
 public:
 	vsRandomSource();
 	~vsRandomSource();
 
 	void Init();
-	void InitWithSeed(uint32_t seed);
+	void InitWithSeed(uint64_t seed);
 	void InitWithSeed(const vsString & seed);
 
 	float GetFloat(float maxValue);
