@@ -299,23 +299,24 @@ vsModel::Draw( vsRenderQueue *queue )
 		}
 		else
 		{
-			vsDisplayList *list = queue->GetGenericList();
-			if ( m_material )
-			{
-				list->SetMaterial( m_material );
-			}
-
 			bool hasTransform = (m_transform != vsTransform3D::Identity);
 
 			if ( hasTransform )
 			{
 				queue->PushMatrix( m_transform.GetMatrix() );
 			}
-			list->SetMatrix4x4( queue->GetMatrix() );
 
 			if ( m_displayList )
 			{
+				// old rendering support
+				vsDisplayList *list = queue->GetGenericList();
+				if ( m_material )
+				{
+					list->SetMaterial( m_material );
+				}
+				list->SetMatrix4x4( queue->GetMatrix() );
 				list->Append( *m_displayList );
+				list->PopTransform();
 			}
 			else
 			{
@@ -330,14 +331,12 @@ vsModel::Draw( vsRenderQueue *queue )
 				}
 			}
 
-			//		Parent::Draw(list);
 			DrawChildren(queue);
 
 			if ( hasTransform )
 			{
 				queue->PopMatrix();
 			}
-			list->PopTransform();
 		}
 	}
 }

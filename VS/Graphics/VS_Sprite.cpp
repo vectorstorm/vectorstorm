@@ -149,14 +149,8 @@ vsSprite::Draw( vsRenderQueue *queue )
 {
 	if ( GetVisible() )
 	{
-		vsDisplayList *list = queue->GetGenericList();
 		vsTransform2D oldCameraTransform = g_drawingCameraTransform;
 
-		if ( m_useColor )
-			list->SetColor( m_color );
-		if ( m_material )
-			list->SetMaterial( m_material );
-		list->PushTransform( m_transform );
 		queue->PushTransform2D( m_transform );
 
 		if ( m_child )
@@ -175,9 +169,14 @@ vsSprite::Draw( vsRenderQueue *queue )
 			// and expects that there'll be an up-to-date transform stack in
 			// the generic list.
 			//
-			// list->SetMatrix4x4( queue->GetMatrix() );
+			vsDisplayList *list = queue->GetGenericList();
+			if ( m_useColor )
+				list->SetColor( m_color );
+			if ( m_material )
+				list->SetMaterial( m_material );
+			list->SetMatrix4x4( queue->GetMatrix() );
 			list->Append( *m_displayList );
-			// list->PopTransform();
+			list->PopTransform();
 		}
 		else
 		{
@@ -192,10 +191,8 @@ vsSprite::Draw( vsRenderQueue *queue )
 			}
 		}
 
-//		Parent::Draw(list);
 		DrawChildren(queue);
 
-		list->PopTransform();
 		queue->PopMatrix();
 
 		g_drawingCameraTransform = oldCameraTransform;
