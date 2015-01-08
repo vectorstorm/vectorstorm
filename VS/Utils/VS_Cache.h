@@ -25,7 +25,8 @@ public:
 						vsResource( const vsString &name ) { m_name = name; m_refCount = 0; }
 	virtual				~vsResource()
 	{
-		vsAssert( GetReferenceCount() == 0, vsFormatString("Error:  references to %s still exist??", m_name.c_str()) );
+		if ( GetReferenceCount() != 0 )
+			vsLog("Error:  %d references to %s still exist.", GetReferenceCount(), m_name.c_str());
 	}
 
 	void				AddReference()	{ m_refCount++; }
