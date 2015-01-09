@@ -57,14 +57,16 @@ vsTimerSystemSprite::vsTimerSystemSprite():
 	// vertices will change every frame, so we'll put them in a streaming
 	// buffer, and update their values in our 'Update()' call each frame.
 	//
-	const int c_indexCount = 10;
+	const int c_indexCount = 14;
 	uint16_t indices[c_indexCount] =
 	{
 		0, 1,
 		2, 3,
 		4, 5,
 		6, 7,
-		8, 9
+		8, 9,
+		10, 11,
+		12, 13
 	};
 	m_indices->SetArray( indices, c_indexCount );
 	m_vertices->ResizeArray( sizeof(vsRenderBuffer::PC) * c_indexCount );
@@ -89,7 +91,7 @@ void
 vsTimerSystemSprite::Update( float timeStep )
 {
 	const float offsetPerMilli = 10.f;
-	const int c_vertexCount = 10;
+	const int c_vertexCount = 14;
 	vsRenderBuffer::PC verts[c_vertexCount];
 
 	vsTimerSystem *ts = vsTimerSystem::Instance();
@@ -115,6 +117,21 @@ vsTimerSystemSprite::Update( float timeStep )
 	verts[9].position.Set( offsetPerMilli * 33.333f, 10.f, 0.f );
 	for (int i = 6; i < 10; i++ )
 		verts[i].color = c_blue;
+
+	float fifoY = 5.f;
+	int fifoSize = vsScreen::Instance()->GetFifoSize();
+	int fifoUsed = vsScreen::Instance()->GetFifoUsage();
+	float endPoint = offsetPerMilli * 33.333f;
+	float midPoint = vsInterpolate( fifoUsed / (float)fifoSize, 0.f, endPoint );
+
+	verts[10].position.Set( 0.f, fifoY, 0.f );
+	verts[10].color = c_red;
+	verts[11].position.Set( midPoint, fifoY, 0.f );
+	verts[11].color = c_red;
+	verts[12].position.Set( midPoint, fifoY, 0.f );
+	verts[12].color = c_green;
+	verts[13].position.Set( endPoint, fifoY, 0.f );
+	verts[13].color = c_green;
 
 	m_vertices->SetArray(verts, c_vertexCount);
 }

@@ -15,6 +15,7 @@
 #endif // _DEBUG
 
 #include "Graphics/VS_Renderer.h"
+#include "Graphics/VS_DisplayList.h"
 #include "Utils/VS_Singleton.h"
 
 class vsDisplayList;
@@ -33,10 +34,10 @@ class vsScreen
     vsRenderer::Settings    m_defaultRenderSettings;
 
 	int					m_sceneCount;	// how many layers we have
+	size_t				m_fifoUsageLastFrame;
 	size_t				m_fifoHighWater;
 
 	vsDisplayList *		m_fifo;			// our FIFO display list, for rendering
-	vsDisplayList *		m_subfifo;			// our FIFO display list, for rendering
 
 	int					m_width;
 	int					m_height;
@@ -92,6 +93,12 @@ public:
 
 	// Ugh.  Need a nicer interface for this.
 	bool			Resized() { return m_resized; }
+
+	// Returns the maximum size of the fifo buffer containing our rendering
+	// commands, in bytes.
+	size_t			GetFifoSize() { return m_fifo->GetMaxSize(); }
+	// Returns the number of bytes we used in the fifo buffer last frame.
+	size_t			GetFifoUsage() { return m_fifoUsageLastFrame; }
 
 	void			CreateScenes(int count);
 	void			DestroyScenes();

@@ -29,6 +29,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_pipeline(NULL),
 	m_scene(NULL),
 	m_sceneCount(0),
+	m_fifoUsageLastFrame(0),
 	m_fifoHighWater(0),
 	m_width(width),
 	m_height(height),
@@ -57,7 +58,6 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
 
 	m_fifo = new vsDisplayList(c_fifoSize);
-	m_subfifo = new vsDisplayList(c_fifoSize);
 }
 
 vsScreen::~vsScreen()
@@ -66,7 +66,6 @@ vsScreen::~vsScreen()
 	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
-	vsDelete( m_subfifo );
 	s_instance = NULL;
 }
 
@@ -190,7 +189,12 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
 	pipeline->Draw(m_fifo);
-	m_fifoHighWater = vsMax( m_fifoHighWater, m_fifo->GetSize() );
+	m_fifoUsageLastFrame = m_fifo->GetSize();
+	if ( m_fifoUsageLastFrame > m_fifoHighWater )
+	{
+		m_fifoHighWater = m_fifoUsageLastFrame;
+		vsLog(" >> New FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
+	}
 #ifdef DEBUG_SCENE
 	m_renderer->RenderDisplayList(m_fifo);
 	m_fifo->Clear();
