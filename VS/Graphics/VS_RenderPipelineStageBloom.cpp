@@ -38,11 +38,10 @@ public:
 
 	virtual void Prepare( vsMaterial *mat )
 	{
+		vsShader::Prepare( mat );
 		glUniform1f(m_locOffsetX, m_offset.x);
 		glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
-
-		vsShader::Prepare( mat );
 	}
 };
 
