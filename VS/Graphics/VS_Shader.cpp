@@ -119,7 +119,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		GLsizei actualLength = 0;
 		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
 		m_uniform[i].name = vsString(nameBuffer);
-		m_uniform[i].loc = glGetUniformLocation(m_shader, m_uniform[i].name.c_str());
+		m_uniform[i].loc = glGetUniformLocation(m_shader, nameBuffer);
 		m_uniform[i].type = type;
 		m_uniform[i].arraySize = arraySize;
 	}

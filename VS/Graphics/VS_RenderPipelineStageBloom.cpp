@@ -221,7 +221,6 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->ClearArrays();
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
 	list->ResolveRenderTarget(m_from);
-	list->SetMaterialInternal(m_hipassMaterial->GetResource());
 	list->SetMaterial(m_hipassMaterial);
 	list->SetRenderTarget(m_pass[0]);
 	list->BindBuffer(m_vertices);
@@ -242,13 +241,11 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	{
 		list->SetRenderTarget(m_pass2[i]);
 		list->ResolveRenderTarget(m_pass[i]);
-		list->SetMaterialInternal(m_horizontalBlurMaterial[i]->GetResource());
 		list->SetMaterial(m_horizontalBlurMaterial[i]);
 		list->TriangleStripBuffer(m_indices);
 
 		list->SetRenderTarget(m_pass[i]);
 		list->ResolveRenderTarget(m_pass2[i]);
-		list->SetMaterialInternal(m_verticalBlurMaterial[i]->GetResource());
 		list->SetMaterial(m_verticalBlurMaterial[i]);
 		list->TriangleStripBuffer(m_indices);
 	}
@@ -262,13 +259,11 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 	// Now do the final combining of our stuff
 	list->SetRenderTarget(m_to);
-	list->SetMaterialInternal(m_fromMaterial->GetResource());
 	list->SetMaterial(m_fromMaterial);
 	list->TriangleStripBuffer(m_indices);
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		list->SetMaterialInternal(m_combinePassMaterial[i]->GetResource());
 		list->SetMaterial(m_combinePassMaterial[i]);
 		list->TriangleStripBuffer(m_indices);
 	}

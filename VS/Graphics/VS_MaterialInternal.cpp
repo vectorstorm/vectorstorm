@@ -277,6 +277,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 void
 vsMaterialInternal::SetShader()
 {
+	vsDelete( m_shader );
 	m_shader = vsRenderer_OpenGL3::Instance()->DefaultShaderFor(this);
 	m_shaderIsMine = false;
 }

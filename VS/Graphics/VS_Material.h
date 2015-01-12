@@ -30,12 +30,18 @@ class vsMaterialInternal;
 
 class vsMaterial : public vsCacheReference<vsMaterialInternal>
 {
-	union Value
+	struct Value
 	{
-		float f32;
-		bool b;
+		union
+		{
+			float f32;
+			bool b;
+			void* bind;
+		};
+		bool bound;
 	};
 	Value		*m_uniformValue;
+	int m_uniformCount;
 
 protected:
 	vsMaterial();
@@ -49,8 +55,10 @@ public:
 	int32_t UniformId( const vsString& name );
 	void SetUniformF( int32_t id, float value );
 	void SetUniformB( int32_t id, bool value );
-	float UniformF( int32_t id ) { return m_uniformValue[id].f32; }
-	bool UniformB( int32_t id ) { return m_uniformValue[id].b; }
+	bool BindUniformF( int32_t id, float* value );
+	bool BindUniformB( int32_t id, bool* value );
+	float UniformF( int32_t id );
+	bool UniformB( int32_t id );
 
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }

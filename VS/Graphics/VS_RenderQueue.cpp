@@ -247,8 +247,6 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 {
 	for (Batch *b = m_batch; b; b = b->next)
 	{
-		list->SetMaterialInternal( b->material );
-
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
 			list->SetMaterial( e->material );

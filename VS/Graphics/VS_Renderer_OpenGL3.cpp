@@ -593,16 +593,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentColors = (vsColor*)op->data.p;
 					break;
 				}
-			case vsDisplayList::OpCode_SetMaterialInternal:
-				{
-					vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
-					SetMaterialInternal( material );
-					m_currentColors = NULL;
-					break;
-				}
 			case vsDisplayList::OpCode_SetMaterial:
 				{
 					vsMaterial *material = (vsMaterial *)op->data.p;
+					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
 					m_currentColors = NULL;
 					break;
