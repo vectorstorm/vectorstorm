@@ -111,6 +111,20 @@ vsMaterial::BindUniformB( int32_t id, bool* value )
 	return false;
 }
 
+bool
+vsMaterial::BindUniformF( const vsString& name, float* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformF(id,value);
+}
+
+bool
+vsMaterial::BindUniformB( const vsString& name, bool* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformB(id,value);
+}
+
 float
 vsMaterial::UniformF( int32_t id )
 {

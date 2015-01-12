@@ -57,6 +57,8 @@ public:
 	void SetUniformB( int32_t id, bool value );
 	bool BindUniformF( int32_t id, float* value );
 	bool BindUniformB( int32_t id, bool* value );
+	bool BindUniformF( const vsString& name, float* value );
+	bool BindUniformB( const vsString& name, bool* value );
 	float UniformF( int32_t id );
 	bool UniformB( int32_t id );
 
