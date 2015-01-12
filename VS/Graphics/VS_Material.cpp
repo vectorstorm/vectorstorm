@@ -40,6 +40,8 @@ vsMaterial::vsMaterial( vsMaterial *other ):
 	m_uniformCount(0)
 {
 	SetupParameters();
+	for ( int i = 0; i < m_uniformCount; i++ )
+		m_uniformValue[i] = other->m_uniformValue[i];
 }
 
 vsMaterial::~vsMaterial()
