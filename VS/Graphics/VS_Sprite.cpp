@@ -187,7 +187,8 @@ vsSprite::Draw( vsRenderQueue *queue )
 		{
 			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
-				queue->AddFragmentBatch( *iter );
+				if ( iter->IsVisible() )
+					queue->AddFragmentBatch( *iter );
 			}
 		}
 

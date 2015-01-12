@@ -23,6 +23,7 @@ class vsFragment
 	vsDisplayList *					m_displayList;
 
 	vsLinkedListStore<vsRenderBuffer>		m_bufferList;
+	bool m_visible;
 
 public:
 
@@ -31,12 +32,14 @@ public:
 	vsFragment();
 	virtual ~vsFragment();
 
+	void	SetVisible(bool visible) { m_visible = visible; }
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( const vsString &name );
 	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; }
 	void	AddBuffer( vsRenderBuffer *buffer );
 	void	Clear();
 
+	bool			IsVisible() { return m_visible; }
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }
 

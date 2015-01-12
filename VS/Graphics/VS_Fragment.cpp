@@ -15,7 +15,8 @@
 
 vsFragment::vsFragment():
 	m_material(NULL),
-	m_displayList(NULL)
+	m_displayList(NULL),
+	m_visible(true)
 {
 }
 
