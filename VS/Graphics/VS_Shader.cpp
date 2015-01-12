@@ -370,6 +370,17 @@ vsShader::SetGlow( float glowAlpha )
 	}
 }
 
+int32_t
+vsShader::GetUniformId(const vsString& name) const
+{
+	for ( int i = 0; i < m_uniformCount; i++ )
+	{
+		if ( m_uniform[i].name == name )
+			return i;
+	}
+	return -1;
+}
+
 void
 vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
@@ -400,9 +411,29 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 }
 
 void
-vsShader::Prepare( vsMaterialInternal *material )
+vsShader::Prepare( vsMaterial *material )
 {
 	CheckGLError("Prepare");
+	for ( int i = 0; i < m_uniformCount; i++ )
+	{
+		if ( material->GetResource()->HasValueForUniform(i) )
+		{
+			SetUniformValueF( i, material->GetResource()->GetValueForUniform(i) );
+		}
+		switch( m_uniform[i].type )
+		{
+			case GL_BOOL:
+				SetUniformValueB( i, material->UniformB(i) );
+				break;
+			case GL_FLOAT:
+				SetUniformValueF( i, material->UniformF(i) );
+				break;
+			default:
+				// TODO:  Handle more uniform types
+				break;
+		}
+	}
+
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
@@ -424,19 +455,18 @@ vsShader::Prepare( vsMaterialInternal *material )
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
 
-	for ( int i = 0; i < m_uniformCount; i++ )
-	{
-		if ( material->HasValueForUniform(i) )
-		{
-			SetUniformValue( i, material->GetValueForUniform(i) );
-		}
-	}
 	CheckGLError("Prepare");
 }
 
 void
-vsShader::SetUniformValue( int i, float value )
+vsShader::SetUniformValueF( int i, float value )
 {
 	glUniform1f( m_uniform[i].loc, value );
+}
+
+void
+vsShader::SetUniformValueB( int i, bool value )
+{
+	glUniform1i( m_uniform[i].loc, value );
 }
 

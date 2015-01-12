@@ -421,6 +421,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
+	SDL_SetWindowFullscreen(g_sdlWindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 #ifdef HIGHDPI_SUPPORTED
 	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #else
@@ -438,6 +439,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 
 	m_scene->Bind();
@@ -481,6 +483,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
 	CheckGLError("RenderDisplayList");
 	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 	RawRenderDisplayList(list);
 
@@ -498,11 +501,12 @@ vsRenderer_OpenGL3::FlushRenderState()
 			glUseProgram( m_currentShader->GetShaderId() );
 		s_lastShaderId = m_currentShader->GetShaderId();
 
+		// now set the parameters on the current material.
 		m_currentShader->Prepare( m_currentMaterial );
-		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
-		m_currentShader->SetGlow( m_currentMaterial->m_glow );
-		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
-		m_currentShader->SetTextures( m_currentMaterial->m_texture );
+		m_currentShader->SetAlphaRef( m_currentMaterialInternal->m_alphaRef );
+		m_currentShader->SetGlow( m_currentMaterialInternal->m_glow );
+		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
+		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
 		else if ( m_currentLocalToWorldCount > 0 )
@@ -589,9 +593,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentColors = (vsColor*)op->data.p;
 					break;
 				}
-			case vsDisplayList::OpCode_SetMaterial:
+			case vsDisplayList::OpCode_SetMaterialInternal:
 				{
 					vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
+					SetMaterialInternal( material );
+					m_currentColors = NULL;
+					break;
+				}
+			case vsDisplayList::OpCode_SetMaterial:
+				{
+					vsMaterial *material = (vsMaterial *)op->data.p;
 					SetMaterial( material );
 					m_currentColors = NULL;
 					break;
@@ -1036,14 +1047,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 }
 
 void
-vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
+vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 {
-	if ( !m_invalidateMaterial && (material == m_currentMaterial) )
+	m_currentMaterial = material;
+}
+
+void
+vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
+{
+	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
 	}
 	m_invalidateMaterial = true;
-	m_currentMaterial = material;
+	m_currentMaterialInternal = material;
 
 	if ( m_currentSettings.writeColor )
 	{
@@ -1086,7 +1103,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
 
-	vsAssert( m_currentMaterial != NULL, "In SetMaterial() with no material?" );
+	vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
 	m_currentShader = NULL;
 	if ( material->m_shader )
 	{
@@ -1526,5 +1543,32 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 	CheckGLError("ClearLoadingContext");
 	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
 	m_loadingGlContextMutex.Unlock();
+}
+
+vsShader*
+vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
+{
+	vsShader *result = NULL;
+	switch( mat->m_drawMode )
+	{
+		case DrawMode_Add:
+		case DrawMode_Subtract:
+		case DrawMode_Normal:
+		case DrawMode_Absolute:
+			if ( mat->m_texture[0] )
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+			else
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+			break;
+		case DrawMode_Lit:
+			if ( mat->m_texture[0] )
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+			else
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+			break;
+		default:
+			vsAssert(0,"Unknown drawmode??");
+	}
+	return result;
 }
 

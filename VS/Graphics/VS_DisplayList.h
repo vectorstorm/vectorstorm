@@ -83,6 +83,7 @@ public:
 		OpCode_TriangleFanBuffer,
 
 		OpCode_SetMaterial,
+		OpCode_SetMaterialInternal,
 		OpCode_SetRenderTarget,
 		OpCode_ClearRenderTarget,
 		OpCode_ResolveRenderTarget,
@@ -261,7 +262,8 @@ public:
 	void	LineStripBuffer( vsRenderBuffer *buffer );
 
 	void	SetMaterial( vsMaterial *material );
-	void	SetMaterial( vsMaterialInternal *material );
+	void	SetMaterialInternal( vsMaterialInternal *material );
+	// void	SetMaterial( vsMaterialInternal *material );
 	void	SetRenderTarget( vsRenderTarget *target );
 	void	ClearRenderTarget(); // clears the currently set render target.
 	void	ResolveRenderTarget( vsRenderTarget *target );

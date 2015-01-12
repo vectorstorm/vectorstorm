@@ -17,6 +17,8 @@
 #include "VS_Record.h"
 #include "VS_Token.h"
 
+#include "VS_Renderer_OpenGL3.h"
+
 static const vsString s_modeString[DRAWMODE_MAX] =
 {
 	"absolute",	//DrawMode_Absolute,
@@ -35,6 +37,7 @@ static const vsString s_cullString[CULL_MAX] =
 
 vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
+	m_shaderIsMine(false),
 	m_shader(NULL),
 	m_texture(),
 	m_color(c_white),
@@ -78,7 +81,8 @@ vsMaterialInternal::~vsMaterialInternal()
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		vsDelete( m_texture[i] );
-	vsDelete( m_shader );
+	if ( m_shaderIsMine )
+		vsDelete( m_shader );
 	vsDeleteArray( m_hasUniformValue );
 	vsDeleteArray( m_uniformValue );
 }
@@ -223,6 +227,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
 					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
+					m_shaderIsMine = true;
 				}
 				else if ( label == "clampU" )
 				{
@@ -265,6 +270,15 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 			break;
 		}
 	}
+
+	SetShader();
+}
+
+void
+vsMaterialInternal::SetShader()
+{
+	m_shader = vsRenderer_OpenGL3::Instance()->DefaultShaderFor(this);
+	m_shaderIsMine = false;
 }
 
 bool

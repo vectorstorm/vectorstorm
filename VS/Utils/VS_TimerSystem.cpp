@@ -41,8 +41,6 @@ vsTimerSystemSprite::vsTimerSystemSprite():
 	m_vertices( new vsRenderBuffer(vsRenderBuffer::Type_Stream) ),
 	m_indices( new vsRenderBuffer(vsRenderBuffer::Type_Static) )
 {
-	SetMaterial( new vsMaterial( "White" ) );
-
 	// we're going to draw five lines, in this format:
 	//                (4)           (5)
 	//  (1)--(2)--(3)--|             |

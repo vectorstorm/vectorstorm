@@ -30,12 +30,27 @@ class vsMaterialInternal;
 
 class vsMaterial : public vsCacheReference<vsMaterialInternal>
 {
+	union Value
+	{
+		float f32;
+		bool b;
+	};
+	Value		*m_uniformValue;
+
 protected:
 	vsMaterial();
+	void SetupParameters();
 public:
 
 	vsMaterial( const vsString &name );
 	vsMaterial( vsMaterial *other );
+	virtual ~vsMaterial();
+
+	int32_t UniformId( const vsString& name );
+	void SetUniformF( int32_t id, float value );
+	void SetUniformB( int32_t id, bool value );
+	float UniformF( int32_t id ) { return m_uniformValue[id].f32; }
+	bool UniformB( int32_t id ) { return m_uniformValue[id].b; }
 
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }

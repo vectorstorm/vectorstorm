@@ -65,7 +65,8 @@ private:
 	int32_t m_uniformCount;
 	int32_t m_attributeCount;
 
-	void SetUniformValue( int i, float value );
+	void SetUniformValueF( int i, float value );
+	void SetUniformValueB( int i, bool value );
 
 protected:
 	uint32_t m_shader;
@@ -89,9 +90,9 @@ public:
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 	void SetGlow( float glowAlpha );
-	void SetCustomUniform( const vsString& name, float value );
 
 	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
+	int32_t GetUniformId(const vsString& name) const;
 	int32_t GetUniformCount() const { return m_uniformCount; }
 	int32_t GetAttributeCount() const { return m_attributeCount; }
 
@@ -99,7 +100,7 @@ public:
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterialInternal *activeMaterial ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial ); // called before we start rendering something with this shader
 };
 
 

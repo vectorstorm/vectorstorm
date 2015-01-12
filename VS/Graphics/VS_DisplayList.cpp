@@ -76,6 +76,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"TriangleFanBuffer",
 
 	"SetMaterial",
+	"SetMaterialInternal",
 	"SetRenderTarget",
 	"ClearRenderTarget",
 	"ResolveRenderTarget",
@@ -974,15 +975,25 @@ vsDisplayList::TriangleFanArray( int *idArray, int vertexCount )
 void
 vsDisplayList::SetMaterial( vsMaterial *material )
 {
-	SetMaterial( material->GetResource() );
-}
-
-void
-vsDisplayList::SetMaterial( vsMaterialInternal *material )
-{
+	// SetMaterial( material->GetResource() );
 	m_fifo->WriteUint8( OpCode_SetMaterial );
 	m_fifo->WriteVoidStar( material );
 }
+
+void
+vsDisplayList::SetMaterialInternal( vsMaterialInternal *material )
+{
+	// SetMaterial( material->GetResource() );
+	m_fifo->WriteUint8( OpCode_SetMaterialInternal );
+	m_fifo->WriteVoidStar( material );
+}
+
+// void
+// vsDisplayList::SetMaterial( vsMaterialInternal *material )
+// {
+// 	m_fifo->WriteUint8( OpCode_SetMaterial );
+// 	m_fifo->WriteVoidStar( material );
+// }
 
 void
 vsDisplayList::SetRenderTarget( vsRenderTarget *target )
@@ -1255,6 +1266,7 @@ vsDisplayList::PopOp()
 				m_fifo->ReadMatrix4x4( &m_currentOp.data.matrix4x4 );
 				break;
 			case OpCode_SetMaterial:
+			case OpCode_SetMaterialInternal:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			case OpCode_SetRenderTarget:

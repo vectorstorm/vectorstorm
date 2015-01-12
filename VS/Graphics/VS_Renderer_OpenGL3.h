@@ -73,7 +73,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 
     vsRendererState      m_state;
 
-	vsMaterialInternal * m_currentMaterial;
+	vsMaterial *         m_currentMaterial;
+	vsMaterialInternal *         m_currentMaterialInternal;
 	vsShader *           m_currentShader;
 	bool                 m_invalidateMaterial;
 
@@ -116,7 +117,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	// a single global Vertex Array Object..
 
 	void				FlushRenderState();
-	virtual void		SetMaterial(vsMaterialInternal *material);
+	virtual void		SetMaterialInternal(vsMaterialInternal *material);
+	virtual void		SetMaterial(vsMaterial *material);
 	//virtual void		SetDrawMode(vsDrawMode mode);
 
 	void Resize();
@@ -161,6 +163,8 @@ public:
 
 	static GLuint		Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
 	static void			DestroyShader(GLuint shader);
+
+	vsShader*	DefaultShaderFor( vsMaterialInternal *mat );
 
 };
 
