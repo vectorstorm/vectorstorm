@@ -122,6 +122,17 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_uniform[i].loc = glGetUniformLocation(m_shader, nameBuffer);
 		m_uniform[i].type = type;
 		m_uniform[i].arraySize = arraySize;
+		switch ( m_uniform[i].type )
+		{
+			case GL_BOOL:
+				m_uniform[i].b = 0;
+				break;
+			case GL_FLOAT:
+				m_uniform[i].f32 = 0.f;
+				break;
+			default:
+				break;
+		}
 	}
 	for ( GLint i = 0; i < m_attributeCount; i++ )
 	{
@@ -203,6 +214,23 @@ vsShader::SetColor( const vsColor& color )
 	}
 
 	glVertexAttrib4f( 3, color.r, color.g, color.b, color.a );
+}
+
+void
+vsShader::SetInstanceColors( vsRenderBuffer *colors )
+{
+	if ( m_instanceColorAttributeLoc >= 0 )
+	{
+		if ( !m_colorAttribIsActive )
+		{
+			glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+			glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+			m_colorAttribIsActive = true;
+		}
+
+		colors->BindAsAttribute( m_instanceColorAttributeLoc );
+	}
+	CheckGLError("SetColors");
 }
 
 void
@@ -413,21 +441,24 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 void
 vsShader::Prepare( vsMaterial *material )
 {
-	CheckGLError("Prepare");
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
-		if ( material->GetResource()->HasValueForUniform(i) )
-		{
-			SetUniformValueF( i, material->GetResource()->GetValueForUniform(i) );
-		}
 		switch( m_uniform[i].type )
 		{
 			case GL_BOOL:
-				SetUniformValueB( i, material->UniformB(i) );
-				break;
+				{
+					bool b = material->UniformB(i);
+					if ( b != m_uniform[i].b )
+						SetUniformValueB( i, b );
+					break;
+				}
 			case GL_FLOAT:
-				SetUniformValueF( i, material->UniformF(i) );
-				break;
+				{
+					float f = material->UniformF(i);
+					if ( f != m_uniform[i].f32 )
+						SetUniformValueF( i, f );
+					break;
+				}
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -454,19 +485,19 @@ vsShader::Prepare( vsMaterial *material )
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
-
-	CheckGLError("Prepare");
 }
 
 void
 vsShader::SetUniformValueF( int i, float value )
 {
 	glUniform1f( m_uniform[i].loc, value );
+	m_uniform[i].f32 = value;
 }
 
 void
 vsShader::SetUniformValueB( int i, bool value )
 {
 	glUniform1i( m_uniform[i].loc, value );
+	m_uniform[i].b = value;
 }
 

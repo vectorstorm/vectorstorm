@@ -24,6 +24,11 @@ public:
 	struct Uniform
 	{
 		vsString name;
+		union
+		{
+			bool b;
+			float f32;
+		};
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
@@ -85,6 +90,7 @@ public:
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
+	void SetInstanceColors( vsRenderBuffer *colors );
 	void SetInstanceColors( const vsColor* color, int matCount );
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
