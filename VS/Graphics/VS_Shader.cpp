@@ -77,7 +77,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
-	m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
@@ -90,7 +89,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
-	m_glowLoc = glGetUniformLocation(m_shader, "glow");
 
 	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
@@ -177,15 +175,6 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 	delete fStore;
 
 	return result;
-}
-
-void
-vsShader::SetAlphaRef( float aref )
-{
-	if ( m_alphaRefLoc >= 0 )
-	{
-		glUniform1f( m_alphaRefLoc, aref );
-	}
 }
 
 void
@@ -354,14 +343,22 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 			}
 
 			static GLuint g_vbo = 0xffffffff;
+			static GLuint g_vboSize = 0;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			}
+			else
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+				// explicitly orphan the buffer
+				glBufferData(GL_ARRAY_BUFFER, g_vboSize, NULL, GL_STREAM_DRAW);
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vsMatrix4x4) * matCount, localToWorld, GL_STREAM_DRAW);
+			g_vboSize = sizeof(vsMatrix4x4) * matCount;
+			glBufferData(GL_ARRAY_BUFFER, g_vboSize, localToWorld, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
@@ -386,15 +383,6 @@ vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 	if ( m_viewToProjectionLoc >= 0 )
 	{
 		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
-	}
-}
-
-void
-vsShader::SetGlow( float glowAlpha )
-{
-	if ( m_glowLoc >= 0 )
-	{
-		glUniform1f( m_glowLoc, glowAlpha );
 	}
 }
 

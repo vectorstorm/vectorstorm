@@ -58,6 +58,10 @@ vsMaterial::SetupParameters()
 		m_uniformCount = GetResource()->m_shader->GetUniformCount();
 		m_uniformValue = new Value[m_uniformCount];
 		memset(m_uniformValue, 0, sizeof(Value) * m_uniformCount);
+
+		// Do some generic setup.
+		SetUniformF( "alphaRef", GetResource()->m_alphaRef );
+		SetUniformF( "glow", GetResource()->m_glow );
 	}
 }
 
@@ -85,6 +89,20 @@ vsMaterial::SetUniformB( int32_t id, bool value )
 		m_uniformValue[id].b = value;
 		m_uniformValue[id].bound = false;
 	}
+}
+
+void
+vsMaterial::SetUniformF( const vsString& name, float value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformF(id,value);
+}
+
+void
+vsMaterial::SetUniformB( const vsString& name, bool value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformB(id,value);
 }
 
 bool

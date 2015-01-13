@@ -503,8 +503,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		// now set the parameters on the current material.
 		m_currentShader->Prepare( m_currentMaterial );
-		m_currentShader->SetAlphaRef( m_currentMaterialInternal->m_alphaRef );
-		m_currentShader->SetGlow( m_currentMaterialInternal->m_glow );
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )

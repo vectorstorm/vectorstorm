@@ -42,7 +42,6 @@ public:
 	};
 
 private:
-	int32_t m_alphaRefLoc;
 	int32_t m_colorLoc;
 	int32_t m_instanceColorAttributeLoc;
 	int32_t m_resolutionLoc;
@@ -56,7 +55,6 @@ private:
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
 	int32_t m_viewToProjectionLoc;
-	int32_t m_glowLoc;
 
 	int32_t m_lightAmbientLoc;
 	int32_t m_lightDiffuseLoc;
@@ -85,7 +83,6 @@ public:
 
 	uint32_t GetShaderId() { return m_shader; }
 
-    void SetAlphaRef( float aref );
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
@@ -95,7 +92,6 @@ public:
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
-	void SetGlow( float glowAlpha );
 
 	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
 	int32_t GetUniformId(const vsString& name) const;
