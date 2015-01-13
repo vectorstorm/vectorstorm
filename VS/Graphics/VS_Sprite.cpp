@@ -185,7 +185,7 @@ vsSprite::Draw( vsRenderQueue *queue )
 
 		if ( !m_fragment.IsEmpty() )
 		{
-			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
 				if ( iter->IsVisible() )
 					queue->AddFragmentBatch( *iter );
@@ -210,7 +210,8 @@ vsSprite::SetDisplayList( vsDisplayList *list )
 void
 vsSprite::AddFragment( vsFragment *fragment )
 {
-	m_fragment.AddItem( fragment );
+	if ( fragment )
+		m_fragment.AddItem( fragment );
 }
 
 void
@@ -233,7 +234,7 @@ vsSprite::BuildBoundingBox()
 		m_displayList->GetBoundingBox(tl,br);
 		boundingBox.Set( tl, br );
 	}
-	for ( vsLinkedListStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	for ( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
 		fragment->GetDisplayList()->GetBoundingBox(tl,br);
@@ -271,7 +272,7 @@ vsSprite::CalculateBoundingRadius()
 		m_displayList->GetBoundingBox(tl,br);
 		m_boundingBox.Set(tl,br);*/
 	}
-	for ( vsLinkedListStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	for ( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
 		m_boundingRadius = vsMax( m_boundingRadius, fragment->GetDisplayList()->GetBoundingRadius() );

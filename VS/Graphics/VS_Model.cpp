@@ -227,7 +227,8 @@ vsModel::SetDisplayList( vsDisplayList *list )
 void
 vsModel::AddFragment( vsFragment *fragment )
 {
-	m_fragment.AddItem( fragment );
+	if ( fragment )
+		m_fragment.AddItem( fragment );
 }
 
 void
@@ -244,7 +245,7 @@ vsModel::BuildBoundingBox()
 	{
 		m_displayList->GetBoundingBox(boundingBox);
 	}
-	for ( vsLinkedListStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
 		vsBox3D fragmentBox;
@@ -288,7 +289,7 @@ vsModel::Draw( vsRenderQueue *queue )
 				m_instanceData->bufferIsDirty = false;
 			}
 #endif
-			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
 // #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 // 				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrixBuffer );
@@ -325,7 +326,7 @@ vsModel::Draw( vsRenderQueue *queue )
 
 			if ( !m_fragment.IsEmpty() )
 			{
-				for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+				for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 				{
 					if ( iter->IsVisible() )
 						queue->AddFragmentBatch( *iter );

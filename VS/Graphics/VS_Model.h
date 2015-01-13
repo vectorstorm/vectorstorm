@@ -17,8 +17,8 @@
 #include "VS/Graphics/VS_Material.h"
 #include "VS/Math/VS_Box.h"
 #include "VS/Math/VS_Transform.h"
-#include "VS/Utils/VS_LinkedList.h"
-#include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Utils/VS_Array.h"
+#include "VS/Utils/VS_ArrayStore.h"
 
 // #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
@@ -86,7 +86,7 @@ protected:
 
 	vsDisplayList	*m_displayList;				// old-style rendering
 
-	vsLinkedListStore<vsFragment>	m_fragment;	// new-style rendering
+	vsArrayStore<vsFragment>	m_fragment;	// new-style rendering
 
 	// m_instanceMat and m_instance may not be in the same order.
 	struct InstanceData *m_instanceData;
@@ -136,6 +136,8 @@ public:
 	void			SetDisplayList( vsDisplayList *list );
 	void			AddFragment( vsFragment *fragment );
 	void			ClearFragments();
+	vsFragment *	GetFragment(int i) { return m_fragment[i]; }
+	size_t			GetFragmentCount() { return m_fragment.ItemCount(); }
 
 	virtual void	Draw( vsRenderQueue *list );
 };
