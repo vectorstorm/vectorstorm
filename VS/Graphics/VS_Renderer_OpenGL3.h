@@ -50,6 +50,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 	{
 		bool supported[CAP_MAX];
 	};
+	int					m_flags;
 	Capabilities		m_capabilities;
 	vsShaderSuite		m_defaultShaderSuite;
 

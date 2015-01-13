@@ -151,6 +151,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_antialias;
+	vsPreferenceObject *	m_highDPI;
 
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
@@ -186,6 +187,9 @@ public:
 
 	bool			GetAntialias();
 	void			SetAntialias(bool enabled);
+
+	bool			GetHighDPI();
+	void			SetHighDPI(bool allow);
 
 	// Sound preferences
 	int				GetEffectVolume();

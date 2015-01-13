@@ -24,7 +24,7 @@
 const int c_fifoSize = 1024 * 300;		// 300kb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias):
+vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias,bool highDPI):
 	m_renderer(NULL),
 	m_pipeline(NULL),
 	m_scene(NULL),
@@ -48,6 +48,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_VSync;
 	if ( antialias )
 		flags |= vsRenderer::Flag_Antialias;
+	if ( highDPI )
+		flags |= vsRenderer::Flag_HighDPI;
 	flags |= vsRenderer::Flag_Resizable;
 
 	int bufferCount = 2;

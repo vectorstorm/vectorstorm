@@ -95,6 +95,7 @@ static void printAttributes ()
 
 vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
+	m_flags(flags),
 	m_window(NULL),
 	m_scene(NULL),
 	m_bufferCount(bufferCount)
@@ -159,7 +160,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	videoFlags = SDL_WINDOW_OPENGL;
 #ifdef HIGHDPI_SUPPORTED
-	videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+	if ( flags & Flag_HighDPI )
+		videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 
 	if ( flags & Flag_Fullscreen )
@@ -200,7 +202,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_widthPixels = width;
 	m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+	if ( flags & Flag_HighDPI )
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 
 	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
@@ -400,12 +403,15 @@ bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
 #ifdef HIGHDPI_SUPPORTED
-	int nowWidthPixels, nowHeightPixels;
-	SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
-	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
+	if ( m_flags & Flag_HighDPI )
 	{
-		UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
-		return true;
+		int nowWidthPixels, nowHeightPixels;
+		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
+		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
+		{
+			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
+			return true;
+		}
 	}
 #endif
 	return false;
@@ -422,11 +428,11 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
 	SDL_SetWindowFullscreen(g_sdlWindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-#ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
-#else
 	m_widthPixels = width;
 	m_heightPixels = height;
+#ifdef HIGHDPI_SUPPORTED
+	if ( m_flags & Flag_HighDPI )
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;

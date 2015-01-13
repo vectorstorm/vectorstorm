@@ -130,9 +130,9 @@ vsSystem::Init()
 #if !defined(TARGET_OS_IPHONE) && defined(IPHONELIKE)
 //	m_screen = new vsScreen( 1920, 1080, 32, false );
 //	m_screen = new vsScreen( 1280, 720, 32, false );
-	m_screen = new vsScreen( 960, 640, 32, false );
+	m_screen = new vsScreen( 960, 640, 32, false, false );
 #else
-	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetVSync(), m_preferences->GetAntialias() );
+	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -407,6 +407,7 @@ vsSystemPreferences::vsSystemPreferences()
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
+	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
 	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
 }
@@ -554,6 +555,18 @@ void
 vsSystemPreferences::SetAntialias(bool enabled)
 {
 	m_antialias->m_value = enabled;
+}
+
+bool
+vsSystemPreferences::GetHighDPI()
+{
+	return !!(m_highDPI->m_value);
+}
+
+void
+vsSystemPreferences::SetHighDPI(bool allow)
+{
+	m_highDPI->m_value = allow;
 }
 
 void
