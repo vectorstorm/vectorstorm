@@ -33,6 +33,13 @@ vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 }
 
 void
+vsDynamicMaterial::SetShader()
+{
+	GetResource()->SetShader();
+	SetupParameters();
+}
+
+void
 vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");

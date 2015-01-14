@@ -47,6 +47,7 @@ public:
 	// NOTE:  Shader must be set LAST, after textures and draw mode are selected
 	void SetShader( const vsString &vShader, const vsString &fShader );
 	void SetShader( vsShader *shader );
+	void SetShader(); // use this one to set the default shader.
 };
 
 #endif // VS_DYNAMICMATERIAL_H
