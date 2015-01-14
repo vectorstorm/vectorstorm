@@ -106,7 +106,7 @@ vsMaterial::SetUniformB( const vsString& name, bool value )
 }
 
 bool
-vsMaterial::BindUniformF( int32_t id, float* value )
+vsMaterial::BindUniformF( int32_t id, const float* value )
 {
 	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT )
 	{
@@ -118,7 +118,7 @@ vsMaterial::BindUniformF( int32_t id, float* value )
 }
 
 bool
-vsMaterial::BindUniformB( int32_t id, bool* value )
+vsMaterial::BindUniformB( int32_t id, const bool* value )
 {
 	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
 	{
@@ -130,14 +130,14 @@ vsMaterial::BindUniformB( int32_t id, bool* value )
 }
 
 bool
-vsMaterial::BindUniformF( const vsString& name, float* value )
+vsMaterial::BindUniformF( const vsString& name, const float* value )
 {
 	int32_t id = UniformId(name);
 	return BindUniformF(id,value);
 }
 
 bool
-vsMaterial::BindUniformB( const vsString& name, bool* value )
+vsMaterial::BindUniformB( const vsString& name, const bool* value )
 {
 	int32_t id = UniformId(name);
 	return BindUniformB(id,value);

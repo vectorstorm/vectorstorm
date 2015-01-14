@@ -36,7 +36,7 @@ class vsMaterial : public vsCacheReference<vsMaterialInternal>
 		{
 			float f32;
 			bool b;
-			void* bind;
+			const void* bind;
 		};
 		bool bound;
 	};
@@ -55,12 +55,12 @@ public:
 	int32_t UniformId( const vsString& name );
 	void SetUniformF( int32_t id, float value );
 	void SetUniformB( int32_t id, bool value );
-	bool BindUniformF( int32_t id, float* value );
-	bool BindUniformB( int32_t id, bool* value );
+	bool BindUniformF( int32_t id, const float* value );
+	bool BindUniformB( int32_t id, const bool* value );
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
-	bool BindUniformF( const vsString& name, float* value );
-	bool BindUniformB( const vsString& name, bool* value );
+	bool BindUniformF( const vsString& name, const float* value );
+	bool BindUniformB( const vsString& name, const bool* value );
 	float UniformF( int32_t id );
 	bool UniformB( int32_t id );
 
