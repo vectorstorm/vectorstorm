@@ -57,6 +57,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_exitGameKeyEnabled( true ),
 	m_exitApplicationKeyEnabled( true ),
 	m_orientation( Orientation_Normal ),
+	m_title( title ),
 	m_screen( NULL )
 {
 	g_globalHeap = new vsHeap("global",totalMemoryBytes);

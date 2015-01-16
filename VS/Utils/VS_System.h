@@ -65,6 +65,7 @@ class vsSystem
 	vsTextureManager *	m_textureManager;
 	vsMaterialManager *	m_materialManager;
 
+	vsString			m_title;
 	vsScreen *			m_screen;
 
 	vsSystemPreferences *m_preferences;
@@ -82,6 +83,8 @@ public:
 
 	void Init();
 	void Deinit();
+
+	const vsString& GetTitle() const { return m_title; }
 
 	void		EnableGameDirectory( const vsString &directory );
 	void		DisableGameDirectory( const vsString &directory );

@@ -193,6 +193,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// int shareVal;
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
+	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
 
 	if ( !g_sdlWindow ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
