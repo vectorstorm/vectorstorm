@@ -56,8 +56,6 @@ static void printAttributes ()
 {
 #if !TARGET_OS_IPHONE
     // Print out attributes of the context we created
-    int nAttr;
-    int i;
 
 	vsLog("OpenGL Context:");
 	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
@@ -72,20 +70,57 @@ static void printAttributes ()
 		vsLog("  Shader Langugage Version:  None");
 	}
 
-    SDL_GLattr  attr[] = { SDL_GL_RED_SIZE, SDL_GL_BLUE_SIZE, SDL_GL_GREEN_SIZE,
-	SDL_GL_ALPHA_SIZE, SDL_GL_BUFFER_SIZE, SDL_GL_DEPTH_SIZE };
-
-    const char *desc[] = { "Red size: %d bits", "Blue size: %d bits", "Green size: %d bits",
-		"Alpha size: %d bits", "Color buffer size: %d bits", "Depth buffer size: %d bits" };
-
-    nAttr = sizeof(attr) / sizeof(int);
-
-    for (i = 0; i < nAttr; i++)
+	vsLog("== Begin OpenGL limits ==");
+	struct attr
 	{
-        int value;
-        SDL_GL_GetAttribute (attr[i], &value);
-        vsLog(vsFormatString(desc[i], value));
+		GLenum name;
+		const char* label;
+	};
+	static const attr a[] =
+	{
+		{GL_MAX_3D_TEXTURE_SIZE, "Max 3D texture size"},
+		{GL_MAX_ARRAY_TEXTURE_LAYERS, "Max array texture layers"},
+		{GL_MAX_CLIP_DISTANCES, "Max clip distances"},
+		{GL_MAX_COLOR_TEXTURE_SAMPLES, "Max samples in a color multisample texture"},
+		{GL_MAX_COMBINED_ATOMIC_COUNTERS, "Maximum atomic counters"},
+		{GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS, "Maximum fragment shader uniform components"},
+		{GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS, "Maximum geometry shader uniform components"},
+		{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, "Maximum combined texture image units"},
+		{GL_MAX_COMBINED_UNIFORM_BLOCKS, "Maximum combined uniform blocks"},
+		{GL_MAX_CUBE_MAP_TEXTURE_SIZE, "Maximum cube map dimensions"},
+		{GL_MAX_DEPTH_TEXTURE_SAMPLES, "Maximum samples in a multisample depth or depth-stencil texture"},
+		{GL_MAX_DRAW_BUFFERS, "Maximum simultaneous draw buffers"},
+		{GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, "Maximum simultaneous draw buffers with dual-source blending"},
+		{GL_MAX_ELEMENTS_INDICES, "Recommended maximum number of vertex array indices"},
+		{GL_MAX_ELEMENTS_VERTICES, "Recommended maximum number of vertex array vertices"},
+		{GL_MAX_FRAGMENT_INPUT_COMPONENTS, "Max fragment shader input components"},
+		{GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, "Max fragment shader uniform components"},
+		{GL_MAX_TEXTURE_BUFFER_SIZE, "Maximum texels in the texel array of a texture buffer"},
+		{GL_MAX_TEXTURE_IMAGE_UNITS, "Maximum supported texture image units in a fragment shader"},
+		{GL_MAX_TEXTURE_SIZE, "Maximum texture size (rough estimate)"},
+		{GL_MAX_UNIFORM_BUFFER_BINDINGS, "Maximum uniform buffer binding points"},
+		{GL_MAX_UNIFORM_BLOCK_SIZE, "Maximum uniform block size"},
+		{GL_MAX_UNIFORM_LOCATIONS, "Maximum uniform locations"},
+		{GL_MAX_VARYING_COMPONENTS, "Maximum varying components"},
+		{GL_MAX_VARYING_FLOATS, "Maximum floating point varying components"},
+		{GL_MAX_VERTEX_ATOMIC_COUNTERS, "Maximum atomic counters in vertex shaders"},
+		{GL_MAX_VERTEX_ATTRIBS, "Maximum vertex attributes in vertex shader"},
+		{GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, "Maximum active shader storage blocks in a vertex shader"},
+		{GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, "Maximum texture image units in vertex shader"},
+		{GL_MAX_VERTEX_UNIFORM_COMPONENTS, "Maximum uniform components in vertex shader"},
+		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
+		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
+		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"}
+	};
+    int nAttr = sizeof(a) / sizeof(struct attr);
+
+    for (int i = 0; i < nAttr; i++)
+	{
+		int value;
+		glGetIntegerv( a[i].name, &value );
+        vsLog("%s: %d", a[i].label, value );
     }
+	vsLog("== End OpenGL limits ==");
 #endif // TARGET_OS_IPHONE
 }
 
@@ -102,13 +137,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 {
 	vsAssert( s_instance == NULL, "Multiple renderers??" );
 	s_instance = this;
-	const char* c_capabilityString[vsRenderer_OpenGL3::CAP_MAX] =
-	{
-		"GL_ARB_framebuffer_object",
-		"GL_EXT_framebuffer_object",
-		"GL_EXT_framebuffer_multisample",
-		"GL_EXT_framebuffer_blit"
-	};
 
 	int displayCount = SDL_GetNumVideoDisplays();
 	if (displayCount < 1)
@@ -192,20 +220,27 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
-	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
-	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
-
 	if ( !g_sdlWindow ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
+	if ( !m_sdlGlContext )
+	{
+		vsLog("Failed to create OpenGL context??");
+		exit(1);
+	}
+	printAttributes();
+
 	m_widthPixels = width;
 	m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED
 	if ( flags & Flag_HighDPI )
 		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
+	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
+	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
 
 	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
 	// if ( shareVal )
@@ -225,12 +260,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("High DPI backing store is: %dx%d", m_widthPixels, m_heightPixels);
 	}
 
-	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
-	if ( !m_sdlGlContext )
-	{
-		vsLog("Failed to create OpenGL context??");
-		exit(1);
-	}
 
 	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_loadingGlContext )
@@ -242,42 +271,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
-	printAttributes();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
-	if ( !GL_VERSION_2_1 )
-	{
-		vsLog("No support for GL 2.1 -- cannot run.");
-		exit(1);	// TODO:  What can I do in this situation?
-	}
-	else
-	{
-		for ( int i = 0; i < CAP_MAX; i++ )
-		{
-			m_capabilities.supported[i] = glewIsSupported( c_capabilityString[i] );
-			vsLog("%s: %s", c_capabilityString[i], m_capabilities.supported[i] ?
-					"supported" : "not supported");
-		}
-
-		// check caps to make sure that we can run.
-		bool canRun = true;
-		if ( !m_capabilities.supported[CAP_ARB_framebuffer_object] &&
-				( !m_capabilities.supported[CAP_EXT_framebuffer_object] ||
-				  !m_capabilities.supported[CAP_EXT_framebuffer_blit] ||
-				  !m_capabilities.supported[CAP_EXT_framebuffer_multisample] )
-		   )
-		{
-			canRun = false;
-		}
-
-		if ( !canRun )
-		{
-			vsLog("Insufficient extensions to run.");
-			exit(1);
-		}
-	}
+	vsAssert( GL_VERSION_3_3, "No support for OpenGL 3.3 -- cannot run." );
 
 	m_antialias = flags & Flag_Antialias;
-	// m_antialias = false;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 	{
