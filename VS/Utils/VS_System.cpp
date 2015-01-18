@@ -67,6 +67,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	// Perform some basic initialisation
 	vsRandom::Init();
+
 	vsLog("VectorStorm engine version %s",VS_VERSION);
 
 	InitPhysFS( argc, argv, companyName, title );
@@ -159,14 +160,16 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
+	vsLog_End();
 }
 
 void
 vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
 {
-	vsLog("====== Initialising file system");
 	PHYSFS_init(argv[0]);
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
+	vsLog_Start();
+	vsLog("====== Initialising file system");
 	if ( !success )
 	{
 		vsLog("SetWriteDir failed!", success);
