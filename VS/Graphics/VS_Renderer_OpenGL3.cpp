@@ -272,9 +272,19 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
-	vsAssert( GL_VERSION_3_3, "No support for OpenGL 3.3 -- cannot run." );
 
-	m_antialias = flags & Flag_Antialias;
+	GLint major = 0;
+	GLint minor = 0;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	if ( major < 3 || (major == 3 && minor < 3) )
+	{
+		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run", major, minor);
+		bool supportsOpenGL33 = false;
+		vsAssert( supportsOpenGL33, errorString );
+	}
+
+	m_antialias = (flags & Flag_Antialias) != 0;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 	{
@@ -695,9 +705,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsMatrix4x4 m = m_transformStack[m_currentTransformStackLevel];
 					vsVector4D &t = m.w;
-					t.x = (int)t.x;
-					t.y = (int)t.y;
-					t.z = (int)t.z;
+					t.x = (float)vsFloor(t.x + 0.5f);
+					t.y = (float)vsFloor(t.y + 0.5f);
+					t.z = (float)vsFloor(t.z + 0.5f);
 					m_transformStack[++m_currentTransformStackLevel] = m;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
@@ -1000,10 +1010,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
 					const vsBox2D& box = op->data.box2D;
-					glScissor( box.GetMin().x * m_viewportWidthPixels,
-							box.GetMin().y * m_viewportHeightPixels,
-							box.Width() * m_viewportWidthPixels,
-							box.Height() * m_viewportHeightPixels );
+					glScissor( (GLsizei)box.GetMin().x * m_viewportWidthPixels,
+							(GLsizei)box.GetMin().y * m_viewportHeightPixels,
+							(GLsizei)box.Width() * m_viewportWidthPixels,
+							(GLsizei)box.Height() * m_viewportHeightPixels );
 					break;
 				}
 			case vsDisplayList::OpCode_DisableScissor:
@@ -1014,10 +1024,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetViewport:
 				{
 					const vsBox2D& box = op->data.box2D;
-					glViewport( box.GetMin().x * m_viewportWidthPixels,
-							box.GetMin().y * m_viewportHeightPixels,
-							box.Width() * m_viewportWidthPixels,
-							box.Height() * m_viewportHeightPixels );
+					glViewport( (GLsizei)box.GetMin().x * m_viewportWidthPixels,
+							(GLsizei)box.GetMin().y * m_viewportHeightPixels,
+							(GLsizei)box.Width() * m_viewportWidthPixels,
+							(GLsizei)box.Height() * m_viewportHeightPixels );
 					//glViewport( box.GetMin().x,
 					//box.GetMin().y,
 					//box.Width(),
