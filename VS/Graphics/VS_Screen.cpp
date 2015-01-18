@@ -195,7 +195,10 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	if ( m_fifoUsageLastFrame > m_fifoHighWater )
 	{
 		m_fifoHighWater = m_fifoUsageLastFrame;
+// #define TRACE_FIFO_SIZE
+#ifdef TRACE_FIFO_SIZE
 		vsLog(" >> New FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
+#endif
 	}
 #ifdef DEBUG_SCENE
 	m_renderer->RenderDisplayList(m_fifo);
