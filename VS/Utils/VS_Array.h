@@ -180,9 +180,33 @@ public:
 		return m_array[id];
 	}
 
+	const T	&GetItem(int id) const
+	{
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		return m_array[id];
+	}
+
+	const T	&operator[](int id) const
+	{
+		return GetItem(id);
+	}
+
 	T	&operator[](int id)
 	{
 		return GetItem(id);
+	}
+
+	void SetArraySize( int size )
+	{
+		// add or remove elements to make us this size.
+		while( ItemCount() > size )
+		{
+			PopBack();
+		}
+		while ( ItemCount() < size )
+		{
+			AddItem( T() );
+		}
 	}
 
 	static const int npos = -1;
