@@ -51,15 +51,32 @@ vsFile::~vsFile()
 }
 
 bool
-vsFile::Exists( const vsString &filename )		// static member!
+vsFile::Exists( const vsString &filename ) // static method
 {
-	return PHYSFS_exists(filename.c_str()) != 0;
+	return PHYSFS_exists(filename.c_str()) && !PHYSFS_isDirectory(filename.c_str());
 }
 
 bool
-vsFile::Delete( const vsString &filename )		// static member!
+vsFile::DirectoryExists( const vsString &filename ) // static method
+{
+	return PHYSFS_exists(filename.c_str()) && PHYSFS_isDirectory(filename.c_str());
+}
+
+bool
+vsFile::Delete( const vsString &filename ) // static method
 {
 	return PHYSFS_delete(filename.c_str()) != 0;
+}
+
+void
+vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // static method
+{
+	if ( !DirectoryExists(writeDirectoryName) )
+	{
+		int mkdirResult = PHYSFS_mkdir( writeDirectoryName.c_str() );
+		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s/%s': %s",
+				PHYSFS_getWriteDir(), writeDirectoryName.c_str(), PHYSFS_getLastError()) );
+	}
 }
 
 bool

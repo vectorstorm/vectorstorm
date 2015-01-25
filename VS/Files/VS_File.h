@@ -46,8 +46,11 @@ public:
 
 	size_t		GetLength() { return m_length; }
 
-	static bool	Exists( const vsString &filename );	// returns true if the requested file exists.  (Useful for prefs files, which may or may not exist)
+	static bool	Exists( const vsString &filename );	// returns true if the specified file exists.
+	static bool	DirectoryExists( const vsString &filename );	// returns true if the specified directory exists.
 	static bool Delete( const vsString &filename );
+
+	static void EnsureWriteDirectoryExists( const vsString &writeDirectoryName );
 
 	bool		PeekRecord( vsRecord *record );	// ONLY FOR READ OPERATIONS.  Peeks at next record, without advancing.
 	bool		Record( vsRecord *record );		// returns true if we found or successfully wrote another record
