@@ -38,6 +38,8 @@ vsInput::~vsInput()
 void
 vsInput::Init()
 {
+	m_fingersDown = 0;
+	m_fingersDownTimer = 0.f;
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
@@ -376,6 +378,14 @@ vsInput::Update(float timeStep)
 					//m_stringModeCursorPosition = event.edit.start;
 					//m_stringModeSelectionLength = event.edit.length;
 					break;
+				case SDL_FINGERDOWN:
+					m_fingersDown++;
+					break;
+				case SDL_FINGERUP:
+					m_fingersDown--;
+					break;
+				case SDL_FINGERMOTION:
+					break;
 				case SDL_MOUSEWHEEL:
 					{
 						float wheelAmt = (float)event.wheel.y;
@@ -385,6 +395,12 @@ vsInput::Update(float timeStep)
 						// everybody else, until those clever SDL folks figure
 						// out how to make wheel scrolling speeds similar.
 						// wheelAmt *= 0.10f;
+						if ( m_fingersDownTimer > 0.f )
+						{
+							// they're probably doing two-finger scrolling.
+							// Tamp that down!
+							wheelAmt *= 0.1f;
+						}
 						#endif
 						if ( wheelAmt > 0 )
 						{
@@ -772,17 +788,35 @@ vsInput::Update(float timeStep)
 
 	m_controlState[CID_MouseWheel] = m_controlState[CID_MouseWheelDown] - m_controlState[CID_MouseWheelUp];
 
-	if ( m_wheelSmoothing )
+	if ( m_fingersDown >= 2 )
 	{
-		const float c_stiffness = 13.f;
+		m_fingersDownTimer = 1.f;
+	}
+	else
+	{
+		m_fingersDownTimer = vsMax(0.f,m_fingersDownTimer - timeStep);
+	}
+	if ( m_wheelSmoothing && m_fingersDownTimer == 0.f )
+	{
+		// on OSX, you can often get absurd instantaneous mouse movements;  reporting
+		// up to 20 or so wheel 'click's in a single frame.  This is probably in part
+		// because of SDL's attempt to convert OSX's clickless scrolling into the
+		// more usual integral 'clicks' used on other OSes.
+		float current = vsClamp(-2.f, m_controlState[CID_MouseWheel], 2.f);
+
+		const float c_stiffness = 23.f;
 		const float c_damping = 2.f * vsSqrt(c_stiffness);
-		float delta = (m_controlState[CID_MouseWheel] - m_wheelSpeed);
+		float delta = (current - m_wheelSpeed);
 		m_wheelSpeed += delta * c_stiffness * timeStep;
 		m_wheelSpeed -= delta * c_damping * timeStep;
 
 		m_controlState[CID_MouseWheelUp] = m_wheelSpeed > 0.f ? m_wheelSpeed : 0.f;
 		m_controlState[CID_MouseWheelDown] = m_wheelSpeed < 0.f ? -m_wheelSpeed : 0.f;
 		m_controlState[CID_MouseWheel] = m_wheelSpeed;
+	}
+	else
+	{
+		m_wheelSpeed = 0.f;
 	}
 #endif
 }

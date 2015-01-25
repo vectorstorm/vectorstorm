@@ -136,6 +136,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	bool			m_suppressFirstMotion;			// suppress our first motion amount after warping, just to be safe.
 	int				m_capturedMouseX;
 	int				m_capturedMouseY;
+	int				m_fingersDown;
+	float			m_fingersDownTimer;
 
 	bool			m_preparingToPoll;
 	bool			m_pollingForDeviceControl;			// are we waiting for an arbitrary control input?  (typically for the purposes of mapping device controls to our virtual controller)
