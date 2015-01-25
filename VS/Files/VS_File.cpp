@@ -68,14 +68,29 @@ vsFile::Delete( const vsString &filename ) // static method
 	return PHYSFS_delete(filename.c_str()) != 0;
 }
 
+vsArray<vsString>
+vsFile::DirectoryContents( const vsString &dirName ) // static method
+{
+	char **files = PHYSFS_enumerateFiles(dirName.c_str());
+	char **i;
+	vsArray<vsString> result;
+
+	for (i = files; *i != NULL; i++)
+		result.AddItem( *i );
+
+	PHYSFS_freeList(files);
+
+	return result;
+}
+
 void
 vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // static method
 {
 	if ( !DirectoryExists(writeDirectoryName) )
 	{
 		int mkdirResult = PHYSFS_mkdir( writeDirectoryName.c_str() );
-		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s/%s': %s",
-				PHYSFS_getWriteDir(), writeDirectoryName.c_str(), PHYSFS_getLastError()) );
+		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s%s%s': %s",
+				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), writeDirectoryName.c_str(), PHYSFS_getLastError()) );
 	}
 }
 
