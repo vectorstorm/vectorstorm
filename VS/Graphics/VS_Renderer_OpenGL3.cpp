@@ -1010,10 +1010,12 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
 					const vsBox2D& box = op->data.box2D;
-					glScissor( (GLsizei)box.GetMin().x * m_viewportWidthPixels,
-							(GLsizei)box.GetMin().y * m_viewportHeightPixels,
-							(GLsizei)box.Width() * m_viewportWidthPixels,
-							(GLsizei)box.Height() * m_viewportHeightPixels );
+					GLsizei x = (GLsizei)(box.GetMin().x * m_viewportWidthPixels);
+					GLsizei y = (GLsizei)(box.GetMin().y * m_viewportHeightPixels);
+					GLsizei wid = (GLsizei)(box.Width() * m_viewportWidthPixels);
+					GLsizei hei = (GLsizei)(box.Height() * m_viewportHeightPixels);
+
+					glScissor( x, y, wid, hei );
 					break;
 				}
 			case vsDisplayList::OpCode_DisableScissor:
