@@ -71,6 +71,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 		vsFile materialFile(fileName);
 		LoadFromFile( &materialFile );
 	}
+	SetShader();
 }
 
 vsMaterialInternal::~vsMaterialInternal()
@@ -237,7 +238,6 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 		}
 	}
 
-	SetShader();
 }
 
 void
