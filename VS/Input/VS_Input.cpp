@@ -41,6 +41,9 @@ vsInput::Init()
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
+	vsSystem::Instance()->GetPreferences();
+	m_wheelSmoothing = true;
+	m_wheelSpeed = 0.f;
 
 	m_axisCenter = NULL;
 	m_axisThrow = NULL;
@@ -307,7 +310,7 @@ vsInput::Correct2DInputForOrientation( const vsVector2D &input )
 void
 vsInput::Update(float timeStep)
 {
-	UNUSED(timeStep);
+	// UNUSED(timeStep);
 
 	m_keyControlState[CID_MouseWheelUp] = 0.f;
 	m_keyControlState[CID_MouseWheelDown] = 0.f;
@@ -769,6 +772,18 @@ vsInput::Update(float timeStep)
 
 	m_controlState[CID_MouseWheel] = m_controlState[CID_MouseWheelDown] - m_controlState[CID_MouseWheelUp];
 
+	if ( m_wheelSmoothing )
+	{
+		const float c_stiffness = 13.f;
+		const float c_damping = 2.f * vsSqrt(c_stiffness);
+		float delta = (m_controlState[CID_MouseWheel] - m_wheelSpeed);
+		m_wheelSpeed += delta * c_stiffness * timeStep;
+		m_wheelSpeed -= delta * c_damping * timeStep;
+
+		m_controlState[CID_MouseWheelUp] = m_wheelSpeed > 0.f ? m_wheelSpeed : 0.f;
+		m_controlState[CID_MouseWheelDown] = m_wheelSpeed < 0.f ? -m_wheelSpeed : 0.f;
+		m_controlState[CID_MouseWheel] = m_wheelSpeed;
+	}
 #endif
 }
 

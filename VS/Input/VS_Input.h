@@ -145,6 +145,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	bool			m_stringModeSelectAll;				// if true, hitting 'backspace' or 'delete' will completely clear the string.
 
 	bool			m_mouseIsInWindow;
+	bool			m_wheelSmoothing; // enable or disable wheel "smoothing" support.
+	float			m_wheelSpeed;
 
 	void			ReadAxis( int axisID, ControlDirection dir, int cid );
 	void			ReadButton( int buttonID, int cid );

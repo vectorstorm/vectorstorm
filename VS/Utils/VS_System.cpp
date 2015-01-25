@@ -414,6 +414,7 @@ vsSystemPreferences::vsSystemPreferences()
 	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
 	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
+	m_wheelSmoothing = m_preferences->GetPreference("WheelSmoothing", 1, 0, 1);
 }
 
 vsSystemPreferences::~vsSystemPreferences()
@@ -571,6 +572,18 @@ void
 vsSystemPreferences::SetHighDPI(bool allow)
 {
 	m_highDPI->m_value = allow;
+}
+
+bool
+vsSystemPreferences::GetWheelSmoothing()
+{
+	return !!(m_wheelSmoothing->m_value);
+}
+
+void
+vsSystemPreferences::SetWheelSmoothing(bool allow)
+{
+	m_wheelSmoothing->m_value = allow;
 }
 
 void

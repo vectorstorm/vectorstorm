@@ -155,6 +155,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_antialias;
 	vsPreferenceObject *	m_highDPI;
+	vsPreferenceObject *	m_wheelSmoothing;
 
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
@@ -193,6 +194,9 @@ public:
 
 	bool			GetHighDPI();
 	void			SetHighDPI(bool allow);
+
+	bool			GetWheelSmoothing();
+	void			SetWheelSmoothing(bool smooth);
 
 	// Sound preferences
 	int				GetEffectVolume();
