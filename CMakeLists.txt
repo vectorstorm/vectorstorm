@@ -323,6 +323,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_TimerSystem.cpp
 	VS/Utils/VS_TimerSystem.h
 	VS/Utils/VS_Tween.h
+	VS/Utils/VS_VolatileArray.h
+	VS/Utils/VS_VolatileArrayStore.h
 	VS/Utils/VS_WeakPointer.h
 	VS/Utils/VS_WeakPointerTarget.h
 	)

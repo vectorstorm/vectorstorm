@@ -66,6 +66,8 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 // 			}
 // 			free(strs);
 // #endif
+			vsLog_End();
+			vsLog_Show();
 #if defined(_DEBUG)
 			DEBUG_BREAK;
 #endif

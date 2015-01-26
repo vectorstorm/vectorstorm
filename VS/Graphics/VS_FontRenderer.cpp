@@ -370,7 +370,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		bool wrapping = outOfSpace;
 		if ( seekPosition != vsString::npos )
 		{
-			if ( remainingString[seekPosition] == '\n' )	// newline?
+			if ( !outOfSpace && remainingString[seekPosition] == '\n' )	// newline?
 			{
 				lineEnd = seekPosition;
 				wrapping = true;

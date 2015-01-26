@@ -31,6 +31,7 @@ class vsRenderQueueStage
 	struct BatchElement
 	{
 		vsMatrix4x4		matrix;
+		vsMaterial *	material;
 		const vsMatrix4x4 *	instanceMatrix;
 		const vsColor *	instanceColor;
 		int				instanceMatrixCount;
@@ -39,6 +40,7 @@ class vsRenderQueueStage
 		BatchElement *	next;
 
 		BatchElement():
+			material(NULL),
 			instanceMatrix(NULL),
 			instanceColor(NULL),
 			instanceMatrixCount(0),
@@ -50,6 +52,7 @@ class vsRenderQueueStage
 
 		void Clear()
 		{
+			material = NULL;
 			instanceMatrix = NULL;
 			instanceMatrixCount = 0;
 			instanceMatrixBuffer = NULL;
@@ -59,9 +62,9 @@ class vsRenderQueueStage
 	};
 	struct Batch
 	{
-		vsMaterial		material;
-		BatchElement*	elementList;
-		Batch*			next;
+		vsMaterialInternal*	material;
+		BatchElement*		elementList;
+		Batch*				next;
 
 		Batch();
 		~Batch();

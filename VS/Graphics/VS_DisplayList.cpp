@@ -974,15 +974,10 @@ vsDisplayList::TriangleFanArray( int *idArray, int vertexCount )
 void
 vsDisplayList::SetMaterial( vsMaterial *material )
 {
-	SetMaterial( material->GetResource() );
-}
-
-void
-vsDisplayList::SetMaterial( vsMaterialInternal *material )
-{
 	m_fifo->WriteUint8( OpCode_SetMaterial );
 	m_fifo->WriteVoidStar( material );
 }
+
 
 void
 vsDisplayList::SetRenderTarget( vsRenderTarget *target )

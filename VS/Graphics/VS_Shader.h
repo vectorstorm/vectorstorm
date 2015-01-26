@@ -24,6 +24,11 @@ public:
 	struct Uniform
 	{
 		vsString name;
+		union
+		{
+			bool b;
+			float f32;
+		};
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
@@ -37,7 +42,6 @@ public:
 	};
 
 private:
-	int32_t m_alphaRefLoc;
 	int32_t m_colorLoc;
 	int32_t m_instanceColorAttributeLoc;
 	int32_t m_resolutionLoc;
@@ -51,7 +55,6 @@ private:
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
 	int32_t m_viewToProjectionLoc;
-	int32_t m_glowLoc;
 
 	int32_t m_lightAmbientLoc;
 	int32_t m_lightDiffuseLoc;
@@ -65,7 +68,8 @@ private:
 	int32_t m_uniformCount;
 	int32_t m_attributeCount;
 
-	void SetUniformValue( int i, float value );
+	void SetUniformValueF( int i, float value );
+	void SetUniformValueB( int i, bool value );
 
 protected:
 	uint32_t m_shader;
@@ -79,19 +83,18 @@ public:
 
 	uint32_t GetShaderId() { return m_shader; }
 
-    void SetAlphaRef( float aref );
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
 	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
+	void SetInstanceColors( vsRenderBuffer *colors );
 	void SetInstanceColors( const vsColor* color, int matCount );
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
-	void SetGlow( float glowAlpha );
-	void SetCustomUniform( const vsString& name, float value );
 
 	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
+	int32_t GetUniformId(const vsString& name) const;
 	int32_t GetUniformCount() const { return m_uniformCount; }
 	int32_t GetAttributeCount() const { return m_attributeCount; }
 
@@ -99,7 +102,7 @@ public:
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterialInternal *activeMaterial ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial ); // called before we start rendering something with this shader
 };
 
 

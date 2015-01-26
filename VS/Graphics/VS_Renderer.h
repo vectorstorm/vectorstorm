@@ -73,7 +73,8 @@ public:
 		Flag_Fullscreen = BIT(0),
 		Flag_VSync = BIT(1),
 		Flag_Resizable = BIT(2),
-		Flag_Antialias = BIT(3)
+		Flag_Antialias = BIT(3),
+		Flag_HighDPI = BIT(4)
 	};
 	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();

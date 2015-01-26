@@ -10,6 +10,10 @@
 #ifndef VS_LOG
 #define VS_LOG
 
+void vsLog_Start();
+void vsLog_End();
+void vsLog_Show();
+
 void vsLog(const char *format, ...);
 void vsLog(const vsString &str);
 

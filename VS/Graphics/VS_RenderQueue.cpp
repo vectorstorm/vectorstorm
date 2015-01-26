@@ -18,7 +18,7 @@
 
 
 vsRenderQueueStage::Batch::Batch():
-	material("White"),
+	material(NULL),
 	elementList(NULL),
 	next(NULL)
 {
@@ -57,7 +57,7 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 {
 	for (Batch *batch = m_batch; batch; batch = batch->next)
 	{
-		if ( batch->material == material )
+		if ( batch->material == material->GetResource() )
 		{
 			return batch;
 		}
@@ -70,7 +70,7 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 	Batch *batch = m_batchPool;
 	m_batchPool = batch->next;
 	batch->next = NULL;
-	batch->material = *material;
+	batch->material = material->GetResource();
 
 	// insert this batch into our batch list, SORTED.
 	bool inserted = false;
@@ -81,7 +81,7 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 	}
 	else
 	{
-		if ( m_batch->material.GetResource()->m_layer > material->GetResource()->m_layer )
+		if ( m_batch->material->m_layer > material->GetResource()->m_layer )
 		{
 			// we should sort before the first thing in the batch list.
 			batch->next = m_batch;
@@ -93,7 +93,7 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 			Batch *lb;
 			for(lb = m_batch; lb->next; lb = lb->next)
 			{
-				if ( lb->next->material.GetResource()->m_layer > material->GetResource()->m_layer )
+				if ( lb->next->material->m_layer > material->GetResource()->m_layer )
 				{
 					batch->next = lb->next;
 					lb->next = batch;
@@ -128,6 +128,7 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	element->next = NULL;
 	element->Clear();
 
+	element->material = material;
 	element->matrix = matrix;
 	element->list = batchList;
 	element->instanceMatrix = NULL;
@@ -174,6 +175,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matr
 	element->next = NULL;
 	element->Clear();
 
+	element->material = material;
 	element->instanceMatrixBuffer = matrixBuffer;
 	element->list = batchList;
 
@@ -195,6 +197,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	element->next = NULL;
 	element->Clear();
 
+	element->material = material;
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
 	element->instanceColor = color;
@@ -218,6 +221,7 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 	element->next = NULL;
 	element->Clear();
 
+	element->material = material;
 	element->matrix = matrix;
 	element->list = new vsDisplayList(size);
 
@@ -243,10 +247,9 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 {
 	for (Batch *b = m_batch; b; b = b->next)
 	{
-		list->SetMaterial( &b->material );
-
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
+			list->SetMaterial( e->material );
 			if ( e->instanceMatrixBuffer )
 				list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
 			else if ( e->instanceMatrix )

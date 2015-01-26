@@ -77,7 +77,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
-	m_alphaRefLoc = glGetUniformLocation(m_shader, "alphaRef");
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
@@ -90,7 +89,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
-	m_glowLoc = glGetUniformLocation(m_shader, "glow");
 
 	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
@@ -119,9 +117,20 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		GLsizei actualLength = 0;
 		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
 		m_uniform[i].name = vsString(nameBuffer);
-		m_uniform[i].loc = glGetUniformLocation(m_shader, m_uniform[i].name.c_str());
+		m_uniform[i].loc = glGetUniformLocation(m_shader, nameBuffer);
 		m_uniform[i].type = type;
 		m_uniform[i].arraySize = arraySize;
+		switch ( m_uniform[i].type )
+		{
+			case GL_BOOL:
+				m_uniform[i].b = 0;
+				break;
+			case GL_FLOAT:
+				m_uniform[i].f32 = 0.f;
+				break;
+			default:
+				break;
+		}
 	}
 	for ( GLint i = 0; i < m_attributeCount; i++ )
 	{
@@ -169,15 +178,6 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 }
 
 void
-vsShader::SetAlphaRef( float aref )
-{
-	if ( m_alphaRefLoc >= 0 )
-	{
-		glUniform1f( m_alphaRefLoc, aref );
-	}
-}
-
-void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
 	if ( m_fogLoc >= 0 )
@@ -203,6 +203,23 @@ vsShader::SetColor( const vsColor& color )
 	}
 
 	glVertexAttrib4f( 3, color.r, color.g, color.b, color.a );
+}
+
+void
+vsShader::SetInstanceColors( vsRenderBuffer *colors )
+{
+	if ( m_instanceColorAttributeLoc >= 0 )
+	{
+		if ( !m_colorAttribIsActive )
+		{
+			glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+			glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+			m_colorAttribIsActive = true;
+		}
+
+		colors->BindAsAttribute( m_instanceColorAttributeLoc );
+	}
+	CheckGLError("SetColors");
 }
 
 void
@@ -326,14 +343,22 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 			}
 
 			static GLuint g_vbo = 0xffffffff;
+			static GLuint g_vboSize = 0;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			}
+			else
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+				// explicitly orphan the buffer
+				glBufferData(GL_ARRAY_BUFFER, g_vboSize, NULL, GL_STREAM_DRAW);
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vsMatrix4x4) * matCount, localToWorld, GL_STREAM_DRAW);
+			g_vboSize = sizeof(vsMatrix4x4) * matCount;
+			glBufferData(GL_ARRAY_BUFFER, g_vboSize, localToWorld, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
@@ -361,13 +386,15 @@ vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 	}
 }
 
-void
-vsShader::SetGlow( float glowAlpha )
+int32_t
+vsShader::GetUniformId(const vsString& name) const
 {
-	if ( m_glowLoc >= 0 )
+	for ( int i = 0; i < m_uniformCount; i++ )
 	{
-		glUniform1f( m_glowLoc, glowAlpha );
+		if ( m_uniform[i].name == name )
+			return i;
 	}
+	return -1;
 }
 
 void
@@ -400,9 +427,32 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 }
 
 void
-vsShader::Prepare( vsMaterialInternal *material )
+vsShader::Prepare( vsMaterial *material )
 {
-	CheckGLError("Prepare");
+	for ( int i = 0; i < m_uniformCount; i++ )
+	{
+		switch( m_uniform[i].type )
+		{
+			case GL_BOOL:
+				{
+					bool b = material->UniformB(i);
+					if ( b != m_uniform[i].b )
+						SetUniformValueB( i, b );
+					break;
+				}
+			case GL_FLOAT:
+				{
+					float f = material->UniformF(i);
+					if ( f != m_uniform[i].f32 )
+						SetUniformValueF( i, f );
+					break;
+				}
+			default:
+				// TODO:  Handle more uniform types
+				break;
+		}
+	}
+
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
@@ -423,20 +473,19 @@ vsShader::Prepare( vsMaterialInternal *material )
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
 	}
-
-	for ( int i = 0; i < m_uniformCount; i++ )
-	{
-		if ( material->HasValueForUniform(i) )
-		{
-			SetUniformValue( i, material->GetValueForUniform(i) );
-		}
-	}
-	CheckGLError("Prepare");
 }
 
 void
-vsShader::SetUniformValue( int i, float value )
+vsShader::SetUniformValueF( int i, float value )
 {
 	glUniform1f( m_uniform[i].loc, value );
+	m_uniform[i].f32 = value;
+}
+
+void
+vsShader::SetUniformValueB( int i, bool value )
+{
+	glUniform1i( m_uniform[i].loc, value );
+	m_uniform[i].b = value;
 }
 

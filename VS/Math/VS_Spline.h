@@ -117,9 +117,9 @@ public:
 
 	void Set( const vsColor &start, const vsColor &middle, const vsColor &end );
 
-	const vsColor& Start() { return m_start; }
-	const vsColor& End() { return m_end; }
-	vsColor Middle() { return m_start + m_startVelocity; }
+	const vsColor& Start() const { return m_start; }
+	const vsColor& End() const { return m_end; }
+	vsColor Middle() const { return m_start + m_startVelocity; }
 
 	// evaluates spline position at time 't'.
 	// 't' must be in the range [0..1] from the start to the end of the spline

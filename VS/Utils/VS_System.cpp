@@ -57,6 +57,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_exitGameKeyEnabled( true ),
 	m_exitApplicationKeyEnabled( true ),
 	m_orientation( Orientation_Normal ),
+	m_title( title ),
 	m_screen( NULL )
 {
 	g_globalHeap = new vsHeap("global",totalMemoryBytes);
@@ -66,6 +67,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	// Perform some basic initialisation
 	vsRandom::Init();
+
 	vsLog("VectorStorm engine version %s",VS_VERSION);
 
 	InitPhysFS( argc, argv, companyName, title );
@@ -130,9 +132,9 @@ vsSystem::Init()
 #if !defined(TARGET_OS_IPHONE) && defined(IPHONELIKE)
 //	m_screen = new vsScreen( 1920, 1080, 32, false );
 //	m_screen = new vsScreen( 1280, 720, 32, false );
-	m_screen = new vsScreen( 960, 640, 32, false );
+	m_screen = new vsScreen( 960, 640, 32, false, false );
 #else
-	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetVSync(), m_preferences->GetAntialias() );
+	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -158,14 +160,16 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
+	vsLog_End();
 }
 
 void
 vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
 {
-	vsLog("====== Initialising file system");
 	PHYSFS_init(argv[0]);
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
+	vsLog_Start();
+	vsLog("====== Initialising file system");
 	if ( !success )
 	{
 		vsLog("SetWriteDir failed!", success);
@@ -256,7 +260,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// Since we're going to be restarting our OpenGL context, we need to recompile all of our compiled display lists!
 	// So before we tear down OpenGL, let's uncompile them all.
 
-	vsRenderBuffer::UnmapAll();
+	// vsRenderBuffer::UnmapAll();
 
 	vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
 
@@ -285,7 +289,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 
 	// And now that we're back, let's re-compile all our display lists.
 
-	vsRenderBuffer::MapAll();
+	// vsRenderBuffer::MapAll();
 }
 
 void
@@ -354,9 +358,9 @@ void
 vsSystem::Launch( const vsString &target )
 {
 #if defined(_WIN32)
-	// ShellExecute(NULL, "open", target.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, "open", target.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE_CC__)
-	system( vsFormatString("open %s", target.c_str()).c_str() );
+	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
 #else
 	// system( vsFormatString("open %s", target.c_str()).c_str() );
 #endif
@@ -407,8 +411,20 @@ vsSystemPreferences::vsSystemPreferences()
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
+	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
 	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
+	m_wheelSmoothing = m_preferences->GetPreference("WheelSmoothing", 1, 0, 1);
+	m_mouseWheelScalePercent = m_preferences->GetPreference("MouseWheelScalePercent", 100, 0, 10000);
+
+	// The Mac implementation of SDL_input shows a very responsive "mouse
+	// wheel" when doing two-finger scrolling on a trackpad.  Not certain
+	// whether this behaviour is similar when doing gesture-based scrolling on
+	// a trackpad on a Windows machine.  For now, default trackpad scrolling
+	// to 10% the speed of mouse scrolling, as that seems to approximately
+	// match, to me.  But other folks should be able to configure this to
+	// whatever behaviour they like on their own systems!
+	m_trackpadWheelScalePercent = m_preferences->GetPreference("TrackpadWheelScalePercent", 10, 0, 10000);
 }
 
 vsSystemPreferences::~vsSystemPreferences()
@@ -554,6 +570,53 @@ void
 vsSystemPreferences::SetAntialias(bool enabled)
 {
 	m_antialias->m_value = enabled;
+}
+
+bool
+vsSystemPreferences::GetHighDPI()
+{
+	return !!(m_highDPI->m_value);
+}
+
+void
+vsSystemPreferences::SetHighDPI(bool allow)
+{
+	m_highDPI->m_value = allow;
+}
+
+float
+vsSystemPreferences::GetMouseWheelScaling()
+{
+	return m_mouseWheelScalePercent->m_value / 100.f;
+}
+void
+vsSystemPreferences::SetMouseWheelScaling(float scaling)
+{
+	m_mouseWheelScalePercent->m_value = scaling * 100.f;
+}
+
+float
+vsSystemPreferences::GetTrackpadWheelScaling()
+{
+	return m_trackpadWheelScalePercent->m_value / 100.f;
+}
+
+void
+vsSystemPreferences::SetTrackpadWheelScaling(float scaling)
+{
+	m_trackpadWheelScalePercent->m_value = scaling * 100.f;
+}
+
+bool
+vsSystemPreferences::GetWheelSmoothing()
+{
+	return !!(m_wheelSmoothing->m_value);
+}
+
+void
+vsSystemPreferences::SetWheelSmoothing(bool allow)
+{
+	m_wheelSmoothing->m_value = allow;
 }
 
 void

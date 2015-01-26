@@ -36,13 +36,12 @@ public:
 		m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
-	virtual void Prepare( vsMaterialInternal *mat )
+	virtual void Prepare( vsMaterial *mat )
 	{
+		vsShader::Prepare( mat );
 		glUniform1f(m_locOffsetX, m_offset.x);
 		glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
-
-		vsShader::Prepare( mat );
 	}
 };
 
@@ -338,6 +337,7 @@ const char *row3v = STRINGIFY( #version 330\n
 			c = coefficients[0] * texture(textures[0], fragment_texcoord[0]);
 			c += coefficients[1] * texture(textures[0], fragment_texcoord[1]);
 			c += coefficients[2] * texture(textures[0], fragment_texcoord[2]);
+			c *= 1.3; // a little extra "oomph" for the glow
 
 			fragment_color = c;
 			}

@@ -56,8 +56,6 @@ static void printAttributes ()
 {
 #if !TARGET_OS_IPHONE
     // Print out attributes of the context we created
-    int nAttr;
-    int i;
 
 	vsLog("OpenGL Context:");
 	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
@@ -72,20 +70,57 @@ static void printAttributes ()
 		vsLog("  Shader Langugage Version:  None");
 	}
 
-    SDL_GLattr  attr[] = { SDL_GL_RED_SIZE, SDL_GL_BLUE_SIZE, SDL_GL_GREEN_SIZE,
-	SDL_GL_ALPHA_SIZE, SDL_GL_BUFFER_SIZE, SDL_GL_DEPTH_SIZE };
-
-    const char *desc[] = { "Red size: %d bits", "Blue size: %d bits", "Green size: %d bits",
-		"Alpha size: %d bits", "Color buffer size: %d bits", "Depth buffer size: %d bits" };
-
-    nAttr = sizeof(attr) / sizeof(int);
-
-    for (i = 0; i < nAttr; i++)
+	vsLog("== Begin OpenGL limits ==");
+	struct attr
 	{
-        int value;
-        SDL_GL_GetAttribute (attr[i], &value);
-        vsLog(vsFormatString(desc[i], value));
+		GLenum name;
+		const char* label;
+	};
+	static const attr a[] =
+	{
+		{GL_MAX_3D_TEXTURE_SIZE, "Max 3D texture size"},
+		{GL_MAX_ARRAY_TEXTURE_LAYERS, "Max array texture layers"},
+		{GL_MAX_CLIP_DISTANCES, "Max clip distances"},
+		{GL_MAX_COLOR_TEXTURE_SAMPLES, "Max samples in a color multisample texture"},
+		{GL_MAX_COMBINED_ATOMIC_COUNTERS, "Maximum atomic counters"},
+		{GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS, "Maximum fragment shader uniform components"},
+		{GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS, "Maximum geometry shader uniform components"},
+		{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, "Maximum combined texture image units"},
+		{GL_MAX_COMBINED_UNIFORM_BLOCKS, "Maximum combined uniform blocks"},
+		{GL_MAX_CUBE_MAP_TEXTURE_SIZE, "Maximum cube map dimensions"},
+		{GL_MAX_DEPTH_TEXTURE_SAMPLES, "Maximum samples in a multisample depth or depth-stencil texture"},
+		{GL_MAX_DRAW_BUFFERS, "Maximum simultaneous draw buffers"},
+		{GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, "Maximum simultaneous draw buffers with dual-source blending"},
+		{GL_MAX_ELEMENTS_INDICES, "Recommended maximum number of vertex array indices"},
+		{GL_MAX_ELEMENTS_VERTICES, "Recommended maximum number of vertex array vertices"},
+		{GL_MAX_FRAGMENT_INPUT_COMPONENTS, "Max fragment shader input components"},
+		{GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, "Max fragment shader uniform components"},
+		{GL_MAX_TEXTURE_BUFFER_SIZE, "Maximum texels in the texel array of a texture buffer"},
+		{GL_MAX_TEXTURE_IMAGE_UNITS, "Maximum supported texture image units in a fragment shader"},
+		{GL_MAX_TEXTURE_SIZE, "Maximum texture size (rough estimate)"},
+		{GL_MAX_UNIFORM_BUFFER_BINDINGS, "Maximum uniform buffer binding points"},
+		{GL_MAX_UNIFORM_BLOCK_SIZE, "Maximum uniform block size"},
+		{GL_MAX_UNIFORM_LOCATIONS, "Maximum uniform locations"},
+		{GL_MAX_VARYING_COMPONENTS, "Maximum varying components"},
+		{GL_MAX_VARYING_FLOATS, "Maximum floating point varying components"},
+		{GL_MAX_VERTEX_ATOMIC_COUNTERS, "Maximum atomic counters in vertex shaders"},
+		{GL_MAX_VERTEX_ATTRIBS, "Maximum vertex attributes in vertex shader"},
+		{GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, "Maximum active shader storage blocks in a vertex shader"},
+		{GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, "Maximum texture image units in vertex shader"},
+		{GL_MAX_VERTEX_UNIFORM_COMPONENTS, "Maximum uniform components in vertex shader"},
+		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
+		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
+		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"}
+	};
+    int nAttr = sizeof(a) / sizeof(struct attr);
+
+    for (int i = 0; i < nAttr; i++)
+	{
+		int value;
+		glGetIntegerv( a[i].name, &value );
+        vsLog("%s: %d", a[i].label, value );
     }
+	vsLog("== End OpenGL limits ==");
 #endif // TARGET_OS_IPHONE
 }
 
@@ -95,19 +130,13 @@ static void printAttributes ()
 
 vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
+	m_flags(flags),
 	m_window(NULL),
 	m_scene(NULL),
 	m_bufferCount(bufferCount)
 {
 	vsAssert( s_instance == NULL, "Multiple renderers??" );
 	s_instance = this;
-	const char* c_capabilityString[vsRenderer_OpenGL3::CAP_MAX] =
-	{
-		"GL_ARB_framebuffer_object",
-		"GL_EXT_framebuffer_object",
-		"GL_EXT_framebuffer_multisample",
-		"GL_EXT_framebuffer_blit"
-	};
 
 	int displayCount = SDL_GetNumVideoDisplays();
 	if (displayCount < 1)
@@ -159,7 +188,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	videoFlags = SDL_WINDOW_OPENGL;
 #ifdef HIGHDPI_SUPPORTED
-	videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+	if ( flags & Flag_HighDPI )
+		videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 
 	if ( flags & Flag_Fullscreen )
@@ -190,18 +220,27 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
-	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
-
 	if ( !g_sdlWindow ){
 		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
+	if ( !m_sdlGlContext )
+	{
+		vsLog("Failed to create OpenGL context??");
+		exit(1);
+	}
+	printAttributes();
+
 	m_widthPixels = width;
 	m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+	if ( flags & Flag_HighDPI )
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
+	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
+	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
 
 	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
 	// if ( shareVal )
@@ -221,12 +260,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("High DPI backing store is: %dx%d", m_widthPixels, m_heightPixels);
 	}
 
-	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
-	if ( !m_sdlGlContext )
-	{
-		vsLog("Failed to create OpenGL context??");
-		exit(1);
-	}
 
 	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_loadingGlContext )
@@ -238,42 +271,20 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
-	printAttributes();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
-	if ( !GL_VERSION_2_1 )
-	{
-		vsLog("No support for GL 2.1 -- cannot run.");
-		exit(1);	// TODO:  What can I do in this situation?
-	}
-	else
-	{
-		for ( int i = 0; i < CAP_MAX; i++ )
-		{
-			m_capabilities.supported[i] = glewIsSupported( c_capabilityString[i] );
-			vsLog("%s: %s", c_capabilityString[i], m_capabilities.supported[i] ?
-					"supported" : "not supported");
-		}
 
-		// check caps to make sure that we can run.
-		bool canRun = true;
-		if ( !m_capabilities.supported[CAP_ARB_framebuffer_object] &&
-				( !m_capabilities.supported[CAP_EXT_framebuffer_object] ||
-				  !m_capabilities.supported[CAP_EXT_framebuffer_blit] ||
-				  !m_capabilities.supported[CAP_EXT_framebuffer_multisample] )
-		   )
-		{
-			canRun = false;
-		}
-
-		if ( !canRun )
-		{
-			vsLog("Insufficient extensions to run.");
-			exit(1);
-		}
+	GLint major = 0;
+	GLint minor = 0;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	if ( major < 3 || (major == 3 && minor < 3) )
+	{
+		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run", major, minor);
+		bool supportsOpenGL33 = false;
+		vsAssert( supportsOpenGL33, errorString );
 	}
 
-	m_antialias = flags & Flag_Antialias;
-	// m_antialias = false;
+	m_antialias = (flags & Flag_Antialias) != 0;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 	{
@@ -400,12 +411,15 @@ bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
 #ifdef HIGHDPI_SUPPORTED
-	int nowWidthPixels, nowHeightPixels;
-	SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
-	if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
+	if ( m_flags & Flag_HighDPI )
 	{
-		UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
-		return true;
+		int nowWidthPixels, nowHeightPixels;
+		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
+		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
+		{
+			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
+			return true;
+		}
 	}
 #endif
 	return false;
@@ -421,11 +435,12 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
-#ifdef HIGHDPI_SUPPORTED
-	SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
-#else
+	SDL_SetWindowFullscreen(g_sdlWindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	m_widthPixels = width;
 	m_heightPixels = height;
+#ifdef HIGHDPI_SUPPORTED
+	if ( m_flags & Flag_HighDPI )
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
@@ -438,6 +453,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 
 	m_scene->Bind();
@@ -481,6 +497,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
 	CheckGLError("RenderDisplayList");
 	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 	RawRenderDisplayList(list);
 
@@ -498,11 +515,10 @@ vsRenderer_OpenGL3::FlushRenderState()
 			glUseProgram( m_currentShader->GetShaderId() );
 		s_lastShaderId = m_currentShader->GetShaderId();
 
+		// now set the parameters on the current material.
 		m_currentShader->Prepare( m_currentMaterial );
-		m_currentShader->SetAlphaRef( m_currentMaterial->m_alphaRef );
-		m_currentShader->SetGlow( m_currentMaterial->m_glow );
-		m_currentShader->SetFog( m_currentMaterial->m_fog, m_currentFogColor, m_currentFogDensity );
-		m_currentShader->SetTextures( m_currentMaterial->m_texture );
+		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
+		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
 			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
 		else if ( m_currentLocalToWorldCount > 0 )
@@ -591,7 +607,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetMaterial:
 				{
-					vsMaterialInternal *material = (vsMaterialInternal *)op->data.p;
+					vsMaterial *material = (vsMaterial *)op->data.p;
+					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
 					m_currentColors = NULL;
 					break;
@@ -688,9 +705,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsMatrix4x4 m = m_transformStack[m_currentTransformStackLevel];
 					vsVector4D &t = m.w;
-					t.x = (int)t.x;
-					t.y = (int)t.y;
-					t.z = (int)t.z;
+					t.x = (float)vsFloor(t.x + 0.5f);
+					t.y = (float)vsFloor(t.y + 0.5f);
+					t.z = (float)vsFloor(t.z + 0.5f);
 					m_transformStack[++m_currentTransformStackLevel] = m;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
@@ -993,10 +1010,12 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
 					const vsBox2D& box = op->data.box2D;
-					glScissor( box.GetMin().x * m_viewportWidthPixels,
-							box.GetMin().y * m_viewportHeightPixels,
-							box.Width() * m_viewportWidthPixels,
-							box.Height() * m_viewportHeightPixels );
+					GLsizei x = (GLsizei)(box.GetMin().x * m_viewportWidthPixels);
+					GLsizei y = (GLsizei)(box.GetMin().y * m_viewportHeightPixels);
+					GLsizei wid = (GLsizei)(box.Width() * m_viewportWidthPixels);
+					GLsizei hei = (GLsizei)(box.Height() * m_viewportHeightPixels);
+
+					glScissor( x, y, wid, hei );
 					break;
 				}
 			case vsDisplayList::OpCode_DisableScissor:
@@ -1007,10 +1026,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetViewport:
 				{
 					const vsBox2D& box = op->data.box2D;
-					glViewport( box.GetMin().x * m_viewportWidthPixels,
-							box.GetMin().y * m_viewportHeightPixels,
-							box.Width() * m_viewportWidthPixels,
-							box.Height() * m_viewportHeightPixels );
+					glViewport( (GLsizei)box.GetMin().x * m_viewportWidthPixels,
+							(GLsizei)box.GetMin().y * m_viewportHeightPixels,
+							(GLsizei)box.Width() * m_viewportWidthPixels,
+							(GLsizei)box.Height() * m_viewportHeightPixels );
 					//glViewport( box.GetMin().x,
 					//box.GetMin().y,
 					//box.Width(),
@@ -1036,14 +1055,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 }
 
 void
-vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
+vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 {
-	if ( !m_invalidateMaterial && (material == m_currentMaterial) )
+	m_currentMaterial = material;
+}
+
+void
+vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
+{
+	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
 	}
 	m_invalidateMaterial = true;
-	m_currentMaterial = material;
+	m_currentMaterialInternal = material;
 
 	if ( m_currentSettings.writeColor )
 	{
@@ -1086,7 +1111,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterialInternal *material)
 			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
 	}
 
-	vsAssert( m_currentMaterial != NULL, "In SetMaterial() with no material?" );
+	vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
 	m_currentShader = NULL;
 	if ( material->m_shader )
 	{
@@ -1526,5 +1551,32 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 	CheckGLError("ClearLoadingContext");
 	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
 	m_loadingGlContextMutex.Unlock();
+}
+
+vsShader*
+vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
+{
+	vsShader *result = NULL;
+	switch( mat->m_drawMode )
+	{
+		case DrawMode_Add:
+		case DrawMode_Subtract:
+		case DrawMode_Normal:
+		case DrawMode_Absolute:
+			if ( mat->m_texture[0] )
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+			else
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+			break;
+		case DrawMode_Lit:
+			if ( mat->m_texture[0] )
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+			else
+				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+			break;
+		default:
+			vsAssert(0,"Unknown drawmode??");
+	}
+	return result;
 }
 

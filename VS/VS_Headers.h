@@ -121,5 +121,6 @@
 #include <VS/Utils/VS_String.h>
 #include <VS/Utils/VS_System.h>
 #include <VS/Utils/VS_VolatileArray.h>
+#include <VS/Utils/VS_VolatileArrayStore.h>
 
 #endif // VS_HEADERS

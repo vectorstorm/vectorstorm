@@ -40,63 +40,8 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 	{
 		m_length = PHYSFS_fileLength(m_file);
 	}
-	else
-	{
-		vsLog("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError());
-	}
 
-	int e = errno;
-
-	vsString errStr;
-
-	switch( e )
-	{
-		case EACCES:
-			errStr = "EACCES: Required permissions are denied";
-			break;
-		case EAGAIN:
-			errStr = "EAGAIN: Specified slave side of a locked pseudo-terminal device";
-			break;
-		case EINTR:
-			errStr = "EINTR: Operation interrupted";
-			break;
-		case EINVAL:
-			errStr = "EINVAL: Invalid value";
-			break;
-		case EIO:
-			errStr = "EIO: IO Error";
-			break;
-		case EISDIR:
-			errStr = "EISDIR:  Requested file is a directory";
-			break;
-#ifndef _WIN32		// no symbolic links in Win32, so this error doesn't exist.
-		case ELOOP:
-			errStr = "ELOOP:  Too many symbolic links in path";
-			break;
-#endif // _WIN32
-		case EMFILE:
-			errStr = "EMFILE:  File is already open";
-			break;
-		case ENAMETOOLONG:
-			errStr = "ENAMETOOLONG:  Filename is too long";
-			break;
-		case ENFILE:
-			errStr = "ENFILE:  System file table is full";
-			break;
-		case ENOENT:
-			errStr = "ENOENT:  A component of the path name that must exist does not exist.";
-			break;
-		case ENOTDIR:
-			errStr = "ENOTDIR:  A component of the path prefix is not a directory.";
-			break;
-		case EROFS:
-			errStr = "EROFS:  Read-only file system.";
-			break;
-		default:
-			errStr = vsFormatString("%d", e);
-	}
-
-	vsAssert( m_file != NULL, STR("fopen() returned %s, opening file '%s'", errStr.c_str(), filename.c_str()) );
+	vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError()) );
 }
 
 vsFile::~vsFile()
@@ -106,15 +51,47 @@ vsFile::~vsFile()
 }
 
 bool
-vsFile::Exists( const vsString &filename )		// static member!
+vsFile::Exists( const vsString &filename ) // static method
 {
-	return PHYSFS_exists(filename.c_str()) != 0;
+	return PHYSFS_exists(filename.c_str()) && !PHYSFS_isDirectory(filename.c_str());
 }
 
 bool
-vsFile::Delete( const vsString &filename )		// static member!
+vsFile::DirectoryExists( const vsString &filename ) // static method
+{
+	return PHYSFS_exists(filename.c_str()) && PHYSFS_isDirectory(filename.c_str());
+}
+
+bool
+vsFile::Delete( const vsString &filename ) // static method
 {
 	return PHYSFS_delete(filename.c_str()) != 0;
+}
+
+vsArray<vsString>
+vsFile::DirectoryContents( const vsString &dirName ) // static method
+{
+	char **files = PHYSFS_enumerateFiles(dirName.c_str());
+	char **i;
+	vsArray<vsString> result;
+
+	for (i = files; *i != NULL; i++)
+		result.AddItem( *i );
+
+	PHYSFS_freeList(files);
+
+	return result;
+}
+
+void
+vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // static method
+{
+	if ( !DirectoryExists(writeDirectoryName) )
+	{
+		int mkdirResult = PHYSFS_mkdir( writeDirectoryName.c_str() );
+		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s%s%s': %s",
+				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), writeDirectoryName.c_str(), PHYSFS_getLastError()) );
+	}
 }
 
 bool

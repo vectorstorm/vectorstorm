@@ -24,11 +24,12 @@
 const int c_fifoSize = 1024 * 300;		// 300kb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias):
+vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias,bool highDPI):
 	m_renderer(NULL),
 	m_pipeline(NULL),
 	m_scene(NULL),
 	m_sceneCount(0),
+	m_fifoUsageLastFrame(0),
 	m_fifoHighWater(0),
 	m_width(width),
 	m_height(height),
@@ -47,6 +48,8 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 		flags |= vsRenderer::Flag_VSync;
 	if ( antialias )
 		flags |= vsRenderer::Flag_Antialias;
+	if ( highDPI )
+		flags |= vsRenderer::Flag_HighDPI;
 	flags |= vsRenderer::Flag_Resizable;
 
 	int bufferCount = 2;
@@ -57,7 +60,6 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	printf("Screen Ratio:  %f\n", m_aspectRatio);
 
 	m_fifo = new vsDisplayList(c_fifoSize);
-	m_subfifo = new vsDisplayList(c_fifoSize);
 }
 
 vsScreen::~vsScreen()
@@ -66,7 +68,6 @@ vsScreen::~vsScreen()
 	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
-	vsDelete( m_subfifo );
 	s_instance = NULL;
 }
 
@@ -190,7 +191,15 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
 	pipeline->Draw(m_fifo);
-	m_fifoHighWater = vsMax( m_fifoHighWater, m_fifo->GetSize() );
+	m_fifoUsageLastFrame = m_fifo->GetSize();
+	if ( m_fifoUsageLastFrame > m_fifoHighWater )
+	{
+		m_fifoHighWater = m_fifoUsageLastFrame;
+// #define TRACE_FIFO_SIZE
+#ifdef TRACE_FIFO_SIZE
+		vsLog(" >> New FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
+#endif
+	}
 #ifdef DEBUG_SCENE
 	m_renderer->RenderDisplayList(m_fifo);
 	m_fifo->Clear();

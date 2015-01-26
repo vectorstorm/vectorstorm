@@ -43,8 +43,10 @@ enum StencilOp
 
 class vsMaterialInternal : public vsResource
 {
+	void		SetShader();
 public:
 
+	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
 	vsShader *  m_shader;
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
@@ -68,9 +70,6 @@ public:
 	bool		m_hasColor;
 	bool		m_blend;
 
-	bool		*m_hasUniformValue;
-	float		*m_uniformValue;
-
 	vsMaterialInternal( const vsString & materialName );
 	vsMaterialInternal( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
 	vsMaterialInternal( vsTexture *texture, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );
@@ -79,15 +78,8 @@ public:
 
 	void		LoadFromFile( vsFile *file );
 
-	void		SetUpShaderStorage();
-
 	vsTexture *	GetTexture(int i = 0) const { return m_texture[i]; }
 	bool HasAnyTextures() const;
-
-	// TODO:  Support more than just 'float' uniform values.
-	bool HasValueForUniform(int i) const { return m_hasUniformValue && m_hasUniformValue[i]; }
-	float GetValueForUniform(int i) const { return m_uniformValue[i]; }
-	void SetUniformValue(const vsString& name, float value);
 
 	void operator=(const vsMaterialInternal &b);
 	bool operator==(const vsMaterialInternal &b) const { return (m_color==b.m_color && m_drawMode==b.m_drawMode); }

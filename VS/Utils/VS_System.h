@@ -65,6 +65,7 @@ class vsSystem
 	vsTextureManager *	m_textureManager;
 	vsMaterialManager *	m_materialManager;
 
+	vsString			m_title;
 	vsScreen *			m_screen;
 
 	vsSystemPreferences *m_preferences;
@@ -82,6 +83,8 @@ public:
 
 	void Init();
 	void Deinit();
+
+	const vsString& GetTitle() const { return m_title; }
 
 	void		EnableGameDirectory( const vsString &directory );
 	void		DisableGameDirectory( const vsString &directory );
@@ -151,6 +154,10 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_antialias;
+	vsPreferenceObject *	m_highDPI;
+	vsPreferenceObject *	m_wheelSmoothing;
+	vsPreferenceObject *	m_mouseWheelScalePercent;
+	vsPreferenceObject *	m_trackpadWheelScalePercent;
 
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
@@ -187,12 +194,24 @@ public:
 	bool			GetAntialias();
 	void			SetAntialias(bool enabled);
 
+	bool			GetHighDPI();
+	void			SetHighDPI(bool allow);
+
+	bool			GetWheelSmoothing();
+	void			SetWheelSmoothing(bool smooth);
+
 	// Sound preferences
 	int				GetEffectVolume();
 	void			SetEffectVolume(int volume);
 
 	int				GetMusicVolume();
 	void			SetMusicVolume(int volume);
+
+	float			GetMouseWheelScaling();
+	void			SetMouseWheelScaling(float scaling); // range: [0..100]
+
+	float			GetTrackpadWheelScaling();
+	void			SetTrackpadWheelScaling(float scaling); // range: [0..100]
 };
 
 #endif // VS_SYSTEM_H

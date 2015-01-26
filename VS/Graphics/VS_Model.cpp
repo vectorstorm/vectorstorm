@@ -227,7 +227,8 @@ vsModel::SetDisplayList( vsDisplayList *list )
 void
 vsModel::AddFragment( vsFragment *fragment )
 {
-	m_fragment.AddItem( fragment );
+	if ( fragment )
+		m_fragment.AddItem( fragment );
 }
 
 void
@@ -244,7 +245,7 @@ vsModel::BuildBoundingBox()
 	{
 		m_displayList->GetBoundingBox(boundingBox);
 	}
-	for ( vsLinkedListStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
 		vsBox3D fragmentBox;
@@ -288,7 +289,7 @@ vsModel::Draw( vsRenderQueue *queue )
 				m_instanceData->bufferIsDirty = false;
 			}
 #endif
-			for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+			for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 			{
 // #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 // 				queue->AddFragmentInstanceBatch( *iter, &m_instanceData->matrixBuffer );
@@ -299,23 +300,24 @@ vsModel::Draw( vsRenderQueue *queue )
 		}
 		else
 		{
-			vsDisplayList *list = queue->GetGenericList();
-			if ( m_material )
-			{
-				list->SetMaterial( m_material );
-			}
-
 			bool hasTransform = (m_transform != vsTransform3D::Identity);
 
 			if ( hasTransform )
 			{
 				queue->PushMatrix( m_transform.GetMatrix() );
 			}
-			list->SetMatrix4x4( queue->GetMatrix() );
 
 			if ( m_displayList )
 			{
+				// old rendering support
+				vsDisplayList *list = queue->GetGenericList();
+				if ( m_material )
+				{
+					list->SetMaterial( m_material );
+				}
+				list->SetMatrix4x4( queue->GetMatrix() );
 				list->Append( *m_displayList );
+				list->PopTransform();
 			}
 			else
 			{
@@ -324,20 +326,19 @@ vsModel::Draw( vsRenderQueue *queue )
 
 			if ( !m_fragment.IsEmpty() )
 			{
-				for( vsListStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+				for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 				{
-					queue->AddFragmentBatch( *iter );
+					if ( iter->IsVisible() )
+						queue->AddFragmentBatch( *iter );
 				}
 			}
 
-			//		Parent::Draw(list);
 			DrawChildren(queue);
 
 			if ( hasTransform )
 			{
 				queue->PopMatrix();
 			}
-			list->PopTransform();
 		}
 	}
 }

@@ -261,7 +261,6 @@ public:
 	void	LineStripBuffer( vsRenderBuffer *buffer );
 
 	void	SetMaterial( vsMaterial *material );
-	void	SetMaterial( vsMaterialInternal *material );
 	void	SetRenderTarget( vsRenderTarget *target );
 	void	ClearRenderTarget(); // clears the currently set render target.
 	void	ResolveRenderTarget( vsRenderTarget *target );
