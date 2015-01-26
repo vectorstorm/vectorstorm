@@ -156,6 +156,8 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_antialias;
 	vsPreferenceObject *	m_highDPI;
 	vsPreferenceObject *	m_wheelSmoothing;
+	vsPreferenceObject *	m_mouseWheelScalePercent;
+	vsPreferenceObject *	m_trackpadWheelScalePercent;
 
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
@@ -204,6 +206,12 @@ public:
 
 	int				GetMusicVolume();
 	void			SetMusicVolume(int volume);
+
+	float			GetMouseWheelScaling();
+	void			SetMouseWheelScaling(float scaling); // range: [0..100]
+
+	float			GetTrackpadWheelScaling();
+	void			SetTrackpadWheelScaling(float scaling); // range: [0..100]
 };
 
 #endif // VS_SYSTEM_H

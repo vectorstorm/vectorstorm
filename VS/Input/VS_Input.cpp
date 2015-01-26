@@ -389,19 +389,15 @@ vsInput::Update(float timeStep)
 				case SDL_MOUSEWHEEL:
 					{
 						float wheelAmt = (float)event.wheel.y;
-						#ifdef __APPLE_CC__
-						// The Mac implementation of SDL_input has a very
-						// responsive mouse wheel.  Let's slow it down to match
-						// everybody else, until those clever SDL folks figure
-						// out how to make wheel scrolling speeds similar.
-						// wheelAmt *= 0.10f;
 						if ( m_fingersDownTimer > 0.f )
 						{
-							// they're probably doing two-finger scrolling.
-							// Tamp that down!
-							wheelAmt *= 0.1f;
+							// probably trackpad scrolling.
+							wheelAmt *= vsSystem::Instance()->GetPreferences()->GetTrackpadWheelScaling();
 						}
-						#endif
+						else
+						{
+							wheelAmt *= vsSystem::Instance()->GetPreferences()->GetMouseWheelScaling();
+						}
 						if ( wheelAmt > 0 )
 						{
 							m_keyControlState[CID_MouseWheelUp] += wheelAmt;

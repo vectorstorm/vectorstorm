@@ -415,6 +415,16 @@ vsSystemPreferences::vsSystemPreferences()
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
 	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
 	m_wheelSmoothing = m_preferences->GetPreference("WheelSmoothing", 1, 0, 1);
+	m_mouseWheelScalePercent = m_preferences->GetPreference("MouseWheelScalePercent", 100, 0, 10000);
+
+	// The Mac implementation of SDL_input shows a very responsive "mouse
+	// wheel" when doing two-finger scrolling on a trackpad.  Not certain
+	// whether this behaviour is similar when doing gesture-based scrolling on
+	// a trackpad on a Windows machine.  For now, default trackpad scrolling
+	// to 10% the speed of mouse scrolling, as that seems to approximately
+	// match, to me.  But other folks should be able to configure this to
+	// whatever behaviour they like on their own systems!
+	m_trackpadWheelScalePercent = m_preferences->GetPreference("TrackpadWheelScalePercent", 10, 0, 10000);
 }
 
 vsSystemPreferences::~vsSystemPreferences()
@@ -572,6 +582,29 @@ void
 vsSystemPreferences::SetHighDPI(bool allow)
 {
 	m_highDPI->m_value = allow;
+}
+
+float
+vsSystemPreferences::GetMouseWheelScaling()
+{
+	return m_mouseWheelScalePercent->m_value / 100.f;
+}
+void
+vsSystemPreferences::SetMouseWheelScaling(float scaling)
+{
+	m_mouseWheelScalePercent->m_value = scaling * 100.f;
+}
+
+float
+vsSystemPreferences::GetTrackpadWheelScaling()
+{
+	return m_trackpadWheelScalePercent->m_value / 100.f;
+}
+
+void
+vsSystemPreferences::SetTrackpadWheelScaling(float scaling)
+{
+	m_trackpadWheelScalePercent->m_value = scaling * 100.f;
 }
 
 bool
