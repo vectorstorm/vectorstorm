@@ -181,6 +181,19 @@ public:
 		return m_array[id];
 	}
 
+	void SetArraySize( int size )
+	{
+		// add or remove elements to make us this size.
+		while( ItemCount() > size )
+		{
+			PopBack();
+		}
+		while ( ItemCount() < size )
+		{
+			AddItem( T() );
+		}
+	}
+
 	T	&operator[](int id)
 	{
 		return GetItem(id);
