@@ -200,6 +200,194 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 	return fragment;
 }
 
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width )
+{
+	size_t vertexCount = (count/2) * 4;
+	size_t indexCount = (count/2) * 6;
+
+	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	uint16_t *ia = new uint16_t[indexCount];
+	int vertexCursor = 0;
+	int indexCursor = 0;
+	float halfWidth = width * 0.5f;
+
+	for ( int i = 0; i < count; i+=2 )
+	{
+		int preI = i;
+		int postI = i+1;
+
+		vsVector3D dirOfTravel = point[postI] - point[preI];
+
+		dirOfTravel.NormaliseSafe();
+
+		vsVector2D offsetPre( dirOfTravel.y, -dirOfTravel.x );
+		offsetPre.NormaliseSafe();
+
+		va[vertexCursor].position = point[preI] - (offsetPre * halfWidth);
+		va[vertexCursor+1].position = point[preI] + (offsetPre * halfWidth);
+		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
+		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
+
+		ia[indexCursor] = vertexCursor;
+		ia[indexCursor+1] = vertexCursor+1;
+		ia[indexCursor+2] = vertexCursor+2;
+		ia[indexCursor+3] = vertexCursor+2;
+		ia[indexCursor+4] = vertexCursor+1;
+		ia[indexCursor+5] = vertexCursor+3;
+		indexCursor += 6;
+		vertexCursor += 4;
+	}
+
+	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vsRenderBuffer* indexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vertexBuffer->SetArray(va, vertexCursor);
+	indexBuffer->SetArray(ia, indexCursor);
+	vsFragment *fragment = new vsFragment;
+	vsDisplayList *dlist = new vsDisplayList(128);
+	dlist->BindBuffer(vertexBuffer);
+	dlist->TriangleListBuffer(indexBuffer);
+	dlist->ClearArrays();
+	fragment->SetDisplayList(dlist);
+	fragment->SetMaterial( material );
+	fragment->AddBuffer(vertexBuffer);
+	fragment->AddBuffer(indexBuffer);
+
+	vsDeleteArray(va);
+	vsDeleteArray(ia);
+
+	return fragment;
+}
+
+vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop )
+{
+	size_t vertexCount = count * 2;
+	size_t indexCount = count * 6;
+
+	float halfWidth = width * 0.5f;
+
+	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	uint16_t *ia = new uint16_t[indexCount];
+	int vertexCursor = 0;
+	int indexCursor = 0;
+
+	for ( int i = 0; i < count; i++ )
+	{
+		vsVector3D dirOfTravel;
+
+		int midI = i;
+		int preI = midI-1;
+		int postI = midI+1;
+
+		// float widthHere = m_width;
+
+		if ( postI >= count )
+		{
+			if ( loop )
+				postI = 0;
+			else
+				postI = count-1;
+		}
+		if ( preI < 0 )
+		{
+			if ( loop )
+				preI = count-1;
+			else
+				preI = 0;
+		}
+
+		vsVector3D dirOfTravelPre = point[midI] - point[preI];
+		vsVector3D dirOfTravelPost = point[postI] - point[midI];
+		float distanceOfTravelPre = dirOfTravelPre.Length();
+		float distanceOfTravelPost = dirOfTravelPost.Length();
+		dirOfTravelPre.NormaliseSafe();
+		dirOfTravelPost.NormaliseSafe();
+
+		vsVector3D up(0.f,1.f,0.f);
+
+		vsVector3D offsetPre = dirOfTravelPre.Cross(up);
+		vsVector3D offsetPost = dirOfTravelPost.Cross(up);
+		offsetPre.NormaliseSafe();
+		offsetPost.NormaliseSafe();
+
+		vsVector3D vertexPosition;
+		if ( offsetPre != offsetPost )
+		{
+			vsVector3D closestPre, closestPost;
+			vsVector3D insidePre = point[preI] - (offsetPre * halfWidth);
+			vsVector3D insidePost = point[postI] - (offsetPost * halfWidth);
+
+			vsSqDistanceBetweenLineSegments( insidePre,
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
+					insidePost,
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
+		}
+		else
+		{
+			vertexPosition = point[midI] - offsetPre * halfWidth;
+		}
+
+		va[vertexCursor].position = vertexPosition;
+
+		if ( offsetPre != offsetPost )
+		{
+			vsVector3D closestPre, closestPost;
+			vsVector3D outsidePre = point[preI] + (offsetPre * halfWidth);
+			vsVector3D outsidePost = point[postI] + (offsetPost * halfWidth);
+
+			vsSqDistanceBetweenLineSegments( outsidePre,
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
+					outsidePost,
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
+		}
+		else
+		{
+			vertexPosition = point[midI] + offsetPre * halfWidth;
+		}
+
+		va[vertexCursor+1].position = vertexPosition;
+
+		if ( loop || i != count - 1 ) // not at the end of the strip
+		{
+			int otherSide = vertexCursor+2;
+			if ( i == count-1 )
+				otherSide = 0;
+			ia[indexCursor] = vertexCursor;
+			ia[indexCursor+1] = vertexCursor+1;
+			ia[indexCursor+2] = otherSide;
+			ia[indexCursor+3] = otherSide;
+			ia[indexCursor+4] = vertexCursor+1;
+			ia[indexCursor+5] = otherSide+1;
+			indexCursor += 6;
+		}
+		vertexCursor += 2;
+	}
+
+	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vsRenderBuffer* indexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vertexBuffer->SetArray(va, vertexCursor);
+	indexBuffer->SetArray(ia, indexCursor);
+	vsFragment *fragment = new vsFragment;
+	vsDisplayList *dlist = new vsDisplayList(128);
+	dlist->BindBuffer(vertexBuffer);
+	dlist->TriangleListBuffer(indexBuffer);
+	dlist->ClearArrays();
+	fragment->SetDisplayList(dlist);
+	fragment->SetMaterial( material );
+	fragment->AddBuffer(vertexBuffer);
+	fragment->AddBuffer(indexBuffer);
+
+	vsDeleteArray(va);
+	vsDeleteArray(ia);
+
+	return fragment;
+}
+
 class vsLines3D::Strip
 {
 public:

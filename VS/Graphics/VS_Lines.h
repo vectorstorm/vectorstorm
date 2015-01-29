@@ -23,6 +23,9 @@ class vsRenderQueue;
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
 
+vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop );
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width );
+
 class vsLines3D: public vsModel
 {
 	class Strip;
