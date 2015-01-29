@@ -26,50 +26,16 @@ class vsFog;
 class vsLight;
 class vsFragment;
 
+
 class vsRenderQueueStage
 {
-	struct BatchElement
-	{
-		vsMatrix4x4		matrix;
-		vsMaterial *	material;
-		const vsMatrix4x4 *	instanceMatrix;
-		const vsColor *	instanceColor;
-		int				instanceMatrixCount;
-		vsRenderBuffer *instanceMatrixBuffer;
-		vsDisplayList *	list;
-		BatchElement *	next;
+public:
+	struct BatchMap;
+	struct BatchElement;
+	struct Batch;
+private:
 
-		BatchElement():
-			material(NULL),
-			instanceMatrix(NULL),
-			instanceColor(NULL),
-			instanceMatrixCount(0),
-			instanceMatrixBuffer(NULL),
-			list(NULL),
-			next(NULL)
-		{
-		}
-
-		void Clear()
-		{
-			material = NULL;
-			instanceMatrix = NULL;
-			instanceMatrixCount = 0;
-			instanceMatrixBuffer = NULL;
-			instanceColor = NULL;
-			list = NULL;
-		}
-	};
-	struct Batch
-	{
-		vsMaterialInternal*	material;
-		BatchElement*		elementList;
-		Batch*				next;
-
-		Batch();
-		~Batch();
-	};
-
+	BatchMap*			m_batchMap;
 	Batch*				m_batch;
 	int					m_batchCount;
 

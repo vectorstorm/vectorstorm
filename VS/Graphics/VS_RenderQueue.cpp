@@ -16,6 +16,58 @@
 
 #include "VS_MaterialInternal.h"
 
+#include "VS/VS_DisableDebugNew.h"
+#include <map>
+#include "VS/VS_EnableDebugNew.h"
+
+
+struct vsRenderQueueStage::BatchElement
+{
+	vsMatrix4x4		matrix;
+	vsMaterial *	material;
+	const vsMatrix4x4 *	instanceMatrix;
+	const vsColor *	instanceColor;
+	int				instanceMatrixCount;
+	vsRenderBuffer *instanceMatrixBuffer;
+	vsDisplayList *	list;
+	BatchElement *	next;
+
+	BatchElement():
+		material(NULL),
+		instanceMatrix(NULL),
+		instanceColor(NULL),
+		instanceMatrixCount(0),
+		instanceMatrixBuffer(NULL),
+		list(NULL),
+		next(NULL)
+	{
+	}
+
+	void Clear()
+	{
+		material = NULL;
+		instanceMatrix = NULL;
+		instanceMatrixCount = 0;
+		instanceMatrixBuffer = NULL;
+		instanceColor = NULL;
+		list = NULL;
+	}
+};
+
+struct vsRenderQueueStage::Batch
+{
+	vsMaterialInternal*	material;
+	BatchElement*		elementList;
+	Batch*				next;
+
+	Batch();
+	~Batch();
+};
+
+struct vsRenderQueueStage::BatchMap
+{
+	std::map<vsMaterialInternal*,vsRenderQueueStage::Batch*> map;
+};
 
 vsRenderQueueStage::Batch::Batch():
 	material(NULL),
@@ -29,6 +81,7 @@ vsRenderQueueStage::Batch::~Batch()
 }
 
 vsRenderQueueStage::vsRenderQueueStage():
+	m_batchMap(new BatchMap),
 	m_batch(NULL),
 	m_batchCount(0),
 	m_batchPool(NULL),
@@ -38,6 +91,7 @@ vsRenderQueueStage::vsRenderQueueStage():
 
 vsRenderQueueStage::~vsRenderQueueStage()
 {
+	vsDelete( m_batchMap );
 	while( m_batchPool )
 	{
 		Batch *b = m_batchPool;
@@ -55,12 +109,10 @@ vsRenderQueueStage::~vsRenderQueueStage()
 vsRenderQueueStage::Batch *
 vsRenderQueueStage::FindBatch( vsMaterial *material )
 {
-	for (Batch *batch = m_batch; batch; batch = batch->next)
+	std::map<vsMaterialInternal*, vsRenderQueueStage::Batch*>::iterator it = m_batchMap->map.find(material->GetResource());
+	if ( it != m_batchMap->map.end() )
 	{
-		if ( batch->material == material->GetResource() )
-		{
-			return batch;
-		}
+		return it->second;
 	}
 
 	if ( !m_batchPool )
@@ -109,6 +161,7 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 		}
 	}
 	m_batchCount++;
+	m_batchMap->map[material->GetResource()] = batch;
 
 	return batch;
 }
@@ -296,6 +349,7 @@ vsRenderQueueStage::EndRender()
 	m_batch = NULL;
 
 	m_temporaryLists.Clear();
+	m_batchMap->map.clear();
 }
 
 vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
