@@ -36,6 +36,7 @@ class vsMaterial : public vsCacheReference<vsMaterialInternal>
 		{
 			float f32;
 			bool b;
+			float vec4[4];
 			const void* bind;
 		};
 		bool bound;
@@ -55,14 +56,19 @@ public:
 	int32_t UniformId( const vsString& name );
 	void SetUniformF( int32_t id, float value );
 	void SetUniformB( int32_t id, bool value );
+	void SetUniformColor( int32_t id, const vsColor& value );
 	bool BindUniformF( int32_t id, const float* value );
 	bool BindUniformB( int32_t id, const bool* value );
+	bool BindUniformColor( int32_t id, const vsColor* value );
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
+	void SetUniformColor( const vsString& name, const vsColor& value );
 	bool BindUniformF( const vsString& name, const float* value );
 	bool BindUniformB( const vsString& name, const bool* value );
+	bool BindUniformColor( const vsString& name, const vsColor* value );
 	float UniformF( int32_t id );
 	bool UniformB( int32_t id );
+	vsVector4D UniformVec4( int32_t id );
 
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }

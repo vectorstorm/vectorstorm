@@ -128,6 +128,12 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 			case GL_FLOAT:
 				m_uniform[i].f32 = 0.f;
 				break;
+			case GL_FLOAT_VEC4:
+				m_uniform[i].vec4[0] = 0.f;
+				m_uniform[i].vec4[1] = 0.f;
+				m_uniform[i].vec4[2] = 0.f;
+				m_uniform[i].vec4[3] = 0.f;
+				break;
 			default:
 				break;
 		}
@@ -447,6 +453,15 @@ vsShader::Prepare( vsMaterial *material )
 						SetUniformValueF( i, f );
 					break;
 				}
+			case GL_FLOAT_VEC4:
+				{
+				{
+					vsVector4D v = material->UniformVec4(i);
+					if ( v != m_uniform[i].vec4 )
+						SetUniformValueVec4( i, v );
+					break;
+				}
+				}
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -487,5 +502,12 @@ vsShader::SetUniformValueB( int i, bool value )
 {
 	glUniform1i( m_uniform[i].loc, value );
 	m_uniform[i].b = value;
+}
+
+void
+vsShader::SetUniformValueVec4( int i, const vsVector4D& value )
+{
+	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
+	m_uniform[i].vec4 = value;
 }
 

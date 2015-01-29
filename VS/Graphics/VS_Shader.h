@@ -24,11 +24,12 @@ public:
 	struct Uniform
 	{
 		vsString name;
-		union
-		{
+		// struct
+		// {
 			bool b;
 			float f32;
-		};
+			vsVector4D vec4; // for vectors of up to 4 floats
+		// };
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
@@ -70,6 +71,7 @@ private:
 
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
+	void SetUniformValueVec4( int i, const vsVector4D& value );
 
 protected:
 	uint32_t m_shader;
