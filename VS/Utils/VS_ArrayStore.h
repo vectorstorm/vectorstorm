@@ -182,13 +182,13 @@ public:
 		return 		vsArrayStoreIterator<T>(this,m_arrayLength);
 	}
 
-	T	*GetItem(int id)
+	T*& GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
 		return m_array[id];
 	}
 
-	T	*operator[](int id)
+	T*& operator[](int id)
 	{
 		return GetItem(id);
 	}
