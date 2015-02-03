@@ -320,6 +320,13 @@ vsSystem::GetTime()
 	return time(NULL);
 }
 
+vsString
+vsSystem::GetTimeAsString()
+{
+	time_t t = GetTime();
+	return MakeTimeString(t);
+}
+
 void
 vsSystem::MakeVsTime(vsTime *t, time_t rawTime)
 {
@@ -349,9 +356,14 @@ vsSystem::MakeVsTime_UTC(vsTime *t, time_t rawTime)
 }
 
 vsString
-vsSystem::MakeTimeString(uint32_t time)
+vsSystem::MakeTimeString(time_t time)
 {
-	return vsString("Foo");
+	const int c_bufferLength = 128;
+	char buffer[c_bufferLength];
+	struct tm * p = localtime(&time);
+	strftime(buffer, c_bufferLength, "%c", p);
+	buffer[c_bufferLength-1] = '\0';
+	return buffer;
 }
 
 void
