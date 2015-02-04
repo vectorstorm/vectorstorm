@@ -18,6 +18,7 @@ find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
 	PATH C:/src/buildzone/include)
 find_package(PhysFS REQUIRED)
+find_package(ZLIB REQUIRED)
 
 
 if(UNIX)
@@ -388,6 +389,7 @@ include_directories(
 	target_link_libraries( vectorstorm
 		${OPENGL_LIBRARIES}
 		${PNG_LIBRARY}
+		${ZLIB_LIBRARY}
 		${SDL_LIBRARY}
 		${SDL_IMAGE_LIBRARY}
 		${SDL_MIXER_LIBRARY}

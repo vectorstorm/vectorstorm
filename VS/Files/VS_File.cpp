@@ -26,8 +26,11 @@
 #include <errno.h>
 #include <physfs.h>
 
+#include <zlib.h>
 
-vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
+
+vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
+	m_stream(NULL)
 {
 	m_mode = mode;
 
@@ -41,13 +44,51 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 		m_length = PHYSFS_fileLength(m_file);
 	}
 
+	if ( mode == MODE_WriteCompressed )
+	{
+		m_stream = new z_stream;
+		m_stream->zalloc = Z_NULL;
+		m_stream->zfree = Z_NULL;
+		m_stream->opaque = Z_NULL;
+		int ret = deflateInit(m_stream, Z_DEFAULT_COMPRESSION);
+		vsAssert(ret == Z_OK, "deflateInit error");
+	}
+
 	vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError()) );
 }
 
 vsFile::~vsFile()
 {
+	if ( m_stream )
+	{
+		// close the compressed file stream.
+		const int c_bufferSize = 1024;
+		uint8_t buffer[c_bufferSize];
+		m_stream->avail_in = 0;
+		m_stream->next_in = NULL;
+		m_stream->avail_out = c_bufferSize;
+		m_stream->next_out = buffer;
+		int ret;
+		do
+		{
+			m_stream->avail_out = c_bufferSize;
+			m_stream->next_out = buffer;
+			ret = deflate(m_stream, Z_FINISH);
+			vsAssert(ret != Z_STREAM_ERROR, "deflate error");
+
+			int bytes = c_bufferSize - m_stream->avail_out;
+			if ( bytes > 0 )
+				PHYSFS_write(m_file, buffer, 1, bytes );
+			// we repeat as long as we were filling that buffer.
+		} while( m_stream->avail_out == 0 );
+
+		deflateEnd(m_stream);
+		vsDelete( m_stream );
+	}
 	if ( m_file )
+	{
 		PHYSFS_close(m_file);
+	}
 }
 
 bool
@@ -99,7 +140,7 @@ vsFile::PeekRecord( vsRecord *r )
 {
 	vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
 
-	if ( m_mode == MODE_Write )
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
 		vsAssert( m_mode != MODE_Write, "Error:  Not legal to PeekRecord() when writing a file!" );
 		return false;
@@ -135,6 +176,36 @@ vsFile::Record( vsRecord *r )
 		PHYSFS_write( m_file, recordString.c_str(), 1, recordString.size() );
 
 		return true;
+	}
+	else if ( m_mode == MODE_WriteCompressed )
+	{
+		vsString recordString = r->ToString();
+		int stringLength = recordString.size();
+		int bytesRead = 0;
+		const int c_bufferSize = 1024;
+		uint8_t outBuf[c_bufferSize];
+		uint8_t inBuf[c_bufferSize];
+		while( bytesRead < stringLength )
+		{
+			int bytesToReadThisRound = std::min(c_bufferSize, stringLength-bytesRead);
+			memcpy(inBuf, &recordString.c_str()[bytesRead], bytesToReadThisRound);
+			bytesRead += bytesToReadThisRound;
+			m_stream->avail_in = bytesToReadThisRound;
+			m_stream->next_in = inBuf;
+			m_stream->avail_out = c_bufferSize;
+			m_stream->next_out = outBuf;
+			do
+			{
+				m_stream->avail_out = c_bufferSize;
+				m_stream->next_out = outBuf;
+				int ret = deflate(m_stream, Z_NO_FLUSH);
+				vsAssert(ret != Z_STREAM_ERROR, "deflate error");
+
+				int bytes = c_bufferSize - m_stream->avail_out;
+				PHYSFS_write(m_file, outBuf, 1, bytes );
+				// we repeat as long as we were filling that buffer.
+			} while( m_stream->avail_out == 0 );
+		}
 	}
 	else
 	{
@@ -205,6 +276,9 @@ vsFile::Store( vsStore *s )
 		s->Rewind();
 		PHYSFS_write( m_file, s->GetReadHead(), 1, s->Length() );
 	}
+	else if ( m_mode == MODE_WriteCompressed )
+	{
+	}
 	else
 	{
 		s->Rewind();
@@ -219,6 +293,9 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 	if ( m_mode == MODE_Write )
 	{
 		PHYSFS_write( m_file, s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()) );
+	}
+	else if ( m_mode == MODE_WriteCompressed )
+	{
 	}
 	else
 	{

@@ -11,6 +11,7 @@
 #define FS_FILE_H
 
 struct PHYSFS_File;
+struct z_stream_s;
 
 class vsRecord;
 class vsStore;
@@ -25,12 +26,15 @@ public:
 	{
 		MODE_Read,
 		MODE_Write,
+		MODE_WriteCompressed,
 
 		MODE_MAX
 	};
 
 private:
+
 	PHYSFS_File *	m_file;
+	struct z_stream_s * m_stream;
 
 	Mode		m_mode;
 
