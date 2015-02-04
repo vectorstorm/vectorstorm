@@ -180,18 +180,20 @@ vsFile::Record( vsRecord *r )
 	else if ( m_mode == MODE_WriteCompressed )
 	{
 		vsString recordString = r->ToString();
-		int stringLength = recordString.size();
-		int bytesRead = 0;
+		// int stringLength = recordString.size();
+		// int bytesRead = 0;
 		const int c_bufferSize = 1024;
 		uint8_t outBuf[c_bufferSize];
-		uint8_t inBuf[c_bufferSize];
-		while( bytesRead < stringLength )
-		{
-			int bytesToReadThisRound = std::min(c_bufferSize, stringLength-bytesRead);
-			memcpy(inBuf, &recordString.c_str()[bytesRead], bytesToReadThisRound);
-			bytesRead += bytesToReadThisRound;
-			m_stream->avail_in = bytesToReadThisRound;
-			m_stream->next_in = inBuf;
+		// uint8_t inBuf[c_bufferSize];
+		// while( bytesRead < stringLength )
+		// {
+			// int bytesToReadThisRound = std::min(c_bufferSize, stringLength-bytesRead);
+			// memcpy(inBuf, &recordString.c_str()[bytesRead], bytesToReadThisRound);
+			// bytesRead += bytesToReadThisRound;
+			// m_stream->avail_in = bytesToReadThisRound;
+			// m_stream->next_in = inBuf;
+			m_stream->avail_in = recordString.size();
+			m_stream->next_in = (uint8_t*)recordString.c_str();
 			m_stream->avail_out = c_bufferSize;
 			m_stream->next_out = outBuf;
 			do
@@ -205,7 +207,7 @@ vsFile::Record( vsRecord *r )
 				PHYSFS_write(m_file, outBuf, 1, bytes );
 				// we repeat as long as we were filling that buffer.
 			} while( m_stream->avail_out == 0 );
-		}
+		// }
 	}
 	else
 	{
