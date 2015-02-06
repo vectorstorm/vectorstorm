@@ -67,6 +67,7 @@ public:
 	vsColor				Color();
 	vsVector2D			Vector2D();
 	vsVector3D			Vector3D();
+	vsVector4D			Vector4D();
 	vsQuaternion		Quaternion();
 
 	void				SetRect(float x, float y, float width, float height);

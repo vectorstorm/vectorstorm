@@ -366,6 +366,17 @@ vsRecord::Vector3D()
 					  GetToken(2).AsFloat() );
 }
 
+vsVector4D
+vsRecord::Vector4D()
+{
+	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a Vector3D!");
+
+	return vsVector4D( GetToken(0).AsFloat(),
+					  GetToken(1).AsFloat(),
+					  GetToken(2).AsFloat(),
+					  GetToken(3).AsFloat() );
+}
+
 vsQuaternion
 vsRecord::Quaternion()
 {
