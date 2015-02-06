@@ -51,6 +51,19 @@ vsModel::LoadFrom( vsRecord *record )
 			m_name = sr->GetToken(0).AsString();
 			// don't use the name right now.
 		}
+		else if ( srLabel == "matrix" )
+		{
+			vsAssert( sr->GetChildCount() == 4, "Wrong number of matrix lines" );
+			vsMatrix4x4 mat;
+			for ( int i = 0; i < 4; i++ )
+			{
+				mat[i] = sr->GetChild(i)->Vector4D();
+			}
+			SetPosition(mat.w);
+			vsQuaternion q(mat.z, mat.y);
+			SetOrientation(q);
+			// SetScale(mat.GetScale());
+		}
 		else if ( srLabel == "translation" )
 		{
 			SetPosition( sr->Vector3D() );
