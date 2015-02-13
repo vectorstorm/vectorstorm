@@ -34,6 +34,7 @@ class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 	vsRenderTarget *m_pass2[BLOOM_PASSES];
 	vsRenderBuffer *m_vertices;
 	vsRenderBuffer *m_indices;
+	vsShader *m_bloomBlurShader;
 public:
 	// 'dims' is how large our largest blur buffer should be.
 	vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims = 1024 );

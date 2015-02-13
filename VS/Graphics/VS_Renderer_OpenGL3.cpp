@@ -488,6 +488,11 @@ vsRenderer_OpenGL3::PostRender()
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	vsTimerSystem::Instance()->EndGPUTime();
 }
 

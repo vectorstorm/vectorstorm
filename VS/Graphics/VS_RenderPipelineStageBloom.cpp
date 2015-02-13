@@ -24,23 +24,21 @@ static bool kernel_normalised = false;
 
 class vsBloomBlurShader: public vsShader
 {
-	vsVector2D m_offset;
-	GLint m_locCoefficients, m_locOffsetX, m_locOffsetY;
+	GLint m_locCoefficients;//, m_locOffsetX, m_locOffsetY;
 public:
-	vsBloomBlurShader( const vsVector2D& offset ):
-		vsShader(row3v, row3f, false, false),
-		m_offset(offset)
+	vsBloomBlurShader():
+		vsShader(row3v, row3f, false, false)
 	{
 		m_locCoefficients = glGetUniformLocation(m_shader, "coefficients");
-		m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
-		m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
+		// m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
+		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
 	virtual void Prepare( vsMaterial *mat )
 	{
 		vsShader::Prepare( mat );
-		glUniform1f(m_locOffsetX, m_offset.x);
-		glUniform1f(m_locOffsetY, m_offset.y);
+		// glUniform1f(m_locOffsetX, m_offset.x);
+		// glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
 	}
 };
@@ -70,7 +68,8 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	m_from(from),
 	m_to(to),
 	m_vertices(NULL),
-	m_indices(NULL)
+	m_indices(NULL),
+	m_bloomBlurShader(NULL)
 {
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
@@ -94,6 +93,7 @@ vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 	vsDelete( m_fromMaterial );
 	vsDelete( m_vertices );
 	vsDelete( m_indices );
+	vsDelete( m_bloomBlurShader );
 }
 
 void
@@ -138,6 +138,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_hipassMaterial->SetTexture(0, m_from->GetTexture(1));
 	m_hipassMaterial->SetShader(new vsShader(passv, normalf, false, false));
 
+	m_bloomBlurShader = new vsBloomBlurShader();
+
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		float offset = 1.2f / m_pass[i]->GetWidth();
@@ -145,15 +147,21 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_horizontalBlurMaterial[i]->SetClampU(true);
 		m_horizontalBlurMaterial[i]->SetClampV(true);
 		m_horizontalBlurMaterial[i]->SetBlend(false);
-		m_horizontalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(offset, 0.f)));
 		m_horizontalBlurMaterial[i]->SetTexture(0,m_pass[i]->GetTexture());
+		m_horizontalBlurMaterial[i]->SetShader(m_bloomBlurShader);
+		m_horizontalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
+		m_horizontalBlurMaterial[i]->SetUniformF("offsetx", offset);
+		m_horizontalBlurMaterial[i]->SetUniformF("offsety", 0.f);
 
 		m_verticalBlurMaterial[i] = new vsDynamicMaterial;
 		m_verticalBlurMaterial[i]->SetClampU(true);
 		m_verticalBlurMaterial[i]->SetClampV(true);
 		m_verticalBlurMaterial[i]->SetBlend(false);
-		m_verticalBlurMaterial[i]->SetShader(new vsBloomBlurShader(vsVector2D(0.f,offset)));
 		m_verticalBlurMaterial[i]->SetTexture(0,m_pass2[i]->GetTexture());
+		m_verticalBlurMaterial[i]->SetShader(m_bloomBlurShader);
+		m_verticalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
+		m_verticalBlurMaterial[i]->SetUniformF("offsetx", 0.f);
+		m_verticalBlurMaterial[i]->SetUniformF("offsety", offset);
 
 		m_combinePassMaterial[i] = new vsDynamicMaterial;
 		m_combinePassMaterial[i]->SetBlend(true);
@@ -165,8 +173,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_combinePassMaterial[i]->SetGlow(false);
 		m_combinePassMaterial[i]->SetClampU(true);
 		m_combinePassMaterial[i]->SetClampV(true);
-		m_combinePassMaterial[i]->SetShader(new vsBloomCombineShader);
 		m_combinePassMaterial[i]->SetTexture(0, m_pass[i]->GetTexture());
+		m_combinePassMaterial[i]->SetShader(new vsBloomCombineShader);
 	}
 
 	m_fromMaterial = new vsDynamicMaterial;
@@ -178,8 +186,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_fromMaterial->SetGlow(false);
 	m_fromMaterial->SetClampU(true);
 	m_fromMaterial->SetClampV(true);
-	m_fromMaterial->SetShader(new vsBloomPassShader);
 	m_fromMaterial->SetTexture(0, m_from->GetTexture());
+	m_fromMaterial->SetShader(new vsBloomPassShader);
 
 	m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);

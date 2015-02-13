@@ -56,7 +56,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_zWrite(true),
 	m_clampU(false),
 	m_clampV(false),
-	m_glow(false),
+	m_glow(0.f),
 	m_postGlow(false),
 	m_hasColor(true),
 	m_blend(true)
@@ -144,7 +144,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "glow" )
 				{
-					m_glow = sr->Bool();
+					m_glow = sr->Bool() ? 1.f : 0.f;
 				}
 				else if ( label == "postglow" )
 				{

@@ -48,7 +48,6 @@ private:
 	int32_t m_resolutionLoc;
 	int32_t m_globalTimeLoc;
 	int32_t m_mouseLoc;
-	int32_t m_fogLoc;
 	int32_t m_fogColorLoc;
 	int32_t m_fogDensityLoc;
 	int32_t m_textureLoc;

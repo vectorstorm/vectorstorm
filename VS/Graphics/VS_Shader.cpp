@@ -74,7 +74,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 #if !TARGET_OS_IPHONE
 	m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
-	//m_shader = vsRenderSchemeShader::Instance()->Compile( vStore->GetReadHead(), fStore->GetReadHead(), vSize, fSize);
 #endif // TARGET_OS_IPHONE
 
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
@@ -82,7 +81,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 	m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
-	m_fogLoc = glGetUniformLocation(m_shader, "fog");
+	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
 	m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
 	m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
 	m_textureLoc = glGetUniformLocation(m_shader, "textures");
@@ -120,19 +119,19 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_uniform[i].loc = glGetUniformLocation(m_shader, nameBuffer);
 		m_uniform[i].type = type;
 		m_uniform[i].arraySize = arraySize;
+		m_uniform[i].b = false;
+		m_uniform[i].f32 = 0.f;
+		// initialise to random values, so we definitely set them at least once.
 		switch ( m_uniform[i].type )
 		{
 			case GL_BOOL:
-				m_uniform[i].b = 0;
+				m_uniform[i].b = 2;
 				break;
 			case GL_FLOAT:
-				m_uniform[i].f32 = 0.f;
+				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
 				break;
 			case GL_FLOAT_VEC4:
-				m_uniform[i].vec4[0] = 0.f;
-				m_uniform[i].vec4[1] = 0.f;
-				m_uniform[i].vec4[2] = 0.f;
-				m_uniform[i].vec4[3] = 0.f;
+				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
 				break;
 			default:
 				break;
@@ -186,17 +185,16 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
-	if ( m_fogLoc >= 0 )
-	{
-		glUniform1i( m_fogLoc, fog );
-	}
 	if ( m_fogColorLoc >= 0 )
 	{
 		glUniform3f( m_fogColorLoc, color.r, color.g, color.b );
 	}
 	if ( m_fogDensityLoc >= 0 )
 	{
-		glUniform1f( m_fogDensityLoc, density );
+		vsAssert( density < 1.f, "High density??" );
+		int32_t fdid = GetUniformId("fogDensity");
+		SetUniformValueF(fdid, density);
+		// glUniform1f( m_fogDensityLoc, density );
 	}
 }
 
@@ -448,19 +446,19 @@ vsShader::Prepare( vsMaterial *material )
 				}
 			case GL_FLOAT:
 				{
-					float f = material->UniformF(i);
-					if ( f != m_uniform[i].f32 )
+					if ( m_uniform[i].arraySize == 1 )
+					{
+						float f = material->UniformF(i);
 						SetUniformValueF( i, f );
+					}
 					break;
 				}
 			case GL_FLOAT_VEC4:
-				{
 				{
 					vsVector4D v = material->UniformVec4(i);
 					if ( v != m_uniform[i].vec4 )
 						SetUniformValueVec4( i, v );
 					break;
-				}
 				}
 			default:
 				// TODO:  Handle more uniform types
@@ -493,8 +491,19 @@ vsShader::Prepare( vsMaterial *material )
 void
 vsShader::SetUniformValueF( int i, float value )
 {
-	glUniform1f( m_uniform[i].loc, value );
-	m_uniform[i].f32 = value;
+	{
+		float valueNow = -1.f;
+		glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
+		CheckGLError("Test");
+		vsAssert( valueNow != -1.f, "-1??" );
+		vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
+	}
+	static bool doTest = false;
+	if ( doTest || value != m_uniform[i].f32 )
+	{
+		glUniform1f( m_uniform[i].loc, value );
+		m_uniform[i].f32 = value;
+	}
 }
 
 void
