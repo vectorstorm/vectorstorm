@@ -41,21 +41,25 @@ vsTimerSystemSprite::vsTimerSystemSprite():
 	m_vertices( new vsRenderBuffer(vsRenderBuffer::Type_Stream) ),
 	m_indices( new vsRenderBuffer(vsRenderBuffer::Type_Static) )
 {
-	// we're going to draw five lines, in this format:
-	//                (4)           (5)
-	//  (1)--(2)--(3)--|             |
+	// we're going to draw eight lines, in this format:
+	//                     (5)           (6)
+	//  (1)--(2)--(3)--(4)--|             |
+	//  ---------------(7)--(8)------------
 	//
 	// 1: CPU time taken
-	// 2: Renderer time taken
-	// 3: GPU time taken
-	// 4: 60fps marker.  (if 1+2+3 reach to here, we're running at 60fps)
-	// 5: 30fps marker.  (if 1+2+3 reach to here, we're running at 30fps)
+	// 2: "Gather" draw time taken
+	// 3: "Draw" draw time taken
+	// 4: GPU time taken
+	// 5: 60fps marker.  (if 1+2+3 reach to here, we're running at 60fps)
+	// 6: 30fps marker.  (if 1+2+3 reach to here, we're running at 30fps)
+	// 7: FIFO usage
+	// 8: FIFO non-usage
 	//
 	// Our ten indices remain the same, so we put them in a static buffer.  Our
 	// vertices will change every frame, so we'll put them in a streaming
 	// buffer, and update their values in our 'Update()' call each frame.
 	//
-	const int c_indexCount = 14;
+	const int c_indexCount = 16;
 	uint16_t indices[c_indexCount] =
 	{
 		0, 1,
@@ -64,7 +68,8 @@ vsTimerSystemSprite::vsTimerSystemSprite():
 		6, 7,
 		8, 9,
 		10, 11,
-		12, 13
+		12, 13,
+		14, 15
 	};
 	m_indices->SetArray( indices, c_indexCount );
 	m_vertices->ResizeArray( sizeof(vsRenderBuffer::PC) * c_indexCount );
@@ -89,7 +94,7 @@ void
 vsTimerSystemSprite::Update( float timeStep )
 {
 	const float offsetPerMilli = 10.f;
-	const int c_vertexCount = 14;
+	const int c_vertexCount = 16;
 	vsRenderBuffer::PC verts[c_vertexCount];
 
 	vsTimerSystem *ts = vsTimerSystem::Instance();
@@ -100,20 +105,25 @@ vsTimerSystemSprite::Update( float timeStep )
 	verts[1].color = c_blue;
 
 	verts[2].position = verts[1].position;
-	verts[3].position = verts[2].position + vsVector2D(offsetPerMilli * ts->GetRenderTime(), 0.f);
+	verts[3].position = verts[2].position + vsVector2D(offsetPerMilli * ts->GetGatherTime(), 0.f);
 	verts[2].color = c_green;
 	verts[3].color = c_green;
 
 	verts[4].position = verts[3].position;
-	verts[5].position = verts[4].position + vsVector2D(offsetPerMilli * ts->GetGPUTime(), 0.f);
-	verts[4].color = c_red;
-	verts[5].color = c_red;
+	verts[5].position = verts[4].position + vsVector2D(offsetPerMilli * ts->GetDrawTime(), 0.f);
+	verts[4].color = c_yellow;
+	verts[5].color = c_yellow;
 
-	verts[6].position.Set( offsetPerMilli * 16.666f, -10.f, 0.f );
-	verts[7].position.Set( offsetPerMilli * 16.666f, 10.f, 0.f );
-	verts[8].position.Set( offsetPerMilli * 33.333f, -10.f, 0.f );
-	verts[9].position.Set( offsetPerMilli * 33.333f, 10.f, 0.f );
-	for (int i = 6; i < 10; i++ )
+	verts[6].position = verts[5].position;
+	verts[7].position = verts[6].position + vsVector2D(offsetPerMilli * ts->GetGPUTime(), 0.f);
+	verts[6].color = c_red;
+	verts[7].color = c_red;
+
+	verts[8].position.Set( offsetPerMilli * 16.666f, -10.f, 0.f );
+	verts[9].position.Set( offsetPerMilli * 16.666f, 10.f, 0.f );
+	verts[10].position.Set( offsetPerMilli * 33.333f, -10.f, 0.f );
+	verts[11].position.Set( offsetPerMilli * 33.333f, 10.f, 0.f );
+	for (int i = 8; i < 12; i++ )
 		verts[i].color = c_blue;
 
 	float fifoY = 5.f;
@@ -122,14 +132,14 @@ vsTimerSystemSprite::Update( float timeStep )
 	float endPoint = offsetPerMilli * 33.333f;
 	float midPoint = vsInterpolate( fifoUsed / (float)fifoSize, 0.f, endPoint );
 
-	verts[10].position.Set( 0.f, fifoY, 0.f );
-	verts[10].color = c_red;
-	verts[11].position.Set( midPoint, fifoY, 0.f );
-	verts[11].color = c_red;
-	verts[12].position.Set( midPoint, fifoY, 0.f );
-	verts[12].color = c_green;
-	verts[13].position.Set( endPoint, fifoY, 0.f );
-	verts[13].color = c_green;
+	verts[12].position.Set( 0.f, fifoY, 0.f );
+	verts[12].color = c_red;
+	verts[13].position.Set( midPoint, fifoY, 0.f );
+	verts[13].color = c_red;
+	verts[14].position.Set( midPoint, fifoY, 0.f );
+	verts[14].color = c_green;
+	verts[15].position.Set( endPoint, fifoY, 0.f );
+	verts[15].color = c_green;
 
 	m_vertices->SetArray(verts, c_vertexCount);
 }
@@ -159,7 +169,8 @@ vsTimerSystem::Init()
 	//	m_startCpu = SDL_GetTicks();
 	//	m_startGpu = SDL_GetTicks();
 	m_startCpu = GetMicroseconds();
-	m_startRender = GetMicroseconds();
+	m_startGather = GetMicroseconds();
+	m_startDraw = GetMicroseconds();
 	m_startGpu = GetMicroseconds();
 	m_missedFrames = 0;
 	m_firstFrame = true;
@@ -268,19 +279,27 @@ vsTimerSystem::Update( float timeStep )
 }
 
 void
-vsTimerSystem::EndRenderTime()
+vsTimerSystem::EndGatherTime()
 {
-	//	unsigned long now = SDL_GetTicks();
+	// Note that we don't set our 'cpuTime' until now (after our Draw() has
+	// been called), because we need last frame's cpuTime during our Draw().
 	unsigned long now = GetMicroseconds();
-	m_renderTime = (now - m_startRender);
-	m_cpuTime = (m_startRender - m_startCpu);
+	m_gatherTime = (now - m_startGather);
+	m_cpuTime = (m_startGather - m_startCpu);
+	m_startDraw = now;
+}
+
+void
+vsTimerSystem::EndDrawTime()
+{
+	unsigned long now = GetMicroseconds();
+	m_drawTime = (now - m_startDraw);
 	m_startGpu = now;
 }
 
 void
 vsTimerSystem::EndGPUTime()
 {
-	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();
 	m_gpuTime = (now - m_startGpu);
 }
@@ -292,6 +311,6 @@ vsTimerSystem::PostUpdate( float timeStep )
 	//	unsigned long now = SDL_GetTicks();
 	unsigned long now = GetMicroseconds();
 
-	m_startRender = now;
+	m_startGather = now;
 }
 

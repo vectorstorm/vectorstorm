@@ -191,6 +191,7 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_renderer->PreRender(m_defaultRenderSettings);
 	m_fifo->Clear();
 	pipeline->Draw(m_fifo);
+	vsTimerSystem::Instance()->EndGatherTime();
 	m_fifoUsageLastFrame = m_fifo->GetSize();
 	if ( m_fifoUsageLastFrame > m_fifoHighWater )
 	{
@@ -206,6 +207,7 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_scene[m_sceneCount-1]->Draw(m_fifo);
 #endif
 	m_renderer->RenderDisplayList(m_fifo);
+	vsTimerSystem::Instance()->EndDrawTime();
 	m_renderer->PostRender();
 
 	m_currentSettings = NULL;

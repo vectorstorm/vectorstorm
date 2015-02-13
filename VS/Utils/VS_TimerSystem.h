@@ -40,13 +40,21 @@ class vsTimerSystem : public coreGameSystem
 
 	unsigned long		m_initTime;
 
+	// we divide our frame into four phases:
+	// "CPU" is our scene update.
+	// "Gather" is the time we take collecting draw commands.
+	// "Draw" is the time we spend processing the list of draw commands.
+	// "GPU" is the time we spend blocked after submitting our last draw command,
+	// waiting for permission to start the next frame.  (This time is often vsync)
 	unsigned long		m_startCpu;
-	unsigned long		m_startRender;
+	unsigned long		m_startGather;
+	unsigned long		m_startDraw;
 	unsigned long		m_startGpu;
 	unsigned int		m_missedFrames;
 
 	unsigned long		m_gpuTime;
-	unsigned long		m_renderTime;
+	unsigned long		m_gatherTime;
+	unsigned long		m_drawTime;
 	unsigned long		m_cpuTime;
 
 #if defined(DEBUG_TIMING_BAR)
@@ -68,14 +76,17 @@ public:
 
 	virtual void		Update( float timeStep );
 	virtual void		PostUpdate(float timeStep);
-	virtual void		EndRenderTime();	// we've finished processing our display lists
+	virtual void		EndGatherTime();	// we've finished building our display lists
+	virtual void		EndDrawTime();		// we've finished processing our display lists
 	virtual void		EndGPUTime();		// OpenGL has returned control to our app
 
 	unsigned long		GetCurrentMillis() { return m_startCpu / 1000; }
 	unsigned int		GetMissedFrameCount() { return m_missedFrames / 1000; }
 
 	unsigned long		GetGPUTime() { return m_gpuTime / 1000; }
-	unsigned long		GetRenderTime() { return m_renderTime / 1000; }
+	unsigned long		GetRenderTime() { return (m_gatherTime + m_drawTime) / 1000; }
+	unsigned long		GetGatherTime() { return m_gatherTime / 1000; }
+	unsigned long		GetDrawTime() { return m_drawTime / 1000; }
 	unsigned long		GetCPUTime() { return m_cpuTime / 1000; }
 
 	static vsTimerSystem *	Instance() { return s_instance; }

@@ -485,7 +485,6 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
-	vsTimerSystem::Instance()->EndRenderTime();
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
@@ -543,6 +542,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 	}
 	else
 	{
+		vsAssert(0, "Trying to flush render state with no shader set?");
 		glUseProgram( 0 );
 	}
 }
