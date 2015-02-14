@@ -58,7 +58,7 @@ void vsOpenGLDebugMessage( GLenum source,
 			GLenum severity,
 			GLsizei length,
 			const GLchar *message,
-			void *userParam)
+			const void *userParam)
 {
 	vsLog("GL: type: %d, severity %d, %s", type, severity, message);
 }
