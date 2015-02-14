@@ -65,7 +65,7 @@ public:
 	bool		m_zWrite;
 	bool		m_clampU;
 	bool		m_clampV;
-	float		m_glow; // [0.f..1.f] how much we glow
+	bool		m_glow;
 	bool		m_postGlow;
 	bool		m_hasColor;
 	bool		m_blend;

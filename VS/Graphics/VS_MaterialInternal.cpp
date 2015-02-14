@@ -56,7 +56,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_zWrite(true),
 	m_clampU(false),
 	m_clampV(false),
-	m_glow(0.f),
+	m_glow(false),
 	m_postGlow(false),
 	m_hasColor(true),
 	m_blend(true)

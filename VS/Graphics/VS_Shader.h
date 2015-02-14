@@ -26,7 +26,7 @@ public:
 		vsString name;
 		// struct
 		// {
-			bool b;
+			int b;
 			float f32;
 			vsVector4D vec4; // for vectors of up to 4 floats
 		// };
@@ -46,7 +46,6 @@ private:
 	int32_t m_colorLoc;
 	int32_t m_instanceColorAttributeLoc;
 	int32_t m_resolutionLoc;
-	int32_t m_globalTimeLoc;
 	int32_t m_mouseLoc;
 	int32_t m_fogColorLoc;
 	int32_t m_fogDensityLoc;
@@ -67,6 +66,8 @@ private:
 
 	int32_t m_uniformCount;
 	int32_t m_attributeCount;
+
+	int32_t m_globalTimeUniformId;
 
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
@@ -104,6 +105,7 @@ public:
 			const vsVector3D& halfVector );
 
 	virtual void Prepare( vsMaterial *activeMaterial ); // called before we start rendering something with this shader
+	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
 };
 
 

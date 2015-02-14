@@ -74,12 +74,12 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 #if !TARGET_OS_IPHONE
 	m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+	vsLog("Created shader %d", m_shader);
 #endif // TARGET_OS_IPHONE
 
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
-	m_globalTimeLoc = glGetUniformLocation(m_shader, "globalTime");
 	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
 	m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
@@ -125,7 +125,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		switch ( m_uniform[i].type )
 		{
 			case GL_BOOL:
-				m_uniform[i].b = 2;
+				glGetUniformiv( m_shader, m_uniform[i].loc, &m_uniform[i].b );
 				break;
 			case GL_FLOAT:
 				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
@@ -148,10 +148,13 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 		m_attribute[i].type = type;
 		m_attribute[i].arraySize = arraySize;
 	}
+
+	m_globalTimeUniformId = GetUniformId("globalTime");
 }
 
 vsShader::~vsShader()
 {
+	vsLog("Destroyed shader %d", m_shader);
 	vsRenderer_OpenGL3::DestroyShader(m_shader);
 	vsDeleteArray( m_uniform );
 	vsDeleteArray( m_attribute );
@@ -194,7 +197,6 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 		vsAssert( density < 1.f, "High density??" );
 		int32_t fdid = GetUniformId("fogDensity");
 		SetUniformValueF(fdid, density);
-		// glUniform1f( m_fogDensityLoc, density );
 	}
 }
 
@@ -433,6 +435,9 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 void
 vsShader::Prepare( vsMaterial *material )
 {
+	GLint current;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &current);
+	vsAssert( current == (GLint)m_shader, "This shader isn't currently active??" );
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
 		switch( m_uniform[i].type )
@@ -440,8 +445,7 @@ vsShader::Prepare( vsMaterial *material )
 			case GL_BOOL:
 				{
 					bool b = material->UniformB(i);
-					if ( b != m_uniform[i].b )
-						SetUniformValueB( i, b );
+					SetUniformValueB( i, b );
 					break;
 				}
 			case GL_FLOAT:
@@ -449,17 +453,24 @@ vsShader::Prepare( vsMaterial *material )
 					if ( m_uniform[i].arraySize == 1 )
 					{
 						float f = material->UniformF(i);
+						if ( m_uniform[i].name == "glow" )
+						{
+							if ( f != m_uniform[i].f32 )
+							{
+								// vsLog("%x, %d: Setting 'glow' from %f to %f, for material %s", this, m_shader, m_uniform[i].f32, f, material->GetResource()->GetName().c_str() );
+							}
+						}
 						SetUniformValueF( i, f );
 					}
 					break;
 				}
-			case GL_FLOAT_VEC4:
-				{
-					vsVector4D v = material->UniformVec4(i);
-					if ( v != m_uniform[i].vec4 )
-						SetUniformValueVec4( i, v );
-					break;
-				}
+			// case GL_FLOAT_VEC4:
+			// 	{
+			// 		vsVector4D v = material->UniformVec4(i);
+			// 		if ( v != m_uniform[i].vec4 )
+			// 			SetUniformValueVec4( i, v );
+			// 		break;
+			// 	}
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -472,11 +483,11 @@ vsShader::Prepare( vsMaterial *material )
 		int yRes = vsScreen::Instance()->GetHeight();
 		glUniform2f( m_resolutionLoc, xRes, yRes );
 	}
-	if ( m_globalTimeLoc >= 0 )
+	if ( m_globalTimeUniformId >= 0 )
 	{
 		int milliseconds = vsTimerSystem::Instance()->GetMicrosecondsSinceInit() / 1000;
 		float seconds = milliseconds / 1000.f;
-		glUniform1f( m_globalTimeLoc, seconds );
+		SetUniformValueF( m_globalTimeUniformId, seconds );
 	}
 	if ( m_mouseLoc >= 0 )
 	{
@@ -485,6 +496,38 @@ vsShader::Prepare( vsMaterial *material )
 		// the coordinate system in the GLSL shader is inverted from the
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
+	}
+}
+
+void
+vsShader::ValidateCache( vsMaterial *activeMaterial )
+{
+	for ( int i = 0; i < m_uniformCount; i++ )
+	{
+		switch( m_uniform[i].type )
+		{
+			case GL_BOOL:
+				{
+					GLint valueNow = -1;
+					glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
+					CheckGLError("Test");
+					vsAssert( valueNow != -1, "-1??" );
+					vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
+					break;
+				}
+			case GL_FLOAT:
+				{
+					if ( m_uniform[i].arraySize == 1 )
+					{
+						float valueNow = -1.f;
+						glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
+						CheckGLError("Test");
+						vsAssert( valueNow != -1.f, "-1??" );
+						vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
+					}
+					break;
+				}
+		}
 	}
 }
 
@@ -503,14 +546,40 @@ vsShader::SetUniformValueF( int i, float value )
 	{
 		glUniform1f( m_uniform[i].loc, value );
 		m_uniform[i].f32 = value;
+
+		{
+			// verify that the value actually changed
+			float valueNow = -1.f;
+			glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
+			CheckGLError("Test");
+			vsAssert( valueNow != -1.f, "-1??" );
+			vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
+		}
 	}
 }
 
 void
 vsShader::SetUniformValueB( int i, bool value )
 {
-	glUniform1i( m_uniform[i].loc, value );
-	m_uniform[i].b = value;
+	{
+		int valueNow = 2;
+		glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
+		CheckGLError("Test");
+		vsAssert( valueNow != 2, "-1??" );
+		vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
+	}
+	if ( value != m_uniform[i].b )
+	{
+		glUniform1i( m_uniform[i].loc, value );
+		m_uniform[i].b = value;
+		{
+			int valueNow = 2;
+			glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
+			CheckGLError("Test");
+			vsAssert( valueNow != 2, "-1??" );
+			vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
+		}
+	}
 }
 
 void
