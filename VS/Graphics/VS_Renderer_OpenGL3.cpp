@@ -52,6 +52,7 @@ void vsRenderDebug( const vsString &message )
 	vsLog("%s", message.c_str());
 }
 
+/*
 void vsOpenGLDebugMessage( GLenum source,
 			GLenum type,
 			GLuint id,
@@ -61,7 +62,7 @@ void vsOpenGLDebugMessage( GLenum source,
 			const void *userParam)
 {
 	vsLog("GL: type: %d, severity %d, %s", type, severity, message);
-}
+}*/
 
 static void printAttributes ()
 {
@@ -306,8 +307,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
-		glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		// glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
+		// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	}
 #endif
 
