@@ -223,11 +223,11 @@ vsStore::ReadString()
 {
 	vsString result;
 	int s = ReadInt16();	// how long is the string?
+	result.reserve(s);
 	for ( int i = 0; i < s; i++ )
 	{
 		result.append(1, ReadInt8());
 	}
-	result[s] = 0;
 
 	return result;
 }
