@@ -435,9 +435,9 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 void
 vsShader::Prepare( vsMaterial *material )
 {
-	GLint current;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &current);
-	vsAssert( current == (GLint)m_shader, "This shader isn't currently active??" );
+	// GLint current;
+	// glGetIntegerv(GL_CURRENT_PROGRAM, &current);
+	// vsAssert( current == (GLint)m_shader, "This shader isn't currently active??" );
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
 		switch( m_uniform[i].type )
@@ -502,6 +502,8 @@ vsShader::Prepare( vsMaterial *material )
 void
 vsShader::ValidateCache( vsMaterial *activeMaterial )
 {
+	return;
+/*
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
 		switch( m_uniform[i].type )
@@ -529,56 +531,26 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 				}
 		}
 	}
+	*/
 }
 
 void
 vsShader::SetUniformValueF( int i, float value )
 {
-	{
-		float valueNow = -1.f;
-		glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
-		CheckGLError("Test");
-		vsAssert( valueNow != -1.f, "-1??" );
-		vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
-	}
-	static bool doTest = false;
-	if ( doTest || value != m_uniform[i].f32 )
+	// if ( value != m_uniform[i].f32 )
 	{
 		glUniform1f( m_uniform[i].loc, value );
 		m_uniform[i].f32 = value;
-
-		{
-			// verify that the value actually changed
-			float valueNow = -1.f;
-			glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
-			CheckGLError("Test");
-			vsAssert( valueNow != -1.f, "-1??" );
-			vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
-		}
 	}
 }
 
 void
 vsShader::SetUniformValueB( int i, bool value )
 {
-	{
-		int valueNow = 2;
-		glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
-		CheckGLError("Test");
-		vsAssert( valueNow != 2, "-1??" );
-		vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
-	}
-	if ( value != m_uniform[i].b )
+	// if ( value != m_uniform[i].b )
 	{
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;
-		{
-			int valueNow = 2;
-			glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
-			CheckGLError("Test");
-			vsAssert( valueNow != 2, "-1??" );
-			vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
-		}
 	}
 }
 

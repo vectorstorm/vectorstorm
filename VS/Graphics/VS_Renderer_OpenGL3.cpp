@@ -526,16 +526,24 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	static vsMaterial *s_previousMaterial = NULL;
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	if ( m_currentShader )
 	{
 		if ( s_lastShaderId != m_currentShader->GetShaderId() )
+		{
 			glUseProgram( m_currentShader->GetShaderId() );
-		s_lastShaderId = m_currentShader->GetShaderId();
+			m_currentShader->Prepare( m_currentMaterial );
+			s_lastShaderId = m_currentShader->GetShaderId();
+			s_previousMaterial = m_currentMaterial;
+		}
+		else if ( m_currentMaterial != s_previousMaterial )
+		{
+			m_currentShader->Prepare( m_currentMaterial );
+			s_previousMaterial = m_currentMaterial;
+		}
 
-		// now set the parameters on the current material.
-		m_currentShader->Prepare( m_currentMaterial );
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
