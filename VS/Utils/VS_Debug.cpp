@@ -55,6 +55,9 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 
 		{
 
+#if defined(_DEBUG)
+			DEBUG_BREAK;
+#else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
 // #if defined(__APPLE_CC__)
@@ -68,8 +71,6 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 // #endif
 			vsLog_End();
 			vsLog_Show();
-#if defined(_DEBUG)
-			DEBUG_BREAK;
 #endif
 			exit(1);
 		}

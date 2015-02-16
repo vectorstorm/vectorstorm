@@ -144,7 +144,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "glow" )
 				{
-					m_glow = sr->Bool();
+					m_glow = sr->Bool() ? 1.f : 0.f;
 				}
 				else if ( label == "postglow" )
 				{

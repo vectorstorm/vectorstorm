@@ -131,6 +131,7 @@ void
 vsDynamicMaterial::SetFog( bool fog )
 {
 	GetResource()->m_fog = fog;
+	SetUniformB("fog", fog );
 }
 
 void

@@ -52,6 +52,18 @@ void vsRenderDebug( const vsString &message )
 	vsLog("%s", message.c_str());
 }
 
+/*
+void vsOpenGLDebugMessage( GLenum source,
+			GLenum type,
+			GLuint id,
+			GLenum severity,
+			GLsizei length,
+			const GLchar *message,
+			const void *userParam)
+{
+	vsLog("GL: type: %d, severity %d, %s", type, severity, message);
+}*/
+
 static void printAttributes ()
 {
 #if !TARGET_OS_IPHONE
@@ -291,10 +303,14 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("Couldn't set vsync");
 	}
 
+#ifdef _DEBUG
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
+		// glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
+		// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	}
+#endif
 
 	vsLog( "VSync: %s", SDL_GL_GetSwapInterval() > 0 ? "ENABLED" : "DISABLED" );
 
@@ -316,9 +332,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !val )
 		vsLog("WARNING:  Failed to initialise double-buffering");
 
-	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &val );
-	if ( !val )
-		vsLog("WARNING:  Failed to get stencil buffer bits");
+	// SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &val );
+	// if ( !val )
+	// 	vsLog("WARNING:  Failed to get stencil buffer bits");
 
 #endif // !TARGET_OS_IPHONE
 
@@ -488,6 +504,11 @@ vsRenderer_OpenGL3::PostRender()
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	vsTimerSystem::Instance()->EndGPUTime();
 }
 
@@ -506,16 +527,24 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	static vsMaterial *s_previousMaterial = NULL;
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	if ( m_currentShader )
 	{
 		if ( s_lastShaderId != m_currentShader->GetShaderId() )
+		{
 			glUseProgram( m_currentShader->GetShaderId() );
-		s_lastShaderId = m_currentShader->GetShaderId();
+			m_currentShader->Prepare( m_currentMaterial );
+			s_lastShaderId = m_currentShader->GetShaderId();
+			s_previousMaterial = m_currentMaterial;
+		}
+		else if ( m_currentMaterial != s_previousMaterial )
+		{
+			m_currentShader->Prepare( m_currentMaterial );
+			s_previousMaterial = m_currentMaterial;
+		}
 
-		// now set the parameters on the current material.
-		m_currentShader->Prepare( m_currentMaterial );
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
@@ -532,13 +561,15 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetInstanceColors( &c_white, 1 );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
-		for ( int i = 0; i < MAX_LIGHTS; i++ )
+		int i = 0;
+		// for ( int i = 0; i < MAX_LIGHTS; i++ )
 		{
 			vsVector3D halfVector;
 			m_currentShader->SetLight( i, m_lightStatus[i].ambient, m_lightStatus[i].diffuse,
 					m_lightStatus[i].specular, m_lightStatus[i].position,
 					halfVector);
 		}
+		m_currentShader->ValidateCache( m_currentMaterial );
 	}
 	else
 	{
@@ -892,6 +923,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriListBuffer(m_currentLocalToWorldCount);
+					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
@@ -1369,8 +1401,8 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	glBindAttribLocation(program, 1, "texcoord");
 	glBindAttribLocation(program, 2, "normal");
 	glBindAttribLocation(program, 3, "color");
-	glBindAttribLocation(program, 5, "localToWorldAttrib");
 	glBindAttribLocation(program, 4, "instanceColorAttrib");
+	glBindAttribLocation(program, 5, "localToWorldAttrib");
 
 	glLinkProgram(program);
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
