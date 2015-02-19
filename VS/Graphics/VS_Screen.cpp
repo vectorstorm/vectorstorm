@@ -24,7 +24,7 @@
 const int c_fifoSize = 1024 * 300;		// 300kb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias,bool highDPI):
+vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int bufferCount, bool vsync, bool antialias,bool highDPI):
 	m_renderer(NULL),
 	m_pipeline(NULL),
 	m_scene(NULL),
@@ -33,6 +33,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	m_fifoHighWater(0),
 	m_width(width),
 	m_height(height),
+	m_bufferCount(bufferCount),
 	m_depth(depth),
 	m_fullscreen(fullscreen),
 	m_resized(false),
@@ -51,8 +52,6 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, bool vsync
 	if ( highDPI )
 		flags |= vsRenderer::Flag_HighDPI;
 	flags |= vsRenderer::Flag_Resizable;
-
-	int bufferCount = 2;
 
 	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags, bufferCount);
 
@@ -74,11 +73,12 @@ vsScreen::~vsScreen()
 void
 vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount)
 {
-	if ( width == m_width && height == m_height && depth == m_depth && fullscreen == m_fullscreen )
+	if ( width == m_width && height == m_height && depth == m_depth && fullscreen == m_fullscreen && bufferCount == m_bufferCount )
 		return;
 
 	m_width = width;
 	m_height = height;
+	m_bufferCount = bufferCount;
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
 	m_fullscreen = fullscreen;

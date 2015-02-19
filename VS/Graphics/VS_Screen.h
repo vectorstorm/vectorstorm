@@ -41,6 +41,7 @@ class vsScreen
 
 	int					m_width;
 	int					m_height;
+	int					m_bufferCount;
 	int					m_depth;
 	float				m_aspectRatio;
 	bool				m_fullscreen;
@@ -54,7 +55,7 @@ public:
 
 	static vsScreen *	Instance() { return s_instance; }
 
-	vsScreen(int width, int height, int depth, bool fullscreen, bool vsync, bool antialias, bool highDPI);
+	vsScreen(int width, int height, int depth, bool fullscreen, int bufferCount, bool vsync, bool antialias, bool highDPI);
 	~vsScreen();
 
 	vsRenderTarget *	GetMainRenderTarget();
