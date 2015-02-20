@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <physfs.h>
 
+#include <vector>
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 {
@@ -68,15 +69,39 @@ vsFile::Delete( const vsString &filename ) // static method
 	return PHYSFS_delete(filename.c_str()) != 0;
 }
 
+class sortFilesByModificationDate
+{
+	vsString m_dirName;
+	public:
+	sortFilesByModificationDate( const vsString& dirName ):
+		m_dirName(dirName)
+	{
+	}
+
+	bool operator()(char* a,char* b)
+	{
+		int atime = PHYSFS_getLastModTime((m_dirName + a).c_str());
+		int btime = PHYSFS_getLastModTime((m_dirName + b).c_str());
+		return ( atime > btime );
+	}
+};
+
 vsArray<vsString>
 vsFile::DirectoryContents( const vsString &dirName ) // static method
 {
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
 	char **i;
+	std::vector<char*> s;
+	for (i = files; *i != NULL; i++)
+		s.push_back(*i);
+
+
+	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
+
 	vsArray<vsString> result;
 
-	for (i = files; *i != NULL; i++)
-		result.AddItem( *i );
+	for (int i = 0; i < s.size(); i++)
+		result.AddItem( s[i] );
 
 	PHYSFS_freeList(files);
 
