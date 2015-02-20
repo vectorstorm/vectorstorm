@@ -26,7 +26,10 @@
 #include <errno.h>
 #include <physfs.h>
 
+#include "VS_DisableDebugNew.h"
 #include <vector>
+#include <algorithm>
+#include "VS_EnableDebugNew.h"
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 {
@@ -100,7 +103,7 @@ vsFile::DirectoryContents( const vsString &dirName ) // static method
 
 	vsArray<vsString> result;
 
-	for (int i = 0; i < s.size(); i++)
+	for (size_t i = 0; i < s.size(); i++)
 		result.AddItem( s[i] );
 
 	PHYSFS_freeList(files);
