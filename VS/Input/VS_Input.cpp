@@ -1129,7 +1129,7 @@ vsInput::GetTouchPosition(int touchID, int scene)
 }
 
 
-#ifdef __APPLE_CC__
+#ifndef _WIN32
 extern SDL_Window *g_sdlWindow;
 #endif
 
@@ -1152,12 +1152,17 @@ vsInput::CaptureMouse( bool capture )
 		else
 		{
 			SDL_SetRelativeMouseMode(SDL_FALSE);
-#ifdef __APPLE_CC__
+#ifndef _WIN32
 			// Bug in SDL2 on OSX:  Relative mouse mode moves the cursor to the
 			// middle of the window, even though the function documentation says
 			// that it's not supposed to do that.  Workaround:  On OSX, explicitly
 			// warp the cursor back to its correct position, when we turn off
 			// mouse capture.
+			//
+			// Similar bug on Linux:  Relative mouse mode doesn't leave the cursor
+			// in the same position where it began, the way that the documentation
+			// says that it's supposed to.  Same workaround:  explicitly warp
+			// the mouse back to the correct position when mouse capture ends.
 			SDL_WarpMouseInWindow( g_sdlWindow, m_capturedMouseX, m_capturedMouseY );
 #endif
 
