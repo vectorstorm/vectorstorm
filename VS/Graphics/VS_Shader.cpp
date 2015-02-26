@@ -74,7 +74,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 #if !TARGET_OS_IPHONE
 	m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
-	vsLog("Created shader %d", m_shader);
+	// vsLog("Created shader %d", m_shader);
 #endif // TARGET_OS_IPHONE
 
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
@@ -154,7 +154,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 
 vsShader::~vsShader()
 {
-	vsLog("Destroyed shader %d", m_shader);
+	// vsLog("Destroyed shader %d", m_shader);
 	vsRenderer_OpenGL3::DestroyShader(m_shader);
 	vsDeleteArray( m_uniform );
 	vsDeleteArray( m_attribute );

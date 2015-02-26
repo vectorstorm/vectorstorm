@@ -56,7 +56,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int buffer
 	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags, bufferCount);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
-	printf("Screen Ratio:  %f\n", m_aspectRatio);
+	vsLog("Screen Ratio:  %f", m_aspectRatio);
 
 	m_fifo = new vsDisplayList(c_fifoSize);
 }
@@ -93,7 +93,7 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int
     vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
-	printf("Screen Ratio:  %f\n", m_aspectRatio);
+	vsLog("Screen aspect ratio:  %f", m_aspectRatio);
 	m_resized = true;
 }
 

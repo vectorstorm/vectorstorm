@@ -163,7 +163,7 @@ vsTimerSystem::Init()
 {
 #if defined(_WIN32)
 	if (!QueryPerformanceFrequency(&g_liFrequency))
-		printf("QPF() failed with error %d\n", GetLastError());
+		vsLog("QPF() failed with error %d\n", GetLastError());
 #endif
 	m_initTime = GetMicroseconds();
 	//	m_startCpu = SDL_GetTicks();
@@ -197,7 +197,7 @@ vsTimerSystem::GetMicroseconds()
 {
 #if defined(_WIN32)
 	if ( !QueryPerformanceCounter(&g_liCurrent) )
-		printf("QPC() failed with error %d\n", GetLastError());
+		vsLog("QPC() failed with error %d\n", GetLastError());
 
 	return (unsigned long)((g_liCurrent.QuadPart * 1000000) / g_liFrequency.QuadPart);
 #else	// !_WIN32

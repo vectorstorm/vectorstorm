@@ -23,17 +23,17 @@ vsSoundSystem::vsSoundSystem()
 {
 	s_instance = this;
 
-	printf(" ++ Initialising mixer\n");
+	vsLog(" ++ Initialising mixer");
 //	if ( Mix_OpenAudio( MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024 ) )
 #if !TARGET_OS_IPHONE
 	if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 1024 ) )
-		printf(" !! Mix_OpenAudio: %s\n", Mix_GetError());
+		vsLog(" !! Mix_OpenAudio: %s", Mix_GetError());
 
 	int numtimesopened, frequency, channels;
 	Uint16 format;
 	numtimesopened=Mix_QuerySpec(&frequency, &format, &channels);
 	if(!numtimesopened) {
-		printf(" !! Mix_QuerySpec: %s\n",Mix_GetError());
+		vsLog(" !! Mix_QuerySpec: %s",Mix_GetError());
 	}
 	else {
 		const char *format_str="Unknown";
@@ -45,15 +45,15 @@ vsSoundSystem::vsSoundSystem()
 			case AUDIO_U16MSB: format_str="U16MSB"; break;
 			case AUDIO_S16MSB: format_str="S16MSB"; break;
 		}
-		printf(" ++ audio frequency=%dHz  format=%s  channels=%d\n",
+		vsLog(" ++ audio frequency=%dHz  format=%s  channels=%d",
 			   frequency, format_str, channels);
 	}
 
 	const char * soundDriver = SDL_GetAudioDeviceName(0, 0);
 	if ( soundDriver )
-		printf(" ++ Sound playing using %s.\n", soundDriver);
+		vsLog(" ++ Sound playing using %s.", soundDriver);
 	else
-		printf(" ?? No sound driver reported by SDL_AudioDriverName.\n");
+		vsLog(" ?? No sound driver reported by SDL_AudioDriverName.");
 
 	m_channelCount = Mix_AllocateChannels(32);	// get ourselves 32 channels for sound effects.  That's pretty realistic for a SNES-era console.
 	m_maxChannelsInUse = 0;
@@ -103,8 +103,8 @@ vsSoundSystem::Deinit()
 #if !TARGET_OS_IPHONE
 	Mix_HaltChannel(-1);
 #endif
-	printf(" ++ Sound channels in use: %d\n", m_channelsInUse);
-	printf(" ++ Max sound channels in use: %d\n", m_maxChannelsInUse);
+	vsLog(" ++ Sound channels in use: %d", m_channelsInUse);
+	vsLog(" ++ Max sound channels in use: %d", m_maxChannelsInUse);
 }
 
 void
@@ -129,7 +129,7 @@ void
 vsSoundSystem::ChannelFinished( int channel )
 {
 	UNUSED(channel);
-	//printf("Channel %d finished playing.\n", channel);
+	//vsLog("Channel %d finished playing.", channel);
 	vsSoundSystem::Instance()->m_channelsInUse--;
 }
 
@@ -140,7 +140,7 @@ vsSoundSystem::PlayMusic( vsMusic * music )
 	if ( music )
 	{
 		if(Mix_PlayMusic(music->m_music, -1)==-1) {
-			printf("Mix_PlayMusic: %s\n", Mix_GetError());
+			vsLog("Mix_PlayMusic: %s", Mix_GetError());
 			// well, there's no music, but most games don't break without music...
 		}
 	}

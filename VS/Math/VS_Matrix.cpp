@@ -414,7 +414,7 @@ vsMatrix4x4::Inverse() const
 	/* Run singularity test. */
 	if (det == 0.0)
 	{
-		/* printf("invert_matrix: Warning: Singular matrix.\n"); */
+		vsLog("invert_matrix: Warning: Singular matrix.");
 		return vsMatrix4x4::Identity;
 	}
 

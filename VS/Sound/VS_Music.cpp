@@ -26,7 +26,7 @@ vsMusic::vsMusic( const vsString &filename_in, bool looping )
 
 	m_music=Mix_LoadMUS(filename.c_str());
 	if(!m_music) {
-		printf("Mix_LoadMUS(\"%s\"): %s\n", filename.c_str(), Mix_GetError());
+		vsLog("Mix_LoadMUS(\"%s\"): %s", filename.c_str(), Mix_GetError());
 		// this might be a critical error...
 	}
 #endif
@@ -61,7 +61,7 @@ vsMusic::Start()
 		m_startTick = vsTimerSystem::Instance()->GetMicroseconds();
 	}
 	else
-		printf("Mix_PlayMusic: %s\n", Mix_GetError()); // well, there's no music, but most games don't break without music, so don't assert.
+		vsLog("Mix_PlayMusic: %s", Mix_GetError()); // well, there's no music, but most games don't break without music, so don't assert.
 #endif
 }
 

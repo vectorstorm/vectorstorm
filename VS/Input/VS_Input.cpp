@@ -67,12 +67,12 @@ vsInput::Init()
 
 	if ( joystickCount )
 	{
-		printf("Found %d joysticks.\n", joystickCount);
+		vsLog("Found %d joysticks.", joystickCount);
 		m_joystick = SDL_JoystickOpen(0);
 		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
 		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
 		m_joystickHats = SDL_JoystickNumHats(m_joystick);
-		printf("Using %s, %d axes, %d buttons, %d hats, %d balls\n", SDL_JoystickName(0), SDL_JoystickNumAxes(m_joystick),
+		vsLog("Using %s, %d axes, %d buttons, %d hats, %d balls", SDL_JoystickName(0), SDL_JoystickNumAxes(m_joystick),
 				SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
 
 
@@ -87,7 +87,7 @@ vsInput::Init()
 		//SDL_JoystickEventState(SDL_ENABLE);
 	}
 	else
-		printf("No joystick found.  Using keyboard input.\n");
+		vsLog("No joystick found.  Using keyboard input.");
 
 
 	Load();

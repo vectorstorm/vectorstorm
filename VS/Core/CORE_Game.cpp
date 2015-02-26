@@ -41,7 +41,7 @@ void
 coreGame::Init()
 {
 	const vsString &name = coreGameRegistry::GetGameName(this);
-	printf(" -- Initialising game \"%s\"\n", name.c_str());
+	vsLog(" -- Initialising game \"%s\"", name.c_str());
 	vsSystem::Instance()->EnableGameDirectory( name );
 	vsSystem::Instance()->SetWindowCaption( name );
 	vsSystem::Instance()->InitGameData();
@@ -59,13 +59,13 @@ void
 coreGame::Deinit()
 {
 	const vsString &name = coreGameRegistry::GetGameName(this);
-	printf(" -- Deinitialising game \"%s\"\n", name.c_str());
+	vsLog(" -- Deinitialising game \"%s\"", name.c_str());
 	DeinitGameSystems();
 
 	vsScreen::Instance()->DestroyScenes();
 	vsSystem::Instance()->DeinitGameData();
 	vsSystem::Instance()->DisableGameDirectory( name );
-	printf(" -- Exitting game \"%s\"\n", name.c_str());
+	vsLog(" -- Exitting game \"%s\"", name.c_str());
 }
 
 void
@@ -94,11 +94,11 @@ coreGame::StopTimer()
 
 	float fps = m_framesRendered / ((timer->GetCurrentMillis()-m_startTicks)/1000.0f);
 
-	printf(" ## Frames rendered: %ld\n ## Average FPS: %f\n", m_framesRendered, fps);
+	vsLog(" ## Frames rendered: %ld\n ## Average FPS: %f", m_framesRendered, fps);
 
 	int missedFrames = timer->GetMissedFrameCount();		// how many times did we miss rendering at 60?
 
-	printf(" ## Frames missed:  %d\n", missedFrames);
+	vsLog(" ## Frames missed:  %d", missedFrames);
 }
 
 void

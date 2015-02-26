@@ -18,7 +18,7 @@ vsSoundSample::vsSoundSample(const vsString &filename_in)
 	const vsString &filename = vsFile::GetFullFilename(filename_in);
 	m_chunk=Mix_LoadWAV(filename.c_str());
 	if(!m_chunk) {
-		printf("Mix_LoadWAV(\"%s\"): %s\n", filename.c_str(), Mix_GetError());
+		vsLog("Mix_LoadWAV(\"%s\"): %s", filename.c_str(), Mix_GetError());
 		// this might be a critical error...
 	}
 #endif

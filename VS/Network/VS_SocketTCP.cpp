@@ -37,8 +37,6 @@ using std::max;
 #define USE_POLL
 #endif
 
-#define vsLog printf
-
 vsSocketTCP::vsSocketTCP( int maxConnectionCount ):
 	m_privateIP(0),
 	m_privatePort(0),
@@ -384,7 +382,7 @@ vsSocketTCP::DoSelect(float maxSleepDuration)
 	{
 		// error!
 		extern int errno;
-		printf("Error: %d", errno);
+		vsLog("Error: %d", errno);
 	}
 	if ( readSocks > 0 )
 	{
