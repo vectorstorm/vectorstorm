@@ -45,6 +45,8 @@ find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 
 if(WIN32)
+	find_file(ZLIB_DLL zlib1.dll REQUIRED
+		PATH ../../buildzone/lib/x86 )
 	find_file(GLEW_DLL glew32.dll REQUIRED
 		PATH ../../buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16-16.dll REQUIRED
