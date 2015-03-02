@@ -14,6 +14,12 @@
 
 //vsString vsEmptyString = "";
 
+#ifdef _WIN32
+#define vsprintf vsprintf_s
+#define localtime localtime_s
+#define gmtime gmtime_s
+#endif
+
 vsString vsFormatString( const char* format, ... )
 {
 	char sz[1024];

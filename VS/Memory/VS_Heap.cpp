@@ -9,7 +9,11 @@
 
 #include "VS_Heap.h"
 
-vsHeap *g_globalHeap;	// 410 meg of global memory
+#ifdef _WIN32
+#define strncpy strncpy_s
+#endif
+
+vsHeap *g_globalHeap;
 
 vsHeap * vsHeap::s_current = NULL;
 
@@ -120,7 +124,11 @@ vsHeap::FindFreeMemBlockOfSize( size_t size )
 		block = block->m_next;
 	}
 
+#ifdef _WIN32
+	vsLog("Unable to find block of size %lu in heap of size %lu.  Largest block available is %lu.", size, m_memorySize, largestBlockSize);
+#else
 	vsLog("Unable to find block of size %zu in heap of size %zu.  Largest block available is %zu.", size, m_memorySize, largestBlockSize);
+#endif
 	vsAssert( foundMemBlockForAlloc, "Out of memory!" );	// if this breaks, we're out of memory, or are suffering from memory fragmentation!
 	return NULL;
 }
@@ -294,8 +302,6 @@ vsHeap::PrintStatus()
 {
 #ifdef VS_OVERLOAD_ALLOCATORS
 	vsLog(" >> MEMORY STATUS");
-	vsLog(" >> Heap current usage %zu / %zu (%0.2f%% usage)", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
-	vsLog(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
 
 	size_t bytesFree = m_memorySize - m_memoryUsed;
 	size_t largestBlock = 0;
@@ -310,7 +316,15 @@ vsHeap::PrintStatus()
 		block = block->m_next;
 	}
 
+#ifdef _WIN32
+	vsLog(" >> Heap current usage %lu / %lu (%0.2f%% usage)", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
+	vsLog(" >> Heap highwater usage %lu / %lu (%0.2f%% usage)", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
+	vsLog(" >> Heap largest free block %lu / %lu bytes free (%0.2f%% fragmentation)", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
+#else
+	vsLog(" >> Heap current usage %zu / %zu (%0.2f%% usage)", m_memoryUsed, m_memorySize, 100.0f*m_memoryUsed/m_memorySize);
+	vsLog(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
 	vsLog(" >> Heap largest free block %zu / %zu bytes free (%0.2f%% fragmentation)", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
+#endif
 #endif // VS_OVERLOAD_ALLOCATORS
 
 }
@@ -349,7 +363,11 @@ vsHeap::TraceMemoryBlocks()
 	{
 		if ( block->m_used )
 		{
+#ifdef _WIN32
+			vsLog("[%d] %s:%d : %lu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
+#else
 			vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
+#endif
 		}
 		block = block->m_next;
 	}
@@ -362,7 +380,11 @@ vsHeap::PrintBlockList()
 
 	while ( block )
 	{
-		vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_size);
+#ifdef _WIN32
+		vsLog("[%d] %s:%d : %lu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
+#else
+		vsLog("[%d] %s:%d : %zu bytes", block->m_blockId, block->m_filename, block->m_line, block->m_sizeRequested);
+#endif
 		block = block->m_next;
 	}
 }

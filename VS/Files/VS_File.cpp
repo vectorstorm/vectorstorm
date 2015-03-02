@@ -42,7 +42,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
 
 	if ( m_file )
 	{
-		m_length = PHYSFS_fileLength(m_file);
+		m_length = (size_t)PHYSFS_fileLength(m_file);
 	}
 
 	vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError()) );
@@ -83,8 +83,8 @@ class sortFilesByModificationDate
 
 	bool operator()(char* a,char* b)
 	{
-		int atime = PHYSFS_getLastModTime((m_dirName + a).c_str());
-		int btime = PHYSFS_getLastModTime((m_dirName + b).c_str());
+		PHYSFS_sint64 atime = PHYSFS_getLastModTime((m_dirName + a).c_str());
+		PHYSFS_sint64 btime = PHYSFS_getLastModTime((m_dirName + b).c_str());
 		return ( atime > btime );
 	}
 };
@@ -139,7 +139,7 @@ vsFile::PeekRecord( vsRecord *r )
 
 		r->Init();
 
-		long filePos = PHYSFS_tell(m_file);
+		PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
 		if ( r->Parse(this) )
 			succeeded = true;
 
@@ -182,15 +182,15 @@ vsFile::ReadLine( vsString *line )
 	// const int c_bufSize = 1024;
 	// char buf[c_bufSize];
 
-	long filePos = PHYSFS_tell(m_file);
+	PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
 	char peekChar = 'a';
 
 	while ( !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
 		PHYSFS_read(m_file, &peekChar, 1, 1);
 	}
-	long afterFilePos = PHYSFS_tell(m_file);
-	long bytes = afterFilePos - filePos;
+	PHYSFS_sint64 afterFilePos = PHYSFS_tell(m_file);
+	PHYSFS_uint32 bytes = PHYSFS_uint32(afterFilePos - filePos);
 	PHYSFS_seek(m_file, filePos);
 	if ( bytes > 0 )
 	{
@@ -213,7 +213,7 @@ vsFile::ReadLine( vsString *line )
 bool
 vsFile::PeekLine( vsString *line )
 {
-	long filePos = PHYSFS_tell(m_file);
+	PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
 	bool result = ReadLine(line);
 	PHYSFS_seek(m_file, filePos);
 	return result;
@@ -236,8 +236,8 @@ vsFile::Store( vsStore *s )
 	else
 	{
 		s->Rewind();
-		size_t n = PHYSFS_read( m_file, s->GetWriteHead(), 1, s->BufferLength() );
-		s->SetLength(n);
+		PHYSFS_sint64 n = PHYSFS_read( m_file, s->GetWriteHead(), 1, s->BufferLength() );
+		s->SetLength((size_t)n);
 	}
 }
 
@@ -250,8 +250,8 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 	}
 	else
 	{
-		size_t n = PHYSFS_read( m_file, s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()) );
-		s->AdvanceWriteHead(n);
+		PHYSFS_sint64 n = PHYSFS_read( m_file, s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()) );
+		s->AdvanceWriteHead((size_t)n);
 	}
 }
 

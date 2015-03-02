@@ -159,7 +159,7 @@ vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexSubImage2D(GL_TEXTURE_2D,
 			0,
-			where.x, where.y,
+			(int)where.x, (int)where.y,
 			image->GetWidth(), image->GetHeight(),
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
@@ -173,7 +173,7 @@ vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexSubImage2D(GL_TEXTURE_2D,
 			0,
-			where.x, where.y,
+			(int)where.x, (int)where.y,
 			image->GetWidth(), image->GetHeight(),
 			GL_RGBA,
 			GL_FLOAT,
@@ -201,14 +201,14 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 
 	//SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
 
-	m_width = (float)source->w;
-	m_height = (float)source->h;
+	m_width = source->w;
+	m_height = source->h;
 
 	int w = power_of_two(source->w);
 	int h = power_of_two(source->h);
 
-	m_glTextureWidth = (float)w;
-	m_glTextureHeight = (float)h;
+	m_glTextureWidth = w;
+	m_glTextureHeight = h;
 
 	SDL_Surface *image = SDL_CreateRGBSurface(
 			SDL_SWSURFACE,

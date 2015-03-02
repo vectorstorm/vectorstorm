@@ -13,6 +13,10 @@
 #include <stdarg.h>
 #include <physfs.h>
 
+#ifdef _WIN32
+#define vsprintf vsprintf_s
+#endif
+
 static PHYSFS_File* s_log = NULL;
 
 void vsLog_Start()

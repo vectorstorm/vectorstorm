@@ -604,7 +604,7 @@ vsSystemPreferences::GetMouseWheelScaling()
 void
 vsSystemPreferences::SetMouseWheelScaling(float scaling)
 {
-	m_mouseWheelScalePercent->m_value = scaling * 100.f;
+	m_mouseWheelScalePercent->m_value = (int)(scaling * 100.f);
 }
 
 float
@@ -616,7 +616,7 @@ vsSystemPreferences::GetTrackpadWheelScaling()
 void
 vsSystemPreferences::SetTrackpadWheelScaling(float scaling)
 {
-	m_trackpadWheelScalePercent->m_value = scaling * 100.f;
+	m_trackpadWheelScalePercent->m_value = (int)(scaling * 100.f);
 }
 
 bool

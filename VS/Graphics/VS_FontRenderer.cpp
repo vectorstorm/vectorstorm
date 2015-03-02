@@ -181,7 +181,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
 	if ( ShouldSnap( context ) )
-		lineMargin = (int)lineMargin;
+		lineMargin = (float)(int)lineMargin;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
@@ -423,7 +423,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 		if ( ShouldSnap( context ) )
 		{
 			// snap our offsets!
-			offset.x = (int)(offset.x);
+			offset.x = (float)(int)(offset.x);
 		}
 		offset.x *= (1.f / size.x);
 

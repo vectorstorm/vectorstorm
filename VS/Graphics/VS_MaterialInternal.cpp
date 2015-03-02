@@ -39,7 +39,6 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
 	m_shaderIsMine(false),
 	m_shader(NULL),
-	m_texture(),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -144,7 +143,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "glow" )
 				{
-					m_glow = sr->Bool() ? 1.f : 0.f;
+					m_glow = sr->Bool();
 				}
 				else if ( label == "postglow" )
 				{

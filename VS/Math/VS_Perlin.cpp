@@ -179,7 +179,7 @@ vsPerlin::Noise(const vsVector2D &pos)
 	{
 		float frequency = (float)(1 << i);
 
-		total += m_octave[i]->InterpolatedNoise2D(pos.x * frequency, pos.y * frequency, m_wrap * frequency) * amplitude;
+		total += m_octave[i]->InterpolatedNoise2D(pos.x * frequency, pos.y * frequency, (int)(m_wrap * frequency)) * amplitude;
 
 		amplitude *= p;
 	}

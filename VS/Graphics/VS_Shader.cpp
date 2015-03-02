@@ -481,7 +481,7 @@ vsShader::Prepare( vsMaterial *material )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
 		int yRes = vsScreen::Instance()->GetHeight();
-		glUniform2f( m_resolutionLoc, xRes, yRes );
+		glUniform2f( m_resolutionLoc, (float)xRes, (float)yRes );
 	}
 	if ( m_globalTimeUniformId >= 0 )
 	{

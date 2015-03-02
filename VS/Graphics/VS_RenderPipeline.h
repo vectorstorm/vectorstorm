@@ -43,7 +43,7 @@ struct RenderTargetRequest
 
 	bool operator==(const RenderTargetRequest& other) const
 	{
-		return *this == other;
+		return (0 == memcmp(this, &other, sizeof(RenderTargetRequest)));
 	}
 };
 

@@ -9,6 +9,10 @@
 
 #include "VS_Token.h"
 
+#ifdef _WIN32
+#define sscanf sscanf_s
+#endif
+
 // tokens may be any of the following:
 //
 // sequences of letters (mixed case)
@@ -250,14 +254,14 @@ vsToken::ExtractFrom( vsString &string )
 
 			if ( isAFloat )
 			{
-				bool success = sscanf( token.c_str(), "%f", &m_float );
+				bool success = (sscanf( token.c_str(), "%f", &m_float )!=0);
 				vsAssert(success, "Couldn't find a floating value where we expected one?");
 				m_type = Type_Float;
 				return true;
 			}
 			else
 			{
-				bool success = sscanf( token.c_str(), "%d", &m_int);
+				bool success = sscanf( token.c_str(), "%d", &m_int) != 0;
 				vsAssert(success, "Couldn't find an integer value?" );
 				m_type = Type_Integer;
 				return true;

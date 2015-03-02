@@ -277,10 +277,10 @@ vsFloatImage::BakePNG(int compression)
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
 			vsColor pixel = GetPixel(u,(m_height-1)-v);
 
-			((unsigned char*)image->pixels)[ri] = 255.f * pixel.r;
-			((unsigned char*)image->pixels)[gi] = 255.f * pixel.g;
-			((unsigned char*)image->pixels)[bi] = 255.f * pixel.b;
-			((unsigned char*)image->pixels)[ai] = 255.f * pixel.a;
+			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
+			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
+			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
+			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
 		}
 	}
 	//
@@ -295,7 +295,7 @@ vsFloatImage::BakePNG(int compression)
 	SDL_UnlockSurface( image );
 	if ( retval == -1 )
 		vsLog( "%s", SDL_GetError() );
-	int bytes = SDL_RWtell(dst);
+	int bytes = (int)SDL_RWtell(dst);
 	vsStore *result = new vsStore(bytes);
 	result->WriteBuffer(pngData,bytes);
 	SDL_RWclose(dst);

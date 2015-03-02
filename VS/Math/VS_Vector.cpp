@@ -87,9 +87,9 @@ vsVector3D::NormaliseSafe()
 void
 vsVector3D::Floor()
 {
-    x = vsFloor(x);
-    y = vsFloor(y);
-    z = vsFloor(z);
+    x = (float)vsFloor(x);
+    y = (float)vsFloor(y);
+    z = (float)vsFloor(z);
 }
 
 float

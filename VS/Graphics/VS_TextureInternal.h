@@ -24,11 +24,11 @@ class vsTextureInternal : public vsResource
 {
 	uint32_t		m_texture;
 
-	float		m_glTextureWidth;
-	float		m_glTextureHeight;
+	int		m_glTextureWidth;
+	int		m_glTextureHeight;
 
-	float		m_width;
-	float		m_height;
+	int 		m_width;
+	int 		m_height;
     bool        m_depth;
 
 	bool		m_premultipliedAlpha;
@@ -52,12 +52,12 @@ public:
 
 	uint32_t		GetTexture() { return m_texture; }
 
-	float		GetWidth() { return m_width; }
-	float		GetHeight() { return m_height; }
+	int		GetWidth() { return m_width; }
+	int		GetHeight() { return m_height; }
     bool        IsDepth() { return m_depth; }
 
-	float		GetGLWidth() { return m_glTextureWidth; }
-	float		GetGLHeight() { return m_glTextureHeight; }
+	int		GetGLWidth() { return m_glTextureWidth; }
+	int		GetGLHeight() { return m_glTextureHeight; }
 
 	uint32_t		ScaleColour(uint32_t ini, float amt);
 	uint32_t		SafeAddColour(uint32_t a, uint32_t b);

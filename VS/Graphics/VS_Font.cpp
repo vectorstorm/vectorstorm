@@ -222,7 +222,7 @@ vsFontSize::LoadBMFont( vsFile *file )
 		vsString label = r.GetLabel().AsString();
 		if ( r.GetLabel().AsString() == "info" )
 		{
-			m_size = GetBMFontValue_Integer(&r, "size");
+			m_size = (float)GetBMFontValue_Integer(&r, "size");
 		}
 		else if ( r.GetLabel().AsString() == "common" )
 		{
@@ -385,7 +385,7 @@ vsFont::Size(float size)
 	if ( vsScreen::Instance()->GetTrueWidth() <
 			vsScreen::Instance()->GetMainRenderTarget()->GetWidth() )
 	{
-		float factor = vsScreen::Instance()->GetMainRenderTarget()->GetWidth() / vsScreen::Instance()->GetTrueWidth();
+		float factor = vsScreen::Instance()->GetMainRenderTarget()->GetWidth() / (float)vsScreen::Instance()->GetTrueWidth();
 		size *= factor;
 	}
 
