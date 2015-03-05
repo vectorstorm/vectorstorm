@@ -27,7 +27,7 @@ vsDynamicMaterial::SetShader( vsShader *shader )
 void
 vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 {
-	GetResource()->m_shader = vsShader::Load(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, GetResource()->m_texture != NULL);
+	GetResource()->m_shader = vsShader::Load(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, GetResource()->m_texture[0] != NULL);
 	GetResource()->m_shaderIsMine = true;
 	SetupParameters();
 }
