@@ -312,7 +312,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 #endif
 
-	vsLog( "VSync: %s", SDL_GL_GetSwapInterval() > 0 ? "ENABLED" : "DISABLED" );
+	int swapInterval = SDL_GL_GetSwapInterval();
+	if ( swapInterval > 0 )
+		vsLog( "VSync: ENABLED" );
+	else if ( swapInterval == 0 )
+		vsLog( "VSync: DISABLED" );
+	else
+		vsLog( "VSync: UNKNOWN (the active OpenGL driver provides no support for querying swap interval)" );
 
 	int MaxVertexTextureImageUnits;
 	glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &MaxVertexTextureImageUnits);
