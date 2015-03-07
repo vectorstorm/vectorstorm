@@ -427,9 +427,6 @@ vsRenderer_OpenGL3::Resize()
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
 	CheckGLError("Resizing");
-
-	m_scene->Bind();
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 }
 
 bool
@@ -481,6 +478,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 
+	m_scene->Bind();
 	m_currentRenderTarget = m_scene;
 	m_currentColor = c_white;
 
@@ -499,7 +497,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 	m_state.Flush();
-	// glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 	// our baseline size is 1024x768.  We want single-pixel lines at that size.
 	// float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
@@ -509,10 +507,13 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
-	m_scene->Bind();
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	vsTimerSystem::Instance()->EndGPUTime();
 }
