@@ -69,7 +69,50 @@ vsFile::DirectoryExists( const vsString &filename ) // static method
 bool
 vsFile::Delete( const vsString &filename ) // static method
 {
+	if ( DirectoryExists(filename) ) // This file is a directory, don't delete it!
+		return false;
+
 	return PHYSFS_delete(filename.c_str()) != 0;
+}
+
+bool
+vsFile::DeleteEmptyDirectory( const vsString &filename )
+{
+	// If it's not a directory, don't delete it!
+	//
+	// Note that PHYSFS_delete will return an error if we
+	// try to delete a non-empty directory.
+	//
+	if ( DirectoryExists(filename) )
+		return PHYSFS_delete(filename.c_str()) != 0;
+	return false;
+}
+
+bool
+vsFile::DeleteDirectory( const vsString &filename )
+{
+	if ( DirectoryExists(filename) )
+	{
+		vsArray<vsString> files = DirectoryContents(filename);
+		for ( int i = 0; i < files.ItemCount(); i++ )
+		{
+			vsString ff = vsFormatString("%s/%s", filename.c_str(), files[i].c_str());
+			if ( vsFile::DirectoryExists( ff ) )
+			{
+				// it's a directory;  remove it!
+				DeleteDirectory( ff );
+			}
+			else
+			{
+				// it's a file, delete it.
+				Delete( ff );
+			}
+		}
+
+		// I should now be empty, so delete me.
+		return DeleteEmptyDirectory( filename );
+	}
+	return false;
 }
 
 class sortFilesByModificationDate
@@ -97,7 +140,6 @@ vsFile::DirectoryContents( const vsString &dirName ) // static method
 	std::vector<char*> s;
 	for (i = files; *i != NULL; i++)
 		s.push_back(*i);
-
 
 	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
 
