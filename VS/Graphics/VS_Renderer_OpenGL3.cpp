@@ -424,6 +424,8 @@ vsRenderer_OpenGL3::Resize()
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
+	m_scene->Bind();
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
 	CheckGLError("Resizing");
@@ -473,35 +475,23 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
+	m_currentColor = c_white;
 
 	m_scene->Bind();
 	m_currentRenderTarget = m_scene;
-	m_currentColor = c_white;
 
-	if ( m_antialias )
-	{
-		m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	}
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.Flush();
-
 	glClearColor(0.0f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 	m_state.Flush();
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-
-	// our baseline size is 1024x768.  We want single-pixel lines at that size.
-	// float lineScaleFactor = vsMax(2.0f,m_heightPixels / 384.f);
-	// glLineWidth( lineScaleFactor );
 }
 
 void
@@ -510,11 +500,19 @@ vsRenderer_OpenGL3::PostRender()
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
+
+	m_scene->Bind();
+	m_currentRenderTarget = m_scene;
 	glClearColor(0.0f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
+	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+
 	vsTimerSystem::Instance()->EndGPUTime();
 }
 
