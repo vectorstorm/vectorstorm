@@ -18,9 +18,8 @@ vsString vsNumberString(int number);
 
 #define STR vsFormatString
 
-//extern vsString vsEmptyString;
+extern const vsString vsEmptyString;
 
-#define vsEmptyString vsString("")
 
 #endif // VS_STRING_H
 
