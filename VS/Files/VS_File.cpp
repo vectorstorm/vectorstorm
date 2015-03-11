@@ -120,7 +120,7 @@ class sortFilesByModificationDate
 	vsString m_dirName;
 	public:
 	sortFilesByModificationDate( const vsString& dirName ):
-		m_dirName(dirName)
+		m_dirName(dirName + PHYSFS_getDirSeparator())
 	{
 	}
 
