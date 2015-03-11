@@ -56,7 +56,7 @@ public:
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 
-	static vsArray<vsString> DirectoryContents( const vsString &dirName );
+	static int DirectoryContents( vsArray<vsString> *result, const vsString &dirName );
 
 	static void EnsureWriteDirectoryExists( const vsString &writeDirectoryName );
 

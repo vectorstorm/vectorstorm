@@ -93,7 +93,8 @@ vsFile::DeleteDirectory( const vsString &filename )
 {
 	if ( DirectoryExists(filename) )
 	{
-		vsArray<vsString> files = DirectoryContents(filename);
+		vsArray<vsString> files;
+        DirectoryContents(&files, filename);
 		for ( int i = 0; i < files.ItemCount(); i++ )
 		{
 			vsString ff = vsFormatString("%s/%s", filename.c_str(), files[i].c_str());
@@ -132,8 +133,8 @@ class sortFilesByModificationDate
 	}
 };
 
-vsArray<vsString>
-vsFile::DirectoryContents( const vsString &dirName ) // static method
+int
+vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
 	char **i;
@@ -143,14 +144,13 @@ vsFile::DirectoryContents( const vsString &dirName ) // static method
 
 	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
 
-	vsArray<vsString> result;
-
+    result->Clear();
 	for (size_t i = 0; i < s.size(); i++)
-		result.AddItem( s[i] );
+		result->AddItem( s[i] );
 
 	PHYSFS_freeList(files);
 
-	return result;
+    return result->ItemCount();
 }
 
 void
