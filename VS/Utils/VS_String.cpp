@@ -20,8 +20,6 @@
 #define gmtime gmtime_s
 #endif
 
-const vsString vsEmptyString("");
-
 vsString vsFormatString( const char* format, ... )
 {
 	char sz[1024];
