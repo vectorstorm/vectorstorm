@@ -23,9 +23,10 @@ class vsRenderPipelineStageScenes: public vsRenderPipelineStage
 	int m_sceneCount;
 	vsRenderTarget *m_target;
 	vsRenderer::Settings m_settings;
+	bool m_clear;
 public:
-	vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings );
-	vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings );
+	vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear );
+	vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear );
 	virtual ~vsRenderPipelineStageScenes();
 
 	virtual void Draw( vsDisplayList *list );

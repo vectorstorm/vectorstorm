@@ -128,7 +128,7 @@ vsScreen::CreateScenes(int count)
 	m_sceneCount = count;
 
 	m_pipeline = new vsRenderPipeline(2);
-	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings ));
+	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, false ));
 	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 
 #if defined(DEBUG_SCENE)
