@@ -140,7 +140,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		float offset = 1.2f / m_pass[i]->GetWidth();
+		float offsetx = 1.2f / m_pass[i]->GetWidth();
+		float offsety = 1.2f / m_pass[i]->GetHeight();
 		m_horizontalBlurMaterial[i] = new vsDynamicMaterial;
 		m_horizontalBlurMaterial[i]->SetClampU(true);
 		m_horizontalBlurMaterial[i]->SetClampV(true);
@@ -148,7 +149,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_horizontalBlurMaterial[i]->SetTexture(0,m_pass[i]->GetTexture());
 		m_horizontalBlurMaterial[i]->SetShader(m_bloomBlurShader);
 		m_horizontalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
-		m_horizontalBlurMaterial[i]->SetUniformF("offsetx", offset);
+		m_horizontalBlurMaterial[i]->SetUniformF("offsetx", offsetx);
 		m_horizontalBlurMaterial[i]->SetUniformF("offsety", 0.f);
 
 		m_verticalBlurMaterial[i] = new vsDynamicMaterial;
@@ -159,7 +160,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_verticalBlurMaterial[i]->SetShader(m_bloomBlurShader);
 		m_verticalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
 		m_verticalBlurMaterial[i]->SetUniformF("offsetx", 0.f);
-		m_verticalBlurMaterial[i]->SetUniformF("offsety", offset);
+		m_verticalBlurMaterial[i]->SetUniformF("offsety", offsety);
 
 		m_combinePassMaterial[i] = new vsDynamicMaterial;
 		m_combinePassMaterial[i]->SetBlend(true);
