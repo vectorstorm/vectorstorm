@@ -36,8 +36,6 @@ struct SDL_Surface;
 
 class vsRenderer_OpenGL3: public vsRenderer
 {
-	static vsRenderer_OpenGL3 *	s_instance;
-
 	int					m_flags;
 	vsShaderSuite		m_defaultShaderSuite;
 
@@ -118,7 +116,7 @@ public:
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
 
-	static vsRenderer_OpenGL3* Instance() { return s_instance; }
+	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
 	bool	CheckVideoMode();
 	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount);

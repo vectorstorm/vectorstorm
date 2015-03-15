@@ -45,8 +45,6 @@ static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
 static vsMutex m_loadingGlContextMutex;
 
-vsRenderer_OpenGL3* vsRenderer_OpenGL3::s_instance = NULL;
-
 void vsRenderDebug( const vsString &message )
 {
 	vsLog("%s", message.c_str());
@@ -147,9 +145,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_scene(NULL),
 	m_bufferCount(bufferCount)
 {
-	vsAssert( s_instance == NULL, "Multiple renderers??" );
-	s_instance = this;
-
 	int displayCount = SDL_GetNumVideoDisplays();
 	if (displayCount < 1)
 	{
@@ -381,7 +376,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
-	s_instance = NULL;
 	vsDelete(m_window);
 	vsDelete(m_scene);
 	CheckGLError("Initialising OpenGL rendering");

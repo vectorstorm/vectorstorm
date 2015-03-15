@@ -20,7 +20,6 @@ vsRenderer::Settings::Settings():
 	writeDepth(true),
 	invertCull(false)
 {
-	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
 }
 
 vsRenderer::vsRenderer(int width, int height, int depth, int flags):
@@ -30,6 +29,7 @@ vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 	m_viewportHeight(height)
 {
 	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
+	s_instance = this;
 }
 
 vsRenderer::~vsRenderer()

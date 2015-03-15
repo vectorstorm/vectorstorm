@@ -61,8 +61,7 @@ public:
 	}
 };
 
-vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int dims ):
-	m_dims(dims),
+vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to ):
 	m_hipassMaterial(NULL),
 	m_fromMaterial(NULL),
 	m_from(from),
@@ -100,7 +99,7 @@ void
 vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 {
 	RenderTargetRequest req;
-	req.type = RenderTargetRequest::Type_AbsoluteSize;
+	req.type = RenderTargetRequest::Type_MipmapLevel;
 	req.depth = false;
 	req.stencil = false;
 	req.linear = true;
@@ -110,8 +109,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		req.width = m_dims >> i;
-		req.height = m_dims >> i;
+		req.mipmapLevel = i;
 		m_pass[i] = pipeline->RequestRenderTarget(req, this);
 		m_pass2[i] = pipeline->RequestRenderTarget(req, this);
 	}
