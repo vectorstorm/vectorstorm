@@ -53,6 +53,7 @@ private:
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
+	int32_t m_cameraPositionLoc;
 	int32_t m_viewToProjectionLoc;
 
 	int32_t m_lightAmbientLoc;
