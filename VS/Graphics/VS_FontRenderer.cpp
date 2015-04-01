@@ -196,7 +196,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	fragment->AddBuffer( ptBuffer );
 	fragment->AddBuffer( tlBuffer );
 
-	vsDisplayList *list = new vsDisplayList(60);
+	vsDisplayList *list = new vsDisplayList(128);
 	bool doSnap = ShouldSnap( context );
 
 	if ( m_transform != vsTransform3D::Identity )
