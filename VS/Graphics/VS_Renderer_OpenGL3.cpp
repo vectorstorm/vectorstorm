@@ -482,13 +482,14 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	glClearDepth(1.f);
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 	m_state.SetBool( vsRendererState::Bool_Blend, true );
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.SetBool( vsRendererState::Bool_CullFace, true );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
 	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
 	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
@@ -511,7 +512,7 @@ vsRenderer_OpenGL3::PostRender()
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, true );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -1030,12 +1031,13 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_EnableStencil:
 				{
+					m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 					glStencilFunc(GL_EQUAL, 0x1, 0x1);
 					break;
 				}
 			case vsDisplayList::OpCode_DisableStencil:
 				{
-					//m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+					m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 					glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 					break;
 				}
