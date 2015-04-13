@@ -39,6 +39,8 @@ class vsRecord
 
 public:
 	vsRecord();
+	vsRecord( const char* fromString );
+	vsRecord( const vsString& fromString );
 	~vsRecord();
 
 	void		Init();
@@ -52,7 +54,7 @@ public:
 	void				SetLabel(const vsString &label);
 
 	vsToken &			GetToken(int i);
-	int					GetTokenCount() { return m_token.ItemCount(); }
+	int					GetTokenCount() const { return m_token.ItemCount(); }
 	void				SetTokenCount( int count );
 
 	vsRecord *			GetChild(int i);
@@ -73,6 +75,9 @@ public:
 	void				SetRect(float x, float y, float width, float height);
 	void				SetInt(int value);
 	void				SetFloat(float value);
+
+	bool operator==(const char* string) { return operator==( vsString(string) ); }
+	bool operator==(const vsString& string);
 };
 
 #endif // FS_RECORD_H

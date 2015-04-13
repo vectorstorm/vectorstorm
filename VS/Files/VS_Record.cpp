@@ -23,6 +23,26 @@ vsRecord::vsRecord()
 	Init();
 }
 
+vsRecord::vsRecord( const char* fromString )
+{
+	m_childList.Clear();
+	m_hasLabel = false;
+	m_lastChild = NULL;
+
+	Init();
+	ParseString( fromString );
+}
+
+vsRecord::vsRecord( const vsString& fromString )
+{
+	m_childList.Clear();
+	m_hasLabel = false;
+	m_lastChild = NULL;
+
+	Init();
+	ParseString( fromString );
+}
+
 vsRecord::~vsRecord()
 {
 	Init();
@@ -386,5 +406,23 @@ vsRecord::Quaternion()
 					  GetToken(1).AsFloat(),
 					  GetToken(2).AsFloat(),
 					  GetToken(3).AsFloat() );
+}
+
+bool
+vsRecord::operator==(const vsString& string)
+{
+	vsRecord other;
+	other.ParseString(string);
+
+	if ( GetTokenCount() != other.GetTokenCount() )
+		return false;
+	if ( GetLabel() != other.GetLabel() )
+		return false;
+	for ( int i = 0; i < GetTokenCount(); i++ )
+	{
+		if ( GetToken(i) != other.GetToken(i) )
+			return false;
+	}
+	return true;
 }
 

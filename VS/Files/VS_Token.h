@@ -53,6 +53,9 @@ public:
 
 	bool		IsType( Type type );
 	bool		IsNumeric() { return IsType( Type_Float ) || IsType( Type_Integer ); }
+
+	bool operator==( vsToken& other );
+	bool operator!=( vsToken& other ) { return ! ((*this) == other); }
 };
 
 #endif // FS_TOKEN_H

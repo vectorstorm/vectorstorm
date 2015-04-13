@@ -384,3 +384,8 @@ vsToken::IsType( vsToken::Type t )
 	return m_type == t;
 }
 
+bool
+vsToken::operator==( vsToken& other )
+{
+	return AsString() == other.AsString();
+}
