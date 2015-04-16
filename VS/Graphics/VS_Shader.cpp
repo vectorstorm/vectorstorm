@@ -21,6 +21,20 @@
 static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
 
+vsMatrix4x4 vsShader::s_matrix[2];
+static vsRenderBuffer *s_matrixBuffer;
+
+void vsShader::Startup()
+{
+	s_matrixBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Dynamic );
+	s_matrixBuffer->SetUniformBuffer( s_matrix, sizeof(s_matrix) );
+	s_matrixBuffer->BindUniformBuffer(0);
+}
+
+void vsShader::Shutdown()
+{
+	vsDelete( s_matrixBuffer );
+}
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_shader(-1)
@@ -86,9 +100,16 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
 	m_textureLoc = glGetUniformLocation(m_shader, "textures");
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
-	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
-	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
+	// m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
+	// m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 	m_cameraPositionLoc = glGetUniformLocation(m_shader, "cameraPosition");
+
+	m_matricesLoc = glGetUniformBlockIndex(m_shader, "Matrices");
+	if ( m_matricesLoc > -1 )
+	{
+		// matrices block is always at bind point zero.
+		glUniformBlockBinding( m_shader, m_matricesLoc, 0 );
+	}
 
 	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
@@ -376,26 +397,20 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 }
 
 void
-vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
+vsShader::SetViewAndProjectionMatrices( const vsMatrix4x4& worldToView, const vsMatrix4x4& projection )
 {
-	if ( m_worldToViewLoc >= 0 )
+	if ( worldToView != s_matrix[0] || projection != s_matrix[1] )
 	{
-		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
+		s_matrix[0] = worldToView;
+		s_matrix[1] = projection;
+		s_matrixBuffer->SetUniformBuffer(s_matrix, sizeof(s_matrix));
 	}
+
 	// assume no scaling.
 	if ( m_cameraPositionLoc >= 0 )
 	{
 		vsVector3D t = worldToView.Inverse().w;
 		glUniform3fv(m_cameraPositionLoc, 1, (GLfloat*)&t);
-	}
-}
-
-void
-vsShader::SetViewToProjection( const vsMatrix4x4& projection )
-{
-	if ( m_viewToProjectionLoc >= 0 )
-	{
-		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
 	}
 }
 

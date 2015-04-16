@@ -3,8 +3,12 @@ uniform bool fog;
 uniform float fogDensity;
 // uniform mat4 localToWorld;
 in mat4 localToWorldAttrib;
-uniform mat4 worldToView;
-uniform mat4 viewToProjection;
+layout (std140) uniform std_matrices
+{
+	mat4 worldToView;
+	mat4 viewToProjection;
+};
+
 uniform vec4 universal_color;
 
 out float fogFactor;

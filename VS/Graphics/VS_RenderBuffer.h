@@ -43,10 +43,17 @@ public:
 		ContentType_PCT,
 		ContentType_PNT,
 		ContentType_PCNT,
-		ContentType_Matrix
+		ContentType_Matrix,
+		ContentType_UniformBuffer
 	};
 private:
 
+	enum BindType
+	{
+		BindType_Attribute,    // this is vertex data
+		BindType_Element,      // this is vertex index data
+		BindType_UniformBuffer // this is a uniform buffer
+	};
 	char *			m_array;
 	int				m_arrayBytes;
 	int				m_glArrayBytes;
@@ -59,9 +66,9 @@ private:
 
 	unsigned int	m_bufferID;
 	bool			m_vbo;
-	bool			m_indexType;
+	BindType		m_bindType;
 
-	void	SetArray_Internal( char *data, int bytes, bool elementArray );
+	void	SetArray_Internal( void *data, int bytes, BindType type );
 	void	SetArraySize_Internal( int bytes );
 
 public:
@@ -144,6 +151,7 @@ public:
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
 	void	SetArray( const uint16_t *array, int size );
+
     void    ResizeArray( int size );
 
 	void	SetActiveSize( int size );
@@ -162,6 +170,10 @@ public:
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
 	int				GetMatrix4x4ArraySize() { return m_arrayBytes/sizeof(vsMatrix4x4); }
+
+	void			SetUniformBuffer( void* data, int dataLength );
+	void			BindUniformBuffer( int bindPoint );
+	void			UnbindUniformBuffer( int bindPoint );
 
 	P *				GetPArray() { return (P*)m_array; }
 	PN *			GetPNArray() { return (PN*)m_array; }

@@ -372,10 +372,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
+	vsShader::Startup();
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
+	vsShader::Shutdown();
+
 	vsDelete(m_window);
 	vsDelete(m_scene);
 	CheckGLError("Initialising OpenGL rendering");
@@ -469,6 +472,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
+	CheckGLError("Initialising OpenGL rendering");
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
@@ -518,6 +522,7 @@ vsRenderer_OpenGL3::PostRender()
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 	vsTimerSystem::Instance()->EndGPUTime();
+	CheckGLError("Initialising OpenGL rendering");
 }
 
 void
@@ -567,8 +572,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
 		else
 			m_currentShader->SetInstanceColors( &c_white, 1 );
-		m_currentShader->SetWorldToView( m_currentWorldToView );
-		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+		m_currentShader->SetViewAndProjectionMatrices( m_currentWorldToView, m_currentViewToProjection );
 		int i = 0;
 		// for ( int i = 0; i < MAX_LIGHTS; i++ )
 		{

@@ -52,9 +52,8 @@ private:
 	int32_t m_textureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
-	int32_t m_worldToViewLoc;
 	int32_t m_cameraPositionLoc;
-	int32_t m_viewToProjectionLoc;
+	int32_t m_matricesLoc;
 
 	int32_t m_lightAmbientLoc;
 	int32_t m_lightDiffuseLoc;
@@ -74,10 +73,15 @@ private:
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueVec4( int i, const vsVector4D& value );
 
+	static vsMatrix4x4 s_matrix[2];
+
 protected:
 	uint32_t m_shader;
 
 public:
+
+	static void Startup();
+	static void Shutdown();
 
 	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 	virtual ~vsShader();
@@ -93,8 +97,8 @@ public:
 	void SetInstanceColors( vsRenderBuffer *colors );
 	void SetInstanceColors( const vsColor* color, int matCount );
 	void SetLocalToWorld( vsRenderBuffer* buffer );
-	void SetWorldToView( const vsMatrix4x4& worldToView );
-	void SetViewToProjection( const vsMatrix4x4& projection );
+
+	void SetViewAndProjectionMatrices( const vsMatrix4x4& worldToView, const vsMatrix4x4& projection );
 
 	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
 	int32_t GetUniformId(const vsString& name) const;

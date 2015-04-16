@@ -282,7 +282,11 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 
 const char *passv = STRINGIFY( #version 330\n
-		uniform mat4 viewToProjection;\n
+		layout (std140) uniform Matrices\n
+		{\n
+			mat4 worldToView;\n
+			mat4 viewToProjection;\n
+		};\n
 		in vec4 vertex;\n
 		in vec2 texcoord;\n
 		out vec2 fragment_texcoord;\n
@@ -316,7 +320,11 @@ const char *passv = STRINGIFY( #version 330\n
 			);
 
 const char *row3v = STRINGIFY( #version 330\n
-		uniform mat4 viewToProjection;\n
+		layout (std140) uniform Matrices\n
+		{\n
+			mat4 worldToView;\n
+			mat4 viewToProjection;\n
+		};\n
 		uniform float offsetx;
 		uniform float offsety;
 		in vec4 vertex;\n
