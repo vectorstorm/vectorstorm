@@ -18,19 +18,21 @@ class vsRenderTarget;
 class vsShader;
 class vsRenderBuffer;
 
-#define BLOOM_PASSES (3)
-
 class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 {
+	struct Pass
+	{
+		vsDynamicMaterial *m_horizontalBlurMaterial;
+		vsDynamicMaterial *m_verticalBlurMaterial;
+		vsDynamicMaterial *m_combinePassMaterial;
+		vsRenderTarget *m_pass;
+		vsRenderTarget *m_pass2;
+	};
+	struct Pass *m_passes;
 	vsDynamicMaterial *m_hipassMaterial;
-	vsDynamicMaterial *m_horizontalBlurMaterial[BLOOM_PASSES];
-	vsDynamicMaterial *m_verticalBlurMaterial[BLOOM_PASSES];
-	vsDynamicMaterial *m_combinePassMaterial[BLOOM_PASSES];
 	vsDynamicMaterial *m_fromMaterial;
 	vsRenderTarget *m_from;
 	vsRenderTarget *m_to;
-	vsRenderTarget *m_pass[BLOOM_PASSES];
-	vsRenderTarget *m_pass2[BLOOM_PASSES];
 	vsRenderBuffer *m_vertices;
 	vsRenderBuffer *m_indices;
 	vsShader *m_bloomBlurShader;

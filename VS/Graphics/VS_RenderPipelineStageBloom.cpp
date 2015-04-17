@@ -17,9 +17,11 @@
 #include "VS_Shader.h"
 #include "VS_Screen.h"
 
+#define BLOOM_PASSES (7)
+
 extern const char *passv, *passf, *combinef, *row3v, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
-static float kernel[KERNEL_SIZE] = { 2, 3, 2  };
+static float kernel[KERNEL_SIZE] = { 1, 4, 1  };
 static bool kernel_normalised = false;
 
 class vsBloomBlurShader: public vsShader
@@ -70,13 +72,14 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	m_indices(NULL),
 	m_bloomBlurShader(NULL)
 {
+	m_passes = new struct Pass[BLOOM_PASSES];
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		m_pass[i] = NULL;
-		m_pass2[i] = NULL;
-		m_horizontalBlurMaterial[i] = NULL;
-		m_verticalBlurMaterial[i] = NULL;
-		m_combinePassMaterial[i] = NULL;
+		m_passes[i].m_pass = NULL;
+		m_passes[i].m_pass2 = NULL;
+		m_passes[i].m_horizontalBlurMaterial = NULL;
+		m_passes[i].m_verticalBlurMaterial = NULL;
+		m_passes[i].m_combinePassMaterial = NULL;
 	}
 }
 
@@ -85,10 +88,11 @@ vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 	vsDelete( m_hipassMaterial );
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		vsDelete( m_horizontalBlurMaterial[i] );
-		vsDelete( m_verticalBlurMaterial[i] );
-		vsDelete( m_combinePassMaterial[i] );
+		vsDelete( m_passes[i].m_horizontalBlurMaterial );
+		vsDelete( m_passes[i].m_verticalBlurMaterial );
+		vsDelete( m_passes[i].m_combinePassMaterial );
 	}
+	vsDeleteArray( m_passes );
 	vsDelete( m_fromMaterial );
 	vsDelete( m_vertices );
 	vsDelete( m_indices );
@@ -110,8 +114,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		req.mipmapLevel = i;
-		m_pass[i] = pipeline->RequestRenderTarget(req, this);
-		m_pass2[i] = pipeline->RequestRenderTarget(req, this);
+		m_passes[i].m_pass = pipeline->RequestRenderTarget(req, this);
+		m_passes[i].m_pass2 = pipeline->RequestRenderTarget(req, this);
 	}
 
 	if ( !kernel_normalised )
@@ -140,40 +144,40 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		float offsetx = 1.2f / m_pass[i]->GetWidth();
-		float offsety = 1.2f / m_pass[i]->GetHeight();
-		m_horizontalBlurMaterial[i] = new vsDynamicMaterial;
-		m_horizontalBlurMaterial[i]->SetClampU(true);
-		m_horizontalBlurMaterial[i]->SetClampV(true);
-		m_horizontalBlurMaterial[i]->SetBlend(false);
-		m_horizontalBlurMaterial[i]->SetTexture(0,m_pass[i]->GetTexture());
-		m_horizontalBlurMaterial[i]->SetShader(m_bloomBlurShader);
-		m_horizontalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
-		m_horizontalBlurMaterial[i]->SetUniformF("offsetx", offsetx);
-		m_horizontalBlurMaterial[i]->SetUniformF("offsety", 0.f);
+		float offsetx = 1.2f / m_passes[i].m_pass->GetWidth();
+		float offsety = 1.2f / m_passes[i].m_pass->GetHeight();
+		m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
+		m_passes[i].m_horizontalBlurMaterial->SetClampU(true);
+		m_passes[i].m_horizontalBlurMaterial->SetClampV(true);
+		m_passes[i].m_horizontalBlurMaterial->SetBlend(false);
+		m_passes[i].m_horizontalBlurMaterial->SetTexture(0,m_passes[i].m_pass->GetTexture());
+		m_passes[i].m_horizontalBlurMaterial->SetShader(m_bloomBlurShader);
+		m_passes[i].m_horizontalBlurMaterial->GetResource()->m_shaderIsMine = false;
+		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsetx", offsetx);
+		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsety", 0.f);
 
-		m_verticalBlurMaterial[i] = new vsDynamicMaterial;
-		m_verticalBlurMaterial[i]->SetClampU(true);
-		m_verticalBlurMaterial[i]->SetClampV(true);
-		m_verticalBlurMaterial[i]->SetBlend(false);
-		m_verticalBlurMaterial[i]->SetTexture(0,m_pass2[i]->GetTexture());
-		m_verticalBlurMaterial[i]->SetShader(m_bloomBlurShader);
-		m_verticalBlurMaterial[i]->GetResource()->m_shaderIsMine = false;
-		m_verticalBlurMaterial[i]->SetUniformF("offsetx", 0.f);
-		m_verticalBlurMaterial[i]->SetUniformF("offsety", offsety);
+		m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
+		m_passes[i].m_verticalBlurMaterial->SetClampU(true);
+		m_passes[i].m_verticalBlurMaterial->SetClampV(true);
+		m_passes[i].m_verticalBlurMaterial->SetBlend(false);
+		m_passes[i].m_verticalBlurMaterial->SetTexture(0,m_passes[i].m_pass2->GetTexture());
+		m_passes[i].m_verticalBlurMaterial->SetShader(m_bloomBlurShader);
+		m_passes[i].m_verticalBlurMaterial->GetResource()->m_shaderIsMine = false;
+		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsetx", 0.f);
+		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsety", offsety);
 
-		m_combinePassMaterial[i] = new vsDynamicMaterial;
-		m_combinePassMaterial[i]->SetBlend(true);
-		m_combinePassMaterial[i]->SetColor(c_white);
-		m_combinePassMaterial[i]->SetCullingType(Cull_None);
-		m_combinePassMaterial[i]->SetZRead(false);
-		m_combinePassMaterial[i]->SetZWrite(false);
-		m_combinePassMaterial[i]->SetDrawMode(DrawMode_Add);
-		m_combinePassMaterial[i]->SetGlow(false);
-		m_combinePassMaterial[i]->SetClampU(true);
-		m_combinePassMaterial[i]->SetClampV(true);
-		m_combinePassMaterial[i]->SetTexture(0, m_pass[i]->GetTexture());
-		m_combinePassMaterial[i]->SetShader(new vsBloomCombineShader);
+		m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;
+		m_passes[i].m_combinePassMaterial->SetBlend(true);
+		m_passes[i].m_combinePassMaterial->SetColor(c_white);
+		m_passes[i].m_combinePassMaterial->SetCullingType(Cull_None);
+		m_passes[i].m_combinePassMaterial->SetZRead(false);
+		m_passes[i].m_combinePassMaterial->SetZWrite(false);
+		m_passes[i].m_combinePassMaterial->SetDrawMode(DrawMode_Add);
+		m_passes[i].m_combinePassMaterial->SetGlow(false);
+		m_passes[i].m_combinePassMaterial->SetClampU(true);
+		m_passes[i].m_combinePassMaterial->SetClampV(true);
+		m_passes[i].m_combinePassMaterial->SetTexture(0, m_passes[i].m_pass->GetTexture());
+		m_passes[i].m_combinePassMaterial->SetShader(new vsBloomCombineShader);
 	}
 
 	m_fromMaterial = new vsDynamicMaterial;
@@ -229,7 +233,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->SetProjectionMatrix4x4(cam.GetProjectionMatrix());
 	list->ResolveRenderTarget(m_from);
 	list->SetMaterial(m_hipassMaterial);
-	list->SetRenderTarget(m_pass[0]);
+	list->SetRenderTarget(m_passes[0].m_pass);
 	list->BindBuffer(m_vertices);
 	list->TriangleStripBuffer(m_indices);
 
@@ -246,18 +250,18 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	//
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		list->SetRenderTarget(m_pass2[i]);
-		list->SetMaterial(m_horizontalBlurMaterial[i]);
+		list->SetRenderTarget(m_passes[i].m_pass2);
+		list->SetMaterial(m_passes[i].m_horizontalBlurMaterial);
 		list->TriangleStripBuffer(m_indices);
 
-		list->SetRenderTarget(m_pass[i]);
-		list->SetMaterial(m_verticalBlurMaterial[i]);
+		list->SetRenderTarget(m_passes[i].m_pass);
+		list->SetMaterial(m_passes[i].m_verticalBlurMaterial);
 		list->TriangleStripBuffer(m_indices);
 
 		// Okay.  pass[i] has now been blurred, so blit down to the next level
 		// (if there is another level)
 		if ( i < BLOOM_PASSES-1 )
-			list->BlitRenderTarget(m_pass[i], m_pass[i+1]);
+			list->BlitRenderTarget(m_passes[i].m_pass, m_passes[i+1].m_pass);
 	}
 
 	// Now do the final combining of our stuff
@@ -267,7 +271,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
-		list->SetMaterial(m_combinePassMaterial[i]);
+		list->SetMaterial(m_passes[i].m_combinePassMaterial);
 		list->TriangleStripBuffer(m_indices);
 	}
 	list->ClearArrays();
@@ -340,7 +344,7 @@ const char *row3v = STRINGIFY( #version 330\n
 			c = coefficients[0] * texture(textures[0], fragment_texcoord[0]);
 			c += coefficients[1] * texture(textures[0], fragment_texcoord[1]);
 			c += coefficients[2] * texture(textures[0], fragment_texcoord[2]);
-			c *= 1.2; // a little extra "oomph" for the glow
+			c *= 1.1; // a little extra "oomph" for the glow
 
 			fragment_color = c;
 			}
