@@ -19,7 +19,7 @@
 
 extern const char *passv, *passf, *combinef, *row3v, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
-static float kernel[KERNEL_SIZE] = { 4, 5, 4  };
+static float kernel[KERNEL_SIZE] = { 2, 3, 2  };
 static bool kernel_normalised = false;
 
 class vsBloomBlurShader: public vsShader
@@ -236,32 +236,28 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	// list->BlitRenderTarget( m_pass[0], m_to );
 	// return;
 
-	// next, blit passes into each other.
+	// Okay.  New plan.  We BLUR each pass, THEN blit down to the next one.
 	//
-	for ( int i = 0; i < BLOOM_PASSES-1; i++ )
-	{
-		list->BlitRenderTarget(m_pass[i], m_pass[i+1]);
-	}
-
-	// next, blur each pass
+	// This has two effects:  First, it eliminates aliasing on thin lines (since
+	// we blur them at the high resolution BEFORE we copy down to a lower
+	// resolution texture!), and second, it makes our blur BIGGER than otherwise,
+	// without requiring as many blur passes.  This new approach looks BETTER
+	// than the old one (particularly at low resolutions), and is also CHEAPER!
+	//
 	for ( int i = 0; i < BLOOM_PASSES; i++ )
 	{
 		list->SetRenderTarget(m_pass2[i]);
-		list->ResolveRenderTarget(m_pass[i]);
 		list->SetMaterial(m_horizontalBlurMaterial[i]);
 		list->TriangleStripBuffer(m_indices);
 
 		list->SetRenderTarget(m_pass[i]);
-		list->ResolveRenderTarget(m_pass2[i]);
 		list->SetMaterial(m_verticalBlurMaterial[i]);
 		list->TriangleStripBuffer(m_indices);
-	}
-    //
-	// resolve all primary passes.
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
-	{
-		list->ResolveRenderTarget(m_pass[i]);
-		// list->ResolveRenderTarget(m_pass2[i]);
+
+		// Okay.  pass[i] has now been blurred, so blit down to the next level
+		// (if there is another level)
+		if ( i < BLOOM_PASSES-1 )
+			list->BlitRenderTarget(m_pass[i], m_pass[i+1]);
 	}
 
 	// Now do the final combining of our stuff
@@ -344,7 +340,7 @@ const char *row3v = STRINGIFY( #version 330\n
 			c = coefficients[0] * texture(textures[0], fragment_texcoord[0]);
 			c += coefficients[1] * texture(textures[0], fragment_texcoord[1]);
 			c += coefficients[2] * texture(textures[0], fragment_texcoord[2]);
-			c *= 1.3; // a little extra "oomph" for the glow
+			c *= 1.2; // a little extra "oomph" for the glow
 
 			fragment_color = c;
 			}

@@ -18,7 +18,7 @@ class vsRenderTarget;
 class vsShader;
 class vsRenderBuffer;
 
-#define BLOOM_PASSES (5)
+#define BLOOM_PASSES (3)
 
 class vsRenderPipelineStageBloom: public vsRenderPipelineStage
 {
