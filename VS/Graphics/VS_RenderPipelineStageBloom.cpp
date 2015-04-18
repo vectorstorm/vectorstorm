@@ -17,11 +17,9 @@
 #include "VS_Shader.h"
 #include "VS_Screen.h"
 
-#define BLOOM_PASSES (7)
-
 extern const char *passv, *passf, *combinef, *row3v, *row3f, *normalf;
 #define KERNEL_SIZE   (3)
-static float kernel[KERNEL_SIZE] = { 1, 4, 1  };
+static float kernel[KERNEL_SIZE] = { 1, 2, 1  };
 static bool kernel_normalised = false;
 
 class vsBloomBlurShader: public vsShader
@@ -63,7 +61,9 @@ public:
 	}
 };
 
-vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to ):
+vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int passes ):
+	m_passes(NULL),
+	m_passCount(passes),
 	m_hipassMaterial(NULL),
 	m_fromMaterial(NULL),
 	m_from(from),
@@ -72,8 +72,8 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 	m_indices(NULL),
 	m_bloomBlurShader(NULL)
 {
-	m_passes = new struct Pass[BLOOM_PASSES];
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	m_passes = new struct Pass[m_passCount];
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		m_passes[i].m_pass = NULL;
 		m_passes[i].m_pass2 = NULL;
@@ -86,7 +86,7 @@ vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vs
 vsRenderPipelineStageBloom::~vsRenderPipelineStageBloom()
 {
 	vsDelete( m_hipassMaterial );
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		vsDelete( m_passes[i].m_horizontalBlurMaterial );
 		vsDelete( m_passes[i].m_verticalBlurMaterial );
@@ -111,7 +111,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	req.antialias = false;
 	req.share = true;
 
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		req.mipmapLevel = i;
 		m_passes[i].m_pass = pipeline->RequestRenderTarget(req, this);
@@ -142,7 +142,7 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 	m_bloomBlurShader = new vsBloomBlurShader();
 
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		float offsetx = 1.2f / m_passes[i].m_pass->GetWidth();
 		float offsety = 1.2f / m_passes[i].m_pass->GetHeight();
@@ -248,7 +248,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	// without requiring as many blur passes.  This new approach looks BETTER
 	// than the old one (particularly at low resolutions), and is also CHEAPER!
 	//
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		list->SetRenderTarget(m_passes[i].m_pass2);
 		list->SetMaterial(m_passes[i].m_horizontalBlurMaterial);
@@ -260,7 +260,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 
 		// Okay.  pass[i] has now been blurred, so blit down to the next level
 		// (if there is another level)
-		if ( i < BLOOM_PASSES-1 )
+		if ( i < m_passCount-1 )
 			list->BlitRenderTarget(m_passes[i].m_pass, m_passes[i+1].m_pass);
 	}
 
@@ -269,7 +269,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->SetMaterial(m_fromMaterial);
 	list->TriangleStripBuffer(m_indices);
 
-	for ( int i = 0; i < BLOOM_PASSES; i++ )
+	for ( int i = 0; i < m_passCount; i++ )
 	{
 		list->SetMaterial(m_passes[i].m_combinePassMaterial);
 		list->TriangleStripBuffer(m_indices);
