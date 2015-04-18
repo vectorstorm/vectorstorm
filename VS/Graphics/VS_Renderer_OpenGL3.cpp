@@ -511,9 +511,18 @@ vsRenderer_OpenGL3::PostRender()
 	glClearDepth(1.f);
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+	m_state.SetBool( vsRendererState::Bool_Blend, true );
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_state.SetBool( vsRendererState::Bool_CullFace, true );
+	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
+	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
+	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
+	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
