@@ -83,6 +83,12 @@ public:
 		return m_array[ iter.m_current ];
 	}
 
+	virtual void	PopBack()
+	{
+		vsDelete( m_array[m_arrayLength-1] );
+		m_arrayLength--;
+	}
+
 	void	Clear()
 	{
 		for ( int i = 0; i < m_arrayLength; i++ )
@@ -180,6 +186,19 @@ public:
 	vsArrayStoreIterator<T>	End() const
 	{
 		return 		vsArrayStoreIterator<T>(this,m_arrayLength);
+	}
+
+	void SetArraySize( int size )
+	{
+		// add or remove elements to make us this size.
+		while( ItemCount() > size )
+		{
+			PopBack();
+		}
+		while ( ItemCount() < size )
+		{
+			AddItem( new T() );
+		}
 	}
 
 	T*& GetItem(int id)
