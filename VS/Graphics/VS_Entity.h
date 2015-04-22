@@ -46,6 +46,7 @@ public:
 	virtual bool	OnScreen(const vsTransform2D & /*cameraTrans*/) { return true; }
 
 	void			RegisterOnScene(int scene);
+	void			RegisterOnScene(vsScene *scene);
 #if defined(_DEBUG)
 	void			RegisterOnDebugScene();
 #endif // _DEBUG

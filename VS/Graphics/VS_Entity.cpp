@@ -159,6 +159,12 @@ vsEntity::RegisterOnScene(int scene)
 	vsScreen::Instance()->GetScene(scene)->RegisterEntityOnTop(this);
 }
 
+void
+vsEntity::RegisterOnScene(vsScene *scene)
+{
+	scene->RegisterEntityOnTop(this);
+}
+
 vsEntity *
 vsEntity::Find( const vsString &name )
 {
