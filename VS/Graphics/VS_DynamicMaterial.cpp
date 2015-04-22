@@ -35,6 +35,13 @@ vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 void
 vsDynamicMaterial::SetShader()
 {
+	if ( GetResource()->m_shaderIsMine )
+	{
+		vsDelete( GetResource()->m_shader );
+	}
+	else
+		GetResource()->m_shader = NULL;
+
 	GetResource()->SetShader();
 	SetupParameters();
 }
