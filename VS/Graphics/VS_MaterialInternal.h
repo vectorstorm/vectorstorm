@@ -44,6 +44,8 @@ enum StencilOp
 class vsMaterialInternal : public vsResource
 {
 	void		SetShader();
+
+	int			m_textureCount; // used during loading;  NOT set for dynamic materials!
 public:
 
 	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
@@ -57,7 +59,6 @@ public:
 	float		m_depthBiasConstant;
 	float		m_depthBiasFactor;
 	int			m_layer;
-	int			m_textureCount;
 	StencilOp	m_stencil;
 	bool		m_alphaTest;
 	bool		m_fog;

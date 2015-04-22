@@ -37,6 +37,7 @@ static const vsString s_cullString[CULL_MAX] =
 
 vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
+	m_textureCount(0),
 	m_shaderIsMine(false),
 	m_shader(NULL),
 	m_color(c_white),
@@ -47,7 +48,6 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
 	m_layer(0),
-	m_textureCount(0),
 	m_stencil(StencilOp_None),
 	m_alphaTest(false),
 	m_fog(false),
