@@ -252,7 +252,7 @@ vsModel::Draw( vsRenderQueue *queue )
 
 vsModelInstance::~vsModelInstance()
 {
-	model->RemoveInstance(this);
+	group->RemoveInstance(this);
 }
 
 void
@@ -261,7 +261,7 @@ vsModelInstance::SetVisible( bool v )
 	if ( visible != v )
 	{
 		visible = v;
-		model->UpdateInstance( this, visible );
+		group->UpdateInstance( this, visible );
 	}
 }
 
@@ -280,9 +280,15 @@ vsModelInstance::SetMatrix( const vsMatrix4x4& mat, const vsColor &c )
 		color = c;
 		if ( visible )
 		{
-			model->UpdateInstance( this, visible );
+			group->UpdateInstance( this, visible );
 		}
 	}
+}
+
+vsModel *
+vsModelInstance::GetModel()
+{
+	return GetInstanceGroup()->GetModel();
 }
 
 vsModelInstance *
@@ -308,7 +314,7 @@ vsModelInstance *
 vsModelInstanceGroup::MakeInstance()
 {
 	vsModelInstance *inst = new vsModelInstance;
-	inst->model = m_model;
+	inst->group = this;
 	inst->visible = false;
 	inst->index = m_instance.ItemCount();
 	inst->matrixIndex = -1;

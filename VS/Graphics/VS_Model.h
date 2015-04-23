@@ -23,13 +23,14 @@
 // #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 class vsModel;
+class vsModelInstanceGroup;
 
 struct vsModelInstance
 {
 private:
 	vsMatrix4x4 matrix;
 	vsColor color;
-	vsModel *model;
+	vsModelInstanceGroup *group;
 	int index;       // our ID within the instance array.
 	int matrixIndex; // our ID within the matrix array.
 	bool visible;
@@ -43,7 +44,8 @@ public:
 	void SetMatrix( const vsMatrix4x4& mat );
 	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
 
-	vsModel * GetModel() { return model; }
+	vsModel * GetModel();
+	vsModelInstanceGroup * GetInstanceGroup() { return group; }
 	const vsVector4D& GetPosition() const { return matrix.w; }
 	const vsMatrix4x4& GetMatrix() const { return matrix; }
 };
@@ -65,6 +67,7 @@ public:
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void RemoveInstance( vsModelInstance *model );
 	void UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
+	vsModel * GetModel() { return m_model; }
 
 	virtual void Draw( vsRenderQueue *queue );
 };
