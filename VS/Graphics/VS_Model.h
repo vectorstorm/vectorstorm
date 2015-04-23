@@ -33,7 +33,7 @@ private:
 	int index;       // our ID within the instance array.
 	int matrixIndex; // our ID within the matrix array.
 	bool visible;
-	friend class vsModel;
+	friend class vsModelInstanceGroup;
 
 public:
 	vsModelInstance() {}
@@ -46,7 +46,27 @@ public:
 	vsModel * GetModel() { return model; }
 	const vsVector4D& GetPosition() const { return matrix.w; }
 	const vsMatrix4x4& GetMatrix() const { return matrix; }
+};
 
+class vsModelInstanceGroup : public vsEntity
+{
+	vsModel *m_model;
+	vsArray<vsMatrix4x4> m_matrix;
+	vsArray<vsColor> m_color;
+	vsArray<int> m_matrixInstanceId;
+	vsArray<vsModelInstance*> m_instance;
+public:
+
+	vsModelInstanceGroup( vsModel *model ):
+		m_model(model)
+	{
+	}
+
+	vsModelInstance * MakeInstance();		// create an instance of me.
+	void RemoveInstance( vsModelInstance *model );
+	void UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
+
+	virtual void Draw( vsRenderQueue *queue );
 };
 
 class vsModel : public vsEntity
@@ -75,6 +95,8 @@ class vsModel : public vsEntity
 #else
 		InstanceData() {}
 #endif
+
+		virtual void	Draw( vsRenderQueue *queue );
 	};
 
 	vsMaterial *	m_material;
@@ -88,8 +110,7 @@ protected:
 
 	vsArrayStore<vsFragment>	m_fragment;	// new-style rendering
 
-	// m_instanceMat and m_instance may not be in the same order.
-	struct InstanceData *m_instanceData;
+	vsModelInstanceGroup *m_instanceGroup;
 
 	vsTransform3D m_transform;
 
@@ -140,6 +161,7 @@ public:
 	size_t			GetFragmentCount() { return m_fragment.ItemCount(); }
 
 	virtual void	Draw( vsRenderQueue *list );
+	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount );
 };
 
 #endif // VS_MODEL_H
