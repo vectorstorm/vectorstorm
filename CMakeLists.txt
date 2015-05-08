@@ -10,13 +10,13 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
-	PATH ../../buildzone/lib/x86/)
+	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
-	PATH ../../buildzone/lib/x86/)
+	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
-	PATH ../../buildzone/lib/x86/)
+	PATH c:/src/buildzone/lib/x86/)
 find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
-	PATH ../../buildzone/include)
+	PATH c:/src/buildzone/include)
 
 
 if(UNIX)
@@ -26,41 +26,41 @@ if(UNIX)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
 	find_library(PHYSFS_LIBRARY physfs REQUIRED
-		PATH ../../buildzone/physfs-2.0.3/build/Release)
+		PATH c:/src/buildzone/physfs-2.0.3/build/Release)
 	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED
-		PATH ../../buildzone/physfs-2.0.3/)
+		PATH c:/src/buildzone/physfs-2.0.3/)
 	find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
-		PATH ../../buildzone/lib/x86/)
+		PATH c:/src/buildzone/lib/x86/)
 	find_library(GLEW_LIBRARY GLEW32 REQUIRED
-		PATH ../../buildzone/lib/Release/Win32)
+		PATH c:/src/buildzone/lib/Release/Win32)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
-	../../buildzone/include/GL )
+	c:/src/buildzone/include/GL )
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
-	../../buildzone/Box2D/Build/vs2010/bin/Release)
+	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
 find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
-	../../buildzone/Box2D/Build/vs2010/bin/Debug)
+	c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D
-	../../buildzone/Box2D_v2.3.0/Box2D/ )
+	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 
 if(WIN32)
 	find_file(ZLIB_DLL zlib1.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
+		PATH c:/src/buildzone/lib/x86 )
 	find_file(GLEW_DLL glew32.dll REQUIRED
-		PATH ../../buildzone/bin/Release/Win32 )
+		PATH c:/src/buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16-16.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
+		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
+		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
+		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
-		PATH ../../buildzone/lib/x86 )
+		PATH c:/src/buildzone/lib/x86 )
 
 	set(VS_PLATFORM_DLLS ${GLEW_DLL} ${PNG_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
