@@ -10,39 +10,43 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
-	PATH C:/src/buildzone/lib/x86/)
+	PATH ../../buildzone/lib/x86/)
 find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
-	PATH C:/src/buildzone/lib/x86/)
+	PATH ../../buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
-	PATH C:/src/buildzone/lib/x86/)
+	PATH ../../buildzone/lib/x86/)
 find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
-	PATH C:/src/buildzone/include)
-find_package(PhysFS REQUIRED)
+	PATH ../../buildzone/include)
 
 
 if(UNIX)
 	find_package(PNG REQUIRED)
+	find_package(PhysFS REQUIRED)
 	find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
+	find_library(PHYSFS_LIBRARY physfs REQUIRED
+		PATH ../../buildzone/physfs-2.0.3/build/Release)
+	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED
+		PATH ../../buildzone/physfs-2.0.3/)
 	find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
-		PATH C:/src/buildzone/lib/x86/)
+		PATH ../../buildzone/lib/x86/)
 	find_library(GLEW_LIBRARY GLEW32 REQUIRED
-		PATH c:/src/buildzone/lib/Release/Win32)
+		PATH ../../buildzone/lib/Release/Win32)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
-	c:/src/buildzone/include/GL )
+	../../buildzone/include/GL )
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
-	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
+	../../buildzone/Box2D/Build/vs2010/bin/Release)
 find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
-	c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
+	../../buildzone/Box2D/Build/vs2010/bin/Debug)
 find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	PATH /usr/include /usr/local/include
 	/usr/include/Box2D /usr/local/include/Box2D
-	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
+	../../buildzone/Box2D_v2.3.0/Box2D/ )
 
 if(WIN32)
 	find_file(ZLIB_DLL zlib1.dll REQUIRED
