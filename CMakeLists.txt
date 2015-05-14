@@ -37,6 +37,7 @@ endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
 	c:/src/buildzone/include/GL
+	~/cross-tools/i686-w64-mingw32/include/GL
 	~/cross-tools/x86_64-w64-mingw32/include/GL )
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
@@ -50,8 +51,8 @@ find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 
 if(WIN32)
-	find_file(ZLIB_DLL zlib1.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
+	# find_file(ZLIB_DLL zlib1.dll REQUIRED
+	# 	PATH c:/src/buildzone/lib/x86 )
 	# find_file(GLEW_DLL glew32.dll REQUIRED
 	# 	PATH c:/src/buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16.dll REQUIRED
@@ -66,7 +67,7 @@ if(WIN32)
 	if ( MINGW )
 		find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
 		find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
-		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
+		# find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		find_file(OGG_DLL libogg-0.dll REQUIRED )
 	endif()
 
@@ -417,6 +418,7 @@ include_directories(
 		${SDL_IMAGE_LIBRARY}
 		${SDL_MIXER_LIBRARY}
 		${GLEW_LIBRARY}
+		${ZLIB_LIBRARY}
 		debug ${BOX2D_LIBRARY_DEBUG}
 		optimized ${BOX2D_LIBRARY_RELEASE}
 		${PTHREAD_LIBRARY}
