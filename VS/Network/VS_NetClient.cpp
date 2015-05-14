@@ -10,7 +10,7 @@
 #include "VS_NetClient.h"
 
 #if defined(_WIN32)
-#include <WinSock.h>
+#include <winsock.h>
 #else
 #include <netdb.h>
 #endif

@@ -9,7 +9,7 @@
 
 #include "VS_Heap.h"
 
-#ifdef _WIN32
+#ifdef MSVC
 #define strncpy strncpy_s
 #endif
 

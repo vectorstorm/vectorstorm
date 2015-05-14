@@ -20,7 +20,7 @@
 #include <SDL2/SDL_messagebox.h>
 
 #if defined(_WIN32)
-	#include <Windows.h>
+	#include <windows.h>
 	#define __thread
 	#define DEBUG_BREAK __debugbreak()
 #elif defined(__APPLE_CC__)

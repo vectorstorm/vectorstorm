@@ -18,6 +18,7 @@
 #if defined(__APPLE_CC__)
 #include <glew.h>
 #else
+#define GLEW_STATIC
 #include <GL/glew.h>
 #endif
 #endif

@@ -13,8 +13,8 @@
 class vsStore;
 
 #ifdef _WIN32
-#include <WinSock2.h>
-typedef SOCKET socktype_t;
+#include <winsock2.h>
+typedef int32_t socktype_t;
 #define USE_SELECT
 #else
 typedef int32_t socktype_t;

@@ -29,14 +29,15 @@ else()
 		PATH c:/src/buildzone/physfs-2.0.3/build/Release)
 	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED
 		PATH c:/src/buildzone/physfs-2.0.3/)
-	find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
-		PATH c:/src/buildzone/lib/x86/)
-	find_library(GLEW_LIBRARY GLEW32 REQUIRED
-		PATH c:/src/buildzone/lib/Release/Win32)
+	# find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
+	# 	PATH c:/src/buildzone/lib/x86/)
+	# find_library(GLEW_LIBRARY glew32 REQUIRED
+	# 	PATH c:/src/buildzone/lib/Release/Win32)
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
-	c:/src/buildzone/include/GL )
+	c:/src/buildzone/include/GL
+	~/cross-tools/x86_64-w64-mingw32/include/GL )
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
 	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
@@ -51,9 +52,9 @@ find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 if(WIN32)
 	find_file(ZLIB_DLL zlib1.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
-	find_file(GLEW_DLL glew32.dll REQUIRED
-		PATH c:/src/buildzone/bin/Release/Win32 )
-	find_file(PNG_DLL libpng16-16.dll REQUIRED
+	# find_file(GLEW_DLL glew32.dll REQUIRED
+	# 	PATH c:/src/buildzone/bin/Release/Win32 )
+	find_file(PNG_DLL libpng16.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
@@ -62,9 +63,17 @@ if(WIN32)
 	find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
 
-	set(VS_PLATFORM_DLLS ${GLEW_DLL} ${PNG_DLL}
+	if ( MINGW )
+		find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
+		find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
+		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
+		find_file(OGG_DLL libogg-0.dll REQUIRED )
+	endif()
+
+	set(VS_PLATFORM_DLLS ${PNG_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
-		${SDL2_MIXER_DLL} PARENT_SCOPE)
+		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
+		${PHYSFS_DLL} ${OGG_DLL} PARENT_SCOPE)
 endif()
 
 # Check our build environment and set any variables
@@ -100,6 +109,10 @@ if(APPLE)
 	#string(REGEX REPLACE "(\r?\n)+$" "" CMAKE_OSX_SYSROOT "${CMAKE_OSX_SYSROOT}")
 	# set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7")
 endif ()
+
+if(CMAKE_COMPILER_IS_MSVC)
+	add_definitions("-DMSVC")
+endif()
 
 # find . -type d
 
@@ -341,6 +354,12 @@ set(SOURCES
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
 	)
+if(WIN32)
+	set( SOURCES
+		glew.c
+		${SOURCES}
+		)
+endif()
 
 	if ( UNIX )
 		add_definitions("-D UNIX")
@@ -364,10 +383,10 @@ include_directories(
 	SYSTEM
 	)
 
-	if (UNIX)
+	if (CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_DEBUG}" )
 		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
+		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
 	else ()
 		set(CMAKE_CXX_FLAGS "/MP ${CMAKE_CXX_FLAGS}")
 		add_definitions("/FI\"VS_Prefix.h\"")

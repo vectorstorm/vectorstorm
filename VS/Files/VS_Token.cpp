@@ -9,7 +9,9 @@
 
 #include "VS_Token.h"
 
-#ifdef _WIN32
+#ifdef MSVC
+// visual studio defines its own "secure" sscanf.  So use that to keep
+// Microsoft happy.
 #define sscanf sscanf_s
 #endif
 

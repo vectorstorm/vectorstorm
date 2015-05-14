@@ -15,7 +15,7 @@
 
 
 #if defined(_WIN32)
-#include <WinSock2.h>
+#include <winsock2.h>
 typedef int socklen_t;	// yay, standards
 #else
 #include <netdb.h>

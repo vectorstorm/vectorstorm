@@ -40,7 +40,7 @@
 #ifdef _WIN32
 // WinSock2 must be #included before Windows.h.  So let's just #include it here,
 // so I don't have to go searching for all possible include path orders.
-#include <WinSock2.h>
+#include <winsock2.h>
 #undef min
 #undef max
 #endif
