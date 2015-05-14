@@ -384,7 +384,7 @@ include_directories(
 	SYSTEM
 	)
 
-	if (CMAKE_COMPILER_IS_GNUCXX)
+	if ((CMAKE_COMPILER_IS_GNUCXX) OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
 		set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_DEBUG}" )
 		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror -fno-exceptions ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 		set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -fno-exceptions ${CMAKE_CXX_FLAGS_RELEASE}" )
