@@ -360,6 +360,7 @@ set(SOURCES
 	VS/VS_Prefix_Debug.h
 	)
 if ( MINGW )
+	add_definitions("-D MINGW")
 	set( SOURCES
 		glew.c
 		${SOURCES}
