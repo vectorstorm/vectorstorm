@@ -67,7 +67,7 @@ if(WIN32)
 	if ( MINGW )
 		find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
 		find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
-		# find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
+		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		find_file(OGG_DLL libogg-0.dll REQUIRED )
 	endif()
 
