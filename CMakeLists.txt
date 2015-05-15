@@ -31,8 +31,11 @@ else()
 		PATH c:/src/buildzone/physfs-2.0.3/)
 	# find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
 	# 	PATH c:/src/buildzone/lib/x86/)
-	# find_library(GLEW_LIBRARY glew32 REQUIRED
-	# 	PATH c:/src/buildzone/lib/Release/Win32)
+	if ( MSVC )
+		# MSVC links glew32 in.  MinGW compiles it in.
+		find_library(GLEW_LIBRARY glew32 REQUIRED
+				PATH c:/src/buildzone/lib/Release/Win32)
+	endif()
 endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
@@ -53,8 +56,6 @@ find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
 if(WIN32)
 	# find_file(ZLIB_DLL zlib1.dll REQUIRED
 	# 	PATH c:/src/buildzone/lib/x86 )
-	# find_file(GLEW_DLL glew32.dll REQUIRED
-	# 	PATH c:/src/buildzone/bin/Release/Win32 )
 	find_file(PNG_DLL libpng16.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
@@ -69,9 +70,12 @@ if(WIN32)
 		find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
 		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		find_file(OGG_DLL libogg-0.dll REQUIRED )
+	else()
+		find_file(GLEW_DLL glew32.dll REQUIRED
+			PATH c:/src/buildzone/bin/Release/Win32 )
 	endif()
 
-	set(VS_PLATFORM_DLLS ${PNG_DLL}
+	set(VS_PLATFORM_DLLS ${PNG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
 		${PHYSFS_DLL} ${OGG_DLL} PARENT_SCOPE)
@@ -111,7 +115,7 @@ if(APPLE)
 	# set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7")
 endif ()
 
-if(CMAKE_COMPILER_IS_MSVC)
+if(MSVC)
 	add_definitions("-DMSVC")
 endif()
 
@@ -355,7 +359,7 @@ set(SOURCES
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
 	)
-if(WIN32)
+if ( MINGW )
 	set( SOURCES
 		glew.c
 		${SOURCES}
