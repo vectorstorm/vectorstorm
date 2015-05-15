@@ -20,7 +20,6 @@
 #else
 #if !defined(MSVC)
 #define GLEW_STATIC
-GJLGSDKGJLSG
 #endif
 #include <GL/glew.h>
 #endif
