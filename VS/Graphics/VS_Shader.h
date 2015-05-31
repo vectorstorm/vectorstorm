@@ -72,6 +72,7 @@ private:
 
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
+	void SetUniformValueVec3( int i, const vsVector3D& value );
 	void SetUniformValueVec4( int i, const vsVector4D& value );
 
 protected:

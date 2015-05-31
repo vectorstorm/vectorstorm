@@ -544,9 +544,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
+	CheckGLError("PostStateFlush");
 	if ( m_currentShader )
 	{
 		if ( s_lastShaderId != m_currentShader->GetShaderId() )
@@ -561,6 +563,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->Prepare( m_currentMaterial );
 			s_previousMaterial = m_currentMaterial;
 		}
+		CheckGLError("PostPrepare");
 
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );

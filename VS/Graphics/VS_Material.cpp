@@ -95,12 +95,38 @@ vsMaterial::SetUniformB( int32_t id, bool value )
 void
 vsMaterial::SetUniformColor( int32_t id, const vsColor& value )
 {
-	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC4 )
 	{
 		m_uniformValue[id].vec4[0] = value.r;
 		m_uniformValue[id].vec4[1] = value.g;
 		m_uniformValue[id].vec4[2] = value.b;
 		m_uniformValue[id].vec4[3] = value.a;
+		m_uniformValue[id].bound = false;
+	}
+}
+
+void
+vsMaterial::SetUniformVec3( int32_t id, const vsVector3D& value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC3 )
+	{
+		m_uniformValue[id].vec4[0] = value.x;
+		m_uniformValue[id].vec4[1] = value.y;
+		m_uniformValue[id].vec4[2] = value.z;
+		m_uniformValue[id].vec4[3] = 0.0;
+		m_uniformValue[id].bound = false;
+	}
+}
+
+void
+vsMaterial::SetUniformVec4( int32_t id, const vsVector4D& value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC4 )
+	{
+		m_uniformValue[id].vec4[0] = value.x;
+		m_uniformValue[id].vec4[1] = value.y;
+		m_uniformValue[id].vec4[2] = value.z;
+		m_uniformValue[id].vec4[3] = value.w;
 		m_uniformValue[id].bound = false;
 	}
 }
@@ -117,6 +143,20 @@ vsMaterial::SetUniformColor( const vsString& name, const vsColor& value )
 {
 	int32_t id = UniformId(name);
 	return SetUniformColor(id,value);
+}
+
+void
+vsMaterial::SetUniformVec3( const vsString& name, const vsVector3D& value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformVec3(id,value);
+}
+
+void
+vsMaterial::SetUniformVec4( const vsString& name, const vsVector4D& value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformVec4(id,value);
 }
 
 void
@@ -163,6 +203,30 @@ vsMaterial::BindUniformColor( int32_t id, const vsColor* value )
 }
 
 bool
+vsMaterial::BindUniformVec3( int32_t id, const vsVector3D* value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC3 )
+	{
+		m_uniformValue[id].bind = value;
+		m_uniformValue[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
+vsMaterial::BindUniformVec4( int32_t id, const vsVector4D* value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC4 )
+	{
+		m_uniformValue[id].bind = value;
+		m_uniformValue[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
 vsMaterial::BindUniformF( const vsString& name, const float* value )
 {
 	int32_t id = UniformId(name);
@@ -181,6 +245,20 @@ vsMaterial::BindUniformColor( const vsString& name, const vsColor* value )
 {
 	int32_t id = UniformId(name);
 	return BindUniformColor(id,value);
+}
+
+bool
+vsMaterial::BindUniformVec3( const vsString& name, const vsVector3D* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformVec3(id,value);
+}
+
+bool
+vsMaterial::BindUniformVec4( const vsString& name, const vsVector4D* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformVec4(id,value);
 }
 
 float

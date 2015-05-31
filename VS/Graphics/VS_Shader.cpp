@@ -131,6 +131,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 			case GL_FLOAT:
 				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
 				break;
+			case GL_FLOAT_VEC3:
+				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
+				break;
 			case GL_FLOAT_VEC4:
 				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
 				break;
@@ -471,13 +474,20 @@ vsShader::Prepare( vsMaterial *material )
 					}
 					break;
 				}
-			// case GL_FLOAT_VEC4:
-			// 	{
-			// 		vsVector4D v = material->UniformVec4(i);
-			// 		if ( v != m_uniform[i].vec4 )
-			// 			SetUniformValueVec4( i, v );
-			// 		break;
-			// 	}
+			case GL_FLOAT_VEC3:
+				{
+					vsVector4D v = material->UniformVec4(i);
+					if ( v != m_uniform[i].vec4 )
+						SetUniformValueVec3( i, v );
+					break;
+				}
+			case GL_FLOAT_VEC4:
+				{
+					vsVector4D v = material->UniformVec4(i);
+					if ( v != m_uniform[i].vec4 )
+						SetUniformValueVec4( i, v );
+					break;
+				}
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -559,6 +569,13 @@ vsShader::SetUniformValueB( int i, bool value )
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;
 	}
+}
+
+void
+vsShader::SetUniformValueVec3( int i, const vsVector3D& value )
+{
+	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
+	m_uniform[i].vec4 = value;
 }
 
 void
