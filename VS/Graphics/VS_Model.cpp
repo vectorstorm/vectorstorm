@@ -15,6 +15,8 @@
 
 #include "VS_File.h"
 #include "VS_Record.h"
+#include "VS_Serialiser.h"
+#include "VS_Store.h"
 
 
 vsModel *
@@ -33,6 +35,124 @@ vsModel::Load( const vsString &filename )
 			return result;
 		}
 	}
+
+	return result;
+}
+
+vsFragment*
+vsModel::LoadFragment_Internal( vsSerialiserRead& r )
+{
+	vsFragment *result = NULL;
+
+	vsString tag;
+	r.String(tag);
+	if ( tag == "Fragment" )
+	{
+		result = new vsFragment;
+		vsString materialName, format;
+		r.String(materialName);
+		r.String(format);
+		result->SetMaterial(materialName);
+		int32_t vertexCount;
+		r.Int32(vertexCount);
+		vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+		vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+
+		if ( format == "PCNT" )
+		{
+			vsRenderBuffer::PCNT *buffer = new vsRenderBuffer::PCNT[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Color(buffer[i].color);
+				r.Vector3D(buffer[i].normal);
+				r.Vector2D(buffer[i].texel);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+
+		r.String(tag);
+
+		vsAssert( tag == "IndexBuffer", "Not matching up??" );
+		int32_t indexCount;
+		r.Int32(indexCount);
+		uint16_t *indices = new uint16_t[ indexCount ];
+		for ( int i = 0; i < indexCount; i++ )
+		{
+			int32_t ind;
+			r.Int32(ind);
+			indices[i] = ind;
+		}
+		ibo->SetArray(indices, indexCount);
+		vsDeleteArray(indices);
+
+		result->AddBuffer(vbo);
+		result->AddBuffer(ibo);
+
+		vsDisplayList *list = new vsDisplayList(128);
+		list->BindBuffer(vbo);
+		list->TriangleListBuffer(ibo);
+		list->ClearArrays();
+
+		result->SetDisplayList(list);
+	}
+
+	return result;
+}
+
+vsModel*
+vsModel::LoadModel_Internal( vsSerialiserRead& r )
+{
+	vsModel *result = NULL;
+	vsString tag;
+	r.String(tag);
+	if ( tag == "ModelV1" )
+	{
+		result = new vsModel;
+		r.String(result->m_name);
+
+		vsVector3D trans, scale;
+		vsVector4D rot;
+		r.Vector3D(trans);
+		r.Vector4D(rot);
+		r.Vector3D(scale);
+
+		result->SetPosition(trans);
+		result->SetScale(scale);
+
+		int32_t meshCount;
+		r.Int32(meshCount);
+
+		for ( int i = 0; i < meshCount; i++ )
+		{
+			vsFragment *f = LoadFragment_Internal(r);
+			result->AddFragment(f);
+		}
+
+		int32_t childCount;
+		r.Int32(childCount);
+
+		for ( int32_t i = 0; i < childCount; i++ )
+		{
+		}
+	}
+
+	return result;
+}
+
+vsModel *
+vsModel::LoadBinary( const vsString &filename )
+{
+	vsModel *result = NULL;
+
+	vsFile file(filename);
+	vsStore store(file.GetLength());
+	file.Store(&store);
+	vsSerialiserRead r(&store);
+
+	result = LoadModel_Internal(r);
+
 
 	return result;
 }

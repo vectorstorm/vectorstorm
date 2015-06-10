@@ -24,6 +24,7 @@
 
 class vsModel;
 class vsModelInstanceGroup;
+class vsSerialiserRead;
 
 struct vsModelInstance
 {
@@ -107,6 +108,8 @@ class vsModel : public vsEntity
 	vsBox3D				m_boundingBox;
 	float				m_boundingRadius;
 
+	static vsModel* LoadModel_Internal( vsSerialiserRead& r );
+	static vsFragment* LoadFragment_Internal( vsSerialiserRead& r );
 protected:
 
 	vsDisplayList	*m_displayList;				// old-style rendering
@@ -122,6 +125,7 @@ protected:
 public:
 
 	static vsModel *	Load( const vsString &filename );
+	static vsModel *	LoadBinary( const vsString &filename );
 
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
