@@ -13,6 +13,8 @@
 class vsFile;
 class vsStore;
 class vsVector2D;
+class vsVector3D;
+class vsVector4D;
 class vsColor;
 
 class vsSerialiser
@@ -51,6 +53,7 @@ public:
 	virtual void	String( vsString &value ) = 0;
 	virtual void	Vector2D( vsVector2D &value ) = 0;
 	virtual void	Vector3D( vsVector3D &value ) = 0;
+	virtual void	Vector4D( vsVector4D &value ) = 0;
 	virtual void	Color( vsColor &value ) = 0;
 };
 
@@ -77,6 +80,7 @@ public:
 	virtual void	String( vsString &value );
 	virtual void	Vector2D( vsVector2D &value );
 	virtual void	Vector3D( vsVector3D &value );
+	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
 };
 
@@ -103,6 +107,7 @@ public:
 	virtual void	String( vsString &value );
 	virtual void	Vector2D( vsVector2D &value );
 	virtual void	Vector3D( vsVector3D &value );
+	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
 };
 
@@ -134,6 +139,7 @@ public:
 	virtual void	String( vsString &value );
 	virtual void	Vector2D( vsVector2D &value );
 	virtual void	Vector3D( vsVector3D &value );
+	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
 };
 
@@ -163,6 +169,7 @@ public:
 	virtual void	String( vsString &value );
 	virtual void	Vector2D( vsVector2D &value );
 	virtual void	Vector3D( vsVector3D &value );
+	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
 };
 

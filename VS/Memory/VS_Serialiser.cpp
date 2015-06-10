@@ -101,6 +101,12 @@ vsSerialiserRead::Vector3D( vsVector3D &value )
 }
 
 void
+vsSerialiserRead::Vector4D( vsVector4D &value )
+{
+	m_store->ReadVector4D(&value);
+}
+
+void
 vsSerialiserRead::Color( vsColor &value )
 {
 	m_store->ReadColor(&value);
@@ -175,6 +181,12 @@ void
 vsSerialiserWrite::Vector3D( vsVector3D &value )
 {
 	m_store->WriteVector3D(value);
+}
+
+void
+vsSerialiserWrite::Vector4D( vsVector4D &value )
+{
+	m_store->ReadVector4D(&value);
 }
 
 void
@@ -301,6 +313,13 @@ vsSerialiserReadStream::Vector3D( vsVector3D &value )
 }
 
 void
+vsSerialiserReadStream::Vector4D( vsVector4D &value )
+{
+	Ensure(sizeof(vsVector4D));
+	m_store->ReadVector4D(&value);
+}
+
+void
 vsSerialiserReadStream::Color( vsColor &value )
 {
 	Ensure(sizeof(vsColor));
@@ -403,6 +422,14 @@ void
 vsSerialiserWriteStream::Vector3D( vsVector3D &value )
 {
 	m_store->WriteVector3D(value);
+	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
+	m_store->Clear();
+}
+
+void
+vsSerialiserWriteStream::Vector4D( vsVector4D &value )
+{
+	m_store->WriteVector4D(value);
 	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
 	m_store->Clear();
 }
