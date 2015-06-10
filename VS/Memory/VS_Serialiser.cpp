@@ -186,7 +186,7 @@ vsSerialiserWrite::Vector3D( vsVector3D &value )
 void
 vsSerialiserWrite::Vector4D( vsVector4D &value )
 {
-	m_store->ReadVector4D(&value);
+	m_store->WriteVector4D(value);
 }
 
 void
