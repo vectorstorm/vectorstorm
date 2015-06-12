@@ -94,6 +94,8 @@ public:
 	void DisplayList2D( vsDisplayList *list, const vsString& string );
 	void DisplayList3D( vsDisplayList *list, const vsString& string );
 
+	vsVector2D GetStringDimensions( const vsString& string );
+
 	friend class vsFontFragment;
 };
 

@@ -341,6 +341,31 @@ vsFontRenderer::DisplayList3D( vsDisplayList *list, const vsString& string )
 	delete loader;
 }
 
+vsVector2D
+vsFontRenderer::GetStringDimensions( const vsString& string )
+{
+#ifdef BOUNDING_BOX_METHOD
+	vsDisplayList *loader = new vsDisplayList(1024 * 10);
+	CreateString_InDisplayList(FontContext_2D, loader, string);
+	vsVector2D topLeft, bottomRight;
+	loader->GetBoundingBox( topLeft, bottomRight );
+	return bottomRight - topLeft;
+#else
+	float size;
+	float topLinePosition;
+	WrapStringSizeTop(string, &size, &topLinePosition);
+
+	vsVector2D result;
+	result.x = m_font->Size(m_size)->GetStringWidth(string, size);
+	float lineHeight = 1.0;
+	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
+	float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
+	result.y = totalScaledHeight;
+	return result;
+#endif
+}
+
+
 void
 vsFontRenderer::WrapLine(const vsString &string, float size)
 {
