@@ -1247,9 +1247,22 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
 	}
 
-	if ( material->m_zRead )
+	if ( material->m_zRead || material->m_zWrite )
 	{
-		glDepthFunc( GL_LEQUAL );
+		m_state.SetBool( vsRendererState::Bool_DepthTest, true );
+		m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
+		if ( material->m_zRead )
+		{
+			glDepthFunc( GL_LEQUAL );
+		}
+		else
+		{
+			glDepthFunc( GL_ALWAYS );
+		}
+	}
+	else
+	{
+		m_state.SetBool( vsRendererState::Bool_DepthTest, false );
 	}
 
 	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
@@ -1263,8 +1276,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 	}
 
 	// m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
-	m_state.SetBool( vsRendererState::Bool_DepthTest, material->m_zRead );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
 	// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
 
 	if ( material->m_cullingType == Cull_None )
