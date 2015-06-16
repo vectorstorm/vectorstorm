@@ -152,6 +152,7 @@ class vsOrientedBox3D
 	bool SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis );
 	bool SAT_Contains( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
 public:
+	vsOrientedBox3D();
 	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
 
 	bool Contains( const vsOrientedBox3D& other );

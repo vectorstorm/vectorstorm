@@ -561,13 +561,17 @@ vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b )
 	return vsBox3D( vsInterpolate( alpha, a.GetMin(), b.GetMin() ), vsInterpolate( alpha, a.GetMax(), b.GetMax() ) );
 }
 
+vsOrientedBox3D::vsOrientedBox3D()
+{
+}
+
 vsOrientedBox3D::vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform ):
 	m_box(box),
 	m_transform(transform)
 {
 	for ( int i = 0; i < 8; i++ )
 	{
-		m_corner[i] = transform.ApplyTo(box.Corner(i));
+		m_corner[i] = m_transform.ApplyTo(m_box.Corner(i));
 	}
 }
 
