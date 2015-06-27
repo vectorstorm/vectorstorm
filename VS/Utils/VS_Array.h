@@ -62,6 +62,17 @@ public:
 
 	typedef vsArrayIterator<T> Iterator;
 
+	vsArray( const vsArray<T>& other )
+	{
+		m_array = new T[ other.ItemCount() ];
+		m_arrayLength = other.ItemCount();
+		m_arrayStorage = m_arrayLength;
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			m_array[i] = other.m_array[i];
+		}
+	}
+
 	vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
@@ -206,6 +217,18 @@ public:
 		while ( ItemCount() < size )
 		{
 			AddItem( T() );
+		}
+	}
+
+	void operator=( const vsArray<T>& other )
+	{
+		vsDeleteArray(m_array);
+		m_array = new T[ other.ItemCount() ];
+		m_arrayLength = other.ItemCount();
+		m_arrayStorage = m_arrayLength;
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			m_array[i] = other.m_array[i];
 		}
 	}
 
