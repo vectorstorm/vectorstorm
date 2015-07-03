@@ -32,7 +32,10 @@ class vsFontRenderer
 	JustificationType m_justification;
 	vsTransform3D m_transform;
 	vsColor m_color;
+	vsColor m_dropShadowColor;
+	vsVector2D m_dropShadowOffset;
 	bool m_hasColor;
+	bool m_hasDropShadow;
 	bool m_snap;
 	bool m_hasSnap;
 
@@ -69,6 +72,9 @@ public:
 	// color is in the sprite font will show through unmodified.
 	void SetColor( const vsColor& color );
 	void SetNoColor();
+
+	// if set, we'll draw a second copy of the text offset and behind the main text.
+	void SetDropShadow( const vsColor& color, int xOff=1, int yOff=1 );
 
 	// if true, the text will snap to integer coordinates.  If false, it won't.
 	// If not set either way, the text will snap in a 2D context, and won't snap

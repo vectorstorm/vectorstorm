@@ -25,8 +25,9 @@ vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type
 	m_size(size),
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
-	m_color(),
+	m_color(c_white),
 	m_hasColor(false),
+	m_hasDropShadow(false),
 	m_snap(false),
 	m_hasSnap(false)
 {
@@ -73,6 +74,15 @@ vsFontRenderer::SetColor( const vsColor& color )
 {
 	m_hasColor = true;
 	m_color = color;
+}
+
+void
+vsFontRenderer::SetDropShadow( const vsColor& color, int xOff, int yOff )
+{
+	m_hasColor = true;
+	m_hasDropShadow = true;
+	m_dropShadowColor = color;
+	m_dropShadowOffset.Set(xOff,yOff);
 }
 
 void
@@ -199,18 +209,34 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	vsDisplayList *list = new vsDisplayList(128);
 	bool doSnap = ShouldSnap( context );
 
+	list->BindBuffer( ptBuffer );
 	if ( m_transform != vsTransform3D::Identity )
 		list->PushTransform( m_transform );
+
+	if ( m_hasDropShadow )
+	{
+		// vsTransform3D shadow;
+		// shadow.SetTranslation( m_dropShadowOffset );
+		// list->PushTransform( shadow );
+		list->PushTranslation( m_dropShadowOffset );
+		if ( doSnap )
+			list->SnapMatrix();
+		list->SetColor( m_dropShadowColor );
+		list->TriangleListBuffer( tlBuffer );
+		if ( doSnap )
+			list->PopTransform();
+		list->PopTransform();
+	}
+
 	if ( doSnap )
 		list->SnapMatrix();
-	if ( m_hasColor )
+	// if ( m_hasColor )
 		list->SetColor( m_color );
-	list->BindBuffer( ptBuffer );
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
 	if ( doSnap )
 		list->PopTransform();
-	if ( m_hasColor )
+	// if ( m_hasColor )
 		list->SetColor( c_white );
 	if ( m_transform != vsTransform3D::Identity )
 		list->PopTransform();
