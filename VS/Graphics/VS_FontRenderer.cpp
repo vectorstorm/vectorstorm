@@ -230,13 +230,13 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 	if ( doSnap )
 		list->SnapMatrix();
-	// if ( m_hasColor )
+	if ( m_hasColor )
 		list->SetColor( m_color );
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
 	if ( doSnap )
 		list->PopTransform();
-	// if ( m_hasColor )
+	if ( m_hasColor )
 		list->SetColor( c_white );
 	if ( m_transform != vsTransform3D::Identity )
 		list->PopTransform();
