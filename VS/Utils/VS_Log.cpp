@@ -34,7 +34,7 @@ void vsLog_Show()
 	const char*writeDir = PHYSFS_getWriteDir();
 	if ( writeDir )
 	{
-		vsSystem::Instance()->Launch(writeDir);
+		vsSystem::Launch(writeDir);
 	}
 }
 

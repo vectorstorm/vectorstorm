@@ -113,7 +113,7 @@ public:
 	void	SetOrientation( Orientation orient ) { m_orientation = orient; }
 	Orientation	GetOrientation() { return m_orientation; }
 
-	void	Launch( const vsString &string );
+	static void Launch( const vsString &string );
 	int		GetNumberOfCores();		// estimates the number of cores on this computer.
 
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
