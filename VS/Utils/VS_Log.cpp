@@ -86,7 +86,11 @@ void vsErrorLog(const vsString &str)
 	if ( s_log )
 	{
 		PHYSFS_write( s_log, str.c_str(), 1, str.size() );
+#ifdef _WIN32
+		PHYSFS_write( s_log, "\r\n", 1, 2 );
+#else
 		PHYSFS_write( s_log, "\n", 1, 1 );
+#endif
 	}
 }
 
