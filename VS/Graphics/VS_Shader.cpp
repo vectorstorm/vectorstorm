@@ -198,7 +198,8 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 	}
 	if ( m_fogDensityLoc >= 0 )
 	{
-		vsAssert( density < 1.f, "High density??" );
+		if ( density >= 1.f )
+			vsLogOnce( "Setting surprisingly high fog density: %f", density );
 		int32_t fdid = GetUniformId("fogDensity");
 		SetUniformValueF(fdid, density);
 	}
