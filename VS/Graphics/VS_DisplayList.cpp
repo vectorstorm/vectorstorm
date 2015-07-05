@@ -1526,6 +1526,11 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 		{
 			switch( o->type )
 			{
+				case OpCode_SnapMatrix:
+					// TODO:  We can't really snap here;  we don't know that we have a full transform stack.
+					transformStack[transformStackLevel+1] = transformStack[transformStackLevel];
+					transformStackLevel++;
+					break;
 				case OpCode_PushTransform:
 					transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.transform;
 					transformStackLevel++;
@@ -1540,6 +1545,7 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 					}
 				case OpCode_PopTransform:
 					transformStackLevel--;
+					vsAssert(transformStackLevel >= 0, "Transform stack underflow while building bounding box");
 					break;
 				case OpCode_VertexArray:
 					currentVertexBuffer = NULL;
