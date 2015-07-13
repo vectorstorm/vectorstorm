@@ -632,6 +632,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_currentColorBuffer = NULL;
 	m_currentTransformStackLevel = 0;
 	m_currentVertexArrayCount = 0;
+	m_currentFogDensity = 0.001f;
 
 	m_inOverlay = false;
 
