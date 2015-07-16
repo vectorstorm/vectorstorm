@@ -192,6 +192,10 @@ vsModel::LoadFrom( vsRecord *record )
 		{
 			SetOrientation( sr->Quaternion() );
 		}
+		else if ( srLabel == "scale" )
+		{
+			SetScale( sr->Vector3D() );
+		}
 		else if ( srLabel == "rotationXYZDegrees" )
 		{
 			// for convenience, allow the rotation to be set as euler angles,
