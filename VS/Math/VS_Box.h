@@ -155,6 +155,8 @@ public:
 	vsOrientedBox3D();
 	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
 
+	const vsVector3D& Corner(int i) const { return m_corner[i]; }
+
 	bool Contains( const vsOrientedBox3D& other );
 	bool Intersects( const vsOrientedBox3D& other );
 	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius );
