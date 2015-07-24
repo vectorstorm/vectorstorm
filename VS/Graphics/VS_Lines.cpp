@@ -532,7 +532,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	// vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
 	vsMatrix4x4 localToView = queue->GetWorldToViewMatrix() * queue->GetMatrix() ;
 	vsMatrix4x4 viewToLocal = localToView.Inverse();
-	// vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
+	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
 	vsVector3D *va = m_vertices.GetVector3DArray();
 	uint16_t *ia = m_indices.GetIntArray();
@@ -560,8 +560,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 				preI = 0;
 		}
 
-		// vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
-		vsVector3D cameraForward = viewToLocal.z;
+		vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
+		// vsVector3D cameraForward = viewToLocal.z;
 		cameraForward.NormaliseSafe();
 
 		vsVector3D dirOfTravelPre = strip->m_vertex[midI] - strip->m_vertex[preI];
