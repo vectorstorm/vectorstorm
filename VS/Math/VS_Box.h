@@ -100,7 +100,7 @@ public:
 
 	bool		EncompassesBox(const vsBox3D &box) const;
 
-	bool		CollideRay(vsVector3D *position, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 
 	void		ExpandToInclude( const vsVector3D &pos );
 	void		ExpandToInclude( const vsBox3D &box );
