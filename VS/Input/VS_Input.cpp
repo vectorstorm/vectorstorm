@@ -26,7 +26,7 @@
 #endif
 
 vsInput::vsInput():
-	m_mouseIsInWindow(true)
+	m_mouseIsInWindow(false)
 {
 	m_captureMouse = false;
 }
