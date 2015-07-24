@@ -539,7 +539,7 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsCol
 	return fragment;
 }
 
-vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
 {
 	vsVector3D va[4] =
 	{
@@ -548,6 +548,8 @@ vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsC
 		vsVector2D(box.GetMin().x,box.GetMax().y),
 		box.GetMax()
 	};
+	for ( int i = 0; i < 4; i++ )
+		va[i] += offset;
 /*	vsVector2D tex[4] =
 	{
 		vsVector2D( 0.f, 0.f),
@@ -576,6 +578,11 @@ vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsC
 	fragment->SetMaterial( material );
 
 	return fragment;
+}
+
+vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+{
+	return vsMakeSolidBox2D_AtOffset( box, vsVector3D::Zero, material, colorOverride );
 }
 
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
