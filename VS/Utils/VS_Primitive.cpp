@@ -624,6 +624,47 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 
 	return fragment;
 }
+
+vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+{
+	vsVector3D va[4] =
+	{
+		box.GetMin(),
+		vsVector2D(box.GetMax().x,box.GetMin().y),
+		vsVector2D(box.GetMin().x,box.GetMax().y),
+		box.GetMax()
+	};
+	vsVector2D tex[4] =
+	{
+		vsVector2D( 0.f, 1.f),
+		vsVector2D( 1.f, 1.f),
+		vsVector2D( 0.f, 0.f),
+		vsVector2D( 1.f, 0.f)
+	};
+	int ts[4] =
+	{
+		0,2,1,3
+	};
+
+	vsDisplayList *list = new vsDisplayList(128);
+
+	if ( colorOverride )
+	{
+		list->SetColor( *colorOverride );
+	}
+	list->VertexArray(va,4);
+	list->TexelArray(tex,4);
+	list->TriangleStripArray(ts,4);
+	list->ClearVertexArray();
+	list->ClearTexelArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
 vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle, vsColor *colorOverride )
 {
 	vsVector3D va[4] =
