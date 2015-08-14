@@ -15,14 +15,14 @@ class vsDisplayList;
 
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Material.h"
-#include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Utils/VS_ArrayStore.h"
 
 class vsFragment
 {
 	vsMaterial *					m_material;
 	vsDisplayList *					m_displayList;
 
-	vsLinkedListStore<vsRenderBuffer>		m_bufferList;
+	vsArrayStore<vsRenderBuffer>	m_bufferList;
 	bool m_visible;
 
 public:
