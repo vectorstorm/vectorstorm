@@ -19,7 +19,7 @@ class vsColor;
 class vsRendererState;
 
 
-class vsRenderBuffer : public vsAutomaticInstanceList<vsRenderBuffer>
+class vsRenderBuffer
 {
 public:
     enum Type
@@ -124,9 +124,6 @@ public:
 		float			padding[4];		// four more floats brings us to 64 bytes.
 	};
 
-
-	static void UnmapAll();
-	static void MapAll();
 
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();

@@ -947,46 +947,6 @@ vsRenderBuffer::LineListBuffer(int instanceCount)
 	}
 }
 
-
-void
-vsRenderBuffer::UnmapAll()
-{
-	for ( vsRenderBuffer *b = vsRenderBuffer::GetFirstInstance(); b; b = b->GetNextInstance() )
-	{
-		if ( b->m_vbo )
-		{
-			glDeleteBuffers( 1, (GLuint*)&b->m_bufferID );
-		}
-		b->m_vbo = false;
-		b->m_glArrayBytes = 0;
-	}
-}
-
-void
-vsRenderBuffer::MapAll()
-{
-#if !TARGET_OS_IPHONE
-	for ( vsRenderBuffer *b = vsRenderBuffer::GetFirstInstance(); b; b = b->GetNextInstance() )
-	{
-		if ( glGenBuffers && b->m_type != vsRenderBuffer::Type_NoVBO )
-		{
-			glGenBuffers(1, (GLuint*)&b->m_bufferID);
-			b->m_vbo = true;
-		}
-		if ( b->m_indexType )
-		{
-			if ( b->m_activeBytes > 0 )
-				b->BakeIndexArray();
-		}
-		else
-		{
-			if ( b->m_activeBytes > 0 )
-				b->BakeArray();
-		}
-	}
-#endif
-}
-
 #define VBO_SIZE (1024 * 1024)
 static GLuint g_vbo = 0xffffffff;
 static int g_vboCursor = VBO_SIZE;
