@@ -120,15 +120,15 @@ vsQuaternion::Set( const vsEulerAngles &ang )
 	sp = halfYaw.Sin();
 	sy = halfBank.Sin();
 
-/*
- cr = halfBank.Cos();
- cp = halfPitch.Cos();
- cy = halfYaw.Cos();
 
- sr = halfBank.Sin();
- sp = halfPitch.Sin();
- sy = halfYaw.Sin();
-*/
+//  cr = halfBank.Cos();
+//  cp = halfPitch.Cos();
+//  cy = halfYaw.Cos();
+//
+//  sr = halfBank.Sin();
+//  sp = halfPitch.Sin();
+//  sy = halfYaw.Sin();
+
 	cpcy = cp * cy;
 	spsy = sp * sy;
 
@@ -142,9 +142,14 @@ vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q )
 {
 	vsEulerAngles result;
 
-	result.pitch = vsATan2(2.f * (q.w*q.x - q.y*q.z), 1.f - 2.f*(q.x*q.x + q.z*q.z));
-	result.bank = vsASin(2.f * (q.x*q.y + q.z*q.w));
-	result.yaw = vsATan2(2.f * (q.w*q.y - q.x*q.z), 1.f - 2.f*(q.y*q.y - q.z*q.z));
+	double sqw = q.w*q.w;
+	double sqx = q.x*q.x;
+	double sqy = q.y*q.y;
+	double sqz = q.z*q.z;
+
+	result.bank = vsATan2(2.0 * (q.x*q.y + q.z*q.w),(sqx - sqy - sqz + sqw));
+	result.pitch = vsATan2(2.0 * (q.y*q.z + q.x*q.w),(-sqx - sqy + sqz + sqw));
+	result.yaw = vsASin(-2.0 * (q.x*q.z - q.y*q.w)/(sqx + sqy + sqz + sqw));
 
 	return result;
 }
