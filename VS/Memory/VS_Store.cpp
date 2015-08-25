@@ -487,6 +487,7 @@ vsStore::WriteLight(const vsLight &l)
 	WriteVector3D( l.GetDirection() );
 	WriteColor( l.GetColor() );
 	WriteColor( l.GetAmbientColor() );
+	WriteColor( l.GetSpecularColor() );
 }
 
 void
@@ -494,17 +495,19 @@ vsStore::ReadLight(vsLight *l)
 {
 	l->SetType( (vsLight::Type)ReadUint8() );
 	vsVector3D pos, dir;
-	vsColor color, ambientColor;
+	vsColor color, ambientColor, specularColor;
 
 	ReadVector3D(&pos);
 	ReadVector3D(&dir);
 	ReadColor(&color);
 	ReadColor(&ambientColor);
+	ReadColor(&specularColor);
 
 	l->SetPosition( pos );
 	l->SetDirection( dir );
 	l->SetColor( color );
 	l->SetAmbientColor( ambientColor );
+	l->SetSpecularColor( specularColor );
 }
 
 void

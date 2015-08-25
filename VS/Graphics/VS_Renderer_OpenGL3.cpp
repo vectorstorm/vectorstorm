@@ -1003,7 +1003,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 						}
 						m_lightStatus[m_lightCount].ambient = l.m_ambient;
 						m_lightStatus[m_lightCount].diffuse = l.m_color;
-						m_lightStatus[m_lightCount].specular = c_white;
+						m_lightStatus[m_lightCount].specular = l.m_specular;
 
 						m_lightCount++;
 					}

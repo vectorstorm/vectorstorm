@@ -16,6 +16,7 @@ vsLight::vsLight()
 	m_direction = vsVector3D::ZAxis;
 	m_color = c_white;
 	m_ambient = vsColor(0.f,0.f,0.f,0.f);
+	m_specular = c_white;
 }
 
 vsLight::~vsLight()
