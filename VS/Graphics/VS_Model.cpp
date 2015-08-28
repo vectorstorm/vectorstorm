@@ -438,17 +438,28 @@ vsModelInstance *
 vsModelInstanceGroup::MakeInstance()
 {
 	vsModelInstance *inst = new vsModelInstance;
-	inst->group = this;
-	inst->visible = false;
-	inst->index = m_instance.ItemCount();
-	inst->matrixIndex = -1;
-	m_instance.AddItem(inst);
+	AddInstance(inst);
 	return inst;
+}
+
+void
+vsModelInstanceGroup::TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup )
+{
+	while( !otherGroup->m_instance.IsEmpty() )
+	{
+		vsModelInstance *instance = otherGroup->m_instance[0];
+		bool visible = instance->visible;
+		otherGroup->RemoveInstance(instance);
+		AddInstance(instance);
+		UpdateInstance(instance, visible);
+	}
 }
 
 void
 vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
 {
+	vsAssert(inst->group == this, "Wrong group??");
+
 	if ( show )
 	{
 		if ( inst->matrixIndex < 0 ) // we've come into view!
@@ -485,6 +496,16 @@ vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
 		m_matrixInstanceId.PopBack();
 		inst->matrixIndex = -1;
 	}
+}
+
+void
+vsModelInstanceGroup::AddInstance( vsModelInstance *inst )
+{
+	inst->group = this;
+	inst->visible = false;
+	inst->index = m_instance.ItemCount();
+	inst->matrixIndex = -1;
+	m_instance.AddItem(inst);
 }
 
 void

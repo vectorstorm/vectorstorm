@@ -65,9 +65,12 @@ public:
 	{
 	}
 
+	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
+
 	vsModelInstance * MakeInstance();		// create an instance of me.
-	void RemoveInstance( vsModelInstance *model );
-	void UpdateInstance( vsModelInstance *, bool show = true ); // must be called to change the matrix on this instance
+	void AddInstance( vsModelInstance *instance );
+	void RemoveInstance( vsModelInstance *instance );
+	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel() { return m_model; }
 
 	virtual void Draw( vsRenderQueue *queue );
@@ -131,6 +134,7 @@ public:
 	virtual			~vsModel();
 
 	void SetAsInstanceModel(); // if set, this model won't be drawn;  only instances will.
+	vsModelInstanceGroup *GetInstanceGroup() { return m_instanceGroup; }
 
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void RemoveInstance( vsModelInstance *model );
