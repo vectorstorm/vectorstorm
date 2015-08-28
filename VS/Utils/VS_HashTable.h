@@ -117,6 +117,16 @@ public:
 		}
 		return NULL;
 	}
+
+	T& operator[]( const vsString& key )
+	{
+		T* result = FindItem(key);
+		if ( result )
+			return *result;
+		T newItem;
+		AddItemWithKey( newItem, key );
+		return *FindItem(key);
+	}
 };
 
 #endif // VS_HASHTABLE_H

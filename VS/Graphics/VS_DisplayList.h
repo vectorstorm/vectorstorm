@@ -27,6 +27,7 @@ class vsRenderBuffer;
 class vsLight;
 class vsMaterial;
 class vsBox3D;
+class vsShaderValues;
 
 #define MAX_OWNED_MATERIALS (10)
 
@@ -108,6 +109,8 @@ public:
 		OpCode_ClearViewport,
 
 		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix push.
+
+		OpCode_SetShaderValues, // set supplementary shader values which may be used by any current shader
 
 		OpCode_Debug,
 
@@ -219,6 +222,7 @@ public:
 	void	SetColors( const vsColor *c, int count );
 	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
+	void	SetShaderValues( vsShaderValues *values );
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!

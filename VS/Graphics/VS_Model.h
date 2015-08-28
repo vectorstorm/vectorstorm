@@ -54,6 +54,7 @@ public:
 class vsModelInstanceGroup : public vsEntity
 {
 	vsModel *m_model;
+	vsShaderValues *m_values; // TEMP:  For testing
 	vsArray<vsMatrix4x4> m_matrix;
 	vsArray<vsColor> m_color;
 	vsArray<int> m_matrixInstanceId;
@@ -61,17 +62,22 @@ class vsModelInstanceGroup : public vsEntity
 public:
 
 	vsModelInstanceGroup( vsModel *model ):
-		m_model(model)
+		m_model(model),
+		m_values(NULL)
 	{
 	}
 
 	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
 
+	void SetShaderValues( vsShaderValues *values ) { m_values = values; }
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void AddInstance( vsModelInstance *instance );
 	void RemoveInstance( vsModelInstance *instance );
 	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel() { return m_model; }
+
+	// find the bounds of our matrix translations.
+	void CalculateMatrixBounds( vsBox3D& out );
 
 	virtual void Draw( vsRenderQueue *queue );
 };
@@ -172,7 +178,7 @@ public:
 	size_t			GetFragmentCount() { return m_fragment.ItemCount(); }
 
 	virtual void	Draw( vsRenderQueue *list );
-	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount );
+	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values );
 };
 
 #endif // VS_MODEL_H

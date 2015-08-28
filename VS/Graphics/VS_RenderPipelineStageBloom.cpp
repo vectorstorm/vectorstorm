@@ -34,9 +34,9 @@ public:
 		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
-	virtual void Prepare( vsMaterial *mat )
+	virtual void Prepare( vsMaterial *mat, vsShaderValues *values )
 	{
-		vsShader::Prepare( mat );
+		vsShader::Prepare( mat, values );
 		// glUniform1f(m_locOffsetX, m_offset.x);
 		// glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
@@ -237,7 +237,7 @@ vsRenderPipelineStageBloom::Draw( vsDisplayList *list )
 	list->BindBuffer(m_vertices);
 	list->TriangleStripBuffer(m_indices);
 
-	// list->BlitRenderTarget( m_pass[0], m_to );
+	// list->BlitRenderTarget( m_passes[0].m_pass, m_to );
 	// return;
 
 	// Okay.  New plan.  We BLUR each pass, THEN blit down to the next one.

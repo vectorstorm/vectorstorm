@@ -75,6 +75,7 @@
 #include <VS/Graphics/VS_Screen.h>
 #include <VS/Graphics/VS_Shader.h>
 #include <VS/Graphics/VS_ShaderSuite.h>
+#include <VS/Graphics/VS_ShaderValues.h>
 #include <VS/Graphics/VS_Sprite.h>
 #include <VS/Graphics/VS_Texture.h>
 #include <VS/Graphics/VS_TextureManager.h>

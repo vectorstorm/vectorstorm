@@ -210,6 +210,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Shader.h
 	VS/Graphics/VS_ShaderSuite.cpp
 	VS/Graphics/VS_ShaderSuite.h
+	VS/Graphics/VS_ShaderValues.cpp
+	VS/Graphics/VS_ShaderValues.h
 	VS/Graphics/VS_Sprite.cpp
 	VS/Graphics/VS_Sprite.h
 	VS/Graphics/VS_Texture.cpp

@@ -12,11 +12,12 @@
 
 class vsDisplayList;
 class vsRenderBuffer;
+class vsMatrix4x4;
+class vsShaderValues;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS_MaterialInternal.h"
-class vsMatrix4x4;
 
 class vsShader
 {
@@ -106,7 +107,7 @@ public:
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterial *activeMaterial ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL ); // called before we start rendering something with this shader
 	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
 };
 

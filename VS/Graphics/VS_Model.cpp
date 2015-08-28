@@ -312,11 +312,11 @@ vsModel::BuildBoundingBox()
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount )
+vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues )
 {
 	for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
-		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount );
+		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
 	}
 }
 
@@ -548,5 +548,14 @@ vsModelInstanceGroup::Draw( vsRenderQueue *queue )
 	if ( m_matrix.IsEmpty() )
 		return;
 
-	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount() );
+	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values );
 }
+
+void
+vsModelInstanceGroup::CalculateMatrixBounds( vsBox3D& out )
+{
+	out.Clear();
+	for ( int i = 0; i < m_matrix.ItemCount(); i++ )
+		out.ExpandToInclude( m_matrix[i].w );
+}
+

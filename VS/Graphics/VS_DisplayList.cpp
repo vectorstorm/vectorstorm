@@ -102,6 +102,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"SnapMatrix",
 
+	"SetShaderValues",
+
 	"Debug"
 };
 
@@ -680,6 +682,13 @@ vsDisplayList::SnapMatrix()
 }
 
 void
+vsDisplayList::SetShaderValues( vsShaderValues *values )
+{
+	m_fifo->WriteUint8( OpCode_SetShaderValues );
+	m_fifo->WriteVoidStar( (char*)values );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -1159,6 +1168,7 @@ vsDisplayList::PopOp()
 
 				break;
 			}
+			case OpCode_SetShaderValues:
 			case OpCode_VertexBuffer:
 			case OpCode_NormalBuffer:
 			case OpCode_TexelBuffer:

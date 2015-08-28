@@ -143,6 +143,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_flags(flags),
 	m_window(NULL),
 	m_scene(NULL),
+	m_currentShaderValues(NULL),
 	m_bufferCount(bufferCount)
 {
 	int displayCount = SDL_GetNumVideoDisplays();
@@ -472,6 +473,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
+	m_currentShaderValues = NULL;
 	m_currentColor = c_white;
 
 	m_scene->Bind();
@@ -536,6 +538,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
+	m_currentShaderValues = NULL;
 	RawRenderDisplayList(list);
 
 	CheckGLError("RenderDisplayList");
@@ -546,6 +549,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 {
 	CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
+	static vsShaderValues *s_previousShaderValues = NULL;
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	CheckGLError("PostStateFlush");
@@ -554,14 +558,15 @@ vsRenderer_OpenGL3::FlushRenderState()
 		if ( s_lastShaderId != m_currentShader->GetShaderId() )
 		{
 			glUseProgram( m_currentShader->GetShaderId() );
-			m_currentShader->Prepare( m_currentMaterial );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
 			s_lastShaderId = m_currentShader->GetShaderId();
 			s_previousMaterial = m_currentMaterial;
 		}
-		else if ( m_currentMaterial != s_previousMaterial )
+		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
-			m_currentShader->Prepare( m_currentMaterial );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
 			s_previousMaterial = m_currentMaterial;
+			s_previousShaderValues = m_currentShaderValues;
 		}
 		CheckGLError("PostPrepare");
 
@@ -751,6 +756,12 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentLocalToWorld = NULL;
 					m_currentLocalToWorldCount = b->GetMatrix4x4ArraySize();
 					m_currentLocalToWorldBuffer = b;
+					break;
+				}
+			case vsDisplayList::OpCode_SetShaderValues:
+				{
+					vsShaderValues *sv = (vsShaderValues*)op->data.p;
+					m_currentShaderValues = sv;
 					break;
 				}
 			case vsDisplayList::OpCode_SnapMatrix:

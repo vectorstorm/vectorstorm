@@ -27,6 +27,7 @@ class vsDisplayList;
 class vsMaterialInternal;
 class vsOverlay;
 class vsRenderBuffer;
+class vsShaderValues;
 class vsTransform2D;
 class vsVector2D;
 struct SDL_Surface;
@@ -60,8 +61,9 @@ class vsRenderer_OpenGL3: public vsRenderer
     vsRendererState      m_state;
 
 	vsMaterial *         m_currentMaterial;
-	vsMaterialInternal *         m_currentMaterialInternal;
+	vsMaterialInternal * m_currentMaterialInternal;
 	vsShader *           m_currentShader;
+	vsShaderValues *     m_currentShaderValues;
 	bool                 m_invalidateMaterial;
 
 	vsVector3D *         m_currentVertexArray;

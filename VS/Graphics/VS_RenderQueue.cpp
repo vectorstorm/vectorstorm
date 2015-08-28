@@ -25,6 +25,7 @@ struct vsRenderQueueStage::BatchElement
 {
 	vsMatrix4x4		matrix;
 	vsMaterial *	material;
+	vsShaderValues *shaderValues;
 	const vsMatrix4x4 *	instanceMatrix;
 	const vsColor *	instanceColor;
 	int				instanceMatrixCount;
@@ -34,6 +35,7 @@ struct vsRenderQueueStage::BatchElement
 
 	BatchElement():
 		material(NULL),
+		shaderValues(NULL),
 		instanceMatrix(NULL),
 		instanceColor(NULL),
 		instanceMatrixCount(0),
@@ -46,6 +48,7 @@ struct vsRenderQueueStage::BatchElement
 	void Clear()
 	{
 		material = NULL;
+		shaderValues = NULL;
 		instanceMatrix = NULL;
 		instanceMatrixCount = 0;
 		instanceMatrixBuffer = NULL;
@@ -237,7 +240,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matr
 }
 
 void
-vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batchList )
+vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batchList, vsShaderValues *values )
 {
 	Batch *batch = FindBatch(material);
 
@@ -251,6 +254,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	element->Clear();
 
 	element->material = material;
+	element->shaderValues = values;
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
 	element->instanceColor = color;
@@ -309,6 +313,7 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
 			else
 				list->SetMatrix4x4( e->matrix );
+			list->SetShaderValues( e->shaderValues );
 			// if ( e->instanceColorBuffer )
 			// 	list->SetColorBuffer( e->instanceColorBuffer );
 			if ( e->instanceColor )
@@ -538,10 +543,10 @@ vsRenderQueue::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuf
 }
 
 void
-vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch )
+vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch, vsShaderValues *values)
 {
 	int stageId = PickStageForMaterial( material );
-	m_stage[stageId].AddInstanceBatch( material, matrix, color, instanceCount, batch );
+	m_stage[stageId].AddInstanceBatch( material, matrix, color, instanceCount, batch, values );
 }
 
 void
@@ -558,9 +563,9 @@ vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
 }
 
 void
-vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount )
+vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsShaderValues *values )
 {
-	AddInstanceBatch( fragment->GetMaterial(), matrix, color, instanceCount, fragment->GetDisplayList() );
+	AddInstanceBatch( fragment->GetMaterial(), matrix, color, instanceCount, fragment->GetDisplayList(), values );
 }
 
 void

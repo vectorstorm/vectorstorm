@@ -14,6 +14,7 @@
 #include "VS_RenderBuffer.h"
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_Screen.h"
+#include "VS_ShaderValues.h"
 #include "VS_Store.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
@@ -444,7 +445,7 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 }
 
 void
-vsShader::Prepare( vsMaterial *material )
+vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 {
 	// GLint current;
 	// glGetIntegerv(GL_CURRENT_PROGRAM, &current);
@@ -455,7 +456,9 @@ vsShader::Prepare( vsMaterial *material )
 		{
 			case GL_BOOL:
 				{
-					bool b = material->UniformB(i);
+					bool b;
+					if ( !values || !values->UniformB( m_uniform[i].name, b ) )
+						 b = material->UniformB(i);
 					SetUniformValueB( i, b );
 					break;
 				}
@@ -463,30 +466,27 @@ vsShader::Prepare( vsMaterial *material )
 				{
 					if ( m_uniform[i].arraySize == 1 )
 					{
-						float f = material->UniformF(i);
-						if ( m_uniform[i].name == "glow" )
-						{
-							if ( f != m_uniform[i].f32 )
-							{
-								// vsLog("%x, %d: Setting 'glow' from %f to %f, for material %s", this, m_shader, m_uniform[i].f32, f, material->GetResource()->GetName().c_str() );
-							}
-						}
+						float f;
+						if ( !values || !values->UniformF( m_uniform[i].name, f ) )
+							f = material->UniformF(i);
 						SetUniformValueF( i, f );
 					}
 					break;
 				}
 			case GL_FLOAT_VEC3:
 				{
-					vsVector4D v = material->UniformVec4(i);
-					if ( v != m_uniform[i].vec4 )
-						SetUniformValueVec3( i, v );
+					vsVector4D v;
+					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
+						v = material->UniformVec4(i);
+					SetUniformValueVec3( i, v );
 					break;
 				}
 			case GL_FLOAT_VEC4:
 				{
-					vsVector4D v = material->UniformVec4(i);
-					if ( v != m_uniform[i].vec4 )
-						SetUniformValueVec4( i, v );
+					vsVector4D v;
+					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
+						v = material->UniformVec4(i);
+					SetUniformValueVec4( i, v );
 					break;
 				}
 			default:
