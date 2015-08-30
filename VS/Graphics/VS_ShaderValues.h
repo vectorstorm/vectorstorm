@@ -11,7 +11,10 @@
 #define VS_SHADERVALUES_H
 
 #include "VS/Utils/VS_HashTable.h"
+#include "VS/Utils/VS_String.h"
+#include "VS_DisableDebugNew.h"
 #include <map>
+#include "VS_EnableDebugNew.h"
 
 class vsColor;
 class vsShader;
