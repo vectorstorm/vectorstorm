@@ -47,7 +47,7 @@ protected:
 public:
 
 	vsCacheReference( const vsString &name ) { m_resource = vsCache<T>::Instance()->Get(name);  m_resource->AddReference(); }
-	vsCacheReference( vsResource *resource ) { m_resource = resource; m_resource->AddReference(); }
+	vsCacheReference( T *resource ) { m_resource = resource; vsCache<T>::Instance()->Add(resource); m_resource->AddReference(); }
 	vsCacheReference( vsCacheReference<T> *other ) { m_resource = other->m_resource; m_resource->AddReference(); }
 	virtual ~vsCacheReference() { m_resource->ReleaseReference(); }
 

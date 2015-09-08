@@ -35,6 +35,38 @@ static const vsString s_cullString[CULL_MAX] =
 	"none"		// Cull_None
 };
 
+static int	s_codeMaterialCount = 0;
+vsMaterialInternal::vsMaterialInternal():
+	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
+	m_textureCount(0),
+	m_shaderIsMine(false),
+	m_shader(NULL),
+	m_color(c_white),
+	m_specularColor(c_black),
+	m_drawMode(DrawMode_Normal),
+	m_cullingType(Cull_Back),
+	m_alphaRef(0.f),
+	m_depthBiasConstant(0.f),
+	m_depthBiasFactor(0.f),
+	m_layer(0),
+	m_stencil(StencilOp_None),
+	m_alphaTest(false),
+	m_fog(false),
+	m_zRead(true),
+	m_zWrite(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_glow(false),
+	m_postGlow(false),
+	m_hasColor(true),
+	m_blend(true)
+{
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+		m_texture[i] = NULL;
+
+	SetShader();
+}
+
 vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
 	m_textureCount(0),
@@ -69,6 +101,10 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	{
 		vsFile materialFile(fileName);
 		LoadFromFile( &materialFile );
+	}
+	else
+	{
+		vsAssert(vsFile::Exists(fileName), vsFormatString("Unable to open material %s", name.c_str()));
 	}
 	SetShader();
 }

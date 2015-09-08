@@ -14,12 +14,10 @@
 #include "VS_Texture.h"
 #include "VS_OpenGL.h"
 
-static int	c_codeMaterialCount = 0;
-
 vsMaterial *vsMaterial::White = NULL;
 
 vsMaterial::vsMaterial():
-	vsCacheReference<vsMaterialInternal>(vsFormatString("CodeMaterial%02d", c_codeMaterialCount++)),
+	vsCacheReference<vsMaterialInternal>( new vsMaterialInternal ),
 	m_uniformValue(NULL),
 	m_uniformCount(0)
 {
