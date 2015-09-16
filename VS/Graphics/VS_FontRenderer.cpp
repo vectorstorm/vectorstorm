@@ -104,7 +104,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	{
 		WrapLine(string, size);
 		fits = true;
-		if ( m_bounds.y != -1.f )
+		if ( m_bounds.y > 0.f )
 		{
 			float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
 			if ( totalScaledHeight > m_bounds.y )
