@@ -204,7 +204,7 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 #ifdef DEBUG_SCENE
 	m_renderer->RenderDisplayList(m_fifo);
 	m_fifo->Clear();
-	m_scene[m_sceneCount-1]->Draw(m_fifo);
+	m_scene[m_sceneCount-1]->Draw(m_fifo, *m_currentSettings);
 #endif
 	m_renderer->RenderDisplayList(m_fifo);
 	vsTimerSystem::Instance()->EndDrawTime();

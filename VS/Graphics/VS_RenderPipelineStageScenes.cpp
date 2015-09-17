@@ -48,7 +48,7 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		if ( m_scene[i] )
-			m_scene[i]->Draw( list );
+			m_scene[i]->Draw( list, m_settings );
 	}
 	list->ResolveRenderTarget( m_target );
 }

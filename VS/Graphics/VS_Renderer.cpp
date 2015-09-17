@@ -13,6 +13,7 @@ vsRenderer*  vsRenderer::s_instance = NULL;
 
 vsRenderer::Settings::Settings():
 	shaderSuite(NULL),
+	customCamera(NULL),
     aspectRatio(1.f),
 	polygonOffsetUnits(0.f),
     useCustomAspectRatio(false),

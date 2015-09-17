@@ -450,12 +450,12 @@ vsRenderQueue::InitialiseTransformStack()
 
 		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
 
-		requestedMatrix.w -= m_parent->GetCamera3D()->GetPosition();
+		requestedMatrix.w -= vsVector3D(m_camera.w);
         //
 		vsMatrix4x4 myIdentity;
 		myIdentity.x *= -1.f;
         //
-		vsMatrix4x4 cameraMatrix = m_parent->GetCamera3D()->GetTransform().GetMatrix();
+		vsMatrix4x4 cameraMatrix = m_camera;
 
 		vsVector3D forward = cameraMatrix.z;
 		vsVector3D up = cameraMatrix.y;

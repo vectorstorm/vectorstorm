@@ -186,7 +186,7 @@ vsScene::Update( float timeStep )
 }
 
 void
-vsScene::Draw( vsDisplayList *list )
+vsScene::Draw( vsDisplayList *list, const vsRenderer::Settings& settings )
 {
 	if ( !IsEnabled() )
 		return;
@@ -204,15 +204,17 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetViewport( m_viewport );
 	}
 
-	m_queue->StartRender(this);
-
 	if ( m_is3d )
 	{
-		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
-		m_queue->SetProjectionMatrix(  m_camera3D->GetProjectionMatrix() );
-		m_queue->SetFOV( m_camera3D->GetFieldOfView() );
-		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
-		// list->SetCameraTransform( m_camera3D->GetTransform() );
+		vsCamera3D *sceneCamera = m_camera3D;
+		if ( settings.customCamera )
+		{
+			sceneCamera = settings.customCamera;
+		}
+		list->SetProjectionMatrix4x4( sceneCamera->GetProjectionMatrix() );
+		m_queue->SetProjectionMatrix( sceneCamera->GetProjectionMatrix() );
+		m_queue->SetCameraMatrix( sceneCamera->GetTransform().GetMatrix() );
+		m_queue->SetFOV( sceneCamera->GetFieldOfView() );
 
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
@@ -234,6 +236,8 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
 		m_queue->SetProjectionMatrix(  m_camera->GetProjectionMatrix() );
 	}
+	m_queue->StartRender(this);
+
 	list->SetWorldToViewMatrix4x4( m_queue->GetWorldToViewMatrix() );
 
 	if ( m_stencilTest )

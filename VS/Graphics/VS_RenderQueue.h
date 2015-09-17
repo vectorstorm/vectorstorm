@@ -79,6 +79,7 @@ class vsRenderQueue
 	int						m_stageCount;
 
 	vsMatrix4x4				m_projection;
+	vsMatrix4x4				m_camera;
 	vsMatrix4x4				m_worldToView;
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
 	int						m_transformStackLevel;
@@ -113,6 +114,7 @@ public:
 	bool			IsOrthographic();
 
 	void SetProjectionMatrix( const vsMatrix4x4& mat ) { m_projection = mat; }
+	void SetCameraMatrix( const vsMatrix4x4& mat ) { m_camera = mat; }
 
 	vsScene *		GetScene() { return m_parent; }
 

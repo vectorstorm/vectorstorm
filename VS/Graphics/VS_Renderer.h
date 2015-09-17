@@ -20,6 +20,7 @@
 #include "Math/VS_Transform.h"
 
 class vsCamera2D;
+class vsCamera3D;
 class vsDisplayList;
 class vsMaterialInternal;
 class vsOverlay;
@@ -36,7 +37,8 @@ public:
 
 	struct Settings
 	{
-		vsShaderSuite *shaderSuite;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
+		vsShaderSuite *shaderSuite; // must be cleaned up by someone else;  this settings object does NOT own shaders!
+		vsCamera3D *customCamera; // must be cleaned up by someone else;  we do NOT own this camera!
         float aspectRatio;
 		float polygonOffsetUnits;
         bool useCustomAspectRatio;
