@@ -51,6 +51,7 @@ public:
 	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
 	vsShader *  m_shader;
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
+	vsTexture *	m_shadowTexture;		// shadow texture?
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
 	vsColor		m_specularColor;	// if we're of "Lit" type, this is our specular color
 	vsDrawMode	m_drawMode;

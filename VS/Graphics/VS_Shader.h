@@ -30,6 +30,7 @@ public:
 			int b;
 			float f32;
 			vsVector4D vec4; // for vectors of up to 4 floats
+			vsMatrix4x4 mat4; // for vectors of up to 4 floats
 		// };
 		int32_t loc;
 		int32_t type;
@@ -51,6 +52,7 @@ private:
 	int32_t m_fogColorLoc;
 	int32_t m_fogDensityLoc;
 	int32_t m_textureLoc;
+	int32_t m_shadowTextureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
@@ -75,6 +77,7 @@ private:
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueVec3( int i, const vsVector3D& value );
 	void SetUniformValueVec4( int i, const vsVector4D& value );
+	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
 
 protected:
 	uint32_t m_shader;

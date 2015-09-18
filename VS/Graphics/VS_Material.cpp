@@ -225,6 +225,18 @@ vsMaterial::BindUniformVec4( int32_t id, const vsVector4D* value )
 }
 
 bool
+vsMaterial::BindUniformMat4( int32_t id, const vsMatrix4x4* value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_MAT4 )
+	{
+		m_uniformValue[id].bind = value;
+		m_uniformValue[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
 vsMaterial::BindUniformF( const vsString& name, const float* value )
 {
 	int32_t id = UniformId(name);
@@ -259,6 +271,13 @@ vsMaterial::BindUniformVec4( const vsString& name, const vsVector4D* value )
 	return BindUniformVec4(id,value);
 }
 
+bool
+vsMaterial::BindUniformMat4( const vsString& name, const vsMatrix4x4* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformMat4(id,value);
+}
+
 float
 vsMaterial::UniformF( int32_t id )
 {
@@ -290,5 +309,16 @@ vsMaterial::UniformVec4( int32_t id )
 		return *(vsVector4D*)m_uniformValue[id].bind;
 	else
 		return *(vsVector4D*)m_uniformValue[id].vec4;
+}
+
+vsMatrix4x4
+vsMaterial::UniformMat4( int32_t id )
+{
+	if ( id >= m_uniformCount )
+		return vsMatrix4x4();
+	if ( m_uniformValue[id].bound )
+		return *(vsMatrix4x4*)m_uniformValue[id].bind;
+	else
+		return *(vsMatrix4x4*)m_uniformValue[id].mat4;
 }
 

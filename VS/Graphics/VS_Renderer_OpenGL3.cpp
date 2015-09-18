@@ -1252,6 +1252,17 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			// glDisable(GL_TEXTURE_2D);
 		}
 	}
+
+	if ( material->m_shadowTexture )
+	{
+		glActiveTexture(GL_TEXTURE0+MAX_TEXTURE_SLOTS);
+		glBindTexture( GL_TEXTURE_2D, material->m_shadowTexture->GetResource()->GetTexture() );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE );
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 
 	if ( material->m_alphaTest )

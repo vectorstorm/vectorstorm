@@ -86,6 +86,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
 	m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
 	m_textureLoc = glGetUniformLocation(m_shader, "textures");
+	m_shadowTextureLoc = glGetUniformLocation(m_shader, "shadowTexture");
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
@@ -290,6 +291,10 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 		glUniform1iv( m_textureLoc, MAX_TEXTURE_SLOTS, value );
 	}
+	if ( m_shadowTextureLoc >= 0 )
+	{
+		glUniform1i( m_shadowTextureLoc, MAX_TEXTURE_SLOTS );
+	}
 }
 
 void
@@ -489,6 +494,14 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 					SetUniformValueVec4( i, v );
 					break;
 				}
+			case GL_FLOAT_MAT4:
+				{
+					vsMatrix4x4 m;
+					// if ( !values || !values->UniformMat4( m_uniform[i].name, m ) )
+						m = material->UniformMat4(i);
+					SetUniformValueMat4( i, m );
+					break;
+				}
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -584,5 +597,12 @@ vsShader::SetUniformValueVec4( int i, const vsVector4D& value )
 {
 	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
 	m_uniform[i].vec4 = value;
+}
+
+void
+vsShader::SetUniformValueMat4( int i, const vsMatrix4x4& value )
+{
+	glUniformMatrix4fv( m_uniform[i].loc, 1, false, (GLfloat*)&value );
+	m_uniform[i].mat4 = value;
 }
 

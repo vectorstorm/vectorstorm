@@ -74,6 +74,13 @@ vsDynamicMaterial::SetTexture( int i, const vsString &texture, bool linear )
 }
 
 void
+vsDynamicMaterial::SetShadowTexture( vsTexture* texture )
+{
+	vsTexture *t = new vsTexture(texture);
+	GetResource()->m_shadowTexture = t;
+}
+
+void
 vsDynamicMaterial::SetColor( const vsColor& color )
 {
 	GetResource()->m_color = color;
