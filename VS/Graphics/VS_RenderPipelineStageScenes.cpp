@@ -50,6 +50,7 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 		if ( m_scene[i] )
 			m_scene[i]->Draw( list, m_settings );
 	}
-	list->ResolveRenderTarget( m_target );
+	if ( m_target )
+		list->ResolveRenderTarget( m_target );
 }
 
