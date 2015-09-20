@@ -34,8 +34,6 @@ class coreGame
 	coreGameSystem			*m_system[GameSystem_MAX];		// An alternate game system execution order can be requested by client games, by filling out this array.
 	int						m_systemCount;					// how many game systems are actually active for this game.
 
-	coreGameMode			*m_currentMode;					// optional;  the current game mode active, if this coreGame uses them.
-
 	unsigned long			m_framesRendered;
 	unsigned long			m_startTicks;
 
@@ -51,6 +49,8 @@ class coreGame
 	void					DeinitGameSystems();
 
 protected:
+	coreGameMode			*m_currentMode;					// optional;  the current game mode active, if this coreGame uses them.
+
 	int						m_sceneCount;					// how many scenes each particular game wishes to use.
 
 public:
