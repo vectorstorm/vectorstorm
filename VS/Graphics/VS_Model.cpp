@@ -120,6 +120,7 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 
 		result->SetPosition(trans);
 		result->SetScale(scale);
+		result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
 
 		int32_t meshCount;
 		r.Int32(meshCount);
