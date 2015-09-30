@@ -136,6 +136,8 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 
 		for ( int32_t i = 0; i < childCount; i++ )
 		{
+			vsModel *child = LoadModel_Internal(r);
+			result->AddChild(child);
 		}
 	}
 
