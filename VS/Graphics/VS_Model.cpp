@@ -20,23 +20,25 @@
 
 
 vsModel *
-vsModel::Load( const vsString &filename )
+vsModel::Load( const vsString &filename_in )
 {
-	vsModel *result = new vsModel;
-
-	vsFile file(filename);
-	vsRecord r;
-
-	while( file.Record(&r) )
+	vsString filename = filename_in;
+	// Check extension.
+	size_t dot = filename.rfind('.');
+	if ( dot != vsString::npos && dot == filename.size() - 4 )
 	{
-		if ( r.GetLabel().AsString() == "Model" )
-		{
-			result->LoadFrom(&r);
-			return result;
-		}
+		// three-character extension
+		vsString extension = filename.substr(dot+1,-1);
+		if ( extension == "vmd" || extension == "vmb" )
+			filename.erase(dot,-1);
 	}
 
-	return result;
+	vsString binaryFilename = filename + ".vmb";
+	vsString textFilename = filename + ".vmd";
+	if ( vsFile::Exists(binaryFilename) )
+		return LoadBinary( binaryFilename );
+	else
+		return LoadText( textFilename );
 }
 
 vsFragment*
@@ -158,6 +160,25 @@ vsModel::LoadBinary( const vsString &filename )
 
 
 	return result;
+}
+
+vsModel *
+vsModel::LoadText( const vsString &filename )
+{
+	vsFile file(filename);
+	vsRecord r;
+
+	while( file.Record(&r) )
+	{
+		if ( r.GetLabel().AsString() == "Model" )
+		{
+			vsModel *result = new vsModel;
+			result->LoadFrom(&r);
+			return result;
+		}
+	}
+
+	return NULL;
 }
 
 void

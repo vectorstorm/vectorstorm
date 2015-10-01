@@ -133,8 +133,9 @@ protected:
 
 public:
 
-	static vsModel *	Load( const vsString &filename );
+	static vsModel *	Load( const vsString &filename ); // trim the extension (if any) and try to load either binary or text format.
 	static vsModel *	LoadBinary( const vsString &filename );
+	static vsModel *	LoadText( const vsString &filename );
 
 	vsModel( vsDisplayList *displayList = NULL );
 	virtual			~vsModel();
