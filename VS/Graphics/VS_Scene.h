@@ -69,7 +69,11 @@ public:
 	void			SetViewport( const vsBox2D& viewport );
 	void			ClearViewport();
 
+
+	// Note that the following 'Corner' and 'Center' functions are only well-defined
+	// for 2D scenes.
 	vsVector2D		GetCorner(bool bottom, bool right);
+	vsVector2D		GetCenter();
 
 	vsVector2D		GetTopLeftCorner() { return GetCorner(false,false); }
 	vsVector2D		GetTopRightCorner() { return GetCorner(false,true); }

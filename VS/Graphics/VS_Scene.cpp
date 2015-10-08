@@ -345,6 +345,20 @@ vsScene::FindEntityAtPosition( const vsVector2D &pos )
 }
 
 vsVector2D
+vsScene::GetCenter()
+{
+	vsVector2D pos = vsVector2D::Zero;
+
+	vsTransform2D worldToCamera;
+	worldToCamera.SetTranslation( m_camera->GetPosition() );
+	worldToCamera.SetAngle( m_camera->GetAngle() );
+
+	pos = worldToCamera.ApplyTo(pos);
+
+	return pos;
+}
+
+vsVector2D
 vsScene::GetCorner(bool bottom, bool right)
 {
 	vsVector2D pos = vsVector2D::Zero;
