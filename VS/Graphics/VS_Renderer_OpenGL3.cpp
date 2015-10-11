@@ -547,12 +547,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
-	CheckGLError("PreFlush");
+	// CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
 	static vsShaderValues *s_previousShaderValues = NULL;
 	static size_t s_lastShaderId = 0;
 	m_state.Flush();
-	CheckGLError("PostStateFlush");
+	// CheckGLError("PostStateFlush");
 	if ( m_currentShader )
 	{
 		if ( s_lastShaderId != m_currentShader->GetShaderId() )
@@ -568,7 +568,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
 		}
-		CheckGLError("PostPrepare");
+		// CheckGLError("PostPrepare");
 
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
@@ -1114,7 +1114,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
-		CheckGLError("RenderOp");
+		// CheckGLError("RenderOp");
 		op = list->PopOp();
 	}
 }
