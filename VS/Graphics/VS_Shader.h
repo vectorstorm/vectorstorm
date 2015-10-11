@@ -48,8 +48,8 @@ private:
 	int32_t m_instanceColorAttributeLoc;
 	int32_t m_resolutionLoc;
 	int32_t m_mouseLoc;
-	int32_t m_fogColorLoc;
-	int32_t m_fogDensityLoc;
+	int32_t m_fogColorId;
+	int32_t m_fogDensityId;
 	int32_t m_textureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
@@ -74,7 +74,9 @@ private:
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueVec3( int i, const vsVector3D& value );
+	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
 	void SetUniformValueVec4( int i, const vsVector4D& value );
+	void SetUniformValueVec4( int i, const vsColor& value );
 
 protected:
 	uint32_t m_shader;

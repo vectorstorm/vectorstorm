@@ -83,8 +83,6 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
-	m_fogDensityLoc = glGetUniformLocation(m_shader, "fogDensity");
-	m_fogColorLoc = glGetUniformLocation(m_shader, "fogColor");
 	m_textureLoc = glGetUniformLocation(m_shader, "textures");
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
@@ -155,6 +153,8 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	}
 
 	m_globalTimeUniformId = GetUniformId("globalTime");
+	m_fogDensityId = GetUniformId("fogDensity");
+	m_fogColorId = GetUniformId("fogColor");
 }
 
 vsShader::~vsShader()
@@ -193,16 +193,16 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
-	if ( m_fogColorLoc >= 0 )
+	if ( m_fogColorId >= 0 )
 	{
-		glUniform3f( m_fogColorLoc, color.r, color.g, color.b );
+		// glUniform3f( m_fogColorLoc, color.r, color.g, color.b );
+		SetUniformValueVec3(m_fogColorId, color);
 	}
-	if ( m_fogDensityLoc >= 0 )
+	if ( m_fogDensityId >= 0 )
 	{
 		if ( density >= 1.f )
 			vsLogOnce( "Setting surprisingly high fog density: %f", density );
-		int32_t fdid = GetUniformId("fogDensity");
-		SetUniformValueF(fdid, density);
+		SetUniformValueF(m_fogDensityId, density);
 	}
 }
 
@@ -231,7 +231,7 @@ vsShader::SetInstanceColors( vsRenderBuffer *colors )
 
 		colors->BindAsAttribute( m_instanceColorAttributeLoc );
 	}
-	CheckGLError("SetColors");
+	// CheckGLError("SetColors");
 }
 
 void
@@ -239,7 +239,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 {
 	if ( matCount <= 0 )
 		return;
-	CheckGLError("SetInstanceColors");
+	// CheckGLError("SetInstanceColors");
 	// if ( m_colorLoc >= 0 )
 	// {
 	// 	glUniform4f( m_colorLoc, color[0].r, color[0].g, color[0].b, color[0].a );
@@ -278,7 +278,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 	}
-	CheckGLError("SetColors");
+	// CheckGLError("SetColors");
 }
 
 
@@ -580,9 +580,23 @@ vsShader::SetUniformValueVec3( int i, const vsVector3D& value )
 }
 
 void
+vsShader::SetUniformValueVec3( int i, const vsColor& value )
+{
+	glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
+	m_uniform[i].vec4.Set(value.r, value.g, value.b, 0.f);
+}
+
+void
 vsShader::SetUniformValueVec4( int i, const vsVector4D& value )
 {
 	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
 	m_uniform[i].vec4 = value;
+}
+
+void
+vsShader::SetUniformValueVec4( int i, const vsColor& value )
+{
+	glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
+	m_uniform[i].vec4.Set(value.r, value.g, value.b, value.a);
 }
 
