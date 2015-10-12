@@ -12,7 +12,7 @@
 //#include <string>
 #include <stdarg.h>
 
-//vsString vsEmptyString = "";
+const vsString vsEmptyString = "";
 
 #ifdef _WIN32
 #define vsprintf vsprintf_s
