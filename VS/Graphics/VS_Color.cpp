@@ -38,90 +38,89 @@ vsColor::FromUInt32(uint32_t c)
 	return FromBytes(cp[0], cp[1], cp[2], cp[3]);
 }
 
-vsColor
-vsColor::FromHSV(float hue, float saturation, float value)
+
+vsColor::vsColor(const vsColorHSV& in)
 {
-	float chroma = value * saturation;
-	float hueSegment = hue * 6.f;
-	int hueSegmentInt = vsFloor(hueSegment);
-	float hueSegmentModTwo = fmodf(hueSegment, 2.0f);
-	float secondaryChroma = chroma * ( 1 - vsFabs(hueSegmentModTwo - 1) );
+	float hh, p, q, t, ff;
+	long i;
 
-	vsColor result;
+	if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
+		r = in.v;
+		g = in.v;
+		b = in.v;
+		return;
+	}
+	hh = in.h * 360.f;
+	if(hh >= 360.f) hh = 0.0;
+	hh /= 60.f;
+	i = vsFloor(hh);
+	ff = hh - i;
+	p = in.v * (1.f - in.s);
+	q = in.v * (1.f - (in.s * ff));
+	t = in.v * (1.f - (in.s * (1.f - ff)));
 
-	switch ( hueSegmentInt )
-	{
+	switch(i) {
 		case 0:
-			result = vsColor(chroma, secondaryChroma, 0.f, 1.f);
+			r = in.v;
+			g = t;
+			b = p;
 			break;
 		case 1:
-			result = vsColor(secondaryChroma, chroma, 0.f, 1.f);
+			r = q;
+			g = in.v;
+			b = p;
 			break;
 		case 2:
-			result = vsColor(0.f, chroma, secondaryChroma, 1.f);
+			r = p;
+			g = in.v;
+			b = t;
 			break;
 		case 3:
-			result = vsColor(0.f, secondaryChroma, chroma, 1.f);
+			r = p;
+			g = q;
+			b = in.v;
 			break;
 		case 4:
-			result = vsColor(secondaryChroma, 0.f, chroma, 1.f);
+			r = t;
+			g = p;
+			b = in.v;
 			break;
 		case 5:
 		default:
-			result = vsColor(chroma, 0.f, secondaryChroma, 1.f);
+			r = in.v;
+			g = p;
+			b = q;
 			break;
 	}
-
-	result += c_white * (value - chroma);
-
-	return result;
+	a = in.a;
 }
+
+vsColor
+vsColor::FromHSV(float hue, float saturation, float value)
+{
+	vsColorHSV chsv(hue,saturation,value,1.f);
+	return vsColor(chsv);
+}
+
 float
 vsColor::GetHue() const
 {
-	float M = vsMax( r, vsMax( g, b ) );
-	float m = vsMin( r, vsMin( g, b ) );
-	float C = M - m;
-	float hueSegment = 0.f;
-
-	if ( C == 0.f )
-		hueSegment = 0.f;
-	if ( M == r )
-	{
-		hueSegment = fmodf( (g-b) / C, 6.f );
-	}
-	else if ( M == g )
-	{
-		hueSegment = (b-r)/C + 2;
-	}
-	else if ( M == b )
-	{
-		hueSegment = (r-g)/C + 4;
-	}
-	return hueSegment / 6.f;
+	vsColorHSV hsvc(*this);
+	return hsvc.h;
 }
 
 float
 vsColor::GetSaturation() const
 {
-	float M = vsMax( r, vsMax( g, b ) );
-	float m = vsMin( r, vsMin( g, b ) );
-	float C = M - m;
-
-	float V = GetValue();
-
-	if ( C == 0.f )
-		return 0.f;
-	else
-	{
-		return C / V;
-	}
+	vsColorHSV hsvc(*this);
+	return hsvc.s;
 }
 
 float
 vsColor::GetValue() const
 {
-	return 0.3333f * (r+g+b);
+	vsColorHSV hsvc(*this);
+	return hsvc.v;
 }
 
 uint32_t
@@ -169,5 +168,62 @@ vsColor vsInterpolateHSV( float alpha, const vsColor &a, const vsColor &b )
 	float sat = vsInterpolate(alpha, a.GetSaturation(), b.GetSaturation());
 	float val = vsInterpolate(alpha, a.GetValue(), b.GetValue());
 	return vsColor::FromHSV(hue, sat, val);
+}
+
+vsColorHSV::vsColorHSV():
+	h(0.f),
+	s(0.f),
+	v(0.f),
+	a(0.f)
+{
+}
+
+vsColorHSV::vsColorHSV( float h_in, float s_in, float v_in, float a_in ):
+	h(h_in),
+	s(s_in),
+	v(v_in),
+	a(a_in)
+{
+}
+
+vsColorHSV::vsColorHSV( const vsColor& in )
+{
+	float M = vsMax( in.r, vsMax( in.g, in.b ) );
+	float m = vsMin( in.r, vsMin( in.g, in.b ) );
+
+	a = in.a;
+	v = M;                                // v
+	float delta = M - m;
+	if (delta < 0.00001f)
+	{
+		s = 0.f;
+		h = 0.f; // undefined, maybe nan?
+	}
+	else
+	{
+		if( M > 0.f ) { // always true unless some of our color components are negative
+			s = (delta / M);
+
+			if( in.r >= M )                           // > is bogus, just keeps compilor happy
+				h = ( in.g - in.b ) / delta;        // between yellow & magenta
+			else
+				if( in.g >= M )
+					h = 2.f + ( in.b - in.r ) / delta;  // between cyan & yellow
+				else
+					h = 4.f + ( in.r - in.g ) / delta;  // between magenta & cyan
+
+			h *= 60.f;                              // degrees
+
+			if( h < 0.f )
+				h += 360.f;
+
+			h = h / 360.f;
+		} else {
+			// if M is 0, then r = g = b = 0
+			// s = 0, v is undefined
+			s = 0.f;
+			h = 0.f;
+		}
+	}
 }
 

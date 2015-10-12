@@ -12,12 +12,15 @@
 
 #include "Math/VS_Math.h"
 
+class vsColorHSV;
+
 class vsColor
 {
 public:
 	float r, g, b, a;
 
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
+	vsColor(const vsColorHSV& hsv);
 
 	static vsColor FromHSV(float hue, float saturation, float value);
 	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
@@ -25,6 +28,7 @@ public:
 	float GetHue() const;
 	float GetSaturation() const;
 	float GetValue() const;
+	vsColorHSV GetHSV() const;
 	uint32_t AsUInt32() const;
 
 	vsColor  operator+( const vsColor &o ) const {return vsColor(r+o.r,g+o.g,b+o.b,a+o.a);}
@@ -42,6 +46,17 @@ public:
 
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
 };
+
+class vsColorHSV
+{
+public:
+	float h, s, v, a;
+
+	vsColorHSV();
+	vsColorHSV( float h, float s, float v, float a );
+	vsColorHSV( const vsColor& other );
+};
+
 
 extern const vsColor c_white;
 extern const vsColor c_grey;
