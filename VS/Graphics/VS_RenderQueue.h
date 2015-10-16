@@ -100,9 +100,11 @@ public:
 	void			Draw( vsDisplayList *list );	// write our queue contents into here.  Called internally.
 	void			EndRender();
 
-	vsMatrix4x4		PushMatrix( const vsMatrix4x4 &matrix );
-    vsMatrix4x4     PushTransform2D( const vsTransform2D &transform );
-	vsMatrix4x4		PushTranslation( const vsVector3D &vector );
+	const vsMatrix4x4& PushMatrix( const vsMatrix4x4 &matrix );
+    const vsMatrix4x4& PushTransform2D( const vsTransform2D &transform );
+	const vsMatrix4x4& PushTranslation( const vsVector3D &vector );
+
+	const vsMatrix4x4& SetMatrix( const vsMatrix4x4 &matrix ); // explicitly set a full local-to-world matrix.  (The 'Push' commands multiply on top of whatever matrix was already set)
 
 	void			PopMatrix();
 	const vsMatrix4x4&		GetMatrix();

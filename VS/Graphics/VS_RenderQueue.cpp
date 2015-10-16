@@ -610,7 +610,7 @@ vsRenderQueue::GetStage( int i )
 }
 
 
-vsMatrix4x4
+const vsMatrix4x4&
 vsRenderQueue::PushMatrix( const vsMatrix4x4 &matrix )
 {
 	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
@@ -625,7 +625,22 @@ vsRenderQueue::PushMatrix( const vsMatrix4x4 &matrix )
 	return m_transformStack[ m_transformStackLevel-1 ];
 }
 
-vsMatrix4x4
+const vsMatrix4x4&
+vsRenderQueue::SetMatrix( const vsMatrix4x4 &matrix )
+{
+	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
+	vsAssert( m_transformStackLevel > 0, "Uninitialised transform stack??" )
+
+	if ( m_transformStackLevel < MAX_SCENE_STACK )
+	{
+		m_transformStack[m_transformStackLevel] = matrix;
+		m_transformStackLevel++;
+	}
+
+	return m_transformStack[ m_transformStackLevel-1 ];
+}
+
+const vsMatrix4x4&
 vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 {
 	vsAssert( m_transformStackLevel < MAX_STACK_DEPTH, "Transform stack overflow!" )
@@ -642,7 +657,7 @@ vsRenderQueue::PushTransform2D( const vsTransform2D &transform )
 	return m_transformStack[ m_transformStackLevel-1 ];
 }
 
-vsMatrix4x4
+const vsMatrix4x4&
 vsRenderQueue::PushTranslation( const vsVector3D &t )
 {
 	vsMatrix4x4 mat;
