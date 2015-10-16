@@ -118,6 +118,7 @@ public:
 	vsVector3D	Corner(int i) const;
 
 	void		Expand( float amt ) { min += -amt * vsVector3D::One; max += amt * vsVector3D::One; }
+	void		Expand( const vsVector3D &amt ) { min -= amt; max += amt; }
 	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.
 
 	bool		operator==(const vsBox3D &b) const { return( min==b.min && max==b.max ); }
