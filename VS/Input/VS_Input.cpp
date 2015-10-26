@@ -137,6 +137,8 @@ static vsString s_cidName[CID_MAX] =
 	"CID_Y",
 	"CID_TriggerR",
 	"CID_TriggerL",
+	"CID_Start",
+	"CID_Back",
 
 	"CID_ZoomIn",
 	"CID_ZoomOut",
@@ -149,8 +151,8 @@ static vsString s_cidName[CID_MAX] =
 	"CID_MouseWheelUp",
 	"CID_MouseWheelDown",
 
-	"CID_Touch0",
-	"CID_Touch1"
+	"CID_TouchA",
+	"CID_TouchB"
 };
 
 void
@@ -205,7 +207,7 @@ vsInput::Load()
 		if ( nameStr != NULL )
 			joystickName = nameStr;
 		else
-			joystickName = "Generic";
+			joystickName = "GenericController";
 		vsPreferences p(joystickName);
 
 		for ( int i = 0; i < CID_MAX; i++ )
@@ -231,9 +233,12 @@ vsInput::Save()
 #if !TARGET_OS_IPHONE
 	if ( m_joystick && m_mappingsChanged )
 	{
-		vsString joystickName = SDL_JoystickName(0);
-		if ( joystickName.length() == 0 )
-			joystickName = "Generic";
+		const char* nameStr = SDL_JoystickName(0);
+		vsString joystickName;
+		if ( nameStr != NULL )
+			joystickName = nameStr;
+		else
+			joystickName = "GenericController";
 		vsPreferences p(joystickName);
 
 		for ( int i = 0; i < CID_MAX; i++ )
