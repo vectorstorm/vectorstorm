@@ -125,10 +125,17 @@ public:
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			// move the last element into this position
-			m_array[index] = m_array[m_arrayLength-1];
-			m_arrayLength--;
+			return RemoveItem( index );
 		}
+		return false;
+	}
+
+	bool	RemoveItem( int index )
+	{
+		vsAssert(index >= 0 && index < m_arrayLength, "Out of bounds vsVolatileArray access");
+		// move the last element into this position
+		m_array[index] = m_array[m_arrayLength-1];
+		m_arrayLength--;
 		return index != npos;
 	}
 
