@@ -73,6 +73,77 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
 		}
+		else if ( format == "PCN" )
+		{
+			vsRenderBuffer::PCN *buffer = new vsRenderBuffer::PCN[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Color(buffer[i].color);
+				r.Vector3D(buffer[i].normal);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else if ( format == "PCT" )
+		{
+			vsRenderBuffer::PCT *buffer = new vsRenderBuffer::PCT[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Color(buffer[i].color);
+				r.Vector2D(buffer[i].texel);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else if ( format == "PC" )
+		{
+			vsRenderBuffer::PC *buffer = new vsRenderBuffer::PC[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Color(buffer[i].color);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else if ( format == "PN" )
+		{
+			vsRenderBuffer::PN *buffer = new vsRenderBuffer::PN[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Vector3D(buffer[i].normal);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else if ( format == "PT" )
+		{
+			vsRenderBuffer::PT *buffer = new vsRenderBuffer::PT[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Vector2D(buffer[i].texel);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else if ( format == "P" )
+		{
+			vsRenderBuffer::P *buffer = new vsRenderBuffer::P[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
+		else
+		{
+			vsAssert(0, vsFormatString("Unsupported vertex format: %s", format.c_str()) );
+		}
 
 		r.String(tag);
 
