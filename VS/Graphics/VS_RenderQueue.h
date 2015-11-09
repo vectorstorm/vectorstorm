@@ -61,7 +61,7 @@ public:
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch, vsShaderValues *values = NULL );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
-	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = NULL );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
@@ -128,7 +128,7 @@ public:
 	// Note that the passed array of matrices must exist until the Draw phase ends!
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch, vsShaderValues *values = NULL);
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
-	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsDisplayList *batch );
+	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = NULL );
 
 
 	// ultra-convenience for fragments.
@@ -137,7 +137,7 @@ public:
 	// Note that the passed array of matrices must exist until the Draw phase ends!
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsShaderValues *values = NULL);
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
-	void			AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer );
+	void			AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer = NULL, vsShaderValues *values = NULL);
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );

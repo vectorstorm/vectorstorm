@@ -43,7 +43,8 @@ public:
 		ContentType_PCT,
 		ContentType_PNT,
 		ContentType_PCNT,
-		ContentType_Matrix
+		ContentType_Matrix,
+		ContentType_Color
 	};
 private:
 

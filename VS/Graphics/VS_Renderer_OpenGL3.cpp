@@ -580,7 +580,9 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
 
 		m_currentShader->SetColor( m_currentColor );
-		if ( m_currentColors )
+		if ( m_currentColorsBuffer )
+			m_currentShader->SetInstanceColors( m_currentColorsBuffer );
+		else if ( m_currentColors )
 			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
 		else
 			m_currentShader->SetInstanceColors( &c_white, 1 );
@@ -628,6 +630,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_currentLocalToWorld = NULL;
 	m_currentLocalToWorldCount = 0;
 	m_currentColors = NULL;
+	m_currentColorsBuffer = NULL;
 	m_currentLocalToWorldBuffer = NULL;
 	m_currentVertexArray = NULL;
 	m_currentVertexBuffer = NULL;
@@ -655,11 +658,19 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_currentColor = op->data.GetColor();
 					m_currentColors = NULL;
+					m_currentColorsBuffer = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetColors:
 				{
 					m_currentColors = (vsColor*)op->data.p;
+					m_currentColorsBuffer = NULL;
+					break;
+				}
+			case vsDisplayList::OpCode_SetColorsBuffer:
+				{
+					m_currentColors = NULL;
+					m_currentColorsBuffer = (vsRenderBuffer*)op->data.p;
 					break;
 				}
 			case vsDisplayList::OpCode_SetMaterial:

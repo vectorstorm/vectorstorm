@@ -51,6 +51,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	vsColor				m_currentColor;
 	vsColor *			m_currentColors;
+	vsRenderBuffer *	m_currentColorsBuffer;
 	vsColor				m_currentFogColor;
 	float				m_currentFogDensity;
 

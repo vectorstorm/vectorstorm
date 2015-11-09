@@ -271,8 +271,14 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
 			}
-			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			else
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+				// explicitly orphan the buffer
+				glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, NULL, GL_STREAM_DRAW);
+			}
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, color, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -555,7 +561,7 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 void
 vsShader::SetUniformValueF( int i, float value )
 {
-	// if ( value != m_uniform[i].f32 )
+	if ( value != m_uniform[i].f32 )
 	{
 		glUniform1f( m_uniform[i].loc, value );
 		m_uniform[i].f32 = value;
@@ -565,7 +571,7 @@ vsShader::SetUniformValueF( int i, float value )
 void
 vsShader::SetUniformValueB( int i, bool value )
 {
-	// if ( value != m_uniform[i].b )
+	if ( value != m_uniform[i].b )
 	{
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;

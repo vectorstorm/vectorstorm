@@ -222,6 +222,7 @@ vsRenderBuffer::SetArray( const vsVector2D *array, int size )
 void
 vsRenderBuffer::SetArray( const vsColor *array, int size )
 {
+	m_contentType = ContentType_Color;
 	SetArray_Internal((char *)array, size*sizeof(vsColor), false);
 }
 
@@ -278,6 +279,12 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, 0, 64, (void*)32);
 		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, 0, 64, (void*)48);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	else if ( m_contentType == ContentType_Color && m_vbo )
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 16, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 	}
 	else
 	{
