@@ -266,7 +266,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 				m_colorAttribIsActive = true;
 			}
 
-			int size = sizeof(vsColor)*matCount;
+			GLuint size = sizeof(vsColor)*matCount;
 			static GLuint g_vbo = 0xffffffff;
 			static GLuint g_vboSize = 0;
 			// this could be a lot smarter.
@@ -372,7 +372,7 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 
 			static GLuint g_vbo = 0xffffffff;
 			static GLuint g_vboSize = 0;
-			int size = sizeof(vsMatrix4x4) * matCount;
+			GLuint size = sizeof(vsMatrix4x4) * matCount;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
