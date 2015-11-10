@@ -276,16 +276,16 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 64, 0);
-		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, 0, 64, (void*)16);
-		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, 0, 64, (void*)32);
-		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, 0, 64, (void*)48);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 64, 0);
+		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, GL_FALSE, 64, (void*)16);
+		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, GL_FALSE, 64, (void*)32);
+		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, GL_FALSE, 64, (void*)48);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 0, 0);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 	}
 	else

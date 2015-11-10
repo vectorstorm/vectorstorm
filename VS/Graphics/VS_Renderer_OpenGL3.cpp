@@ -765,7 +765,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderBuffer *b = (vsRenderBuffer*)op->data.p;
 					m_transformStack[++m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 					m_currentLocalToWorld = NULL;
-					m_currentLocalToWorldCount = b->GetMatrix4x4ArraySize();
+					m_currentLocalToWorldCount = b->GetActiveMatrix4x4ArraySize();
 					m_currentLocalToWorldBuffer = b;
 					break;
 				}
