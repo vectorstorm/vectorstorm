@@ -416,6 +416,15 @@ vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const
 }
 
 void
+vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues )
+{
+	for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	{
+		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
+	}
+}
+
+void
 vsModel::Draw( vsRenderQueue *queue )
 {
 	if ( GetVisible() )
@@ -563,11 +572,17 @@ vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
 			m_matrix.AddItem( inst->matrix );
 			m_color.AddItem( inst->color );
 			m_matrixInstanceId.AddItem( inst->index );
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+			m_bufferIsDirty = true;
+#endif
 		}
 		else // we were already in view;  just update our matrix
 		{
 			m_matrix[inst->matrixIndex] = inst->matrix;
 			m_color[inst->matrixIndex] = inst->color;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+			m_bufferIsDirty = true;
+#endif
 		}
 	}
 	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
@@ -590,6 +605,9 @@ vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
 		m_color.PopBack();
 		m_matrixInstanceId.PopBack();
 		inst->matrixIndex = -1;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+		m_bufferIsDirty = true;
+#endif
 	}
 }
 
@@ -601,6 +619,9 @@ vsModelInstanceGroup::AddInstance( vsModelInstance *inst )
 	inst->index = m_instance.ItemCount();
 	inst->matrixIndex = -1;
 	m_instance.AddItem(inst);
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+	m_bufferIsDirty = true;
+#endif
 }
 
 void
@@ -633,8 +654,11 @@ vsModelInstanceGroup::RemoveInstance( vsModelInstance *inst )
 		}
 	}
 
-	// Finally, drop that last position.
+	// Finally, drop that last instance.
 	m_instance.PopBack();
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+	m_bufferIsDirty = true;
+#endif
 }
 
 void
@@ -643,7 +667,19 @@ vsModelInstanceGroup::Draw( vsRenderQueue *queue )
 	if ( m_matrix.IsEmpty() )
 		return;
 
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+	if ( m_bufferIsDirty )
+	{
+		vsAssert(m_matrix.ItemCount() == m_color.ItemCount(), "Non-equal instance buffers??");
+		m_matrixBuffer.SetArray(&m_matrix[0], m_matrix.ItemCount() );
+		m_colorBuffer.SetArray(&m_color[0], m_color.ItemCount() );
+		m_bufferIsDirty = false;
+	}
+	m_model->DrawInstanced( queue, &m_matrixBuffer, &m_colorBuffer, m_values );
+#else
 	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values );
+#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
+
 }
 
 void

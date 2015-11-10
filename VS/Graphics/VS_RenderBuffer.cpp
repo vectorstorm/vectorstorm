@@ -115,6 +115,8 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 		}
 		else
 		{
+			// glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
+			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 			if ( ptr )
@@ -222,6 +224,7 @@ vsRenderBuffer::SetArray( const vsVector2D *array, int size )
 void
 vsRenderBuffer::SetArray( const vsColor *array, int size )
 {
+	m_contentType = ContentType_Color;
 	SetArray_Internal((char *)array, size*sizeof(vsColor), false);
 }
 
@@ -273,11 +276,17 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 64, 0);
-		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, 0, 64, (void*)16);
-		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, 0, 64, (void*)32);
-		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, 0, 64, (void*)48);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 64, 0);
+		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, GL_FALSE, 64, (void*)16);
+		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, GL_FALSE, 64, (void*)32);
+		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, GL_FALSE, 64, (void*)48);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	else if ( m_contentType == ContentType_Color && m_vbo )
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 	}
 	else
 	{

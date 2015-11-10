@@ -266,14 +266,30 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 				m_colorAttribIsActive = true;
 			}
 
+			GLuint size = sizeof(vsColor)*matCount;
 			static GLuint g_vbo = 0xffffffff;
+			static GLuint g_vboSize = 0;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
 			}
+
 			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, color, GL_STREAM_DRAW);
+			if ( size > g_vboSize )
+			{
+				glBufferData(GL_ARRAY_BUFFER, size, color, GL_STREAM_DRAW);
+				g_vboSize = size;
+			}
+			else
+			{
+				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+				if ( ptr )
+				{
+					memcpy(ptr, color, size);
+					glUnmapBuffer(GL_ARRAY_BUFFER);
+				}
+			}
 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
@@ -356,21 +372,28 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 
 			static GLuint g_vbo = 0xffffffff;
 			static GLuint g_vboSize = 0;
+			GLuint size = sizeof(vsMatrix4x4) * matCount;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			}
+			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			if ( size > g_vboSize )
+			{
+				glBufferData(GL_ARRAY_BUFFER, size, localToWorld, GL_STREAM_DRAW);
+				g_vboSize = size;
 			}
 			else
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-				// explicitly orphan the buffer
-				glBufferData(GL_ARRAY_BUFFER, g_vboSize, NULL, GL_STREAM_DRAW);
+				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+				if ( ptr )
+				{
+					memcpy(ptr, localToWorld, size);
+					glUnmapBuffer(GL_ARRAY_BUFFER);
+				}
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			g_vboSize = sizeof(vsMatrix4x4) * matCount;
-			glBufferData(GL_ARRAY_BUFFER, g_vboSize, localToWorld, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
@@ -555,7 +578,7 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 void
 vsShader::SetUniformValueF( int i, float value )
 {
-	// if ( value != m_uniform[i].f32 )
+	if ( value != m_uniform[i].f32 )
 	{
 		glUniform1f( m_uniform[i].loc, value );
 		m_uniform[i].f32 = value;
@@ -565,7 +588,7 @@ vsShader::SetUniformValueF( int i, float value )
 void
 vsShader::SetUniformValueB( int i, bool value )
 {
-	// if ( value != m_uniform[i].b )
+	if ( value != m_uniform[i].b )
 	{
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;

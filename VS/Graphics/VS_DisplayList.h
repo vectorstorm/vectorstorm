@@ -38,6 +38,7 @@ public:
 	{
 		OpCode_SetColor,
 		OpCode_SetColors,
+		OpCode_SetColorsBuffer,
 
 		OpCode_PushTransform,
 		OpCode_PushTranslation,
@@ -220,6 +221,7 @@ public:
 	void	SetMatrix4x4( const vsMatrix4x4 &m );
 	void	SetMatrices4x4( const vsMatrix4x4 *m, int count );
 	void	SetColors( const vsColor *c, int count );
+	void	SetColorsBuffer( const vsRenderBuffer *buffer );
 	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
 	void	SetShaderValues( vsShaderValues *values );

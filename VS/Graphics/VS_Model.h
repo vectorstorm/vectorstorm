@@ -51,6 +51,9 @@ public:
 	const vsMatrix4x4& GetMatrix() const { return matrix; }
 };
 
+#define INSTANCED_MODEL_USES_LOCAL_BUFFER
+
+
 class vsModelInstanceGroup : public vsEntity
 {
 	vsModel *m_model;
@@ -59,11 +62,22 @@ class vsModelInstanceGroup : public vsEntity
 	vsArray<vsColor> m_color;
 	vsArray<int> m_matrixInstanceId;
 	vsArray<vsModelInstance*> m_instance;
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+	vsRenderBuffer m_matrixBuffer;
+	vsRenderBuffer m_colorBuffer;
+	bool m_bufferIsDirty;
+#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 public:
 
 	vsModelInstanceGroup( vsModel *model ):
 		m_model(model),
 		m_values(NULL)
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+		,
+		m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
+		m_colorBuffer(vsRenderBuffer::Type_Dynamic),
+		m_bufferIsDirty(false)
+#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 	{
 	}
 
@@ -85,33 +99,6 @@ public:
 class vsModel : public vsEntity
 {
 	typedef vsEntity Parent;
-
-	struct InstanceData
-	{
-		vsArray<vsMatrix4x4> matrix;
-		vsArray<vsColor> color;
-		vsArray<int> matrixInstanceId;
-		vsArray<vsModelInstance*> instance;
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-		vsRenderBuffer matrixBuffer;
-		vsRenderBuffer colorBuffer;
-		bool bufferIsDirty;
-#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
-
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-		InstanceData() :
-			matrixBuffer(vsRenderBuffer::Type_Dynamic),
-			colorBuffer(vsRenderBuffer::Type_Dynamic),
-			bufferIsDirty(false)
-		{
-		}
-#else
-		InstanceData() {}
-#endif
-
-		virtual void	Draw( vsRenderQueue *queue );
-	};
-
 	vsMaterial *	m_material;
 
 	vsBox3D				m_boundingBox;
@@ -180,6 +167,7 @@ public:
 
 	virtual void	Draw( vsRenderQueue *list );
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values );
+	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values );
 };
 
 #endif // VS_MODEL_H

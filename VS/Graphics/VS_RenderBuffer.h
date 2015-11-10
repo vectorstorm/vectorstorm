@@ -43,7 +43,8 @@ public:
 		ContentType_PCT,
 		ContentType_PNT,
 		ContentType_PCNT,
-		ContentType_Matrix
+		ContentType_Matrix,
+		ContentType_Color
 	};
 private:
 
@@ -159,6 +160,7 @@ public:
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
 	int				GetMatrix4x4ArraySize() { return m_arrayBytes/sizeof(vsMatrix4x4); }
+	int				GetActiveMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 
 	P *				GetPArray() { return (P*)m_array; }
 	PN *			GetPNArray() { return (PN*)m_array; }
