@@ -51,7 +51,7 @@ public:
 	const vsMatrix4x4& GetMatrix() const { return matrix; }
 };
 
-#define INSTANCED_MODEL_USES_LOCAL_BUFFER
+// #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 
 class vsModelInstanceGroup : public vsEntity

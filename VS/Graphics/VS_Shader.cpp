@@ -266,20 +266,30 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 				m_colorAttribIsActive = true;
 			}
 
+			int size = sizeof(vsColor)*matCount;
 			static GLuint g_vbo = 0xffffffff;
+			static GLuint g_vboSize = 0;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			if ( size > g_vboSize )
+			{
+				glBufferData(GL_ARRAY_BUFFER, size, color, GL_STREAM_DRAW);
+				g_vboSize = size;
 			}
 			else
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-				// explicitly orphan the buffer
-				glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, NULL, GL_STREAM_DRAW);
+				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+				if ( ptr )
+				{
+					memcpy(ptr, color, size);
+					glUnmapBuffer(GL_ARRAY_BUFFER);
+				}
 			}
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vsColor) * matCount, color, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
@@ -362,21 +372,28 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 
 			static GLuint g_vbo = 0xffffffff;
 			static GLuint g_vboSize = 0;
+			int size = sizeof(vsMatrix4x4) * matCount;
 			// this could be a lot smarter.
 			if ( g_vbo == 0xffffffff )
 			{
 				glGenBuffers(1, &g_vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			}
+			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			if ( size > g_vboSize )
+			{
+				glBufferData(GL_ARRAY_BUFFER, size, localToWorld, GL_STREAM_DRAW);
+				g_vboSize = size;
 			}
 			else
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-				// explicitly orphan the buffer
-				glBufferData(GL_ARRAY_BUFFER, g_vboSize, NULL, GL_STREAM_DRAW);
+				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+				if ( ptr )
+				{
+					memcpy(ptr, localToWorld, size);
+					glUnmapBuffer(GL_ARRAY_BUFFER);
+				}
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			g_vboSize = sizeof(vsMatrix4x4) * matCount;
-			glBufferData(GL_ARRAY_BUFFER, g_vboSize, localToWorld, GL_STREAM_DRAW);
 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);

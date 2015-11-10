@@ -115,6 +115,8 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 		}
 		else
 		{
+			// glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
+			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 			if ( ptr )

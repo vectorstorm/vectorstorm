@@ -651,8 +651,6 @@ vsModelInstanceGroup::RemoveInstance( vsModelInstance *inst )
 		if ( last->matrixIndex >= 0 )
 		{
 			m_matrixInstanceId[ last->matrixIndex ] = inst->index;
-			m_color[ inst->index ] = m_color[ last->matrixIndex ];
-			m_matrix[ inst->index ] = m_matrix[ last->matrixIndex ];
 		}
 	}
 
@@ -672,6 +670,7 @@ vsModelInstanceGroup::Draw( vsRenderQueue *queue )
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	if ( m_bufferIsDirty )
 	{
+		vsAssert(m_matrix.ItemCount() == m_color.ItemCount(), "Non-equal instance buffers??");
 		m_matrixBuffer.SetArray(&m_matrix[0], m_matrix.ItemCount() );
 		m_colorBuffer.SetArray(&m_color[0], m_color.ItemCount() );
 		m_bufferIsDirty = false;
