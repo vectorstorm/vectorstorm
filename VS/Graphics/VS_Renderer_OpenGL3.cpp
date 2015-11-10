@@ -679,6 +679,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
 					m_currentColors = NULL;
+					m_currentColorsBuffer = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetRenderTarget:
