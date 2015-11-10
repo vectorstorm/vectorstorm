@@ -651,10 +651,12 @@ vsModelInstanceGroup::RemoveInstance( vsModelInstance *inst )
 		if ( last->matrixIndex >= 0 )
 		{
 			m_matrixInstanceId[ last->matrixIndex ] = inst->index;
+			m_color[ inst->index ] = m_color[ last->matrixIndex ];
+			m_matrix[ inst->index ] = m_matrix[ last->matrixIndex ];
 		}
 	}
 
-	// Finally, drop that last position.
+	// Finally, drop that last instance.
 	m_instance.PopBack();
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	m_bufferIsDirty = true;

@@ -283,7 +283,7 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 16, 0);
+		glVertexAttribPointer(attributeId, 4, GL_FLOAT, 0, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 	}
 	else
