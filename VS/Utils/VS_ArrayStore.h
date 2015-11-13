@@ -207,6 +207,12 @@ public:
 		return m_array[id];
 	}
 
+	const T* GetItemConst(int id) const
+	{
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		return m_array[id];
+	}
+
 	T*& operator[](int id)
 	{
 		return GetItem(id);
