@@ -27,8 +27,12 @@ public:
 	vsMatrix3x3();
 	vsMatrix3x3(const vsVector3D &x_in, const vsVector3D &y_in, const vsVector3D &z_in);
 	vsMatrix3x3(const vsVector3D &forward, const vsVector3D &up);
+	vsMatrix3x3( const vsQuaternion &quat );
 
 	void Set( const vsQuaternion &quat );
+	void Set(const vsVector3D &x_in, const vsVector3D &y_in, const vsVector3D &z_in);
+	void Set(const vsVector3D &forward, const vsVector3D &up);
+
 	const vsVector3D &	operator[](int n) const;
 
 	vsMatrix3x3 Transpose() const;

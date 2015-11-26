@@ -21,7 +21,7 @@ vsMatrix3x3::vsMatrix3x3():
 {
 }
 
-vsMatrix3x3::vsMatrix3x3(const vsVector3D &x_in, const vsVector3D &y_in, const vsVector3D &z_in):
+vsMatrix3x3::vsMatrix3x3( const vsVector3D &x_in, const vsVector3D &y_in, const vsVector3D &z_in ):
 	x(x_in),
 	y(y_in),
 	z(z_in)
@@ -29,6 +29,25 @@ vsMatrix3x3::vsMatrix3x3(const vsVector3D &x_in, const vsVector3D &y_in, const v
 }
 
 vsMatrix3x3::vsMatrix3x3( const vsVector3D &forward, const vsVector3D &up )
+{
+	Set(forward,up);
+}
+
+vsMatrix3x3::vsMatrix3x3( const vsQuaternion &q )
+{
+	Set(q);
+}
+
+void
+vsMatrix3x3::Set( const vsVector3D &x_in, const vsVector3D &y_in, const vsVector3D &z_in )
+{
+	x = x_in;
+	y = y_in;
+	z = z_in;
+}
+
+void
+vsMatrix3x3::Set( const vsVector3D &forward, const vsVector3D &up )
 {
 	vsVector3D f,u,r;
 
