@@ -87,6 +87,7 @@ public:
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void AddInstance( vsModelInstance *instance );
 	void RemoveInstance( vsModelInstance *instance );
+	bool ContainsInstance( vsModelInstance *instance );
 	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel() { return m_model; }
 

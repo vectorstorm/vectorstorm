@@ -624,6 +624,13 @@ vsModelInstanceGroup::AddInstance( vsModelInstance *inst )
 #endif
 }
 
+bool
+vsModelInstanceGroup::ContainsInstance( vsModelInstance *instance )
+{
+	return m_instance.Contains(instance);
+}
+
+
 void
 vsModelInstanceGroup::RemoveInstance( vsModelInstance *inst )
 {
