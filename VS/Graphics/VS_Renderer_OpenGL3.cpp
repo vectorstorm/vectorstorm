@@ -690,11 +690,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearRenderTarget:
 				{
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
+					m_state.Flush();
 					m_currentRenderTarget->Clear();
 					break;
 				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
+					m_state.Flush(); // Since resolving a render target can involve a blit, flush render state first.
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 					if ( target )
 						target->Resolve();
