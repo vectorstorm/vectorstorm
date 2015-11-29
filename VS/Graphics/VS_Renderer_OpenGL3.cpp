@@ -702,6 +702,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
 				{
+					m_state.Flush(); // flush our renderer state before blitting!
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
 					from->BlitTo(to);
