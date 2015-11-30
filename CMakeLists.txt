@@ -32,6 +32,7 @@ else()
 	# find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
 	# 	PATH c:/src/buildzone/lib/x86/)
 	if ( MSVC )
+		add_definitions("-D MSVC")
 		# MSVC links glew32 in.  MinGW compiles it in.
 		find_library(GLEW_LIBRARY glew32 REQUIRED
 				PATH c:/src/buildzone/lib/Release/Win32)

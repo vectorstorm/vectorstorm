@@ -14,7 +14,7 @@
 
 const vsString vsEmptyString = "";
 
-#ifdef _WIN32
+#ifdef MSVC
 #define vsprintf vsprintf_s
 #define localtime localtime_s
 #define gmtime gmtime_s
@@ -26,7 +26,7 @@ vsString vsFormatString( const char* format, ... )
 	va_list marker;
 
 	va_start(marker, format);
-	vsprintf(sz, format, marker);
+	vsnprintf(sz, 1024, format, marker);
 	va_end(marker);
 
 	return sz;

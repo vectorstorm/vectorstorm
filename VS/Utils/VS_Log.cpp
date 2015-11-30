@@ -10,10 +10,12 @@
 #include "VS_Log.h"
 
 #include "VS_System.h"
-#include <stdarg.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstddef>
 #include <physfs.h>
 
-#ifdef _WIN32
+#ifdef MSVC
 #define vsprintf vsprintf_s
 #endif
 
@@ -38,14 +40,14 @@ void vsLog_Show()
 	}
 }
 
+char sz[1024*10];
 void vsLog(const char *format, ...)
 {
-	char sz[1024*10];
-	va_list marker;
+	va_list va;
 
-	va_start(marker, format);
-	vsprintf(sz, format, marker);
-	va_end(marker);
+	va_start(va, format);
+	vsnprintf(sz, 1024*10, format, va);
+	va_end(va);
 
 	vsString str = sz;
 
@@ -54,7 +56,7 @@ void vsLog(const char *format, ...)
 
 void vsLog(const vsString &str)
 {
-	fprintf(stdout, "%s\n", str.c_str() );
+	fprintf(stdout, "%s\n", str.c_str());
 	if ( s_log )
 	{
 		PHYSFS_write( s_log, str.c_str(), 1, str.size() );
@@ -68,11 +70,10 @@ void vsLog(const vsString &str)
 
 void vsErrorLog(const char *format, ...)
 {
-	char sz[1024*10];
 	va_list marker;
 
 	va_start(marker, format);
-	vsprintf(sz, format, marker);
+	vsnprintf(sz, 1024*10, format, marker);
 	va_end(marker);
 
 	vsString str = sz;

@@ -58,11 +58,11 @@
 #if defined(__cplusplus)
 
 #include <string>
-#include <stdlib.h>
+#include <cstdlib>
 #ifdef UNIX
 #include <stdint.h>
 #endif
-#include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <exception> // for std::bad_alloc
 #include "VS/Math/VS_Math.h"
