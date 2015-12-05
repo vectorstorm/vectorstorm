@@ -78,6 +78,15 @@ public:
 		vsDeleteArray( m_array );
 	}
 
+	// take the elements from that other store, including transferring
+	// ownership
+	void Adopt( vsArrayStore<T> &other )
+	{
+		for ( int i = 0; i < other.m_arrayLength; i++ )
+			AddItem( other.m_array[i] );
+		other.m_arrayLength = 0;
+	}
+
 	T *		Get( const vsArrayStoreIterator<T> &iter ) const
 	{
 		return m_array[ iter.m_current ];
