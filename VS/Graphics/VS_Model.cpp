@@ -555,7 +555,8 @@ vsModelInstanceGroup::TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup )
 		bool visible = instance->visible;
 		otherGroup->RemoveInstance(instance);
 		AddInstance(instance);
-		UpdateInstance(instance, visible);
+		instance->SetVisible(visible);
+		// UpdateInstance(instance, visible);
 	}
 }
 
