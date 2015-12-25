@@ -470,6 +470,10 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
+	m_draws = 0;
+	m_instances = 0;
+	m_instanceDraws = 0;
+
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
@@ -596,7 +600,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					m_lightStatus[i].specular, m_lightStatus[i].position,
 					halfVector);
 		}
-		m_currentShader->ValidateCache( m_currentMaterial );
+		// m_currentShader->ValidateCache( m_currentMaterial );
 	}
 	else
 	{
@@ -938,12 +942,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListArray:
@@ -951,12 +963,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripArray:
 				{
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
@@ -964,6 +984,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriStripBuffer(m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
@@ -971,6 +995,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriListBuffer(m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
 				}
@@ -980,6 +1008,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					int first = op->data.i;
 					int count = op->data.i2;
 					vsRenderBuffer::TriList(first, count, m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
 				}
@@ -988,6 +1020,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriFanBuffer(m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_LineListBuffer:
@@ -995,6 +1031,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->LineListBuffer(m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripBuffer:
@@ -1002,12 +1042,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->LineStripBuffer(m_currentLocalToWorldCount);
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanArray:
 				{
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					// glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}
@@ -1015,6 +1063,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_draws++;
+					m_instances += m_currentLocalToWorldCount;
+					if ( m_currentLocalToWorldCount > 1 )
+						m_instanceDraws++;
 					// glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
 					break;
 				}

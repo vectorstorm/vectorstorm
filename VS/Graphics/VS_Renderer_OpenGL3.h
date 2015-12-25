@@ -114,6 +114,10 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	void	SetRenderTarget( vsRenderTarget *target );
 
+	int m_draws;
+	int m_instanceDraws;
+	int m_instances;
+
 public:
 
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
