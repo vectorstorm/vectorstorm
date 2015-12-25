@@ -165,6 +165,8 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		vsDisplayList *list = new vsDisplayList(128);
 		list->BindBuffer(vbo);
 
+		vsLog("  mesh:  %d verts, %d indices", vertexCount, indexCount);
+
 		if ( needIndices )
 		{
 			vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
@@ -209,6 +211,7 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 		int32_t meshCount;
 		r.Int32(meshCount);
 
+		vsLog("  Contains %d meshes", meshCount);
 		for ( int i = 0; i < meshCount; i++ )
 		{
 			vsFragment *f = LoadFragment_Internal(r);
@@ -238,6 +241,7 @@ vsModel::LoadBinary( const vsString &filename )
 	file.Store(&store);
 	vsSerialiserRead r(&store);
 
+	vsLog("Loading file: %s", filename.c_str());
 	result = LoadModel_Internal(r);
 
 
