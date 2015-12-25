@@ -67,6 +67,8 @@ private:
 	bool			m_vbo;
 	bool			m_indexType;
 
+	uint32_t m_vao;
+
 	void	SetArray_Internal( char *data, int bytes, bool elementArray );
 	void	SetArraySize_Internal( int bytes );
 

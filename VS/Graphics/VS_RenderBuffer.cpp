@@ -37,7 +37,8 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 	m_bufferCount(0),
 	m_currentBuffer(0),
     m_vbo(false),
-    m_indexType(false)
+    m_indexType(false),
+	m_vao(0)
 {
 	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
@@ -317,7 +318,7 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 void
 vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	glEnableVertexAttribArray(Attribute_Vertex);
 
 	if ( m_vbo )
 	{
@@ -335,13 +336,13 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+	glDisableVertexAttribArray(Attribute_Vertex);
 }
 
 void
 vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+	glEnableVertexAttribArray(Attribute_Normal);
 
 	if ( m_vbo )
 	{
@@ -358,13 +359,13 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindNormalBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+	glDisableVertexAttribArray(Attribute_Normal);
 }
 
 void
 vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	glEnableVertexAttribArray(Attribute_TextureCoordinate);
 
 	if ( m_vbo )
 	{
@@ -382,13 +383,13 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindTexelBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	glDisableVertexAttribArray(Attribute_TextureCoordinate);
 }
 
 void
 vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+	glEnableVertexAttribArray(Attribute_Color);
 
 	if ( m_vbo )
 	{
@@ -405,240 +406,251 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+	glDisableVertexAttribArray(Attribute_Color);
 }
 
 void
 vsRenderBuffer::Bind( vsRendererState *state )
 {
-	switch( m_contentType )
+	if ( m_vao != 0 )
 	{
-		case ContentType_P:
+		glBindVertexArray(m_vao);
+	}
+	else
+	{
+		if ( m_vao == 0 )
+			glGenVertexArrays(1, &m_vao);
+		glBindVertexArray(m_vao);
+
+		switch( m_contentType )
 		{
-			int stride = sizeof(P);
+			case ContentType_P:
+				{
+					int stride = sizeof(P);
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-			}
-			break;
-		}
-		case ContentType_PC:
-		{
-			PC dummyArray[2];
-			int stride = sizeof(PC);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* cStartPtr = (GLvoid*)cStart;
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+					}
+					break;
+				}
+			case ContentType_PC:
+				{
+					PC dummyArray[2];
+					int stride = sizeof(PC);
+					size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* cStartPtr = (GLvoid*)cStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Color);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PC*)m_array)[0].color );
-			}
-			break;
-		}
-		case ContentType_PT:
-		{
-			PT dummyArray[2];
-			int stride = sizeof(PT);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* tStartPtr = (GLvoid*)tStart;
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PC*)m_array)[0].color );
+					}
+					break;
+				}
+			case ContentType_PT:
+				{
+					PT dummyArray[2];
+					int stride = sizeof(PT);
+					size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_TextureCoordinate);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
-			}
-			break;
-		}
-		case ContentType_PN:
-		{
-			PN dummyArray[2];
-			int stride = sizeof(PN);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* nStartPtr = (GLvoid*)nStart;
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
+					}
+					break;
+				}
+			case ContentType_PN:
+				{
+					PN dummyArray[2];
+					int stride = sizeof(PN);
+					size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Normal);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PN*)m_array)[0].normal );
-			}
-			break;
-		}
-		case ContentType_PNT:
-		{
-			PNT dummyArray[2];
-			int stride = sizeof(PNT);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* nStartPtr = (GLvoid*)nStart;
-			GLvoid* tStartPtr = (GLvoid*)tStart;
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PN*)m_array)[0].normal );
+					}
+					break;
+				}
+			case ContentType_PNT:
+				{
+					PNT dummyArray[2];
+					int stride = sizeof(PNT);
+					size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+					size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* nStartPtr = (GLvoid*)nStart;
+					GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Normal);
+					glEnableVertexAttribArray(Attribute_TextureCoordinate);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].normal );
-			}
-			break;
-		}
-		case ContentType_PCNT:
-		{
-			PCNT dummyArray[2];
-			int stride = sizeof(PCNT);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* cStartPtr = (GLvoid*)cStart;
-			GLvoid* nStartPtr = (GLvoid*)nStart;
-			GLvoid* tStartPtr = (GLvoid*)tStart;
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].normal );
+					}
+					break;
+				}
+			case ContentType_PCNT:
+				{
+					PCNT dummyArray[2];
+					int stride = sizeof(PCNT);
+					size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+					size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+					size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* cStartPtr = (GLvoid*)cStart;
+					GLvoid* nStartPtr = (GLvoid*)nStart;
+					GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Color);
+					glEnableVertexAttribArray(Attribute_Normal);
+					glEnableVertexAttribArray(Attribute_TextureCoordinate);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].color );
-			}
-			break;
-		}
-		case ContentType_PCN:
-		{
-			PCN dummyArray[2];
-			int stride = sizeof(PCN);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* cStartPtr = (GLvoid*)cStart;
-			GLvoid* nStartPtr = (GLvoid*)nStart;
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].color );
+					}
+					break;
+				}
+			case ContentType_PCN:
+				{
+					PCN dummyArray[2];
+					int stride = sizeof(PCN);
+					size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+					size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* cStartPtr = (GLvoid*)cStart;
+					GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Color);
+					glEnableVertexAttribArray(Attribute_Normal);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].color );
-			}
-			break;
-		}
-		case ContentType_PCT:
-		{
-			PCT dummyArray[2];
-			int stride = sizeof(PCT);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			GLvoid* cStartPtr = (GLvoid*)cStart;
-			GLvoid* tStartPtr = (GLvoid*)tStart;
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].color );
+					}
+					break;
+				}
+			case ContentType_PCT:
+				{
+					PCT dummyArray[2];
+					int stride = sizeof(PCT);
+					size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+					size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+					GLvoid* cStartPtr = (GLvoid*)cStart;
+					GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					glEnableVertexAttribArray(Attribute_Vertex);
+					glEnableVertexAttribArray(Attribute_Color);
+					glEnableVertexAttribArray(Attribute_TextureCoordinate);
 
-			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
+					if ( m_vbo )
+					{
+						glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
 
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}
-			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].color );
-			}
-			break;
-		}
-		default:
-		{
-			vsAssert(0, "Unknown content type!");
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+					}
+					else
+					{
+						glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+						glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
+						glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].color );
+					}
+					break;
+				}
+			default:
+				{
+					vsAssert(0, "Unknown content type!");
+				}
 		}
 	}
 }
@@ -646,47 +658,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 void
 vsRenderBuffer::Unbind( vsRendererState *state )
 {
-	switch( m_contentType )
-	{
-        case ContentType_P:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-            break;
-        case ContentType_PC:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-            break;
-        case ContentType_PNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PCT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        default:
-            vsAssert(0, "Unknown content type!");
-	}
+	vsAssert( m_contentType != ContentType_Custom, "Unknown content type!");
+	return;
 }
 
 int

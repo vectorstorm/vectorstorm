@@ -493,10 +493,12 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+
+	glBindVertexArray(m_vao);
+	glDisableVertexAttribArray( Attribute_Vertex );
+	glDisableVertexAttribArray( Attribute_Normal );
+	glDisableVertexAttribArray( Attribute_Color );
+	glDisableVertexAttribArray( Attribute_TextureCoordinate );
 	m_state.Flush();
 }
 
@@ -521,10 +523,12 @@ vsRenderer_OpenGL3::PostRender()
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+
+	glBindVertexArray(m_vao);
+	glDisableVertexAttribArray( Attribute_Vertex );
+	glDisableVertexAttribArray( Attribute_Normal );
+	glDisableVertexAttribArray( Attribute_Color );
+	glDisableVertexAttribArray( Attribute_TextureCoordinate );
 	m_state.Flush();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
@@ -820,7 +824,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_VertexArray:
 				{
 					vsRenderBuffer::BindVertexArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
+					glEnableVertexAttribArray( Attribute_Vertex );
 					break;
 				}
 			case vsDisplayList::OpCode_VertexBuffer:
@@ -832,36 +836,38 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_NormalArray:
 				{
 					vsRenderBuffer::BindNormalArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					glEnableVertexAttribArray( Attribute_Normal );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalBuffer:
 				{
 					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentNormalBuffer->BindNormalBuffer( &m_state );
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					glEnableVertexAttribArray( Attribute_Normal );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
 				{
+					glBindVertexArray(m_vao);
 					m_currentVertexBuffer = NULL;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					glDisableVertexAttribArray( Attribute_Vertex );
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
 					break;
 				}
 			case vsDisplayList::OpCode_ClearNormalArray:
 				{
+					glBindVertexArray(m_vao);
 					m_currentNormalBuffer = NULL;
 					m_currentNormalArray = NULL;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+					glDisableVertexAttribArray( Attribute_Normal );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelArray:
 				{
 					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					glEnableVertexAttribArray( Attribute_TextureCoordinate );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelBuffer:
@@ -872,13 +878,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
 				{
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+					glBindVertexArray(m_vao);
+					glDisableVertexAttribArray( Attribute_TextureCoordinate );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorArray:
 				{
 					vsRenderBuffer::BindColorArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+					glEnableVertexAttribArray( Attribute_Color );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorBuffer:
@@ -889,6 +896,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearColorArray:
 				{
+					glBindVertexArray(m_vao);
+					glDisableVertexAttribArray( Attribute_Color );
 					if ( m_currentColorBuffer )
 					{
 						//m_currentColorBuffer->UnbindColorBuffer();
@@ -896,30 +905,30 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					}
 					m_currentColorArray = NULL;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearArrays:
 				{
+					glBindVertexArray(m_vao);
 					m_currentColorArray = NULL;
 					m_currentColorBuffer = NULL;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 
 					m_currentTexelBuffer = NULL;
 					m_currentTexelArray = NULL;
 					m_currentTexelArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 
 					m_currentNormalBuffer = NULL;
 					m_currentNormalArray = NULL;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 
 					m_currentVertexBuffer = NULL;
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					glDisableVertexAttribArray( Attribute_Vertex );
+					glDisableVertexAttribArray( Attribute_Color );
+					glDisableVertexAttribArray( Attribute_Normal );
+					glDisableVertexAttribArray( Attribute_TextureCoordinate );
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
@@ -932,6 +941,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Unbind( &m_state );
+					glBindVertexArray(m_vao);
 					break;
 				}
 			case vsDisplayList::OpCode_LineListArray:

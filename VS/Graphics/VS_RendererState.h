@@ -91,6 +91,14 @@ public:
 	}
 };
 
+enum
+{
+	Attribute_Vertex = 0,
+	Attribute_TextureCoordinate = 1,
+	Attribute_Normal = 2,
+	Attribute_Color = 3
+};
+
 class vsRendererState
 {
 public:
@@ -110,10 +118,10 @@ public:
 		//Bool_Smooth,
 		//Bool_Texture2D,
 		Bool_DepthMask,
-		ClientBool_VertexArray,
-		ClientBool_NormalArray,
-		ClientBool_ColorArray,
-		ClientBool_TextureCoordinateArray,
+		// ClientBool_VertexArray,
+		// ClientBool_NormalArray,
+		// ClientBool_ColorArray,
+		// ClientBool_TextureCoordinateArray,
 		BOOL_COUNT
 	};
 	enum Float
