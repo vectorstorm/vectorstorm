@@ -37,7 +37,10 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 	m_bufferCount(0),
 	m_currentBuffer(0),
     m_vbo(false),
-    m_indexType(false)
+    m_indexType(false),
+	m_simpleArrayIndexType(false),
+	m_simpleArrayIndexCount(0)
+
 {
 	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
@@ -251,7 +254,26 @@ vsRenderBuffer::SetArray( const vsColor *array, int size )
 void
 vsRenderBuffer::SetArray( const uint16_t *array, int size )
 {
-	SetArray_Internal((char *)array, size*sizeof(uint16_t), true);
+	// Okay, let's check whether I even need to update my array.
+	bool isSimple = true;
+	for ( int i = 0; i < size; i++ )
+	{
+		if ( array[i] != i )
+		{
+			isSimple = false;
+			break;
+		}
+	}
+	if ( isSimple )
+	{
+		m_simpleArrayIndexType = true;
+		m_simpleArrayIndexCount = size;
+	}
+	else
+	{
+		m_simpleArrayIndexType = false;
+		SetArray_Internal((char *)array, size*sizeof(uint16_t), true);
+	}
 }
 
 void
@@ -894,12 +916,19 @@ vsRenderBuffer::GetColor(int i)
 void
 vsRenderBuffer::TriStripBuffer(int instanceCount)
 {
-	if ( m_vbo )
+	if ( m_simpleArrayIndexType )
+	{
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, m_simpleArrayIndexCount, instanceCount);
+	}
+	else if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
-		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+		if ( instanceCount == 1 )
+			glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		else
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
@@ -912,11 +941,18 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 void
 vsRenderBuffer::TriListBuffer(int instanceCount)
 {
-	if ( m_vbo )
+	if ( m_simpleArrayIndexType )
+	{
+		glDrawArraysInstanced(GL_TRIANGLES, 0, m_simpleArrayIndexCount, instanceCount);
+	}
+	else if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		glDrawElementsInstanced(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+		if ( instanceCount == 1 )
+			glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		else
+			glDrawElementsInstanced(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
@@ -936,11 +972,18 @@ vsRenderBuffer::TriList(int first, int count, int instanceCount)
 void
 vsRenderBuffer::TriFanBuffer(int instanceCount)
 {
-	if ( m_vbo )
+	if ( m_simpleArrayIndexType )
+	{
+		glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, m_simpleArrayIndexCount, instanceCount);
+	}
+	else if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+		if ( instanceCount == 1 )
+			glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
+		else
+			glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
@@ -953,7 +996,11 @@ vsRenderBuffer::TriFanBuffer(int instanceCount)
 void
 vsRenderBuffer::LineStripBuffer(int instanceCount)
 {
-	if ( m_vbo )
+	if ( m_simpleArrayIndexType )
+	{
+		glDrawArraysInstanced(GL_LINE_STRIP, 0, m_simpleArrayIndexCount, instanceCount);
+	}
+	else if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glDrawElementsInstanced(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
@@ -969,7 +1016,11 @@ vsRenderBuffer::LineStripBuffer(int instanceCount)
 void
 vsRenderBuffer::LineListBuffer(int instanceCount)
 {
-	if ( m_vbo )
+	if ( m_simpleArrayIndexType )
+	{
+		glDrawArraysInstanced(GL_LINES, 0, m_simpleArrayIndexCount, instanceCount);
+	}
+	else if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glDrawElementsInstanced(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
