@@ -974,6 +974,15 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
 				}
+			case vsDisplayList::OpCode_TriangleList:
+				{
+					FlushRenderState();
+					int first = op->data.i;
+					int count = op->data.i2;
+					vsRenderBuffer::TriList(first, count, m_currentLocalToWorldCount);
+					// m_currentShader->ValidateCache( m_currentMaterial );
+					break;
+				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
 					FlushRenderState();

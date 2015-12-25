@@ -953,6 +953,14 @@ vsDisplayList::TriangleFanBuffer( vsRenderBuffer *buffer )
 }
 
 void
+vsDisplayList::TriangleList( int first, int count )
+{
+	m_fifo->WriteUint8( OpCode_TriangleList );
+	m_fifo->WriteUint16(first);
+	m_fifo->WriteUint16(count);
+}
+
+void
 vsDisplayList::LineListBuffer( vsRenderBuffer *buffer )
 {
 	m_fifo->WriteUint8( OpCode_LineListBuffer );
@@ -1237,6 +1245,12 @@ vsDisplayList::PopOp()
 			case OpCode_TriangleFanBuffer:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			}
+			case OpCode_TriangleList:
+			{
+				m_currentOp.data.i = m_fifo->ReadUint16();
+				m_currentOp.data.i2 = m_fifo->ReadUint16();
 				break;
 			}
 			case OpCode_PushTransform:
@@ -1594,6 +1608,23 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 							vsVector3D pos;
 							if ( currentVertexArray )
 								pos = currentVertexArray[index];
+							else
+								pos = currentVertexBuffer->GetPosition(index);
+							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
+						}
+						break;
+					}
+				case OpCode_TriangleList:
+					{
+						int first = o->data.i;
+						int count = o->data.i2;
+						for ( int i = first; first+count; i++ )
+						{
+							int index = i;
+
+							vsVector3D pos;
+							if ( currentVertexArray )
+								pos = currentVertexBuffer->GetPosition(index);
 							else
 								pos = currentVertexBuffer->GetPosition(index);
 							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );

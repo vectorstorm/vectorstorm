@@ -71,6 +71,7 @@ public:
 		OpCode_ClearColorArray,
 		OpCode_ClearArrays,	// clear them all!
 
+		// these 'Array' functions aren't supported any more.
 		OpCode_LineListArray,
 		OpCode_LineStripArray,
 		OpCode_TriangleListArray,
@@ -83,6 +84,8 @@ public:
 		OpCode_TriangleStripBuffer,
 		OpCode_TriangleListBuffer,
 		OpCode_TriangleFanBuffer,
+
+		OpCode_TriangleList,
 
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
@@ -121,6 +124,7 @@ public:
 	struct Data
 	{
 		uint32_t i;
+		uint32_t i2;
 		vsVector3D vector;
 		vsBox2D box2D;
 		vsColor color;
@@ -265,6 +269,8 @@ public:
 	void	TriangleFanBuffer( vsRenderBuffer *buffer );
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );
+
+	void	TriangleList( int first, int count );
 
 	void	SetMaterial( vsMaterial *material );
 	void	SetRenderTarget( vsRenderTarget *target );

@@ -598,8 +598,11 @@ vsShader::SetUniformValueB( int i, bool value )
 void
 vsShader::SetUniformValueVec3( int i, const vsVector3D& value )
 {
-	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
-	m_uniform[i].vec4 = value;
+	if ( m_uniform[i].vec4 != value )
+	{
+		glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
+		m_uniform[i].vec4 = value;
+	}
 }
 
 void
@@ -612,8 +615,11 @@ vsShader::SetUniformValueVec3( int i, const vsColor& value )
 void
 vsShader::SetUniformValueVec4( int i, const vsVector4D& value )
 {
-	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
-	m_uniform[i].vec4 = value;
+	if ( m_uniform[i].vec4 != value )
+	{
+		glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
+		m_uniform[i].vec4 = value;
+	}
 }
 
 void

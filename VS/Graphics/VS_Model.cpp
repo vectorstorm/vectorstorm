@@ -58,7 +58,6 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		int32_t vertexCount;
 		r.Int32(vertexCount);
 		vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
-		vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 
 		if ( format == "PCNT" )
 		{
@@ -151,24 +150,36 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		int32_t indexCount;
 		r.Int32(indexCount);
 		uint16_t *indices = new uint16_t[ indexCount ];
+		bool needIndices = false;
 		for ( int i = 0; i < indexCount; i++ )
 		{
 			int32_t ind;
 			r.Int32(ind);
 			indices[i] = ind;
+			if ( i != ind )
+				needIndices = true;
 		}
-		ibo->SetArray(indices, indexCount);
-		vsDeleteArray(indices);
 
 		result->AddBuffer(vbo);
-		result->AddBuffer(ibo);
 
 		vsDisplayList *list = new vsDisplayList(128);
 		list->BindBuffer(vbo);
-		list->TriangleListBuffer(ibo);
-		list->ClearArrays();
 
+		if ( needIndices )
+		{
+			vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+			ibo->SetArray(indices, indexCount);
+			result->AddBuffer(ibo);
+			list->TriangleListBuffer(ibo);
+		}
+		else
+		{
+			list->TriangleList(0, indexCount / 3);
+		}
+
+		list->ClearArrays();
 		result->SetDisplayList(list);
+		vsDeleteArray(indices);
 	}
 
 	return result;
