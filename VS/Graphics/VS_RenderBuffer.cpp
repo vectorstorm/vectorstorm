@@ -24,21 +24,18 @@ static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 	0,
 	GL_STATIC_DRAW,
 	GL_DYNAMIC_DRAW,
-#if TARGET_OS_IPHONE
 	GL_DYNAMIC_DRAW
-#else
-	GL_STREAM_DRAW
-#endif
 };
 
 vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_array(NULL),
     m_arrayBytes(0),
-    m_glArrayBytes(0),
     m_activeBytes(0),
     m_type(type),
     m_contentType(ContentType_Custom),
-    m_bufferID(-1),
+    // m_bufferID(-1),
+	m_bufferCount(0),
+	m_currentBuffer(0),
     m_vbo(false),
     m_indexType(false)
 {
@@ -48,8 +45,14 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 #if !TARGET_OS_IPHONE
 	if ( glGenBuffers && m_type != Type_NoVBO )
 	{
-		glGenBuffers(1, (GLuint*)&m_bufferID);
+		m_bufferCount = (m_type == Type_Static) ? 1 : DYNAMIC_BUFFER_COUNT;
+		glGenBuffers(m_bufferCount, (GLuint*)&m_bufferID);
 		m_vbo = true;
+		for ( int i = 0; i < m_bufferCount; i++ )
+		{
+			m_fences[i] = 0;
+			m_bufferBytes[i] = 0;
+		}
 	}
 #endif
 }
@@ -58,7 +61,7 @@ vsRenderBuffer::~vsRenderBuffer()
 {
 	if ( m_vbo )
 	{
-		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+		glDeleteBuffers( m_bufferCount, (GLuint*)&m_bufferID );
 	}
 
 	{
@@ -106,24 +109,41 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
 
 	if ( m_vbo )
 	{
-		glBindBuffer(bindPoint, m_bufferID);
+		m_currentBuffer = (m_currentBuffer + 1) % m_bufferCount;
 
-		if ( size > m_glArrayBytes )
+		if ( m_fences[m_currentBuffer] != 0 )
+		{
+			const GLuint64 c_timeoutNanos = 0;
+			GLenum result = glClientWaitSync( m_fences[m_currentBuffer], 0, c_timeoutNanos );
+			if ( result == GL_TIMEOUT_EXPIRED )
+			{
+				vsAssert(0, "Expired!");
+			}
+			else if ( result == GL_WAIT_FAILED )
+				vsAssert(0, "Wait failed!");
+		}
+		glBindBuffer(bindPoint, m_bufferID[m_currentBuffer]);
+
+		if ( size > m_bufferBytes[m_currentBuffer] )
 		{
 			glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
-			m_glArrayBytes = size;
+			m_bufferBytes[m_currentBuffer] = size;
 		}
 		else
 		{
 			// glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
 			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
-			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+			void *ptr = glMapBufferRange(bindPoint, 0, size,
+					GL_MAP_WRITE_BIT |
+					GL_MAP_UNSYNCHRONIZED_BIT);
+					// GL_MAP_INVALIDATE_BUFFER_BIT);
 
 			if ( ptr )
 			{
 				memcpy(ptr, data, size);
 				glUnmapBuffer(bindPoint);
 			}
+			m_fences[m_currentBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		}
 
 		glBindBuffer(bindPoint, 0);
@@ -275,7 +295,7 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 {
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 64, 0);
 		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, GL_FALSE, 64, (void*)16);
 		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, GL_FALSE, 64, (void*)32);
@@ -284,7 +304,7 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 	}
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 	}
@@ -301,7 +321,7 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -325,7 +345,7 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -348,7 +368,7 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -372,7 +392,7 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, 0 );
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -401,7 +421,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
@@ -423,7 +443,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
@@ -448,7 +468,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
@@ -473,7 +493,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
@@ -502,7 +522,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
@@ -536,7 +556,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
@@ -569,7 +589,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
@@ -600,7 +620,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
@@ -876,7 +896,7 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
 		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
@@ -894,7 +914,7 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glDrawElementsInstanced(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
@@ -908,11 +928,17 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 }
 
 void
+vsRenderBuffer::TriList(int first, int count, int instanceCount)
+{
+	glDrawArraysInstanced(GL_TRIANGLES, first, count, instanceCount);
+}
+
+void
 vsRenderBuffer::TriFanBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -929,7 +955,7 @@ vsRenderBuffer::LineStripBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glDrawElementsInstanced(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
@@ -945,7 +971,7 @@ vsRenderBuffer::LineListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID[m_currentBuffer]);
 		glDrawElementsInstanced(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}

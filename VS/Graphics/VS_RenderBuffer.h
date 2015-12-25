@@ -14,10 +14,12 @@
 #include "VS/Math/VS_Matrix.h"
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
+#include "VS/VS_OpenGL.h"
 
 class vsColor;
 class vsRendererState;
 
+#define DYNAMIC_BUFFER_COUNT (6)
 
 class vsRenderBuffer
 {
@@ -50,7 +52,6 @@ private:
 
 	char *			m_array;
 	int				m_arrayBytes;
-	int				m_glArrayBytes;
 
 	int				m_activeBytes;
 
@@ -58,7 +59,11 @@ private:
 
 	ContentType		m_contentType;
 
-	unsigned int	m_bufferID;
+	unsigned int	m_bufferID[DYNAMIC_BUFFER_COUNT];
+	int				m_bufferBytes[DYNAMIC_BUFFER_COUNT];
+	GLsync			m_fences[DYNAMIC_BUFFER_COUNT];
+	unsigned int	m_bufferCount;
+	unsigned int	m_currentBuffer;
 	bool			m_vbo;
 	bool			m_indexType;
 
@@ -214,6 +219,8 @@ public:
 	void	TriFanBuffer(int instanceCount);
 	void	LineStripBuffer(int instanceCount);
 	void	LineListBuffer(int instanceCount);
+
+	static void TriList(int first, int count, int instanceCount);
 
 	const bool IsVBO() { return m_vbo; }
 };
