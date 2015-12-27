@@ -51,7 +51,7 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 		m_bufferCount = (m_type == Type_Static) ? 1 : DYNAMIC_BUFFER_COUNT;
 		glGenBuffers(m_bufferCount, (GLuint*)&m_bufferID);
 		m_vbo = true;
-		for ( int i = 0; i < m_bufferCount; i++ )
+		for ( unsigned int i = 0; i < m_bufferCount; i++ )
 		{
 			m_fences[i] = 0;
 			m_bufferBytes[i] = 0;
