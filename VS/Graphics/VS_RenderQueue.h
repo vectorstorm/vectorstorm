@@ -14,8 +14,7 @@
 #include "VS/Math/VS_Transform.h"
 #include "VS/Graphics/VS_DisplayList.h"
 #include "VS/Graphics/VS_Screen.h"
-#include "VS/Utils/VS_LinkedList.h"
-#include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Utils/VS_ArrayStore.h"
 #include "VS/Utils/VS_Pool.h"
 
 class vsEntity;
@@ -43,7 +42,7 @@ private:
 	Batch *				m_batchPool;
 	BatchElement * 		m_batchElementPool;
 
-	vsLinkedListStore<vsDisplayList>	m_temporaryLists;
+	vsArrayStore<vsDisplayList>	m_temporaryLists;
 
 	Batch *			FindBatch( vsMaterial *material );
 
