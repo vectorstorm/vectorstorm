@@ -176,7 +176,7 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		}
 		else
 		{
-			list->TriangleList(0, indexCount / 3);
+			list->TriangleList(0, indexCount);
 		}
 
 		list->ClearArrays();

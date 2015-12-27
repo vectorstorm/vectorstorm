@@ -270,7 +270,7 @@ public:
 	void	LineListBuffer( vsRenderBuffer *buffer );
 	void	LineStripBuffer( vsRenderBuffer *buffer );
 
-	void	TriangleList( int first, int count );
+	void	TriangleList( int first, int indexCount );
 
 	void	SetMaterial( vsMaterial *material );
 	void	SetRenderTarget( vsRenderTarget *target );
