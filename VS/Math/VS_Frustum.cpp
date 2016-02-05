@@ -150,10 +150,9 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	//
 	// It's less accurate (it produces a larger sphere than is strictly
 	// necessary), but it'll never claim that something is 'Outside' if it's
-	// actually visible.  And it'll still reject things which are
+	// actually visible, and it'll never claim that it's entirely 'Inside' if
+	// it's not actually inside.  And it'll still reject things which are
 	// well-and-truly outside our view.
-	//
-	// In the below calculation
 	//
 	const float halfSqrtTwo = 0.707106f;	// approximately
 	float radius = halfSqrtTwo * vsMax(box.Width(), vsMax(box.Height(), box.Depth()));
@@ -161,10 +160,6 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	Classification sphereClassification = ClassifySphere( middle, radius );
 	if ( sphereClassification != Intersect )
 		return sphereClassification;
-
-	// check this sphere against our frustum
-
-	int in, out;
 
 	vsVector3D boxVert[8];
 	boxVert[0] = box.GetMin();
@@ -176,11 +171,12 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	boxVert[6].Set( box.GetMax().x, box.GetMax().y, box.GetMin().z );
 	boxVert[7].Set( box.GetMax().x, box.GetMax().y, box.GetMax().z );
 
+	int out = 0;
 	// for each plane do ...
 	for(int i=0; i < 6; i++) {
 
 		// reset counters for corners in and out
-		out=0;in=0;
+		int in=0;
 		// for each corner of the box do ...
 		// get out of the cycle as soon as a box has corners
 		// both inside and out of the frustum
