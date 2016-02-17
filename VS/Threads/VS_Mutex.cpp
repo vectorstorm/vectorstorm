@@ -8,8 +8,45 @@
 
 #include "VS_Mutex.h"
 
-#ifdef UNIX
-// Apple version of vsMutex
+#ifdef __APPLE__
+// Apple version of vsMutex.
+//
+// On OS X, pthread mutexes are very heavy, and impact our performance to a silly
+// extent.  And since we're a game (and probably not even multithreaded the vast
+// majority of the time), we don't ever actually hold mutexes for more than a
+// brief moment.  So let's just go ahead and use a spinlock, instead.  This keeps
+// us from needing to talk to the kernel, and makes every "mutex" operation
+// substantially faster.
+//
+vsMutex::vsMutex():
+	m_mutex(0)
+{
+}
+
+vsMutex::~vsMutex()
+{
+}
+
+bool
+vsMutex::TryLock()
+{
+	return ( OSSpinLockTry( &m_mutex ) );
+}
+
+void
+vsMutex::Lock()
+{
+	OSSpinLockLock( &m_mutex );
+}
+
+void
+vsMutex::Unlock()
+{
+	OSSpinLockUnlock( &m_mutex );
+}
+
+#elif defined(UNIX)
+// Unix version of vsMutex
 
 #include <pthread.h>
 
@@ -48,7 +85,7 @@ vsMutex::Unlock()
     vsAssert(result == 0, "Error %d in pthread_mutex_lock");
 }
 
-#else   // !__APPLE_CC__
+#else   // !UNIX
 // Win32 version of vsMutex
 
 vsMutex::vsMutex()

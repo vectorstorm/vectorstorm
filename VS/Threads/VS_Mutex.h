@@ -9,7 +9,11 @@
 #ifndef VS_MUTEX_H
 #define VS_MUTEX_H
 
-#ifdef UNIX
+#ifdef __APPLE__
+ #include <libkern/OSAtomic.h>
+// use spinlocks on OSX, because mutexes are silly expensive here.
+typedef OSSpinLock mutex_t;
+#elif defined(UNIX)
 #include <pthread.h>
 typedef pthread_mutex_t mutex_t;
 #else
