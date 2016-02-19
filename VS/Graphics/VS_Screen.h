@@ -51,6 +51,8 @@ class vsScreen
 	vsRenderTarget *	m_currentRenderTarget;
     const vsRenderer::Settings *m_currentSettings;
 
+	void BuildDefaultPipeline();
+
 public:
 
 	static vsScreen *	Instance() { return s_instance; }

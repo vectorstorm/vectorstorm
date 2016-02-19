@@ -95,6 +95,8 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	vsLog("Screen aspect ratio:  %f", m_aspectRatio);
 	m_resized = true;
+	BuildDefaultPipeline();
+
 }
 
 void
@@ -127,13 +129,20 @@ vsScreen::CreateScenes(int count)
 		m_scene[i] = new vsScene;
 	m_sceneCount = count;
 
-	m_pipeline = new vsRenderPipeline(2);
-	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, false ));
-	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
+	BuildDefaultPipeline();
 
 #if defined(DEBUG_SCENE)
 	m_scene[m_sceneCount-1]->SetDebugCamera();
 #endif // DEBUG_SCENE
+}
+
+void
+vsScreen::BuildDefaultPipeline()
+{
+	vsDelete( m_pipeline );
+	m_pipeline = new vsRenderPipeline(2);
+	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, false ));
+	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 }
 
 vsRenderTarget *
