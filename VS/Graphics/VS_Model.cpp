@@ -615,11 +615,17 @@ vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
 void
 vsModelInstanceGroup::AddInstance( vsModelInstance *inst )
 {
+	bool wasVisible = inst->visible;
 	inst->group = this;
 	inst->visible = false;
 	inst->index = m_instance.ItemCount();
 	inst->matrixIndex = -1;
 	m_instance.AddItem(inst);
+
+	if ( wasVisible )
+	{
+		inst->SetVisible(true);
+	}
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	m_bufferIsDirty = true;
 #endif
