@@ -700,7 +700,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_state.Flush(); // Since resolving a render target can involve a blit, flush render state first.
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 					if ( target )
+					{
 						target->Resolve();
+					}
 					break;
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:

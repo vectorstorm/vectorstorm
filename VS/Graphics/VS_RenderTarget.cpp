@@ -53,6 +53,13 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 		m_texture[i] = new vsTexture(name);
 	}
 
+	{
+		vsString name = vsFormatString("DepthTarget%d", s_renderTargetCount++);
+		vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, 0, true);
+		vsTextureManager::Instance()->Add(ti);
+		m_depthTexture = new vsTexture(name);
+	}
+
 	Clear();
 }
 
@@ -62,6 +69,7 @@ vsRenderTarget::~vsRenderTarget()
 	{
 		vsDelete( m_texture[i] );
 	}
+	vsDelete( m_depthTexture );
 	vsDeleteArray( m_texture );
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
@@ -77,9 +85,17 @@ vsRenderTarget::Resolve(int id)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
 		for ( int i = 0; i < m_bufferCount; i++ )
 		{
+			int bits = GL_COLOR_BUFFER_BIT;
+			if ( i == 0 )
+				bits |= GL_DEPTH_BUFFER_BIT;
 			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
-			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	// CheckGLError("vsSurface");
+			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, bits, GL_NEAREST);
+	// CheckGLError("vsSurface");
+	// 		if ( i == 0 && m_textureSurface->m_depth )
+	// 			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	// CheckGLError("vsSurface");
 		}
 	}
 	if ( m_textureSurface )
@@ -100,6 +116,29 @@ vsRenderTarget::Resolve(int id)
 
 	return NULL;
 }
+
+// vsTexture *
+// vsRenderTarget::ResolveDepth()
+// {
+// 	CheckGLError("vsSurface");
+// 	if ( m_renderBufferSurface )
+// 	{
+// 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+// 	CheckGLError("vsSurface");
+// 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+// 	CheckGLError("vsSurface");
+// 		if ( m_textureSurface->m_depth )
+// 		{
+// 			glReadBuffer(GL_DEPTH_ATTACHMENT);
+// 	CheckGLError("vsSurface");
+// 			glDrawBuffer(GL_DEPTH_ATTACHMENT);
+// 	CheckGLError("vsSurface");
+// 			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_DEPTH_BUFFER_BIT, GL_LINEAR);
+// 	CheckGLError("vsSurface");
+// 		}
+// 	}
+// 	return m_depthTexture;
+// }
 
 void
 vsRenderTarget::Bind()
@@ -289,19 +328,20 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
-			//if ( stencil )
-			//{
-			//glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-			//}
-			//else
+			if ( settings.stencil )
 			{
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+			}
+			else
+			{
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
 			}
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
