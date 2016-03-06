@@ -46,6 +46,14 @@ bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, cons
 float vsInterpolate( float alpha, float a, float b );
 float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
 
+// vsFadeInOut is a utility function for mapping a single time value into a
+// [0..1..0] sequence.
+//
+// returned value goes [0..1..0] as 'time' goes from [startFadeIn .. endFadeOut].
+// it holds at 0 before 'startFadeIn' and after 'endFadeOut', and holds at 1 between 'endFadeIn' and 'startFadeOut'.
+//
+float vsFadeInOut( float time, float startFadeIn, float endFadeIn, float startFadeOut, float endFadeOut );
+
 float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
 inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL )
 {

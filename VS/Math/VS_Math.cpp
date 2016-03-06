@@ -112,6 +112,29 @@ float vsProgressFraction( float value, float a, float b )
 	}
 }
 
+float vsFadeInOut( float time, float startFadeIn, float endFadeIn, float startFadeOut, float endFadeOut )
+{
+	if ( time < startFadeIn || time > endFadeOut )
+		return 0.f;
+
+	if ( startFadeOut < endFadeIn ) // Bad case; we're supposed to start fading out before we finish fading in!
+	{
+		// for now, just swap the two values so the rest of our logic works.
+		// But we could be smarter than this;  only fade partway in before
+		// starting to fade out again.  But that's a bit more complicated to
+		// think about.
+	}
+
+	if ( time > startFadeOut )
+		return vsProgressFraction( time, endFadeOut, startFadeOut );
+	else if ( time > endFadeIn )
+		return 1.f;
+	else
+		return vsProgressFraction( time, startFadeIn, endFadeIn );
+
+	return 0.f;
+}
+
 float vsInterpolate( float alpha, float a, float b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
