@@ -15,7 +15,7 @@
 typedef OSSpinLock mutex_t;
 #elif defined(UNIX)
 #include <pthread.h>
-typedef pthread_mutex_t mutex_t;
+typedef pthread_spinlock_t mutex_t;
 #else
 #include <windows.h>
 typedef HANDLE mutex_t;

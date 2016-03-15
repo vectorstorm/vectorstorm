@@ -52,37 +52,32 @@ vsMutex::Unlock()
 
 vsMutex::vsMutex()
 {
-    pthread_mutexattr_t attr;
-
-    pthread_mutexattr_init( &attr );
-    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_DEFAULT );
-
-    pthread_mutex_init( &m_mutex, &attr );
+    pthread_spin_init( &m_mutex, PTHREAD_PROCESS_PRIVATE );
 }
 
 vsMutex::~vsMutex()
 {
-    pthread_mutex_destroy( &m_mutex );
+    pthread_spin_destroy( &m_mutex );
 }
 
 bool
 vsMutex::TryLock()
 {
-	return ( pthread_mutex_trylock( &m_mutex ) == 0 );
+	return ( pthread_spin_trylock( &m_mutex ) == 0 );
 }
 
 void
 vsMutex::Lock()
 {
-    int result = pthread_mutex_lock( &m_mutex );
-    vsAssert(result == 0, "Error %d in pthread_mutex_lock");
+    int result = pthread_spin_lock( &m_mutex );
+    vsAssert(result == 0, "Error %d in pthread_spin_lock");
 }
 
 void
 vsMutex::Unlock()
 {
-    int result = pthread_mutex_unlock( &m_mutex );
-    vsAssert(result == 0, "Error %d in pthread_mutex_lock");
+    int result = pthread_spin_unlock( &m_mutex );
+    vsAssert(result == 0, "Error %d in pthread_spin_lock");
 }
 
 #else   // !UNIX
