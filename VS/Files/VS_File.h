@@ -53,6 +53,8 @@ public:
 	static bool	DirectoryExists( const vsString &dirName );	// returns true if the specified directory exists.
 	// Delete functions return TRUE on success.
 	static bool Delete( const vsString &filename ); // will delete a FILE.
+	static bool Copy( const vsString &from, const vsString &to ); // will delete a FILE.
+	static bool Move( const vsString &from, const vsString &to ); // will delete a FILE.
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 

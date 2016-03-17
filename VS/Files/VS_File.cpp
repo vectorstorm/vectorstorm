@@ -76,6 +76,28 @@ vsFile::Delete( const vsString &filename ) // static method
 }
 
 bool
+vsFile::Copy( const vsString &from, const vsString &to )
+{
+	if ( !vsFile::Exists(from) )
+		return false;
+
+	vsFile f(from);
+	vsFile t(to, vsFile::MODE_Write);
+
+	vsStore s( f.GetLength() );
+	f.Store(&s);
+	t.Store(&s);
+
+	return true;
+}
+
+bool
+vsFile::Move( const vsString &from, const vsString &to )
+{
+	return ( Copy(from, to) && Delete(from) );
+}
+
+bool
 vsFile::DeleteEmptyDirectory( const vsString &filename )
 {
 	// If it's not a directory, don't delete it!
