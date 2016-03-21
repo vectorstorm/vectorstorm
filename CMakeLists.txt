@@ -177,6 +177,10 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Mesh.h
 	VS/Graphics/VS_Model.cpp
 	VS/Graphics/VS_Model.h
+	VS/Graphics/VS_ModelInstance.cpp
+	VS/Graphics/VS_ModelInstance.h
+	VS/Graphics/VS_ModelInstanceGroup.cpp
+	VS/Graphics/VS_ModelInstanceGroup.h
 	VS/Graphics/VS_RenderBuffer.cpp
 	VS/Graphics/VS_RenderBuffer.h
 	VS/Graphics/VS_RenderQueue.cpp
