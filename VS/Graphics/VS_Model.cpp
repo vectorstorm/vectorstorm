@@ -331,7 +331,7 @@ vsModel::vsModel( vsDisplayList *list ):
 	m_displayList(list)
 {
 	SetLodCount(1);
-	m_lodLevel = 0;
+	SetLodLevel(0);
 }
 
 vsModel::~vsModel()
@@ -364,10 +364,10 @@ vsModel::SetDisplayList( vsDisplayList *list )
 }
 
 void
-vsModel::AddFragment( vsFragment *fragment )
+vsModel::AddLodFragment( size_t lodLevel, vsFragment *fragment )
 {
 	if ( fragment )
-		m_lod[0]->fragment.AddItem( fragment );
+		m_lod[lodLevel]->fragment.AddItem( fragment );
 }
 
 void
@@ -504,7 +504,9 @@ vsModel::RemoveInstance( vsModelInstance *inst )
 void
 vsModel::SetLodCount(size_t count)
 {
+	vsAssert(count > 0, "Zero-LOD vsModels are not supported");
 	m_lod.SetArraySize(count);
+	m_lodLevel = vsMin(m_lodLevel, count-1);
 }
 
 size_t

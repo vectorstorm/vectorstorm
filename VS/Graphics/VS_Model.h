@@ -92,7 +92,7 @@ public:
 	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
-	void			AddFragment( vsFragment *fragment );
+	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			ClearFragments();
 	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
 	size_t			GetFragmentCount() { return GetLodFragmentCount(0); }
@@ -103,6 +103,7 @@ public:
 	void			SetLodCount(size_t count);
 	void			SetLodLevel(size_t level) { m_lodLevel = level; }
 	size_t			GetLodLevel() { return m_lodLevel; }
+	void			AddLodFragment( size_t lodId, vsFragment *fragment );
 
 	virtual void	Draw( vsRenderQueue *list );
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values );
