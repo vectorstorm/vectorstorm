@@ -39,6 +39,8 @@ class vsModel : public vsEntity
 	float				m_boundingRadius;
 
 	static vsModel* LoadModel_Internal( vsSerialiserRead& r );
+	static vsModel* LoadModel_InternalV1( vsSerialiserRead& r );
+	static vsModel* LoadModel_InternalV2( vsSerialiserRead& r );
 	static vsFragment* LoadFragment_Internal( vsSerialiserRead& r );
 
 	vsArrayStore<vsLod> m_lod; // new-new-style rendering.
@@ -97,7 +99,7 @@ public:
 	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
 	size_t			GetFragmentCount() { return GetLodFragmentCount(0); }
 
-	size_t			GetLodCount() { return 1 + m_lod.ItemCount(); }
+	size_t			GetLodCount() { return m_lod.ItemCount(); }
 	size_t			GetLodFragmentCount( size_t lodId );
 	vsFragment *	GetLodFragment(size_t lodId, size_t fragmentId) { return m_lod[lodId]->fragment[fragmentId]; }
 	void			SetLodCount(size_t count);

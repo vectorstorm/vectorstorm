@@ -177,6 +177,85 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 }
 
 vsModel*
+vsModel::LoadModel_InternalV1( vsSerialiserRead& r )
+{
+	vsModel *result = new vsModel;
+	r.String(result->m_name);
+
+	vsVector3D trans, scale;
+	vsVector4D rot;
+	r.Vector3D(trans);
+	r.Vector4D(rot);
+	r.Vector3D(scale);
+
+	result->SetPosition(trans);
+	result->SetScale(scale);
+	result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
+
+	int32_t meshCount;
+	r.Int32(meshCount);
+
+	for ( int i = 0; i < meshCount; i++ )
+	{
+		vsFragment *f = LoadFragment_Internal(r);
+		result->AddFragment(f);
+	}
+
+	int32_t childCount;
+	r.Int32(childCount);
+
+	for ( int32_t i = 0; i < childCount; i++ )
+	{
+		vsModel *child = LoadModel_Internal(r);
+		result->AddChild(child);
+	}
+	return result;
+}
+
+vsModel*
+vsModel::LoadModel_InternalV2( vsSerialiserRead& r )
+{
+	vsModel *result = new vsModel;
+	r.String(result->m_name);
+
+	vsVector3D trans, scale;
+	vsVector4D rot;
+	r.Vector3D(trans);
+	r.Vector4D(rot);
+	r.Vector3D(scale);
+
+	result->SetPosition(trans);
+	result->SetScale(scale);
+	result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
+
+	int32_t lodCount;
+	r.Int32(lodCount);
+	result->SetLodCount(lodCount);
+
+	for ( int l = 0; l < lodCount; l++ )
+	{
+		int32_t meshCount;
+		r.Int32(meshCount);
+
+		for ( int i = 0; i < meshCount; i++ )
+		{
+			vsFragment *f = LoadFragment_Internal(r);
+			result->AddLodFragment(l, f);
+		}
+	}
+
+	int32_t childCount;
+	r.Int32(childCount);
+
+	for ( int32_t i = 0; i < childCount; i++ )
+	{
+		vsModel *child = LoadModel_Internal(r);
+		result->AddChild(child);
+	}
+	return result;
+}
+
+vsModel*
 vsModel::LoadModel_Internal( vsSerialiserRead& r )
 {
 	vsModel *result = NULL;
@@ -184,36 +263,11 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 	r.String(tag);
 	if ( tag == "ModelV1" )
 	{
-		result = new vsModel;
-		r.String(result->m_name);
-
-		vsVector3D trans, scale;
-		vsVector4D rot;
-		r.Vector3D(trans);
-		r.Vector4D(rot);
-		r.Vector3D(scale);
-
-		result->SetPosition(trans);
-		result->SetScale(scale);
-		result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
-
-		int32_t meshCount;
-		r.Int32(meshCount);
-
-		for ( int i = 0; i < meshCount; i++ )
-		{
-			vsFragment *f = LoadFragment_Internal(r);
-			result->AddFragment(f);
-		}
-
-		int32_t childCount;
-		r.Int32(childCount);
-
-		for ( int32_t i = 0; i < childCount; i++ )
-		{
-			vsModel *child = LoadModel_Internal(r);
-			result->AddChild(child);
-		}
+		result = LoadModel_InternalV1(r);
+	}
+	else if ( tag == "ModelV2" )
+	{
+		result = LoadModel_InternalV2(r);
 	}
 
 	return result;
@@ -366,6 +420,7 @@ vsModel::SetDisplayList( vsDisplayList *list )
 void
 vsModel::AddLodFragment( size_t lodLevel, vsFragment *fragment )
 {
+	vsAssert(lodLevel < m_lod.ItemCount(), "Tried to add a fragment to a non-existant lod??");
 	if ( fragment )
 		m_lod[lodLevel]->fragment.AddItem( fragment );
 }
@@ -413,6 +468,7 @@ vsModel::BuildBoundingBox()
 void
 vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues )
 {
+	vsAssert( m_lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
@@ -422,6 +478,7 @@ vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const
 void
 vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues )
 {
+	vsAssert( m_lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
