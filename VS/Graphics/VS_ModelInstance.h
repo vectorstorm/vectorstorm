@@ -15,6 +15,7 @@
 
 class vsModel;
 class vsModelInstanceGroup;
+class vsModelInstanceLodGroup;
 
 struct vsModelInstance
 {
@@ -22,18 +23,25 @@ private:
 	vsMatrix4x4 matrix;
 	vsColor color;
 	vsModelInstanceGroup *group;
+	vsModelInstanceLodGroup *lodGroup;
 	int index;       // our ID within the instance array.
 	int matrixIndex; // our ID within the matrix array.
+	size_t lodLevel;
 	bool visible;
 	friend class vsModelInstanceGroup;
+	friend class vsModelInstanceLodGroup;
+
+	void UpdateGroup();
 
 public:
-	vsModelInstance() {}
+	vsModelInstance();
 	~vsModelInstance();
 
 	void SetVisible( bool visible );
 	void SetMatrix( const vsMatrix4x4& mat );
 	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
+	void SetLodLevel( size_t lodLevel );
+	int GetLodCount();
 
 	vsModel * GetModel();
 	vsModelInstanceGroup * GetInstanceGroup() { return group; }

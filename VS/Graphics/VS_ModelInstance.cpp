@@ -11,9 +11,21 @@
 #include "VS_ModelInstanceGroup.h"
 #include "VS_Model.h"
 
+vsModelInstance::vsModelInstance():
+	group(NULL),
+	lodLevel(0)
+{
+}
+
 vsModelInstance::~vsModelInstance()
 {
 	group->RemoveInstance(this);
+}
+
+void
+vsModelInstance::UpdateGroup()
+{
+	group->UpdateInstance( this, visible );
 }
 
 void
@@ -22,7 +34,7 @@ vsModelInstance::SetVisible( bool v )
 	if ( visible != v )
 	{
 		visible = v;
-		group->UpdateInstance( this, visible );
+		UpdateGroup();
 	}
 }
 
@@ -41,9 +53,25 @@ vsModelInstance::SetMatrix( const vsMatrix4x4& mat, const vsColor &c )
 		color = c;
 		if ( visible )
 		{
-			group->UpdateInstance( this, visible );
+			UpdateGroup();
 		}
 	}
+}
+
+void
+vsModelInstance::SetLodLevel( size_t lodLevel_in )
+{
+	if ( lodLevel_in != lodLevel )
+	{
+		lodLevel = lodLevel_in;
+		UpdateGroup();
+	}
+}
+
+int
+vsModelInstance::GetLodCount()
+{
+	return GetModel()->GetLodCount();
 }
 
 vsModel *

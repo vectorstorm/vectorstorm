@@ -16,16 +16,20 @@
 #include "VS/Graphics/VS_Entity.h"
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Utils/VS_Array.h"
+#include "VS/Utils/VS_ArrayStore.h"
 
 class vsModel;
 struct vsModelInstance;
+class vsModelInstanceGroup;
 class vsShaderValues;
 
 // #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
-class vsModelInstanceGroup : public vsEntity
+class vsModelInstanceLodGroup : public vsEntity
 {
+	vsModelInstanceGroup *m_group; // what group am a part of
 	vsModel *m_model;
+	size_t m_lodLevel;
 	vsShaderValues *m_values; // TEMP:  For testing
 	vsArray<vsMatrix4x4> m_matrix;
 	vsArray<vsColor> m_color;
@@ -38,8 +42,10 @@ class vsModelInstanceGroup : public vsEntity
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 public:
 
-	vsModelInstanceGroup( vsModel *model ):
+	vsModelInstanceLodGroup( vsModelInstanceGroup *group, vsModel *model, size_t lodLevel ):
+		m_group(group),
 		m_model(model),
+		m_lodLevel(lodLevel),
 		m_values(NULL)
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 		,
@@ -50,7 +56,7 @@ public:
 	{
 	}
 
-	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
+	void TakeInstancesFromGroup( vsModelInstanceLodGroup *otherGroup );
 
 	void SetShaderValues( vsShaderValues *values ) { m_values = values; }
 	vsModelInstance * MakeInstance();		// create an instance of me.
@@ -59,6 +65,30 @@ public:
 	bool ContainsInstance( vsModelInstance *instance );
 	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel() { return m_model; }
+
+	// find the bounds of our matrix translations.
+	void CalculateMatrixBounds( vsBox3D& out );
+
+	virtual void Draw( vsRenderQueue *queue );
+};
+
+class vsModelInstanceGroup: public vsEntity
+{
+	vsModel *m_model;
+	vsArrayStore<vsModelInstanceLodGroup> m_lod;
+public:
+
+	vsModelInstanceGroup( vsModel *model );
+
+	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
+	void SetShaderValues( vsShaderValues *values );
+
+	vsModelInstance * MakeInstance( int lod = 0 );		// create an instance of me.
+	void AddInstance( vsModelInstance *instance );
+	void RemoveInstance( vsModelInstance *instance );
+	bool ContainsInstance( vsModelInstance *instance );
+	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
+	vsModel * GetModel();
 
 	// find the bounds of our matrix translations.
 	void CalculateMatrixBounds( vsBox3D& out );

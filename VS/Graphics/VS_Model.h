@@ -44,7 +44,7 @@ class vsModel : public vsEntity
 	static vsFragment* LoadFragment_Internal( vsSerialiserRead& r );
 
 	vsArrayStore<vsLod> m_lod; // new-new-style rendering.
-	size_t m_lodLevel; // which lod am I rendering right now?  0 == 'm_fragment'.
+	int m_lodLevel; // which lod am I rendering right now?  0 == 'm_fragment'.
 	vsModelInstanceGroup *m_instanceGroup;
 protected:
 
@@ -97,19 +97,19 @@ public:
 	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			ClearFragments();
 	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
-	size_t			GetFragmentCount() { return GetLodFragmentCount(0); }
+	int				GetFragmentCount() { return GetLodFragmentCount(0); }
 
-	size_t			GetLodCount() { return m_lod.ItemCount(); }
-	size_t			GetLodFragmentCount( size_t lodId );
-	vsFragment *	GetLodFragment(size_t lodId, size_t fragmentId) { return m_lod[lodId]->fragment[fragmentId]; }
-	void			SetLodCount(size_t count);
-	void			SetLodLevel(size_t level) { m_lodLevel = level; }
-	size_t			GetLodLevel() { return m_lodLevel; }
-	void			AddLodFragment( size_t lodId, vsFragment *fragment );
+	int				GetLodCount() { return m_lod.ItemCount(); }
+	int				GetLodFragmentCount( int lodId );
+	vsFragment *	GetLodFragment(int lodId, int fragmentId) { return m_lod[lodId]->fragment[fragmentId]; }
+	void			SetLodCount(int count);
+	void			SetLodLevel(int level) { m_lodLevel = level; }
+	int				GetLodLevel() { return m_lodLevel; }
+	void			AddLodFragment( int lodId, vsFragment *fragment );
 
 	virtual void	Draw( vsRenderQueue *list );
-	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values );
-	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values );
+	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, int lodLevel );
+	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, int lodLevel );
 };
 
 #endif // VS_MODEL_H

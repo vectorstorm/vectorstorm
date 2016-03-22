@@ -418,9 +418,9 @@ vsModel::SetDisplayList( vsDisplayList *list )
 }
 
 void
-vsModel::AddLodFragment( size_t lodLevel, vsFragment *fragment )
+vsModel::AddLodFragment( int lodLevel, vsFragment *fragment )
 {
-	vsAssert(lodLevel < m_lod.ItemCount(), "Tried to add a fragment to a non-existant lod??");
+	vsAssert((int)lodLevel < m_lod.ItemCount(), "Tried to add a fragment to a non-existant lod??");
 	if ( fragment )
 		m_lod[lodLevel]->fragment.AddItem( fragment );
 }
@@ -466,20 +466,20 @@ vsModel::BuildBoundingBox()
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues )
+vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, int lodLevel )
 {
-	vsAssert( m_lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
-	for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
 	}
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues )
+vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, int lodLevel )
 {
-	vsAssert( m_lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
-	for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
 	}
@@ -559,15 +559,15 @@ vsModel::RemoveInstance( vsModelInstance *inst )
 }
 
 void
-vsModel::SetLodCount(size_t count)
+vsModel::SetLodCount(int count)
 {
 	vsAssert(count > 0, "Zero-LOD vsModels are not supported");
 	m_lod.SetArraySize(count);
 	m_lodLevel = vsMin(m_lodLevel, count-1);
 }
 
-size_t
-vsModel::GetLodFragmentCount( size_t lodId )
+int
+vsModel::GetLodFragmentCount( int lodId )
 {
 	return m_lod[lodId]->fragment.ItemCount();
 }
