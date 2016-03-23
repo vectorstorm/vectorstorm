@@ -20,81 +20,14 @@
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_ArrayStore.h"
 
-// #define INSTANCED_MODEL_USES_LOCAL_BUFFER
-
 class vsModel;
+struct vsModelInstance;
 class vsModelInstanceGroup;
 class vsSerialiserRead;
 
-struct vsModelInstance
+struct vsLod
 {
-private:
-	vsMatrix4x4 matrix;
-	vsColor color;
-	vsModelInstanceGroup *group;
-	int index;       // our ID within the instance array.
-	int matrixIndex; // our ID within the matrix array.
-	bool visible;
-	friend class vsModelInstanceGroup;
-
-public:
-	vsModelInstance() {}
-	~vsModelInstance();
-
-	void SetVisible( bool visible );
-	void SetMatrix( const vsMatrix4x4& mat );
-	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
-
-	vsModel * GetModel();
-	vsModelInstanceGroup * GetInstanceGroup() { return group; }
-	const vsVector4D& GetPosition() const { return matrix.w; }
-	const vsMatrix4x4& GetMatrix() const { return matrix; }
-};
-
-#define INSTANCED_MODEL_USES_LOCAL_BUFFER
-
-
-class vsModelInstanceGroup : public vsEntity
-{
-	vsModel *m_model;
-	vsShaderValues *m_values; // TEMP:  For testing
-	vsArray<vsMatrix4x4> m_matrix;
-	vsArray<vsColor> m_color;
-	vsArray<int> m_matrixInstanceId;
-	vsArray<vsModelInstance*> m_instance;
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-	vsRenderBuffer m_matrixBuffer;
-	vsRenderBuffer m_colorBuffer;
-	bool m_bufferIsDirty;
-#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
-public:
-
-	vsModelInstanceGroup( vsModel *model ):
-		m_model(model),
-		m_values(NULL)
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-		,
-		m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
-		m_colorBuffer(vsRenderBuffer::Type_Dynamic),
-		m_bufferIsDirty(false)
-#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
-	{
-	}
-
-	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
-
-	void SetShaderValues( vsShaderValues *values ) { m_values = values; }
-	vsModelInstance * MakeInstance();		// create an instance of me.
-	void AddInstance( vsModelInstance *instance );
-	void RemoveInstance( vsModelInstance *instance );
-	bool ContainsInstance( vsModelInstance *instance );
-	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
-	vsModel * GetModel() { return m_model; }
-
-	// find the bounds of our matrix translations.
-	void CalculateMatrixBounds( vsBox3D& out );
-
-	virtual void Draw( vsRenderQueue *queue );
+	vsArrayStore<vsFragment>	fragment;
 };
 
 class vsModel : public vsEntity
@@ -106,17 +39,17 @@ class vsModel : public vsEntity
 	float				m_boundingRadius;
 
 	static vsModel* LoadModel_Internal( vsSerialiserRead& r );
+	static vsModel* LoadModel_InternalV1( vsSerialiserRead& r );
+	static vsModel* LoadModel_InternalV2( vsSerialiserRead& r );
 	static vsFragment* LoadFragment_Internal( vsSerialiserRead& r );
+
+	vsArrayStore<vsLod> m_lod; // new-new-style rendering.
+	int m_lodLevel; // which lod am I rendering right now?  0 == 'm_fragment'.
+	vsModelInstanceGroup *m_instanceGroup;
 protected:
 
 	vsDisplayList	*m_displayList;				// old-style rendering
-
-	vsArrayStore<vsFragment>	m_fragment;	// new-style rendering
-
-	vsModelInstanceGroup *m_instanceGroup;
-
 	vsTransform3D m_transform;
-
 	void LoadFrom( vsRecord *record );
 
 public:
@@ -161,14 +94,22 @@ public:
 	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
-	void			AddFragment( vsFragment *fragment );
+	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			ClearFragments();
-	vsFragment *	GetFragment(int i) { return m_fragment[i]; }
-	size_t			GetFragmentCount() { return m_fragment.ItemCount(); }
+	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
+	int				GetFragmentCount() { return GetLodFragmentCount(0); }
+
+	int				GetLodCount() { return m_lod.ItemCount(); }
+	int				GetLodFragmentCount( int lodId );
+	vsFragment *	GetLodFragment(int lodId, int fragmentId) { return m_lod[lodId]->fragment[fragmentId]; }
+	void			SetLodCount(int count);
+	void			SetLodLevel(int level) { m_lodLevel = level; }
+	int				GetLodLevel() { return m_lodLevel; }
+	void			AddLodFragment( int lodId, vsFragment *fragment );
 
 	virtual void	Draw( vsRenderQueue *list );
-	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values );
-	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values );
+	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, int lodLevel );
+	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, int lodLevel );
 };
 
 #endif // VS_MODEL_H

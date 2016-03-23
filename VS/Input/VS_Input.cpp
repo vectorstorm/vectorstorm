@@ -38,6 +38,16 @@ vsInput::~vsInput()
 void
 vsInput::Init()
 {
+	// In the documentation, SDL2 implies that "text input" mode starts disabled,
+	// but at least in the current OSX build, it actually starts enabled.  So during
+	// startup, let's just check and see if it's turned on, and if so, turn it off
+	// explicitly.
+	if ( SDL_IsTextInputActive() )
+	{
+		vsLog("TextInput was enabled by default; turning it off until we need it!");
+		SDL_StopTextInput();
+	}
+
 	m_fingersDown = 0;
 	m_fingersDownTimer = 0.f;
 	m_preparingToPoll = false;

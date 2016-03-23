@@ -62,6 +62,8 @@
 #include <VS/Graphics/VS_Material.h>
 #include <VS/Graphics/VS_Mesh.h>
 #include <VS/Graphics/VS_Model.h>
+#include <VS/Graphics/VS_ModelInstance.h>
+#include <VS/Graphics/VS_ModelInstanceGroup.h>
 #include <VS/Graphics/VS_RenderBuffer.h>
 #include <VS/Graphics/VS_RenderPipeline.h>
 #include <VS/Graphics/VS_RenderPipelineStage.h>

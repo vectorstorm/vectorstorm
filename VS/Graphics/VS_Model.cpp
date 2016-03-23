@@ -8,6 +8,8 @@
  */
 
 #include "VS_Model.h"
+#include "VS_ModelInstance.h"
+#include "VS_ModelInstanceGroup.h"
 
 #include "VS_DisplayList.h"
 #include "VS_RenderQueue.h"
@@ -175,6 +177,85 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 }
 
 vsModel*
+vsModel::LoadModel_InternalV1( vsSerialiserRead& r )
+{
+	vsModel *result = new vsModel;
+	r.String(result->m_name);
+
+	vsVector3D trans, scale;
+	vsVector4D rot;
+	r.Vector3D(trans);
+	r.Vector4D(rot);
+	r.Vector3D(scale);
+
+	result->SetPosition(trans);
+	result->SetScale(scale);
+	result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
+
+	int32_t meshCount;
+	r.Int32(meshCount);
+
+	for ( int i = 0; i < meshCount; i++ )
+	{
+		vsFragment *f = LoadFragment_Internal(r);
+		result->AddFragment(f);
+	}
+
+	int32_t childCount;
+	r.Int32(childCount);
+
+	for ( int32_t i = 0; i < childCount; i++ )
+	{
+		vsModel *child = LoadModel_Internal(r);
+		result->AddChild(child);
+	}
+	return result;
+}
+
+vsModel*
+vsModel::LoadModel_InternalV2( vsSerialiserRead& r )
+{
+	vsModel *result = new vsModel;
+	r.String(result->m_name);
+
+	vsVector3D trans, scale;
+	vsVector4D rot;
+	r.Vector3D(trans);
+	r.Vector4D(rot);
+	r.Vector3D(scale);
+
+	result->SetPosition(trans);
+	result->SetScale(scale);
+	result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
+
+	int32_t lodCount;
+	r.Int32(lodCount);
+	result->SetLodCount(lodCount);
+
+	for ( int l = 0; l < lodCount; l++ )
+	{
+		int32_t meshCount;
+		r.Int32(meshCount);
+
+		for ( int i = 0; i < meshCount; i++ )
+		{
+			vsFragment *f = LoadFragment_Internal(r);
+			result->AddLodFragment(l, f);
+		}
+	}
+
+	int32_t childCount;
+	r.Int32(childCount);
+
+	for ( int32_t i = 0; i < childCount; i++ )
+	{
+		vsModel *child = LoadModel_Internal(r);
+		result->AddChild(child);
+	}
+	return result;
+}
+
+vsModel*
 vsModel::LoadModel_Internal( vsSerialiserRead& r )
 {
 	vsModel *result = NULL;
@@ -182,36 +263,11 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 	r.String(tag);
 	if ( tag == "ModelV1" )
 	{
-		result = new vsModel;
-		r.String(result->m_name);
-
-		vsVector3D trans, scale;
-		vsVector4D rot;
-		r.Vector3D(trans);
-		r.Vector4D(rot);
-		r.Vector3D(scale);
-
-		result->SetPosition(trans);
-		result->SetScale(scale);
-		result->SetOrientation( vsQuaternion( rot.x, rot.y, rot.z, rot.w ) );
-
-		int32_t meshCount;
-		r.Int32(meshCount);
-
-		for ( int i = 0; i < meshCount; i++ )
-		{
-			vsFragment *f = LoadFragment_Internal(r);
-			result->AddFragment(f);
-		}
-
-		int32_t childCount;
-		r.Int32(childCount);
-
-		for ( int32_t i = 0; i < childCount; i++ )
-		{
-			vsModel *child = LoadModel_Internal(r);
-			result->AddChild(child);
-		}
+		result = LoadModel_InternalV1(r);
+	}
+	else if ( tag == "ModelV2" )
+	{
+		result = LoadModel_InternalV2(r);
 	}
 
 	return result;
@@ -325,14 +381,16 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(NULL),
-	m_displayList(list),
-	m_instanceGroup(NULL)
+	m_instanceGroup(NULL),
+	m_displayList(list)
 {
+	SetLodCount(1);
+	SetLodLevel(0);
 }
 
 vsModel::~vsModel()
 {
-	m_fragment.Clear();
+	m_lod.Clear();
 
 	if ( m_displayList )
 		vsDelete(m_displayList);
@@ -360,16 +418,17 @@ vsModel::SetDisplayList( vsDisplayList *list )
 }
 
 void
-vsModel::AddFragment( vsFragment *fragment )
+vsModel::AddLodFragment( int lodLevel, vsFragment *fragment )
 {
+	vsAssert((int)lodLevel < m_lod.ItemCount(), "Tried to add a fragment to a non-existant lod??");
 	if ( fragment )
-		m_fragment.AddItem( fragment );
+		m_lod[lodLevel]->fragment.AddItem( fragment );
 }
 
 void
 vsModel::ClearFragments()
 {
-	m_fragment.Clear();
+	m_lod[0]->fragment.Clear();
 }
 
 void
@@ -380,7 +439,7 @@ vsModel::BuildBoundingBox()
 	{
 		m_displayList->GetBoundingBox(boundingBox);
 	}
-	for ( vsArrayStore<vsFragment>::Iterator iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
 		vsBox3D fragmentBox;
@@ -407,18 +466,20 @@ vsModel::BuildBoundingBox()
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues )
+vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, int lodLevel )
 {
-	for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
 	}
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues )
+vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, int lodLevel )
 {
-	for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
 		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
 	}
@@ -459,9 +520,9 @@ vsModel::Draw( vsRenderQueue *queue )
 				DynamicDraw( queue );
 			}
 
-			if ( !m_fragment.IsEmpty() )
+			if ( !m_lod[m_lodLevel]->fragment.IsEmpty() )
 			{
-				for( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
+				for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
 				{
 					if ( iter->IsVisible() )
 						queue->AddFragmentBatch( *iter );
@@ -476,47 +537,6 @@ vsModel::Draw( vsRenderQueue *queue )
 			}
 		}
 	}
-}
-
-vsModelInstance::~vsModelInstance()
-{
-	group->RemoveInstance(this);
-}
-
-void
-vsModelInstance::SetVisible( bool v )
-{
-	if ( visible != v )
-	{
-		visible = v;
-		group->UpdateInstance( this, visible );
-	}
-}
-
-void
-vsModelInstance::SetMatrix( const vsMatrix4x4& mat )
-{
-	SetMatrix( mat, c_white );
-}
-
-void
-vsModelInstance::SetMatrix( const vsMatrix4x4& mat, const vsColor &c )
-{
-	if ( matrix != mat || color != c)
-	{
-		matrix = mat;
-		color = c;
-		if ( visible )
-		{
-			group->UpdateInstance( this, visible );
-		}
-	}
-}
-
-vsModel *
-vsModelInstance::GetModel()
-{
-	return GetInstanceGroup()->GetModel();
 }
 
 vsModelInstance *
@@ -538,169 +558,17 @@ vsModel::RemoveInstance( vsModelInstance *inst )
 	m_instanceGroup->RemoveInstance( inst );
 }
 
-vsModelInstance *
-vsModelInstanceGroup::MakeInstance()
-{
-	vsModelInstance *inst = new vsModelInstance;
-	AddInstance(inst);
-	return inst;
-}
-
 void
-vsModelInstanceGroup::TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup )
+vsModel::SetLodCount(int count)
 {
-	while( !otherGroup->m_instance.IsEmpty() )
-	{
-		vsModelInstance *instance = otherGroup->m_instance[0];
-		bool visible = instance->visible;
-		otherGroup->RemoveInstance(instance);
-		AddInstance(instance);
-		instance->SetVisible(visible);
-		// UpdateInstance(instance, visible);
-	}
+	vsAssert(count > 0, "Zero-LOD vsModels are not supported");
+	m_lod.SetArraySize(count);
+	m_lodLevel = vsMin(m_lodLevel, count-1);
 }
 
-void
-vsModelInstanceGroup::UpdateInstance( vsModelInstance *inst, bool show )
+int
+vsModel::GetLodFragmentCount( int lodId )
 {
-	vsAssert(inst->group == this, "Wrong group??");
-
-	if ( show )
-	{
-		if ( inst->matrixIndex < 0 ) // we've come into view!
-		{
-			inst->matrixIndex = m_matrix.ItemCount();
-			m_matrix.AddItem( inst->matrix );
-			m_color.AddItem( inst->color );
-			m_matrixInstanceId.AddItem( inst->index );
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-			m_bufferIsDirty = true;
-#endif
-		}
-		else // we were already in view;  just update our matrix
-		{
-			m_matrix[inst->matrixIndex] = inst->matrix;
-			m_color[inst->matrixIndex] = inst->color;
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-			m_bufferIsDirty = true;
-#endif
-		}
-	}
-	else if ( !show && inst->matrixIndex >= 0 ) // we've gone out of view!
-	{
-		int swapFrom = m_matrix.ItemCount() - 1;
-		int swapTo = inst->matrixIndex;
-
-		// We don't need to swap if we were already the last thing in the list.
-		if ( swapFrom != swapTo )
-		{
-			int swapperInstanceId = m_matrixInstanceId[swapFrom];
-			vsModelInstance *swapper = m_instance[swapperInstanceId];
-
-			m_matrix[swapTo] = m_matrix[swapFrom];
-			m_color[swapTo] = m_color[swapFrom];
-			m_matrixInstanceId[swapTo] = m_matrixInstanceId[swapFrom];
-			swapper->matrixIndex = swapTo;
-		}
-		m_matrix.PopBack();
-		m_color.PopBack();
-		m_matrixInstanceId.PopBack();
-		inst->matrixIndex = -1;
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-		m_bufferIsDirty = true;
-#endif
-	}
-}
-
-void
-vsModelInstanceGroup::AddInstance( vsModelInstance *inst )
-{
-	bool wasVisible = inst->visible;
-	inst->group = this;
-	inst->visible = false;
-	inst->index = m_instance.ItemCount();
-	inst->matrixIndex = -1;
-	m_instance.AddItem(inst);
-
-	if ( wasVisible )
-	{
-		inst->SetVisible(true);
-	}
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-	m_bufferIsDirty = true;
-#endif
-}
-
-bool
-vsModelInstanceGroup::ContainsInstance( vsModelInstance *instance )
-{
-	return m_instance.Contains(instance);
-}
-
-
-void
-vsModelInstanceGroup::RemoveInstance( vsModelInstance *inst )
-{
-	// FIRST, update this instance to not be visible.  That gets it out of our
-	// matrix and matrixInstanceId arrays, if it had been visible.
-	UpdateInstance( inst, false );
-
-	// NOW, I want to swap this instance into last position in the instance
-	// array.
-
-	// Check whether I'm already in last position.
-	int lastIndex = m_instance.ItemCount()-1;
-	if ( inst->index != lastIndex )
-	{
-		// Not in last position, so swap that last item into my current spot.
-		vsModelInstance *last = m_instance[ lastIndex ];
-
-		// To do this swap, I potentially need to update two references to the
-		// 'last' item being swapped:  the instance array, and (if the 'last'
-		// instance is visible), the modelInstanceId array which tells where
-		// it can be found in the instance array.
-		m_instance[ inst->index ] = last;
-		last->index = inst->index;
-
-		if ( last->matrixIndex >= 0 )
-		{
-			m_matrixInstanceId[ last->matrixIndex ] = inst->index;
-		}
-	}
-
-	// Finally, drop that last instance.
-	m_instance.PopBack();
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-	m_bufferIsDirty = true;
-#endif
-}
-
-void
-vsModelInstanceGroup::Draw( vsRenderQueue *queue )
-{
-	if ( m_matrix.IsEmpty() )
-		return;
-
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-	if ( m_bufferIsDirty )
-	{
-		vsAssert(m_matrix.ItemCount() == m_color.ItemCount(), "Non-equal instance buffers??");
-		m_matrixBuffer.SetArray(&m_matrix[0], m_matrix.ItemCount() );
-		m_colorBuffer.SetArray(&m_color[0], m_color.ItemCount() );
-		m_bufferIsDirty = false;
-	}
-	m_model->DrawInstanced( queue, &m_matrixBuffer, &m_colorBuffer, m_values );
-#else
-	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values );
-#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
-
-}
-
-void
-vsModelInstanceGroup::CalculateMatrixBounds( vsBox3D& out )
-{
-	out.Clear();
-	for ( int i = 0; i < m_matrix.ItemCount(); i++ )
-		out.ExpandToInclude( m_matrix[i].w );
+	return m_lod[lodId]->fragment.ItemCount();
 }
 
