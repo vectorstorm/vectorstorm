@@ -10,6 +10,7 @@
 #include "VS_FontRenderer.h"
 #include "VS_DisplayList.h"
 #include "VS_Fragment.h"
+#include "Utils/utfcpp/utf8.h"
 
 static float s_globalFontScale = 1.f;
 static vsDisplayList s_tempFontList(1024*10);
@@ -458,7 +459,6 @@ void
 vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in)
 {
 	vsVector2D offset = offset_in;
-	size_t len = strlen(string);
 
 	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
@@ -483,13 +483,18 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 	uint16_t glyphIndices[6] = { 0, 2, 1, 1, 2, 3 };
 
+	size_t len = utf8::distance(string, string + strlen(string));
+	const char* w = string;
 	for ( size_t i = 0; i < len; i++ )
 	{
-		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( string[i] );
+		uint32_t cp = utf8::next(w, string + strlen(string));
+		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( cp );
 
 		if ( !g )
 		{
-			vsLog("Missing character in font: %c", string[i]);
+			char glyphString[5];
+			utf8::append(cp, glyphString);
+			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 		}
 		else
 		{
@@ -524,7 +529,6 @@ void
 vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset_in)
 {
 	vsVector2D offset = offset_in;
-	size_t len = strlen(string);
 
 	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
@@ -550,13 +554,18 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	list->PushTransform(transform);
 	list->BindBuffer( m_font->Size(m_size)->m_ptBuffer );
 
+	size_t len = utf8::distance(string, string + strlen(string));
+	const char* w = string;
 	for ( size_t i = 0; i < len; i++ )
 	{
-		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( string[i] );
+		uint32_t cp = utf8::next(w, string + strlen(string));
+		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( cp );
 
 		if ( !g )
 		{
-			vsLog("Missing character in font: %c", string[i]);
+			char glyphString[5];
+			utf8::append(cp, glyphString);
+			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 		}
 		else
 		{

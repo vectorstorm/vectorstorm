@@ -18,6 +18,7 @@
 #include "VS_System.h"
 
 #include "VS_Preferences.h"
+#include "Utils/utfcpp/utf8.h"
 
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
@@ -463,7 +464,17 @@ vsInput::Update(float timeStep)
 										else
 										{
 											//Remove a character from the end
-											m_stringModeString.erase( m_stringModeString.length() - 1 );
+											size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
+											if ( len > 0 )
+											{
+												len--;
+												// const char* w = m_stringModeString.begin();
+												std::string::iterator w = m_stringModeString.begin();
+												utf8::advance(w, len, m_stringModeString.end());
+												m_stringModeString.erase(w,m_stringModeString.end());
+												// utf8::advance(w,
+												// m_stringModeString.erase( m_stringModeString.length() - 1 );
+											}
 										}
 									}
 									break;

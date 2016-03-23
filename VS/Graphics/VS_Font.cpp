@@ -312,7 +312,7 @@ vsFontSize::LoadBMFont( vsFile *file )
 }
 
 vsGlyph *
-vsFontSize::FindGlyphForCharacter(char letter)
+vsFontSize::FindGlyphForCharacter(uint32_t letter)
 {
 	for ( int i = 0; i < m_glyphCount; i++ )
 	{
@@ -337,7 +337,7 @@ vsFontSize::GetStringWidth( const vsString &string, float size )
 }
 
 float
-vsFontSize::GetCharacterWidth( char c, float size )
+vsFontSize::GetCharacterWidth( uint32_t c, float size )
 {
 	float width = 0.f;
 

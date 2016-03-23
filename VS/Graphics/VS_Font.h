@@ -49,7 +49,7 @@ enum FontContext
 
 struct vsGlyph
 {
-	int		glyph;
+	uint32_t	glyph;
 
 	vsVector3D	vertex[4];        // our vertices
 	vsVector2D	texel[4];         // our texture coordinates
@@ -71,7 +71,7 @@ class vsFontSize
 
 	vsRenderBuffer   m_glyphTriangleList;
 
-	vsGlyph *		FindGlyphForCharacter( char letter );
+	vsGlyph *		FindGlyphForCharacter( uint32_t letter ); // in UTF8 codepoint format
 
 	void LoadOldFormat(vsFile *file);
 	void LoadBMFont(vsFile *file);
@@ -82,7 +82,7 @@ public:
 
 	float			GetNativeSize() { return m_size; }
 
-	float			GetCharacterWidth(char letter, float size);
+	float			GetCharacterWidth(uint32_t letter, float size);
 	float			GetStringWidth(const vsString &string, float size);
 
 	friend class vsFontRenderer;
