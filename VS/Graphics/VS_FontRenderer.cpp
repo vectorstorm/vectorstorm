@@ -495,8 +495,13 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			char glyphString[5];
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
+
+			g = m_font->Size(m_size)->FindGlyphForCharacter(L'□');
+
+			if ( !g )
+				g = m_font->Size(m_size)->FindGlyphForCharacter( '?' );
 		}
-		else
+		if ( g )
 		{
 			vsVector2D characterOffset = offset - g->baseline;
 			vsVector2D scaledPosition;
@@ -566,8 +571,15 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 			char glyphString[5];
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
+			// check whether we have a "missing symbol" glyph.
+
+			g = m_font->Size(m_size)->FindGlyphForCharacter(L'□');
+
+			if ( !g )
+				g = m_font->Size(m_size)->FindGlyphForCharacter( '?' );
 		}
-		else
+
+		if ( g )
 		{
 			list->PushTranslation(offset - g->baseline);
 			list->TriangleStripBuffer( &g->tsBuffer );
