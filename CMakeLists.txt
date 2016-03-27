@@ -38,10 +38,9 @@ else()
 				PATH c:/src/buildzone/lib/Release/Win32)
 	endif()
 endif()
-find_path(GLEW_INCLUDE_DIR glew.h
-	PATH /usr/include/GL /usr/local/include/GL
-	c:/src/buildzone/include/GL
-	include/GL )
+find_path(GLEW_INCLUDE_DIR GL/glew.h
+	PATH /usr/include /usr/local/include
+	c:/src/buildzone/include)
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
 	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
