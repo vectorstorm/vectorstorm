@@ -33,7 +33,7 @@
 #define GLEW_STATIC
 #endif
 
-#include <GL/glew.h>
+#include <glew.h>
 
 #if defined(_WIN32)
 #  include <GL/wglew.h>
