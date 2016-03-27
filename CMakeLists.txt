@@ -41,8 +41,7 @@ endif()
 find_path(GLEW_INCLUDE_DIR glew.h
 	PATH /usr/include/GL /usr/local/include/GL
 	c:/src/buildzone/include/GL
-	~/cross-tools/i686-w64-mingw32/include/GL
-	~/cross-tools/x86_64-w64-mingw32/include/GL )
+	include/GL )
 find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
 	PATH /usr/lib /usr/local/lib ../
 	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
