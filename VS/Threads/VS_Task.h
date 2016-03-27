@@ -11,16 +11,17 @@
 
 #ifdef UNIX
 #include <pthread.h>
+typedef pthread_t thread_t;
 #else
 #include <windows.h>
 
-typedef HANDLE pthread_t;
+typedef HANDLE thread_t;
 
 #endif
 
 class vsTask
 {
-    pthread_t   m_thread;
+    thread_t   m_thread;
     bool        m_done;
 
 #ifdef UNIX
