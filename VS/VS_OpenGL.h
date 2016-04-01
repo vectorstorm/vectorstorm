@@ -16,7 +16,7 @@
 #else
 #include <SDL2/SDL.h>
 #if defined(__APPLE_CC__)
-#include <glew.h>
+#include <GL/glew.h>
 #else
 #if !defined(MSVC)
 #define GLEW_STATIC
