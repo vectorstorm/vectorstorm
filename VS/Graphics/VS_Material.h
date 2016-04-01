@@ -22,6 +22,7 @@ enum vsDrawMode
 	DrawMode_Lit,
 	DrawMode_Add,
 	DrawMode_Subtract,
+	DrawMode_Multiply,
 
 	DRAWMODE_MAX
 };

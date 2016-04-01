@@ -25,7 +25,8 @@ static const vsString s_modeString[DRAWMODE_MAX] =
 	"normal",	//DrawMode_Normal,
 	"lit",		//DrawMode_Lit,
 	"add",		//DrawMode_Add,
-	"subtract"	//DrawMode_Subtract,
+	"subtract",	//DrawMode_Subtract,
+	"multiply"	//DrawMode_Multiply,
 };
 
 static const vsString s_cullString[CULL_MAX] =

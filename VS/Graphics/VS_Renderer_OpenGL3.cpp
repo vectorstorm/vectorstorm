@@ -1353,6 +1353,15 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 				break;
 			}
+		case DrawMode_Multiply:
+			{
+				glBlendEquation(GL_FUNC_ADD);
+				glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+				// glBlendFuncSeparate(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+				break;
+			}
 		case DrawMode_Absolute:
 			{
 #if !TARGET_OS_IPHONE
@@ -1653,6 +1662,7 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 	{
 		case DrawMode_Add:
 		case DrawMode_Subtract:
+		case DrawMode_Multiply:
 		case DrawMode_Normal:
 		case DrawMode_Absolute:
 			if ( mat->m_texture[0] )
