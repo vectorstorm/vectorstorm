@@ -38,6 +38,13 @@ vsColor::FromUInt32(uint32_t c)
 	return FromBytes(cp[0], cp[1], cp[2], cp[3]);
 }
 
+vsColor::vsColor(const vsColorPacked& packed):
+	r(packed.r/255.f),
+	g(packed.g/255.f),
+	b(packed.b/255.f),
+	a(packed.a/255.f)
+{
+}
 
 vsColor::vsColor(const vsColorHSV& in)
 {
@@ -227,3 +234,16 @@ vsColorHSV::vsColorHSV( const vsColor& in )
 	}
 }
 
+vsColorPacked::vsColorPacked(const vsColor& c):
+	r(c.r * 255),
+	g(c.g * 255),
+	b(c.b * 255),
+	a(c.a * 255)
+{
+}
+
+vsColor
+vsColorPacked::operator+( const vsColor &o ) const
+{
+	return vsColor(*this) + o;
+}

@@ -15,7 +15,6 @@
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
-class vsColor;
 class vsRendererState;
 
 
@@ -75,7 +74,7 @@ public:
 	struct PC
 	{
 		vsVector3D		position;
-		vsColor			color;
+		vsColorPacked			color;
 		float			padding[1];		// total:  32 bytes.
 	};
 
@@ -103,7 +102,7 @@ public:
 	struct PCT
 	{
 		vsVector3D		position;
-		vsColor			color;
+		vsColorPacked			color;
 		vsVector2D		texel;			// total:  36 bytes.
 		float			padding[7];		// seven more floats brings us up to 64 bytes.
 	};
@@ -112,7 +111,7 @@ public:
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColor			color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
+		vsColorPacked			color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
 		float			padding[6];		// six more floats brings us up to 64 bytes.
 	};
 
@@ -120,7 +119,7 @@ public:
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColor			color;
+		vsColorPacked			color;
 		vsVector2D		texel;			// total:  48 bytes.
 		float			padding[4];		// four more floats brings us to 64 bytes.
 	};

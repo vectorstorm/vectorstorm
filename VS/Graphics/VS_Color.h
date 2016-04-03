@@ -13,6 +13,7 @@
 #include "Math/VS_Math.h"
 
 class vsColorHSV;
+class vsColorPacked;
 
 class vsColor
 {
@@ -20,6 +21,7 @@ public:
 	float r, g, b, a;
 
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
+	vsColor(const vsColorPacked& packed);
 	vsColor(const vsColorHSV& hsv);
 
 	static vsColor FromHSV(float hue, float saturation, float value);
@@ -45,6 +47,40 @@ public:
 	float	Magnitude() { return vsSqrt( r*r + g*g + b*b + a*a ); }
 
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
+};
+
+class vsColorPacked
+{
+public:
+	uint8_t r, g, b, a;
+
+	vsColorPacked(uint8_t red=0, uint8_t green=0, uint8_t blue=0, uint8_t alpha=1) { r=red; g=green; b=blue; a=alpha; }
+	vsColorPacked(const vsColor& c);
+	vsColorPacked(const vsColorHSV& hsv);
+
+	static vsColor FromHSV(float hue, float saturation, float value);
+	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+	static vsColor FromUInt32(uint32_t rgba);
+	float GetHue() const;
+	float GetSaturation() const;
+	float GetValue() const;
+	vsColorHSV GetHSV() const;
+	uint32_t AsUInt32() const;
+
+	vsColor  operator+( const vsColor &o ) const;
+	vsColor  operator-( const vsColor &o ) const;
+	vsColor & operator+=( const vsColor &o );
+	vsColor  operator*( float scalar );
+	vsColor &  operator*=( float scalar );
+	vsColor  operator*( const vsColor &o ) const;
+	vsColor & operator*=( const vsColor &o );
+
+	bool	operator==( const vsColorPacked &o ) const { return (r==o.r && b==o.b && g==o.g && a==o.a); }
+	bool	operator!=( const vsColorPacked &o ) const { return !(*this==o); }
+
+	float	Magnitude();
+
+	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red*255; g=green*255; b=blue*255; a=alpha*255; };
 };
 
 class vsColorHSV

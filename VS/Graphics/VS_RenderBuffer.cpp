@@ -415,7 +415,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			PC dummyArray[2];
 			int stride = sizeof(PC);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 
 			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
@@ -426,13 +426,13 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PC*)m_array)[0].color );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PC*)m_array)[0].color );
 			}
 			break;
 		}
@@ -524,7 +524,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			int stride = sizeof(PCNT);
 			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
 			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
@@ -541,7 +541,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
@@ -550,7 +550,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].color );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCNT*)m_array)[0].color );
 			}
 			break;
 		}
@@ -559,7 +559,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			PCN dummyArray[2];
 			int stride = sizeof(PCN);
 			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
@@ -573,7 +573,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
@@ -581,7 +581,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].color );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCN*)m_array)[0].color );
 			}
 			break;
 		}
@@ -589,7 +589,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			PCT dummyArray[2];
 			int stride = sizeof(PCT);
-			size_t cStart = (&dummyArray[0].color.r - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
@@ -604,7 +604,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, cStartPtr );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
@@ -612,7 +612,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].color );
+				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
 			}
 			break;
 		}
