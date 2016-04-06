@@ -85,28 +85,29 @@ vsMutex::Unlock()
 
 vsMutex::vsMutex()
 {
-	m_mutex = CreateMutex(
-        NULL,              // default security attributes
-        FALSE,             // initially not owned
-        NULL);             // unnamed mutex
+	m_mutex = SDL_CreateMutex();
+	// m_mutex = CreateMutex(
+    //     NULL,              // default security attributes
+    //     FALSE,             // initially not owned
+    //     NULL);             // unnamed mutex
 
 }
 
 vsMutex::~vsMutex()
 {
-	CloseHandle(m_mutex);
+	SDL_DestroyMutex(m_mutex);
 }
 
 void
 vsMutex::Lock()
 {
-	WaitForSingleObject( m_mutex, INFINITE );
+	SDL_LockMutex(m_mutex);
 }
 
 void
 vsMutex::Unlock()
 {
-	ReleaseMutex( m_mutex );
+	SDL_UnlockMutex(m_mutex);
 }
 
 

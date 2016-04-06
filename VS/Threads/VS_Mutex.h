@@ -17,8 +17,10 @@ typedef OSSpinLock mutex_t;
 #include <pthread.h>
 typedef pthread_spinlock_t mutex_t;
 #else
-#include <windows.h>
-typedef HANDLE mutex_t;
+// #include <windows.h>
+// typedef HANDLE mutex_t;
+#include "SDL2/SDL.h"
+typedef SDL_mutex* mutex_t;
 #undef PlaySound	// gah, Windows.
 
 #endif
