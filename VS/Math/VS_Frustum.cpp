@@ -144,7 +144,7 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	// make a sphere that encompasses our box.  If it's entirely
 	// inside or entirely outside our view, just use that result.
 	//
-	// (Technically, we should be using the diagonal as the radius.  But
+	// (Technically, we should be using half the diagonal as the radius.  But
 	// since calculating that involves a square root, let's just get the
 	// maximum dimension, and then assume that the box is a cube of that size)
 	//
@@ -154,8 +154,9 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	// it's not actually inside.  And it'll still reject things which are
 	// well-and-truly outside our view.
 	//
-	const float halfSqrtTwo = 0.707106f;	// approximately
-	float radius = halfSqrtTwo * vsMax(box.Width(), vsMax(box.Height(), box.Depth()));
+	const float sqrtThree = 1.732051; // approximately
+	float longestDimension = vsMax(box.Width(), vsMax(box.Height(), box.Depth()));
+	float radius = longestDimension * 0.5f * sqrtThree;
 	vsVector3D middle = box.Middle();
 	Classification sphereClassification = ClassifySphere( middle, radius );
 	if ( sphereClassification != Intersect )
