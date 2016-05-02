@@ -31,10 +31,10 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
-vsFile::vsFile( const vsString &filename, vsFile::Mode mode )
+vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
+	m_mode(mode),
+	m_length(0)
 {
-	m_mode = mode;
-
 	if ( mode == MODE_Read )
 		m_file = PHYSFS_openRead( filename.c_str() );
 	else
