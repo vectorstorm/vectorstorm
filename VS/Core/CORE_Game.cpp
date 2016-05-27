@@ -106,8 +106,12 @@ coreGame::CreateGameSystems()
 {
 	s_system[ GameSystem_Timer ] = new vsTimerSystem;
 	s_system[ GameSystem_Input ] = new vsInput;
+#ifdef USE_BOX2D_PHYSICS
 	s_system[ GameSystem_Collision ] = new vsCollisionSystem;
+#endif
+#ifdef USE_SDL_SOUND
 	s_system[ GameSystem_Sound ] = new vsSoundSystem;
+#endif
 }
 
 void
@@ -115,8 +119,12 @@ coreGame::DestroyGameSystems()
 {
 	vsDelete( s_system[ GameSystem_Timer] );
 	vsDelete( s_system[ GameSystem_Input] );
+#ifdef USE_BOX2D_PHYSICS
 	vsDelete( s_system[ GameSystem_Collision] );
+#endif
+#ifdef USE_SDL_SOUND
 	vsDelete( s_system[ GameSystem_Sound] );
+#endif
 }
 
 
@@ -194,17 +202,21 @@ coreGame::GetInput()
 	return (vsInput *)s_system[GameSystem_Input];
 }
 
+#ifdef USE_BOX2D_PHYSICS
 vsCollisionSystem *
 coreGame::GetCollision()
 {
 	return (vsCollisionSystem *)s_system[GameSystem_Collision];
 }
+#endif
 
+#ifdef USE_SDL_SOUND
 vsSoundSystem *
 coreGame::GetSound()
 {
 	return (vsSoundSystem *)s_system[GameSystem_Sound];
 }
+#endif
 
 vsTimerSystem *
 coreGame::GetTimer()

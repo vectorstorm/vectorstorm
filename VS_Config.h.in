@@ -1,2 +1,4 @@
 // Configured build settings, as detected by cmake
 #cmakedefine HIGHDPI_SUPPORTED
+#cmakedefine USE_SDL_SOUND
+#cmakedefine USE_BOX2D_PHYSICS

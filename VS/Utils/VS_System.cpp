@@ -84,7 +84,9 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	atexit(SDL_Quit);
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+#if defined(USE_SDL_SOUND)
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
+#endif // USE_SDL_SOUND
 #endif
 
 #if defined(_WIN32)

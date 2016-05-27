@@ -335,9 +335,9 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	vsString result = vsFormatString("./%s",filename.c_str());
 	return result;
 #else
-
-	vsString dir = PHYSFS_getRealDir( filename_in.c_str() );
-	return dir + "/" + filename_in;
+	vsString filename(filename_in);
+	vsString dir = PHYSFS_getRealDir( filename.c_str() );
+	return dir + "/" + filename;
 #endif
 }
 

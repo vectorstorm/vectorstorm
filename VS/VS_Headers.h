@@ -31,14 +31,19 @@
 #include <VS/Utils/VS_WeakPointer.h>
 #include <VS/Utils/VS_WeakPointerTarget.h>
 
+#ifdef USE_SDL_SOUND
 #include <Sound/VS_Music.h>
 #include <Sound/VS_SoundSample.h>
 #include <Sound/VS_SoundSystem.h>
+#endif //USE_SDL_SOUND
 
+#ifdef USE_BOX2D_PHYSICS
 #include <Physics/VS_CollisionObject.h>
 #include <Physics/VS_PhysicsEmitter.h>
 #include <Physics/VS_PhysicsSprite.h>
 #include <Physics/VS_CollisionSystem.h>
+#endif //USE_BOX2D_PHYSICS
+
 #include <Input/VS_Input.h>
 #include <Utils/VS_TimerSystem.h>
 

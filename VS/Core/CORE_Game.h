@@ -15,8 +15,12 @@ enum GameSystem
 {
 	GameSystem_Timer,			// this system caps our frame rate
 	GameSystem_Input,			// this system reads input devices
+#ifdef USE_BOX2D_PHYSICS
 	GameSystem_Collision,		// this system performs collision tests
+#endif // USE_BOX2D_PHYSICS
+#ifdef USE_SDL_SOUND
 	GameSystem_Sound,			// this system performs sound mixing
+#endif // USE_SDL_SOUND
 	GameSystem_MAX
 };
 
@@ -79,8 +83,12 @@ public:
 	void					SetTimeStep(float timeStep) { m_timeStep = timeStep; }
 
 	vsInput *				GetInput();
+#ifdef USE_BOX2D_PHYSICS
 	vsCollisionSystem *				GetCollision();
+#endif
+#ifdef USE_SDL_SOUND
 	vsSoundSystem *				GetSound();
+#endif
 	vsTimerSystem *				GetTimer();
 };
 

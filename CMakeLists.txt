@@ -8,16 +8,21 @@ endif()
 project( vectorstorm )
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
+option( USE_SDL_SOUND "If disabled, don't use the SDL-based sound system." YES )
+option( USE_BOX2D_PHYSICS "If disabled, don't use the Box2D collision system." YES )
+
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
-find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
-	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
-find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
-	PATH c:/src/buildzone/include)
 
+if ( USE_SDL_SOUND )
+	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
+		PATH c:/src/buildzone/lib/x86/)
+	find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
+		PATH c:/src/buildzone/include)
+endif()
 
 if(UNIX)
 	find_package(PNG REQUIRED)
@@ -41,16 +46,19 @@ endif()
 find_path(GLEW_INCLUDE_DIR GL/glew.h
 	PATH /usr/include /usr/local/include
 	c:/src/buildzone/include)
-find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
-	PATH /usr/lib /usr/local/lib ../
-	c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
-find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
-	PATH /usr/lib /usr/local/lib ../
-	c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
-find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
-	PATH /usr/include /usr/local/include
-	/usr/include/Box2D /usr/local/include/Box2D
-	c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
+
+if (USE_BOX2D_PHYSICS)
+	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
+		PATH /usr/lib /usr/local/lib ../
+		c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
+	find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
+		PATH /usr/lib /usr/local/lib ../
+		c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
+	find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
+		PATH /usr/include /usr/local/include
+		/usr/include/Box2D /usr/local/include/Box2D
+		c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
+endif()
 
 if(WIN32)
 	# find_file(ZLIB_DLL zlib1.dll REQUIRED
@@ -61,14 +69,18 @@ if(WIN32)
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
-	find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
+	if ( USE_SDL_SOUND )
+		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
+			PATH c:/src/buildzone/lib/x86 )
+	endif()
 
 	if ( MINGW )
-		find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
-		find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
 		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
-		find_file(OGG_DLL libogg-0.dll REQUIRED )
+		if ( USE_SDL_SOUND )
+			find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
+			find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
+			find_file(OGG_DLL libogg-0.dll REQUIRED )
+		endif()
 	else()
 		find_file(GLEW_DLL glew32.dll REQUIRED
 			PATH c:/src/buildzone/bin/Release/Win32 )
@@ -271,24 +283,28 @@ set(NETWORK_SOURCES
 	VS/Network/VS_SocketTCP.cpp
 	VS/Network/VS_SocketTCP.h
 	)
-set(PHYSICS_SOURCES
-	VS/Physics/VS_CollisionObject.cpp
-	VS/Physics/VS_CollisionObject.h
-	VS/Physics/VS_CollisionSystem.cpp
-	VS/Physics/VS_CollisionSystem.h
-	VS/Physics/VS_PhysicsEmitter.cpp
-	VS/Physics/VS_PhysicsEmitter.h
-	VS/Physics/VS_PhysicsSprite.cpp
-	VS/Physics/VS_PhysicsSprite.h
-	)
-set(SOUND_SOURCES
-	VS/Sound/VS_Music.cpp
-	VS/Sound/VS_Music.h
-	VS/Sound/VS_SoundSample.cpp
-	VS/Sound/VS_SoundSample.h
-	VS/Sound/VS_SoundSystem.cpp
-	VS/Sound/VS_SoundSystem.h
-	)
+if ( USE_BOX2D_PHYSICS )
+	set(PHYSICS_SOURCES
+		VS/Physics/VS_CollisionObject.cpp
+		VS/Physics/VS_CollisionObject.h
+		VS/Physics/VS_CollisionSystem.cpp
+		VS/Physics/VS_CollisionSystem.h
+		VS/Physics/VS_PhysicsEmitter.cpp
+		VS/Physics/VS_PhysicsEmitter.h
+		VS/Physics/VS_PhysicsSprite.cpp
+		VS/Physics/VS_PhysicsSprite.h
+		)
+endif()
+if ( USE_SDL_SOUND )
+	set(SOUND_SOURCES
+		VS/Sound/VS_Music.cpp
+		VS/Sound/VS_Music.h
+		VS/Sound/VS_SoundSample.cpp
+		VS/Sound/VS_SoundSample.h
+		VS/Sound/VS_SoundSystem.cpp
+		VS/Sound/VS_SoundSystem.h
+		)
+endif()
 set(THREADS_SOURCES
 	VS/Threads/VS_Mutex.cpp
 	VS/Threads/VS_Mutex.h
@@ -421,18 +437,30 @@ endif()
 		${PLATFORM_SOURCES}
 		)
 
-	target_link_libraries( vectorstorm
+	set( LIBRARIES
 		${OPENGL_LIBRARIES}
 		${PNG_LIBRARY}
 		${SDL_LIBRARY}
 		${SDL_IMAGE_LIBRARY}
-		${SDL_MIXER_LIBRARY}
 		${GLEW_LIBRARY}
 		${ZLIB_LIBRARY}
-		debug ${BOX2D_LIBRARY_DEBUG}
-		optimized ${BOX2D_LIBRARY_RELEASE}
 		${PTHREAD_LIBRARY}
 		${PHYSFS_LIBRARY}
+		)
+	if ( USE_SDL_SOUND )
+		set( LIBRARIES ${LIBRARIES}
+			${SDL_MIXER_LIBRARY})
+	endif()
+	if ( USE_BOX2D_PHYSICS )
+		set( LIBRARIES ${LIBRARIES}
+			debug ${BOX2D_LIBRARY_DEBUG}
+			optimized ${BOX2D_LIBRARY_RELEASE})
+	endif()
+
+
+
+	target_link_libraries( vectorstorm
+		${LIBRARIES}
 		)
 
 	set_target_properties(vectorstorm PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "/Library/Frameworks/")	# Working around bug in XCode 4.3.3
