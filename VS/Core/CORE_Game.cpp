@@ -27,10 +27,11 @@ coreGameSystem	*coreGame::s_system[GameSystem_MAX];
 
 //coreGame *coreGame::s_instance = NULL;
 
-coreGame::coreGame()
+coreGame::coreGame():
+	m_system(NULL),
+	m_currentMode(NULL),
+	m_sceneCount(1)
 {
-	m_sceneCount = 1;
-	m_currentMode = NULL;
 }
 
 coreGame::~coreGame()
@@ -137,14 +138,28 @@ coreGame::ConfigureGameSystems()
 {
 	m_systemCount = GameSystem_MAX;
 
-	for ( int i = 0; i < GameSystem_MAX; i++ )
+	m_system = (coreGameSystem**)malloc( sizeof( coreGameSystem* ) * m_systemCount );
+	for ( int i = 0; i < m_systemCount; i++ )
 		m_system[i] = s_system[i];
+}
+
+void
+coreGame::AddSystem( coreGameSystem *system )
+{
+	coreGameSystem** newSystems = (coreGameSystem**)malloc( sizeof( coreGameSystem* ) * (m_systemCount+1) );
+	for ( int i = 0; i < m_systemCount; i++ )
+		newSystems[i] = m_system[i];
+	newSystems[m_systemCount] = system;
+
+	free(m_system);
+	m_system = newSystems;
+	m_systemCount++;
 }
 
 void
 coreGame::InitGameSystems()
 {
-	for ( int i = 0; i < GameSystem_MAX; i++ )
+	for ( int i = 0; i < m_systemCount; i++ )
 	{
 		m_system[i]->Init();
 		m_system[i]->Activate();
@@ -154,12 +169,14 @@ coreGame::InitGameSystems()
 void
 coreGame::DeinitGameSystems()
 {
-	for ( int i = 0; i < GameSystem_MAX; i++ )
+	for ( int i = 0; i < m_systemCount; i++ )
 	{
 		m_system[i]->Deinit();
 //		delete m_system[i];
 //		m_system[i] = NULL;
 	}
+	free(m_system);
+	m_system = NULL;
 }
 
 void
@@ -167,7 +184,7 @@ coreGame::Go()
 {
 	m_framesRendered++;
 
-	for ( int i = 0; i < GameSystem_MAX; i++ )
+	for ( int i = 0; i < m_systemCount; i++ )
 		if ( m_system[i]->IsActive() )
 			m_system[i]->Update( m_timeStep );
 
@@ -183,7 +200,7 @@ coreGame::Go()
 
 	vsScreen::Instance()->Update( m_timeStep );
 
-	for ( int i = 0; i < GameSystem_MAX; i++ )
+	for ( int i = 0; i < m_systemCount; i++ )
 		if ( m_system[i]->IsActive() )
 			m_system[i]->PostUpdate( m_timeStep );
 
