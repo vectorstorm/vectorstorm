@@ -23,7 +23,7 @@ struct vsModelInstance;
 class vsModelInstanceGroup;
 class vsShaderValues;
 
-// #define INSTANCED_MODEL_USES_LOCAL_BUFFER
+#define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 class vsModelInstanceLodGroup : public vsEntity
 {

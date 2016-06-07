@@ -526,7 +526,6 @@ vsRenderer_OpenGL3::PostRender()
 	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 	m_state.Flush();
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 	vsTimerSystem::Instance()->EndGPUTime();
 }

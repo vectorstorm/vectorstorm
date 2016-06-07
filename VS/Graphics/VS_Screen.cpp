@@ -141,7 +141,7 @@ vsScreen::BuildDefaultPipeline()
 {
 	vsDelete( m_pipeline );
 	m_pipeline = new vsRenderPipeline(2);
-	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, false ));
+	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
 	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 }
 
