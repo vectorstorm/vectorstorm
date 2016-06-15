@@ -476,6 +476,8 @@ vsSystemPreferences::CheckResolutions()
 
 	/* Check if our resolution is restricted */
 	{
+		int actualModeCount = 0;
+
 		m_supportedResolutionCount = modeCount;
 		/* Print valid modes */
 		vsLog("Available Modes");
@@ -484,16 +486,28 @@ vsSystemPreferences::CheckResolutions()
 
 		for(int i=0;i<modeCount;i++)
 		{
-			m_supportedResolution[modeCount-(i+1)].width = modes[i].w;
-			m_supportedResolution[modeCount-(i+1)].height = modes[i].h;
-
-			if ( modes[i].w > maxWidth )
-				maxWidth = modes[i].w;
-			if ( modes[i].h > maxHeight )
-				maxHeight = modes[i].h;
+			bool alreadyAdded = false;
+			for ( int j = 0; j < actualModeCount; j++ )
+			{
+				if ( modes[i].w == m_supportedResolution[j].width &&
+						modes[i].h == m_supportedResolution[j].height )
+				{
+					alreadyAdded = true;
+					break;
+				}
+			}
+			if ( !alreadyAdded )
+			{
+				m_supportedResolution[actualModeCount].width = modes[i].w;
+				m_supportedResolution[actualModeCount].height = modes[i].h;
+				maxWidth = vsMax( maxWidth, m_supportedResolution[actualModeCount].width );
+				maxHeight = vsMax( maxHeight, m_supportedResolution[actualModeCount].height );
+				actualModeCount++;
+			}
+			m_supportedResolutionCount = actualModeCount;
 		}
 
-		for(int i = 0; i<modeCount; i++ )
+		for(int i = 0; i<m_supportedResolutionCount; i++ )
 		{
 			vsLog("%d:  %d x %d", i, m_supportedResolution[i].width, m_supportedResolution[i].height);
 		}
@@ -501,13 +515,13 @@ vsSystemPreferences::CheckResolutions()
 
 	m_resolutionX = m_preferences->GetPreference("ResolutionX", 1024, 0, maxWidth);
 	m_resolutionY = m_preferences->GetPreference("ResolutionY", 576, 0, maxHeight);
-	int selectedResolution = modeCount-1;
-	//int exactResolution = modeCount-1;
+	int selectedResolution = m_supportedResolutionCount-1;
+	//int exactResolution = m_supportedResolutionCount-1;
 
 	int desiredWidth = m_resolutionX->m_value;
 	int desiredHeight = m_resolutionY->m_value;
 
-	for ( int j = 0; j < modeCount; j++ )
+	for ( int j = m_supportedResolutionCount-1; j >= 0; j-- )
 	{
 		if ( m_supportedResolution[j].width <= desiredWidth )
 		{
