@@ -454,6 +454,10 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
+	int nowWidth, nowHeight;
+	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+	if ( nowWidth != width || nowHeight != height )
+		SDL_SetWindowSize(g_sdlWindow, width, height);
 	SDL_SetWindowFullscreen(g_sdlWindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	m_widthPixels = width;
 	m_heightPixels = height;
