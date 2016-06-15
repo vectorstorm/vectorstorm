@@ -149,36 +149,12 @@ vsCamera3D::GetProjectionMatrix()
 		float hh = vsTan(m_fov * .5f) * m_nearPlane;
 		float hw = hh * m_aspectRatio;
 
-		/*vsMatrix4x4 m(
-				vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-				vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane) ),
-				vsVector4D( 0.f, 0.f, -1.f, 0.f )
-				);*/
-		// vsMatrix4x4 m(
-		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -2.f*(m_farPlane*m_nearPlane)/(m_farPlane-m_nearPlane) ),
-		// 		vsVector4D( 0.f, 0.f, -1, 0.f )
-		// 		);
-		// vsMatrix4x4 m(
-		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-		// 		vsVector4D( 0.f, 0.f, -(m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), -1.f ),
-		// 		vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
-		// 		);
 		vsMatrix4x4 m(
 				vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
 				vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
 				vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_farPlane - m_nearPlane), 1.f ),
 				vsVector4D( 0.f, 0.f, -2.f * (m_farPlane * m_nearPlane) / (m_farPlane - m_nearPlane), 0.f )
 				);
-		// vsMatrix4x4 m(
-		// 		vsVector4D( (2.f*m_nearPlane) / (hw * 2.0f), 0.f, 0.f, 0.f ),
-		// 		vsVector4D( 0.f, (2.f*m_nearPlane) / (hh * 2.0f), 0.f, 0.f ),
-		// 		vsVector4D( 0.f, 0.f, (m_nearPlane + m_farPlane) / (m_nearPlane - m_farPlane), -1.f ),
-		// 		vsVector4D( 0.f, 0.f, (2.f * m_farPlane * m_nearPlane) / (m_nearPlane - m_farPlane), 0.f )
-		// 		);
 
 		return m;
 	}
@@ -197,12 +173,6 @@ vsCamera3D::GetProjectionMatrix()
 				vsVector4D( 0.f, 0.f, -2.f / (f-n), 0.f ),
 				vsVector4D( 0.f, 0.f, 0.f, 1.f )
 				);
-		// vsMatrix4x4 m(
-		// 		vsVector4D( 1.f / hw, 0.f, 0.f, 0.f ),
-		// 		vsVector4D( 0.f, 1.f / hh, 0.f, 0.f ),
-		// 		vsVector4D( 0.f, 0.f, -2.f / (f-n), -(f+n) / (f-n) ),
-		// 		vsVector4D( 0.f, 0.f, 0.f, 1.f )
-		// 		);
 
 		return m;
 	}
