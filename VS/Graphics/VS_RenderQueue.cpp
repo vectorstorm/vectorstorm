@@ -701,7 +701,7 @@ vsRenderQueue::PickStageForMaterial( vsMaterial *material )
 	{
 		return 2;
 	}
-	else if ( material->GetResource()->m_glow )
+	else if ( material->GetResource()->m_glow && !material->GetResource()->m_preGlow )
 	{
 		return 1;
 	}

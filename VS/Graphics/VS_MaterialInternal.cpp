@@ -58,6 +58,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_clampU(false),
 	m_clampV(false),
 	m_glow(false),
+	m_preGlow(false),
 	m_postGlow(false),
 	m_hasColor(true),
 	m_blend(true)
@@ -89,6 +90,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_clampU(false),
 	m_clampV(false),
 	m_glow(false),
+	m_preGlow(false),
 	m_postGlow(false),
 	m_hasColor(true),
 	m_blend(true)
@@ -181,6 +183,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "glow" )
 				{
 					m_glow = sr->Bool();
+				}
+				else if ( label == "preglow" )
+				{
+					m_preGlow = sr->Bool();
 				}
 				else if ( label == "postglow" )
 				{

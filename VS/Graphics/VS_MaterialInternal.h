@@ -67,6 +67,7 @@ public:
 	bool		m_clampU;
 	bool		m_clampV;
 	bool		m_glow;
+	bool		m_preGlow;
 	bool		m_postGlow;
 	bool		m_hasColor;
 	bool		m_blend;
