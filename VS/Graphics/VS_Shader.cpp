@@ -213,8 +213,8 @@ vsShader::SetColor( const vsColor& color )
 	{
 		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
 	}
-
-	glVertexAttrib4f( 3, color.r, color.g, color.b, color.a );
+	// this is vertex color;  don't set that!
+	glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
 }
 
 void

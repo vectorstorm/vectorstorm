@@ -33,7 +33,7 @@ struct lightSourceParameters
 	vec4 specular;             // Scli
 	vec3 position;             // Ppli
 	vec3 halfVector;           // Derived: Hi
-}; 
+};
 
 uniform lightSourceParameters lightSource[4];
 
@@ -45,8 +45,7 @@ void main(void)
 	texcoord_out = texcoord;
 #endif // TEXTURE
 
-	/* frontColor = universal_color * color; */
-	frontColor = color;
+	frontColor = universal_color * color;
 	//gl_Position    = ftransform();
 	gl_Position = viewToProjection * worldToView * localToWorldAttrib * vertex;
 	// gl_Position = vertex * localToWorld * worldToView * viewToProjection;

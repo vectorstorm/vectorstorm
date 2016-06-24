@@ -582,6 +582,15 @@ vsRenderer_OpenGL3::FlushRenderState()
 		else
 			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
 
+		if ( m_currentMaterial->GetResource()->m_glow )
+		{
+			// debugging!
+			// vsLog("DEBUGGING GLOW RENDER:");
+			// vsLog("CurrentColor: %f,%f,%f,%f", m_currentColor.r, m_currentColor.g, m_currentColor.b, m_currentColor.a);
+			// vsLog("CurrentColorsBuffer: %s", m_currentColorsBuffer ? "TRUE" : "FALSE");
+			// vsLog("CurrentColors: %s", m_currentColors ? "TRUE" : "FALSE");
+		}
+
 		m_currentShader->SetColor( m_currentColor );
 		if ( m_currentColorsBuffer )
 			m_currentShader->SetInstanceColors( m_currentColorsBuffer );
@@ -666,12 +675,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetColors:
 				{
+					m_currentColor = c_white;
 					m_currentColors = (vsColor*)op->data.p;
 					m_currentColorsBuffer = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetColorsBuffer:
 				{
+					m_currentColor = c_white;
 					m_currentColors = NULL;
 					m_currentColorsBuffer = (vsRenderBuffer*)op->data.p;
 					break;
