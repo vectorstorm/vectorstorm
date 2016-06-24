@@ -20,6 +20,10 @@ class vsRenderQueue;
 // for a 2D line set, we can just spit out a static fragment.  Not like
 // 3D where we need to check the camera position and recreate our
 // renderable model each frame.
+vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, vsColor *carray, int count, float width, bool loop );
+vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, vsColor *carray, int count, float width );
+
+// Old function signature for backwards-compatibility
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
 
@@ -39,6 +43,7 @@ class vsLines3D: public vsModel
 	bool m_widthInScreenspace;
 
 	vsRenderBuffer m_vertices;
+	vsRenderBuffer m_colors;
 	vsRenderBuffer m_indices;
 	int m_vertexCursor;
 	int m_indexCursor;
@@ -57,8 +62,10 @@ public:
 
 	void Clear();
 	void AddLine( vsVector3D &a, vsVector3D &b );
-	void AddStrip( vsVector3D *array, int arraySize );
-	void AddLoop( vsVector3D *array, int arraySize );
+	void AddStrip( vsVector3D *array, int arraySize ) { AddStrip(array, NULL, arraySize); }
+	void AddStrip( vsVector3D *array, vsColor *carray, int arraySize );
+	void AddLoop( vsVector3D *array, int arraySize ) { AddLoop(array, NULL, arraySize); }
+	void AddLoop( vsVector3D *array, vsColor *carray, int arraySize );
 
 	void DynamicDraw( vsRenderQueue *queue );
 

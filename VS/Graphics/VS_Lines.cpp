@@ -14,12 +14,12 @@
 
 float vsLines3D::s_widthFactor = 1.f;
 
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, int count, float width )
+vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, vsColor *color, int count, float width )
 {
 	size_t vertexCount = (count/2) * 4;
 	size_t indexCount = (count/2) * 6;
 
-	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -41,6 +41,21 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, int count
 		va[vertexCursor+1].position = point[preI] + (offsetPre * halfWidth);
 		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
 		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
+
+		if ( color )
+		{
+			va[vertexCursor].color = color[preI];
+			va[vertexCursor+1].color = color[preI];
+			va[vertexCursor+2].color = color[postI];
+			va[vertexCursor+3].color = color[postI];
+		}
+		else
+		{
+			va[vertexCursor].color = c_white;
+			va[vertexCursor+1].color = c_white;
+			va[vertexCursor+2].color = c_white;
+			va[vertexCursor+3].color = c_white;
+		}
 
 		ia[indexCursor] = vertexCursor;
 		ia[indexCursor+1] = vertexCursor+1;
@@ -72,14 +87,14 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, int count
 	return fragment;
 }
 
-vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int count, float width, bool loop )
+vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor *color, int count, float width, bool loop )
 {
 	size_t vertexCount = count * 2;
 	size_t indexCount = count * 6;
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -163,6 +178,16 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 		}
 
 		va[vertexCursor+1].position = vertexPosition;
+		if ( color )
+		{
+			va[vertexCursor].color = color[midI];
+			va[vertexCursor+1].color = color[midI];
+		}
+		else
+		{
+			va[vertexCursor].color = c_white;
+			va[vertexCursor+1].color = c_white;
+		}
 
 		if ( loop || i != count - 1 ) // not at the end of the strip
 		{
@@ -200,12 +225,15 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, int coun
 	return fragment;
 }
 
+vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,NULL,count,width,loop); }
+vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,NULL,count,width); }
+
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width )
 {
 	size_t vertexCount = (count/2) * 4;
 	size_t indexCount = (count/2) * 6;
 
-	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -227,6 +255,11 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 		va[vertexCursor+1].position = point[preI] + (offsetPre * halfWidth);
 		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
 		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
+
+		va[vertexCursor].color = c_white;
+		va[vertexCursor+1].color = c_white;
+		va[vertexCursor+2].color = c_white;
+		va[vertexCursor+3].color = c_white;
 
 		ia[indexCursor] = vertexCursor;
 		ia[indexCursor+1] = vertexCursor+1;
@@ -392,11 +425,13 @@ class vsLines3D::Strip
 {
 public:
 	vsVector3D *m_vertex;
+	vsColor *m_color;
 	int m_length;
 	bool m_loop;
 
 	Strip( vsVector3D *array, int length ):
 		m_vertex( new vsVector3D[length] ),
+		m_color( NULL ),
 		m_length( length ),
 		m_loop(false)
 	{
@@ -405,9 +440,22 @@ public:
 			m_vertex[i] = array[i];
 		}
 	}
+	Strip( vsVector3D *array, vsColor *carray, int length ):
+		m_vertex( new vsVector3D[length] ),
+		m_color( new vsColor[length] ),
+		m_length( length ),
+		m_loop(false)
+	{
+		for ( int i = 0; i < length; i++ )
+		{
+			m_vertex[i] = array[i];
+			m_color[i] = carray[i];
+		}
+	}
 	~Strip()
 	{
 		vsDeleteArray( m_vertex );
+		vsDeleteArray( m_color );
 	}
 };
 
@@ -447,21 +495,26 @@ vsLines3D::AddLine( vsVector3D &a, vsVector3D &b )
 }
 
 void
-vsLines3D::AddStrip( vsVector3D *array, int arraySize )
+vsLines3D::AddStrip( vsVector3D *array, vsColor *carray, int arraySize )
 {
 	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines3D" );
 	int i = m_stripCount++;
-
-	m_strip[i] = new Strip(array, arraySize);
+	if ( carray )
+		m_strip[i] = new Strip(array, carray, arraySize);
+	else
+		m_strip[i] = new Strip(array, arraySize);
 }
 
 void
-vsLines3D::AddLoop( vsVector3D *array, int arraySize )
+vsLines3D::AddLoop( vsVector3D *array, vsColor *carray, int arraySize )
 {
 	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines3D" );
 	int i = m_stripCount++;
 
-	m_strip[i] = new Strip(array, arraySize);
+	if ( carray )
+		m_strip[i] = new Strip(array, carray, arraySize);
+	else
+		m_strip[i] = new Strip(array, arraySize);
 	m_strip[i]->m_loop = true;
 }
 
@@ -505,6 +558,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 		return;
 
 	m_vertices.ResizeArray( sizeof(vsVector3D) * vertexCount );
+	m_colors.ResizeArray( sizeof(vsColor) * vertexCount );
 	m_indices.ResizeArray( sizeof(uint16_t) * indexCount );
 
 	for ( int i = 0; i < m_stripCount; i++ )
@@ -513,10 +567,12 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 	}
 
 	m_vertices.BakeArray();
+	m_colors.BakeArray();
 	m_indices.BakeArray();
 
 	vsDisplayList *	list = queue->MakeTemporaryBatchList( GetMaterial(), queue->GetMatrix(), 1024 );
 	list->VertexBuffer(&m_vertices);
+	list->ColorBuffer(&m_colors);
 	list->TriangleListBuffer(&m_indices);
 	list->ClearBuffers();
 }
@@ -535,6 +591,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
 	vsVector3D *va = m_vertices.GetVector3DArray();
+	vsColor *ca = m_colors.GetColorArray();
 	uint16_t *ia = m_indices.GetIntArray();
 
 	for ( int i = 0; i < strip->m_length; i++ )
@@ -642,6 +699,16 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		}
 
 		va[m_vertexCursor+1] = vertexPosition;
+		if ( strip->m_color )
+		{
+			ca[m_vertexCursor] = strip->m_color[i];
+			ca[m_vertexCursor+1] = strip->m_color[i];
+		}
+		else
+		{
+			ca[m_vertexCursor] = c_white;
+			ca[m_vertexCursor+1] = c_white;
+		}
 
 		if ( i != strip->m_length - 1 ) // not at the end of the strip
 		{
