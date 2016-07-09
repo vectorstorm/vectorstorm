@@ -8,6 +8,7 @@
  */
 
 #include "VS_Heap.h"
+#include "VS_Config.h"
 
 #ifdef MSVC
 #define strncpy strncpy_s
@@ -35,6 +36,11 @@ vsHeap::vsHeap(vsString name, size_t size):
 		m_startOfMemory = malloc(size);
 		s_current = this;
 		Push(this);
+	}
+	if ( m_startOfMemory == NULL )
+	{
+		vsLog("UNABLE TO ALLOCATE MEMORY HEAP FOR CUSTOM ALLOCATOR!");
+		exit(1);
 	}
 
 	m_endOfMemory = (void *)((char *)m_startOfMemory + size);

@@ -10,6 +10,7 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
 option( USE_SDL_SOUND "If disabled, don't use the SDL-based sound system." YES )
 option( USE_BOX2D_PHYSICS "If disabled, don't use the Box2D collision system." YES )
+option( VS_OVERLOAD_ALLOCATORS "If enabled, use custom internal allocators which can track memory overruns and leaks." YES )
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
