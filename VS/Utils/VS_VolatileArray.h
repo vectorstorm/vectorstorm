@@ -188,6 +188,12 @@ public:
 		return m_array[id];
 	}
 
+	const T	&GetItem(int id) const
+	{
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArray access");
+		return m_array[id];
+	}
+
 	void SetArraySize( int size )
 	{
 		// add or remove elements to make us this size.
@@ -202,6 +208,11 @@ public:
 	}
 
 	T	&operator[](int id)
+	{
+		return GetItem(id);
+	}
+
+	const T	&operator[](int id) const
 	{
 		return GetItem(id);
 	}
