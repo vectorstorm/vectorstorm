@@ -228,8 +228,9 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,NULL,count,width,loop); }
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,NULL,count,width); }
 
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width )
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width, const vsColor *color_in )
 {
+	const vsColor *color = (color_in) ? color_in : &c_white;
 	size_t vertexCount = (count/2) * 4;
 	size_t indexCount = (count/2) * 6;
 
@@ -256,10 +257,10 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
 		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
 
-		va[vertexCursor].color = c_white;
-		va[vertexCursor+1].color = c_white;
-		va[vertexCursor+2].color = c_white;
-		va[vertexCursor+3].color = c_white;
+		va[vertexCursor].color = *color;
+		va[vertexCursor+1].color = *color;
+		va[vertexCursor+2].color = *color;
+		va[vertexCursor+3].color = *color;
 
 		ia[indexCursor] = vertexCursor;
 		ia[indexCursor+1] = vertexCursor+1;
@@ -291,14 +292,15 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 	return fragment;
 }
 
-vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop )
+vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop, const vsColor *color_in )
 {
+	const vsColor *color = (color_in) ? color_in : &c_white;
 	size_t vertexCount = count * 2;
 	size_t indexCount = count * 6;
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::P *va = new vsRenderBuffer::P[vertexCount];
+	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -363,6 +365,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		}
 
 		va[vertexCursor].position = vertexPosition;
+		va[vertexCursor].color = *color;
 
 		if ( offsetPre != offsetPost )
 		{
@@ -384,6 +387,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		}
 
 		va[vertexCursor+1].position = vertexPosition;
+		va[vertexCursor+1].color = *color;
 
 		if ( loop || i != count - 1 ) // not at the end of the strip
 		{

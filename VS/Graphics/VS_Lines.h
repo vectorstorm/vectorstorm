@@ -27,8 +27,8 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, vsColor *
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
 
-vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop );
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width );
+vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = NULL );
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL );
 
 class vsLines3D: public vsModel
 {
