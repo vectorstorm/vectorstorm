@@ -21,7 +21,7 @@
 
 #include "VS_TimerSystem.h"
 
-const int c_fifoSize = 1024 * 300;		// 300kb for our FIFO display list
+const int c_fifoSize = 1024 * 500;		// 500kb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
 vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int bufferCount, bool vsync, bool antialias,bool highDPI):
