@@ -30,6 +30,9 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count
 vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = NULL );
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL );
 
+vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width, bool loop );
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width );
+
 class vsLines3D: public vsModel
 {
 	class Strip;
