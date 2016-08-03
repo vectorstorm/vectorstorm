@@ -50,7 +50,54 @@ void vsRenderDebug( const vsString &message )
 	vsLog("%s", message.c_str());
 }
 
-/*
+// The following code for adapting from GLenums to strings
+// was written by Timo Suoranta, from:
+// > https://github.com/tksuoran/RenderStack/blob/master/libraries/renderstack_graphics/source/configuration.cpp
+//
+// It is used here under the terms of the zlib/libpng license.
+//
+static const char * desc_debug_source(GLenum source)
+{
+	switch (source)
+	{
+		case GL_DEBUG_SOURCE_API            : return "api";
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM  : return "window system";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "shader compiler";
+		case GL_DEBUG_SOURCE_THIRD_PARTY    : return "third party";
+		case GL_DEBUG_SOURCE_APPLICATION    : return "application";
+		case GL_DEBUG_SOURCE_OTHER          : return "other";
+		default: return "?";
+	}
+}
+
+static const char * desc_debug_type(GLenum type)
+{
+	switch (type)
+	{
+		case GL_DEBUG_TYPE_ERROR              : return "error";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "deprecated behavior";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR : return "undefined behavior";
+		case GL_DEBUG_TYPE_PORTABILITY        : return "portability";
+		case GL_DEBUG_TYPE_PERFORMANCE        : return "performance";
+		case GL_DEBUG_TYPE_OTHER              : return "other";
+		case GL_DEBUG_TYPE_MARKER             : return "marker";
+		case GL_DEBUG_TYPE_PUSH_GROUP         : return "push group";
+		case GL_DEBUG_TYPE_POP_GROUP          : return "pop group";
+		default: return "?";
+	}
+}
+
+static const char * desc_debug_severity(GLenum severity)
+{
+	switch (severity)
+	{
+		case GL_DEBUG_SEVERITY_HIGH  : return "high";
+		case GL_DEBUG_SEVERITY_MEDIUM: return "medium";
+		case GL_DEBUG_SEVERITY_LOW   : return "low";
+		default: return "?";
+	}
+}
+
 void vsOpenGLDebugMessage( GLenum source,
 			GLenum type,
 			GLuint id,
@@ -59,8 +106,19 @@ void vsOpenGLDebugMessage( GLenum source,
 			const GLchar *message,
 			const void *userParam)
 {
-	vsLog("GL: type: %d, severity %d, %s", type, severity, message);
-}*/
+	// NVidia debug message spam.
+	if (id == 0x00020071) return; // memory usage
+	// if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
+	if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
+	if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
+	if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
+	if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
+
+	// Intel debug message spam.
+	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
+
+	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
+}
 
 static void printAttributes ()
 {
@@ -303,8 +361,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
-		// glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
-		// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	}
 #endif
 
