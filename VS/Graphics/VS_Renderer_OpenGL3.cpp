@@ -104,7 +104,7 @@ void vsOpenGLDebugMessage( GLenum source,
 			GLenum severity,
 			GLsizei length,
 			const GLchar *message,
-			const void *userParam)
+			GLvoid *userParam)
 {
 	// NVidia debug message spam.
 	if (id == 0x00020071) return; // memory usage
