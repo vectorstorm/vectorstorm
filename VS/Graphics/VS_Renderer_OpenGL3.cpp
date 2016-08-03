@@ -104,7 +104,7 @@ void vsOpenGLDebugMessage( GLenum source,
 			GLenum severity,
 			GLsizei length,
 			const GLchar *message,
-			GLvoid *userParam)
+			const GLvoid *userParam)
 {
 	// NVidia debug message spam.
 	if (id == 0x00020071) return; // memory usage
@@ -361,7 +361,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
-		glDebugMessageCallback( &vsOpenGLDebugMessage, NULL );
+		glDebugMessageCallback( (GLDEBUGPROC)&vsOpenGLDebugMessage, NULL );
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	}
 #endif
