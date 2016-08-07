@@ -33,7 +33,9 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 		//settings.height = vsNextPowerOfTwo(settings.height);
 		if ( m_type == Type_Multisample )
 		{
-			m_renderBufferSurface = new vsSurface(settings, false, true);
+			vsSurface::Settings rbs = settings_in;
+			rbs.mipMaps = false;
+			m_renderBufferSurface = new vsSurface(rbs, false, true);
 		}
 		m_textureSurface = new vsSurface(settings, (t == Type_Depth), false);
 		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
@@ -256,6 +258,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
@@ -284,7 +287,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			glBindTexture(GL_TEXTURE_2D, m_depth);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
