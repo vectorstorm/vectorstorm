@@ -301,10 +301,11 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
+	vsRenderBuffer::PCT *va = new vsRenderBuffer::PCT[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
+	float distance = 0.0f;
 
 	for ( int i = 0; i < count; i++ )
 	{
@@ -328,7 +329,9 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 			if ( loop )
 				preI = count-1;
 			else
+			{
 				preI = 0;
+			}
 		}
 
 		vsVector3D dirOfTravelPre = point[midI] - point[preI];
@@ -342,6 +345,16 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		vsVector3D offsetPre = dirOfTravelPre.Cross(up);
 		vsVector3D offsetPost = dirOfTravelPost.Cross(up);
+		if ( preI == midI )
+		{
+			offsetPre = offsetPost;
+			dirOfTravelPre = dirOfTravelPost;
+		}
+		else if ( midI == postI )
+		{
+			offsetPost = offsetPre;
+			dirOfTravelPost = dirOfTravelPre;
+		}
 		offsetPre.NormaliseSafe();
 		offsetPost.NormaliseSafe();
 
@@ -367,6 +380,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		va[vertexCursor].position = vertexPosition;
 		va[vertexCursor].color = *color;
+		va[vertexCursor].texel.Set( 0.0, distance );
 
 		if ( offsetPre != offsetPost )
 		{
@@ -389,6 +403,8 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		va[vertexCursor+1].position = vertexPosition;
 		va[vertexCursor+1].color = *color;
+		va[vertexCursor+1].texel.Set( width, distance );
+		distance += (point[postI] - point[midI]).Length();
 
 		if ( loop || i != count - 1 ) // not at the end of the strip
 		{
@@ -498,10 +514,11 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
+	vsRenderBuffer::PCT *va = new vsRenderBuffer::PCT[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
+	float distance = 0.0;
 
 	for ( int i = 0; i < count; i++ )
 	{
@@ -564,6 +581,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 		va[vertexCursor].position = vertexPosition;
 		va[vertexCursor].color = color[midI];
+		va[vertexCursor].texel.Set( 0.0, distance );
 
 		if ( offsetPre != offsetPost )
 		{
@@ -586,6 +604,9 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 		va[vertexCursor+1].position = vertexPosition;
 		va[vertexCursor+1].color = color[midI];
+		va[vertexCursor+1].texel.Set( width, distance );
+
+		distance += (point[postI] - point[midI]).Length();
 
 		if ( loop || i != count - 1 ) // not at the end of the strip
 		{

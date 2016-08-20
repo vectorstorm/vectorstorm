@@ -731,6 +731,11 @@ vsRenderBuffer::GetPosition(int i)
 			PN* pn = (PN*)m_array;
 			return pn[i].position;
 		}
+		case ContentType_PCT:
+		{
+			PCT* pc = (PCT*)m_array;
+			return pc[i].position;
+		}
 		case ContentType_PCN:
 		{
 			PCN* pnc = (PCN*)m_array;
