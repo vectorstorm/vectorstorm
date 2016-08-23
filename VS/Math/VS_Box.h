@@ -30,6 +30,8 @@ public:
 
 	static vsBox2D CenteredBox( const vsVector2D &dimensions ) { vsBox2D result(vsVector2D::Zero, dimensions); result -= 0.5f * dimensions; return result; }
 
+	void Clear() { set = false; min = max = vsVector2D::Zero; }
+
 	const vsVector2D &	GetMin() const { return min; }
 	const vsVector2D &	GetMax() const { return max; }
 
