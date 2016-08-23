@@ -247,7 +247,7 @@ vsRecord::AppendToken( const vsToken &t )
 		}
 		else if ( t.GetType() == vsToken::Type_NewLine )
 		{
-			if ( !m_token.IsEmpty() )
+			if ( m_hasLabel || !m_token.IsEmpty() )
 			{
 				if ( m_lineIsOpen )
 				{
