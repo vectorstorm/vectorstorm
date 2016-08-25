@@ -45,6 +45,7 @@ class vsScreen
 	int					m_depth;
 	float				m_aspectRatio;
 	bool				m_fullscreen;
+	bool				m_antialias;
 
 	bool				m_resized;
 
@@ -63,7 +64,7 @@ public:
 	vsRenderTarget *	GetMainRenderTarget();
 	vsRenderTarget *	GetPresentTarget();
 
-	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount);
+	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias);
 	void			CheckVideoMode();
 
 	// The following width/height/aspect ratio functions operate in terms of

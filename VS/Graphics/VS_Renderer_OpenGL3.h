@@ -122,7 +122,7 @@ public:
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
 	bool	CheckVideoMode();
-	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount);
+	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias);
 
 	void	PreRender( const Settings &s );
 	void	RenderDisplayList( vsDisplayList *list );

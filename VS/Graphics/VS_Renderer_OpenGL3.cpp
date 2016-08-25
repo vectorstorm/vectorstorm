@@ -494,7 +494,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 		{
-			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount );
+			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount, m_antialias );
 			return true;
 		}
 	}
@@ -503,7 +503,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias)
 {
 	UNUSED(depth);
 	UNUSED(fullscreen);
@@ -512,6 +512,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
+	m_antialias = antialias;
 	int nowWidth, nowHeight;
 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 	if ( nowWidth != width || nowHeight != height )
