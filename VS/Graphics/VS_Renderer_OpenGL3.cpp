@@ -178,13 +178,14 @@ static void printAttributes ()
 		{GL_MAX_VERTEX_UNIFORM_COMPONENTS, "Maximum uniform components in vertex shader"},
 		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
 		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
-		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"}
+		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"},
+		{GL_MAX_SAMPLES, "Maximum MSAA samples"}
 	};
     int nAttr = sizeof(a) / sizeof(struct attr);
 
+	GLint value;
     for (int i = 0; i < nAttr; i++)
 	{
-		int value;
 		glGetIntegerv( a[i].name, &value );
         vsLog("%s: %d", a[i].label, value );
     }
