@@ -345,6 +345,7 @@ const char *row3v = STRINGIFY( #version 330\n
 			c += coefficients[1] * texture(textures[0], fragment_texcoord[1]);
 			c += coefficients[2] * texture(textures[0], fragment_texcoord[2]);
 			c *= 1.1; // a little extra "oomph" for the glow
+			c.a = 1.0;
 
 			fragment_color = c;
 			}
