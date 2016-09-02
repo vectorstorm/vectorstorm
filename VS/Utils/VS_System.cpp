@@ -386,7 +386,8 @@ vsSystem::Launch( const vsString &target )
 #elif defined(__APPLE_CC__)
 	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
 #else
-	// system( vsFormatString("open %s", target.c_str()).c_str() );
+	// Linux, probably?
+	system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
 #endif
 }
 
