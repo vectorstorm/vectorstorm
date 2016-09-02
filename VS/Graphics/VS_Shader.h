@@ -51,6 +51,7 @@ private:
 	int32_t m_fogColorId;
 	int32_t m_fogDensityId;
 	int32_t m_textureLoc;
+	int32_t m_shadowTextureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
@@ -77,6 +78,7 @@ private:
 	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
 	void SetUniformValueVec4( int i, const vsVector4D& value );
 	void SetUniformValueVec4( int i, const vsColor& value );
+	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
 
 protected:
 	uint32_t m_shader;

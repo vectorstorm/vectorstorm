@@ -10,6 +10,7 @@
 #include "VS_ShaderValues.h"
 #include "VS_Shader.h"
 #include "VS_OpenGL.h"
+#include "VS_Matrix.h"
 
 vsShaderValues::vsShaderValues():
 	m_value(16)
@@ -126,6 +127,17 @@ vsShaderValues::BindUniformVec4( const vsString& id, const vsVector4D* value )
 }
 
 bool
+vsShaderValues::BindUniformMat4( const vsString& id, const vsMatrix4x4* value )
+{
+	{
+		m_value[id].bind = value;
+		m_value[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
 vsShaderValues::Has( const vsString& name )
 {
 	return m_value.FindItem(name) != NULL;
@@ -207,3 +219,15 @@ vsShaderValues::UniformVec4( const vsString& id, vsVector4D& out )
 	return true;
 }
 
+bool
+vsShaderValues::UniformMat4( const vsString& id, vsMatrix4x4& out )
+{
+	Value* v = m_value.FindItem(id);
+	if ( !v )
+		return false;
+	if ( v->bound )
+		out = *(vsMatrix4x4*)v->bind;
+	// else
+	// 	out = *(vsMatrix4x4*)v->mat4;
+	return true;
+}

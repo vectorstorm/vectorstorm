@@ -64,6 +64,19 @@ vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 }
 
 void
+vsDynamicMaterial::SetShadowTexture( vsTexture *texture )
+{
+	if ( texture )
+	{
+		GetResource()->m_shadowTexture = new vsTexture(texture);
+	}
+	else
+	{
+		vsDelete( GetResource()->m_shadowTexture );
+	}
+}
+
+void
 vsDynamicMaterial::SetTexture( int i, const vsString &texture, bool linear )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
