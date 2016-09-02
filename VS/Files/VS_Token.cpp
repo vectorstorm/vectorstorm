@@ -87,7 +87,7 @@ static vsString ExtractStringToken( vsString &string )
 	string.erase(0,1);
 
 	bool escaped = false;
-	while( !string.empty() && string[0] && string[0] != '\"' ){
+	while( !string.empty() && string[0] ){
 		if ( escaped )
 		{
 			if ( string[0] == 'n' )
@@ -102,7 +102,11 @@ static vsString ExtractStringToken( vsString &string )
 		}
 		else
 		{
-			if ( string[0] == '\\' )
+			if ( string[0] == '\"' )
+			{
+				break; // end of string!
+			}
+			else if ( string[0] == '\\' )
 			{
 				escaped = true;
 			}
