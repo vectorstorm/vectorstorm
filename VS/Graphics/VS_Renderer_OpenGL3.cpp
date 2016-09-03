@@ -179,7 +179,9 @@ static void printAttributes ()
 		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
 		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
 		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"},
-		{GL_MAX_SAMPLES, "Maximum MSAA samples"}
+		{GL_MAX_SAMPLES, "Maximum MSAA samples"},
+		{GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, "NVidia-only:  Currently available video memory"},
+		{GL_TEXTURE_FREE_MEMORY_ATI, "ATI-only:  Currently available video memory"}
 	};
     int nAttr = sizeof(a) / sizeof(struct attr);
 
@@ -189,6 +191,12 @@ static void printAttributes ()
 		glGetIntegerv( a[i].name, &value );
         vsLog("%s: %d", a[i].label, value );
     }
+
+	// now clear the GL error state;  one of the texture memory stats will
+	// probably have generated an "invalid enum" error, since those texture
+	// memory queries are vendor-specific OpenGL extensions.
+	glGetError();
+
 	vsLog("== End OpenGL limits ==");
 #endif // TARGET_OS_IPHONE
 }
