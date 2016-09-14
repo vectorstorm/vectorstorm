@@ -40,6 +40,16 @@
 
 #endif
 
+#ifdef _WIN32
+// workaround for NVidia Optimus systems not correctly switching
+// to the discrete NVidia chipset when starting up.  Tell them
+// that we want to run on the NVidia card by exporting this global
+// variable.
+extern "C" {
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+#endif
+
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
