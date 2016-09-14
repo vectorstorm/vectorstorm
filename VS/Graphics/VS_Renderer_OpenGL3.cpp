@@ -314,6 +314,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !m_sdlGlContext )
 	{
 		vsLog("Failed to create OpenGL context??");
+		vsAssert(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.");
 		exit(1);
 	}
 	printAttributes();
