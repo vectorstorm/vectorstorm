@@ -168,11 +168,8 @@ vsSystem::Deinit()
 void
 vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
 {
-	vsLog("About to set our write directory");
 	PHYSFS_init(argv[0]);
-	vsLog("about to set our write directory");
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
-	vsLog("just set our write directory");
 	vsLog_Start();
 	vsLog("====== Initialising file system");
 	if ( !success )

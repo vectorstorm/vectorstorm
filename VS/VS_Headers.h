@@ -109,6 +109,7 @@
 
 #include <VS/Utils/VS_Array.h>
 #include <VS/Utils/VS_ArrayStore.h>
+#include <VS/Utils/VS_Backtrace.h>
 #include <VS/Utils/VS_Debug.h>
 #include <VS/Utils/VS_Factory.h>
 #include <VS/Utils/VS_FloatImage.h>

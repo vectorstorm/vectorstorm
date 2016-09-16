@@ -11,6 +11,7 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 option( USE_SDL_SOUND "If disabled, don't use the SDL-based sound system." YES )
 option( USE_BOX2D_PHYSICS "If disabled, don't use the Box2D collision system." YES )
 option( VS_OVERLOAD_ALLOCATORS "If enabled, use custom internal allocators which can track memory overruns and leaks." YES )
+option( BACKTRACE_SUPPORTED "If enabled, generate backtraces in the event of a crash. (currently only supported for Linux/OSX/MinGW)" YES )
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
@@ -76,6 +77,14 @@ if(WIN32)
 	endif()
 
 	if ( MINGW )
+		if ( BACKTRACE )
+			find_file(DBGHELP_DLL dbghelp.dll REQUIRED )
+			find_file(EXCHNDL_DLL exchndl.dll REQUIRED )
+			find_file(MGWHELP_DLL mgwhelp.dll REQUIRED )
+			find_file(SYMSRV_DLL symsrv.dll REQUIRED )
+			find_file(SYMSRV_YES symsrv.yes REQUIRED )
+			find_library(EXCHNDL_LIBRARY exchndl REQUIRED )
+		endif()
 		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		if ( USE_SDL_SOUND )
 			find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
@@ -90,7 +99,9 @@ if(WIN32)
 	set(VS_PLATFORM_DLLS ${PNG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
-		${PHYSFS_DLL} ${OGG_DLL} PARENT_SCOPE)
+		${PHYSFS_DLL} ${OGG_DLL} ${DBGHELP_DLL}
+		${EXCHNDL_DLL} ${MGWHELP_DLL} ${SYMSRV_DLL}
+		${SYMSRV_YES} PARENT_SCOPE)
 endif()
 
 # Check our build environment and set any variables
@@ -318,6 +329,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Array.h
 	VS/Utils/VS_ArrayStore.h
 	VS/Utils/VS_AutomaticInstanceList.h
+	VS/Utils/VS_Backtrace.cpp
+	VS/Utils/VS_Backtrace.h
 	#VS/Utils/VS_Cache.cpp
 	VS/Utils/VS_Cache.h
 	VS/Utils/VS_Debug.cpp
@@ -415,6 +428,12 @@ if ((CMAKE_COMPILER_IS_GNUCXX) OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
 	set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_DEBUG}" )
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 	set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -mfpmath=sse -msse2 ${CMAKE_CXX_FLAGS_RELEASE}" )
+
+	if ( MINGW AND BACKTRACE )
+		set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_DEBUG}" )
+		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
+		set(CMAKE_CXX_FLAGS_RELEASE "-g -fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_RELEASE}" )
+	endif()
 else ()
 	set(CMAKE_CXX_FLAGS "/MP ${CMAKE_CXX_FLAGS}")
 	add_definitions("/FI\"VS_Prefix.h\"")
@@ -447,6 +466,7 @@ endif()
 		${ZLIB_LIBRARY}
 		${PTHREAD_LIBRARY}
 		${PHYSFS_LIBRARY}
+		${EXCHNDL_LIBRARY}
 		)
 	if ( USE_SDL_SOUND )
 		set( LIBRARIES ${LIBRARIES}

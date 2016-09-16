@@ -3,3 +3,4 @@
 #cmakedefine HIGHDPI_SUPPORTED
 #cmakedefine USE_SDL_SOUND
 #cmakedefine USE_BOX2D_PHYSICS
+#cmakedefine BACKTRACE_SUPPORTED
