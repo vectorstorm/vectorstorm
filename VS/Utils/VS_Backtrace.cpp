@@ -66,15 +66,20 @@ void vsInstallBacktraceHandler()
 	signal(SIGTERM, handler);
 }
 
+#include "VS/Files/VS_File.h"
+
 void vsBacktrace()
 {
-	void *array[10];
+	void *array[20];
 	size_t size;
 
 	// get void*'s for all entries on the stack
-	size = backtrace(array, 10);
+	size = backtrace(array, 20);
 
+	FILE* f = fopen("crash.rpt", "w");
+	backtrace_symbols_fd(array, size, fileno(f));
 	backtrace_symbols_fd(array, size, STDERR_FILENO);
+	fclose(f);
 }
 
 #endif
