@@ -72,7 +72,8 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 			vsLog_End();
 			vsLog_Show();
 #endif
-			exit(1);
+			// raise a segfault, to force exception handling to kick in.
+			*(char*)(NULL) = 1;
 		}
 	}
 	else
