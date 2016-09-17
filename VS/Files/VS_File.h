@@ -58,7 +58,16 @@ public:
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 
+	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
+	// directory.  It is your responsibility to check for each one whether it
+	// is the type of object you were looking for.
 	static int DirectoryContents( vsArray<vsString> *result, const vsString &dirName );
+
+	// DirectoryFiles returns a list of FILES inside this directory.
+	static int DirectoryFiles( vsArray<vsString> *result, const vsString &dirName );
+
+	// DirectoryFiles returns a list of DIRECTORIES inside this directory.
+	static int DirectoryDirectories( vsArray<vsString> *result, const vsString &dirName );
 
 	static void EnsureWriteDirectoryExists( const vsString &writeDirectoryName );
 

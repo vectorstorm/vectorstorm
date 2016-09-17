@@ -160,6 +160,7 @@ class sortFilesByModificationDate
 int
 vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
+    result->Clear();
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
 	char **i;
 	std::vector<char*> s;
@@ -168,11 +169,44 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 
 	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
 
-    result->Clear();
 	for (size_t i = 0; i < s.size(); i++)
 		result->AddItem( s[i] );
 
 	PHYSFS_freeList(files);
+
+    return result->ItemCount();
+}
+
+int
+vsFile::DirectoryFiles( vsArray<vsString>* result, const vsString &dirName ) // static method
+{
+	result->Clear();
+	vsArray<vsString> all;
+	DirectoryContents(&all, dirName);
+
+	for ( int i = 0; i < all.ItemCount(); i++ )
+	{
+		vsString fn = all[i];
+		if ( !vsFile::DirectoryExists( dirName + "/" + fn ) )
+			result->AddItem(fn);
+	}
+
+    return result->ItemCount();
+}
+
+int
+vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName ) // static method
+{
+    result->Clear();
+	vsArray<vsString> all;
+	DirectoryContents(&all, dirName);
+
+	for ( int i = 0; i < all.ItemCount(); i++ )
+	{
+		vsString fn = all[i];
+		if ( vsFile::DirectoryExists( dirName + "/" + fn ) )
+			result->AddItem(fn);
+	}
 
     return result->ItemCount();
 }
