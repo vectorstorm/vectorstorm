@@ -51,15 +51,13 @@
 	#define CRASH raise(SIGSEGV)
 #endif
 
-//#if defined(_DEBUG)
-
 static bool bAsserted = false;
 
 void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const char *file, int line )
 {
 	if ( !bAsserted )
 	{
-		// failed assertion..  render and go into an infinite loop.
+		// failed assertion..  trace out some information and then crash.
 		bAsserted = true;
 		vsString trimmedFile(file);
 		size_t pos = trimmedFile.rfind('/');
@@ -71,25 +69,14 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		vsLog("Failed assertion:  %s", msg.c_str());
 		vsLog("Failed condition: (%s)", conditionStr.c_str());
 		vsLog("at %s:%d", trimmedFile.c_str(), line);
+		vsLog_End();
 
 		{
-
 #if defined(_DEBUG)
 			DEBUG_BREAK;
 #else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
-// #if defined(__APPLE_CC__)
-// 			void* callstack[128];
-// 			int i, frames = backtrace(callstack, 128);
-// 			char** strs = backtrace_symbols(callstack, frames);
-// 			for (i = 0; i < frames; ++i) {
-// 				vsLog("%s", strs[i]);
-// 			}
-// 			free(strs);
-// #endif
-			vsLog_End();
-			vsLog_Show();
 #endif
 			CRASH;
 		}
@@ -99,6 +86,4 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		vsLog("Error:  Asserted while handling assertion!");
 	}
 }
-
-//#endif
 
