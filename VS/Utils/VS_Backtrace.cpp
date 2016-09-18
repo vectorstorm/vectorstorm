@@ -47,6 +47,9 @@ void handler(int sig) {
 		case SIGTERM:
 			fputs("Caught SIGTERM: a termination request was sent to the program\n", stderr);
 			break;
+		default:
+			fprintf(stderr, "Caught %d\n", sig);
+			break;
 	}
 	// print out all the frames to stderr
 
@@ -61,7 +64,7 @@ void vsInstallBacktraceHandler()
 	signal(SIGABRT, handler);
 	signal(SIGFPE, handler);
 	signal(SIGILL, handler);
-	signal(SIGINT, handler);
+	// signal(SIGINT, handler); // SIGINT is a user interruption, like hitting ctrl-c in a terminal process.  Not a crash.
 	signal(SIGSEGV, handler);
 	signal(SIGTERM, handler);
 }
