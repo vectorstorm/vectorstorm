@@ -23,13 +23,32 @@
 	#include <windows.h>
 	#define __thread
 	#define DEBUG_BREAK __debugbreak()
+	// no elegant way to crash on Windows, so let's just
+	// write into an illegal address space to force the
+	// kernel to kill us.
+	//
+	// Interesting note:  writing into illegal memory like
+	// this officially triggers "undefined behaviour".  It
+	// won't necessarily crash.  In fact, recent versions
+	// of clang have chosen to simply ignore writes to NULL;
+	// behaviour is undefined, so they're well within their
+	// rights to not crash when you do that.  But here on
+	// Windows, our nefarious deeds will actually (at time
+	// of writing) crash our program successfully.
+	#define CRASH *((volatile int*)NULL) = 0xDEADBEEF
+
 #elif defined(__APPLE_CC__)
 	#include <execinfo.h>
 	#include <signal.h>
-	#define DEBUG_BREAK raise(SIGTRAP)
+	#define DEBUG_BREAK __builtin_trap()
+	// we don't need to do something illegal to crash;  we
+	// can simply send a "we've crashed" signal ourselves.
+	// So much simpler, this way!
+	#define CRASH raise(SIGSEGV)
 #else
 	#include <signal.h>
-	#define DEBUG_BREAK raise(SIGTRAP)
+	#define DEBUG_BREAK __builtin_trap()
+	#define CRASH raise(SIGSEGV)
 #endif
 
 //#if defined(_DEBUG)
@@ -72,8 +91,7 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 			vsLog_End();
 			vsLog_Show();
 #endif
-			// raise a segfault, to force exception handling to kick in.
-			*(char*)(NULL) = 1;
+			CRASH;
 		}
 	}
 	else
