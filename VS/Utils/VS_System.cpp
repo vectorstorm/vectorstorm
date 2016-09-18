@@ -162,7 +162,6 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
-	vsLog_End();
 }
 
 void
@@ -170,7 +169,6 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 {
 	PHYSFS_init(argv[0]);
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
-	vsLog_Start();
 	vsLog("====== Initialising file system");
 	if ( !success )
 	{
@@ -201,13 +199,14 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
 #endif
+	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
 	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
-	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s", m_dataDirectory.c_str());
 		exit(1);
 	}
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
 	char** searchPath = PHYSFS_getSearchPath();
 	int pathId = 0;
