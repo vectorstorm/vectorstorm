@@ -440,12 +440,18 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 
 			lineEnd = 0;
 			seekPosition = 0;
+
+			if ( m_wrappedLineCount >= MAX_WRAPPED_LINES )
+				return;
 		}
 		else if ( seekPosition == vsString::npos )
 		{
 			m_wrappedLine[m_wrappedLineCount] = remainingString;
 			m_wrappedLineCount++;
 			remainingString = vsEmptyString;
+
+			if ( m_wrappedLineCount >= MAX_WRAPPED_LINES )
+				return;
 		}
 		else
 		{
@@ -489,6 +495,11 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
 		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( cp );
+
+		if ( cp == '\r' )
+			continue;
+		if ( cp == '\t' )
+			continue;
 
 		if ( !g )
 		{
