@@ -41,6 +41,20 @@ struct RenderTargetRequest
 	bool antialias; // antialiasing enabled
 	bool share;     // this target can be shared with other stages
 
+	RenderTargetRequest():
+		type(Type_AbsoluteSize),
+		width(128),
+		height(128),
+		mipmapLevel(0),
+		depth(false),
+		stencil(false),
+		linear(false),
+		mipmaps(false),
+		antialias(false),
+		share(true)
+	{
+	}
+
 	bool operator==(const RenderTargetRequest& other) const
 	{
 		return (0 == memcmp(this, &other, sizeof(RenderTargetRequest)));

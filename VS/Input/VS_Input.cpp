@@ -30,6 +30,7 @@ vsInput::vsInput():
 	m_mouseIsInWindow(false)
 {
 	m_captureMouse = false;
+	m_suppressFirstMotion = false;
 }
 
 vsInput::~vsInput()

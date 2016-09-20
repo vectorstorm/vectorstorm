@@ -168,6 +168,7 @@ vsSurface::vsSurface( int width, int height ):
 	m_width(width),
 	m_height(height),
 	m_texture(0),
+	m_textureCount(1),
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
@@ -207,6 +208,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_texture(0),
 	m_textureCount(settings.buffers),
 	m_depth(0),
+	m_stencil(0),
 	m_fbo(0),
 	m_isRenderbuffer(false)
 {

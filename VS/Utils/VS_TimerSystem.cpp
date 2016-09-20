@@ -149,7 +149,16 @@ vsTimerSystemSprite::Update( float timeStep )
 	m_vertices->SetArray(verts, c_vertexCount);
 }
 
-vsTimerSystem::vsTimerSystem()
+vsTimerSystem::vsTimerSystem():
+	m_startCpu(0),
+	m_startGather(0),
+	m_startDraw(0),
+	m_startGpu(0),
+	m_missedFrames(0),
+	m_gpuTime(0),
+	m_gatherTime(0),
+	m_drawTime(0),
+	m_cpuTime(0)
 {
 #if defined(DEBUG_TIMING_BAR)
 	m_sprite = NULL;
