@@ -153,10 +153,10 @@ vsRendererState::~vsRendererState()
     {
         delete m_intState[i];
     }
-	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
+	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
-		delete m_floatState[i];
-	}*/
+		delete m_float2State[i];
+	}
 }
 
 void

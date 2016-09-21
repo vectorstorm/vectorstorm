@@ -383,7 +383,9 @@ vsSystem::Launch( const vsString &target )
 	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
 #else
 	// Linux, probably?
-	system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	int err = system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	if ( err )
+		vsLog("system: error %d", err);
 #endif
 }
 
@@ -451,6 +453,7 @@ vsSystemPreferences::vsSystemPreferences()
 vsSystemPreferences::~vsSystemPreferences()
 {
 	delete m_preferences;
+	delete [] m_supportedResolution;
 }
 
 void
