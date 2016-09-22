@@ -214,7 +214,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 {
 	CheckGLError("vsSurface");
 
-	GLenum internalFormat = GL_RGBA8;
+	GLenum internalFormat = GL_SRGB8_ALPHA8;
 	GLenum pixelFormat = GL_RGBA;
 	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
 	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;

@@ -298,6 +298,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
+
 #ifdef _DEBUG
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // _DEBUG
@@ -412,6 +414,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !val )
 		vsLog("WARNING:  Failed to initialise double-buffering");
 
+	SDL_GL_GetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, &val);
+	if ( !val )
+		vsLog("Failed to initialise sRGB framebuffer");
+
 	// SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &val );
 	// if ( !val )
 	// 	vsLog("WARNING:  Failed to get stencil buffer bits");
@@ -427,6 +433,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);							// Set The Blending Function For Additive
 	glEnable(GL_BLEND);											// Enable Blending
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	CheckGLError("Initialising OpenGL rendering");
 
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
