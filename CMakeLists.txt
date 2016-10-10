@@ -322,6 +322,8 @@ set(THREADS_SOURCES
 	VS/Threads/VS_Mutex.h
 	VS/Threads/VS_Semaphore.cpp
 	VS/Threads/VS_Semaphore.h
+	VS/Threads/VS_Spinlock.cpp
+	VS/Threads/VS_Spinlock.h
 	VS/Threads/VS_Task.cpp
 	VS/Threads/VS_Task.h
 	)

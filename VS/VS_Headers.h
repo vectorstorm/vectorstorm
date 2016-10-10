@@ -105,6 +105,7 @@
 
 #include <VS/Threads/VS_Mutex.h>
 #include <VS/Threads/VS_Semaphore.h>
+#include <VS/Threads/VS_Spinlock.h>
 #include <VS/Threads/VS_Task.h>
 
 #include <VS/Utils/VS_Array.h>
