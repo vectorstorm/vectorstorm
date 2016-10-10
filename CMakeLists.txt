@@ -22,9 +22,9 @@ find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
 		PATH c:/src/buildzone/lib/x86/)
-	find_path(SDL_INCLUDE_DIR SDL2/SDL_mixer.h REQUIRED
-		PATH c:/src/buildzone/include)
 endif()
+find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED
+	PATH c:/src/buildzone/include)
 
 if(UNIX)
 	find_package(PNG REQUIRED)
