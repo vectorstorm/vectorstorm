@@ -86,8 +86,8 @@ vsSoundSystem::InitVolume()
 {
 #if !TARGET_OS_IPHONE
 	vsSystemPreferences *p = vsSystem::Instance()->GetPreferences();
-	float effectVolumeFraction = p->GetEffectVolume() / 10.f;
-	float musicVolumeFraction = p->GetMusicVolume() / 10.f;
+	float effectVolumeFraction = p->GetEffectVolume() / 100.f;
+	float musicVolumeFraction = p->GetMusicVolume() / 100.f;
 
 	for ( int i = 0; i < m_maxChannelsInUse; i++ )
 		Mix_Volume(i, int(MIX_MAX_VOLUME * effectVolumeFraction));

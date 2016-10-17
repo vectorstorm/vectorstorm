@@ -435,8 +435,8 @@ vsSystemPreferences::vsSystemPreferences()
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
 	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
-	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
-	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
+	m_effectVolume = m_preferences->GetPreference("EffectVolume", 100, 0, 100);
+	m_musicVolume = m_preferences->GetPreference("MusicVolume", 100, 0, 100);
 	m_wheelSmoothing = m_preferences->GetPreference("WheelSmoothing", 1, 0, 1);
 	m_mouseWheelScalePercent = m_preferences->GetPreference("MouseWheelScalePercent", 100, 0, 10000);
 
