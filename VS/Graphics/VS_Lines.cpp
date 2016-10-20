@@ -136,6 +136,17 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 		offsetPre.NormaliseSafe();
 		offsetPost.NormaliseSafe();
 
+		if ( preI == midI )
+		{
+			offsetPre = offsetPost;
+			dirOfTravelPre = dirOfTravelPost;
+		}
+		else if ( midI == postI )
+		{
+			offsetPost = offsetPre;
+			dirOfTravelPost = dirOfTravelPre;
+		}
+
 		vsVector3D vertexPosition;
 		if ( offsetPre != offsetPost )
 		{
