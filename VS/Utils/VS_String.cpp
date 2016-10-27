@@ -32,6 +32,18 @@ vsString vsFormatString( const char* format, ... )
 	return sz;
 }
 
+vsString vsFormatString( const vsString& format, ... )
+{
+	char sz[1024];
+	va_list marker;
+
+	va_start(marker, format);
+	vsnprintf(sz, 1024, format.c_str(), marker);
+	va_end(marker);
+
+	return sz;
+}
+
 vsString vsNumberString(int number)
 {
 	vsString result;
