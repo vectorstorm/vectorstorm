@@ -13,7 +13,6 @@
 typedef std::string vsString;
 
 vsString vsFormatString( const char* format, ... );
-vsString vsFormatString( const vsString& format, ... );
 
 vsString vsNumberString(int number);
 
