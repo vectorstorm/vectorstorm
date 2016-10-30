@@ -15,6 +15,7 @@ vsTransform2D vsTransform2D::Zero;
 vsTransform3D vsTransform3D::Identity( vsQuaternion(0.f,0.f,0.f,1.f), vsVector3D::Zero, vsVector3D(1.f,1.f,1.f) );
 
 vsTransform2D::vsTransform2D():
+	m_dirty(true),
 	m_position( vsVector2D::Zero ),
 	m_angle( vsAngle::Zero ),
 	m_scale(1.0f, 1.0f)

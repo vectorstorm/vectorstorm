@@ -40,6 +40,16 @@
 
 #endif
 
+#ifdef _WIN32
+// workaround for NVidia Optimus systems not correctly switching
+// to the discrete NVidia chipset when starting up.  Tell them
+// that we want to run on the NVidia card by exporting this global
+// variable.
+extern "C" {
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+#endif
+
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
@@ -179,7 +189,9 @@ static void printAttributes ()
 		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
 		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
 		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"},
-		{GL_MAX_SAMPLES, "Maximum MSAA samples"}
+		{GL_MAX_SAMPLES, "Maximum MSAA samples"},
+		{GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, "NVidia-only:  Currently available video memory"},
+		{GL_TEXTURE_FREE_MEMORY_ATI, "ATI-only:  Currently available video memory"}
 	};
     int nAttr = sizeof(a) / sizeof(struct attr);
 
@@ -189,6 +201,12 @@ static void printAttributes ()
 		glGetIntegerv( a[i].name, &value );
         vsLog("%s: %d", a[i].label, value );
     }
+
+	// now clear the GL error state;  one of the texture memory stats will
+	// probably have generated an "invalid enum" error, since those texture
+	// memory queries are vendor-specific OpenGL extensions.
+	glGetError();
+
 	vsLog("== End OpenGL limits ==");
 #endif // TARGET_OS_IPHONE
 }
@@ -296,6 +314,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !m_sdlGlContext )
 	{
 		vsLog("Failed to create OpenGL context??");
+		vsAssert(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.");
 		exit(1);
 	}
 	printAttributes();

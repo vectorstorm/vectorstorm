@@ -35,6 +35,8 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_mode(mode),
 	m_length(0)
 {
+	vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
+
 	if ( mode == MODE_Read )
 		m_file = PHYSFS_openRead( filename.c_str() );
 	else
@@ -158,6 +160,7 @@ class sortFilesByModificationDate
 int
 vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
+    result->Clear();
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
 	char **i;
 	std::vector<char*> s;
@@ -166,11 +169,44 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 
 	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
 
-    result->Clear();
 	for (size_t i = 0; i < s.size(); i++)
 		result->AddItem( s[i] );
 
 	PHYSFS_freeList(files);
+
+    return result->ItemCount();
+}
+
+int
+vsFile::DirectoryFiles( vsArray<vsString>* result, const vsString &dirName ) // static method
+{
+	result->Clear();
+	vsArray<vsString> all;
+	DirectoryContents(&all, dirName);
+
+	for ( int i = 0; i < all.ItemCount(); i++ )
+	{
+		vsString fn = all[i];
+		if ( !vsFile::DirectoryExists( dirName + "/" + fn ) )
+			result->AddItem(fn);
+	}
+
+    return result->ItemCount();
+}
+
+int
+vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName ) // static method
+{
+    result->Clear();
+	vsArray<vsString> all;
+	DirectoryContents(&all, dirName);
+
+	for ( int i = 0; i < all.ItemCount(); i++ )
+	{
+		vsString fn = all[i];
+		if ( vsFile::DirectoryExists( dirName + "/" + fn ) )
+			result->AddItem(fn);
+	}
 
     return result->ItemCount();
 }
@@ -248,10 +284,12 @@ vsFile::ReadLine( vsString *line )
 
 	PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
 	char peekChar = 'a';
+	bool done = false;
 
-	while ( !AtEnd() && peekChar != '\n' && peekChar != 0 )
+	while ( !done && !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
-		PHYSFS_read(m_file, &peekChar, 1, 1);
+		if ( PHYSFS_read(m_file, &peekChar, 1, 1) <= 0 )
+			done = true;
 	}
 	PHYSFS_sint64 afterFilePos = PHYSFS_tell(m_file);
 	PHYSFS_uint32 bytes = PHYSFS_uint32(afterFilePos - filePos);
@@ -259,7 +297,8 @@ vsFile::ReadLine( vsString *line )
 	if ( bytes > 0 )
 	{
 		char* buffer = (char*)malloc(bytes+1);
-		PHYSFS_read(m_file, buffer, 1, bytes);
+		PHYSFS_uint32 bytesRead = PHYSFS_read(m_file, buffer, 1, bytes);
+		vsAssert(bytesRead == bytes, "Didn't read as many bytes as we expected?");
 		buffer[bytes-1] = 0;
 
 		*line = buffer;

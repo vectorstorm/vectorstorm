@@ -162,18 +162,13 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
-	vsLog_End();
 }
 
 void
 vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
 {
-	vsLog("About to set our write directory");
 	PHYSFS_init(argv[0]);
-	vsLog("about to set our write directory");
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
-	vsLog("just set our write directory");
-	vsLog_Start();
 	vsLog("====== Initialising file system");
 	if ( !success )
 	{
@@ -204,13 +199,14 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
 #endif
+	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
 	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
-	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s", m_dataDirectory.c_str());
 		exit(1);
 	}
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
 	char** searchPath = PHYSFS_getSearchPath();
 	int pathId = 0;
@@ -387,7 +383,9 @@ vsSystem::Launch( const vsString &target )
 	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
 #else
 	// Linux, probably?
-	system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	int err = system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	if ( err )
+		vsLog("system: error %d", err);
 #endif
 }
 
@@ -437,8 +435,8 @@ vsSystemPreferences::vsSystemPreferences()
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
 	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
-	m_effectVolume = m_preferences->GetPreference("EffectVolume", 8, 0, 10);
-	m_musicVolume = m_preferences->GetPreference("MusicVolume", 7, 0, 10);
+	m_effectVolume = m_preferences->GetPreference("EffectVolume", 100, 0, 100);
+	m_musicVolume = m_preferences->GetPreference("MusicVolume", 100, 0, 100);
 	m_wheelSmoothing = m_preferences->GetPreference("WheelSmoothing", 1, 0, 1);
 	m_mouseWheelScalePercent = m_preferences->GetPreference("MouseWheelScalePercent", 100, 0, 10000);
 
@@ -455,6 +453,7 @@ vsSystemPreferences::vsSystemPreferences()
 vsSystemPreferences::~vsSystemPreferences()
 {
 	delete m_preferences;
+	delete [] m_supportedResolution;
 }
 
 void

@@ -39,7 +39,7 @@ class vsFontRenderer
 	bool m_snap;
 	bool m_hasSnap;
 
-#define MAX_WRAPPED_LINES (50)
+#define MAX_WRAPPED_LINES (5000)
 	vsString	m_wrappedLine[MAX_WRAPPED_LINES];
 	int m_wrappedLineCount;
 

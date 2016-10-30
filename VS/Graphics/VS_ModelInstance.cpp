@@ -13,7 +13,8 @@
 
 vsModelInstance::vsModelInstance():
 	group(NULL),
-	lodLevel(0)
+	lodLevel(0),
+	visible(false)
 {
 }
 

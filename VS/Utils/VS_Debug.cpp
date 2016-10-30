@@ -23,16 +23,33 @@
 	#include <windows.h>
 	#define __thread
 	#define DEBUG_BREAK __debugbreak()
+	// no elegant way to crash on Windows, so let's just
+	// write into an illegal address space to force the
+	// kernel to kill us.
+	//
+	// Interesting note:  writing into illegal memory like
+	// this officially triggers "undefined behaviour".  It
+	// won't necessarily crash.  In fact, recent versions
+	// of clang have chosen to simply ignore writes to NULL;
+	// behaviour is undefined, so they're well within their
+	// rights to not crash when you do that.  But here on
+	// Windows, our nefarious deeds will actually (at time
+	// of writing) crash our program successfully.
+	#define CRASH *((volatile int*)NULL) = 0xDEADBEEF
+
 #elif defined(__APPLE_CC__)
 	#include <execinfo.h>
 	#include <signal.h>
-	#define DEBUG_BREAK raise(SIGTRAP)
+	#define DEBUG_BREAK __builtin_trap()
+	// we don't need to do something illegal to crash;  we
+	// can simply send a "we've crashed" signal ourselves.
+	// So much simpler, this way!
+	#define CRASH raise(SIGSEGV)
 #else
 	#include <signal.h>
-	#define DEBUG_BREAK raise(SIGTRAP)
+	#define DEBUG_BREAK __builtin_trap()
+	#define CRASH raise(SIGSEGV)
 #endif
-
-//#if defined(_DEBUG)
 
 static bool bAsserted = false;
 
@@ -40,7 +57,7 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 {
 	if ( !bAsserted )
 	{
-		// failed assertion..  render and go into an infinite loop.
+		// failed assertion..  trace out some information and then crash.
 		bAsserted = true;
 		vsString trimmedFile(file);
 		size_t pos = trimmedFile.rfind('/');
@@ -52,27 +69,16 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		vsLog("Failed assertion:  %s", msg.c_str());
 		vsLog("Failed condition: (%s)", conditionStr.c_str());
 		vsLog("at %s:%d", trimmedFile.c_str(), line);
+		vsLog_End();
 
 		{
-
 #if defined(_DEBUG)
 			DEBUG_BREAK;
 #else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
-// #if defined(__APPLE_CC__)
-// 			void* callstack[128];
-// 			int i, frames = backtrace(callstack, 128);
-// 			char** strs = backtrace_symbols(callstack, frames);
-// 			for (i = 0; i < frames; ++i) {
-// 				vsLog("%s", strs[i]);
-// 			}
-// 			free(strs);
-// #endif
-			vsLog_End();
-			vsLog_Show();
 #endif
-			exit(1);
+			CRASH;
 		}
 	}
 	else
@@ -80,6 +86,4 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 		vsLog("Error:  Asserted while handling assertion!");
 	}
 }
-
-//#endif
 

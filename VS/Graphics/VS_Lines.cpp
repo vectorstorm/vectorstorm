@@ -136,6 +136,17 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 		offsetPre.NormaliseSafe();
 		offsetPost.NormaliseSafe();
 
+		if ( preI == midI )
+		{
+			offsetPre = offsetPost;
+			dirOfTravelPre = dirOfTravelPost;
+		}
+		else if ( midI == postI )
+		{
+			offsetPost = offsetPre;
+			dirOfTravelPost = dirOfTravelPre;
+		}
+
 		vsVector3D vertexPosition;
 		if ( offsetPre != offsetPost )
 		{
@@ -293,7 +304,7 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 	return fragment;
 }
 
-vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop, const vsColor *color_in )
+vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop, const vsColor *color_in, float texScale )
 {
 	const vsColor *color = (color_in) ? color_in : &c_white;
 	size_t vertexCount = count * 2;
@@ -380,7 +391,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		va[vertexCursor].position = vertexPosition;
 		va[vertexCursor].color = *color;
-		va[vertexCursor].texel.Set( 0.0, distance );
+		va[vertexCursor].texel.Set( 0.0, distance / texScale );
 
 		if ( offsetPre != offsetPost )
 		{
@@ -403,7 +414,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		va[vertexCursor+1].position = vertexPosition;
 		va[vertexCursor+1].color = *color;
-		va[vertexCursor+1].texel.Set( width, distance );
+		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
 		distance += (point[postI] - point[midI]).Length();
 
 		if ( loop || i != count - 1 ) // not at the end of the strip

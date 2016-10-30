@@ -105,10 +105,12 @@
 
 #include <VS/Threads/VS_Mutex.h>
 #include <VS/Threads/VS_Semaphore.h>
+#include <VS/Threads/VS_Spinlock.h>
 #include <VS/Threads/VS_Task.h>
 
 #include <VS/Utils/VS_Array.h>
 #include <VS/Utils/VS_ArrayStore.h>
+#include <VS/Utils/VS_Backtrace.h>
 #include <VS/Utils/VS_Debug.h>
 #include <VS/Utils/VS_Factory.h>
 #include <VS/Utils/VS_FloatImage.h>

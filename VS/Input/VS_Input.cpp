@@ -30,6 +30,7 @@ vsInput::vsInput():
 	m_mouseIsInWindow(false)
 {
 	m_captureMouse = false;
+	m_suppressFirstMotion = false;
 }
 
 vsInput::~vsInput()
@@ -1155,9 +1156,9 @@ vsInput::GetTouchPosition(int touchID, int scene)
 }
 
 
-#ifndef _WIN32
+// #ifndef _WIN32
 extern SDL_Window *g_sdlWindow;
-#endif
+// #endif
 
 void
 vsInput::CaptureMouse( bool capture )
@@ -1178,7 +1179,7 @@ vsInput::CaptureMouse( bool capture )
 		else
 		{
 			SDL_SetRelativeMouseMode(SDL_FALSE);
-#ifndef _WIN32
+// #ifndef _WIN32
 			// Bug in SDL2 on OSX:  Relative mouse mode moves the cursor to the
 			// middle of the window, even though the function documentation says
 			// that it's not supposed to do that.  Workaround:  On OSX, explicitly
@@ -1189,8 +1190,13 @@ vsInput::CaptureMouse( bool capture )
 			// in the same position where it began, the way that the documentation
 			// says that it's supposed to.  Same workaround:  explicitly warp
 			// the mouse back to the correct position when mouse capture ends.
+			//
+			// ...and now the Linux behaviour is happening on Windows as well.
+			// So I guess that's just expected behaviour, now.  :)  Enabling
+			// mouse warping for Windows, too!
+			//
 			SDL_WarpMouseInWindow( g_sdlWindow, m_capturedMouseX, m_capturedMouseY );
-#endif
+// #endif
 
 			m_mousePos = vsVector2D((float)m_capturedMouseX,(float)m_capturedMouseY);
 

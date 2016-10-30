@@ -10,7 +10,7 @@
 #ifndef MEM_HEAP_H
 #define MEM_HEAP_H
 
-#include "VS/Threads/VS_Mutex.h"
+#include "VS/Threads/VS_Spinlock.h"
 
 
 class memBlock
@@ -77,7 +77,7 @@ class vsHeap
 
 	memBlock *	FindFreeMemBlockOfSize(size_t size);
 //	memBlock *	GetUnusedMemBlock();
-	vsMutex m_mutex;
+	vsSpinlock m_lock;
 
 public:
 	vsHeap(vsString name, size_t bufferSize);

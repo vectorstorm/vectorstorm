@@ -142,7 +142,7 @@ vsHeap::FindFreeMemBlockOfSize( size_t size )
 void *
 vsHeap::Alloc(size_t size_requested, const char *file, int line, int allocType)
 {
-	m_mutex.Lock();
+	m_lock.Lock();
 
 	size_t size = size_requested;
 	size += sizeof( memBlock ) + sizeof( unsigned long );		// we need to allocate enough space for our new 'memBlock' header, and some bytes on the end.
@@ -210,7 +210,7 @@ vsHeap::Alloc(size_t size_requested, const char *file, int line, int allocType)
 	unsigned long *safetyLong = (unsigned long *)safety;
 	*safetyLong = 0xeeeeeeee;
 
-	m_mutex.Unlock();
+	m_lock.Unlock();
 
 	return result;
 }
@@ -218,7 +218,7 @@ vsHeap::Alloc(size_t size_requested, const char *file, int line, int allocType)
 void
 vsHeap::Free(void *p, int allocType)
 {
-	m_mutex.Lock();
+	m_lock.Lock();
 
 	p = (void *)((char *)p - sizeof(memBlock));	// adjust pointer to point to the start of its memBlock header
 
@@ -285,14 +285,14 @@ vsHeap::Free(void *p, int allocType)
 			prevBlock->m_size += block->m_size;
 			block->ExtractBlock();
 			block->Extract();
-			m_mutex.Unlock();
+			m_lock.Unlock();
 			return;
 		}
 
 		block->Extract();
 		m_unusedBlockList.Append(block);
 		//foundBlockToFree = true;
-		m_mutex.Unlock();
+		m_lock.Unlock();
 		return;
 	}
 	//	block = block->m_next;
@@ -300,7 +300,7 @@ vsHeap::Free(void *p, int allocType)
 
 	//vsAssert(foundBlockToFree, "Tried to free a block we didn't allocate!");	// tried to free a block we didn't know about!
 
-	m_mutex.Unlock();
+	m_lock.Unlock();
 }
 
 void
@@ -338,7 +338,7 @@ vsHeap::PrintStatus()
 void
 vsHeap::CheckForLeaks()
 {
-	m_mutex.Lock();
+	m_lock.Lock();
 	bool foundLeak = false;
 	memBlock *block = m_blockList.m_next;
 
@@ -355,7 +355,7 @@ vsHeap::CheckForLeaks()
 		}
 		block = block->m_next;
 	}
-	m_mutex.Unlock();
+	m_lock.Unlock();
 
 	vsAssert(!foundLeak, "Memory leaks found!  Details to stdout.");
 }
