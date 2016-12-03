@@ -100,6 +100,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 	bool                 m_usingNormalArray;
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
+	bool                 m_vsync;
 	uint32_t			m_vao;	// temporary -- for our global VAO.
 	// VAOs should really be integrated more nicely somewhere, but for now,
 	// we'll treat our rendering like OpenGL2 and just continually reconfigure
@@ -122,7 +123,7 @@ public:
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
 	bool	CheckVideoMode();
-	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias);
+	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync);
 
 	void	PreRender( const Settings &s );
 	void	RenderDisplayList( vsDisplayList *list );

@@ -71,7 +71,7 @@ vsScreen::~vsScreen()
 }
 
 void
-vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias)
+vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync)
 {
 	if ( width == m_width && height == m_height && depth == m_depth && fullscreen == m_fullscreen && bufferCount == m_bufferCount && antialias == m_antialias)
 		return;
@@ -83,7 +83,7 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int
 	m_depth = depth;
 	m_fullscreen = fullscreen;
 	m_antialias = antialias;
-	m_renderer->UpdateVideoMode(width, height, depth, fullscreen, bufferCount, antialias);
+	m_renderer->UpdateVideoMode(width, height, depth, fullscreen, bufferCount, antialias, vsync);
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->UpdateVideoMode();

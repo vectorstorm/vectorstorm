@@ -371,11 +371,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 
 	m_antialias = (flags & Flag_Antialias) != 0;
+	m_vsync = (flags & Flag_VSync) != 0;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
-	{
 		vsLog("Couldn't set vsync");
-	}
 
 #ifdef _DEBUG
 	if ( glDebugMessageCallback )
@@ -514,7 +513,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 		{
-			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount, m_antialias );
+			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount, m_antialias, m_vsync );
 			return true;
 		}
 	}
@@ -523,7 +522,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync)
 {
 	UNUSED(depth);
 	UNUSED(fullscreen);
@@ -533,6 +532,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_height = m_viewportHeight = height;
 	m_bufferCount = bufferCount;
 	m_antialias = antialias;
+	m_vsync = vsync;
 	int nowWidth, nowHeight;
 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 	if ( nowWidth != width || nowHeight != height )
@@ -547,6 +547,8 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_viewportWidthPixels = m_widthPixels;
 	m_viewportHeightPixels = m_heightPixels;
 	Resize();
+	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
+		vsLog("Couldn't set vsync");
 	CheckGLError("UpdateVideoMode");
 }
 

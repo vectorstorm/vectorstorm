@@ -64,7 +64,7 @@ public:
 	vsRenderTarget *	GetMainRenderTarget();
 	vsRenderTarget *	GetPresentTarget();
 
-	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias);
+	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync);
 	void			CheckVideoMode();
 
 	// The following width/height/aspect ratio functions operate in terms of

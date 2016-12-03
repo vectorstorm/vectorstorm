@@ -289,7 +289,8 @@ vsSystem::UpdateVideoMode(int width, int height)
 			32,
 			m_preferences->GetFullscreen(),
 			bufferCount,
-			m_preferences->GetAntialias()
+			m_preferences->GetAntialias(),
+			m_preferences->GetVSync()
 			);
     //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
