@@ -250,8 +250,15 @@ vsSystem::ShowCursor(bool show)
 void
 vsSystem::UpdateVideoMode()
 {
-	Resolution *res = m_preferences->GetResolution();
-	UpdateVideoMode(res->width, res->height);
+	if ( m_preferences->GetFullscreen() )
+	{
+		Resolution *res = m_preferences->GetResolution();
+		UpdateVideoMode(res->width, res->height);
+	}
+	else
+	{
+		UpdateVideoMode(m_screen->GetTrueWidth(), m_screen->GetTrueHeight());
+	}
 }
 
 void
