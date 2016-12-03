@@ -46,6 +46,7 @@ class vsScreen
 	float				m_aspectRatio;
 	bool				m_fullscreen;
 	bool				m_antialias;
+	bool				m_vsync;
 
 	bool				m_resized;
 
