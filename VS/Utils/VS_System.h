@@ -133,13 +133,40 @@ public:
 	bool IsExitApplicationKeyEnabled() const { return m_exitApplicationKeyEnabled; }
 };
 
-
 struct Resolution
 {
 	int width;
 	int height;
 };
 
+class Display
+{
+	vsString m_name;
+
+	Resolution* m_supportedResolution;
+	int m_supportedResolutionCount;
+public:
+
+	Display(): m_supportedResolution(NULL), m_supportedResolutionCount(0) {}
+	~Display()
+	{
+		vsDeleteArray(m_supportedResolution);
+	}
+
+	int				GetSupportedResolutionCount() { return m_supportedResolutionCount; }
+	Resolution *	GetSupportedResolutions() { return m_supportedResolution; }
+
+	void			SetSupportedResolutions( Resolution *res, int count );
+};
+
+
+struct VideoMode
+{
+	int displayId;
+	int width;
+	int height;
+	bool fullscreen;
+};
 
 	/** vsSystemPreferences
 	 *		Accessor class to provide managed access to the global preferences data.
@@ -148,7 +175,8 @@ class vsSystemPreferences
 {
 	vsPreferences *	m_preferences;
 
-	vsPreferenceObject *	m_resolution;
+	vsPreferenceObject *	m_display;
+	vsPreferenceObject *	m_fullscreenResolution;
 	vsPreferenceObject *	m_resolutionX;
 	vsPreferenceObject *	m_resolutionY;
 	vsPreferenceObject *	m_fullscreen;
@@ -163,9 +191,11 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
 
-	Resolution*	m_supportedResolution;
-	int			m_supportedResolutionCount;
+	Display* m_availableDisplays;
+	int m_availableDisplayCount;
 
+
+	void			CheckDisplayResolution(int i, int& maxWidth, int& maxHeight);
 
 public:
 
@@ -173,18 +203,31 @@ public:
 	~vsSystemPreferences();
 
 	void			Save();
+	void			CheckDisplays();
 
-	void			CheckResolutions();
-	int				GetSupportedResolutionCount() { return m_supportedResolutionCount; }
-	Resolution *	GetSupportedResolutions() { return m_supportedResolution; }
+	int				GetDisplayCount() { return m_availableDisplayCount; }
+	Display *		GetDisplays() { return m_availableDisplays; }
+
+	// int				GetSupportedResolutionCount() { return m_supportedResolutionCount; }
+	// Resolution *	GetSupportedResolutions() { return m_supportedResolution; }
 
 	// Video preferences
-	Resolution *	GetResolution();
-	int				GetResolutionId();
-	void			SetResolutionId(int val);
+	Display *		GetDisplay();
+	int				GetDisplayId();
+
+	int				GetResolutionX();
+	int				GetResolutionY();
+	// void			SetDisplayId(int val);
+
+	// Resolution *	GetResolution();
+	// int				GetResolutionId();
+
+	// void			SetResolutionId(int val);
 
 	bool			GetFullscreen();
-	void			SetFullscreen(bool fullscreen);
+	// void			SetFullscreen(bool fullscreen);
+
+	void			SetVideoMode( const VideoMode& mode );
 
 	bool			GetVSync();
 	void			SetVSync(bool vsync);

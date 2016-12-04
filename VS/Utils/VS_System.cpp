@@ -118,10 +118,11 @@ vsSystem::~vsSystem()
 void
 vsSystem::Init()
 {
-	m_preferences->CheckResolutions();
-	Resolution *res = m_preferences->GetResolution();
+	m_preferences->CheckDisplays();
+	int width = m_preferences->GetResolutionX();
+	int height = m_preferences->GetResolutionY();
 
-	vsLog("Initialising [%dx%d] resolution...", res->width, res->height);
+	vsLog("Initialising [%dx%d] resolution...", width, height);
 
 #if !TARGET_OS_IPHONE
 	m_showCursor = !m_preferences->GetFullscreen();
@@ -136,7 +137,7 @@ vsSystem::Init()
 //	m_screen = new vsScreen( 1280, 720, 32, false );
 	m_screen = new vsScreen( 960, 640, 32, false, false );
 #else
-	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	m_screen = new vsScreen( width, height, 32, m_preferences->GetFullscreen(), m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -252,8 +253,9 @@ vsSystem::UpdateVideoMode()
 {
 	if ( m_preferences->GetFullscreen() )
 	{
-		Resolution *res = m_preferences->GetResolution();
-		UpdateVideoMode(res->width, res->height);
+		int width = m_preferences->GetResolutionX();
+		int height = m_preferences->GetResolutionY();
+		UpdateVideoMode(width, height);
 	}
 	else
 	{
@@ -437,7 +439,7 @@ vsSystemPreferences::vsSystemPreferences()
 {
 	m_preferences = new vsPreferences("Global");
 
-	m_resolution = NULL;	// can't get this one until we can actually check what SDL supports, later on.
+	m_display = NULL;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 0, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
@@ -461,26 +463,23 @@ vsSystemPreferences::vsSystemPreferences()
 vsSystemPreferences::~vsSystemPreferences()
 {
 	delete m_preferences;
-	delete [] m_supportedResolution;
+	delete [] m_availableDisplays;
 }
 
 void
-vsSystemPreferences::CheckResolutions()
+vsSystemPreferences::CheckDisplayResolution( int id, int &maxWidth, int &maxHeight )
 {
-#if !TARGET_OS_IPHONE
-	vsLog("Checking supported resolutions...");
+	vsAssert(id < m_availableDisplayCount, "Unknown display??");
 
 	SDL_DisplayMode *modes;
 	int modeCount;
-	int maxWidth = 0;
-	int maxHeight = 0;
 	/* Get available fullscreen/hardware modes */
-	modeCount = SDL_GetNumDisplayModes(0);
+	modeCount = SDL_GetNumDisplayModes(id);
 	modes = new SDL_DisplayMode[modeCount];
 
 	for ( int i = 0; i < modeCount; i++ )
 	{
-		SDL_GetDisplayMode(0, i, &modes[i]);
+		SDL_GetDisplayMode(id, i, &modes[i]);
 	}
 
 	/* Check if there are any modes available */
@@ -489,60 +488,82 @@ vsSystemPreferences::CheckResolutions()
 		exit(-1);
 	}
 
+	Display *display = &m_availableDisplays[id];
+
 	/* Check if our resolution is restricted */
+	int actualModeCount = 0;
+
+	vsLog("Available modes for display %s:", SDL_GetDisplayName(id));
+
+	Resolution *res = new Resolution[modeCount];
+
+	for(int i=0;i<modeCount;i++)
 	{
-		int actualModeCount = 0;
-
-		m_supportedResolutionCount = modeCount;
-		/* Print valid modes */
-		vsLog("Available Modes");
-
-		m_supportedResolution = new Resolution[m_supportedResolutionCount];
-
-		for(int i=0;i<modeCount;i++)
+		bool alreadyAdded = false;
+		for ( int j = 0; j < actualModeCount; j++ )
 		{
-			bool alreadyAdded = false;
-			for ( int j = 0; j < actualModeCount; j++ )
+			if ( modes[i].w == res[j].width &&
+					modes[i].h == res[j].height )
 			{
-				if ( modes[i].w == m_supportedResolution[j].width &&
-						modes[i].h == m_supportedResolution[j].height )
-				{
-					alreadyAdded = true;
-					break;
-				}
+				alreadyAdded = true;
+				break;
 			}
-			if ( !alreadyAdded )
-			{
-				m_supportedResolution[actualModeCount].width = modes[i].w;
-				m_supportedResolution[actualModeCount].height = modes[i].h;
-				maxWidth = vsMax( maxWidth, m_supportedResolution[actualModeCount].width );
-				maxHeight = vsMax( maxHeight, m_supportedResolution[actualModeCount].height );
-				actualModeCount++;
-			}
-			m_supportedResolutionCount = actualModeCount;
 		}
-
-		for(int i = 0; i<m_supportedResolutionCount; i++ )
+		if ( !alreadyAdded )
 		{
-			vsLog("%d:  %d x %d", i, m_supportedResolution[i].width, m_supportedResolution[i].height);
+			res[actualModeCount].width = modes[i].w;
+			res[actualModeCount].height = modes[i].h;
+			maxWidth = vsMax( maxWidth, res[actualModeCount].width );
+			maxHeight = vsMax( maxHeight, res[actualModeCount].height );
+			actualModeCount++;
 		}
 	}
+	modeCount = actualModeCount;
+	vsDeleteArray( modes );
 
+	for(int i = 0; i<modeCount; i++ )
+	{
+		vsLog("%d:  %d x %d", i, res[i].width, res[i].height);
+	}
+
+	display->SetSupportedResolutions(res, modeCount);
+}
+
+void
+vsSystemPreferences::CheckDisplays()
+{
+#if !TARGET_OS_IPHONE
+	vsLog("Checking supported video displays...");
+
+	m_availableDisplayCount = SDL_GetNumVideoDisplays();
+	m_availableDisplays = new Display[ m_availableDisplayCount ];
+
+	int maxWidth = 0;
+	int maxHeight = 0;
+	for ( int i = 0; i < m_availableDisplayCount; i++ )
+	{
+		CheckDisplayResolution(i, maxWidth, maxHeight);
+	}
+
+	m_display = m_preferences->GetPreference("VideoDisplay", 0, 0, m_availableDisplayCount-1);
 	m_resolutionX = m_preferences->GetPreference("ResolutionX", 1024, 0, maxWidth);
 	m_resolutionY = m_preferences->GetPreference("ResolutionY", 576, 0, maxHeight);
-	int selectedResolution = m_supportedResolutionCount-1;
 	//int exactResolution = m_supportedResolutionCount-1;
 
 	int desiredWidth = m_resolutionX->m_value;
 	int desiredHeight = m_resolutionY->m_value;
 
-	for ( int j = m_supportedResolutionCount-1; j >= 0; j-- )
+	int resCount = m_availableDisplays[ m_display->GetValue() ].GetSupportedResolutionCount();
+	Resolution *res = m_availableDisplays[ m_display->GetValue() ].GetSupportedResolutions();
+	int selectedResolution = resCount-1;
+
+	for ( int j = resCount-1; j >= 0; j-- )
 	{
-		if ( m_supportedResolution[j].width <= desiredWidth )
+		if ( res[j].width <= desiredWidth )
 		{
 			selectedResolution = j;
 		}
-		if ( m_supportedResolution[j].width == desiredWidth && m_supportedResolution[j].height == desiredHeight )
+		if ( res[j].width == desiredWidth && res[j].height == desiredHeight )
 		{
 			//exactResolution = j;
 			selectedResolution = j;
@@ -550,49 +571,67 @@ vsSystemPreferences::CheckResolutions()
 		}
 	}
 #else
-
-	extern int resX;
-	extern int resY;
-
-	int maxWidth = 320;
-	int maxHeight = 480;
-	m_supportedResolution = new Resolution[1];
-	m_supportedResolution[0].width = resX;
-	m_supportedResolution[0].height = resY;
-	int selectedResolution = 0;
-	int modeCount = 1;
-
-	m_resolutionX = m_preferences->GetPreference("ResolutionX", 320, 0, maxWidth);
-	m_resolutionY = m_preferences->GetPreference("ResolutionY", 480, 0, maxHeight);
-
+	vsAssert(0, "iOS build target Unsupported;  needs re-implementation someday");
 #endif
-	m_resolution = m_preferences->GetPreference("Resolution", selectedResolution, 0, modeCount-1);
-	m_resolutionX->m_value = m_supportedResolution[selectedResolution].width;
-	m_resolutionY->m_value = m_supportedResolution[selectedResolution].height;
-	m_resolution->m_value = selectedResolution;
-	delete [] modes;
+	m_resolutionX->m_value = res[selectedResolution].width;
+	m_resolutionY->m_value = res[selectedResolution].height;
 }
 
-Resolution *
-vsSystemPreferences::GetResolution()
+Display *
+vsSystemPreferences::GetDisplay()
 {
-	int resolutionId = GetResolutionId();
-	return &m_supportedResolution[resolutionId];
+	int displayId = GetDisplayId();
+	return &m_availableDisplays[displayId];
 }
 
 int
-vsSystemPreferences::GetResolutionId()
+vsSystemPreferences::GetDisplayId()
 {
-	return m_resolution->m_value;
+	return m_display->m_value;
 }
 
 void
-vsSystemPreferences::SetResolutionId(int id)
+vsSystemPreferences::SetVideoMode( const VideoMode& mode )
 {
-	m_resolution->m_value = id;
-	m_resolutionX->m_value = m_supportedResolution[id].width;
-	m_resolutionY->m_value = m_supportedResolution[id].height;
+	m_display->SetValue( mode.displayId );
+	m_resolutionX->SetValue( mode.width );
+	m_resolutionY->SetValue( mode.height );
+	m_fullscreen->SetValue( mode.fullscreen );
 }
+
+int
+vsSystemPreferences::GetResolutionX()
+{
+	return m_resolutionX->GetValue();
+}
+
+int
+vsSystemPreferences::GetResolutionY()
+{
+	return m_resolutionY->GetValue();
+}
+
+// Resolution *
+// vsSystemPreferences::GetResolution()
+// {
+// 	int resolutionId = GetResolutionId();
+// 	Display *display = GetDisplay();
+// 	return &display->GetSupportedResolutions()[resolutionId];
+// }
+
+// int
+// vsSystemPreferences::GetResolutionId()
+// {
+// 	return m_resolution->m_value;
+// }
+//
+// void
+// vsSystemPreferences::SetResolutionId(int id)
+// {
+// 	m_resolution->m_value = id;
+// 	m_resolutionX->m_value = m_supportedResolution[id].width;
+// 	m_resolutionY->m_value = m_supportedResolution[id].height;
+// }
 
 bool
 vsSystemPreferences::GetBloom()
@@ -671,11 +710,11 @@ vsSystemPreferences::Save()
 	m_preferences->Save();
 }
 
-void
-vsSystemPreferences::SetFullscreen(bool fullscreen)
-{
-	m_fullscreen->m_value = fullscreen;
-}
+// void
+// vsSystemPreferences::SetFullscreen(bool fullscreen)
+// {
+// 	m_fullscreen->m_value = fullscreen;
+// }
 
 bool
 vsSystemPreferences::GetFullscreen()
@@ -719,4 +758,12 @@ vsSystemPreferences::GetMusicVolume()
 	return m_musicVolume->m_value;
 }
 
+
+void
+Display::SetSupportedResolutions( Resolution *res, int count )
+{
+	vsDeleteArray(m_supportedResolution);
+	m_supportedResolution = res;
+	m_supportedResolutionCount = count;
+}
 
