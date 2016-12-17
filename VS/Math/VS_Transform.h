@@ -42,11 +42,11 @@ public:
     const vsAngle&  GetAngle() const            { return m_angle; }
     const vsVector2D& GetScale() const          { return m_scale; }
 
-	vsVector2D		ApplyTo( const vsVector2D &v );
-	vsVector2D		ApplyInverseTo( const vsVector2D &v );
+	vsVector2D		ApplyTo( const vsVector2D &v ) const;
+	vsVector2D		ApplyInverseTo( const vsVector2D &v ) const;
 
-	vsTransform2D operator*( const vsTransform2D &o );
-	vsTransform2D	ApplyInverseTo( const vsTransform2D &o );
+	vsTransform2D operator*( const vsTransform2D &o ) const;
+	vsTransform2D	ApplyInverseTo( const vsTransform2D &o ) const;
 
 	const vsMatrix4x4 & GetMatrix() const;
 };
