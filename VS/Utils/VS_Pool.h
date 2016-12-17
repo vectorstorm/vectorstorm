@@ -65,7 +65,7 @@ public:
 		}
 		m_unusedCount--;
 
-		T* result = *m_unusedList.Begin();
+		T* result = m_unusedList[m_unusedList.ItemCount()-1];
 		m_unusedList.RemoveItem(result);
 		//m_usedList.AddItem(result);
 
