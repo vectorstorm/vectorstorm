@@ -55,6 +55,7 @@ vsColor::vsColor(const vsColorHSV& in)
 		r = in.v;
 		g = in.v;
 		b = in.v;
+		a = in.a;
 		return;
 	}
 	hh = in.h * 360.f;
