@@ -51,6 +51,9 @@ class vsLines3D: public vsModel
 	int m_vertexCursor;
 	int m_indexCursor;
 
+	vsVector3D m_constantViewDirection;
+	bool m_useConstantViewDirection;
+
 	void DrawStrip( vsRenderQueue *queue, Strip *strip );
 
 	size_t GetFinalVertexCount();
@@ -62,6 +65,8 @@ public:
 
 	void SetLeftRightWidths(float left, float right) { m_leftWidth = left; m_rightWidth = right; }
 	void SetWidth(float width) { SetLeftRightWidths( width * 0.5f, width * 0.5f ); }
+
+	void SetConstantViewDirection( const vsVector3D& direction );
 
 	void Clear();
 	void AddLine( vsVector3D &a, vsVector3D &b );

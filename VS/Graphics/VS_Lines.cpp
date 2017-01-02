@@ -701,7 +701,9 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_rightWidth( width * 0.5f ),
 	m_widthInScreenspace( screenspace ),
 	m_vertices( vsRenderBuffer::Type_Stream ),
-	m_indices( vsRenderBuffer::Type_Stream )
+	m_indices( vsRenderBuffer::Type_Stream ),
+	m_constantViewDirection(),
+	m_useConstantViewDirection(false)
 {
 }
 
@@ -709,6 +711,13 @@ vsLines3D::~vsLines3D()
 {
 	Clear();
 	vsDeleteArray( m_strip );
+}
+
+void
+vsLines3D::SetConstantViewDirection( const vsVector3D& direction )
+{
+	m_constantViewDirection = direction;
+	m_useConstantViewDirection = true;
 }
 
 void
@@ -852,6 +861,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		}
 
 		vsVector3D cameraForward = strip->m_vertex[midI] - camPos;
+		if ( m_useConstantViewDirection )
+			cameraForward = m_constantViewDirection;
 		// vsVector3D cameraForward = viewToLocal.z;
 		cameraForward.NormaliseSafe();
 
@@ -877,9 +888,6 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		{
 			if ( queue->IsOrthographic() )
 			{
-				// TODO:  Figure out conversion factor between screen pixels
-				// and meters in ortho.
-
 				leftWidthHere *= fovPerPixel;
 				rightWidthHere *= fovPerPixel;
 			}
