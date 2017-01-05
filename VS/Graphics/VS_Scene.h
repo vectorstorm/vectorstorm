@@ -83,6 +83,7 @@ public:
 	//	vsDisplayList *	GetDisplayList() { return m_displayList; }
 	vsCamera2D *		GetCamera() { return m_camera; }
 	vsCamera3D *		GetCamera3D() { return m_camera3D; }
+	bool				CameraIsReference() { return m_cameraIsReference; }
 	void			SetCamera2D( vsCamera2D *camera, bool reference=false );	// if the camera is "reference", then we don't own this camera;
 	void			SetCamera3D( vsCamera3D *camera, bool reference=false );	// and so do not call Update() on it.  (This is for use if we want to set the same camera on multiple layers)
 
