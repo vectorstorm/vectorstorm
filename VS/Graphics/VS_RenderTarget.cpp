@@ -214,6 +214,10 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 {
 	CheckGLError("vsSurface");
 
+	GLint maxSamples = 0;
+	if ( multisample )
+		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+
 	GLenum internalFormat = GL_RGBA8;
 	GLenum pixelFormat = GL_RGBA;
 	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
@@ -241,7 +245,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			{
 				glGenRenderbuffers(1, &m_texture[i]);
 				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, pixelFormat, m_width, m_height );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, pixelFormat, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_RENDERBUFFER, m_texture[i]);
 				m_isRenderbuffer = true;
 			}
@@ -274,12 +278,12 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
 			if ( settings.stencil )
 			{
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, m_width, m_height );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
 			}
 			else
 			{
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT24, m_width, m_height );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH_COMPONENT24, m_width, m_height );
 			}
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth);
 		}

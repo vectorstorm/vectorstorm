@@ -70,7 +70,7 @@ vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransf
 }
 
 vsVector2D
-vsTransform2D::ApplyTo( const vsVector2D &v )
+vsTransform2D::ApplyTo( const vsVector2D &v ) const
 {
 	vsVector2D result = m_angle.ApplyRotationTo(v);
 	result.x *= m_scale.x;
@@ -81,7 +81,7 @@ vsTransform2D::ApplyTo( const vsVector2D &v )
 }
 
 vsVector2D
-vsTransform2D::ApplyInverseTo( const vsVector2D &v )
+vsTransform2D::ApplyInverseTo( const vsVector2D &v ) const
 {
 	vsVector2D result = v;
 	vsAngle inverseAngle = -m_angle;
@@ -95,7 +95,7 @@ vsTransform2D::ApplyInverseTo( const vsVector2D &v )
 }
 
 vsTransform2D
-vsTransform2D::operator*( const vsTransform2D &o )
+vsTransform2D::operator*( const vsTransform2D &o ) const
 {
 	vsTransform2D result;
 
@@ -109,7 +109,7 @@ vsTransform2D::operator*( const vsTransform2D &o )
 }
 
 vsTransform2D
-vsTransform2D::ApplyInverseTo( const vsTransform2D &o )
+vsTransform2D::ApplyInverseTo( const vsTransform2D &o ) const
 {
 	vsTransform2D result;
 

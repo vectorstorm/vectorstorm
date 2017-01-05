@@ -55,6 +55,7 @@ vsColor::vsColor(const vsColorHSV& in)
 		r = in.v;
 		g = in.v;
 		b = in.v;
+		a = in.a;
 		return;
 	}
 	hh = in.h * 360.f;
@@ -102,11 +103,49 @@ vsColor::vsColor(const vsColorHSV& in)
 	a = in.a;
 }
 
+static float hue2rgb(float p, float q, float t)
+{
+	if(t < 0) t += 1;
+	if(t > 1) t -= 1;
+	if(t < 1.f/6.f) return p + (q - p) * 6 * t;
+	if(t < 1.f/2.f) return q;
+	if(t < 2.f/3.f) return p + (q - p) * (2.f/3.f - t) * 6;
+	return p;
+}
+
+vsColor::vsColor(const vsColorHSL& in)
+{
+	// This code (and its utility function 'hue2rgb', above) is adapted from
+	// the HSL -> RGB conversion code provided here:
+	//
+	// http://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+	if(in.s == 0)
+	{
+		r = g = b = in.l; // achromatic
+	}
+	else
+	{
+		float q = in.l < 0.5 ? in.l * (1.f + in.s) : in.l + in.s - in.l * in.s;
+		float p = 2.f * in.l - q;
+		r = hue2rgb(p, q, in.h + 1.f/3.f);
+		g = hue2rgb(p, q, in.h);
+		b = hue2rgb(p, q, in.h - 1.f/3.f);
+	}
+	a = in.a;
+}
+
 vsColor
 vsColor::FromHSV(float hue, float saturation, float value)
 {
 	vsColorHSV chsv(hue,saturation,value,1.f);
 	return vsColor(chsv);
+}
+
+vsColor
+vsColor::FromHSL(float hue, float saturation, float lightness)
+{
+	vsColorHSL chsl(hue,saturation,lightness,1.f);
+	return vsColor(chsl);
 }
 
 float
@@ -232,6 +271,90 @@ vsColorHSV::vsColorHSV( const vsColor& in )
 			h = 0.f;
 		}
 	}
+}
+
+vsColorHSL::vsColorHSL():
+	h(0.f),
+	s(0.f),
+	l(0.f),
+	a(0.f)
+{
+}
+
+vsColorHSL::vsColorHSL( float h, float s, float l, float a ):
+	h(h),
+	s(s),
+	l(l),
+	a(a)
+{
+}
+
+vsColorHSL::vsColorHSL( const vsColor& in )
+{
+	float M = vsMax( in.r, vsMax( in.g, in.b ) );
+	float m = vsMin( in.r, vsMin( in.g, in.b ) );
+
+	a = in.a;
+	l = 0.5f * (M+m); // lightness is average of min and max color component.
+	float delta = M - m;
+	if (delta < 0.00001f)
+	{
+		s = 0.f;
+		h = 0.f; // undefined, maybe nan?
+	}
+	else
+	{
+		// always true unless our color components are negative
+		if( M > 0.f )
+		{
+			s = delta;
+			s /= 1.f - vsFabs(2.f * l - 1);
+
+			if( in.r >= M )                           // > is bogus, just keeps compilor happy
+				h = ( in.g - in.b ) / delta;        // between yellow & magenta
+			else
+				if( in.g >= M )
+					h = 2.f + ( in.b - in.r ) / delta;  // between cyan & yellow
+				else
+					h = 4.f + ( in.r - in.g ) / delta;  // between magenta & cyan
+
+			h *= 60.f;                              // degrees
+
+			if( h < 0.f )
+				h += 360.f;
+
+			h = h / 360.f;
+		} else {
+			// if M is 0, then r = g = b = 0
+			// s = 0, v is undefined
+			s = 0.f;
+			h = 0.f;
+		}
+	}
+}
+
+float
+vsColorHSL::SaturationToChroma(float saturation, float lightness)
+{
+	if ( lightness == 1.f )
+		return 0.f;
+
+	float maximumSaturation = (1.f - vsFabs(2.f * lightness - 1.f) );
+	float chroma = saturation / maximumSaturation;
+	chroma = vsClamp(0.f, 1.f, chroma);
+
+	return chroma;
+}
+
+float
+vsColorHSL::ChromaToSaturation(float chroma, float lightness)
+{
+	if ( lightness == 1.f )
+		return 0.f;
+
+	float maximumSaturation = (1.f - vsFabs(2.f * lightness - 1.f) );
+	float saturation = chroma * maximumSaturation;
+	return saturation;
 }
 
 vsColorPacked::vsColorPacked(const vsColor& c):

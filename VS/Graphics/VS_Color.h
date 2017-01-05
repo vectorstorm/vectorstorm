@@ -12,6 +12,7 @@
 
 #include "Math/VS_Math.h"
 
+class vsColorHSL;
 class vsColorHSV;
 class vsColorPacked;
 
@@ -23,8 +24,10 @@ public:
 	vsColor(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; }
 	vsColor(const vsColorPacked& packed);
 	vsColor(const vsColorHSV& hsv);
+	vsColor(const vsColorHSL& hsl);
 
 	static vsColor FromHSV(float hue, float saturation, float value);
+	static vsColor FromHSL(float hue, float saturation, float lightness);
 	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	static vsColor FromUInt32(uint32_t rgba);
 	float GetHue() const;
@@ -93,6 +96,29 @@ public:
 	vsColorHSV( const vsColor& other );
 };
 
+class vsColorHSL
+{
+public:
+	float h, s, l, a;
+
+	vsColorHSL();
+	vsColorHSL( float h, float s, float l, float a );
+	vsColorHSL( const vsColor& other );
+
+	// Technically, our 'S' value both here in the vsColorHSL and
+	// vsColorHSV classes are actually storing "chroma" values;  scaled
+	// within the value range of saturation levels for the specified
+	// lightness/value (because otherwise, it would be possible to go
+	// outside the representable RGB color space).  If we need an
+	// absolute saturation value, we can use these conversion functions.
+	//
+	// Again, in order to cause maximum confusion, the 's' value on
+	// this class is actually storing chroma, and "saturation" is traditionally
+	// the 'true' non-scaled value.  So to get that true non-scaled value,
+	// pass that 's' value into "ChromaToSaturation".
+	static float SaturationToChroma(float saturation, float lightness);
+	static float ChromaToSaturation(float chroma, float lightness);
+};
 
 extern const vsColor c_white;
 extern const vsColor c_grey;

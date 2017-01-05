@@ -78,6 +78,26 @@ vsBox2D::ExpandToInclude( const vsBox2D &other )
 	ExpandToInclude( other.max );
 }
 
+void
+vsBox2D::Union( const vsBox2D& other )
+{
+	ExpandToInclude(other);
+}
+
+void
+vsBox2D::Intersect( const vsBox2D& other )
+{
+	if ( !Intersects(other) )
+		min = max = vsVector2D::Zero;
+	else
+	{
+		min.x = vsMax( min.x, other.min.x );
+		min.y = vsMax( min.y, other.min.y );
+		max.x = vsMin( max.x, other.max.x );
+		max.y = vsMin( max.y, other.max.y );
+	}
+}
+
 
 vsBox2D vsInterpolate( float alpha, const vsBox2D& a, const vsBox2D& b )
 {

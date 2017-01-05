@@ -256,8 +256,14 @@ vsToken::ExtractFrom( vsString &string )
 		{
 			vsString token = ExtractNumberToken(string);
 
-			bool isAFloat = ( token.find('.') != token.npos );
+			if ( token == "-" ) // Ugly:  handle negative nans as zeroes.
+			{
+				m_int = 0;
+				m_type = Type_Integer;
+				return false;
+			}
 
+			bool isAFloat = ( token.find('.') != token.npos );
 			if ( isAFloat )
 			{
 				bool success = (sscanf( token.c_str(), "%f", &m_float )!=0);

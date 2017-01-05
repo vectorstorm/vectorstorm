@@ -47,6 +47,9 @@ public:
 	void		Expand( float amt ) { min += -amt * vsVector2D::One; max += amt * vsVector2D::One; }
 	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.
 
+	void		Union( const vsBox2D& other ); // sets me to the union of my box and that box.
+	void		Intersect( const vsBox2D& other ); // sets me to the intersection of my box and that box.
+
 	void Set(const vsVector2D &min_in, const vsVector2D &max_in) { min = min_in; max = max_in; set = true; }
 
 	bool ContainsPoint(const vsVector2D &pos) const;	// 'pos' must be in local coordinates!
