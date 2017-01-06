@@ -74,8 +74,13 @@ vsBox2D::ExpandToInclude( const vsVector2D &pos )
 void
 vsBox2D::ExpandToInclude( const vsBox2D &other )
 {
-	ExpandToInclude( other.min );
-	ExpandToInclude( other.max );
+	if ( !set )
+		*this = other;
+	else if ( other.set )
+	{
+		ExpandToInclude( other.min );
+		ExpandToInclude( other.max );
+	}
 }
 
 void
@@ -477,8 +482,15 @@ vsBox3D::ExpandToInclude( const vsVector3D &pos )
 void
 vsBox3D::ExpandToInclude( const vsBox3D &b )
 {
-	ExpandToInclude(b.min);
-	ExpandToInclude(b.max);
+	if ( !set )
+	{
+		*this = b;
+	}
+	else if ( b.set )
+	{
+		ExpandToInclude(b.min);
+		ExpandToInclude(b.max);
+	}
 }
 
 float
