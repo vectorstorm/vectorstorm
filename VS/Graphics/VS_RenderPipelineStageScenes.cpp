@@ -58,10 +58,13 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 				cam = m_scene[i]->GetCamera3D();
 				reference = m_scene[i]->CameraIsReference();
 				m_scene[i]->SetCamera3D(m_customCamera);
-			}
-			m_scene[i]->Draw( list );
-			if ( m_customCamera && m_scene[i]->Is3D() )
+				m_scene[i]->Draw( list );
 				m_scene[i]->SetCamera3D(cam, reference);
+			}
+			else
+			{
+				m_scene[i]->Draw( list );
+			}
 		}
 	}
 	list->ResolveRenderTarget( m_target );
