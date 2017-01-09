@@ -11,14 +11,14 @@
 
 static int s_renderTargetCount = 0;
 
-vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in ):
+vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
+	m_settings(settings),
 	m_texture(NULL),
 	m_renderBufferSurface(NULL),
 	m_textureSurface(NULL),
 	m_type(t)
 {
 	CheckGLError("RenderTarget");
-	vsSurface::Settings settings = settings_in;
 
 	if ( m_type == Type_Window )
 	{
@@ -29,11 +29,9 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings_in )
 	}
 	else
 	{
-		//settings.width = vsNextPowerOfTwo(settings.width);
-		//settings.height = vsNextPowerOfTwo(settings.height);
 		if ( m_type == Type_Multisample )
 		{
-			vsSurface::Settings rbs = settings_in;
+			vsSurface::Settings rbs = settings;
 			rbs.mipMaps = false;
 			m_renderBufferSurface = new vsSurface(rbs, false, true);
 		}
@@ -236,6 +234,8 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
+		for ( int i = 0; i < m_textureCount; i++ )
+			m_texture[i] = 0;
 	}
 	else
 	{
@@ -354,4 +354,49 @@ vsSurface::~vsSurface()
 
 
 
+
+void
+vsRenderTarget::Resize( int width, int height )
+{
+	if ( m_renderBufferSurface )
+		m_renderBufferSurface->Resize(width, height);
+	if ( m_textureSurface )
+		m_textureSurface->Resize(width, height);
+	m_viewportWidth = width;
+	m_viewportHeight = height;
+	m_settings.width = width;
+	m_settings.height = height;
+}
+
+void
+vsSurface::Resize( int width, int height )
+{
+	if ( m_width == width && m_height == height )
+		return;
+
+	glActiveTexture(GL_TEXTURE0);
+
+	vsAssert( !m_isRenderbuffer, "Resize not yet supported for renderbuffer surfaces" );
+	for ( int i = 0; i < m_textureCount; i++ )
+	{
+		if ( m_texture[i] )
+		{
+			GLenum internalFormat = GL_RGBA8;
+			GLenum pixelFormat = GL_RGBA;
+			GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, pixelFormat, type, 0);
+		}
+	}
+
+	if ( m_depth )
+	{
+		glBindTexture(GL_TEXTURE_2D, m_depth);
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	m_width = width;
+	m_height = height;
+}
 

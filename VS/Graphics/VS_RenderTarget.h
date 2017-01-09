@@ -54,6 +54,9 @@ public:
 	vsSurface( int width, int height );	// for main window.
 	vsSurface( const Settings& settings, bool depthOnly, bool multisample );
 	~vsSurface();
+
+	// experimental support for resizing an existing render target.
+	void Resize( int width, int height );
 };
 
 
@@ -71,7 +74,7 @@ public:
 
 private:
 
-
+	vsSurface::Settings m_settings;
 
 	vsTexture **m_texture;
 	int			m_bufferCount;
@@ -110,6 +113,9 @@ public:
 
 	float	GetTexWidth() { return m_texWidth; }
 	float	GetTexHeight() { return m_texHeight; }
+
+	// experimental support for resizing an existing render target.
+	void Resize( int width, int height );
 };
 
 #endif // VS_RENDERTARGET_H
