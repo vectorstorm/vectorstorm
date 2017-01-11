@@ -19,6 +19,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	m_type(t)
 {
 	CheckGLError("RenderTarget");
+	bool isDepth = ( t == Type_Depth || t == Type_DepthCompare );
 
 	if ( m_type == Type_Window )
 	{
@@ -33,11 +34,15 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 		{
 			vsSurface::Settings rbs = settings;
 			rbs.mipMaps = false;
-			m_renderBufferSurface = new vsSurface(rbs, false, true);
+			m_renderBufferSurface = new vsSurface(rbs, false, true, false);
 		}
-		m_textureSurface = new vsSurface(settings, (t == Type_Depth), false);
+		m_textureSurface = new vsSurface(settings, isDepth, false, m_type == Type_DepthCompare );
 		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
 		m_texHeight = 1.0;//settings.height / (float)vsNextPowerOfTwo(settings.height);
+
+		if ( isDepth )
+		{
+		}
 	}
 
 	m_viewportWidth = settings.width;
@@ -48,7 +53,10 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	for ( int i = 0; i < settings.buffers; i++ )
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
-		vsTextureInternal *ti = new vsTextureInternal(name, m_textureSurface, i, (t == Type_Depth));
+		vsTextureInternal *ti = new vsTextureInternal(name,
+				m_textureSurface,
+				i,
+				isDepth);
 		vsTextureManager::Instance()->Add(ti);
 		m_texture[i] = new vsTexture(name);
 	}
@@ -200,7 +208,7 @@ static void CheckFBO()
 }
 
 
-vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample ):
+vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(settings.width),
 	m_height(settings.height),
 	m_texture(0),
@@ -302,8 +310,11 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			if ( depthCompare )
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			}
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);

@@ -52,7 +52,7 @@ public:
 	bool	m_isRenderbuffer;
 
 	vsSurface( int width, int height );	// for main window.
-	vsSurface( const Settings& settings, bool depthOnly, bool multisample );
+	vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare );
 	~vsSurface();
 
 	// experimental support for resizing an existing render target.
@@ -69,7 +69,8 @@ public:
 		Type_Window,			// our main OpenGL context window.  Won't allocate texture space, will just use our main framebuffer.
 		Type_Texture,			// regular texture
 		Type_Multisample,		// regular texture, with multisample enabled
-		Type_Depth				// not implemented -- depth component only
+		Type_Depth,				// depth-only, regular access.
+		Type_DepthCompare		// depth-only, access via compare mode.
 	};
 
 private:
