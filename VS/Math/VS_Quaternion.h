@@ -45,6 +45,9 @@ public:
 	void	NormaliseIfNeeded();
 
 	vsVector3D	ApplyTo( const vsVector3D &in ) const;
+
+	void			Invert();
+	vsQuaternion	Inverse() const;
 };
 
 // Spherical linear linearpolation from one quaternion to another.

@@ -282,3 +282,25 @@ vsQuaternion::ApplyTo( const vsVector3D &in ) const
 }
 
 
+void
+vsQuaternion::Invert()
+{
+	NormaliseIfNeeded();
+
+	x *= -1.0f;
+	y *= -1.0f;
+	z *= -1.0f;
+}
+
+vsQuaternion
+vsQuaternion::Inverse() const
+{
+	vsQuaternion b(*this);
+	b.NormaliseIfNeeded();
+
+	b.x *= -1.0f;
+	b.y *= -1.0f;
+	b.z *= -1.0f;
+	return b;
+}
+
