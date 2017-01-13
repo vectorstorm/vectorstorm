@@ -90,7 +90,10 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	fString = version + fString;
 
 #if !TARGET_OS_IPHONE
-	m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+	if ( m_shader == 0xffffffff )
+		m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+	else
+		vsRenderer_OpenGL3::Compile( m_shader, vString.c_str(), fString.c_str(), vString.size(), fString.size(), false );
 	// vsLog("Created shader %d", m_shader);
 #endif // TARGET_OS_IPHONE
 
@@ -223,8 +226,6 @@ vsShader::ReloadAll()
 	{
 		if ( s->m_vertexShaderFile != vsEmptyString && s->m_fragmentShaderFile != vsEmptyString )
 		{
-			vsRenderer_OpenGL3::DestroyShader(s->m_shader);
-
 			vsFile vShader( vsString("shaders/") + s->m_vertexShaderFile, vsFile::MODE_Read );
 			vsFile fShader( vsString("shaders/") + s->m_fragmentShaderFile, vsFile::MODE_Read );
 
@@ -239,8 +240,7 @@ vsShader::ReloadAll()
 			vsString vString( vStore->GetReadHead(), vSize );
 			vsString fString( fStore->GetReadHead(), fSize );
 
-			// s->m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
-			s->Compile( vString, fString, s->m_litBool, s->m_textureBool);
+			s->Compile( vString, fString, s->m_litBool, s->m_textureBool );
 
 			delete vStore;
 			delete fStore;

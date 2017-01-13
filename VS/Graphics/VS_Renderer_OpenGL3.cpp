@@ -1529,17 +1529,18 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	GLuint program;
 	program = glCreateProgram();
 
-	Compile(program, vert, frag, vLength, fLength );
+	Compile(program, vert, frag, vLength, fLength, true );
 
 	return program;
 }
 
 void
-vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, int vLength, int fLength )
+vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, int vLength, int fLength, bool requireSuccess )
 {
-	GLuint vertShader, fragShader;
+	GLuint vertShader = -1;
+	GLuint fragShader = -1;
 	GLchar buf[256];
-	GLint success;
+	GLint success = true;
 
 	GLint *vLengthPtr = NULL;
 	GLint *fLengthPtr = NULL;
@@ -1550,49 +1551,56 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 		fLengthPtr = (GLint*)&fLength;
 
 	vertShader = glCreateShader(GL_VERTEX_SHADER);
+	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+
 	glShaderSource(vertShader, 1, (const GLchar**) &vert, vLengthPtr);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-		// vsLog("%s",vert);
 		vsLog("%s",buf);
-		vsAssert(success,"Unable to compile vertex shader.\n");
+
+		vsAssert(success || !requireSuccess,"Unable to compile vertex shader.\n");
 	}
 
-	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
-	glCompileShader(fragShader);
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-	if (!success)
+	if ( success )
 	{
-		glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-		vsLog("%s",frag);
-		vsLog(buf);
-		vsAssert(success,"Unable to compile fragment shader.\n");
+		glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
+		glCompileShader(fragShader);
+		glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
+			vsLog("%s",frag);
+			vsLog(buf);
+			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
+		}
 	}
 
-	glAttachShader(program, vertShader);
-	glAttachShader(program, fragShader);
-
-	glBindAttribLocation(program, 0, "vertex");
-	glBindAttribLocation(program, 1, "texcoord");
-	glBindAttribLocation(program, 2, "normal");
-	glBindAttribLocation(program, 3, "color");
-	glBindAttribLocation(program, 4, "instanceColorAttrib");
-	glBindAttribLocation(program, 5, "localToWorldAttrib");
-
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	if (!success)
+	if ( success )
 	{
-		glGetProgramInfoLog(program, sizeof(buf), 0, buf);
-		vsLog(buf);
-		vsAssert(success,"Unable to link shaders.\n");
+		glAttachShader(program, vertShader);
+		glAttachShader(program, fragShader);
+
+		glBindAttribLocation(program, 0, "vertex");
+		glBindAttribLocation(program, 1, "texcoord");
+		glBindAttribLocation(program, 2, "normal");
+		glBindAttribLocation(program, 3, "color");
+		glBindAttribLocation(program, 4, "instanceColorAttrib");
+		glBindAttribLocation(program, 5, "localToWorldAttrib");
+
+		glLinkProgram(program);
+		glGetProgramiv(program, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			glGetProgramInfoLog(program, sizeof(buf), 0, buf);
+			vsLog(buf);
+			vsAssert(success || !requireSuccess,"Unable to link shaders.\n");
+		}
+		glDetachShader(program,vertShader);
+		glDetachShader(program,fragShader);
 	}
-	glDetachShader(program,vertShader);
-	glDetachShader(program,fragShader);
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
 }

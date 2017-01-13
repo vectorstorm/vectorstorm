@@ -152,7 +152,7 @@ public:
 	vsImage*	ScreenshotAlpha();
 
 	static GLuint		Compile(const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
-	static void			Compile(GLuint program, const char *vert, const char *frag, int vertLength = 0, int fragLength = 0 );
+	static void			Compile(GLuint program, const char *vert, const char *frag, int vertLength = 0, int fragLength = 0, bool requireSuccess = true );
 	static void			DestroyShader(GLuint shader);
 
 	vsShader*	DefaultShaderFor( vsMaterialInternal *mat );
