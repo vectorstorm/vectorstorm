@@ -24,12 +24,28 @@ static bool m_colorAttribIsActive = false;
 
 
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
+	m_uniform(NULL),
+	m_attribute(NULL),
+	m_uniformCount(0),
+	m_attributeCount(0),
 	m_shader(-1)
 {
+	Compile( vertexShader, fragmentShader, lit, texture );
+}
+
+void
+vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
+{
+	Uniform *oldUniform = m_uniform;
+	Attribute *oldAttribute = m_attribute;
+	// int oldUniformCount = m_uniformCount;
+	// int oldAttributeCount = m_attributeCount;
+
 	vsString version;
 
 	vsString vString = vertexShader;
 	vsString fString = fragmentShader;
+
 
 	// check whether each shader begins with a #version statement.
 	// If so, let's remove and remember it, then re-insert it into
@@ -156,6 +172,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_globalTimeUniformId = GetUniformId("globalTime");
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
+
+	vsDeleteArray( oldUniform );
+	vsDeleteArray( oldAttribute );
 }
 
 vsShader::~vsShader()
@@ -184,11 +203,51 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 	vsString fString( fStore->GetReadHead(), fSize );
 
 	vsShader *result =  new vsShader(vString, fString, lit, texture);
+	result->m_vertexShaderFile = vertexShader;
+	result->m_fragmentShaderFile = fragmentShader;
+	result->m_litBool = lit;
+	result->m_textureBool = texture;
+
 
 	delete vStore;
 	delete fStore;
 
 	return result;
+}
+
+void
+vsShader::ReloadAll()
+{
+	vsShader *s = vsShader::GetFirstInstance();
+	while ( s )
+	{
+		if ( s->m_vertexShaderFile != vsEmptyString && s->m_fragmentShaderFile != vsEmptyString )
+		{
+			vsRenderer_OpenGL3::DestroyShader(s->m_shader);
+
+			vsFile vShader( vsString("shaders/") + s->m_vertexShaderFile, vsFile::MODE_Read );
+			vsFile fShader( vsString("shaders/") + s->m_fragmentShaderFile, vsFile::MODE_Read );
+
+			uint32_t vSize = vShader.GetLength();
+			uint32_t fSize = fShader.GetLength();
+
+			vsStore *vStore = new vsStore(vSize);
+			vsStore *fStore = new vsStore(fSize);
+
+			vShader.Store( vStore );
+			fShader.Store( fStore );
+			vsString vString( vStore->GetReadHead(), vSize );
+			vsString fString( fStore->GetReadHead(), fSize );
+
+			// s->m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+			s->Compile( vString, fString, s->m_litBool, s->m_textureBool);
+
+			delete vStore;
+			delete fStore;
+		}
+
+		s = s->GetNextInstance();
+	}
 }
 
 void

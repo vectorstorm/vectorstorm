@@ -18,8 +18,9 @@ class vsShaderValues;
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS_MaterialInternal.h"
+#include "VS/Utils/VS_AutomaticInstanceList.h"
 
-class vsShader
+class vsShader: public vsAutomaticInstanceList<vsShader>
 {
 public:
 	struct Uniform
@@ -72,6 +73,9 @@ private:
 
 	int32_t m_globalTimeUniformId;
 
+	vsString m_vertexShaderFile;
+	vsString m_fragmentShaderFile;
+
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueVec3( int i, const vsVector3D& value );
@@ -80,8 +84,12 @@ private:
 	void SetUniformValueVec4( int i, const vsColor& value );
 	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
 
+	void Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
+
 protected:
 	uint32_t m_shader;
+	bool m_litBool;
+	bool m_textureBool;
 
 public:
 
@@ -89,6 +97,7 @@ public:
 	virtual ~vsShader();
 
 	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
+	static void ReloadAll();
 
 	uint32_t GetShaderId() { return m_shader; }
 

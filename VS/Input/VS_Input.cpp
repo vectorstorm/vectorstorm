@@ -17,6 +17,8 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 
+#include "VS_Shader.h" // TEMP:  For triggering shader reload.
+
 #include "VS_Preferences.h"
 #include "Utils/utfcpp/utf8.h"
 
@@ -489,7 +491,7 @@ vsInput::Update(float timeStep)
 									break;
 							}
 						}
-						else
+						else // not string mode
 						{
 							switch( event.key.keysym.sym )
 							{
@@ -552,6 +554,10 @@ vsInput::Update(float timeStep)
 									//						case 'Z':
 									//							m_keyControlState[CID_ZoomOut] = 1.f;
 									//							break;
+								case SDLK_p:
+									// reload shaders!
+									vsShader::ReloadAll();
+									break;
 								default:
 									break;
 							}

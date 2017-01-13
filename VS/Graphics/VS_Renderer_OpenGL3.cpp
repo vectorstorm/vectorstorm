@@ -1526,8 +1526,19 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 GLuint
 vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int fLength )
 {
+	GLuint program;
+	program = glCreateProgram();
+
+	Compile(program, vert, frag, vLength, fLength );
+
+	return program;
+}
+
+void
+vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, int vLength, int fLength )
+{
+	GLuint vertShader, fragShader;
 	GLchar buf[256];
-	GLuint vertShader, fragShader, program;
 	GLint success;
 
 	GLint *vLengthPtr = NULL;
@@ -1562,7 +1573,6 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 		vsAssert(success,"Unable to compile fragment shader.\n");
 	}
 
-	program = glCreateProgram();
 	glAttachShader(program, vertShader);
 	glAttachShader(program, fragShader);
 
@@ -1585,8 +1595,6 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	glDetachShader(program,fragShader);
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
-
-	return program;
 }
 
 void
