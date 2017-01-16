@@ -160,7 +160,16 @@ vsPreferenceObject::Extract()
 void
 vsPreferenceObject::Validate()
 {
-	vsAssert(m_value >= m_min, "Preference value too low!");
-	vsAssert(m_value <= m_max, "Preference value too high!");
+	if ( m_value < m_min || m_value > m_max )
+	{
+		vsAssert(m_value >= m_min,
+				vsFormatString("Preference value '%s' too low! (value %d < min %d)",
+					m_label.c_str(), m_value, m_min)
+				);
+		vsAssert(m_value <= m_max,
+				vsFormatString("Preference value '%s' too high! (value %d > max %d)",
+					m_label.c_str(), m_value, m_max)
+				);
+	}
 }
 
