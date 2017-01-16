@@ -18,6 +18,7 @@
 #include "VS_Store.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
+#include <algorithm>
 
 static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
@@ -46,6 +47,8 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	vsString vString = vertexShader;
 	vsString fString = fragmentShader;
 
+	vString.erase( std::remove(vString.begin(), vString.end(), '\r'), vString.end() );
+	fString.erase( std::remove(fString.begin(), fString.end(), '\r'), fString.end() );
 
 	// check whether each shader begins with a #version statement.
 	// If so, let's remove and remember it, then re-insert it into
