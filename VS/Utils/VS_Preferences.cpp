@@ -26,9 +26,10 @@ vsPreferences::vsPreferences(const vsString &filename_in)
 
 		while( prevsFile.Record(&record) )
 		{
- 			vsAssert( record.GetTokenCount() == 3, vsFormatString("%s preference has wrong number of arguments!", record.GetLabel().AsString().c_str() ));
-
-			AddPreference( record.GetLabel().AsString(), record.GetToken(0).AsInteger(), record.GetToken(1).AsInteger(), record.GetToken(2).AsInteger());
+			if ( record.GetTokenCount() != 3 )
+				vsLog("%s preference has wrong number of arguments!", record.GetLabel().AsString().c_str() );
+			else
+				AddPreference( record.GetLabel().AsString(), record.GetToken(0).AsInteger(), record.GetToken(1).AsInteger(), record.GetToken(2).AsInteger());
 		}
 	}
 }
