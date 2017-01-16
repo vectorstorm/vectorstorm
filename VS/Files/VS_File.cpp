@@ -299,13 +299,21 @@ vsFile::ReadLine( vsString *line )
 		char* buffer = (char*)malloc(bytes+1);
 		PHYSFS_uint32 bytesRead = PHYSFS_read(m_file, buffer, 1, bytes);
 		vsAssert(bytesRead == bytes, "Didn't read as many bytes as we expected?");
-		buffer[bytes-1] = 0;
+
+		// if we read a newline, let's just ignore it.
+		if ( peekChar == '\n' )
+		{
+			bytes--;
+		}
+
+		buffer[bytes] = 0;
 
 		*line = buffer;
-		while (line->find('\r') != vsString::npos)
+		while ( size_t i = line->find('\r') != vsString::npos)
 		{
-			line->erase( line->find('\r') );
+			line->erase(i);
 		}
+
 		free(buffer);
 
 		return true;
