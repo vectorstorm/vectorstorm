@@ -18,7 +18,9 @@
 #include "VS_Store.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
+#include "VS_DisableDebugNew.h"
 #include <algorithm>
+#include "VS_EnableDebugNew.h"
 
 static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
