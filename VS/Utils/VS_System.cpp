@@ -121,7 +121,8 @@ vsSystem::Init()
 	m_preferences->CheckResolutions();
 	Resolution *res = m_preferences->GetResolution();
 
-	vsLog("Initialising [%dx%d] resolution...", res->width, res->height);
+	vsLog("Init:  Initialising [%dx%d] resolution (%s)...", res->width, res->height,
+			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
 
 #if !TARGET_OS_IPHONE
 	m_showCursor = !m_preferences->GetFullscreen();
@@ -278,7 +279,9 @@ vsSystem::UpdateVideoMode(int width, int height)
 
 	vsHeap::Push(g_globalHeap);
 
-	vsLog("Initialising [%dx%d] resolution...", width, height);
+
+	vsLog("Changing resolution to [%dx%d] (%s)...", width, height,
+			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
 
 	if ( !m_showCursorOverridden )
 	{
