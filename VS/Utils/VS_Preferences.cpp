@@ -26,10 +26,10 @@ vsPreferences::vsPreferences(const vsString &filename_in)
 
 		while( prevsFile.Record(&record) )
 		{
-			if ( record.GetTokenCount() != 3 )
+			if ( record.GetTokenCount() < 1 )
 				vsLog("%s preference has wrong number of arguments!", record.GetLabel().AsString().c_str() );
 			else
-				AddPreference( record.GetLabel().AsString(), record.GetToken(0).AsInteger(), record.GetToken(1).AsInteger(), record.GetToken(2).AsInteger());
+				AddPreference( record.GetLabel().AsString(), record.GetToken(0).AsInteger() );
 		}
 	}
 }
@@ -65,15 +65,11 @@ vsPreferences::FindPreference(const vsString &label)
 }
 
 vsPreferenceObject *
-vsPreferences::AddPreference(const vsString &label, int value, int minValue, int maxValue)
+vsPreferences::AddPreference(const vsString &label, int value)
 {
 	vsPreferenceObject *newObj = new vsPreferenceObject;
 	newObj->m_label = label;
 	newObj->m_value = value;
-	newObj->m_min = minValue;
-	newObj->m_max = maxValue;
-
-	newObj->Validate();
 
 	m_preferenceList->Insert(newObj);
 
@@ -93,10 +89,8 @@ vsPreferences::Save()
 		record.Init();
 
 		record.SetLabel( s->m_label );
-		record.SetTokenCount(3);
+		record.SetTokenCount(1);
 		record.GetToken(0).SetInteger(s->m_value);
-		record.GetToken(1).SetInteger(s->m_min);
-		record.GetToken(2).SetInteger(s->m_max);
 
 		prevsFile.Record(&record);
 
@@ -112,17 +106,11 @@ vsPreferences::GetPreference(const vsString &label, int defaultValue, int minVal
 	vsPreferenceObject *o = FindPreference(label);
 	if ( o )
 	{
-		o->m_min = minValue;
-		o->m_max = maxValue;
-
-		if ( o->m_value < minValue || o->m_value > maxValue )
-			o->m_value = defaultValue;		// we seem to have changed the limits for this value, such that the saved value is no longer legal.  Switch it to the new default value.
-
-		o->Validate();
+		o->m_value = vsClamp( minValue, o->m_value, maxValue );
 	}
 	else
 	{
-		o = AddPreference(label, defaultValue, minValue, maxValue);
+		o = AddPreference(label, defaultValue);
 	}
 
 	return o;
@@ -131,9 +119,7 @@ vsPreferences::GetPreference(const vsString &label, int defaultValue, int minVal
 
 vsPreferenceObject::vsPreferenceObject():
 	m_label("NULL"),
-	m_value(0),
-	m_min(0),
-	m_max(0)
+	m_value(0)
 {
 	m_next = this;
 	m_prev = this;
@@ -156,21 +142,5 @@ vsPreferenceObject::Extract()
 	m_prev->m_next = m_next;
 
 	m_next = m_prev = this;
-}
-
-void
-vsPreferenceObject::Validate()
-{
-	if ( m_value < m_min || m_value > m_max )
-	{
-		vsAssert(m_value >= m_min,
-				vsFormatString("Preference value '%s' too low! (value %d < min %d)",
-					m_label.c_str(), m_value, m_min)
-				);
-		vsAssert(m_value <= m_max,
-				vsFormatString("Preference value '%s' too high! (value %d > max %d)",
-					m_label.c_str(), m_value, m_max)
-				);
-	}
 }
 
