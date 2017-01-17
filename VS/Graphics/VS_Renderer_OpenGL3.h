@@ -106,6 +106,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	// we'll treat our rendering like OpenGL2 and just continually reconfigure
 	// a single global Vertex Array Object..
 
+	WindowType m_windowType;
+
 	void				FlushRenderState();
 	virtual void		SetMaterialInternal(vsMaterialInternal *material);
 	virtual void		SetMaterial(vsMaterial *material);
@@ -123,7 +125,7 @@ public:
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
 	bool	CheckVideoMode();
-	void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync);
+	virtual void UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync);
 
 	void	PreRender( const Settings &s );
 	void	RenderDisplayList( vsDisplayList *list );

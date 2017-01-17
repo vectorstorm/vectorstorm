@@ -148,10 +148,11 @@ class vsSystemPreferences
 {
 	vsPreferences *	m_preferences;
 
-	vsPreferenceObject *	m_resolution;
+	int m_resolution;
 	vsPreferenceObject *	m_resolutionX;
 	vsPreferenceObject *	m_resolutionY;
 	vsPreferenceObject *	m_fullscreen;
+	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_antialias;
@@ -185,6 +186,9 @@ public:
 
 	bool			GetFullscreen();
 	void			SetFullscreen(bool fullscreen);
+
+	bool			GetFullscreenWindow();
+	void			SetFullscreenWindow(bool fullscreen);
 
 	bool			GetVSync();
 	void			SetVSync(bool vsync);

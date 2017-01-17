@@ -137,7 +137,15 @@ vsSystem::Init()
 //	m_screen = new vsScreen( 1280, 720, 32, false );
 	m_screen = new vsScreen( 960, 640, 32, false, false );
 #else
-	m_screen = new vsScreen( res->width, res->height, 32, m_preferences->GetFullscreen(), m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	vsRenderer::WindowType wt = vsRenderer::WindowType_Window;
+	if ( m_preferences->GetFullscreen() )
+	{
+		if ( m_preferences->GetFullscreenWindow() )
+			wt = vsRenderer::WindowType_FullscreenWindow;
+		else
+			wt = vsRenderer::WindowType_Fullscreen;
+	}
+	m_screen = new vsScreen( res->width, res->height, 32, wt, m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -293,11 +301,19 @@ vsSystem::UpdateVideoMode(int width, int height)
 	int bufferCount = 1;
 	if ( m_preferences->GetBloom() )
 		bufferCount = 2;
+	vsRenderer::WindowType wt = vsRenderer::WindowType_Window;
+	if ( m_preferences->GetFullscreen() )
+	{
+		if ( m_preferences->GetFullscreenWindow() )
+			wt = vsRenderer::WindowType_FullscreenWindow;
+		else
+			wt = vsRenderer::WindowType_Fullscreen;
+	}
 	GetScreen()->UpdateVideoMode(
 			width,
 			height,
 			32,
-			m_preferences->GetFullscreen(),
+			wt,
 			bufferCount,
 			m_preferences->GetAntialias(),
 			m_preferences->GetVSync()
@@ -440,8 +456,9 @@ vsSystemPreferences::vsSystemPreferences()
 {
 	m_preferences = new vsPreferences("Global");
 
-	m_resolution = NULL;	// can't get this one until we can actually check what SDL supports, later on.
+	m_resolution = 0;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 0, 0, 1);
+	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 0, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
@@ -569,10 +586,10 @@ vsSystemPreferences::CheckResolutions()
 	m_resolutionY = m_preferences->GetPreference("ResolutionY", 480, 0, maxHeight);
 
 #endif
-	m_resolution = m_preferences->GetPreference("Resolution", selectedResolution, 0, modeCount-1);
+	m_resolution = selectedResolution;
 	m_resolutionX->m_value = m_supportedResolution[selectedResolution].width;
 	m_resolutionY->m_value = m_supportedResolution[selectedResolution].height;
-	m_resolution->m_value = selectedResolution;
+	m_resolution = selectedResolution;
 	delete [] modes;
 }
 
@@ -586,13 +603,13 @@ vsSystemPreferences::GetResolution()
 int
 vsSystemPreferences::GetResolutionId()
 {
-	return m_resolution->m_value;
+	return m_resolution;
 }
 
 void
 vsSystemPreferences::SetResolutionId(int id)
 {
-	m_resolution->m_value = id;
+	m_resolution = id;
 	m_resolutionX->m_value = m_supportedResolution[id].width;
 	m_resolutionY->m_value = m_supportedResolution[id].height;
 }
@@ -684,6 +701,18 @@ bool
 vsSystemPreferences::GetFullscreen()
 {
 	return !!m_fullscreen->m_value;
+}
+
+void
+vsSystemPreferences::SetFullscreenWindow(bool fullscreen)
+{
+	m_fullscreen->m_value = fullscreen;
+}
+
+bool
+vsSystemPreferences::GetFullscreenWindow()
+{
+	return !!m_fullscreenWindow->m_value;
 }
 
 void

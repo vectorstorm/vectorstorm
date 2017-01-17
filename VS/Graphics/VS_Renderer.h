@@ -71,16 +71,24 @@ public:
 	enum
 	{
 		Flag_Fullscreen = BIT(0),
-		Flag_VSync = BIT(1),
-		Flag_Resizable = BIT(2),
-		Flag_Antialias = BIT(3),
-		Flag_HighDPI = BIT(4)
+		Flag_FullscreenWindow = BIT(1),
+		Flag_VSync = BIT(2),
+		Flag_Resizable = BIT(3),
+		Flag_Antialias = BIT(4),
+		Flag_HighDPI = BIT(5)
+	};
+
+	enum WindowType
+	{
+		WindowType_Window,
+		WindowType_Fullscreen,
+		WindowType_FullscreenWindow,
 	};
 	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();
 
 	virtual bool	CheckVideoMode() = 0;
-	virtual void	UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync) = 0;
+	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync) = 0;
 
 	virtual void	PreRender( const Settings &s ) = 0;
 	virtual void	RenderDisplayList( vsDisplayList *list ) = 0;

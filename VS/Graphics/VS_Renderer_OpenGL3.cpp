@@ -278,7 +278,12 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 #endif
 
 	if ( flags & Flag_Fullscreen )
-		videoFlags |= SDL_WINDOW_FULLSCREEN;
+	{
+		if ( flags & Flag_FullscreenWindow )
+			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		else
+			videoFlags |= SDL_WINDOW_FULLSCREEN;
+	}
 	else if ( flags & Flag_Resizable )
 		videoFlags |= SDL_WINDOW_RESIZABLE;
 
@@ -513,7 +518,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 		{
-			UpdateVideoMode( m_width, m_height, true, false, m_bufferCount, m_antialias, m_vsync );
+			UpdateVideoMode( m_width, m_height, true, m_windowType, m_bufferCount, m_antialias, m_vsync );
 			return true;
 		}
 	}
@@ -522,10 +527,9 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType windowType, int bufferCount, bool antialias, bool vsync)
 {
 	UNUSED(depth);
-	UNUSED(fullscreen);
 	CheckGLError("UpdateVideoMode");
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
@@ -533,11 +537,25 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, bool fulls
 	m_bufferCount = bufferCount;
 	m_antialias = antialias;
 	m_vsync = vsync;
+	m_windowType = windowType;
 	int nowWidth, nowHeight;
 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 	if ( nowWidth != width || nowHeight != height )
 		SDL_SetWindowSize(g_sdlWindow, width, height);
-	SDL_SetWindowFullscreen(g_sdlWindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+
+	int sdlWindowFlags = 0;
+	switch( windowType )
+	{
+		case WindowType_Fullscreen:
+			sdlWindowFlags = SDL_WINDOW_FULLSCREEN;
+			break;
+		case WindowType_FullscreenWindow:
+			sdlWindowFlags = SDL_WINDOW_FULLSCREEN_DESKTOP;
+			break;
+		default:
+			break;
+	}
+	SDL_SetWindowFullscreen(g_sdlWindow, sdlWindowFlags);
 	m_widthPixels = width;
 	m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED

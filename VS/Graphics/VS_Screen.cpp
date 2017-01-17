@@ -24,7 +24,7 @@
 const int c_fifoSize = 1024 * 1000;		// 500kb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
-vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int bufferCount, bool vsync, bool antialias,bool highDPI):
+vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
 	m_renderer(NULL),
 	m_pipeline(NULL),
 	m_scene(NULL),
@@ -35,7 +35,7 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int buffer
 	m_height(height),
 	m_bufferCount(bufferCount),
 	m_depth(depth),
-	m_fullscreen(fullscreen),
+	m_windowType(windowType),
 	m_antialias(antialias),
 	m_vsync(vsync),
 	m_resized(false),
@@ -45,8 +45,10 @@ vsScreen::vsScreen(int width, int height, int depth, bool fullscreen, int buffer
 	vsAssert(s_instance == NULL, "Tried to create a second vsScreen");
 	s_instance = this;
 	int flags = 0;
-	if ( fullscreen )
+	if ( windowType != vsRenderer::WindowType_Window )
 		flags |= vsRenderer::Flag_Fullscreen;
+	if ( windowType == vsRenderer::WindowType_FullscreenWindow )
+		flags |= vsRenderer::Flag_FullscreenWindow;
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
 	if ( antialias )
@@ -73,12 +75,12 @@ vsScreen::~vsScreen()
 }
 
 void
-vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync)
+vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync)
 {
 	if ( width == m_width &&
 			height == m_height &&
 			depth == m_depth &&
-			fullscreen == m_fullscreen &&
+			windowType == m_windowType &&
 			bufferCount == m_bufferCount &&
 			antialias == m_antialias &&
 			vsync == m_vsync )
@@ -89,10 +91,10 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, bool fullscreen, int
 	m_bufferCount = bufferCount;
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
-	m_fullscreen = fullscreen;
+	m_windowType = windowType;
 	m_antialias = antialias;
 	m_vsync = vsync;
-	m_renderer->UpdateVideoMode(width, height, depth, fullscreen, bufferCount, antialias, vsync);
+	m_renderer->UpdateVideoMode(width, height, depth, m_windowType, bufferCount, antialias, vsync);
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->UpdateVideoMode();

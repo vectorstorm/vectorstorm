@@ -44,7 +44,7 @@ class vsScreen
 	int					m_bufferCount;
 	int					m_depth;
 	float				m_aspectRatio;
-	bool				m_fullscreen;
+	vsRenderer::WindowType	m_windowType;
 	bool				m_antialias;
 	bool				m_vsync;
 
@@ -59,13 +59,13 @@ public:
 
 	static vsScreen *	Instance() { return s_instance; }
 
-	vsScreen(int width, int height, int depth, bool fullscreen, int bufferCount, bool vsync, bool antialias, bool highDPI);
+	vsScreen(int width, int height, int depth, vsRenderer::WindowType type, int bufferCount, bool vsync, bool antialias, bool highDPI);
 	~vsScreen();
 
 	vsRenderTarget *	GetMainRenderTarget();
 	vsRenderTarget *	GetPresentTarget();
 
-	void			UpdateVideoMode(int width, int height, int depth, bool fullscreen, int bufferCount, bool antialias, bool vsync);
+	void			UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync);
 	void			CheckVideoMode();
 
 	// The following width/height/aspect ratio functions operate in terms of
