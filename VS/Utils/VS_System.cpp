@@ -119,9 +119,20 @@ void
 vsSystem::Init()
 {
 	m_preferences->CheckResolutions();
-	Resolution *res = m_preferences->GetResolution();
+	int width, height;
+	if ( m_preferences->GetFullscreen() )
+	{
+		Resolution *res = m_preferences->GetResolution();
+		width = res->width;
+		height = res->height;
+	}
+	else
+	{
+		width = m_preferences->GetWindowResolutionX();
+		height = m_preferences->GetWindowResolutionY();
+	}
 
-	vsLog("Init:  Initialising [%dx%d] resolution (%s)...", res->width, res->height,
+	vsLog("Init:  Initialising [%dx%d] resolution (%s)...", width, height,
 			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
 
 #if !TARGET_OS_IPHONE
@@ -145,7 +156,7 @@ vsSystem::Init()
 		else
 			wt = vsRenderer::WindowType_Fullscreen;
 	}
-	m_screen = new vsScreen( res->width, res->height, 32, wt, m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	m_screen = new vsScreen( width, height, 32, wt, m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -266,7 +277,7 @@ vsSystem::UpdateVideoMode()
 	}
 	else
 	{
-		UpdateVideoMode(m_screen->GetTrueWidth(), m_screen->GetTrueHeight());
+		UpdateVideoMode(m_preferences->GetWindowResolutionX(), m_preferences->GetWindowResolutionY());
 	}
 }
 
@@ -290,6 +301,12 @@ vsSystem::UpdateVideoMode(int width, int height)
 
 	vsLog("Changing resolution to [%dx%d] (%s)...", width, height,
 			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
+
+	if ( !m_preferences->GetFullscreen() )
+	{
+		m_preferences->SetWindowResolution( width, height );
+	}
+
 
 	if ( !m_showCursorOverridden )
 	{
@@ -340,6 +357,14 @@ vsSystem::CheckVideoMode()
 
 	vsHeap::Pop(g_globalHeap);
 }
+
+void
+vsSystem::ToggleFullscreen()
+{
+	m_preferences->SetFullscreen( !m_preferences->GetFullscreen() );
+	UpdateVideoMode();
+}
+
 
 void
 vsSystem::SetWindowCaption(const vsString &caption)
@@ -457,8 +482,8 @@ vsSystemPreferences::vsSystemPreferences()
 	m_preferences = new vsPreferences("Global");
 
 	m_resolution = 0;	// can't get this one until we can actually check what SDL supports, later on.
-	m_fullscreen = m_preferences->GetPreference("Fullscreen", 0, 0, 1);
-	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 0, 0, 1);
+	m_fullscreen = m_preferences->GetPreference("Fullscreen", 1, 0, 1);
+	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 1, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
@@ -550,6 +575,8 @@ vsSystemPreferences::CheckResolutions()
 
 	m_resolutionX = m_preferences->GetPreference("ResolutionX", 1024, 0, maxWidth);
 	m_resolutionY = m_preferences->GetPreference("ResolutionY", 576, 0, maxHeight);
+	m_windowResolutionX = m_preferences->GetPreference("WindowResolutionX", 1280, 0, maxWidth);
+	m_windowResolutionY = m_preferences->GetPreference("WindowResolutionY", 720, 0, maxHeight);
 	int selectedResolution = m_supportedResolutionCount-1;
 	//int exactResolution = m_supportedResolutionCount-1;
 
@@ -695,6 +722,25 @@ void
 vsSystemPreferences::SetFullscreen(bool fullscreen)
 {
 	m_fullscreen->m_value = fullscreen;
+}
+
+int
+vsSystemPreferences::GetWindowResolutionX()
+{
+	return m_windowResolutionX->GetValue();
+}
+
+int
+vsSystemPreferences::GetWindowResolutionY()
+{
+	return m_windowResolutionY->GetValue();
+}
+
+void
+vsSystemPreferences::SetWindowResolution( int x, int y )
+{
+	m_windowResolutionX->SetValue(x);
+	m_windowResolutionY->SetValue(y);
 }
 
 bool

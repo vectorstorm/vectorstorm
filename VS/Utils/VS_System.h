@@ -102,6 +102,8 @@ public:
 	void UpdateVideoMode(int width, int height);
 	void CheckVideoMode();
 
+	void ToggleFullscreen();
+
 	void	ShowCursor(bool show);
 	void	HideCursor() { ShowCursor(false); }
 	void	SetWindowCaption(const vsString &caption);
@@ -151,6 +153,8 @@ class vsSystemPreferences
 	int m_resolution;
 	vsPreferenceObject *	m_resolutionX;
 	vsPreferenceObject *	m_resolutionY;
+	vsPreferenceObject *	m_windowResolutionX;
+	vsPreferenceObject *	m_windowResolutionY;
 	vsPreferenceObject *	m_fullscreen;
 	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
 	vsPreferenceObject *	m_vsync;
@@ -184,11 +188,17 @@ public:
 	int				GetResolutionId();
 	void			SetResolutionId(int val);
 
+	int				GetWindowResolutionX();
+	int				GetWindowResolutionY();
+	void			SetWindowResolution( int x, int y );
+
 	bool			GetFullscreen();
 	void			SetFullscreen(bool fullscreen);
 
 	bool			GetFullscreenWindow();
 	void			SetFullscreenWindow(bool fullscreen);
+
+	void			ToggleFullscreen();
 
 	bool			GetVSync();
 	void			SetVSync(bool vsync);

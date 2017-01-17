@@ -283,6 +283,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 		else
 			videoFlags |= SDL_WINDOW_FULLSCREEN;
+		videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 	else if ( flags & Flag_Resizable )
 		videoFlags |= SDL_WINDOW_RESIZABLE;
@@ -537,34 +538,50 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	m_bufferCount = bufferCount;
 	m_antialias = antialias;
 	m_vsync = vsync;
-	m_windowType = windowType;
-	int nowWidth, nowHeight;
-	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
-	if ( nowWidth != width || nowHeight != height )
-		SDL_SetWindowSize(g_sdlWindow, width, height);
-
-	int sdlWindowFlags = 0;
-	switch( windowType )
+	if ( m_windowType != windowType )
 	{
-		case WindowType_Fullscreen:
-			sdlWindowFlags = SDL_WINDOW_FULLSCREEN;
-			break;
-		case WindowType_FullscreenWindow:
-			sdlWindowFlags = SDL_WINDOW_FULLSCREEN_DESKTOP;
-			break;
-		default:
-			break;
+		switch( windowType )
+		{
+			case WindowType_Window:
+				{
+					SDL_SetWindowFullscreen(g_sdlWindow, 0);
+					/* if ( m_windowType == WindowType_Fullscreen ) // we're switching to a window from fullscreen; reset our size! */
+					SDL_SetWindowSize(g_sdlWindow, width, height);
+					break;
+				}
+			case WindowType_Fullscreen:
+				SDL_SetWindowSize(g_sdlWindow, width, height);
+				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
+				break;
+			case WindowType_FullscreenWindow:
+				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
+				break;
+			default:
+				break;
+		}
 	}
-	SDL_SetWindowFullscreen(g_sdlWindow, sdlWindowFlags);
-	m_widthPixels = width;
-	m_heightPixels = height;
+	else if ( m_windowType == WindowType_Window || m_windowType == WindowType_Fullscreen )
+	{
+		int nowWidth, nowHeight;
+		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+		if ( nowWidth != width || nowHeight != height )
+			SDL_SetWindowSize(g_sdlWindow, width, height);
+	}
+	m_windowType = windowType;
+
+	{
+		int nowWidth, nowHeight;
+		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+		m_widthPixels = width;
+		m_heightPixels = height;
 #ifdef HIGHDPI_SUPPORTED
-	if ( m_flags & Flag_HighDPI )
-		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+		if ( m_flags & Flag_HighDPI )
+			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
-	m_viewportWidthPixels = m_widthPixels;
-	m_viewportHeightPixels = m_heightPixels;
-	Resize();
+		m_viewportWidthPixels = m_widthPixels;
+		m_viewportHeightPixels = m_heightPixels;
+		Resize();
+	}
 	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
 		vsLog("Couldn't set vsync");
 	CheckGLError("UpdateVideoMode");

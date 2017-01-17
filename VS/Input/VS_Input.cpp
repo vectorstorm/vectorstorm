@@ -540,12 +540,23 @@ vsInput::Update(float timeStep)
 								case SDLK_3:
 									m_keyControlState[CID_X] = 1.0f;
 									break;
-								case SDLK_RETURN:
-									m_keyControlState[CID_Start] = 1.0f;
-									break;
 								case SDLK_BACKSPACE:
 									m_keyControlState[CID_Back] = 1.0f;
 									break;
+								case SDLK_RETURN:
+									{
+										if ( m_keyControlState[CID_Start] == 0.0f )
+										{
+											SDL_Keymod keymod = SDL_GetModState();
+											if ( keymod & KMOD_LALT )
+											{
+												// alt-enter means toggle fullscreen!
+												vsSystem::Instance()->ToggleFullscreen();
+											}
+										}
+										m_keyControlState[CID_Start] = 1.0f;
+										break;
+									}
 									//						case 'a':
 									//						case 'A':
 									//							m_keyControlState[CID_ZoomIn] = 1.f;
