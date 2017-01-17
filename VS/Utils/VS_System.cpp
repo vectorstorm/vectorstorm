@@ -706,7 +706,7 @@ vsSystemPreferences::GetFullscreen()
 void
 vsSystemPreferences::SetFullscreenWindow(bool fullscreen)
 {
-	m_fullscreen->m_value = fullscreen;
+	m_fullscreenWindow->m_value = fullscreen;
 }
 
 bool
