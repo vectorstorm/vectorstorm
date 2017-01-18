@@ -33,6 +33,7 @@ vsInput::vsInput():
 {
 	m_captureMouse = false;
 	m_suppressFirstMotion = false;
+	m_suppressResizeEvent = false;
 }
 
 vsInput::~vsInput()
@@ -646,10 +647,15 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_RESIZED:
 							{
-								vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
-								int windowWidth = event.window.data1;
-								int windowHeight = event.window.data2;
-								vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
+								if ( m_suppressResizeEvent )
+									m_suppressResizeEvent = false;
+								else
+								{
+									vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
+									int windowWidth = event.window.data1;
+									int windowHeight = event.window.data2;
+									vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
+								}
 								break;
 							}
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
@@ -859,6 +865,7 @@ vsInput::Update(float timeStep)
 		m_wheelSpeed = 0.f;
 	}
 #endif
+	m_suppressResizeEvent = false;
 }
 
 float

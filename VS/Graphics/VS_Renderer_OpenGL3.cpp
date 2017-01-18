@@ -31,6 +31,8 @@
 
 #include "VS_TimerSystem.h"
 
+#include "VS_Input.h" // flag event queue to ignore resize events while we're changing window type
+
 
 #if TARGET_OS_IPHONE
 
@@ -544,12 +546,13 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 		{
 			case WindowType_Window:
 				{
+					vsInput::Instance()->SuppressResizeEvent();
 					SDL_SetWindowFullscreen(g_sdlWindow, 0);
-					/* if ( m_windowType == WindowType_Fullscreen ) // we're switching to a window from fullscreen; reset our size! */
 					SDL_SetWindowSize(g_sdlWindow, width, height);
 					break;
 				}
 			case WindowType_Fullscreen:
+				vsInput::Instance()->SuppressResizeEvent();
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
 				break;

@@ -134,6 +134,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	vsVector2D		m_mouseMotion;					// how much has the mouse moved this frame?
 	bool			m_captureMouse;
 	bool			m_suppressFirstMotion;			// suppress our first motion amount after warping, just to be safe.
+	bool			m_suppressResizeEvent;			// suppress our next resize event after a window mode change, just to be safe.
 	int				m_capturedMouseX;
 	int				m_capturedMouseY;
 	int				m_fingersDown;
@@ -200,6 +201,8 @@ public:
 	bool			IsDown( ControlID id );
 	bool			WasPressed( ControlID id );
 	bool			WasReleased( ControlID id );
+
+	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 
 	void			SetStringMode(bool mode);
 	bool			InStringMode() { return m_stringMode; }
