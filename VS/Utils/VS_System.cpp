@@ -479,7 +479,7 @@ vsSystem::GetNumberOfCores()
 
 vsSystemPreferences::vsSystemPreferences()
 {
-	m_preferences = new vsPreferences("Global");
+	m_preferences = new vsPreferences("vectorstorm");
 
 	m_resolution = 0;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 1, 0, 1);
