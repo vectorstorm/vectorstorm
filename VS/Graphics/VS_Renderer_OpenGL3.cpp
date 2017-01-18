@@ -549,6 +549,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					vsInput::Instance()->SuppressResizeEvent();
 					SDL_SetWindowFullscreen(g_sdlWindow, 0);
 					SDL_SetWindowSize(g_sdlWindow, width, height);
+					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 					break;
 				}
 			case WindowType_Fullscreen:
