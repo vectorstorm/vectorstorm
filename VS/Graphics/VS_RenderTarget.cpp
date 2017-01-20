@@ -222,7 +222,10 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 	GLint maxSamples = 0;
 	if ( multisample )
+	{
 		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+		maxSamples = vsMin(maxSamples,4);
+	}
 
 	GLenum internalFormat = GL_RGBA8;
 	GLenum pixelFormat = GL_RGBA;
