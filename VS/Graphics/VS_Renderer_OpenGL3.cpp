@@ -463,9 +463,11 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
-	GL_CHECK_SCOPED("vsRenderer_OpenGL3 destructor");
-	vsDelete(m_window);
-	vsDelete(m_scene);
+	{
+		GL_CHECK_SCOPED("vsRenderer_OpenGL3 destructor");
+		vsDelete(m_window);
+		vsDelete(m_scene);
+	}
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
