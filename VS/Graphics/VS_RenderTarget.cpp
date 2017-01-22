@@ -88,7 +88,12 @@ vsRenderTarget::Resolve(int id)
 		{
 			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
-			glBlitFramebuffer(0, 0, m_renderBufferSurface->m_width, m_renderBufferSurface->m_height, 0, 0, m_textureSurface->m_width, m_textureSurface->m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			glBlitFramebuffer(0, 0,
+					m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
+					0, 0,
+					m_textureSurface->m_width, m_textureSurface->m_height,
+					GL_COLOR_BUFFER_BIT,
+					GL_LINEAR);
 		}
 	}
 	if ( m_textureSurface )
@@ -169,7 +174,12 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	else
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
 
-	glBlitFramebuffer(0, 0, m_viewportWidth, m_viewportHeight, 0, 0, other->m_viewportWidth, other->m_viewportHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0,
+			m_viewportWidth, m_viewportHeight,
+			0, 0, other->m_viewportWidth,
+			other->m_viewportHeight,
+			GL_COLOR_BUFFER_BIT,
+			GL_LINEAR);
 }
 
 vsSurface::vsSurface( int width, int height ):
@@ -269,10 +279,10 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				m_isRenderbuffer = false;
 				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, m_texture[i], 0);
-				if ( settings.mipMaps )
-				{
-					glGenerateMipmap(GL_TEXTURE_2D);
-				}
+				/* if ( settings.mipMaps ) */
+				/* { */
+				/* 	glGenerateMipmap(GL_TEXTURE_2D); */
+				/* } */
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
@@ -304,14 +314,15 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		{
 			glGenTextures(1, &m_depth);
 			glBindTexture(GL_TEXTURE_2D, m_depth);
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			if ( settings.mipMaps )
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			else
+			/* if ( settings.mipMaps ) */
+			/* 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); */
+			/* else */
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
@@ -320,9 +331,6 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			}
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-			//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
 			//if ( stencil )
 			//{
@@ -352,8 +360,8 @@ vsSurface::~vsSurface()
 		}
 		else
 		{
-			// really shouldn't delete this;  we have a texture that's using this and will delete it itself.
-			//glDeleteTextures(1, &m_texture[i]);
+			// don't delete our textures manually;  we have vsTexture objects
+			// which will do it automatically when they're destroyed, below.
 		}
 	}
 	if ( m_depth )
