@@ -18,7 +18,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	m_textureSurface(NULL),
 	m_type(t)
 {
-	CheckGLError("RenderTarget");
+	CheckGLError("PreRenderTarget");
 	bool isDepth = ( t == Type_Depth || t == Type_DepthCompare );
 
 	if ( m_type == Type_Window )
@@ -62,6 +62,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	}
 
 	Clear();
+	CheckGLError("PostRenderTarget");
 }
 
 vsRenderTarget::~vsRenderTarget()
@@ -112,6 +113,7 @@ vsRenderTarget::Resolve(int id)
 void
 vsRenderTarget::Bind()
 {
+	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
@@ -218,7 +220,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_fbo(0),
 	m_isRenderbuffer(false)
 {
-	CheckGLError("vsSurface");
+	GL_CHECK_SCOPED("vsSurface");
 
 	GLint maxSamples = 0;
 	if ( multisample )
@@ -337,17 +339,16 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 	CheckFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	CheckGLError("vsSurface");
 }
 
 vsSurface::~vsSurface()
 {
+	GL_CHECK_SCOPED("vsSurface destructor");
 	for ( int i = 0; i < m_textureCount; i++ )
 	{
 		if ( m_isRenderbuffer )
 		{
 			glDeleteRenderbuffers(1, &m_texture[i]);
-			CheckGLError("vsSurface");
 		}
 		else
 		{
@@ -358,10 +359,8 @@ vsSurface::~vsSurface()
 	if ( m_depth )
 	{
 		glDeleteRenderbuffers(1, &m_depth);
-		CheckGLError("vsSurface");
 	}
 	glDeleteFramebuffers(1, &m_fbo);
-	CheckGLError("vsSurface");
 	vsDeleteArray(m_texture);
 }
 
@@ -372,6 +371,7 @@ vsSurface::~vsSurface()
 void
 vsRenderTarget::Resize( int width, int height )
 {
+	GL_CHECK_SCOPED("vsRenderTarget::Resize");
 	if ( m_renderBufferSurface )
 		m_renderBufferSurface->Resize(width, height);
 	if ( m_textureSurface )
@@ -385,6 +385,7 @@ vsRenderTarget::Resize( int width, int height )
 void
 vsSurface::Resize( int width, int height )
 {
+	GL_CHECK_SCOPED("vsSurface::Resize");
 	if ( m_width == width && m_height == height )
 		return;
 

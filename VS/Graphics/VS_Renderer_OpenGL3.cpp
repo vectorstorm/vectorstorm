@@ -52,6 +52,7 @@ extern "C" {
 }
 #endif
 
+
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
@@ -242,7 +243,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
-#ifdef _DEBUG
+#if defined(_DEBUG)
 	if ( displayCount > 1 )
 	{
 		// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
@@ -306,9 +307,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-#ifdef _DEBUG
+#if defined(VS_GL_DEBUG)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-#endif // _DEBUG
+#endif // VS_GL_DEBUG
 
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
@@ -384,7 +385,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 		vsLog("Couldn't set vsync");
 
-#ifdef _DEBUG
+#if defined(VS_GL_DEBUG)
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
@@ -462,9 +463,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
+	GL_CHECK_SCOPED("vsRenderer_OpenGL3 destructor");
 	vsDelete(m_window);
 	vsDelete(m_scene);
-	CheckGLError("Initialising OpenGL rendering");
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
@@ -474,7 +475,7 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 void
 vsRenderer_OpenGL3::Resize()
 {
-	CheckGLError("Resizing");
+	GL_CHECK_SCOPED("vsRenderer_OpenGL3::Resize");
 	vsDelete( m_window );
 	vsDelete( m_scene );
 
@@ -508,7 +509,6 @@ vsRenderer_OpenGL3::Resize()
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
-	CheckGLError("Resizing");
 }
 
 bool
@@ -533,7 +533,7 @@ void
 vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType windowType, int bufferCount, bool antialias, bool vsync)
 {
 	UNUSED(depth);
-	CheckGLError("UpdateVideoMode");
+	GL_CHECK_SCOPED("vsRenderer_OpenGL3::UpdateVideoMode");
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
@@ -588,7 +588,6 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	}
 	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
 		vsLog("Couldn't set vsync");
-	CheckGLError("UpdateVideoMode");
 }
 
 void

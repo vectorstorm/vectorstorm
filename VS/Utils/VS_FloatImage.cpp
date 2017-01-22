@@ -53,6 +53,7 @@ vsFloatImage::vsFloatImage( const vsString &filename_in )
 
 vsFloatImage::vsFloatImage( vsTexture * texture )
 {
+	GL_CHECK_SCOPED("vsFloatImage");
 	m_width = texture->GetResource()->GetWidth();
 	m_height = texture->GetResource()->GetHeight();
 
@@ -65,7 +66,6 @@ vsFloatImage::vsFloatImage( vsTexture * texture )
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glActiveTexture( GL_TEXTURE0 );
-	CheckGLError("vsFloatImage");
 	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
@@ -123,8 +123,6 @@ vsFloatImage::vsFloatImage( vsTexture * texture )
 		}
 		vsDeleteArray( pixels );
 	}
-
-	CheckGLError("vsFloatImage");
 }
 
 vsFloatImage::~vsFloatImage()

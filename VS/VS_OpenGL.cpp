@@ -9,9 +9,11 @@
 
 #include "VS_OpenGL.h"
 
-#ifdef CHECK_GL_ERRORS
-void CheckGLError(const char* string)
+void ReportGLError( GLenum errcode, const char* string )
 {
+	if (errcode == GL_NO_ERROR)
+		return;
+
 	char enums[][20] =
 	{
 		"invalid enumeration", // GL_INVALID_ENUM
@@ -22,14 +24,47 @@ void CheckGLError(const char* string)
 		"out of memory"        // GL_OUT_OF_MEMORY
 	};
 
-	GLenum errcode = glGetError();
-	if (errcode == GL_NO_ERROR)
-		return;
-
 	errcode -= GL_INVALID_ENUM;
 
 	vsString errString = vsFormatString("OpenGL %s in '%s'", enums[errcode], string);
 	vsLog(errString);
 	vsAssert(false,errString);
 }
-#endif
+
+#ifdef VS_GL_DEBUG
+void CheckGLError(const char* string)
+{
+	GLenum errcode = glGetError();
+	if ( errcode != GL_NO_ERROR )
+		ReportGLError(errcode, string);
+}
+
+void ReportGLError( GLenum errcode, const char* string );
+
+vsGLContext::vsGLContext( const char* string, const char* file, int line ):
+	m_string(string),
+	m_file(file),
+	m_line(line)
+{
+	GLenum errcode = glGetError();
+	if ( errcode != GL_NO_ERROR )
+	{
+		vsString s = vsFormatString("%s-Pre (%s:%d)", m_string, m_file, m_line);
+		ReportGLError(errcode, s.c_str());
+	}
+}
+
+vsGLContext::~vsGLContext()
+{
+	GLenum errcode = glGetError();
+	if ( errcode != GL_NO_ERROR )
+	{
+		vsString s = vsFormatString("%s-Post (%s:%d)", m_string, m_file, m_line);
+		ReportGLError(errcode, s.c_str());
+	}
+}
+
+
+#endif // VS_GL_DEBUG
+
+

@@ -12,6 +12,7 @@ option( USE_SDL_SOUND "If disabled, don't use the SDL-based sound system." YES )
 option( USE_BOX2D_PHYSICS "If disabled, don't use the Box2D collision system." YES )
 option( VS_OVERLOAD_ALLOCATORS "If enabled, use custom internal allocators which can track memory overruns and leaks." YES )
 option( BACKTRACE_SUPPORTED "If enabled, generate backtraces in the event of a crash. (currently only supported for Linux/OSX/MinGW)" YES )
+option( VS_GL_DEBUG "If enabled, try to create an OpenGL Debug context and spit out any errors to the log.  Additionally, perform extra OpenGL error testing." NO )
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED
