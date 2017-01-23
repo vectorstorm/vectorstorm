@@ -224,6 +224,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_window(NULL),
 	m_scene(NULL),
 	m_currentShaderValues(NULL),
+	m_lastShaderId(0),
 	m_bufferCount(bufferCount)
 {
 	int displayCount = SDL_GetNumVideoDisplays();
@@ -508,6 +509,8 @@ vsRenderer_OpenGL3::Resize()
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 	}
 	m_scene->Bind();
+	m_lastShaderId = 0;
+	glUseProgram(0);
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
@@ -674,16 +677,15 @@ vsRenderer_OpenGL3::FlushRenderState()
 	// CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
 	static vsShaderValues *s_previousShaderValues = NULL;
-	static size_t s_lastShaderId = 0;
 	m_state.Flush();
 	// CheckGLError("PostStateFlush");
 	if ( m_currentShader )
 	{
-		if ( s_lastShaderId != m_currentShader->GetShaderId() )
+		if ( m_lastShaderId != m_currentShader->GetShaderId() )
 		{
 			glUseProgram( m_currentShader->GetShaderId() );
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
-			s_lastShaderId = m_currentShader->GetShaderId();
+			m_lastShaderId = m_currentShader->GetShaderId();
 			s_previousMaterial = m_currentMaterial;
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
@@ -825,6 +827,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearRenderTarget:
 				{
+					m_lastShaderId = 0;
+					glUseProgram(0);
 					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
 					m_state.Flush();
 					m_currentRenderTarget->Clear();
@@ -1218,6 +1222,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearStencil:
 				{
+					m_lastShaderId = 0;
+					glUseProgram(0);
 					glClearStencil(0);
 					glClear(GL_STENCIL_BUFFER_BIT);
 					break;

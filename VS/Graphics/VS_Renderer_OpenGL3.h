@@ -77,6 +77,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsRenderBuffer *     m_currentTexelBuffer;
 	vsRenderBuffer *     m_currentColorBuffer;
 
+	size_t m_lastShaderId;
+
 #define MAX_LIGHTS (4)
 	struct lightStatus
 	{
