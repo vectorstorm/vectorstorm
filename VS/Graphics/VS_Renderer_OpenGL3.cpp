@@ -58,6 +58,8 @@ static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
 static vsMutex m_loadingGlContextMutex;
 
+bool g_crashOnTextureStateUsageWarning = false;
+
 void vsRenderDebug( const vsString &message )
 {
 	vsLog("%s", message.c_str());
@@ -131,6 +133,11 @@ void vsOpenGLDebugMessage( GLenum source,
 	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
 
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
+
+	if (id == 0x00020084 && g_crashOnTextureStateUsageWarning )
+	{
+		vsAssert(0, "Texture state usage warning");
+	}
 }
 
 static void printAttributes ()
