@@ -18,7 +18,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	m_textureSurface(NULL),
 	m_type(t)
 {
-	CheckGLError("PreRenderTarget");
+	GL_CHECK_SCOPED("RenderTarget");
 	bool isDepth = ( t == Type_Depth || t == Type_DepthCompare );
 
 	if ( m_type == Type_Window )
@@ -39,10 +39,6 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 		m_textureSurface = new vsSurface(settings, isDepth, false, m_type == Type_DepthCompare );
 		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
 		m_texHeight = 1.0;//settings.height / (float)vsNextPowerOfTwo(settings.height);
-
-		if ( isDepth )
-		{
-		}
 	}
 
 	m_viewportWidth = settings.width;
@@ -62,11 +58,12 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	}
 
 	Clear();
-	CheckGLError("PostRenderTarget");
 }
 
 vsRenderTarget::~vsRenderTarget()
 {
+	GL_CHECK_SCOPED("vsRenderTarget::~vsRenderTarget");
+
 	for ( int i = 0; i < m_bufferCount; i++ )
 	{
 		vsDelete( m_texture[i] );
@@ -79,6 +76,8 @@ vsRenderTarget::~vsRenderTarget()
 vsTexture *
 vsRenderTarget::Resolve(int id)
 {
+	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
+
 	if ( m_renderBufferSurface )
 	{
 		// need to copy from the render buffer surface to the regular texture.
@@ -146,6 +145,8 @@ vsRenderTarget::Bind()
 void
 vsRenderTarget::Clear()
 {
+	GL_CHECK_SCOPED("vsRenderTarget::Clear");
+
 	GLbitfield bits = GL_COLOR_BUFFER_BIT;
 	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
 	if ( surface->m_depth )
