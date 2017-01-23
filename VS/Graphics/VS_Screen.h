@@ -113,6 +113,7 @@ public:
 	void			DrawPipeline( vsRenderPipeline *pipeline );
 
 	vsImage *       Screenshot();
+	vsImage *       ScreenshotBack();
 	vsImage *       ScreenshotDepth();
 	vsImage *       ScreenshotAlpha();
 

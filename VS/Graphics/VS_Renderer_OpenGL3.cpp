@@ -1668,6 +1668,11 @@ vsRenderer_OpenGL3::DestroyShader(GLuint shader)
 vsImage *
 vsRenderer_OpenGL3::Screenshot()
 {
+	// bind our main window, which isn't multisampled (since glReadPixels()
+	// doesn't support reading pixels from a framebuffer with MSAA enabled).
+	//
+	m_window->Bind();
+
 	const size_t bytesPerPixel = 3;	// RGB
 	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_widthPixels) * size_t(m_heightPixels);
 
@@ -1677,6 +1682,7 @@ vsRenderer_OpenGL3::Screenshot()
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	GL_CHECK("glPixelStorei");
 	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	CheckGLError("glReadPixels");
 
@@ -1703,6 +1709,16 @@ vsRenderer_OpenGL3::Screenshot()
 
 	vsDeleteArray( pixels );
 
+	m_scene->Bind();
+
+	return image;
+}
+
+vsImage*
+vsRenderer_OpenGL3::ScreenshotBack()
+{
+	vsTexture *texture = m_scene->Resolve(0);
+	vsImage *image = new vsImage(texture);
 	return image;
 }
 
@@ -1718,8 +1734,9 @@ vsRenderer_OpenGL3::ScreenshotDepth()
 	// have allocated the exact size needed for the image so we have to use 1-byte alignment
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	GL_CHECK("glPixelStorei");
 	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	GL_CHECK("glReadPixels");
 
 
 	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );

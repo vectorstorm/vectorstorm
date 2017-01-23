@@ -326,6 +326,12 @@ vsScreen::Screenshot()
 }
 
 vsImage *
+vsScreen::ScreenshotBack()
+{
+	return m_renderer->ScreenshotBack();
+}
+
+vsImage *
 vsScreen::ScreenshotDepth()
 {
 	return m_renderer->ScreenshotDepth();
