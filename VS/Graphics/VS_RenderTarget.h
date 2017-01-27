@@ -79,6 +79,7 @@ private:
 
 	vsTexture **m_texture;
 	int			m_bufferCount;
+	vsTexture * m_depthTexture;
 
 	vsSurface *	m_renderBufferSurface;
 	vsSurface *	m_textureSurface;
@@ -103,6 +104,7 @@ public:
 	void		Bind();
 	vsTexture *	Resolve(int id=0);
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
+	vsTexture *	GetDepthTexture() { return m_depthTexture; }
 
 	void		Clear();
 	void		BlitTo( vsRenderTarget *other );

@@ -14,6 +14,7 @@ static int s_renderTargetCount = 0;
 vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	m_settings(settings),
 	m_texture(NULL),
+	m_depthTexture(NULL),
 	m_renderBufferSurface(NULL),
 	m_textureSurface(NULL),
 	m_type(t)
@@ -57,6 +58,17 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 		m_texture[i] = new vsTexture(name);
 	}
 
+	if ( settings.depth && !isDepth )
+	{
+		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
+		vsTextureInternal *ti = new vsTextureInternal(name,
+				m_textureSurface,
+				0,
+				true);
+		vsTextureManager::Instance()->Add(ti);
+		m_depthTexture = new vsTexture(name);
+	}
+
 	Clear();
 }
 
@@ -69,6 +81,7 @@ vsRenderTarget::~vsRenderTarget()
 		vsDelete( m_texture[i] );
 	}
 	vsDeleteArray( m_texture );
+	vsDelete( m_depthTexture );
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
 }
@@ -85,14 +98,18 @@ vsRenderTarget::Resolve(int id)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
 		for ( int i = 0; i < m_bufferCount; i++ )
 		{
+			GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
+			if ( m_renderBufferSurface->m_depth )
+				bufferBits |= GL_DEPTH_BUFFER_BIT;
+
 			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
 			glBlitFramebuffer(0, 0,
 					m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
 					0, 0,
 					m_textureSurface->m_width, m_textureSurface->m_height,
-					GL_COLOR_BUFFER_BIT,
-					GL_LINEAR);
+					bufferBits,
+					GL_NEAREST);
 		}
 	}
 	if ( m_textureSurface )
