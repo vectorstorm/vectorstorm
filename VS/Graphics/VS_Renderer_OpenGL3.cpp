@@ -847,6 +847,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 					if ( target )
 						target->Resolve();
+					else // NULL target means main render target.
+						m_scene->Resolve();
 					break;
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
