@@ -27,7 +27,8 @@ class vsFontRenderer
 	// reference only -- do not deallocate!
 	vsFont *m_font;
 
-	float m_size;
+	float m_size;    // actual size
+	float m_texSize; // size of the texture we want to use.  For 2D, this should equal m_size.  For 3D, will determine quality of font bitmaps that are used.
 	vsVector2D m_bounds;
 	JustificationType m_justification;
 	vsTransform3D m_transform;

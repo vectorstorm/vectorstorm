@@ -97,6 +97,7 @@ public:
 	~vsFont();
 
 	vsFontSize* Size(float size);
+	float MaxSize();
 
 	void RegisterFragment( vsFontFragment *fragment );
 	void RemoveFragment( vsFontFragment *fragment );

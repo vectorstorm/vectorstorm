@@ -400,6 +400,12 @@ vsFont::Size(float size)
 	return m_size[sizeCount-1];
 }
 
+float
+vsFont::MaxSize()
+{
+	return m_size[ m_size.ItemCount()-1 ]->GetNativeSize();
+}
+
 void
 vsFont::RegisterFragment( vsFontFragment *fragment )
 {

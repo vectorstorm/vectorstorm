@@ -24,6 +24,7 @@ vsFontRenderer::SetGlobalFontScale( float scale )
 vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type ):
 	m_font(font),
 	m_size(size),
+	m_texSize(size),
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
 	m_color(c_white),
@@ -203,7 +204,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
 	tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
 
-	fragment->SetMaterial( m_font->Size(m_size)->m_material );
+	fragment->SetMaterial( m_font->Size(m_texSize)->m_material );
 	fragment->AddBuffer( ptBuffer );
 	fragment->AddBuffer( tlBuffer );
 
@@ -260,7 +261,7 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 {
 	bool doSnap = ShouldSnap( context );
 
-	list->SetMaterial( m_font->Size(m_size)->m_material );
+	list->SetMaterial( m_font->Size(m_texSize)->m_material );
 	if ( m_hasColor )
 		list->SetColor( m_color );
 
@@ -297,6 +298,7 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 vsFragment*
 vsFontRenderer::Fragment2D( const vsString& string )
 {
+	m_texSize = m_size;
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
 	CreateString_InFragment(FontContext_2D, fragment, string);
 	m_font->RegisterFragment(fragment);
@@ -311,6 +313,7 @@ vsFontRenderer::Fragment2D( const vsString& string )
 vsFragment*
 vsFontRenderer::Fragment3D( const vsString& string )
 {
+	m_texSize = m_font->MaxSize();
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
 	CreateString_InFragment(FontContext_3D, fragment, string);
 	m_font->RegisterFragment(fragment);
@@ -325,6 +328,7 @@ vsFontRenderer::Fragment3D( const vsString& string )
 vsDisplayList*
 vsFontRenderer::DisplayList2D( const vsString& string )
 {
+	m_texSize = m_size;
 	vsDisplayList *loader = new vsDisplayList(1024 * 10);
 	CreateString_InDisplayList(FontContext_2D, loader, string);
 
@@ -338,6 +342,7 @@ vsFontRenderer::DisplayList2D( const vsString& string )
 vsDisplayList*
 vsFontRenderer::DisplayList3D( const vsString& string )
 {
+	m_texSize = m_font->MaxSize();
 	vsDisplayList *loader = new vsDisplayList(1024 * 10);
 	CreateString_InDisplayList(FontContext_3D, loader, string);
 
@@ -351,6 +356,7 @@ vsFontRenderer::DisplayList3D( const vsString& string )
 void
 vsFontRenderer::DisplayList2D( vsDisplayList *list, const vsString& string )
 {
+	m_texSize = m_size;
 	vsDisplayList *loader = new vsDisplayList(1024 * 10);
 	CreateString_InDisplayList(FontContext_3D, loader, string);
 
@@ -361,6 +367,7 @@ vsFontRenderer::DisplayList2D( vsDisplayList *list, const vsString& string )
 void
 vsFontRenderer::DisplayList3D( vsDisplayList *list, const vsString& string )
 {
+	m_texSize = m_font->MaxSize();
 	vsDisplayList *loader = new vsDisplayList(1024 * 10);
 	CreateString_InDisplayList(FontContext_3D, loader, string);
 
@@ -494,7 +501,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	for ( size_t i = 0; i < len; i++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
-		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( cp );
+		vsGlyph *g = m_font->Size(m_texSize)->FindGlyphForCharacter( cp );
 
 		if ( cp == '\r' )
 			continue;
@@ -507,10 +514,10 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 
-			g = m_font->Size(m_size)->FindGlyphForCharacter(L'□');
+			g = m_font->Size(m_texSize)->FindGlyphForCharacter(L'□');
 
 			if ( !g )
-				g = m_font->Size(m_size)->FindGlyphForCharacter( '?' );
+				g = m_font->Size(m_texSize)->FindGlyphForCharacter( '?' );
 		}
 		if ( g )
 		{
@@ -522,8 +529,8 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			for ( int i = 0; i < 4; i++ )
 			{
 				scaledPosition = g->vertex[i] + characterOffset;
-				scaledPosition.x *= size.x;
-				scaledPosition.y *= size.y;
+				scaledPosition.x *= size.x * (m_size / m_texSize);
+				scaledPosition.y *= size.y * (m_size / m_texSize);
 
 				constructor->ptArray[ constructor->ptIndex+i ].position = scaledPosition;
 				constructor->ptArray[ constructor->ptIndex+i ].texel = g->texel[i];
