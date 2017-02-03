@@ -18,7 +18,7 @@ class vsSphere : public vsModel
 {
 public:
 
-	vsSphere( float radius, int resolution, const vsString &materialName, const vsColor& color = c_white );
+	vsSphere( float radius, int resolution, const vsString &materialName, const vsColor& color = c_white, const vsVector3D &offset = vsVector3D::Zero );
 };
 
 class vsGem : public vsModel

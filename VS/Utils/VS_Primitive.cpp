@@ -15,7 +15,7 @@
 #include "VS_Mesh.h"
 
 
-vsSphere::vsSphere( float radius, int slices, const vsString &materialName, const vsColor &c )
+vsSphere::vsSphere( float radius, int slices, const vsString &materialName, const vsColor &c, const vsVector3D &offset )
 {
 	vsAssert(slices > 1, "Need more than one slice!");
 
@@ -55,7 +55,7 @@ vsSphere::vsSphere( float radius, int slices, const vsString &materialName, cons
 
 			matrix.Set( vsQuaternion(ang) );
 
-			mesh->SetVertex( (y*slices)+x, matrix.z * radius );
+			mesh->SetVertex( (y*slices)+x, matrix.z * radius + offset );
 			mesh->SetNormal( (y*slices)+x, matrix.z );
 			mesh->SetColor( (y*slices)+x, c );
 			mesh->SetTexel( (y*slices)+x, vsVector2D(x * xIncrement, y * yIncrement) );
