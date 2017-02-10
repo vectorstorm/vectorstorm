@@ -10,6 +10,7 @@
 #ifndef VS_LINES_H
 #define VS_LINES_H
 
+#include "VS/Utils/VS_Array.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Model.h"
@@ -26,6 +27,9 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, vsColor *
 // Old function signature for backwards-compatibility
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
+
+
+void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *array, int count, float width, bool loop );
 
 vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = NULL, float texScale = 1.f );
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL );

@@ -978,3 +978,107 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	}
 }
 
+void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *point, int count, float width, bool loop )
+{
+	size_t vertexCount = count * 2;
+	float halfWidth = width * 0.5f;
+
+	result->SetArraySize(vertexCount);
+	int vertexCursor = 0;
+
+	vsArray<vsVector2D>& va = *result;
+
+	for ( int i = 0; i < count; i++ )
+	{
+		vsVector3D dirOfTravel;
+
+		int midI = i;
+		int preI = midI-1;
+		int postI = midI+1;
+
+		// float widthHere = m_width;
+
+		if ( postI >= count )
+		{
+			if ( loop )
+				postI = 0;
+			else
+				postI = count-1;
+		}
+		if ( preI < 0 )
+		{
+			if ( loop )
+				preI = count-1;
+			else
+				preI = 0;
+		}
+
+		vsVector2D dirOfTravelPre = point[midI] - point[preI];
+		vsVector2D dirOfTravelPost = point[postI] - point[midI];
+		float distanceOfTravelPre = dirOfTravelPre.Length();
+		float distanceOfTravelPost = dirOfTravelPost.Length();
+		dirOfTravelPre.NormaliseSafe();
+		dirOfTravelPost.NormaliseSafe();
+
+		vsVector2D offsetPre( dirOfTravelPre.y, -dirOfTravelPre.x );
+		vsVector2D offsetPost( dirOfTravelPost.y, -dirOfTravelPost.x );
+		offsetPre.NormaliseSafe();
+		offsetPost.NormaliseSafe();
+
+		if ( preI == midI )
+		{
+			offsetPre = offsetPost;
+			dirOfTravelPre = dirOfTravelPost;
+		}
+		else if ( midI == postI )
+		{
+			offsetPost = offsetPre;
+			dirOfTravelPost = dirOfTravelPre;
+		}
+
+		vsVector3D vertexPosition;
+		if ( offsetPre != offsetPost )
+		{
+			vsVector3D closestPre, closestPost;
+			vsVector3D insidePre = point[preI] - (offsetPre * halfWidth);
+			vsVector3D insidePost = point[postI] - (offsetPost * halfWidth);
+
+			vsSqDistanceBetweenLineSegments( insidePre,
+					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
+					insidePost,
+					insidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
+		}
+		else
+		{
+			vertexPosition = point[midI] - offsetPre * halfWidth;
+		}
+
+		va[vertexCursor] = vertexPosition;
+
+		if ( offsetPre != offsetPost )
+		{
+			vsVector3D closestPre, closestPost;
+			vsVector3D outsidePre = point[preI] + (offsetPre * halfWidth);
+			vsVector3D outsidePost = point[postI] + (offsetPost * halfWidth);
+
+			vsSqDistanceBetweenLineSegments( outsidePre,
+					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
+					outsidePost,
+					outsidePost - dirOfTravelPost * (distanceOfTravelPost + 3.f * halfWidth),
+					&closestPre, &closestPost );
+
+			vertexPosition = vsInterpolate(0.5f, closestPre, closestPost);
+		}
+		else
+		{
+			vertexPosition = point[midI] + offsetPre * halfWidth;
+		}
+
+		va[vertexCursor+1] = vertexPosition;
+		vertexCursor += 2;
+	}
+}
+
