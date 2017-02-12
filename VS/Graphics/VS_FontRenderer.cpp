@@ -529,8 +529,8 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			for ( int i = 0; i < 4; i++ )
 			{
 				scaledPosition = g->vertex[i] + characterOffset;
-				scaledPosition.x *= size.x * (m_size / m_texSize);
-				scaledPosition.y *= size.y * (m_size / m_texSize);
+				scaledPosition.x *= size.x;
+				scaledPosition.y *= size.y;
 
 				constructor->ptArray[ constructor->ptIndex+i ].position = scaledPosition;
 				constructor->ptArray[ constructor->ptIndex+i ].texel = g->texel[i];
