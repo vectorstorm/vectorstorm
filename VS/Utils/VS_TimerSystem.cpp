@@ -21,7 +21,7 @@
 // set to 1 to explicitly insert delays between frames,
 // if the user has disabled vsync, in order to try to
 // render just at 60fps.
-#define ENFORCE_SIXTY_FPS_MAXIMUM (1)
+#define ENFORCE_SIXTY_FPS_MAXIMUM (0)
 
 #if !TARGET_OS_IPHONE
 #include <SDL2/SDL.h>
@@ -249,7 +249,7 @@ vsTimerSystem::Update( float timeStep )
 
 	unsigned long roundTime = now - m_startCpu;
 
-	// show down our frame rate by a lot, if our window isn't visible.
+	// slow down our frame rate by a lot, if our window isn't visible.
 	if ( !vsSystem::Instance()->AppIsVisible() )
 	{
 		minTicksPerRound = 160000;
