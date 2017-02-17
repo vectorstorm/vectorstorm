@@ -52,6 +52,7 @@ public:
 	vsShader *  m_shader;
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
 	vsTexture *	m_shadowTexture;		// what shadow texture do we use? (if any)
+	vsTexture *	m_bufferTexture;		// what shadow texture do we use? (if any)
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
 	vsColor		m_specularColor;	// if we're of "Lit" type, this is our specular color
 	vsDrawMode	m_drawMode;
@@ -84,6 +85,7 @@ public:
 
 	vsTexture *	GetTexture(int i = 0) const { return m_texture[i]; }
 	vsTexture *	GetShadowTexture() const { return m_shadowTexture; }
+	vsTexture *	GetBufferTexture() const { return m_bufferTexture; }
 	bool HasAnyTextures() const;
 
 	void operator=(const vsMaterialInternal &b);

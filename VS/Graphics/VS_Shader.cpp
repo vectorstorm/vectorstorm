@@ -33,12 +33,14 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_attributeCount(0),
 	m_shader(-1)
 {
+	GL_CHECK_SCOPED("Shader");
 	Compile( vertexShader, fragmentShader, lit, texture );
 }
 
 void
 vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
 {
+	GL_CHECK_SCOPED("Shader::Compile");
 	Uniform *oldUniform = m_uniform;
 	Attribute *oldAttribute = m_attribute;
 	// int oldUniformCount = m_uniformCount;
@@ -109,6 +111,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
 	m_textureLoc = glGetUniformLocation(m_shader, "textures");
 	m_shadowTextureLoc = glGetUniformLocation(m_shader, "shadowTexture");
+	m_bufferTextureLoc = glGetUniformLocation(m_shader, "bufferTexture");
 	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
@@ -136,6 +139,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	char nameBuffer[c_maxNameLength];
 	for ( GLint i = 0; i < m_uniformCount; i++ )
 	{
+		GL_CHECK("Shader::Uniform");
 		GLint arraySize = 0;
 		GLenum type = 0;
 		GLsizei actualLength = 0;
@@ -164,9 +168,12 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 			default:
 				break;
 		}
+		GL_CHECK("Shader::Uniform");
 	}
+	GL_CHECK("Shader::Between");
 	for ( GLint i = 0; i < m_attributeCount; i++ )
 	{
+		GL_CHECK("Shader::Attribute");
 		GLint arraySize = 0;
 		GLenum type = 0;
 		GLsizei actualLength = 0;
@@ -175,8 +182,10 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		m_attribute[i].loc = glGetAttribLocation(m_shader, m_attribute[i].name.c_str());
 		m_attribute[i].type = type;
 		m_attribute[i].arraySize = arraySize;
+		GL_CHECK("Shader::Attribute");
 	}
 
+	GL_CHECK("Shader::Other");
 	m_globalTimeUniformId = GetUniformId("globalTime");
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
@@ -374,6 +383,10 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 	if ( m_shadowTextureLoc >= 0 )
 	{
 		glUniform1i( m_shadowTextureLoc, 8 );
+	}
+	if ( m_bufferTextureLoc >= 0 )
+	{
+		glUniform1i( m_bufferTextureLoc, 9 );
 	}
 }
 

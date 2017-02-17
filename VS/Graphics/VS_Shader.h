@@ -53,6 +53,7 @@ private:
 	int32_t m_fogDensityId;
 	int32_t m_textureLoc;
 	int32_t m_shadowTextureLoc;
+	int32_t m_bufferTextureLoc;
 	int32_t m_localToWorldLoc;
 	int32_t m_localToWorldAttributeLoc;
 	int32_t m_worldToViewLoc;
