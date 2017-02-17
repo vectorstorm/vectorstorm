@@ -29,8 +29,10 @@ static bool m_colorAttribIsActive = false;
 vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
 	m_uniform(NULL),
 	m_attribute(NULL),
+	m_block(NULL),
 	m_uniformCount(0),
 	m_attributeCount(0),
+	m_blockCount(0),
 	m_shader(-1)
 {
 	Compile( vertexShader, fragmentShader, lit, texture );
@@ -39,6 +41,7 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 void
 vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
 {
+	GL_CHECK_SCOPED("vsShader::Compile");
 	Uniform *oldUniform = m_uniform;
 	Attribute *oldAttribute = m_attribute;
 	// int oldUniformCount = m_uniformCount;
@@ -128,9 +131,12 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
 	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &m_uniformCount );
 	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
+	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORM_BLOCKS, &m_blockCount );
+	GL_CHECK("vsShader::Compile");
 
 	m_uniform = new Uniform[m_uniformCount];
 	m_attribute = new Attribute[m_attributeCount];
+	m_block = new Block[m_blockCount];
 
 	const int c_maxNameLength = 256;
 	char nameBuffer[c_maxNameLength];
@@ -146,23 +152,32 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		m_uniform[i].arraySize = arraySize;
 		m_uniform[i].b = false;
 		m_uniform[i].f32 = 0.f;
-		// initialise to random values, so we definitely set them at least once.
-		switch ( m_uniform[i].type )
+
+		// Don't try to get an initial value if the 'loc' is -1!
+		//
+		// variables inside a uniform block will show up here, and their 'loc'
+		// value will be set as '-1', since they cannot be set via
+		// glUniformFoo() interfaces.
+		if ( m_uniform[i].loc != -1 )
 		{
-			case GL_BOOL:
-				glGetUniformiv( m_shader, m_uniform[i].loc, &m_uniform[i].b );
-				break;
-			case GL_FLOAT:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
-				break;
-			case GL_FLOAT_VEC3:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
-				break;
-			case GL_FLOAT_VEC4:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
-				break;
-			default:
-				break;
+			// initialise to random values, so we definitely set them at least once.
+			switch ( m_uniform[i].type )
+			{
+				case GL_BOOL:
+					glGetUniformiv( m_shader, m_uniform[i].loc, &m_uniform[i].b );
+					break;
+				case GL_FLOAT:
+					glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
+					break;
+				case GL_FLOAT_VEC3:
+					glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
+					break;
+				case GL_FLOAT_VEC4:
+					glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
+					break;
+				default:
+					break;
+			}
 		}
 	}
 	for ( GLint i = 0; i < m_attributeCount; i++ )
@@ -176,11 +191,20 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		m_attribute[i].type = type;
 		m_attribute[i].arraySize = arraySize;
 	}
+	for ( GLint i = 0; i < m_blockCount; i++ )
+	{
+		GLsizei actualLength = 0;
+		glGetActiveUniformBlockName( m_shader, i, c_maxNameLength, &actualLength, nameBuffer);
+		m_block[i].name = vsString(nameBuffer);
+		// glGetActiveUniformBlockiv( m_shader, i,
+	}
 
+	GL_CHECK("vsShader::Compile");
 	m_globalTimeUniformId = GetUniformId("globalTime");
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
 
+	GL_CHECK("vsShader::Compile");
 	vsDeleteArray( oldUniform );
 	vsDeleteArray( oldAttribute );
 }
@@ -191,6 +215,7 @@ vsShader::~vsShader()
 	vsRenderer_OpenGL3::DestroyShader(m_shader);
 	vsDeleteArray( m_uniform );
 	vsDeleteArray( m_attribute );
+	vsDeleteArray( m_block );
 }
 
 vsShader *

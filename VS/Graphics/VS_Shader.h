@@ -43,6 +43,10 @@ public:
 		int32_t type;
 		int32_t arraySize;
 	};
+	struct Block
+	{
+		vsString name;
+	};
 
 private:
 	int32_t m_colorLoc;
@@ -67,9 +71,11 @@ private:
 
 	Uniform *m_uniform;
 	Attribute *m_attribute;
+	Block *m_block;
 
 	int32_t m_uniformCount;
 	int32_t m_attributeCount;
+	int32_t m_blockCount;
 
 	int32_t m_globalTimeUniformId;
 
