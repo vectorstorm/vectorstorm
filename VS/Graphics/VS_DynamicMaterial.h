@@ -25,6 +25,7 @@ public:
 	void SetTexture( int i, vsTexture *texture, bool linear = true );
 	void SetTexture( int i, const vsString &texture, bool linear = true );
 	void SetShadowTexture( vsTexture *texture);
+	void SetBufferTexture( vsTexture *texture);
 	void SetColor( const vsColor& color );
 	void SetSpecularColor( const vsColor& specularColor );
 	void SetDrawMode( vsDrawMode drawMode );

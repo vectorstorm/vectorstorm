@@ -36,7 +36,8 @@ static int power_of_two(int input)
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
-	m_premultipliedAlpha(true)
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
 {
 	vsString filename = vsFile::GetFullFilename(filename_in);
 
@@ -46,15 +47,28 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	vsResource(name),
 	m_texture(0),
-	m_premultipliedAlpha(true)
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
 {
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
 	vsResource(name),
 	m_texture( (depth) ? surface->m_depth : surface->m_texture ),
-	m_premultipliedAlpha(true)
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
 {
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(false),
+	m_tbo(buffer)
+{
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
 }
 
 vsTextureInternal::~vsTextureInternal()
@@ -62,6 +76,8 @@ vsTextureInternal::~vsTextureInternal()
 	GLuint t = m_texture;
 	glDeleteTextures(1, &t);
 	m_texture = 0;
+
+	vsDelete( m_tbo );
 }
 
 
@@ -83,7 +99,8 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
 	m_depth(false),
-	m_premultipliedAlpha(false)
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
 {
 	vsString filename = vsFile::GetFullFilename(filename_in);
 
@@ -97,7 +114,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
-	m_premultipliedAlpha(false)
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -127,7 +145,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
-	m_premultipliedAlpha(false)
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -151,6 +170,17 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 			GL_FLOAT,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(false),
+	m_tbo(buffer)
+{
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
 }
 
 void
@@ -189,7 +219,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	m_width(surface->m_width),
 	m_height(surface->m_height),
 	m_depth(depth),
-	m_premultipliedAlpha(true)
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
 {
 }
 

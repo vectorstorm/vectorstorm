@@ -17,6 +17,7 @@ struct SDL_Surface;
 
 class vsFloatImage;
 class vsImage;
+class vsRenderBuffer;
 class vsRenderTarget;
 class vsSurface;
 
@@ -33,6 +34,8 @@ class vsTextureInternal : public vsResource
 
 	bool		m_premultipliedAlpha;
 
+	vsRenderBuffer *m_tbo;
+
 	void		ProcessSurface( SDL_Surface *surface );
 
 
@@ -42,6 +45,7 @@ public:
 	vsTextureInternal( const vsString &name, vsImage *image );
 	vsTextureInternal( const vsString &name, vsFloatImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
+	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
 	~vsTextureInternal();
 
 	void		Blit( vsImage *image, const vsVector2D& where);
@@ -51,6 +55,9 @@ public:
 	void		SetLinearSampling();
 
 	uint32_t		GetTexture() { return m_texture; }
+
+	bool IsTextureBuffer() { return m_tbo != NULL; }
+	vsRenderBuffer *GetTextureBuffer() { return m_tbo; }
 
 	int		GetWidth() { return m_width; }
 	int		GetHeight() { return m_height; }

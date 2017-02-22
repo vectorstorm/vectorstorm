@@ -1408,10 +1408,19 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
 			// glEnable(GL_TEXTURE_2D);
-			glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+			if ( t->GetResource()->IsTextureBuffer() )
+			{
+				GL_CHECK_SCOPED("BufferTexture");
+				glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
+				vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
+				buffer->BindAsTexture();
+			}
+			else
+			{
+				glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+			}
 		}
 		else
 		{
@@ -1423,6 +1432,15 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 	{
 		glActiveTexture(GL_TEXTURE0+8);
 		glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
+	}
+	vsTexture *bt = material->GetBufferTexture();
+	if ( bt )
+	{
+		GL_CHECK_SCOPED("BufferTexture");
+		glActiveTexture(GL_TEXTURE0+9);
+		glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
+		vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
+		buffer->BindAsTexture();
 	}
 
 	if ( material->m_alphaTest )

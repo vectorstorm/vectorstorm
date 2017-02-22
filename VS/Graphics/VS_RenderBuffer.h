@@ -21,16 +21,23 @@ class vsRendererState;
 class vsRenderBuffer
 {
 public:
-    enum Type
-    {
-        Type_NoVBO,		// don't use a VBO for this buffer, even if they're supported.  (Use this if we're going to compile the data into a display list)
+	enum BindType
+	{
+		BindType_Array,
+		BindType_ElementArray,
+		BindType_TextureBuffer,
+		BindType_MAX
+	};
+	enum Type
+	{
+		Type_NoVBO,		// don't use a VBO for this buffer, even if they're supported.  (Use this if we're going to compile the data into a display list)
 
-        Type_Static,		// we're going to set this only once, then render over and over again
-        Type_Dynamic,		// we're going to change these values from time to time
-        Type_Stream,		// we're going to write data into here once per render.
+		Type_Static,		// we're going to set this only once, then render over and over again
+		Type_Dynamic,		// we're going to change these values from time to time
+		Type_Stream,		// we're going to write data into here once per render.
 
-        TYPE_MAX
-    };
+		TYPE_MAX
+	};
 	enum ContentType
 	{
 		ContentType_Custom,
@@ -43,7 +50,8 @@ public:
 		ContentType_PNT,
 		ContentType_PCNT,
 		ContentType_Matrix,
-		ContentType_Color
+		ContentType_Color,
+		ContentType_Float
 	};
 private:
 
@@ -59,9 +67,9 @@ private:
 
 	unsigned int	m_bufferID;
 	bool			m_vbo;
-	bool			m_indexType;
+	BindType		m_bindType;
 
-	void	SetArray_Internal( char *data, int bytes, bool elementArray );
+	void	SetArray_Internal( char *data, int bytes, BindType bindType);
 	void	SetArraySize_Internal( int bytes );
 
 public:
@@ -141,6 +149,7 @@ public:
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
 	void	SetArray( const uint16_t *array, int size );
+	void	SetArray( const float *array, int size );
     void    ResizeArray( int size );
 
 	void	SetActiveSize( int size );
@@ -184,6 +193,7 @@ public:
 	ContentType	GetContentType() { return m_contentType; }
 
 	void	BindAsAttribute( int attributeId );
+	void	BindAsTexture();
 
 	void	BindVertexBuffer( vsRendererState *state );
 	void	UnbindVertexBuffer( vsRendererState *state );

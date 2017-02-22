@@ -43,6 +43,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_shaderIsMine(false),
 	m_shader(NULL),
 	m_shadowTexture(NULL),
+	m_bufferTexture(NULL),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -76,6 +77,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_shaderIsMine(false),
 	m_shader(NULL),
 	m_shadowTexture(NULL),
+	m_bufferTexture(NULL),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -121,6 +123,7 @@ vsMaterialInternal::~vsMaterialInternal()
 	if ( m_shaderIsMine )
 		vsDelete( m_shader );
 	vsDelete( m_shadowTexture );
+	vsDelete( m_bufferTexture );
 }
 
 void
@@ -303,6 +306,8 @@ vsMaterialInternal::HasAnyTextures() const
 		if ( m_texture[i] != NULL )
 			return true;
 	}
+	if ( m_shadowTexture != NULL || m_bufferTexture != NULL )
+		return true;
 	return false;
 }
 

@@ -40,7 +40,7 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_contentType(ContentType_Custom),
     m_bufferID(-1),
     m_vbo(false),
-    m_indexType(false)
+    m_bindType(BindType_Array)
 {
 	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
@@ -96,13 +96,19 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 }
 
 void
-vsRenderBuffer::SetArray_Internal( char *data, int size, bool elementArray )
+vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
 
-	int bindPoint = (elementArray) ? GL_ELEMENT_ARRAY_BUFFER : GL_ARRAY_BUFFER;
+	int bindPoints[BindType_MAX] =
+	{
+		GL_ARRAY_BUFFER,
+		GL_ELEMENT_ARRAY_BUFFER,
+		GL_TEXTURE_BUFFER
+	};
+	int bindPoint = bindPoints[bindType];
 
-	m_indexType = elementArray;
+	m_bindType = bindType;
 
 	if ( m_vbo )
 	{
@@ -142,7 +148,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::P *array, int size )
 {
 	m_contentType = ContentType_P;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::P), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::P), BindType_Array);
 }
 
 void
@@ -150,7 +156,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PC *array, int size )
 {
 	m_contentType = ContentType_PC;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PC), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PC), BindType_Array);
 }
 
 void
@@ -158,7 +164,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PT *array, int size )
 {
 	m_contentType = ContentType_PT;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PT), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PT), BindType_Array);
 }
 
 void
@@ -166,7 +172,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PN *array, int size )
 {
 	m_contentType = ContentType_PN;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PN), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PN), BindType_Array);
 }
 
 void
@@ -174,7 +180,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCT *array, int size )
 {
 	m_contentType = ContentType_PCT;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCT), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCT), BindType_Array);
 }
 
 void
@@ -182,7 +188,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PNT *array, int size )
 {
 	m_contentType = ContentType_PNT;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PNT), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PNT), BindType_Array);
 }
 
 void
@@ -190,7 +196,7 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCN *array, int size )
 {
 	m_contentType = ContentType_PCN;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCN), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCN), BindType_Array);
 }
 
 void
@@ -198,40 +204,47 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCNT *array, int size )
 {
 	m_contentType = ContentType_PCNT;
 
-	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCNT), false);
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::PCNT), BindType_Array);
 }
 
 void
 vsRenderBuffer::SetArray( const vsMatrix4x4 *array, int size )
 {
 	m_contentType = ContentType_Matrix;
-	SetArray_Internal((char *)array, size*sizeof(vsMatrix4x4), false);
+	SetArray_Internal((char *)array, size*sizeof(vsMatrix4x4), BindType_Array);
 }
 
 void
 vsRenderBuffer::SetArray( const vsVector3D *array, int size )
 {
 	m_contentType = ContentType_P;
-	SetArray_Internal((char *)array, size*sizeof(vsVector3D), false);
+	SetArray_Internal((char *)array, size*sizeof(vsVector3D), BindType_Array);
 }
 
 void
 vsRenderBuffer::SetArray( const vsVector2D *array, int size )
 {
-	SetArray_Internal((char *)array, size*sizeof(vsVector2D), false);
+	SetArray_Internal((char *)array, size*sizeof(vsVector2D), BindType_Array);
 }
 
 void
 vsRenderBuffer::SetArray( const vsColor *array, int size )
 {
 	m_contentType = ContentType_Color;
-	SetArray_Internal((char *)array, size*sizeof(vsColor), false);
+	SetArray_Internal((char *)array, size*sizeof(vsColor), BindType_Array);
 }
 
 void
 vsRenderBuffer::SetArray( const uint16_t *array, int size )
 {
-	SetArray_Internal((char *)array, size*sizeof(uint16_t), true);
+	SetArray_Internal((char *)array, size*sizeof(uint16_t), BindType_ElementArray);
+}
+
+void
+vsRenderBuffer::SetArray( const float *array, int size )
+{
+	m_contentType = ContentType_Float;
+	SetArray_Internal((char *)array, size*sizeof(float), BindType_TextureBuffer);
 }
 
 void
@@ -261,13 +274,13 @@ vsRenderBuffer::SetIntArraySize( int size )
 void
 vsRenderBuffer::BakeArray()
 {
-	SetArray_Internal( m_array, m_activeBytes, false );
+	SetArray_Internal( m_array, m_activeBytes, BindType_Array );
 }
 
 void
 vsRenderBuffer::BakeIndexArray()
 {
-	SetArray_Internal( m_array, m_activeBytes, true );
+	SetArray_Internal( m_array, m_activeBytes, BindType_ElementArray );
 }
 
 void
@@ -287,6 +300,20 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
+	}
+	else
+	{
+		vsAssert(0, "Not yet implemented");
+	}
+}
+
+void
+vsRenderBuffer::BindAsTexture()
+{
+	GL_CHECK_SCOPED("BufferTexture");
+	if ( m_contentType == ContentType_Float && m_vbo )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, m_bufferID);
 	}
 	else
 	{
@@ -315,7 +342,7 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+	state->SetBool( vsRendererState::ClientBool_VertexArray, BindType_ElementArray );
 }
 
 void
