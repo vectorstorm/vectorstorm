@@ -49,13 +49,14 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 #define VS_VERSION ("0.0.1")
 
 
-vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes):
+vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes, size_t minBuffers):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
 	m_visible( false ),
 	m_exitGameKeyEnabled( true ),
 	m_exitApplicationKeyEnabled( true ),
+	m_minBuffers(minBuffers),
 	m_orientation( Orientation_Normal ),
 	m_title( title ),
 	m_screen( NULL )
@@ -156,7 +157,7 @@ vsSystem::Init()
 		else
 			wt = vsRenderer::WindowType_Fullscreen;
 	}
-	m_screen = new vsScreen( width, height, 32, wt, m_preferences->GetBloom() ? 2 : 1, m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	m_screen = new vsScreen( width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 
 	vsBuiltInFont::Init();
@@ -284,20 +285,18 @@ vsSystem::UpdateVideoMode()
 void
 vsSystem::UpdateVideoMode(int width, int height)
 {
-	// this function is called when we change video mode while the game is running, post-initialisation.
-	// Since we're going to be restarting our OpenGL context, we need to recompile all of our compiled display lists!
-	// So before we tear down OpenGL, let's uncompile them all.
+	// this function is called when we change video mode while the game is
+	// running, post-initialisation.
 
-	// vsRenderBuffer::UnmapAll();
+	// flush any unused client-side textures now, so they don't accidentally go
+	// away and go into the global heap.
+	vsTextureManager::Instance()->CollectGarbage();
 
-	vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
-
-	// Since this function is being called post-initialisation, we need to switch back to our system heap.
-	// (So that potentially changing video mode doesn't get charged to the currently active game,
-	// and then treated as a memory leak)
-
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially changing video
+	// mode doesn't get charged to the currently active game, and then treated
+	// as a memory leak)
 	vsHeap::Push(g_globalHeap);
-
 
 	vsLog("Changing resolution to [%dx%d] (%s)...", width, height,
 			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
@@ -306,7 +305,6 @@ vsSystem::UpdateVideoMode(int width, int height)
 	{
 		m_preferences->SetWindowResolution( width, height );
 	}
-
 
 	if ( !m_showCursorOverridden )
 	{
@@ -318,6 +316,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 	int bufferCount = 1;
 	if ( m_preferences->GetBloom() )
 		bufferCount = 2;
+	bufferCount = vsMin( bufferCount, m_minBuffers );
 	vsRenderer::WindowType wt = vsRenderer::WindowType_Window;
 	if ( m_preferences->GetFullscreen() )
 	{

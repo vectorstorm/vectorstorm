@@ -505,7 +505,7 @@ vsRenderer_OpenGL3::Resize()
 	settings.linear = true;
 	settings.mipMaps = false;
 	settings.stencil = true;
-	settings.buffers = 2;	// one for opaque color, one for glow color.  TODO:  Set only one buffer if we're not doing a glow pass!
+	settings.buffers = m_bufferCount;
 
 	if ( m_antialias )
 	{

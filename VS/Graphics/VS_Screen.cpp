@@ -34,6 +34,7 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 	m_width(width),
 	m_height(height),
 	m_bufferCount(bufferCount),
+	m_minBufferCount(bufferCount),
 	m_depth(depth),
 	m_windowType(windowType),
 	m_antialias(antialias),
