@@ -46,6 +46,11 @@ public:
 	vsTextureInternal( const vsString &name, vsFloatImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
+
+	// for hooking up to OpenGL textures created elsewhere.
+	// TODO:  THIS SHOULD GO AWAY!  Textures should all be created by VectorStorm!
+	vsTextureInternal( const vsString &name, uint32_t glTextureId );
+
 	~vsTextureInternal();
 
 	void		Blit( vsImage *image, const vsVector2D& where);

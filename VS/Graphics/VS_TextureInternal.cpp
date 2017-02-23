@@ -81,6 +81,7 @@ vsTextureInternal::~vsTextureInternal()
 }
 
 
+
 #else
 #include <SDL2/SDL_image.h>
 
@@ -182,6 +183,15 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	glGenTextures(1, &t);
 	m_texture = t;
 }
+
+vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId ):
+	vsResource(name),
+	m_texture(glTextureId),
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
+{
+}
+
 
 void
 vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
