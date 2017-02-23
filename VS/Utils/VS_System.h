@@ -59,6 +59,7 @@ class vsSystem
 	bool				m_visible;
 	bool				m_exitGameKeyEnabled;
 	bool				m_exitApplicationKeyEnabled;
+	int					m_minBuffers; // how many color buffers on our main render target?
 
 	Orientation			m_orientation;
 
@@ -78,7 +79,7 @@ public:
 
 	static vsSystem *	Instance() { return s_instance; }
 
-	vsSystem( const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64 );
+	vsSystem( const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64, size_t minBuffers = 1 );
 	~vsSystem();
 
 	void Init();
