@@ -443,7 +443,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);							// Set The Blending Function For Additive
 	glEnable(GL_BLEND);											// Enable Blending
+	glEnable(GL_FRAMEBUFFER_SRGB);								// Enable automatic sRGB conversion.
 	CheckGLError("Initialising OpenGL rendering");
+
 
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
 	glDepthFunc( GL_LEQUAL );

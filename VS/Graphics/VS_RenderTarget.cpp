@@ -257,9 +257,10 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		maxSamples = vsMin(maxSamples,4);
 	}
 
-	GLenum internalFormat = GL_RGBA8;
+	GLenum internalFormat = GL_RGB10_A2;
 	GLenum pixelFormat = GL_RGBA;
-	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	// GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	GLenum type = GL_UNSIGNED_INT_10_10_10_2;
 	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;
 
 	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
@@ -308,6 +309,15 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
+
+			GLint params;
+			glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER,
+					GL_COLOR_ATTACHMENT0+i,
+					GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING,
+					&params );
+
+			if ( params != GL_LINEAR )
+				vsLog("sRGB framebuffer attachment!");
 		}
 	}
 
@@ -372,6 +382,14 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 	CheckFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			GLint params;
+			glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER,
+					GL_FRONT_LEFT,
+					GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING,
+					&params );
+			if ( params == GL_SRGB )
+				vsLog("Default framebuffer is sRGB");
 }
 
 vsSurface::~vsSurface()
