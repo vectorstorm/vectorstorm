@@ -42,7 +42,6 @@ class vsScreen
 	int					m_width;
 	int					m_height;
 	int					m_bufferCount;
-	int					m_minBufferCount;
 	int					m_depth;
 	float				m_aspectRatio;
 	vsRenderer::WindowType	m_windowType;

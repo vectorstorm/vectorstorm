@@ -316,7 +316,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 	int bufferCount = 1;
 	if ( m_preferences->GetBloom() )
 		bufferCount = 2;
-	bufferCount = vsMin( bufferCount, m_minBuffers );
+	bufferCount = vsMax( bufferCount, m_minBuffers );
 	vsRenderer::WindowType wt = vsRenderer::WindowType_Window;
 	if ( m_preferences->GetFullscreen() )
 	{
