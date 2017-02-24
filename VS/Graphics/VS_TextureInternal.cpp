@@ -380,11 +380,14 @@ vsTextureInternal::SetNearestSampling()
 }
 
 void
-vsTextureInternal::SetLinearSampling()
+vsTextureInternal::SetLinearSampling(bool linearMipmaps)
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	if ( linearMipmaps )
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	else
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 #endif // TARGET_OS_IPHONE
