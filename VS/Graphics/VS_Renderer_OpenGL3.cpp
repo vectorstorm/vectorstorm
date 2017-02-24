@@ -1631,6 +1631,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
+		vsLog("%s", vert);
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
 		vsLog("%s",buf);
 

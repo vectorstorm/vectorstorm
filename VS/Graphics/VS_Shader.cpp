@@ -37,6 +37,46 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	Compile( vertexShader, fragmentShader, lit, texture );
 }
 
+void DoIncludes( vsString &s )
+{
+	size_t includePos;
+	while ( (includePos = s.find("#include \"")) != vsString::npos )
+	{
+		// We have a #include directive.  Let's find the filename
+		size_t cursor = includePos;
+		bool inFilename = false;
+		vsString filename;
+		while (1)
+		{
+			if ( s[cursor] != '\"' )
+			{
+				if ( inFilename )
+					filename += s[cursor];
+			}
+			else
+			{
+				if ( !inFilename )
+					inFilename = true;
+				else
+				{
+					// Okay, we have our filename and our include statement!
+					cursor++;
+					vsFile file( vsString("shaders/") + filename, vsFile::MODE_Read );
+					uint32_t size = file.GetLength();
+					vsStore *vStore = new vsStore(size);
+					file.Store( vStore );
+					vsString fileContents( vStore->GetReadHead(), size );
+					s.replace(includePos, cursor-includePos, fileContents);
+					break;
+				}
+			}
+			cursor++;
+		}
+
+	}
+
+}
+
 void
 vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
 {
@@ -81,6 +121,9 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 			fString.erase(0,pos);
 		}
 	}
+
+	DoIncludes(vString);
+	DoIncludes(fString);
 
 	if ( lit )
 	{
