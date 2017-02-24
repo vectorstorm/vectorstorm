@@ -59,6 +59,7 @@ void DoPreprocessor( vsString &s )
 		// }
 		if ( (includePos = s.find("\n#include \"")) != vsString::npos )
 		{
+			includePos++; // skip the newline
 			done = false;
 			// We have a #include directive.  Let's find the filename
 			size_t cursor = includePos;
