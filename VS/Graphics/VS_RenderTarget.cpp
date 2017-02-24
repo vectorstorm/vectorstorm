@@ -192,12 +192,20 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	else
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
 
-	glBlitFramebuffer(0, 0,
-			m_viewportWidth, m_viewportHeight,
-			0, 0, other->m_viewportWidth,
-			other->m_viewportHeight,
-			GL_COLOR_BUFFER_BIT,
-			GL_LINEAR);
+	// for the moment, assume that a 'BlitTo' is only copying the first color attachment.
+	for ( int i = 0; i < vsMin( m_bufferCount, other->m_bufferCount ); i++ )
+	{
+		if ( other->m_type == Type_Window ) // default framebuffer!  Don't use attachments
+			glDrawBuffer(GL_BACK);
+		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+
+		glBlitFramebuffer(0, 0,
+				m_viewportWidth, m_viewportHeight,
+				0, 0, other->m_viewportWidth,
+				other->m_viewportHeight,
+				GL_COLOR_BUFFER_BIT,
+				GL_LINEAR);
+	}
 }
 
 vsSurface::vsSurface( int width, int height ):
