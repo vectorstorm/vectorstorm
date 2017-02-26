@@ -624,7 +624,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.SetBool( vsRendererState::Bool_CullFace, true );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
+	m_state.SetBool( vsRendererState::Bool_Multisample, true );
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
@@ -652,7 +652,7 @@ vsRenderer_OpenGL3::PostRender()
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.SetBool( vsRendererState::Bool_CullFace, true );
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, m_antialias );
+	m_state.SetBool( vsRendererState::Bool_Multisample, true );
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
