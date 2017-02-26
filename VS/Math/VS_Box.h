@@ -38,6 +38,7 @@ public:
 	float		Width() const { return max.x - min.x; }
 	float		Height() const { return max.y - min.y; }
 	vsVector2D	Middle() const { return (min + max) * 0.5f; }
+	vsVector2D	Extents() const { return max - min; }
 
 	vsVector2D	TopLeft() const { return min; }
 	vsVector2D	TopRight() const { return vsVector2D(max.x, min.y); }
