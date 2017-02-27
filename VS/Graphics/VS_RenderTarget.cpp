@@ -265,9 +265,9 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		maxSamples = vsMin(maxSamples,4);
 	}
 
-	GLenum internalFormat = GL_RGBA8;
-	GLenum pixelFormat = GL_RGBA;
-	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	GLenum internalFormat = GL_RGBA16F;
+	GLenum format = GL_RGBA;
+	GLenum type = GL_FLOAT;
 	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;
 
 	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
@@ -294,7 +294,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			{
 				glGenRenderbuffers(1, &m_texture[i]);
 				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, pixelFormat, m_width, m_height );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_RENDERBUFFER, m_texture[i]);
 				m_isRenderbuffer = true;
 			}
@@ -303,7 +303,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				glGenTextures(1, &m_texture[i]);
 				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
 				m_isRenderbuffer = false;
-				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, pixelFormat, type, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, format, type, 0);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, m_texture[i], 0);
 				/* if ( settings.mipMaps ) */
 				/* { */
@@ -437,11 +437,11 @@ vsSurface::Resize( int width, int height )
 	{
 		if ( m_texture[i] )
 		{
-			GLenum internalFormat = GL_RGBA8;
-			GLenum pixelFormat = GL_RGBA;
-			GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+			GLenum internalFormat = GL_RGBA16F;
+			GLenum format = GL_RGBA;
+			GLenum type = GL_FLOAT;
 			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, pixelFormat, type, 0);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
 		}
 	}
 
