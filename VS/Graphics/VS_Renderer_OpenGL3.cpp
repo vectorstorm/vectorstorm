@@ -1607,6 +1607,19 @@ vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int
 	return program;
 }
 
+static void PrintAnnotatedSource( const vsString& str_in )
+{
+	vsString str(str_in);
+	int lineNumber = 1;
+	size_t lnpos = 0;
+	while ( (lnpos = str.find('\n')) != vsString::npos )
+	{
+		vsString line = str.substr(0, lnpos);
+		str.erase(0,lnpos+1);
+		vsLog("%.4d: %s", lineNumber++, line.c_str());
+	}
+}
+
 void
 vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, int vLength, int fLength, bool requireSuccess )
 {
@@ -1631,7 +1644,8 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		vsLog("%s", vert);
+		PrintAnnotatedSource(vert);
+		// vsLog("%s", vert);
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
 		vsLog("%s",buf);
 
@@ -1646,7 +1660,8 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 		if (!success)
 		{
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-			vsLog("%s",frag);
+			PrintAnnotatedSource(frag);
+			// vsLog("%s",frag);
 			vsLog(buf);
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
 		}
