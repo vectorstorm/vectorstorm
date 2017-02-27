@@ -37,6 +37,65 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	Compile( vertexShader, fragmentShader, lit, texture );
 }
 
+void DoPreprocessor( vsString &s )
+{
+	bool done = false;
+	size_t includePos;
+	// size_t commentPos;
+	while (!done)
+	{
+		done = true;
+
+		// if ( (commentPos = s.find("#<{(|")) != vsString::npos )
+		// {
+		// 	done = false;
+		// 	// We have a C-style comment block.  Kill everything
+		// 	// from here to the first comment close.
+		// 	size_t commentEndPos = s.find("|)}>#");
+		// 	vsAssert( commentEndPos != vsString::npos, "Unterminated comment block??" );
+		// 	commentEndPos += 2;
+		// 	s.erase( commentPos, commentEndPos-commentPos );
+		// 	continue;
+		// }
+		if ( (includePos = s.find("\n#include \"")) != vsString::npos )
+		{
+			includePos++; // skip the newline
+			done = false;
+			// We have a #include directive.  Let's find the filename
+			size_t cursor = includePos;
+			bool inFilename = false;
+			vsString filename;
+			while (1)
+			{
+				if ( s[cursor] != '\"' )
+				{
+					if ( inFilename )
+						filename += s[cursor];
+				}
+				else
+				{
+					if ( !inFilename )
+						inFilename = true;
+					else
+					{
+						// Okay, we have our filename and our include statement!
+						cursor++;
+						vsFile file( vsString("shaders/") + filename, vsFile::MODE_Read );
+						uint32_t size = file.GetLength();
+						vsStore *vStore = new vsStore(size);
+						file.Store( vStore );
+						vsString fileContents( vStore->GetReadHead(), size );
+						s.replace(includePos, cursor-includePos, fileContents);
+						break;
+					}
+				}
+				cursor++;
+			}
+			continue;
+		}
+	}
+}
+
 void
 vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
 {
@@ -81,6 +140,9 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 			fString.erase(0,pos);
 		}
 	}
+
+	DoPreprocessor(vString);
+	DoPreprocessor(fString);
 
 	if ( lit )
 	{

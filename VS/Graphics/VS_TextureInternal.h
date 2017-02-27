@@ -57,7 +57,7 @@ public:
 	void		Blit( vsFloatImage *image, const vsVector2D& where);
 
 	void		SetNearestSampling();
-	void		SetLinearSampling();
+	void		SetLinearSampling(bool linearMipmaps = true);
 
 	uint32_t		GetTexture() { return m_texture; }
 
