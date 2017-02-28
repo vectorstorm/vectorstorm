@@ -1519,7 +1519,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		case DrawMode_Subtract:
 			{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_SUBTRACT);
+				glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 #endif
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
