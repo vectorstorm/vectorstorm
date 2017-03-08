@@ -309,9 +309,10 @@ vsFile::ReadLine( vsString *line )
 		buffer[bytes] = 0;
 
 		*line = buffer;
-		while ( size_t i = line->find('\r') != vsString::npos)
+		size_t i;
+		while ( (i = line->find('\r')) != vsString::npos)
 		{
-			line->erase(i);
+			line->erase(i,1);
 		}
 
 		free(buffer);
