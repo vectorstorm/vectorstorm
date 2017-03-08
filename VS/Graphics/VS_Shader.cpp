@@ -86,6 +86,7 @@ void DoPreprocessor( vsString &s )
 						file.Store( vStore );
 						vsString fileContents( vStore->GetReadHead(), size );
 						s.replace(includePos, cursor-includePos, fileContents);
+						delete vStore;
 						break;
 					}
 				}
