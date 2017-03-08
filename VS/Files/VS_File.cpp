@@ -313,7 +313,6 @@ vsFile::ReadLine( vsString *line )
 		while ( (i = line->find('\r')) != vsString::npos)
 		{
 			line->erase(i,1);
-			vsLog("%s",line->c_str());
 		}
 
 		free(buffer);
