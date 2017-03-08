@@ -13,6 +13,7 @@
 #include "VS_FloatImage.h"
 #include "VS_Image.h"
 #include "VS_RenderTarget.h"	// for vsSurface.  Should move into its own file.
+#include "VS_RenderBuffer.h"
 
 #include "VS/Files/VS_File.h"
 
@@ -369,6 +370,8 @@ vsTextureInternal::~vsTextureInternal()
 	glDeleteTextures(1, &t);
 	m_texture = 0;
 
+
+	vsDelete( m_tbo );
 }
 
 void
