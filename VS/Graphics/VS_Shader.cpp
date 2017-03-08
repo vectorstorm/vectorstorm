@@ -195,6 +195,8 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &m_uniformCount );
 	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
 
+	vsDeleteArray(m_uniform);
+	vsDeleteArray(m_attribute);
 	m_uniform = new Uniform[m_uniformCount];
 	m_attribute = new Attribute[m_attributeCount];
 
