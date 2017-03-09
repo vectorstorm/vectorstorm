@@ -518,6 +518,7 @@ vsRenderer_OpenGL3::Resize()
 	m_scene->Bind();
 	m_lastShaderId = 0;
 	glUseProgram(0);
+	glClearDepth( 1.0 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );

@@ -174,6 +174,7 @@ vsRenderTarget::Clear()
 	{
 		bits |= GL_STENCIL_BUFFER_BIT;
 	}
+	glClearDepth(1.0);
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
 	glClear(bits);
