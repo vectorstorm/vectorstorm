@@ -42,19 +42,8 @@ class vsModelInstanceLodGroup : public vsEntity
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 public:
 
-	vsModelInstanceLodGroup( vsModelInstanceGroup *group, vsModel *model, size_t lodLevel ):
-		m_group(group),
-		m_model(model),
-		m_lodLevel(lodLevel),
-		m_values(NULL)
-#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
-		,
-		m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
-		m_colorBuffer(vsRenderBuffer::Type_Dynamic),
-		m_bufferIsDirty(false)
-#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
-	{
-	}
+	vsModelInstanceLodGroup( vsModelInstanceGroup *group, vsModel *model, size_t lodLevel );
+	virtual ~vsModelInstanceLodGroup();
 
 	void TakeInstancesFromGroup( vsModelInstanceLodGroup *otherGroup );
 

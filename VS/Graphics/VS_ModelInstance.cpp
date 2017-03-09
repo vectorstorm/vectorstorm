@@ -20,13 +20,15 @@ vsModelInstance::vsModelInstance():
 
 vsModelInstance::~vsModelInstance()
 {
-	group->RemoveInstance(this);
+	if ( group )
+		group->RemoveInstance(this);
 }
 
 void
 vsModelInstance::UpdateGroup()
 {
-	group->UpdateInstance( this, visible );
+	if ( group )
+		group->UpdateInstance( this, visible );
 }
 
 void

@@ -11,6 +11,26 @@
 #include "VS_ModelInstance.h"
 #include "VS_Model.h"
 
+vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, vsModel *model, size_t lodLevel ):
+	m_group(group),
+	m_model(model),
+	m_lodLevel(lodLevel),
+	m_values(NULL)
+#ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
+	,
+	m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
+	m_colorBuffer(vsRenderBuffer::Type_Dynamic),
+	m_bufferIsDirty(false)
+#endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
+{
+}
+
+vsModelInstanceLodGroup::~vsModelInstanceLodGroup()
+{
+	for ( int i = 0; i < m_instance.ItemCount(); i++ )
+		RemoveInstance(m_instance[i]);
+}
+
 vsModelInstance *
 vsModelInstanceLodGroup::MakeInstance()
 {
@@ -148,6 +168,9 @@ vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	m_bufferIsDirty = true;
 #endif
+
+	inst->group = NULL;
+	inst->lodGroup = NULL;
 }
 
 void
