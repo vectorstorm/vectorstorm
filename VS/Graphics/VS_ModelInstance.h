@@ -31,8 +31,6 @@ private:
 	friend class vsModelInstanceGroup;
 	friend class vsModelInstanceLodGroup;
 
-	void UpdateGroup();
-
 public:
 	vsModelInstance();
 	~vsModelInstance();
@@ -42,6 +40,7 @@ public:
 	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
 	void SetLodLevel( size_t lodLevel );
 	int GetLodCount();
+	void UpdateGroup();
 
 	vsModel * GetModel();
 	vsModelInstanceGroup * GetInstanceGroup() { return group; }

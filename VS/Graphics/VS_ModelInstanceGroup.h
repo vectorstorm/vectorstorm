@@ -52,6 +52,7 @@ public:
 	void AddInstance( vsModelInstance *instance );
 	void RemoveInstance( vsModelInstance *instance );
 	bool ContainsInstance( vsModelInstance *instance );
+	bool IsEmpty();
 	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel() { return m_model; }
 
@@ -76,6 +77,7 @@ public:
 	void AddInstance( vsModelInstance *instance );
 	void RemoveInstance( vsModelInstance *instance );
 	bool ContainsInstance( vsModelInstance *instance );
+	bool IsEmpty();
 	void UpdateInstance( vsModelInstance *instance, bool show = true ); // must be called to change the matrix on this instance
 	vsModel * GetModel();
 

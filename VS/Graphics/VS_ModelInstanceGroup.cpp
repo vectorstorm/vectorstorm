@@ -132,6 +132,11 @@ vsModelInstanceLodGroup::ContainsInstance( vsModelInstance *instance )
 	return m_instance.Contains(instance);
 }
 
+bool
+vsModelInstanceLodGroup::IsEmpty()
+{
+	return m_instance.IsEmpty();
+}
 
 void
 vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
@@ -256,6 +261,7 @@ vsModelInstanceGroup::AddInstance( vsModelInstance *instance )
 		dest = m_lod.ItemCount() - 1;
 	}
 	m_lod[dest]->AddInstance(instance);
+	instance->UpdateGroup();
 }
 
 void
@@ -271,6 +277,17 @@ vsModelInstanceGroup::ContainsInstance( vsModelInstance *instance )
 	if ( instance->group == this )
 		return true;
 	return false;
+}
+
+bool
+vsModelInstanceGroup::IsEmpty()
+{
+	bool isEmpty = true;
+	for ( int i = 0; i < m_lod.ItemCount(); i++ )
+	{
+		isEmpty &= m_lod[i]->IsEmpty();
+	}
+	return isEmpty;
 }
 
 void
