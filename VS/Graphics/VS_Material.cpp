@@ -57,10 +57,22 @@ vsMaterial::SetupParameters()
 		m_uniformValue = new Value[m_uniformCount];
 		memset(m_uniformValue, 0, sizeof(Value) * m_uniformCount);
 
+		// Grab some default values from the shader.
+		for ( int i = 0; i < m_uniformCount; i++ )
+		{
+			const vsShader::Uniform *u = GetResource()->m_shader->GetUniform(i);
+
+			if ( u->type == GL_SAMPLER_2D )
+				SetUniformI( i, u->b );
+			if ( u->type == GL_SAMPLER_BUFFER )
+				SetUniformI( i, u->b );
+		}
+
 		// Do some generic setup.
 		SetUniformF( "alphaRef", GetResource()->m_alphaRef );
 		SetUniformB( "fog", GetResource()->m_fog );
 		BindUniformB( "glow", &GetResource()->m_glow );
+
 	}
 }
 
@@ -84,6 +96,16 @@ void
 vsMaterial::SetUniformB( int32_t id, bool value )
 {
 	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
+	{
+		m_uniformValue[id].b = value;
+		m_uniformValue[id].bound = false;
+	}
+}
+
+void
+vsMaterial::SetUniformI( int32_t id, int value )
+{
+	if ( id >= 0 && id < m_uniformCount )
 	{
 		m_uniformValue[id].b = value;
 		m_uniformValue[id].bound = false;
@@ -178,6 +200,18 @@ vsMaterial::BindUniformF( int32_t id, const float* value )
 
 bool
 vsMaterial::BindUniformB( int32_t id, const bool* value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
+	{
+		m_uniformValue[id].bind = value;
+		m_uniformValue[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
+vsMaterial::BindUniformI( int32_t id, const int* value )
 {
 	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
 	{
@@ -296,6 +330,17 @@ vsMaterial::UniformB( int32_t id )
 		return false;
 	if ( m_uniformValue[id].bound )
 		return *(bool*)m_uniformValue[id].bind;
+	else
+		return m_uniformValue[id].b;
+}
+
+int
+vsMaterial::UniformI( int32_t id )
+{
+	if ( id >= m_uniformCount )
+		return 0;
+	if ( m_uniformValue[id].bound )
+		return *(int*)m_uniformValue[id].bind;
 	else
 		return m_uniformValue[id].b;
 }

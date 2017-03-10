@@ -36,7 +36,7 @@ class vsMaterial : public vsCacheReference<vsMaterialInternal>
 		union
 		{
 			float f32;
-			bool b;
+			int b;
 			float vec4[4];
 			const void* bind;
 		};
@@ -57,11 +57,13 @@ public:
 	int32_t UniformId( const vsString& name );
 	void SetUniformF( int32_t id, float value );
 	void SetUniformB( int32_t id, bool value );
+	void SetUniformI( int32_t id, int value );
 	void SetUniformColor( int32_t id, const vsColor& value );
 	void SetUniformVec3( int32_t id, const vsVector3D& value );
 	void SetUniformVec4( int32_t id, const vsVector4D& value );
 	bool BindUniformF( int32_t id, const float* value );
 	bool BindUniformB( int32_t id, const bool* value );
+	bool BindUniformI( int32_t id, const int* value );
 	bool BindUniformColor( int32_t id, const vsColor* value );
 	bool BindUniformVec3( int32_t id, const vsVector3D* value );
 	bool BindUniformVec4( int32_t id, const vsVector4D* value );
@@ -79,6 +81,7 @@ public:
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
 	float UniformF( int32_t id );
 	bool UniformB( int32_t id );
+	int UniformI( int32_t id );
 	vsVector4D UniformVec4( int32_t id );
 	vsMatrix4x4 UniformMat4( int32_t id );
 

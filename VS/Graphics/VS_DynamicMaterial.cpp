@@ -27,7 +27,7 @@ vsDynamicMaterial::SetShader( vsShader *shader )
 void
 vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 {
-	bool hasTextures = (GetResource()->m_texture[0] != NULL) || GetResource()->m_shadowTexture || GetResource()->m_bufferTexture;
+	bool hasTextures = GetResource()->HasAnyTextures();
 	if ( GetResource()->m_shaderIsMine )
 	{
 		vsDelete( GetResource()->m_shader );
@@ -71,28 +71,13 @@ vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 void
 vsDynamicMaterial::SetShadowTexture( vsTexture *texture )
 {
-	if ( texture )
-	{
-		GetResource()->m_shadowTexture = new vsTexture(texture);
-	}
-	else
-	{
-		vsDelete( GetResource()->m_shadowTexture );
-	}
+	SetTexture( 8, texture );
 }
 
 void
 vsDynamicMaterial::SetBufferTexture( vsTexture *texture)
 {
-	if ( texture )
-	{
-		vsDelete( GetResource()->m_bufferTexture );
-		GetResource()->m_bufferTexture = new vsTexture(texture);
-	}
-	else
-	{
-		vsDelete( GetResource()->m_bufferTexture );
-	}
+	SetTexture( 9, texture );
 }
 
 void

@@ -1428,21 +1428,21 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			// glDisable(GL_TEXTURE_2D);
 		}
 	}
-	vsTexture *st = material->GetShadowTexture();
-	if ( st )
-	{
-		glActiveTexture(GL_TEXTURE0+8);
-		glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
-	}
-	vsTexture *bt = material->GetBufferTexture();
-	if ( bt )
-	{
-		GL_CHECK_SCOPED("BufferTexture");
-		glActiveTexture(GL_TEXTURE0+9);
-		glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
-		vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
-		buffer->BindAsTexture();
-	}
+	// vsTexture *st = material->GetShadowTexture();
+	// if ( st )
+	// {
+	// 	glActiveTexture(GL_TEXTURE0+8);
+	// 	glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
+	// }
+	// vsTexture *bt = material->GetBufferTexture();
+	// if ( bt )
+	// {
+	// 	GL_CHECK_SCOPED("BufferTexture");
+	// 	glActiveTexture(GL_TEXTURE0+9);
+	// 	glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
+	// 	vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
+	// 	buffer->BindAsTexture();
+	// }
 
 	if ( material->m_alphaTest )
 	{

@@ -17,8 +17,28 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 
-#define MAX_TEXTURE_SLOTS (8)
-//class vsTexture;
+// In OpenGL 3.2 and later, we support a minimum of 48 texture binding
+// points.
+//
+// CAVEAT!!!
+//
+// Be aware that we will automatically try to map textures in slots [0..7]
+// as uniforms named "textures[0]" through "textures[7]".  The texture in
+// slot [8] will be automatically mapped to a uniform named "shadowTexture".
+// The texture in slot [9] will be automatically mapped to a uniform named
+// "bufferTexture".
+//
+// Similarly, the "SetShadowTexture()" and "SetBufferTexture()" methods on
+// the vsDynamicMaterial simply set the provided texture into those hardcoded
+// texture slots.
+//
+// If you want to use those slots for something else, please feel free!  Just
+// be aware that you'll need to manually set your uniform samplers to point to
+// the correct texture binding points;  the engine won't do it for you!
+//
+#define MAX_TEXTURE_SLOTS (48)
+
+
 class vsFile;
 class vsShader;
 
@@ -41,6 +61,12 @@ enum StencilOp
 	STENCILOP_MAX
 };
 
+struct TextureBinding
+{
+	int textureSlot;
+	vsTexture *texture;
+};
+
 class vsMaterialInternal : public vsResource
 {
 	void		SetShader();
@@ -51,8 +77,6 @@ public:
 	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
 	vsShader *  m_shader;
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
-	vsTexture *	m_shadowTexture;		// what shadow texture do we use? (if any)
-	vsTexture *	m_bufferTexture;		// what shadow texture do we use? (if any)
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)
 	vsColor		m_specularColor;	// if we're of "Lit" type, this is our specular color
 	vsDrawMode	m_drawMode;
@@ -84,8 +108,8 @@ public:
 	void		LoadFromFile( vsFile *file );
 
 	vsTexture *	GetTexture(int i = 0) const { return m_texture[i]; }
-	vsTexture *	GetShadowTexture() const { return m_shadowTexture; }
-	vsTexture *	GetBufferTexture() const { return m_bufferTexture; }
+	vsTexture *	GetShadowTexture() const { return GetTexture(8); }
+	vsTexture *	GetBufferTexture() const { return GetTexture(9); }
 	bool HasAnyTextures() const;
 
 	void operator=(const vsMaterialInternal &b);

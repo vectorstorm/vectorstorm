@@ -200,6 +200,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 
 	const int c_maxNameLength = 256;
 	char nameBuffer[c_maxNameLength];
+	int defaultSamplerBinding = 0;
 	for ( GLint i = 0; i < m_uniformCount; i++ )
 	{
 		GL_CHECK("Shader::Uniform");
@@ -213,6 +214,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		m_uniform[i].arraySize = arraySize;
 		m_uniform[i].b = false;
 		m_uniform[i].f32 = 0.f;
+
 		// initialise to random values, so we definitely set them at least once.
 		switch ( m_uniform[i].type )
 		{
@@ -227,6 +229,32 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 				break;
 			case GL_FLOAT_VEC4:
 				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
+				break;
+			case GL_SAMPLER_2D:
+				m_uniform[i].b = defaultSamplerBinding;
+				defaultSamplerBinding += m_uniform[i].arraySize;
+				break;
+			case GL_SAMPLER_BUFFER:
+				// we're still by default binding buffer textures to slot 9.
+				//
+				// Really what we want is to look at the material's texture slots
+				// to find the first buffer texture in there, and set that slot
+				// index here.  And then if there's another sampler buffer in
+				// the material's slots, and another uniform asking for one,
+				// use that next.  And so on.
+				//
+				// Or alternately, maybe I want to ignore that whole complexity,
+				// and just have samplers get numbered directly regardless of
+				// type, and let the shader simply throw errors if the coder
+				// hasn't lined up the shader's samplers to match the material.
+				// Maybe that'd be most sensible.
+				//
+				// But for right now, stick with hardcoded 9, since that's still
+				// hardcoded on the vsDynamicMaterial.
+				//
+				m_uniform[i].b = 9;
+				// m_uniform[i].b = defaultSamplerBinding;
+				// defaultSamplerBinding += m_uniform[i].arraySize;
 				break;
 			default:
 				break;
@@ -438,19 +466,21 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 void
 vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
-	if ( m_textureLoc >= 0 )
-	{
-		const GLint value[MAX_TEXTURE_SLOTS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-		glUniform1iv( m_textureLoc, MAX_TEXTURE_SLOTS, value );
-	}
-	if ( m_shadowTextureLoc >= 0 )
-	{
-		glUniform1i( m_shadowTextureLoc, 8 );
-	}
-	if ( m_bufferTextureLoc >= 0 )
-	{
-		glUniform1i( m_bufferTextureLoc, 9 );
-	}
+	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
+	//
+	// if ( m_textureLoc >= 0 )
+	// {
+	// 	const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	// 	glUniform1iv( m_textureLoc, 8, value );
+	// }
+	// if ( m_shadowTextureLoc >= 0 )
+	// {
+	// 	glUniform1i( m_shadowTextureLoc, 8 );
+	// }
+	// if ( m_bufferTextureLoc >= 0 )
+	// {
+	// 	glUniform1i( m_bufferTextureLoc, 9 );
+	// }
 }
 
 void
@@ -665,6 +695,23 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 					SetUniformValueMat4( i, v );
 					break;
 				}
+			case GL_SAMPLER_2D:
+				{
+					int b;
+					// TODO:  Expose samplers through shadervalue objects, maybe?
+					b = material->UniformI(i);
+					SetUniformValueI( i, b );
+					break;
+				}
+			case GL_SAMPLER_BUFFER:
+				{
+					int b;
+					// TODO:  Expose samplers through shadervalue objects, maybe?
+					b = material->UniformI(i);
+					SetUniformValueI( i, b );
+					break;
+				}
+
 			default:
 				// TODO:  Handle more uniform types
 				break;
@@ -745,6 +792,15 @@ vsShader::SetUniformValueB( int i, bool value )
 	{
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;
+	}
+}
+
+void
+vsShader::SetUniformValueI( int i, int value )
+{
+	for ( int j = 0; j < m_uniform[i].arraySize; j++ )
+	{
+		glUniform1i( m_uniform[i].loc+j, value+j );
 	}
 }
 
