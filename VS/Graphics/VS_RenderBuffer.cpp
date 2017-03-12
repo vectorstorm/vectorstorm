@@ -316,6 +316,10 @@ vsRenderBuffer::BindAsTexture()
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, m_bufferID);
 	}
+	else if ( m_contentType == ContentType_P )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, m_bufferID);
+	}
 	else if ( m_contentType == ContentType_UInt16 )
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, m_bufferID);
