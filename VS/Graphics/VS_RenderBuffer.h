@@ -51,7 +51,8 @@ public:
 		ContentType_PCNT,
 		ContentType_Matrix,
 		ContentType_Color,
-		ContentType_Float
+		ContentType_Float,
+		ContentType_UInt16
 	};
 private:
 

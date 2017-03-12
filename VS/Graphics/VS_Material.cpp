@@ -152,6 +152,13 @@ vsMaterial::SetUniformVec4( int32_t id, const vsVector4D& value )
 }
 
 void
+vsMaterial::SetUniformI( const vsString& name, int value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformI(id,value);
+}
+
+void
 vsMaterial::SetUniformF( const vsString& name, float value )
 {
 	int32_t id = UniformId(name);

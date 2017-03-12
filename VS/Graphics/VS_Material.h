@@ -68,6 +68,7 @@ public:
 	bool BindUniformVec3( int32_t id, const vsVector3D* value );
 	bool BindUniformVec4( int32_t id, const vsVector4D* value );
 	bool BindUniformMat4( int32_t id, const vsMatrix4x4* value );
+	void SetUniformI( const vsString& name, int value );
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
 	void SetUniformColor( const vsString& name, const vsColor& value );
