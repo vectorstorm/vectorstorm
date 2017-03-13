@@ -242,6 +242,13 @@ vsRenderBuffer::SetArray( const uint16_t *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const uint32_t *array, int size )
+{
+	m_contentType = ContentType_UInt32;
+	SetArray_Internal((char *)array, size*sizeof(uint32_t), BindType_ElementArray);
+}
+
+void
 vsRenderBuffer::SetArray( const float *array, int size )
 {
 	m_contentType = ContentType_Float;
@@ -327,6 +334,10 @@ vsRenderBuffer::BindAsTexture()
 	else if ( m_contentType == ContentType_UInt16 )
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, m_bufferID);
+	}
+	else if ( m_contentType == ContentType_UInt32 )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, m_bufferID);
 	}
 	else
 	{
