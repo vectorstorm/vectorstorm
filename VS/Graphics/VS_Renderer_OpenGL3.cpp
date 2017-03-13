@@ -149,6 +149,7 @@ static void printAttributes ()
 	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
 	vsLog("  Renderer: %s", glGetString(GL_RENDERER));
 	vsLog("  Version: %s", glGetString(GL_VERSION));
+	vsLog("  GLEW: %s", glewGetString(GLEW_VERSION));
 	if ( glGetString(GL_SHADING_LANGUAGE_VERSION) )
 	{
 		vsLog("  Shading Language Version:  %s", glGetString(GL_SHADING_LANGUAGE_VERSION));

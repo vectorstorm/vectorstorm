@@ -219,6 +219,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		switch ( m_uniform[i].type )
 		{
 			case GL_BOOL:
+			case GL_INT:
 				glGetUniformiv( m_shader, m_uniform[i].loc, &m_uniform[i].b );
 				break;
 			case GL_FLOAT:
@@ -696,14 +697,8 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 					SetUniformValueMat4( i, v );
 					break;
 				}
+			case GL_INT:
 			case GL_SAMPLER_2D:
-				{
-					int b;
-					// TODO:  Expose samplers through shadervalue objects, maybe?
-					b = material->UniformI(i);
-					SetUniformValueI( i, b );
-					break;
-				}
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				{
