@@ -112,6 +112,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 {
 #if !TARGET_OS_IPHONE
 	SDL_Joystick	*m_joystick;
+	SDL_GameController *m_controller;
 #endif
 
 	int				m_joystickAxes;

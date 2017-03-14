@@ -89,6 +89,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 #endif // USE_SDL_SOUND
 #endif
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 
 #if defined(_WIN32)
 	static bool startedUp = false;

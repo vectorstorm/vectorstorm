@@ -78,18 +78,35 @@ vsInput::Init()
 	m_joystick = NULL;
 	// try to get a joystick
 
+	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
 	int joystickCount = SDL_NumJoysticks();
 
 	if ( joystickCount )
 	{
 		vsLog("Found %d joysticks.", joystickCount);
-		m_joystick = SDL_JoystickOpen(0);
+
+		for ( int i = 0; i < joystickCount; i++ )
+		{
+			if ( SDL_IsGameController(i) )
+			{
+				m_controller = SDL_GameControllerOpen(i);
+				const char *name = SDL_GameControllerNameForIndex(i);
+				vsLog("Game controller found: %s", name);
+				if ( m_controller )
+				{
+					m_joystick = SDL_GameControllerGetJoystick(m_controller);
+					break;
+				}
+
+			}
+		}
+
+		// m_joystick = SDL_JoystickOpen(0);
 		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
 		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
 		m_joystickHats = SDL_JoystickNumHats(m_joystick);
-		vsLog("Using %s, %d axes, %d buttons, %d hats, %d balls", SDL_JoystickName(0), SDL_JoystickNumAxes(m_joystick),
+		vsLog("Device has %d axes, %d buttons, %d hats, %d balls", SDL_JoystickNumAxes(m_joystick),
 				SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
-
 
 		m_axisCenter = new float[m_joystickAxes];
 		m_axisThrow = new float[m_joystickAxes];
@@ -175,38 +192,68 @@ vsInput::Load()
 {
 #if !TARGET_OS_IPHONE
 	// set some sensible defaults.  (XBox 360 gamepad)
-	if ( m_joystickAxes >= 2 )
+	if ( m_controller )
 	{
-		m_controlMapping[CID_LLeft].Set( CT_Axis, 0, CD_Negative );
-		m_controlMapping[CID_LRight].Set( CT_Axis, 0, CD_Positive );
-		m_controlMapping[CID_LUp].Set( CT_Axis, 1, CD_Negative );
-		m_controlMapping[CID_LDown].Set( CT_Axis, 1, CD_Positive );
-	}
-	if ( m_joystickAxes >= 4 )
-	{
-		m_controlMapping[CID_RLeft].Set( CT_Axis, 2, CD_Negative );
-		m_controlMapping[CID_RRight].Set( CT_Axis, 2, CD_Positive );
-		m_controlMapping[CID_RUp].Set( CT_Axis, 3, CD_Negative );
-		m_controlMapping[CID_RDown].Set( CT_Axis, 3, CD_Positive );
-	}
-	if ( m_joystickAxes >= 6 )
-	{
-		m_controlMapping[CID_TriggerL].Set( CT_Axis, 4, CD_Positive );
-		m_controlMapping[CID_TriggerR].Set( CT_Axis, 5, CD_Positive );
-	}
+		m_controlMapping[CID_LLeft].Set( CT_Axis, SDL_CONTROLLER_AXIS_LEFTX, CD_Negative );
+		m_controlMapping[CID_LRight].Set( CT_Axis, SDL_CONTROLLER_AXIS_LEFTX, CD_Positive );
+		m_controlMapping[CID_LUp].Set( CT_Axis, SDL_CONTROLLER_AXIS_LEFTY, CD_Negative );
+		m_controlMapping[CID_LDown].Set( CT_Axis, SDL_CONTROLLER_AXIS_LEFTY, CD_Positive );
 
-	if ( m_joystickButtons >= 2 )
-	{
-		m_controlMapping[CID_A].Set( CT_Button, 0 );
-		m_controlMapping[CID_B].Set( CT_Button, 1 );
-	}
+		m_controlMapping[CID_RLeft].Set( CT_Axis, SDL_CONTROLLER_AXIS_RIGHTX, CD_Negative );
+		m_controlMapping[CID_RRight].Set( CT_Axis, SDL_CONTROLLER_AXIS_RIGHTX, CD_Positive );
+		m_controlMapping[CID_RUp].Set( CT_Axis, SDL_CONTROLLER_AXIS_RIGHTY, CD_Negative );
+		m_controlMapping[CID_RDown].Set( CT_Axis, SDL_CONTROLLER_AXIS_RIGHTY, CD_Positive );
 
-	if ( m_joystickHats > 0 )
+		m_controlMapping[CID_TriggerL].Set( CT_Axis, SDL_CONTROLLER_AXIS_TRIGGERLEFT, CD_Positive );
+		m_controlMapping[CID_TriggerR].Set( CT_Axis, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, CD_Positive );
+
+		m_controlMapping[CID_A].Set( CT_Button, SDL_CONTROLLER_BUTTON_A );
+		m_controlMapping[CID_B].Set( CT_Button, SDL_CONTROLLER_BUTTON_B );
+		m_controlMapping[CID_X].Set( CT_Button, SDL_CONTROLLER_BUTTON_X );
+		m_controlMapping[CID_Y].Set( CT_Button, SDL_CONTROLLER_BUTTON_Y );
+		// int aButton = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_A);
+		// int bButton = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_B);
+		//
+		// // int hatUp = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
+		// // int hatDown = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+		// // int hatLeft = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+		// // int hatRight = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+	}
+	else
 	{
-		m_controlMapping[CID_Up].Set( CT_Hat, 0, CD_Hat_Up );
-		m_controlMapping[CID_Down].Set( CT_Hat, 0, CD_Hat_Down );
-		m_controlMapping[CID_Left].Set( CT_Hat, 0, CD_Hat_Left );
-		m_controlMapping[CID_Right].Set( CT_Hat, 0, CD_Hat_Right );
+		if ( m_joystickAxes >= 2 )
+		{
+			m_controlMapping[CID_LLeft].Set( CT_Axis, 0, CD_Negative );
+			m_controlMapping[CID_LRight].Set( CT_Axis, 0, CD_Positive );
+			m_controlMapping[CID_LUp].Set( CT_Axis, 1, CD_Negative );
+			m_controlMapping[CID_LDown].Set( CT_Axis, 1, CD_Positive );
+		}
+		if ( m_joystickAxes >= 4 )
+		{
+			m_controlMapping[CID_RLeft].Set( CT_Axis, 2, CD_Negative );
+			m_controlMapping[CID_RRight].Set( CT_Axis, 2, CD_Positive );
+			m_controlMapping[CID_RUp].Set( CT_Axis, 3, CD_Negative );
+			m_controlMapping[CID_RDown].Set( CT_Axis, 3, CD_Positive );
+		}
+		if ( m_joystickAxes >= 6 )
+		{
+			m_controlMapping[CID_TriggerL].Set( CT_Axis, 4, CD_Positive );
+			m_controlMapping[CID_TriggerR].Set( CT_Axis, 5, CD_Positive );
+		}
+
+		if ( m_joystickButtons >= 2 )
+		{
+			m_controlMapping[CID_A].Set( CT_Button, 0 );
+			m_controlMapping[CID_B].Set( CT_Button, 1 );
+		}
+
+		if ( m_joystickHats > 0 )
+		{
+			// m_controlMapping[CID_Up].Set( CT_Hat, 0, CD_Hat_Up );
+			// m_controlMapping[CID_Down].Set( CT_Hat, 0, CD_Hat_Down );
+			// m_controlMapping[CID_Left].Set( CT_Hat, 0, CD_Hat_Left );
+			// m_controlMapping[CID_Right].Set( CT_Hat, 0, CD_Hat_Right );
+		}
 	}
 
 	m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
@@ -215,7 +262,7 @@ vsInput::Load()
 	//m_controlMapping[CID_MouseWheelUp].Set( CT_MouseButton, SDL_BUTTON_WHEELUP );
 	//m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
 
-	if ( m_joystick )
+	if ( m_joystick && !m_controller )
 	{
 		const char* nameStr = SDL_JoystickName(0);
 		vsString joystickName;
@@ -237,6 +284,7 @@ vsInput::Load()
 			m_controlMapping[i].cid = id->GetValue();
 			m_controlMapping[i].dir = (ControlDirection)dir->GetValue();
 		}
+		p.Save();
 	}
 #endif
 	m_mappingsChanged = false;
@@ -245,31 +293,31 @@ vsInput::Load()
 void
 vsInput::Save()
 {
-#if !TARGET_OS_IPHONE
-	if ( m_joystick && m_mappingsChanged )
-	{
-		const char* nameStr = SDL_JoystickName(0);
-		vsString joystickName;
-		if ( nameStr != NULL )
-			joystickName = nameStr;
-		else
-			joystickName = "GenericController";
-		vsPreferences p(joystickName);
-
-		for ( int i = 0; i < CID_MAX; i++ )
-		{
-			vsPreferenceObject *type = p.GetPreference( vsFormatString("%sType", s_cidName[i].c_str()), m_controlMapping[i].type, 0, CT_MAX );
-			vsPreferenceObject *id = p.GetPreference( vsFormatString("%sId", s_cidName[i].c_str()), m_controlMapping[i].cid, 0, CID_MAX );
-			vsPreferenceObject *dir = p.GetPreference( vsFormatString("%sDir", s_cidName[i].c_str()), m_controlMapping[i].dir, 0, CD_MAX );
-
-			type->SetValue( m_controlMapping[i].type );
-			id->SetValue( m_controlMapping[i].cid );
-			dir->SetValue( m_controlMapping[i].dir );
-		}
-
-		p.Save();
-	}
-#endif
+// #if !TARGET_OS_IPHONE
+// 	if ( m_joystick && m_mappingsChanged )
+// 	{
+// 		const char* nameStr = SDL_JoystickName(0);
+// 		vsString joystickName;
+// 		if ( nameStr != NULL )
+// 			joystickName = nameStr;
+// 		else
+// 			joystickName = "GenericController";
+// 		vsPreferences p(joystickName);
+//
+// 		for ( int i = 0; i < CID_MAX; i++ )
+// 		{
+// 			vsPreferenceObject *type = p.GetPreference( vsFormatString("%sType", s_cidName[i].c_str()), m_controlMapping[i].type, 0, CT_MAX );
+// 			vsPreferenceObject *id = p.GetPreference( vsFormatString("%sId", s_cidName[i].c_str()), m_controlMapping[i].cid, 0, CID_MAX );
+// 			vsPreferenceObject *dir = p.GetPreference( vsFormatString("%sDir", s_cidName[i].c_str()), m_controlMapping[i].dir, 0, CD_MAX );
+//
+// 			type->SetValue( m_controlMapping[i].type );
+// 			id->SetValue( m_controlMapping[i].cid );
+// 			dir->SetValue( m_controlMapping[i].dir );
+// 		}
+//
+// 		p.Save();
+// 	}
+// #endif
 }
 
 void
@@ -708,7 +756,7 @@ vsInput::Update(float timeStep)
 		}
 	}
 
-	if ( m_joystick )
+	if ( m_controller )
 	{
 		SDL_JoystickUpdate();
 
@@ -913,7 +961,11 @@ float
 vsInput::ReadAxis_Raw( int axisID )
 {
 #if !TARGET_OS_IPHONE
-	float axisValue = SDL_JoystickGetAxis(m_joystick, axisID) / 32767.0f;
+	float axisValue;
+	if ( m_controller )
+		axisValue = SDL_GameControllerGetAxis(m_controller, (SDL_GameControllerAxis)axisID) / 32767.0f;
+	else
+		axisValue = SDL_JoystickGetAxis(m_joystick, axisID) / 32767.0f;
 #else
 	float axisValue = 0.0f;
 #endif
