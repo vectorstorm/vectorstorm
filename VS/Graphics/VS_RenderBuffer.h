@@ -73,6 +73,7 @@ private:
 
 	void	SetArray_Internal( char *data, int bytes, BindType bindType);
 	void	SetArraySize_Internal( int bytes );
+	void	ResizeArray_Internal( int bytes ); // like the above, but retain saved array data.
 
 public:
 
@@ -228,6 +229,13 @@ public:
 	void	LineListBuffer(int instanceCount);
 
 	const bool IsVBO() { return m_vbo; }
+
+
+	// Advanced interface;  TODO is to figure out whether there's a nicer
+	// way to provide this kind of functionality.
+
+	void* BindRange(int startByte, int length);
+	void UnbindRange( void* ptr );
 };
 
 

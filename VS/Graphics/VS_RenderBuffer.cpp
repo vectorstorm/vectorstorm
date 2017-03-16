@@ -96,6 +96,20 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 }
 
 void
+vsRenderBuffer::ResizeArray_Internal( int size )
+{
+	if ( m_array && size > m_arrayBytes )
+	{
+		char* newArray = new char[size];
+		memcpy(newArray, m_array, m_arrayBytes);
+		m_arrayBytes = size;
+		vsDeleteArray( m_array );
+		m_array = newArray;
+	}
+	SetArraySize_Internal( size );
+}
+
+void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
@@ -1094,4 +1108,38 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	g_evboCursor += bufferSize;
+}
+
+void*
+vsRenderBuffer::BindRange(int startByte, int length)
+{
+	GL_CHECK_SCOPED("BindRange");
+	if ( m_vbo )
+	{
+		if ( startByte + length > m_glArrayBytes )
+		{
+			// resize our array if necessary, and reset the buffer with the new size.
+			ResizeArray_Internal( startByte + length );
+			SetArray_Internal( m_array, startByte + length, BindType_Array );
+		}
+		int bindPoint = GL_ARRAY_BUFFER;
+		glBindBuffer(bindPoint, m_bufferID);
+		void *ptr = glMapBufferRange(bindPoint, startByte, length, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+		return ptr;
+	}
+	// otherwise, just give them a pointer into our array data
+	return m_array + startByte;
+}
+
+void
+vsRenderBuffer::UnbindRange( void* ptr )
+{
+	GL_CHECK_SCOPED("UnbindRange");
+	if ( m_vbo )
+	{
+		int bindPoint = GL_ARRAY_BUFFER;
+		glUnmapBuffer(bindPoint);
+		glBindBuffer(bindPoint, 0);
+	}
+	// nothing to do, if no VBO.
 }
