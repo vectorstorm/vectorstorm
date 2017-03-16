@@ -303,3 +303,10 @@ vsMaterialInternal::HasAnyTextures() const
 	return false;
 }
 
+void
+vsMaterialInternal::SetTexture(int i, vsTexture *texture)
+{
+	vsDelete(m_texture[i]);
+	m_texture[i] = new vsTexture(texture);
+}
+

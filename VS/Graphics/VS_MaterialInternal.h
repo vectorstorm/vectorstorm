@@ -112,6 +112,8 @@ public:
 	vsTexture *	GetBufferTexture() const { return GetTexture(9); }
 	bool HasAnyTextures() const;
 
+	void SetTexture(int i, vsTexture *texture); // we'll take a copy of this texture;  caller must dispose of their own copy
+
 	void operator=(const vsMaterialInternal &b);
 	bool operator==(const vsMaterialInternal &b) const { return (m_color==b.m_color && m_drawMode==b.m_drawMode); }
 	bool operator!=(const vsMaterialInternal &b) const { return !((*this)==b); }
