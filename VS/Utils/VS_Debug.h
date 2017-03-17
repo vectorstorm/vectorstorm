@@ -17,7 +17,11 @@
 
 #define vsAssert(x,y) if(!(x)){ vsFailedAssert(#x, y,__FILE__, __LINE__); }
 
-void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const char *file, int line );
+void vsFailedAssert( const char* conditionStr, const char* msg, const char *file, int line );
+inline void vsFailedAssert( const char* conditionStr, const vsString &msg, const char *file, int line )
+{
+	return vsFailedAssert( conditionStr, msg.c_str(), file, line );
+}
 
 #else
 #define vsAssert(x,y) {}

@@ -53,7 +53,7 @@
 
 static bool bAsserted = false;
 
-void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const char *file, int line )
+void vsFailedAssert( const char* conditionStr, const char* msg, const char *file, int line )
 {
 	if ( !bAsserted )
 	{
@@ -66,8 +66,8 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 			trimmedFile = trimmedFile.substr(pos+1);
 		}
 
-		vsLog("Failed assertion:  %s", msg.c_str());
-		vsLog("Failed condition: (%s)", conditionStr.c_str());
+		vsLog("Failed assertion:  %s", msg);
+		vsLog("Failed condition: (%s)", conditionStr);
 		vsLog("at %s:%d", trimmedFile.c_str(), line);
 		vsLog_End();
 
@@ -75,7 +75,7 @@ void vsFailedAssert( const vsString &conditionStr, const vsString &msg, const ch
 #if defined(_DEBUG)
 			DEBUG_BREAK;
 #else
-			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg.c_str(), conditionStr.c_str(), trimmedFile.c_str(), line);
+			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg, conditionStr, trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
 #endif
 			CRASH;
