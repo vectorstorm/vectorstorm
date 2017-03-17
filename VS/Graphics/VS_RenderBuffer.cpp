@@ -69,7 +69,7 @@ vsRenderBuffer::~vsRenderBuffer()
 void
 vsRenderBuffer::ResizeArray( int size )
 {
-    SetArraySize_Internal( size );
+    ResizeArray_Internal( size );
 }
 
 void
