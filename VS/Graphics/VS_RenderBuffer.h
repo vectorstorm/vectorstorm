@@ -171,6 +171,8 @@ public:
 	void			SetVector2DArraySize( int size );
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
+	void*			GetGenericArray() { return m_array; }
+
 	int				GetMatrix4x4ArraySize() { return m_arrayBytes/sizeof(vsMatrix4x4); }
 	int				GetActiveMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 
