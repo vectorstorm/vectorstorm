@@ -235,6 +235,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 				m_uniform[i].b = defaultSamplerBinding;
 				defaultSamplerBinding += m_uniform[i].arraySize;
 				break;
+			case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				// we're still by default binding buffer textures to slot 9.
@@ -699,6 +700,7 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 				}
 			case GL_INT:
 			case GL_SAMPLER_2D:
+			case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				{
