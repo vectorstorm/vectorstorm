@@ -17,6 +17,20 @@
 
 class vsRendererState;
 
+struct vsVector4D_i32
+{
+	int32_t x;
+	int32_t y;
+	int32_t z;
+	int32_t w;
+};
+struct vsVector4D_ui32
+{
+	uint32_t x;
+	uint32_t y;
+	uint32_t z;
+	uint32_t w;
+};
 
 class vsRenderBuffer
 {
@@ -53,7 +67,9 @@ public:
 		ContentType_Color,
 		ContentType_Float,
 		ContentType_UInt16,
-		ContentType_UInt32
+		ContentType_UInt32,
+		ContentType_I32Vec4,
+		ContentType_UI32Vec4
 	};
 private:
 
@@ -154,6 +170,8 @@ public:
 	void	SetArray( const uint16_t *array, int size );
 	void	SetArray( const uint32_t *array, int size );
 	void	SetArray( const float *array, int size );
+	void	SetArray( const vsVector4D_ui32 *array, int size );
+	void	SetArray( const vsVector4D_i32 *array, int size );
     void    ResizeArray( int size );
 
 	void	SetActiveSize( int size );

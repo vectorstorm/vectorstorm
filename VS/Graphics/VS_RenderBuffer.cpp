@@ -270,6 +270,20 @@ vsRenderBuffer::SetArray( const float *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const vsVector4D_ui32 *array, int size )
+{
+	m_contentType = ContentType_UI32Vec4;
+	SetArray_Internal((char *)array, size*sizeof(vsVector4D_ui32), BindType_TextureBuffer);
+}
+
+void
+vsRenderBuffer::SetArray( const vsVector4D_i32 *array, int size )
+{
+	m_contentType = ContentType_I32Vec4;
+	SetArray_Internal((char *)array, size*sizeof(vsVector4D_i32), BindType_TextureBuffer);
+}
+
+void
 vsRenderBuffer::SetVector3DArraySize( int size )
 {
 	SetArraySize_Internal(size*sizeof(vsVector3D));
@@ -352,6 +366,14 @@ vsRenderBuffer::BindAsTexture()
 	else if ( m_contentType == ContentType_UInt32 )
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, m_bufferID);
+	}
+	else if ( m_contentType == ContentType_I32Vec4 )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32I, m_bufferID);
+	}
+	else if ( m_contentType == ContentType_UI32Vec4 )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, m_bufferID);
 	}
 	else
 	{
