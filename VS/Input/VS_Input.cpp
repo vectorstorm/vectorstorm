@@ -76,6 +76,7 @@ vsInput::Init()
 
 #if !TARGET_OS_IPHONE
 	m_joystick = NULL;
+	m_controller = NULL;
 	// try to get a joystick
 
 	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
