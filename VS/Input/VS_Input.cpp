@@ -102,22 +102,22 @@ vsInput::Init()
 			}
 		}
 
-		// m_joystick = SDL_JoystickOpen(0);
-		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
-		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
-		m_joystickHats = SDL_JoystickNumHats(m_joystick);
-		vsLog("Device has %d axes, %d buttons, %d hats, %d balls", SDL_JoystickNumAxes(m_joystick),
-				SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
-
-		m_axisCenter = new float[m_joystickAxes];
-		m_axisThrow = new float[m_joystickAxes];
-		for ( int i = 0; i < m_joystickAxes; i++ )
+		if ( m_joystick )
 		{
-			m_axisCenter[i] = ReadAxis_Raw(i);
-			m_axisThrow[i] = 1.0f;
-		}
+			m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
+			m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
+			m_joystickHats = SDL_JoystickNumHats(m_joystick);
+			vsLog("Device has %d axes, %d buttons, %d hats, %d balls", SDL_JoystickNumAxes(m_joystick),
+					SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
 
-		//SDL_JoystickEventState(SDL_ENABLE);
+			m_axisCenter = new float[m_joystickAxes];
+			m_axisThrow = new float[m_joystickAxes];
+			for ( int i = 0; i < m_joystickAxes; i++ )
+			{
+				m_axisCenter[i] = ReadAxis_Raw(i);
+				m_axisThrow[i] = 1.0f;
+			}
+		}
 	}
 	else
 		vsLog("No joystick found.  Using keyboard input.");
