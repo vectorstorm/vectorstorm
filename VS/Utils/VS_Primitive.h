@@ -44,6 +44,14 @@ public:
 // vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = NULL );
 // vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = NULL );
 
+
+// A "Fringed" box is surrounded by boxes of equal-size around all edges, but
+// with alpha set to zero.  This can potentially be useful if you're drawing
+// really really small boxes.  But in general, you can ignore this function.  It's
+// for special case stuff where you're trying to get a little extra anti-aliasing
+// on a very very small box.  :)
+vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
+
 vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
 // a variant of the above which flips V coordinates.  Useful if we're going to draw this box in a 3D context, where Y is inverted.

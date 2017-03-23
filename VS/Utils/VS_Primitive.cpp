@@ -581,6 +581,74 @@ vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &of
 	return fragment;
 }
 
+vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+{
+	// vsVector3D va[4] =
+	// {
+	// 	box.GetMin(),
+	// 	vsVector2D(box.GetMax().x,box.GetMin().y),
+	// 	vsVector2D(box.GetMin().x,box.GetMax().y),
+	// 	box.GetMax()
+	// };
+
+	// six indices per quad, nine quads.
+
+	vsRenderBuffer *vb = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer *ib = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+
+	uint16_t ts[54];
+	vsRenderBuffer::PC pc[16];
+	vsVector3D origin = box.GetMin() - box.Extents();
+	for ( int x = 0; x < 4; x++ )
+	{
+		for ( int y = 0; y < 4; y++ )
+		{
+			int index = y*4 + x;
+			pc[index].position = origin;
+			pc[index].position.x += x * box.Extents().x;
+			pc[index].position.y += y * box.Extents().y;
+
+			if ( colorOverride )
+				pc[index].color = *colorOverride;
+			else
+				pc[index].color = c_white;
+
+			if ( x == 0 || x == 3 || y == 0 || y == 3 )
+				pc[index].color.a = 0.0f;
+
+			if ( y < 3 && x < 3 )
+			{
+				int ti = y*(6*3)+(x*6); // 18 indices per x strip
+
+				ts[ti+0] = index;
+				ts[ti+1] = index+1;
+				ts[ti+2] = index+4;
+				ts[ti+3] = index+4;
+				ts[ti+4] = index+1;
+				ts[ti+5] = index+5;
+			}
+		}
+	}
+
+	vsDisplayList *list = new vsDisplayList(128);
+	vb->SetArray(pc, 16);
+	ib->SetArray(ts, 54);
+
+
+	list->BindBuffer(vb);
+//	list->TexelArray(tex,4);
+	list->TriangleListBuffer(ib);
+	list->ClearVertexArray();
+
+	vsFragment *fragment = new vsFragment;
+	fragment->AddBuffer(vb);
+	fragment->AddBuffer(ib);
+	fragment->SetDisplayList(list);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
 vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
 {
 	return vsMakeSolidBox2D_AtOffset( box, vsVector3D::Zero, material, colorOverride );
