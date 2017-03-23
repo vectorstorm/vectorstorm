@@ -705,6 +705,16 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_constantViewDirection(),
 	m_useConstantViewDirection(false)
 {
+	if ( m_widthInScreenspace )
+	{
+		// With our new wider drawing method (with alphaed edges),
+		// we're drawing lines a bit wider than before.  So let's tamp
+		// them back down to be approximately the same width that they
+		// were before, so clients don't need to change all their code
+		// that calls into us.
+		m_leftWidth *= 0.707f;
+		m_rightWidth *= 0.707f;
+	}
 }
 
 vsLines3D::~vsLines3D()
@@ -767,8 +777,24 @@ vsLines3D::GetFinalVertexCount()
 	size_t result = 0;
 	for ( int i = 0; i < m_stripCount; i++ )
 	{
-		// we're going to emit two vertices per strip vertex.
-		result += m_strip[i]->m_length * 2;
+		// we're going to emit FOUR vertices per strip vertex.
+		//
+		// Assuming (for the sake of this diagram) that our line
+		// is travelling downward or upward, these vertices will be:
+		//
+		//  -> crossline direction
+		//
+		//  0  1  2  3
+		//  t  o  o  t
+		//
+		//  (t == transparent)
+		//  (o == opaque)
+		//
+		// The idea here is that if we're drawing one-pixel lines, this
+		// should give us some simple anti-aliasing in the pixels between 0 and 1,
+		// and between 2 and 3, even if MSAA is disabled
+		//
+		result += m_strip[i]->m_length * 4;
 	}
 	return result;
 }
@@ -779,12 +805,12 @@ vsLines3D::GetFinalIndexCount()
 	size_t result = 0;
 	for ( int i = 0; i < m_stripCount; i++ )
 	{
-		// we're going to emit six indices for each quad.  We're going
+		// we're going to emit 18 indices for each quad.  We're going
 		// to emit one quad for each strip vertex, except for the last one
 		// of each strip.  ('n' vertices means 'n-1' quads)
-		result += (m_strip[i]->m_length-1) * 6;
+		result += (m_strip[i]->m_length-1) * 18;
 		if ( m_strip[i]->m_loop )
-			result += 6;	// six more indices if we're looping, as we connect end->start
+			result += 18;	// six more indices if we're looping, as we connect end->start
 	}
 	return result;
 }
@@ -919,7 +945,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 			vertexPosition = strip->m_vertex[midI] - offsetPre * rightWidthHere;
 		}
 
-		va[m_vertexCursor] = vertexPosition;
+		va[m_vertexCursor+0] = (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
+		va[m_vertexCursor+1] = vertexPosition;
 
 		if ( offsetPre != offsetPost )
 		{
@@ -940,41 +967,60 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 			vertexPosition = strip->m_vertex[midI] + offsetPre * leftWidthHere;
 		}
 
-		va[m_vertexCursor+1] = vertexPosition;
+		va[m_vertexCursor+2] = vertexPosition;
+		va[m_vertexCursor+3] = (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
+
 		if ( strip->m_color )
 		{
-			ca[m_vertexCursor] = strip->m_color[i];
+			ca[m_vertexCursor+0] = strip->m_color[i];
 			ca[m_vertexCursor+1] = strip->m_color[i];
+			ca[m_vertexCursor+2] = strip->m_color[i];
+			ca[m_vertexCursor+3] = strip->m_color[i];
 		}
 		else
 		{
-			ca[m_vertexCursor] = c_white;
+			ca[m_vertexCursor+0] = c_white;
 			ca[m_vertexCursor+1] = c_white;
+			ca[m_vertexCursor+2] = c_white;
+			ca[m_vertexCursor+3] = c_white;
 		}
+		ca[m_vertexCursor+0].a = 0;
+		ca[m_vertexCursor+3].a = 0;
 
 		if ( i != strip->m_length - 1 ) // not at the end of the strip
 		{
-			ia[m_indexCursor] = m_vertexCursor;
-			ia[m_indexCursor+1] = m_vertexCursor+1;
-			ia[m_indexCursor+2] = m_vertexCursor+2;
-			ia[m_indexCursor+3] = m_vertexCursor+2;
-			ia[m_indexCursor+4] = m_vertexCursor+1;
-			ia[m_indexCursor+5] = m_vertexCursor+3;
-			m_indexCursor += 6;
+			for ( int i = 0; i < 3; i++ )
+			{
+				ia[m_indexCursor+0] = m_vertexCursor+0;
+				ia[m_indexCursor+1] = m_vertexCursor+1;
+				ia[m_indexCursor+2] = m_vertexCursor+4;
+				ia[m_indexCursor+3] = m_vertexCursor+4;
+				ia[m_indexCursor+4] = m_vertexCursor+1;
+				ia[m_indexCursor+5] = m_vertexCursor+5;
+
+				m_indexCursor += 6;
+				m_vertexCursor ++;
+			}
+			m_vertexCursor ++;
 		}
-		m_vertexCursor += 2;
 	}
 
 	if ( strip->m_loop )
 	{
-		// and join up the end to the start.
-		ia[m_indexCursor] = m_vertexCursor-2;
-		ia[m_indexCursor+1] = m_vertexCursor-1;
-		ia[m_indexCursor+2] = startOfStripVertexCursor;
-		ia[m_indexCursor+3] = startOfStripVertexCursor;
-		ia[m_indexCursor+4] = m_vertexCursor-1;
-		ia[m_indexCursor+5] = startOfStripVertexCursor + 1;
-		m_indexCursor += 6;
+		for ( int i = 0; i < 3; i++ )
+		{
+			// and join up the end to the start.
+			ia[m_indexCursor] = m_vertexCursor-2;
+			ia[m_indexCursor+1] = m_vertexCursor-1;
+			ia[m_indexCursor+2] = startOfStripVertexCursor;
+			ia[m_indexCursor+3] = startOfStripVertexCursor;
+			ia[m_indexCursor+4] = m_vertexCursor-1;
+			ia[m_indexCursor+5] = startOfStripVertexCursor + 1;
+			m_indexCursor += 6;
+			m_vertexCursor ++;
+			startOfStripVertexCursor += 2;
+		}
+		m_vertexCursor ++;
 	}
 }
 
