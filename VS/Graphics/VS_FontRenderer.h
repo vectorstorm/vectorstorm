@@ -17,7 +17,7 @@ class vsFontRenderer
 {
 	struct FragmentConstructor
 	{
-		vsRenderBuffer::PT *ptArray;
+		vsRenderBuffer::PCT *ptArray;
 		uint16_t *			tlArray;
 
 		int					ptIndex;
@@ -32,6 +32,8 @@ class vsFontRenderer
 	vsVector2D m_bounds;
 	JustificationType m_justification;
 	vsTransform3D m_transform;
+	vsArray<vsTransform3D> m_glyphTransform;
+	vsArray<vsColor> m_glyphColor;
 	vsColor m_color;
 	vsColor m_dropShadowColor;
 	vsVector2D m_dropShadowOffset;
@@ -68,6 +70,9 @@ public:
 	void SetMaxWidth(float maxWidth);
 
 	void SetTransform( const vsTransform3D& transform );
+
+	void SetGlyphTransforms( const vsArray<vsTransform3D> &transforms );
+	void SetGlyphColors( const vsArray<vsColor> &colors );
 
 	// If set, this color will be applied to the drawn text.  If not, whatever
 	// color is in the sprite font will show through unmodified.

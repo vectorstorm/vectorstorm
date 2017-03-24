@@ -161,7 +161,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	size_t requiredSize = stringLength * 4;      // we need a maximum of four verts for each character in the string.
 	size_t requiredTriangles = stringLength * 6; // three indices per triangle, two triangles per character, max.
 
-	vsRenderBuffer::PT *ptArray = new vsRenderBuffer::PT[ requiredSize ];
+	vsRenderBuffer::PCT *ptArray = new vsRenderBuffer::PCT[ requiredSize ];
 	uint16_t *tlArray = new uint16_t[ requiredTriangles ];
 
 	vsRenderBuffer *ptBuffer = new vsRenderBuffer;
@@ -498,7 +498,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 	size_t len = utf8::distance(string, string + strlen(string));
 	const char* w = string;
-	for ( size_t i = 0; i < len; i++ )
+	for ( size_t glyphId = 0; glyphId < len; glyphId++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
 		vsGlyph *g = m_font->Size(m_texSize)->FindGlyphForCharacter( cp );
@@ -528,11 +528,32 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 			for ( int i = 0; i < 4; i++ )
 			{
-				scaledPosition = g->vertex[i] + characterOffset;
+				vsVector3D v = g->vertex[i];
+				vsColor color = c_white;
+
+				if ( glyphId < (size_t)m_glyphTransform.ItemCount() )
+				{
+					// Now, I just so happen to know that vertices (0,1) are
+					// on the left and right sides of this quad.  And (1,2) are
+					// at the top and bottom.  So let's offset by half, before we
+					// transform the vertex, then offset back.
+					v.x -= (g->vertex[0].x + g->vertex[1].x) * 0.5f;
+					v.y -= (g->vertex[1].y + g->vertex[2].y) * 0.5f;
+					v = m_glyphTransform[glyphId].ApplyTo( v );
+					v.x += (g->vertex[0].x + g->vertex[1].x) * 0.5f;
+					v.y += (g->vertex[1].y + g->vertex[2].y) * 0.5f;
+				}
+				if ( glyphId < (size_t)m_glyphColor.ItemCount() )
+				{
+					color = m_glyphColor[glyphId];
+				}
+
+				scaledPosition = v + characterOffset;
 				scaledPosition.x *= size.x;
 				scaledPosition.y *= size.y;
 
 				constructor->ptArray[ constructor->ptIndex+i ].position = scaledPosition;
+				constructor->ptArray[ constructor->ptIndex+i ].color = color;
 				constructor->ptArray[ constructor->ptIndex+i ].texel = g->texel[i];
 			}
 			for ( int i = 0; i < 6; i++ )
@@ -608,6 +629,18 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 
 	list->PopTransform();
 	list->ClearArrays();
+}
+
+void
+vsFontRenderer::SetGlyphTransforms( const vsArray<vsTransform3D> &transforms )
+{
+	m_glyphTransform = transforms;
+}
+
+void
+vsFontRenderer::SetGlyphColors( const vsArray<vsColor> &colors )
+{
+	m_glyphColor = colors;
 }
 
 vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string ):
