@@ -89,8 +89,9 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, vsColor *
 
 vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor *color, int count, float width, bool loop )
 {
-	size_t vertexCount = count * 2;
-	size_t indexCount = count * 6;
+	width *= 0.707f;
+	size_t vertexCount = count * 4;
+	size_t indexCount = count * 18;
 
 	float halfWidth = width * 0.5f;
 
@@ -167,7 +168,8 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 			vertexPosition = point[midI] - offsetPre * halfWidth;
 		}
 
-		va[vertexCursor].position = vertexPosition;
+		va[vertexCursor+0].position = (vertexPosition - point[midI]) + vertexPosition;
+		va[vertexCursor+1].position = vertexPosition;
 
 		if ( offsetPre != offsetPost )
 		{
@@ -188,32 +190,45 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 			vertexPosition = point[midI] + offsetPre * halfWidth;
 		}
 
-		va[vertexCursor+1].position = vertexPosition;
+		va[vertexCursor+2].position = vertexPosition;
+		va[vertexCursor+3].position = (vertexPosition - point[midI]) + vertexPosition;
 		if ( color )
 		{
-			va[vertexCursor].color = color[midI];
+			va[vertexCursor+0].color = color[midI];
 			va[vertexCursor+1].color = color[midI];
+			va[vertexCursor+2].color = color[midI];
+			va[vertexCursor+3].color = color[midI];
 		}
 		else
 		{
-			va[vertexCursor].color = c_white;
+			va[vertexCursor+0].color = c_white;
 			va[vertexCursor+1].color = c_white;
+			va[vertexCursor+2].color = c_white;
+			va[vertexCursor+3].color = c_white;
 		}
+		va[vertexCursor+0].color.a = 0.f;
+		va[vertexCursor+3].color.a = 0.f;
 
-		if ( loop || i != count - 1 ) // not at the end of the strip
+		if ( loop || i != (count - 1) ) // not at the end of the strip
 		{
-			int otherSide = vertexCursor+2;
-			if ( i == count-1 )
-				otherSide = 0;
-			ia[indexCursor] = vertexCursor;
-			ia[indexCursor+1] = vertexCursor+1;
-			ia[indexCursor+2] = otherSide;
-			ia[indexCursor+3] = otherSide;
-			ia[indexCursor+4] = vertexCursor+1;
-			ia[indexCursor+5] = otherSide+1;
-			indexCursor += 6;
+			for ( int q = 0; q < 3; q++ )
+			{
+				int otherSide = vertexCursor+4;
+				if ( i == count-1 )
+					otherSide = 0 + q;
+				ia[indexCursor] = vertexCursor;
+				ia[indexCursor+1] = vertexCursor+1;
+				ia[indexCursor+2] = otherSide;
+				ia[indexCursor+3] = otherSide;
+				ia[indexCursor+4] = vertexCursor+1;
+				ia[indexCursor+5] = otherSide+1;
+				indexCursor += 6;
+				vertexCursor ++;
+			}
+			vertexCursor ++;
 		}
-		vertexCursor += 2;
+		else
+			vertexCursor += 4;
 	}
 
 	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
