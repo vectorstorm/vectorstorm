@@ -94,5 +94,89 @@ public:
 	}
 };
 
+#include "Math/VS_Spline.h"
+
+// vsTweenSpline3D works for vsVector3D types.  Same interface as vsTween, but
+// it uses a spline for its backing.  This means it handles changing
+// destinations a lot more smoothly!
+class vsTweenSpline3D
+{
+	vsSpline3D m_spline;
+	vsVector3D m_current;
+	float	m_tweenTimer;
+	float	m_tweenDuration;
+	bool m_tweening;
+public:
+	vsTweenSpline3D( const vsVector3D& ini ):
+		m_spline(ini, vsVector3D::Zero, ini, vsVector3D::Zero),
+		m_tweenTimer(0.f),
+		m_tweenDuration(1.f),
+		m_tweening(false)
+	{
+	}
+
+	void SetValue(const vsVector3D &value)
+	{
+		m_spline.Set(value, vsVector3D::Zero, value, vsVector3D::Zero);
+		m_current = value;
+		m_tweening = false;
+	}
+
+	bool		IsTweening()
+	{
+		return m_tweening;
+	}
+
+	const vsVector3D&	GetValue()
+	{
+		return m_current;
+	}
+
+	vsVector3D GetTarget()
+	{
+		return m_spline.PositionAtTime( 1.f );
+	}
+
+	void TweenTo(const vsVector3D&value, float time)
+	{
+		if ( value == m_current )
+		{
+			m_tweening = false;
+		}
+		else if ( time == 0.f )
+		{
+			SetValue(value);
+		}
+		else
+		{
+			float timeNow = m_tweenTimer / m_tweenDuration;
+			vsVector3D velocityNow = m_tweening ?
+				m_spline.VelocityAtTime(timeNow) : vsVector3D::Zero;
+			vsVector3D positionNow = m_spline.PositionAtTime(timeNow);
+
+			m_spline.Set( positionNow, velocityNow, value, vsVector3D::Zero );
+			m_tweenTimer = 0.f;
+			m_tweenDuration = time;
+			m_tweening = true;
+		}
+	}
+
+	void Update(float timeStep)
+	{
+		if ( m_tweening )
+		{
+			m_tweenTimer += timeStep;
+			if ( m_tweenTimer > m_tweenDuration )
+			{
+				m_tweening = false;
+				m_current = GetTarget();
+				return;
+			}
+			float time = m_tweenTimer / m_tweenDuration;
+			m_current = m_spline.PositionAtTime(time);
+		}
+	}
+};
+
 #endif // UT_TWEEN_H
 
