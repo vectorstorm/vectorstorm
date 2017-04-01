@@ -427,6 +427,21 @@ vsInput::Update(float timeStep)
 						vsSystem::Instance()->SetAppHasFocus(true);
 					}
 					break;
+				case SDL_CONTROLLERDEVICEADDED:
+					{
+						vsLog("Controller connected: %d", event.cdevice.which);
+						break;
+					}
+				case SDL_CONTROLLERDEVICEREMOVED:
+					{
+						vsLog("Controller removed: %d", event.cdevice.which);
+						break;
+					}
+				case SDL_CONTROLLERDEVICEREMAPPED:
+					{
+						vsLog("Controller remapped: %d", event.cdevice.which);
+						break;
+					}
 				case SDL_TEXTINPUT:
 					if ( m_stringModeSelectAll )
 					{
