@@ -1006,36 +1006,42 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		{
 			for ( int i = 0; i < 3; i++ )
 			{
-				ia[m_indexCursor+0] = m_vertexCursor+0;
-				ia[m_indexCursor+1] = m_vertexCursor+1;
-				ia[m_indexCursor+2] = m_vertexCursor+4;
-				ia[m_indexCursor+3] = m_vertexCursor+4;
-				ia[m_indexCursor+4] = m_vertexCursor+1;
-				ia[m_indexCursor+5] = m_vertexCursor+5;
+				int nearMinVertex = m_vertexCursor;
+				int farMinVertex = m_vertexCursor+4;
+
+				ia[m_indexCursor+0] = nearMinVertex+0;
+				ia[m_indexCursor+1] = nearMinVertex+1;
+				ia[m_indexCursor+2] = farMinVertex+0;
+				ia[m_indexCursor+3] = farMinVertex+0;
+				ia[m_indexCursor+4] = nearMinVertex+1;
+				ia[m_indexCursor+5] = farMinVertex+1;
 
 				m_indexCursor += 6;
 				m_vertexCursor ++;
 			}
 			m_vertexCursor ++;
 		}
+		else
+			m_vertexCursor += 4;
 	}
 
 	if ( strip->m_loop )
 	{
 		for ( int i = 0; i < 3; i++ )
 		{
+			int nearMinVertex = m_vertexCursor+i-4;
+			int farMinVertex = startOfStripVertexCursor+i;
+
 			// and join up the end to the start.
-			ia[m_indexCursor] = m_vertexCursor-2;
-			ia[m_indexCursor+1] = m_vertexCursor-1;
-			ia[m_indexCursor+2] = startOfStripVertexCursor;
-			ia[m_indexCursor+3] = startOfStripVertexCursor;
-			ia[m_indexCursor+4] = m_vertexCursor-1;
-			ia[m_indexCursor+5] = startOfStripVertexCursor + 1;
+			ia[m_indexCursor+0] = nearMinVertex+0;
+			ia[m_indexCursor+1] = nearMinVertex+1;
+			ia[m_indexCursor+2] = farMinVertex+0;
+			ia[m_indexCursor+3] = farMinVertex+0;
+			ia[m_indexCursor+4] = nearMinVertex+1;
+			ia[m_indexCursor+5] = farMinVertex+1;
+
 			m_indexCursor += 6;
-			m_vertexCursor ++;
-			startOfStripVertexCursor += 2;
 		}
-		m_vertexCursor ++;
 	}
 }
 
