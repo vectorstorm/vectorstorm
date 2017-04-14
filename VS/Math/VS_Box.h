@@ -152,24 +152,24 @@ class vsOrientedBox3D
 	vsVector3D m_corner[8];
 
 	// run a single Separating Axis Theorem test, along the proposed axis
-	bool SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis );
-	bool SAT_Intersects( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
+	bool SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis ) const;
+	bool SAT_Intersects( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f ) const;
 
 	// run a single test for containment, along the proposed axis
-	bool SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis );
-	bool SAT_Contains( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f );
+	bool SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis ) const;
+	bool SAT_Contains( const vsVector3D* points, int pountCount, const vsVector3D& axis, float otherRadius = 0.f ) const;
 public:
 	vsOrientedBox3D();
 	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
 
 	const vsVector3D& Corner(int i) const { return m_corner[i]; }
 
-	bool Contains( const vsOrientedBox3D& other );
-	bool Intersects( const vsOrientedBox3D& other );
-	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius );
-	bool IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius );
-	bool IntersectsSphere( const vsVector3D& point, float radius );
-	bool ContainsPoint( const vsVector3D& point );
+	bool Contains( const vsOrientedBox3D& other ) const;
+	bool Intersects( const vsOrientedBox3D& other ) const;
+	bool IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius ) const;
+	bool IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius ) const;
+	bool IntersectsSphere( const vsVector3D& point, float radius ) const;
+	bool ContainsPoint( const vsVector3D& point ) const;
 };
 
 vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b );

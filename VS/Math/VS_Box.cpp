@@ -608,7 +608,7 @@ vsOrientedBox3D::vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& trans
 }
 
 bool
-vsOrientedBox3D::Contains( const vsOrientedBox3D& other )
+vsOrientedBox3D::Contains( const vsOrientedBox3D& other ) const
 {
 	const vsVector3D &ax = m_transform.GetMatrix().x;
 	const vsVector3D &ay = m_transform.GetMatrix().y;
@@ -620,7 +620,7 @@ vsOrientedBox3D::Contains( const vsOrientedBox3D& other )
 }
 
 bool
-vsOrientedBox3D::Intersects( const vsOrientedBox3D& other )
+vsOrientedBox3D::Intersects( const vsOrientedBox3D& other ) const
 {
 	// we're going to check a whole heap of directions to see whether we can
 	// find one which doesn't result in our vertices intersecting.  If we can
@@ -667,13 +667,13 @@ vsOrientedBox3D::Intersects( const vsOrientedBox3D& other )
 }
 
 bool
-vsOrientedBox3D::SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis )
+vsOrientedBox3D::SAT_Contains( const vsOrientedBox3D& other, const vsVector3D& axis ) const
 {
 	return SAT_Contains( other.m_corner, 8, axis );
 }
 
 bool
-vsOrientedBox3D::SAT_Contains( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius )
+vsOrientedBox3D::SAT_Contains( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius ) const
 {
 	// we're going to project each of MY corners onto this axis and get the 1D range
 	// of distances.
@@ -706,7 +706,7 @@ vsOrientedBox3D::SAT_Contains( const vsVector3D* points, int pointCount, const v
 	return false;
 }
 bool
-vsOrientedBox3D::SAT_Intersects( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius )
+vsOrientedBox3D::SAT_Intersects( const vsVector3D* points, int pointCount, const vsVector3D& axis, float otherRadius ) const
 {
 	// we're going to project each of MY corners onto this axis and get the 1D range
 	// of distances.
@@ -740,13 +740,13 @@ vsOrientedBox3D::SAT_Intersects( const vsVector3D* points, int pointCount, const
 }
 
 bool
-vsOrientedBox3D::SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis )
+vsOrientedBox3D::SAT_Intersects( const vsOrientedBox3D& other, const vsVector3D& axis ) const
 {
 	return SAT_Intersects( other.m_corner, 8, axis );
 }
 
 bool
-vsOrientedBox3D::IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius )
+vsOrientedBox3D::IntersectsLineStrip( const vsVector3D* point, int pointCount, float radius ) const
 {
 	for ( int i = 0; i < pointCount-1; i++ )
 	{
@@ -758,7 +758,7 @@ vsOrientedBox3D::IntersectsLineStrip( const vsVector3D* point, int pointCount, f
 }
 
 bool
-vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius )
+vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b, float radius ) const
 {
 	// check this line against each of my axes, see if there is one where we don't intersect.
 	const vsVector3D &ax = m_transform.GetMatrix().x;
@@ -787,7 +787,7 @@ vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b
 }
 
 bool
-vsOrientedBox3D::IntersectsSphere( const vsVector3D& center, float radius )
+vsOrientedBox3D::IntersectsSphere( const vsVector3D& center, float radius ) const
 {
 	if ( ContainsPoint( center ) )
 		return true;
@@ -801,7 +801,7 @@ vsOrientedBox3D::IntersectsSphere( const vsVector3D& center, float radius )
 }
 
 bool
-vsOrientedBox3D::ContainsPoint( const vsVector3D& point )
+vsOrientedBox3D::ContainsPoint( const vsVector3D& point ) const
 {
 	const vsVector3D &ax = m_transform.GetMatrix().x;
 	const vsVector3D &ay = m_transform.GetMatrix().y;
