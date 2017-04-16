@@ -766,6 +766,9 @@ vsOrientedBox3D::IntersectsLineSegment( const vsVector3D& a, const vsVector3D& b
 	const vsVector3D &az = m_transform.GetMatrix().z;
 
 	vsVector3D direction = b-a;
+	if ( direction.SqLength() < 0.01f ) // basically a single point;  just do circle test.
+		return IntersectsSphere( a, radius );
+
 	direction.Normalise();
 
 	vsVector3D segment[2] = { a, b };
