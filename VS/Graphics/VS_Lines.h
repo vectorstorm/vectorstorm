@@ -32,7 +32,7 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count
 void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *array, int count, float width, bool loop );
 
 vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = NULL, float texScale = 1.f );
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL );
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL, float texScale = 1.f );
 
 vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width, bool loop );
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width );
@@ -47,10 +47,10 @@ class vsLines3D: public vsModel
 	static float s_widthFactor;
 	float m_leftWidth;
 	float m_rightWidth;
+	float m_texScale;
 	bool m_widthInScreenspace;
 
 	vsRenderBuffer m_vertices;
-	vsRenderBuffer m_colors;
 	vsRenderBuffer m_indices;
 	int m_vertexCursor;
 	int m_indexCursor;
@@ -69,6 +69,7 @@ public:
 
 	void SetLeftRightWidths(float left, float right) { m_leftWidth = left; m_rightWidth = right; }
 	void SetWidth(float width) { SetLeftRightWidths( width * 0.5f, width * 0.5f ); }
+	void SetTexScale(float scale) { m_texScale = scale; }
 
 	void SetConstantViewDirection( const vsVector3D& direction );
 
