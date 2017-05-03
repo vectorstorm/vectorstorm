@@ -967,7 +967,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 			vertexPosition = strip->m_vertex[midI] - offsetPre * rightWidthHere;
 		}
 
-		va[m_vertexCursor+0].position = (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
+		va[m_vertexCursor+0].position = 3.0f * (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
 		va[m_vertexCursor+1].position = vertexPosition;
 
 		if ( offsetPre != offsetPost )
@@ -990,7 +990,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		}
 
 		va[m_vertexCursor+2].position = vertexPosition;
-		va[m_vertexCursor+3].position = (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
+		va[m_vertexCursor+3].position = 3.0f * (vertexPosition - strip->m_vertex[midI]) + vertexPosition;
 
 		if ( strip->m_color )
 		{
