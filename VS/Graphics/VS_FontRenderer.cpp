@@ -31,7 +31,8 @@ vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type
 	m_hasColor(false),
 	m_hasDropShadow(false),
 	m_snap(false),
-	m_hasSnap(false)
+	m_hasSnap(false),
+	m_buildMapping(false)
 {
 }
 
@@ -172,6 +173,13 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	constructor.tlArray = tlArray;
 	constructor.ptIndex = constructor.tlIndex = 0;
 
+	constructor.glyphBox = NULL;
+	constructor.glyphCount = 0;
+	constructor.lineBox = NULL;
+	constructor.lineFirstGlyph = NULL;
+	constructor.lineLastGlyph = NULL;
+	constructor.lineCount = 0;
+
 	// figure out our wrapping and final render size
 	float topLinePosition;
 	WrapStringSizeTop(string, &size, &topLinePosition);
@@ -189,7 +197,25 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 	vsVector2D offset(0.f,topLinePosition);
 
+	if ( m_buildMapping )
+	{
+		for ( int i = 0; i < m_wrappedLineCount; i++ )
+		{
+			size_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+			constructor.glyphCount += glyphs;
+		}
+		constructor.lineCount = m_wrappedLineCount;
+		if ( constructor.glyphCount > 0 )
+		{
+			constructor.glyphBox = new vsBox2D[constructor.glyphCount];
+			constructor.lineBox = new vsBox2D[constructor.lineCount];
+			constructor.lineFirstGlyph = new int[constructor.lineCount];
+			constructor.lineLastGlyph = new int[constructor.lineCount];
+		}
+	}
 
+
+	int nextGlyph = 0;
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
 	if ( ShouldSnap( context ) )
@@ -198,7 +224,10 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
-		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset );
+		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i );
+
+		size_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+		nextGlyph += glyphsInThisLine;
 	}
 
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
@@ -244,6 +273,23 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 		list->PopTransform();
 
 	fragment->SetDisplayList( list );
+	vsFontFragment* ff = dynamic_cast<vsFontFragment*>(fragment);
+	if ( ff )
+	{
+		ff->m_glyphBox = constructor.glyphBox;
+		ff->m_glyphCount = constructor.glyphCount;
+		ff->m_lineBox = constructor.lineBox;
+		ff->m_lineFirstGlyph = constructor.lineFirstGlyph;
+		ff->m_lineLastGlyph = constructor.lineLastGlyph;
+		ff->m_lineCount = constructor.lineCount;
+	}
+	else
+	{
+		vsDeleteArray( constructor.glyphBox );
+		vsDeleteArray( constructor.lineBox );
+		vsDeleteArray( constructor.lineFirstGlyph );
+		vsDeleteArray( constructor.lineLastGlyph );
+	}
 
 	vsDeleteArray( ptArray );
 	vsDeleteArray( tlArray );
@@ -295,7 +341,7 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 		list->PopTransform();
 }
 
-vsFragment*
+vsFontFragment*
 vsFontRenderer::Fragment2D( const vsString& string )
 {
 	m_texSize = m_size;
@@ -310,7 +356,7 @@ vsFontRenderer::Fragment2D( const vsString& string )
 	return fragment;
 }
 
-vsFragment*
+vsFontFragment*
 vsFontRenderer::Fragment3D( const vsString& string )
 {
 	m_texSize = m_font->MaxSize();
@@ -469,9 +515,16 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 }
 
 void
-vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in)
+vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in, int nextGlyphId, int lineId)
 {
+	if ( m_buildMapping )
+	{
+		constructor->lineFirstGlyph[lineId] = nextGlyphId;
+	}
+
 	vsVector2D offset = offset_in;
+	vsBox2D lineBox;
+	int glyphCount = 0;
 
 	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
@@ -526,6 +579,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 			// now, add our four verts and two triangles onto the arrays.
 
+
 			for ( int i = 0; i < 4; i++ )
 			{
 				vsVector3D v = g->vertex[i];
@@ -555,7 +609,14 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 				constructor->ptArray[ constructor->ptIndex+i ].position = scaledPosition;
 				constructor->ptArray[ constructor->ptIndex+i ].color = color;
 				constructor->ptArray[ constructor->ptIndex+i ].texel = g->texel[i];
+
+				if ( m_buildMapping )
+				{
+					constructor->glyphBox[nextGlyphId].ExpandToInclude(scaledPosition);
+					lineBox.ExpandToInclude(scaledPosition);
+				}
 			}
+
 			for ( int i = 0; i < 6; i++ )
 			{
 				constructor->tlArray[ constructor->tlIndex+i ] = constructor->ptIndex + glyphIndices[i];
@@ -565,7 +626,25 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			constructor->tlIndex += 6;
 
 			offset.x += g->xAdvance;
+			nextGlyphId++;
+			glyphCount++;
 		}
+	}
+
+	if ( m_buildMapping )
+	{
+		// fix top and bottom of lineBox.
+		float top = (offset.y - 1.0f) * m_size;
+		float bottom = (offset.y) * m_size;
+		vsVector2D tl = lineBox.GetMin();
+		vsVector2D br = lineBox.GetMax();
+		tl.y = top;
+		br.y = bottom;
+		lineBox.Set(tl,br);
+		constructor->lineBox[lineId] = lineBox;
+		if ( glyphCount == 0 )
+			constructor->lineFirstGlyph[lineId] = nextGlyphId-1;
+		constructor->lineLastGlyph[lineId] = nextGlyphId-1;
 	}
 }
 
@@ -647,6 +726,11 @@ vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const 
 	m_renderer(renderer),
 	m_context(fc),
 	m_string(string),
+	m_lineBox(NULL),
+	m_lineFirstGlyph(NULL),
+	m_lineLastGlyph(NULL),
+	m_lineCount(0),
+	m_glyphBox(NULL),
 	m_attached(true)
 {
 }
@@ -655,6 +739,10 @@ vsFontFragment::~vsFontFragment()
 {
 	if ( m_attached )
 		m_renderer.m_font->RemoveFragment(this);
+	vsDeleteArray(m_glyphBox);
+	vsDeleteArray(m_lineBox);
+	vsDeleteArray(m_lineFirstGlyph);
+	vsDeleteArray(m_lineLastGlyph);
 }
 
 void
@@ -663,6 +751,10 @@ vsFontFragment::Rebuild()
 	if ( m_attached )
 	{
 		Clear();
+		vsDeleteArray(m_glyphBox);
+		vsDeleteArray(m_lineBox);
+		vsDeleteArray(m_lineFirstGlyph);
+		vsDeleteArray(m_lineLastGlyph);
 		m_renderer.CreateString_InFragment( m_context, this, m_string );
 	}
 }

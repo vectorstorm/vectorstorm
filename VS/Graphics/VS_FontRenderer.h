@@ -18,10 +18,23 @@ class vsFontRenderer
 	struct FragmentConstructor
 	{
 		vsRenderBuffer::PCT *ptArray;
-		uint16_t *			tlArray;
+		uint16_t *tlArray;
 
-		int					ptIndex;
-		int					tlIndex;
+		int ptIndex;
+		int tlIndex;
+
+		// if 'm_buildMapping' is set, these contain boxes for each generated glyph
+		vsBox2D *glyphBox;
+		int glyphCount;
+		// if 'm_buildMapping' is set, these contain boxes around each
+		// generated wrapped line.  Note that these are NOT "exact" boxes;
+		// they cover top to bottom of the main portion of the line, they do
+		// not necessarily cover descenders, and they DO contain the top of
+		// where capitals would be in the line, if there were any capitals.
+		vsBox2D *lineBox;
+		int *lineFirstGlyph;
+		int *lineLastGlyph;
+		int lineCount;
 	};
 
 	// reference only -- do not deallocate!
@@ -41,6 +54,7 @@ class vsFontRenderer
 	bool m_hasDropShadow;
 	bool m_snap;
 	bool m_hasSnap;
+	bool m_buildMapping;
 
 #define MAX_WRAPPED_LINES (5000)
 	vsString	m_wrappedLine[MAX_WRAPPED_LINES];
@@ -51,7 +65,7 @@ class vsFontRenderer
 	// vsFragment* CreateString_Fragment( FontContext context, const vsString& string );
 	void		CreateString_InFragment( FontContext context, vsFontFragment *fragment, const vsString& string );
 	void		CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string );
-	void		AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType type, const vsVector2D &offset);
+	void		AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType type, const vsVector2D &offset, int nextGlyphId, int lineId);
 	void		BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType type, const vsVector2D &offset);
 
 	bool		ShouldSnap( FontContext context );
@@ -87,11 +101,19 @@ public:
 	// in a 3D context.
 	void SetSnap( bool snap ) { m_hasSnap = true; m_snap = snap; }
 
+	// If true, we'll produce a set of boxes around glyphs, which can be used
+	// to figure out where individual glyphs are.  These will be stored on
+	// any vsFontFragments produced.  There's no way to get at them from
+	// display lists, so this function really doesn't do anything in that case.
+	// You really shouldn't be building display lists any more anyway;
+	// fragments are better in almost every way!
+	void BuildMapping( bool mapping = true ) { m_buildMapping = mapping; }
+
 	// the 'fragment' approach is ideal for long-lived strings, as it produces a
 	// single renderable chunk of geometry which can be drawn in a single draw call,
 	// but which requires its own blob of data on the GPU.
-	vsFragment* Fragment2D( const vsString& string );
-	vsFragment* Fragment3D( const vsString& string );
+	vsFontFragment* Fragment2D( const vsString& string );
+	vsFontFragment* Fragment3D( const vsString& string );
 
 	// the non-fragment approach avoids creating its own data on the GPU, and instead
 	// uses a single shared blob of data which is owned by the font itself.  The
@@ -116,15 +138,47 @@ class vsFontFragment: public vsFragment
 	vsFontRenderer m_renderer;
 	FontContext m_context;
 	vsString m_string;
+
+	vsBox2D *m_lineBox; // contains a box around each wrapped line.
+	int *m_lineFirstGlyph; // the first glyph on each line.
+	int *m_lineLastGlyph; // the last glyph on each line.
+	int m_lineCount;
+
+	vsBox2D *m_glyphBox; // contains a box around each glyph.
+	int m_glyphCount;
+
 	bool m_attached;
+
 public:
 	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string );
 	virtual ~vsFontFragment();
 
-	// detach makes the fragment aware that its font no longer exists.  It will
-	// no longer attempt to rebuild or to alert its font that it's being destroyed.
+	// If our font renderer had mapping enabled, these functions provide access
+	// to the generated glyph mapping.
+	int GetGlyphMappingCount() const { return m_glyphCount; }
+	const vsBox2D& GetGlyphMapping(int glyph) const { return m_glyphBox[glyph]; }
+
+	// If our font renderer had mapping enabled, these functions provide access
+	// to the generated line mapping.
+	int GetLineMappingCount() const { return m_lineCount; }
+	const vsBox2D& GetLineMapping(int line) const { return m_lineBox[line]; }
+	int GetLineFirstGlyph(int line) const { return m_lineFirstGlyph[line]; }
+	int GetLineLastGlyph(int line) const { return m_lineLastGlyph[line]; }
+
+	// Detach() makes the fragment aware that its font no longer exists.  Should
+	// only be called by the Font.  Calling it means that this fragment will no
+	// no longer attempt to rebuild itself in response to DPI changes, or otherwise
+	// communicate with the vsFont.
 	void Detach();
+	//
+	// Rebuild is called in the event of a DPI change (for example, if the window
+	// gets dragged from a regular screen to a Retina screen on OSX, or if the
+	// 'HighDPI' setting is changed on a HighDPI screen).  This is called
+	// automatically by the font when this happens;  end-users should never
+	// call it manually.
 	void Rebuild();
+
+	friend class vsFontRenderer;
 };
 
 
