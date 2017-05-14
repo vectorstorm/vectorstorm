@@ -485,7 +485,8 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		if ( wrapping )
 		{
 			// time to wrap!
-			line.erase(lineEnd);
+			if ( line.size() > lineEnd )
+				line.erase(lineEnd+1);
 			remainingString.erase(0,lineEnd+1);
 			// we've gone too far, and need to wrap!  Wrap to the last safe wrap point we found.
 
