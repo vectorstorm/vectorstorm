@@ -485,7 +485,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		if ( wrapping )
 		{
 			// time to wrap!
-			line.erase(lineEnd+1);
+			line.erase(lineEnd);
 			remainingString.erase(0,lineEnd+1);
 			// we've gone too far, and need to wrap!  Wrap to the last safe wrap point we found.
 
@@ -615,6 +615,10 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 				if ( m_buildMapping )
 				{
 					vsVector2D mappingPosition = scaledPosition;
+					if ( cp == ' ' && i == 1) // let's map spaces better
+					{
+						mappingPosition.x += g->xAdvance * size.x;
+					}
 					constructor->glyphBox[nextGlyphId].ExpandToInclude(mappingPosition);
 					lineBox.ExpandToInclude(mappingPosition);
 				}
