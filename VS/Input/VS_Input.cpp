@@ -634,6 +634,19 @@ vsInput::Update(float timeStep)
 										// }
 									}
 									break;
+								case SDLK_LEFT:
+									{
+										m_stringModeCursorLastGlyph = vsMax( m_stringModeCursorLastGlyph-1, 0 );
+										m_stringModeCursorFirstGlyph = m_stringModeCursorLastGlyph;
+									}
+									break;
+								case SDLK_RIGHT:
+									{
+										int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+										m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph+1, inLength );
+										m_stringModeCursorFirstGlyph = m_stringModeCursorLastGlyph;
+									}
+									break;
 								case SDLK_RETURN:
 									if ( m_stringMode )
 									{
