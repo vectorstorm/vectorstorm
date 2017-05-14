@@ -485,7 +485,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		if ( wrapping )
 		{
 			// time to wrap!
-			line.erase(lineEnd);
+			line.erase(lineEnd+1);
 			remainingString.erase(0,lineEnd+1);
 			// we've gone too far, and need to wrap!  Wrap to the last safe wrap point we found.
 
@@ -551,7 +551,9 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 	size_t len = utf8::distance(string, string + strlen(string));
 	const char* w = string;
-	for ( size_t glyphId = 0; glyphId < len; glyphId++ )
+	size_t startGlyphId = nextGlyphId;
+	size_t endGlyphId = nextGlyphId + len;
+	for ( size_t glyphId = startGlyphId; glyphId < endGlyphId; glyphId++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
 		vsGlyph *g = m_font->Size(m_texSize)->FindGlyphForCharacter( cp );
@@ -612,8 +614,9 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 				if ( m_buildMapping )
 				{
-					constructor->glyphBox[nextGlyphId].ExpandToInclude(scaledPosition);
-					lineBox.ExpandToInclude(scaledPosition);
+					vsVector2D mappingPosition = scaledPosition;
+					constructor->glyphBox[nextGlyphId].ExpandToInclude(mappingPosition);
+					lineBox.ExpandToInclude(mappingPosition);
 				}
 			}
 
@@ -720,6 +723,13 @@ void
 vsFontRenderer::SetGlyphColors( const vsArray<vsColor> &colors )
 {
 	m_glyphColor = colors;
+}
+
+int
+vsFontRenderer::GetGlyphCount( const vsString& string )
+{
+	int glyphs = utf8::distance( string.c_str(), string.c_str() + string.size() );
+	return glyphs;
 }
 
 vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string ):

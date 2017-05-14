@@ -129,6 +129,7 @@ public:
 	void DisplayList3D( vsDisplayList *list, const vsString& string );
 
 	vsVector2D GetStringDimensions( const vsString& string );
+	static int GetGlyphCount( const vsString& string );
 
 	friend class vsFontFragment;
 };
