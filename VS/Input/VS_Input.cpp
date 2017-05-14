@@ -21,6 +21,7 @@
 
 #include "VS_Preferences.h"
 #include "Utils/utfcpp/utf8.h"
+#include <iterator>
 
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
@@ -332,7 +333,8 @@ vsInput::SetStringMode(bool mode)
 			SDL_StartTextInput();
 			m_stringMode = true;
 			m_stringModeString.clear();
-			m_stringModeSelectAll = false;
+			SetStringModeSelectAll(false);
+			// m_stringModeSelectAll = false;
 
 			//Enable Unicode
 			//SDL_EnableUNICODE( SDL_ENABLE );
@@ -341,7 +343,7 @@ vsInput::SetStringMode(bool mode)
 		{
 			SDL_StopTextInput();
 			m_stringMode = false;
-			m_stringModeSelectAll = false;
+			// m_stringModeSelectAll = false;
 
 			//Disable Unicode
 			//SDL_EnableUNICODE( SDL_DISABLE );
@@ -349,6 +351,57 @@ vsInput::SetStringMode(bool mode)
 		}
 	}
 #endif
+}
+
+void
+vsInput::SetStringModeCursor( int firstGlyph, int lastGlyph )
+{
+	m_stringModeCursorFirstGlyph = firstGlyph;
+	m_stringModeCursorLastGlyph = lastGlyph;
+}
+
+int
+vsInput::GetStringModeCursorFirstGlyph()
+{
+	return m_stringModeCursorFirstGlyph;
+}
+
+int
+vsInput::GetStringModeCursorLastGlyph()
+{
+	return m_stringModeCursorLastGlyph;
+}
+
+void
+vsInput::SetStringModeSelectAll( bool selectAll )
+{
+	int lastGlyph = utf8::distance(
+			m_stringModeString.c_str(),
+			m_stringModeString.c_str() + m_stringModeString.size()
+			);
+
+	if ( selectAll )
+	{
+		m_stringModeCursorFirstGlyph = 0;
+		m_stringModeCursorLastGlyph = lastGlyph+1;
+	}
+	else
+	{
+		m_stringModeCursorFirstGlyph = lastGlyph+1;
+		m_stringModeCursorLastGlyph = lastGlyph+1;
+	}
+}
+
+bool
+vsInput::GetStringModeSelectAll()
+{
+	int lastGlyph = utf8::distance(
+			m_stringModeString.c_str(),
+			m_stringModeString.c_str() + m_stringModeString.size()
+			);
+
+	return ( m_stringModeCursorFirstGlyph == 0 &&
+			m_stringModeCursorLastGlyph == lastGlyph+1 );
 }
 
 vsVector2D
@@ -443,14 +496,20 @@ vsInput::Update(float timeStep)
 						break;
 					}
 				case SDL_TEXTINPUT:
-					if ( m_stringModeSelectAll )
 					{
-						m_stringModeString = event.text.text;
-						m_stringModeSelectAll = false;
-					}
-					else
-					{
-						m_stringModeString += event.text.text;
+						HandleTextInput(event.text.text);
+						break;
+
+
+						// if ( m_stringModeSelectAll )
+						// {
+						// 	m_stringModeString = event.text.text;
+						// 	m_stringModeSelectAll = false;
+						// }
+						// else
+						// {
+						// 	m_stringModeString += event.text.text;
+						// }
 					}
 					break;
 				case SDL_TEXTEDITING:
@@ -523,27 +582,56 @@ vsInput::Update(float timeStep)
 								case SDLK_BACKSPACE:
 									if ( m_stringMode && m_stringModeString.length() != 0 )
 									{
-										if ( m_stringModeSelectAll )
+										if ( m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
 										{
-											// we're in "select all" mode, so remove the whole string.
-											m_stringModeString = "";
-											m_stringModeSelectAll = false;
+											if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
+												return;
+
+											// delete one character
+											vsString oldString = m_stringModeString;
+											m_stringModeString = vsEmptyString;
+											// Okay.  copy all the glyphs up to the cursor MINUS ONE.
+											// then copy the rest.
+											utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+											int inLength = utf8::distance(oldString.begin(), oldString.end());
+											std::back_insert_iterator<std::string> out(m_stringModeString);
+											for ( int i = 0; i < inLength; i++ )
+											{
+												if ( i != m_stringModeCursorFirstGlyph-1 )
+													*(out++) = *in;
+												in++;
+											}
+
+											m_stringModeCursorFirstGlyph -= 1;
+											m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
 										}
 										else
 										{
-											//Remove a character from the end
-											size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
-											if ( len > 0 )
-											{
-												len--;
-												// const char* w = m_stringModeString.begin();
-												std::string::iterator w = m_stringModeString.begin();
-												utf8::advance(w, len, m_stringModeString.end());
-												m_stringModeString.erase(w,m_stringModeString.end());
-												// utf8::advance(w,
-												// m_stringModeString.erase( m_stringModeString.length() - 1 );
-											}
+											// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
+											HandleTextInput("");
 										}
+
+										// if ( GetStringModeSelectAll() )
+										// {
+										// 	// we're in "select all" mode, so remove the whole string.
+										// 	m_stringModeString = "";
+										// 	m_stringModeSelectAll = false;
+										// }
+										// else
+										// {
+										// 	//Remove a character from the end
+										// 	size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
+										// 	if ( len > 0 )
+										// 	{
+										// 		len--;
+										// 		// const char* w = m_stringModeString.begin();
+										// 		std::string::iterator w = m_stringModeString.begin();
+										// 		utf8::advance(w, len, m_stringModeString.end());
+										// 		m_stringModeString.erase(w,m_stringModeString.end());
+										// 		// utf8::advance(w,
+										// 		// m_stringModeString.erase( m_stringModeString.length() - 1 );
+										// 	}
+										// }
 									}
 									break;
 								case SDLK_RETURN:
@@ -1302,3 +1390,35 @@ vsInput::CaptureMouse( bool capture )
 	}
 #endif
 }
+
+void
+vsInput::HandleTextInput( const vsString& _input )
+{
+	vsString oldString = m_stringModeString;
+	m_stringModeString = vsEmptyString;
+	// Okay.  First, let's copy all the glyphs up to the cursor
+	// to the new string
+	utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+	int inLength = utf8::distance(oldString.begin(), oldString.end());
+	std::back_insert_iterator<std::string> out(m_stringModeString);
+	for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
+	{
+		*(out++) = *(in++);
+	}
+	for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
+		in++;
+
+	vsString inputString(_input);
+	utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
+	int inputLength = utf8::distance(inputString.begin(), inputString.end());
+	for ( int i = 0; i < inputLength; i++ )
+		*out++ = *input++;
+
+	// now add on the end of our original input string
+	for ( int i = m_stringModeCursorLastGlyph; i < inLength; i++ )
+		*(out++) = *(in++);
+
+	m_stringModeCursorFirstGlyph += inputLength;
+	m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
+}
+

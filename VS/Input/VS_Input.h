@@ -146,7 +146,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 
 	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
-	bool			m_stringModeSelectAll;				// if true, hitting 'backspace' or 'delete' will completely clear the string.
+	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
+	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
 
 	bool			m_mouseIsInWindow;
 	bool			m_wheelSmoothing; // enable or disable wheel "smoothing" support.
@@ -209,8 +210,12 @@ public:
 	bool			InStringMode() { return m_stringMode; }
 	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
 	vsString		GetStringModeString() { return m_stringModeString; }
-	void			SetStringModeSelectAll( bool selectAll ) { m_stringModeSelectAll = selectAll; }
-	bool			GetStringModeSelectAll() { return m_stringModeSelectAll; }
+	void			SetStringModeCursor( int firstGlyph, int lastGlyph );
+	int				GetStringModeCursorFirstGlyph();
+	int				GetStringModeCursorLastGlyph();
+	void			SetStringModeSelectAll( bool selectAll );
+	bool			GetStringModeSelectAll();
+	void HandleTextInput( const vsString& input );
 
 	void			StartPollingForDeviceControl() { m_preparingToPoll = true; }
 	bool			IsPolling() { return m_pollingForDeviceControl || m_preparingToPoll; }
