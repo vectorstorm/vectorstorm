@@ -149,7 +149,8 @@ public:
 	{
 		Validation_None,
 		Validation_Filename,
-		Validation_Numeric
+		Validation_Numeric,
+		Validation_PositiveInteger
 	};
 private:
 
