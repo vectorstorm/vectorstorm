@@ -74,11 +74,12 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 		{
 #if defined(_DEBUG)
 			DEBUG_BREAK;
+			CRASH;
 #else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg, conditionStr, trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
+			exit(1); // exit with error condition, but without actually crashing.
 #endif
-			CRASH;
 		}
 	}
 	else
