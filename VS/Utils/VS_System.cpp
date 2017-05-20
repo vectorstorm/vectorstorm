@@ -25,6 +25,13 @@
 #include <time.h>
 #include <SDL2/SDL_filesystem.h>
 
+#if defined(MSVC)
+// MSVC
+#include <intrin.h>
+#else
+#include <cpuid.h>
+#endif
+
 #if defined(_WIN32)
 //#include <shellapi.h>
 #include <winsock2.h>
@@ -160,6 +167,7 @@ vsSystem::Init()
 	}
 	m_screen = new vsScreen( width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
+	LogSystemDetails();
 
 	vsBuiltInFont::Init();
 }
@@ -620,6 +628,87 @@ vsSystemPreferences::CheckResolutions()
 	delete [] modes;
 }
 
+vsString
+vsSystem::CPUDescription()
+{
+	// We're going to retrieve the CPU brand string using the CPUID
+	// function.  Different compilers do this different ways.
+
+#if defined(MSVC)
+#if 0
+	// MSVC;  I'm informed that this code might work in Visual Studio?
+	// Untested, though, so far.  Particular concern:  The method being used
+	// here seems to be assuming that the CPU will support CPUID with
+	// 0x80000002-4 queries, which is only true for late-model Pentium 4s and
+	// later.  In the GCC section below, I check for that situation and try to
+	// handle it.  Not sure what would happen if one used this implementation
+	// on an old system.  And I'm not currently doing MSVC builds (or have
+	// access to such an old machine for testing), so I can't really check it
+	// right now.
+	//
+	// This code is provided in case somebody else wants to test it, or for
+	// myself in the future, if someday I need MSVC builds for something for
+	// some reason.
+
+	int cpuInfo[4] = {-1};
+	char CPUBrandString[0x40];
+
+	memset(CPUBrandString, 0, sizeof(CPUBrandString));
+
+	__cpuid(cpuInfo, 0x80000002);
+	memcpy(CPUBrandString, cpuInfo, sizeof(cpuInfo));
+
+	__cpuid(cpuInfo, 0x80000003);
+	memcpy(CPUBrandString + 16, cpuInfo, sizeof(cpuInfo));
+
+	__cpuid(cpuInfo, 0x80000004);
+	memcpy(CPUBrandString + 32, cpuInfo, sizeof(cpuInfo));
+
+	return vsString(CPUBrandString);
+#endif // 0
+
+	return vsString("CPUDescription() is currently unimplemented in MSVC");
+#else // !MSVC
+	// everybody else (GCC or GCC-like) uses the GCC interface to the CPUID
+	// op.
+
+	struct BrandString {
+		unsigned int eax;
+		unsigned int ebx;
+		unsigned int ecx;
+		unsigned int edx;
+
+		vsString ToString() const
+		{
+			return vsString(reinterpret_cast<const char *>(this), 16);
+		}
+	};
+
+	unsigned int maxLevel = __get_cpuid_max(0x80000000, NULL);
+	if ( maxLevel < 0x80000004 )
+		return vsString("CPU brand string not supported on this hardware.  Probably Pentium 4 or earlier.");
+	unsigned int eax, ebx, ecx, edx;
+	eax = ebx = ecx = edx = 0;
+
+	vsString identification;
+	for ( int i = 2; i <= 4; i++ )
+	{
+		__get_cpuid( 0x80000000 + i, &eax, &ebx, &ecx, &edx );
+		BrandString vid = { eax, ebx, ecx, edx };
+		identification += vid.ToString();
+	}
+
+	return identification;
+#endif
+}
+
+void
+vsSystem::LogSystemDetails()
+{
+	vsLog("CPU:  %s", CPUDescription().c_str());
+	vsLog("Number of hardware threads:  %d", GetNumberOfCores());
+}
+
 Resolution *
 vsSystemPreferences::GetResolution()
 {
@@ -796,5 +885,4 @@ vsSystemPreferences::GetMusicVolume()
 {
 	return m_musicVolume->m_value;
 }
-
 

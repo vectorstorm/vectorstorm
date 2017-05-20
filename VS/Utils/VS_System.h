@@ -118,6 +118,9 @@ public:
 
 	static void Launch( const vsString &string );
 	int		GetNumberOfCores();		// estimates the number of cores on this computer.
+	vsString CPUDescription(); // tries to build a string describing the system.
+
+	void LogSystemDetails();
 
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
 	vsSystemPreferences *	GetPreferences() { return m_preferences; }
