@@ -144,10 +144,21 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	bool			m_preparingToPoll;
 	bool			m_pollingForDeviceControl;			// are we waiting for an arbitrary control input?  (typically for the purposes of mapping device controls to our virtual controller)
 
+public:
+	enum ValidationType
+	{
+		Validation_None,
+		Validation_Filename,
+		Validation_Numeric
+	};
+private:
+
 	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
 	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
+	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
+	ValidationType	m_stringValidationType;
 
 	bool			m_mouseIsInWindow;
 	bool			m_wheelSmoothing; // enable or disable wheel "smoothing" support.
@@ -173,6 +184,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	void			Load();
 
 	vsVector2D		Correct2DInputForOrientation( const vsVector2D &input );
+	void ValidateString();
 
 public:
 
@@ -206,7 +218,8 @@ public:
 
 	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 
-	void			SetStringMode(bool mode);
+	void			SetStringMode(bool mode, ValidationType = Validation_None);
+	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
 	bool			InStringMode() { return m_stringMode; }
 	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
 	vsString		GetStringModeString() { return m_stringModeString; }

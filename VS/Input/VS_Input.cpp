@@ -30,6 +30,8 @@
 #endif
 
 vsInput::vsInput():
+	m_stringMode(false),
+	m_stringValidationType(Validation_None),
 	m_mouseIsInWindow(false)
 {
 	m_captureMouse = false;
@@ -323,9 +325,14 @@ vsInput::Save()
 }
 
 void
-vsInput::SetStringMode(bool mode)
+vsInput::SetStringMode(bool mode, ValidationType vt)
 {
-#if !TARGET_OS_IPHONE
+	SetStringMode(mode, -1, vt);
+}
+
+void
+vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
+{
 	if ( mode != m_stringMode )
 	{
 		if ( mode )
@@ -333,24 +340,16 @@ vsInput::SetStringMode(bool mode)
 			SDL_StartTextInput();
 			m_stringMode = true;
 			m_stringModeString.clear();
+			m_stringModeMaxLength = maxLength;
+			m_stringValidationType = vt;
 			SetStringModeSelectAll(false);
-			// m_stringModeSelectAll = false;
-
-			//Enable Unicode
-			//SDL_EnableUNICODE( SDL_ENABLE );
 		}
 		else
 		{
 			SDL_StopTextInput();
 			m_stringMode = false;
-			// m_stringModeSelectAll = false;
-
-			//Disable Unicode
-			//SDL_EnableUNICODE( SDL_DISABLE );
-
 		}
 	}
-#endif
 }
 
 void
@@ -1433,5 +1432,76 @@ vsInput::HandleTextInput( const vsString& _input )
 
 	m_stringModeCursorFirstGlyph += inputLength;
 	m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
+
+	ValidateString();
+}
+
+void
+vsInput::ValidateString()
+{
+	vsString oldString = m_stringModeString;
+	m_stringModeString = vsEmptyString;
+
+	utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
+	std::back_insert_iterator<std::string> out(m_stringModeString);
+
+	int length = utf8::distance(oldString.begin(), oldString.end());
+
+	bool hasDot = false;
+	int glyphsSoFar = 0;
+
+	for ( int i = 0; i < length; i++ )
+	{
+		bool valid = true;
+
+		if ( m_stringValidationType == Validation_Numeric )
+		{
+			vsString validString = "0123456789";
+			// we support only [0-9].
+			//
+			// We also support up to one '.', and we may have a '-' on the front.
+
+			if ( *it == '-' && i != 0 )
+				valid = false;
+			else if ( *it == '.' )
+			{
+				if ( hasDot )
+					valid = false;
+				else
+					hasDot = true;
+			}
+			else
+			{
+				valid = false;
+				utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+				for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+				{
+					if ( *it == *(vit++) )
+						valid = true;
+				}
+			}
+		}
+		else if ( m_stringValidationType == Validation_Filename )
+		{
+			vsString invalidString = "!@#$%^&*()_{}][/\\.,';\":>?<";
+			utf8::iterator<std::string::iterator> vit( invalidString.begin(), invalidString.begin(), invalidString.end() );
+			for ( int l = 0; l < utf8::distance(invalidString.begin(), invalidString.end()); l++ )
+			{
+				if ( *it == *(vit++) )
+					valid = false;
+			}
+		}
+
+		if ( valid && glyphsSoFar < m_stringModeMaxLength )
+		{
+			glyphsSoFar++;
+			*(out++) = *it;
+		}
+
+		it++;
+	}
+
+	m_stringModeCursorFirstGlyph = vsMin( m_stringModeCursorFirstGlyph, glyphsSoFar );
+	m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph, glyphsSoFar );
 }
 
