@@ -179,6 +179,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
 	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
 	m_cameraPositionLoc = glGetUniformLocation(m_shader, "cameraPosition");
+	m_cameraDirectionLoc = glGetUniformLocation(m_shader, "cameraDirection");
 
 	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
@@ -593,6 +594,11 @@ vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 	{
 		vsVector3D t = worldToView.Inverse().w;
 		glUniform3fv(m_cameraPositionLoc, 1, (GLfloat*)&t);
+	}
+	if ( m_cameraDirectionLoc >= 0 )
+	{
+		vsVector3D dir = worldToView.Inverse().z;
+		glUniform3fv(m_cameraDirectionLoc, 1, (GLfloat*)&dir);
 	}
 }
 
