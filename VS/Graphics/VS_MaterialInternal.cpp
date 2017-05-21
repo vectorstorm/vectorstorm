@@ -50,7 +50,9 @@ vsMaterialInternal::vsMaterialInternal():
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
 	m_layer(0),
-	m_stencil(StencilOp_None),
+	m_stencilOp(StencilOp_None),
+	m_stencilRead(false),
+	m_stencilWrite(false),
 	m_alphaTest(false),
 	m_fog(false),
 	m_zRead(true),
@@ -82,7 +84,9 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
 	m_layer(0),
-	m_stencil(StencilOp_None),
+	m_stencilOp(StencilOp_None),
+	m_stencilRead(false),
+	m_stencilWrite(false),
 	m_alphaTest(false),
 	m_fog(false),
 	m_zRead(true),
@@ -254,7 +258,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					m_layer = sr->Int();
 				}
-				else if ( label == "stencil" )
+				else if ( label == "stencilOp" )
 				{
 					vsString request = sr->String();
 					std::string opString[STENCILOP_MAX] =
@@ -271,9 +275,17 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					{
 						if ( opString[i] == request )
 						{
-							m_stencil = (StencilOp)i;
+							m_stencilOp = (StencilOp)i;
 						}
 					}
+				}
+				else if ( label == "stencilRead" )
+				{
+					m_stencilRead = sr->Bool();
+				}
+				else if ( label == "stencilWrite" )
+				{
+					m_stencilWrite = sr->Bool();
 				}
 			}
 			break;

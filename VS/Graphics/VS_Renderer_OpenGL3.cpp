@@ -621,7 +621,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	glClearDepth(1.f);
 	glClearStencil(0);
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+	// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 	m_state.SetBool( vsRendererState::Bool_Blend, true );
 	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
 	m_state.SetBool( vsRendererState::Bool_CullFace, true );
@@ -839,6 +839,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_lastShaderId = 0;
 					glUseProgram(0);
 					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
+					m_state.SetBool( vsRendererState::Bool_StencilTest, true ); // when we're clearing a render target, make sure we're not testing stencil bits!
 					m_state.Flush();
 					m_currentRenderTarget->Clear();
 					break;
@@ -1219,16 +1220,17 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					// glShadeModel( GL_SMOOTH );
 					break;
 				}
+				// Disabling 'EnableStencil' and 'DisableStencil' opcodes;  moving them to materials.
 			case vsDisplayList::OpCode_EnableStencil:
 				{
-					m_state.SetBool( vsRendererState::Bool_StencilTest, true );
-					glStencilFunc(GL_EQUAL, 0x1, 0x1);
+					// m_state.SetBool( vsRendererState::Bool_StencilTest, true );
+					// glStencilFunc(GL_EQUAL, 0x1, 0x1);
 					break;
 				}
 			case vsDisplayList::OpCode_DisableStencil:
 				{
-					m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-					glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+					// m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+					// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 					break;
 				}
 			case vsDisplayList::OpCode_ClearStencil:
@@ -1320,29 +1322,52 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		m_state.SetBool( vsRendererState::Bool_DepthMask, false );
 	}
 
-	switch ( material->m_stencil )
+	if ( material->m_stencilRead || material->m_stencilWrite )
 	{
-		case StencilOp_None:
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-			break;
-		case StencilOp_One:
-			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-			break;
-		case StencilOp_Zero:
-			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-			break;
-		case StencilOp_Inc:
-			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-			break;
-		case StencilOp_Dec:
-			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-			break;
-		case StencilOp_Invert:
-			glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
-			break;
-		default:
-			vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencil));
+		m_state.SetBool( vsRendererState::Bool_StencilTest, true );
 	}
+	else
+	{
+		m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+	}
+
+	if ( material->m_stencilRead )
+	{
+		glStencilFunc(GL_EQUAL, 0x1, 0x1);
+	}
+	else
+	{
+		glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+	}
+	if ( material->m_stencilWrite )
+	{
+		glStencilMask(0xff);
+		switch ( material->m_stencilOp )
+		{
+			case StencilOp_None:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+				break;
+			case StencilOp_One:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+				break;
+			case StencilOp_Zero:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+				break;
+			case StencilOp_Inc:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+				break;
+			case StencilOp_Dec:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+				break;
+			case StencilOp_Invert:
+				glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+				break;
+			default:
+				vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencilOp));
+		}
+	}
+	else
+		glStencilMask(0x0);
 
 	vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
 	m_currentShader = NULL;

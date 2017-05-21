@@ -85,7 +85,9 @@ public:
 	float		m_depthBiasConstant;
 	float		m_depthBiasFactor;
 	int			m_layer;
-	StencilOp	m_stencil;
+	StencilOp	m_stencilOp;
+	bool		m_stencilRead;
+	bool		m_stencilWrite;
 	bool		m_alphaTest;
 	bool		m_fog;
 	bool		m_zRead;

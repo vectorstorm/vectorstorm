@@ -162,6 +162,7 @@ vsRenderTarget::Bind()
 void
 vsRenderTarget::Clear()
 {
+	Bind();
 	GL_CHECK_SCOPED("vsRenderTarget::Clear");
 
 	GLbitfield bits = GL_COLOR_BUFFER_BIT;
@@ -174,6 +175,7 @@ vsRenderTarget::Clear()
 	{
 		bits |= GL_STENCIL_BUFFER_BIT;
 	}
+	glStencilMask(0xff);
 	glClearDepth(1.0);
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
@@ -320,7 +322,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		}
 	}
 
-	if (settings.depth || depthOnly)
+	if (settings.stencil || settings.depth || depthOnly)
 	{
 		if ( multisample )
 		{
@@ -330,6 +332,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			{
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
+				m_stencil = true;
 			}
 			else
 			{
@@ -375,6 +378,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				// we're using a single depth/stencil texture, so bind it as
 				// our FBO's stencil attachment too.
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				m_stencil = true;
 			}
 		}
 	}

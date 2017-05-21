@@ -142,7 +142,7 @@ vsDynamicMaterial::SetLayer( int layer )
 void
 vsDynamicMaterial::SetStencil( StencilOp stencil )
 {
-	GetResource()->m_stencil = stencil;
+	GetResource()->m_stencilOp = stencil;
 }
 
 void
