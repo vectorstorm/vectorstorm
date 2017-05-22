@@ -411,7 +411,6 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		}
 
 		va[vertexCursor].position = vertexPosition;
-		va[vertexCursor].color = *color;
 		va[vertexCursor].texel.Set( 0.0, distance / texScale );
 
 		if ( offsetPre != offsetPost )
@@ -434,10 +433,19 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		}
 
 		va[vertexCursor+1].position = vertexPosition;
-		va[vertexCursor+1].color = *color;
 		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
 		distance += (point[postI] - point[midI]).Length();
 
+		if ( color )
+		{
+			va[vertexCursor].color = *color;
+			va[vertexCursor+1].color = *color;
+		}
+		else
+		{
+			va[vertexCursor].color = c_white;
+			va[vertexCursor+1].color = c_white;
+		}
 		if ( loop || i != count - 1 ) // not at the end of the strip
 		{
 			int otherSide = vertexCursor+2;
@@ -581,6 +589,10 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 		vsVector3D dirOfTravelPost = point[postI] - point[midI];
 		float distanceOfTravelPre = dirOfTravelPre.Length();
 		float distanceOfTravelPost = dirOfTravelPost.Length();
+		if ( midI == preI )
+			dirOfTravelPre = dirOfTravelPost;
+		if ( midI == postI )
+			dirOfTravelPost = dirOfTravelPre;
 		dirOfTravelPre.NormaliseSafe();
 		dirOfTravelPost.NormaliseSafe();
 
@@ -612,7 +624,6 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 		}
 
 		va[vertexCursor].position = vertexPosition;
-		va[vertexCursor].color = color[midI];
 		va[vertexCursor].texel.Set( 0.0, distance );
 
 		if ( offsetPre != offsetPost )
@@ -635,9 +646,18 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 		}
 
 		va[vertexCursor+1].position = vertexPosition;
-		va[vertexCursor+1].color = color[midI];
 		va[vertexCursor+1].texel.Set( width, distance );
 
+		if ( color )
+		{
+			va[vertexCursor].color = color[midI];
+			va[vertexCursor+1].color = color[midI];
+		}
+		else
+		{
+			va[vertexCursor].color = c_white;
+			va[vertexCursor+1].color = c_white;
+		}
 		distance += (point[postI] - point[midI]).Length();
 
 		if ( loop || i != count - 1 ) // not at the end of the strip
@@ -1008,10 +1028,10 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 		}
 		va[m_vertexCursor+0].color.a = 0;
 		va[m_vertexCursor+3].color.a = 0;
-		va[m_vertexCursor+0].texel.Set(distance/m_texScale,0.f);
-		va[m_vertexCursor+1].texel.Set(distance/m_texScale,0.f);
-		va[m_vertexCursor+2].texel.Set(distance/m_texScale,0.f);
-		va[m_vertexCursor+3].texel.Set(distance/m_texScale,0.f);
+		va[m_vertexCursor+0].texel.Set(0.f,distance/m_texScale);
+		va[m_vertexCursor+1].texel.Set(0.f,distance/m_texScale);
+		va[m_vertexCursor+2].texel.Set(0.f,distance/m_texScale);
+		va[m_vertexCursor+3].texel.Set(0.f,distance/m_texScale);
 
 		distance += distanceOfTravelPre;
 
