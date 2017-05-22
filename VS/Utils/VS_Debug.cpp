@@ -78,7 +78,8 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 #else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg, conditionStr, trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
-			exit(1); // exit with error condition, but without actually crashing.
+			CRASH; // actually, we do need to crash;  otherwise, we don't catch the exception handler.
+			// exit(1); // exit with error condition, but without actually crashing.
 #endif
 		}
 	}
