@@ -31,6 +31,7 @@ public:
 
 private:
 	PHYSFS_File *	m_file;
+	vsStore *m_store;
 
 	Mode		m_mode;
 

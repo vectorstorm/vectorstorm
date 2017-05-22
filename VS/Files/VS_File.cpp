@@ -32,6 +32,8 @@
 #include "VS_EnableDebugNew.h"
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
+	m_file(NULL),
+	m_store(NULL),
 	m_mode(mode),
 	m_length(0)
 {
@@ -48,10 +50,23 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	}
 
 	vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastError()) );
+
+	if ( mode == MODE_Read )
+	{
+		// in read mode, let's just read out all the data right now and close
+		// the file.  It's much (MUCH) faster to read if the data's already in
+		// memory.  Particularly on Windows.
+		m_store = new vsStore( m_length );
+		Store(m_store);
+
+		PHYSFS_close(m_file);
+		m_file = NULL;
+	}
 }
 
 vsFile::~vsFile()
 {
+	vsDelete( m_store );
 	if ( m_file )
 		PHYSFS_close(m_file);
 }
@@ -239,11 +254,12 @@ vsFile::PeekRecord( vsRecord *r )
 
 		r->Init();
 
-		PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
+		size_t filePos = m_store->GetReadHeadPosition();
 		if ( r->Parse(this) )
 			succeeded = true;
 
-		PHYSFS_seek(m_file, filePos);
+		m_store->SeekReadHeadTo(filePos);
+		// PHYSFS_seek(m_file, filePos);
 
 		return succeeded;
 	}
@@ -282,23 +298,21 @@ vsFile::ReadLine( vsString *line )
 	// const int c_bufSize = 1024;
 	// char buf[c_bufSize];
 
-	PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
+	size_t filePos = m_store->GetReadHeadPosition();
 	char peekChar = 'a';
 	bool done = false;
 
 	while ( !done && !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
-		if ( PHYSFS_read(m_file, &peekChar, 1, 1) <= 0 )
-			done = true;
+		peekChar = m_store->ReadInt8();
 	}
-	PHYSFS_sint64 afterFilePos = PHYSFS_tell(m_file);
-	PHYSFS_uint32 bytes = PHYSFS_uint32(afterFilePos - filePos);
-	PHYSFS_seek(m_file, filePos);
+	size_t afterFilePos = m_store->GetReadHeadPosition();
+	size_t bytes = afterFilePos - filePos;
+	m_store->SeekReadHeadTo(filePos);
 	if ( bytes > 0 )
 	{
 		char* buffer = (char*)malloc(bytes+1);
-		PHYSFS_uint32 bytesRead = PHYSFS_read(m_file, buffer, 1, bytes);
-		vsAssert(bytesRead == bytes, "Didn't read as many bytes as we expected?");
+		m_store->ReadBuffer(buffer, bytes);
 
 		// if we read a newline, let's just ignore it.
 		if ( peekChar == '\n' )
@@ -325,16 +339,23 @@ vsFile::ReadLine( vsString *line )
 bool
 vsFile::PeekLine( vsString *line )
 {
-	PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
+	size_t filePos = m_store->GetReadHeadPosition();
 	bool result = ReadLine(line);
-	PHYSFS_seek(m_file, filePos);
+	m_store->SeekReadHeadTo(filePos);
 	return result;
+	// PHYSFS_sint64 filePos = PHYSFS_tell(m_file);
+	// bool result = ReadLine(line);
+	// PHYSFS_seek(m_file, filePos);
+	// return result;
 }
 
 void
 vsFile::Rewind()
 {
-	PHYSFS_seek(m_file, 0);
+	if ( m_store )
+		m_store->SeekReadHeadTo(0);
+	if ( m_file )
+		PHYSFS_seek(m_file, 0);
 }
 
 void
@@ -348,8 +369,17 @@ vsFile::Store( vsStore *s )
 	else
 	{
 		s->Rewind();
-		PHYSFS_sint64 n = PHYSFS_read( m_file, s->GetWriteHead(), 1, s->BufferLength() );
-		s->SetLength((size_t)n);
+		if ( m_file )
+		{
+			PHYSFS_sint64 n;
+			n = PHYSFS_read( m_file, s->GetWriteHead(), 1, s->BufferLength() );
+			s->SetLength((size_t)n);
+		}
+		else
+		{
+			s->Clear();
+			s->Append(m_store);
+		}
 	}
 }
 
@@ -362,8 +392,9 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 	}
 	else
 	{
-		PHYSFS_sint64 n = PHYSFS_read( m_file, s->GetWriteHead(), 1, vsMin(bytes, s->BytesLeftForWriting()) );
-		s->AdvanceWriteHead((size_t)n);
+		size_t actualBytes = vsMin(bytes, m_store->BytesLeftForReading());
+		s->WriteBuffer( m_store->GetReadHead(), actualBytes );
+		m_store->AdvanceReadHead(actualBytes);
 	}
 }
 
@@ -393,6 +424,6 @@ vsFile::GetFullFilename(const vsString &filename_in)
 bool
 vsFile::AtEnd()
 {
-	return !m_file || PHYSFS_eof( m_file );
+	return m_store->BytesLeftForReading() == 0; // !m_file || PHYSFS_eof( m_file );
 }
 
