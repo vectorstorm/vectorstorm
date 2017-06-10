@@ -71,6 +71,16 @@ template<class T> T *vsAutomaticInstanceList<T>::s_firstInstance = NULL;
 
 template<class T> T *vsAutomaticInstanceList<T>::s_lastInstance = NULL;
 
+template<class T> T* GetFirstInstance(void)
+{
+	return vsAutomaticInstanceList<T>::GetFirstInstance();
+}
+
+template<class T> T* GetNextInstance( T* currentInstance )
+{
+	return currentInstance->vsAutomaticInstanceList<T>::GetNextInstance();
+}
+
 
 /** Adds this instance to the automatic instance list for this type.
 */
