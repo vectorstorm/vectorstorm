@@ -112,6 +112,11 @@ float vsProgressFraction( float value, float a, float b )
 	}
 }
 
+float vsProgressFraction_Clamped( float value, float a, float b )
+{
+	return vsClamp( vsProgressFraction(value,a,b), 0.f, 1.f );
+}
+
 float vsFadeInOut( float time, float startFadeIn, float endFadeIn, float startFadeOut, float endFadeOut )
 {
 	if ( time < startFadeIn || time > endFadeOut )
