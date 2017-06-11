@@ -331,13 +331,32 @@ vsFontSize::GetStringWidth( const vsString &string, float size )
 	size_t length = string.size();
 	for ( size_t i = 0; i < length; i++ )
 	{
-		width += GetCharacterWidth( string[i], size );
+		if ( i == length-1 )
+			width += GetCharacterWidth( string[i], size ); // last character, use the full character width
+		else
+			width += GetCharacterAdvance( string[i], size ); // other characters, just use the distance we advance
 	}
 	return width;
 }
 
 float
 vsFontSize::GetCharacterWidth( uint32_t c, float size )
+{
+	float width = 0.f;
+
+	vsGlyph *g = FindGlyphForCharacter(c);
+	if ( g )
+	{
+		// this relies on knowing that vertex[1] is on the right, and vertex[0]
+		// is on the left.
+		width = g->vertex[1].x - g->vertex[0].x;
+	}
+
+	return width * size;
+}
+
+float
+vsFontSize::GetCharacterAdvance( uint32_t c, float size )
 {
 	float width = 0.f;
 

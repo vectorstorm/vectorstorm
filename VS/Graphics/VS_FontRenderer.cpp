@@ -122,7 +122,6 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
 	float baseOffsetDown = 0.f;
 
-	// by default, we CENTER our
 	if ( m_justification == Justification_BottomLeft || m_justification == Justification_BottomRight || m_justification == Justification_BottomCenter )
 	{
 		// If we're justifying the bottom of our text to this point, we need to
@@ -218,8 +217,6 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	int nextGlyph = 0;
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
-	if ( ShouldSnap( context ) )
-		lineMargin = (float)(int)lineMargin;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
@@ -424,6 +421,7 @@ vsFontRenderer::DisplayList3D( vsDisplayList *list, const vsString& string )
 vsVector2D
 vsFontRenderer::GetStringDimensions( const vsString& string )
 {
+// #define BOUNDING_BOX_METHOD
 #ifdef BOUNDING_BOX_METHOD
 	vsDisplayList *loader = new vsDisplayList(1024 * 10);
 	CreateString_InDisplayList(FontContext_2D, loader, string);
@@ -436,7 +434,11 @@ vsFontRenderer::GetStringDimensions( const vsString& string )
 	WrapStringSizeTop(string, &size, &topLinePosition);
 
 	vsVector2D result;
-	result.x = m_font->Size(m_size)->GetStringWidth(string, size);
+	for ( int i = 0; i < m_wrappedLineCount; i++ )
+	{
+		float width = m_font->Size(m_size)->GetStringWidth(m_wrappedLine[i], size);
+		result.x = vsMax( width, result.x );
+	}
 	float lineHeight = 1.0;
 	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
 	float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));

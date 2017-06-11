@@ -82,6 +82,7 @@ public:
 
 	float			GetNativeSize() { return m_size; }
 
+	float			GetCharacterAdvance(uint32_t letter, float size);
 	float			GetCharacterWidth(uint32_t letter, float size);
 	float			GetStringWidth(const vsString &string, float size);
 
