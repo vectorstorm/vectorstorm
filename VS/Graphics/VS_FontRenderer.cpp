@@ -101,7 +101,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	bool fits = false;
 
 	float lineHeight = 1.f;
-	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
+	float lineMargin = m_font->Size(size)->m_lineSpacing;
 
 	while ( !fits )
 	{
@@ -117,7 +117,20 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 				size *= 0.95f;
 			}
 		}
+		if ( fits && m_bounds.x > 0.f )
+		{
+			for ( int i = 0; i < m_wrappedLineCount; i++ )
+			{
+				float totalScaledWidth = m_font->Size(size)->GetStringWidth( m_wrappedLine[i], size );
+				if ( totalScaledWidth > m_bounds.x )
+				{
+					fits = false;
+					size -= 1.0f;
+				}
+			}
+		}
 	}
+	m_texSize = size;
 
 	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
 	float baseOffsetDown = 0.f;
@@ -216,7 +229,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 	int nextGlyph = 0;
 	float lineHeight = 1.f;
-	float lineMargin = lineHeight * m_font->Size(m_size)->m_lineSpacing;
+	float lineMargin = lineHeight * m_font->Size(size)->m_lineSpacing;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
@@ -317,7 +330,7 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 	WrapStringSizeTop(string, &size, &topLinePosition);
 
 	float lineHeight = 1.f;
-	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
+	float lineMargin = m_font->Size(size)->m_lineSpacing;
 
 	vsVector2D offset(0.f,topLinePosition);
 
@@ -436,11 +449,11 @@ vsFontRenderer::GetStringDimensions( const vsString& string )
 	vsVector2D result;
 	for ( int i = 0; i < m_wrappedLineCount; i++ )
 	{
-		float width = m_font->Size(m_size)->GetStringWidth(m_wrappedLine[i], size);
+		float width = m_font->Size(size)->GetStringWidth(m_wrappedLine[i], size);
 		result.x = vsMax( width, result.x );
 	}
 	float lineHeight = 1.0;
-	float lineMargin = m_font->Size(m_size)->m_lineSpacing;
+	float lineMargin = m_font->Size(size)->m_lineSpacing;
 	float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
 	result.y = totalScaledHeight;
 	return result;
@@ -473,7 +486,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 		}
 
 		// check if we want to do a line break here!
-		bool outOfSpace = (maxWidth > 0.f && m_font->Size(m_size)->GetStringWidth(line, size) > maxWidth && lineEnd > 0) ;
+		bool outOfSpace = (maxWidth > 0.f && m_font->Size(size)->GetStringWidth(line, size) > maxWidth && lineEnd > 0) ;
 		bool wrapping = outOfSpace;
 		if ( seekPosition != vsString::npos )
 		{
@@ -556,10 +569,12 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	const char* w = string;
 	size_t startGlyphId = nextGlyphId;
 	size_t endGlyphId = nextGlyphId + len;
+	float fontSize = m_texSize;
+
 	for ( size_t glyphId = startGlyphId; glyphId < endGlyphId; glyphId++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
-		vsGlyph *g = m_font->Size(m_texSize)->FindGlyphForCharacter( cp );
+		vsGlyph *g = m_font->Size(fontSize)->FindGlyphForCharacter( cp );
 
 		if ( cp == '\r' )
 			continue;
@@ -572,10 +587,10 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 
-			g = m_font->Size(m_texSize)->FindGlyphForCharacter(L'□');
+			g = m_font->Size(fontSize)->FindGlyphForCharacter(L'□');
 
 			if ( !g )
-				g = m_font->Size(m_texSize)->FindGlyphForCharacter( '?' );
+				g = m_font->Size(fontSize)->FindGlyphForCharacter( '?' );
 		}
 		if ( g )
 		{
@@ -665,7 +680,7 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 
 	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
-		float width = m_font->Size(m_size)->GetStringWidth(string, size);
+		float width = m_font->Size(size)->GetStringWidth(string, size);
 
 		if ( j == Justification_Right || j == Justification_TopRight || j == Justification_BottomRight )
 			offset.x = -width;
@@ -685,14 +700,14 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	}
 	transform.SetScale( vsVector2D(size,ysize) );
 	list->PushTransform(transform);
-	list->BindBuffer( m_font->Size(m_size)->m_ptBuffer );
+	list->BindBuffer( m_font->Size(size)->m_ptBuffer );
 
 	size_t len = utf8::distance(string, string + strlen(string));
 	const char* w = string;
 	for ( size_t i = 0; i < len; i++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
-		vsGlyph *g = m_font->Size(m_size)->FindGlyphForCharacter( cp );
+		vsGlyph *g = m_font->Size(size)->FindGlyphForCharacter( cp );
 
 		if ( !g )
 		{
@@ -701,10 +716,10 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 			// check whether we have a "missing symbol" glyph.
 
-			g = m_font->Size(m_size)->FindGlyphForCharacter(L'□');
+			g = m_font->Size(size)->FindGlyphForCharacter(L'□');
 
 			if ( !g )
-				g = m_font->Size(m_size)->FindGlyphForCharacter( '?' );
+				g = m_font->Size(size)->FindGlyphForCharacter( '?' );
 		}
 
 		if ( g )
