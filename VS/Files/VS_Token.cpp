@@ -307,7 +307,29 @@ vsString
 vsToken::BackToString()
 {
 	if ( m_type == Type_String )
-		return "\"" + m_string + "\"";
+	{
+		// check for newlines and other special characters;  we need to escape them!
+		vsString escapedString = m_string;
+		while ( escapedString.find('\n') != vsString::npos )
+		{
+			size_t pos = escapedString.find('\n');
+			escapedString.erase(pos,1);
+			escapedString.insert(pos, "\\n");
+		}
+		while ( escapedString.find('\t') != vsString::npos )
+		{
+			size_t pos = escapedString.find('\t');
+			escapedString.erase(pos,1);
+			escapedString.insert(pos, "\\t");
+		}
+		while ( escapedString.find('\"') != vsString::npos )
+		{
+			size_t pos = escapedString.find('\"');
+			escapedString.erase(pos,1);
+			escapedString.insert(pos, "\\\"");
+		}
+		return "\"" + escapedString + "\"";
+	}
 
 	return AsString();
 }
