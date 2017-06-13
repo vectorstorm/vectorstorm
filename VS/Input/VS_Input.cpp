@@ -1508,6 +1508,16 @@ vsInput::ValidateString()
 			glyphsSoFar++;
 			*(out++) = *it;
 		}
+		else
+		{
+			// This glyph wasn't valid!  Therefore, we're removing it, and we
+			// need to adjust the cursor positioning.
+
+			if ( m_stringModeCursorFirstGlyph > glyphsSoFar )
+				m_stringModeCursorFirstGlyph--;
+			if ( m_stringModeCursorLastGlyph > glyphsSoFar )
+				m_stringModeCursorLastGlyph--;
+		}
 
 		it++;
 	}
