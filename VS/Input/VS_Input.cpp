@@ -1408,27 +1408,36 @@ vsInput::HandleTextInput( const vsString& _input )
 {
 	vsString oldString = m_stringModeString;
 	m_stringModeString = vsEmptyString;
+
 	// Okay.  First, let's copy all the glyphs up to the cursor
 	// to the new string
-	utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+	utf8::iterator<std::string::iterator> old( oldString.begin(), oldString.begin(), oldString.end() );
 	int inLength = utf8::distance(oldString.begin(), oldString.end());
-	std::back_insert_iterator<std::string> out(m_stringModeString);
 	for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
-	{
-		*(out++) = *(in++);
-	}
-	for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
-		in++;
+		utf8::append( *(old++), back_inserter(m_stringModeString) );
 
+	// skip any glyphs which were inside a cursor selection;  they'll be
+	// replaced by the new input.
+	for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
+		old++;
+
+	// Now, append our new input onto the string we're building up.
+	// Important point:  use utf8::append() to build up the string!  Otherwise,
+	// we're just stuffing raw code points onto the end of the string, instead of
+	// UTF8-encoded text!
+	//
+	// Note that we copy the input out into a separate string to do this, as I
+	// haven't found a way to make utfcpp play nicely with const_iterators.
 	vsString inputString(_input);
 	utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
 	int inputLength = utf8::distance(inputString.begin(), inputString.end());
 	for ( int i = 0; i < inputLength; i++ )
-		*out++ = *input++;
+		utf8::append( *(input++), back_inserter(m_stringModeString) );
 
-	// now add on the end of our original input string
+	// now add the end of our original input string;  anything which was past
+	// the end of the cursor selection
 	for ( int i = m_stringModeCursorLastGlyph; i < inLength; i++ )
-		*(out++) = *(in++);
+		utf8::append( *(input++), back_inserter(m_stringModeString));
 
 	m_stringModeCursorFirstGlyph += inputLength;
 	m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
@@ -1506,7 +1515,7 @@ vsInput::ValidateString()
 		if ( valid && glyphsSoFar < m_stringModeMaxLength )
 		{
 			glyphsSoFar++;
-			*(out++) = *it;
+			utf8::append( *it, out );
 		}
 		else
 		{
