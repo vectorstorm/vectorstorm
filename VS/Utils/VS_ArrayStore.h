@@ -197,6 +197,16 @@ public:
 		return 		vsArrayStoreIterator<T>(this,m_arrayLength);
 	}
 
+	vsArrayStoreIterator<T>	Front() const
+	{
+		return 		vsArrayStoreIterator<T>(this,0);
+	}
+
+	vsArrayStoreIterator<T>	Back() const
+	{
+		return 		vsArrayStoreIterator<T>(this,m_arrayLength-1);
+	}
+
 	void SetArraySize( int size )
 	{
 		// add or remove elements to make us this size.

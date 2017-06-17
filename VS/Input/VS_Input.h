@@ -13,6 +13,7 @@
 #include "Core/CORE_GameSystem.h"
 #include "VS/Math/VS_Vector.h"
 #include "Utils/VS_Singleton.h"
+#include "Utils/VS_ArrayStore.h"
 
 #if defined __APPLE__
 #include "TargetConditionals.h"
@@ -154,12 +155,19 @@ public:
 	};
 private:
 
-	vsString		m_stringModeString;
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
-	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
-	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
 
+	class StringModeState
+	{
+	public:
+		StringModeState() {}
+
+		vsString string;
+		int anchorGlyph;
+		int floatingGlyph;
+	};
+	vsArrayStore<StringModeState> m_stringModeUndoStack;
 	// When selecting text, one side or the other is the "anchor";  it's the
 	// true cursor position.  When we click on text, it's wherever we clicked
 	// before dragging.  When we create a selection using shift+arrow keys, It's
@@ -167,6 +175,10 @@ private:
 	// never moves;  only the other end is moved around by shift+arrows.
 	int				m_stringModeCursorAnchorGlyph;
 	int				m_stringModeCursorFloatingGlyph;
+	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
+	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
+	vsString		m_stringModeString;
+
 	ValidationType	m_stringValidationType;
 
 	bool			m_mouseIsInWindow;
@@ -194,6 +206,12 @@ private:
 
 	vsVector2D		Correct2DInputForOrientation( const vsVector2D &input );
 	void ValidateString();
+
+	bool m_backspaceMode; // set to 'true' if we've just hit backspace.  We don't trigger an undo state for second and subsequent backspaces.
+	bool m_undoMode; // did we just undo?
+	bool m_stringModeEditing; // set to 'true' if we've modified the string.  Set to 'false' when we move the cursor.
+	void StringModeSaveUndoState();
+	bool StringModeUndo();
 
 public:
 
@@ -230,11 +248,11 @@ public:
 	void			SetStringMode(bool mode, ValidationType = Validation_None);
 	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
 	bool			InStringMode() { return m_stringMode; }
-	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
+	void			SetStringModeString( const vsString &s );
 	vsString		GetStringModeString() { return m_stringModeString; }
 	vsString		GetStringModeSelection();
-	void			SetStringModeCursor( int anchorGlyph ); // collapse the floating glyph
-	void			SetStringModeCursor( int anchorGlyph, int floatingGlyph );
+	void			SetStringModeCursor( int anchorGlyph, bool endEdit ); // collapse the floating glyph.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
+	void			SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit );
 	int				GetStringModeCursorFirstGlyph();
 	int				GetStringModeCursorLastGlyph();
 	int				GetStringModeCursorAnchorGlyph();

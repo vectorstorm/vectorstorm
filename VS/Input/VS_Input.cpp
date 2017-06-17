@@ -32,7 +32,8 @@
 vsInput::vsInput():
 	m_stringMode(false),
 	m_stringValidationType(Validation_None),
-	m_mouseIsInWindow(false)
+	m_mouseIsInWindow(false),
+	m_backspaceMode(false)
 {
 	m_captureMouse = false;
 	m_suppressFirstMotion = false;
@@ -368,14 +369,27 @@ vsInput::GetStringModeSelection()
 }
 
 void
-vsInput::SetStringModeCursor( int anchorGlyph )
+vsInput::SetStringModeCursor( int anchorGlyph, bool endEdit )
 {
-	SetStringModeCursor(anchorGlyph, anchorGlyph);
+	SetStringModeCursor(anchorGlyph, anchorGlyph, endEdit );
 }
 
 void
-vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph )
+vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
 {
+	m_undoMode = false; // if we're moving the cursor around, we're not in undo mode any more!
+	if ( endEdit && m_stringModeEditing )
+	{
+		StringModeSaveUndoState();
+		m_stringModeEditing = false;
+	}
+	else if ( endEdit && anchorGlyph != floatingGlyph && m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+	{
+		// if we're makign a wide selection and previously we had an I-beam-style cursor,
+		// save the I-beam-style position.
+		StringModeSaveUndoState();
+	}
+
 	// first, clamp these positions into legal positions between glyphs
 	int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
 	anchorGlyph = vsClamp( anchorGlyph, 0, inLength+1 );
@@ -421,11 +435,11 @@ vsInput::SetStringModeSelectAll( bool selectAll )
 
 	if ( selectAll )
 	{
-		SetStringModeCursor( 0, lastGlyph+1);
+		SetStringModeCursor( 0, lastGlyph+1, true);
 	}
 	else
 	{
-		SetStringModeCursor( lastGlyph+1 );
+		SetStringModeCursor( lastGlyph+1, true );
 	}
 }
 
@@ -623,6 +637,8 @@ vsInput::Update(float timeStep)
 										{
 											if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
 												return;
+											if ( !m_backspaceMode )
+												StringModeSaveUndoState();
 
 											// delete one character
 											vsString oldString = m_stringModeString;
@@ -638,7 +654,9 @@ vsInput::Update(float timeStep)
 												in++;
 											}
 
-											SetStringModeCursor( m_stringModeCursorFirstGlyph-1 );
+											m_backspaceMode = true;
+											m_undoMode = false;
+											SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
 										}
 										else
 										{
@@ -675,12 +693,12 @@ vsInput::Update(float timeStep)
 												event.key.keysym.mod & KMOD_RSHIFT )
 										{
 											// shift is held down;  move the floating glyph, but not the anchor glyph!
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1 );
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
 										}
 										else
 										{
 											// shift isn't down;  move the anchor glyph and collapse any selection
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph-1 );
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
 										}
 									}
 									break;
@@ -690,12 +708,12 @@ vsInput::Update(float timeStep)
 												event.key.keysym.mod & KMOD_RSHIFT )
 										{
 											// shift is held down;  move the floating glyph, but not the anchor glyph!
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1 );
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
 										}
 										else
 										{
 											// shift isn't down;  move the anchor glyph and collapse any selection
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph+1 );
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
 										}
 									}
 									break;
@@ -711,7 +729,10 @@ vsInput::Update(float timeStep)
 										{
 											vsString clipboardText = SDL_GetClipboardText();
 											if ( !clipboardText.empty() )
+											{
+												StringModeSaveUndoState();
 												HandleTextInput( clipboardText );
+											}
 										}
 										break;
 									}
@@ -743,6 +764,7 @@ vsInput::Update(float timeStep)
 #endif
 										{
 											// extract the currently selected text
+											StringModeSaveUndoState();
 											vsString sel = GetStringModeSelection();
 											if ( !sel.empty() )
 												SDL_SetClipboardText( sel.c_str() );
@@ -750,9 +772,27 @@ vsInput::Update(float timeStep)
 										}
 										break;
 									}
+								case SDLK_z:
+									{
+#if defined( __APPLE_CC__ )
+										if ( event.key.keysym.mod & KMOD_LGUI ||
+												event.key.keysym.mod & KMOD_RGUI )
+#else
+										if ( event.key.keysym.mod & KMOD_LCTRL ||
+												event.key.keysym.mod & KMOD_RCTRL )
+#endif
+										{
+											StringModeUndo();
+										}
+										break;
+									}
+								case SDLK_SPACE:
+									StringModeSaveUndoState();
+									break;
 								case SDLK_RETURN:
 									if ( m_stringMode )
 									{
+										StringModeSaveUndoState();
 										SetStringMode(false);
 									}
 									break;
@@ -1510,6 +1550,15 @@ vsInput::CaptureMouse( bool capture )
 void
 vsInput::HandleTextInput( const vsString& _input )
 {
+	m_undoMode = false;
+	m_backspaceMode = false;
+
+	if ( !m_stringModeEditing )
+	{
+		StringModeSaveUndoState();
+		m_stringModeEditing = true;
+	}
+
 	vsString oldString = m_stringModeString;
 	m_stringModeString = vsEmptyString;
 
@@ -1543,7 +1592,7 @@ vsInput::HandleTextInput( const vsString& _input )
 	for ( int i = m_stringModeCursorLastGlyph; i < oldLength; i++ )
 		utf8::append( *(old++), back_inserter(m_stringModeString));
 
-	SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength );
+	SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength, false );
 
 	ValidateString();
 }
@@ -1635,5 +1684,53 @@ vsInput::ValidateString()
 
 	m_stringModeCursorFirstGlyph = vsMin( m_stringModeCursorFirstGlyph, glyphsSoFar );
 	m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph, glyphsSoFar );
+}
+
+void
+vsInput::SetStringModeString( const vsString &s )
+{
+	m_stringModeEditing = true; // 'true', since we just reset the string!  Now when we set the cursor position, we'll automatically save off an undo state.
+	m_stringModeUndoStack.Clear();
+	m_stringModeString = s;
+	SetStringModeCursor( s.size(), false );
+	// vsLog("Clearing undo stack");
+}
+
+void
+vsInput::StringModeSaveUndoState()
+{
+	StringModeState *state = new StringModeState;
+	state->string = m_stringModeString;
+	state->anchorGlyph = m_stringModeCursorAnchorGlyph;
+	state->floatingGlyph = m_stringModeCursorFloatingGlyph;
+	m_stringModeUndoStack.AddItem(state);
+	// vsLog("Saved undo state");
+}
+
+bool
+vsInput::StringModeUndo()
+{
+	if ( !m_stringModeUndoStack.IsEmpty() )
+	{
+		// if we're in undo mode, we're undoing again, so we need
+		// to actually remove our current undo state.
+		// if ( m_undoMode && m_stringModeUndoState.ItemCount() > 1 )
+		// 	m_stringModeUndoStack.PopBack();
+
+		// vsLog("Restore undo state");
+		vsArrayStoreIterator<StringModeState> last = m_stringModeUndoStack.Back();
+		// StringModeState &state = m_stringModeUndoStack[0];
+		// SetStringModeString( last->string );
+		m_stringModeString = last->string;
+		m_stringModeEditing = false;
+		SetStringModeCursor( last->anchorGlyph, last->floatingGlyph, false );
+		m_stringModeUndoStack.PopBack();
+
+
+		m_undoMode = true;
+		return true;
+	}
+	vsLog("Failed to undo");
+	return false;
 }
 

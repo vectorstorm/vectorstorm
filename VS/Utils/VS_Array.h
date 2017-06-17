@@ -185,6 +185,16 @@ public:
 		return 		vsArrayIterator<T>(this,m_arrayLength);
 	}
 
+	vsArrayIterator<T>	Front() const
+	{
+		return 		vsArrayIterator<T>(this,0);
+	}
+
+	vsArrayIterator<T>	Back() const
+	{
+		return 		vsArrayIterator<T>(this,m_arrayLength-1);
+	}
+
 	T	&GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
