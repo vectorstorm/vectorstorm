@@ -352,6 +352,21 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 	}
 }
 
+vsString
+vsInput::GetStringModeSelection()
+{
+	vsString result;
+	utf8::iterator<std::string::iterator> str( m_stringModeString.begin(), m_stringModeString.begin(), m_stringModeString.end() );
+	int length = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+	for ( int i = 0; i < length; i++ )
+	{
+		if ( i >= m_stringModeCursorFirstGlyph && i < m_stringModeCursorLastGlyph )
+			utf8::append( *str, back_inserter(result) );
+		str++;
+	}
+	return result;
+}
+
 void
 vsInput::SetStringModeCursor( int anchorGlyph )
 {
@@ -684,6 +699,57 @@ vsInput::Update(float timeStep)
 										}
 									}
 									break;
+								case SDLK_v:
+									{
+#if defined( __APPLE_CC__ )
+										if ( event.key.keysym.mod & KMOD_LGUI ||
+												event.key.keysym.mod & KMOD_RGUI )
+#else
+										if ( event.key.keysym.mod & KMOD_LCTRL ||
+												event.key.keysym.mod & KMOD_RCTRL )
+#endif
+										{
+											vsString clipboardText = SDL_GetClipboardText();
+											if ( !clipboardText.empty() )
+												HandleTextInput( clipboardText );
+										}
+										break;
+									}
+								case SDLK_c:
+									{
+#if defined( __APPLE_CC__ )
+										if ( event.key.keysym.mod & KMOD_LGUI ||
+												event.key.keysym.mod & KMOD_RGUI )
+#else
+										if ( event.key.keysym.mod & KMOD_LCTRL ||
+												event.key.keysym.mod & KMOD_RCTRL )
+#endif
+										{
+											// extract the currently selected text
+											vsString sel = GetStringModeSelection();
+											if ( !sel.empty() )
+												SDL_SetClipboardText( sel.c_str() );
+										}
+										break;
+									}
+								case SDLK_x:
+									{
+#if defined( __APPLE_CC__ )
+										if ( event.key.keysym.mod & KMOD_LGUI ||
+												event.key.keysym.mod & KMOD_RGUI )
+#else
+										if ( event.key.keysym.mod & KMOD_LCTRL ||
+												event.key.keysym.mod & KMOD_RCTRL )
+#endif
+										{
+											// extract the currently selected text
+											vsString sel = GetStringModeSelection();
+											if ( !sel.empty() )
+												SDL_SetClipboardText( sel.c_str() );
+											HandleTextInput("");
+										}
+										break;
+									}
 								case SDLK_RETURN:
 									if ( m_stringMode )
 									{

@@ -232,6 +232,7 @@ public:
 	bool			InStringMode() { return m_stringMode; }
 	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
 	vsString		GetStringModeString() { return m_stringModeString; }
+	vsString		GetStringModeSelection();
 	void			SetStringModeCursor( int anchorGlyph ); // collapse the floating glyph
 	void			SetStringModeCursor( int anchorGlyph, int floatingGlyph );
 	int				GetStringModeCursorFirstGlyph();
