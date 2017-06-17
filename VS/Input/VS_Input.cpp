@@ -353,10 +353,23 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 }
 
 void
-vsInput::SetStringModeCursor( int firstGlyph, int lastGlyph )
+vsInput::SetStringModeCursor( int anchorGlyph )
 {
-	m_stringModeCursorFirstGlyph = firstGlyph;
-	m_stringModeCursorLastGlyph = lastGlyph;
+	SetStringModeCursor(anchorGlyph, anchorGlyph);
+}
+
+void
+vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph )
+{
+	// first, clamp these positions into legal positions between glyphs
+	int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+	anchorGlyph = vsClamp( anchorGlyph, 0, inLength+1 );
+	floatingGlyph = vsClamp( floatingGlyph, 0, inLength+1 );
+
+	m_stringModeCursorFirstGlyph = vsMin(anchorGlyph, floatingGlyph);
+	m_stringModeCursorLastGlyph = vsMax(anchorGlyph, floatingGlyph);
+	m_stringModeCursorAnchorGlyph = anchorGlyph;
+	m_stringModeCursorFloatingGlyph = floatingGlyph;
 }
 
 int
@@ -371,6 +384,18 @@ vsInput::GetStringModeCursorLastGlyph()
 	return m_stringModeCursorLastGlyph;
 }
 
+int
+vsInput::GetStringModeCursorAnchorGlyph()
+{
+	return m_stringModeCursorAnchorGlyph;
+}
+
+int
+vsInput::GetStringModeCursorFloatingGlyph()
+{
+	return m_stringModeCursorFloatingGlyph;
+}
+
 void
 vsInput::SetStringModeSelectAll( bool selectAll )
 {
@@ -381,13 +406,11 @@ vsInput::SetStringModeSelectAll( bool selectAll )
 
 	if ( selectAll )
 	{
-		m_stringModeCursorFirstGlyph = 0;
-		m_stringModeCursorLastGlyph = lastGlyph+1;
+		SetStringModeCursor( 0, lastGlyph+1);
 	}
 	else
 	{
-		m_stringModeCursorFirstGlyph = lastGlyph+1;
-		m_stringModeCursorLastGlyph = lastGlyph+1;
+		SetStringModeCursor( lastGlyph+1 );
 	}
 }
 
@@ -593,16 +616,14 @@ vsInput::Update(float timeStep)
 											// then copy the rest.
 											utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
 											int inLength = utf8::distance(oldString.begin(), oldString.end());
-											std::back_insert_iterator<std::string> out(m_stringModeString);
 											for ( int i = 0; i < inLength; i++ )
 											{
 												if ( i != m_stringModeCursorFirstGlyph-1 )
-													*(out++) = *in;
+													utf8::append( *in, std::back_inserter(m_stringModeString) );
 												in++;
 											}
 
-											m_stringModeCursorFirstGlyph -= 1;
-											m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
+											SetStringModeCursor( m_stringModeCursorFirstGlyph-1 );
 										}
 										else
 										{
@@ -635,15 +656,32 @@ vsInput::Update(float timeStep)
 									break;
 								case SDLK_LEFT:
 									{
-										m_stringModeCursorLastGlyph = vsMax( m_stringModeCursorLastGlyph-1, 0 );
-										m_stringModeCursorFirstGlyph = m_stringModeCursorLastGlyph;
+										if ( event.key.keysym.mod & KMOD_LSHIFT ||
+												event.key.keysym.mod & KMOD_RSHIFT )
+										{
+											// shift is held down;  move the floating glyph, but not the anchor glyph!
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1 );
+										}
+										else
+										{
+											// shift isn't down;  move the anchor glyph and collapse any selection
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph-1 );
+										}
 									}
 									break;
 								case SDLK_RIGHT:
 									{
-										int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-										m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph+1, inLength );
-										m_stringModeCursorFirstGlyph = m_stringModeCursorLastGlyph;
+										if ( event.key.keysym.mod & KMOD_LSHIFT ||
+												event.key.keysym.mod & KMOD_RSHIFT )
+										{
+											// shift is held down;  move the floating glyph, but not the anchor glyph!
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1 );
+										}
+										else
+										{
+											// shift isn't down;  move the anchor glyph and collapse any selection
+											SetStringModeCursor( m_stringModeCursorAnchorGlyph+1 );
+										}
 									}
 									break;
 								case SDLK_RETURN:
@@ -1412,7 +1450,7 @@ vsInput::HandleTextInput( const vsString& _input )
 	// Okay.  First, let's copy all the glyphs up to the cursor
 	// to the new string
 	utf8::iterator<std::string::iterator> old( oldString.begin(), oldString.begin(), oldString.end() );
-	int inLength = utf8::distance(oldString.begin(), oldString.end());
+	int oldLength = utf8::distance(oldString.begin(), oldString.end());
 	for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
 		utf8::append( *(old++), back_inserter(m_stringModeString) );
 
@@ -1436,11 +1474,10 @@ vsInput::HandleTextInput( const vsString& _input )
 
 	// now add the end of our original input string;  anything which was past
 	// the end of the cursor selection
-	for ( int i = m_stringModeCursorLastGlyph; i < inLength; i++ )
-		utf8::append( *(input++), back_inserter(m_stringModeString));
+	for ( int i = m_stringModeCursorLastGlyph; i < oldLength; i++ )
+		utf8::append( *(old++), back_inserter(m_stringModeString));
 
-	m_stringModeCursorFirstGlyph += inputLength;
-	m_stringModeCursorLastGlyph = m_stringModeCursorFirstGlyph;
+	SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength );
 
 	ValidateString();
 }
@@ -1452,7 +1489,6 @@ vsInput::ValidateString()
 	m_stringModeString = vsEmptyString;
 
 	utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
-	std::back_insert_iterator<std::string> out(m_stringModeString);
 
 	int length = utf8::distance(oldString.begin(), oldString.end());
 
@@ -1515,7 +1551,7 @@ vsInput::ValidateString()
 		if ( valid && glyphsSoFar < m_stringModeMaxLength )
 		{
 			glyphsSoFar++;
-			utf8::append( *it, out );
+			utf8::append( *it, back_inserter(m_stringModeString) );
 		}
 		else
 		{

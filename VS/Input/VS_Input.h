@@ -159,6 +159,14 @@ private:
 	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
 	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
+
+	// When selecting text, one side or the other is the "anchor";  it's the
+	// true cursor position.  When we click on text, it's wherever we clicked
+	// before dragging.  When we create a selection using shift+arrow keys, It's
+	// wherever the cursor was before using shift+arrows.  This side of the selection
+	// never moves;  only the other end is moved around by shift+arrows.
+	int				m_stringModeCursorAnchorGlyph;
+	int				m_stringModeCursorFloatingGlyph;
 	ValidationType	m_stringValidationType;
 
 	bool			m_mouseIsInWindow;
@@ -224,9 +232,12 @@ public:
 	bool			InStringMode() { return m_stringMode; }
 	void			SetStringModeString( const vsString &s ) { m_stringModeString = s; }
 	vsString		GetStringModeString() { return m_stringModeString; }
-	void			SetStringModeCursor( int firstGlyph, int lastGlyph );
+	void			SetStringModeCursor( int anchorGlyph ); // collapse the floating glyph
+	void			SetStringModeCursor( int anchorGlyph, int floatingGlyph );
 	int				GetStringModeCursorFirstGlyph();
 	int				GetStringModeCursorLastGlyph();
+	int				GetStringModeCursorAnchorGlyph();
+	int				GetStringModeCursorFloatingGlyph();
 	void			SetStringModeSelectAll( bool selectAll );
 	bool			GetStringModeSelectAll();
 	void HandleTextInput( const vsString& input );
