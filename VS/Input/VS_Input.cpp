@@ -1663,7 +1663,7 @@ vsInput::ValidateString()
 			}
 		}
 
-		if ( valid && glyphsSoFar < m_stringModeMaxLength )
+		if ( valid && (m_stringModeMaxLength < 0 || glyphsSoFar < m_stringModeMaxLength) )
 		{
 			glyphsSoFar++;
 			utf8::append( *it, back_inserter(m_stringModeString) );
