@@ -1625,6 +1625,19 @@ vsInput::ValidateString()
 					valid = true;
 			}
 		}
+		else if ( m_stringValidationType == Validation_Integer )
+		{
+			vsString validString = "0123456789";
+			valid = false;
+			utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+			for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+			{
+				if ( *it == *(vit++) )
+					valid = true;
+			}
+			if ( *it == '-' && i == 0 )
+				valid = true;
+		}
 		else if ( m_stringValidationType == Validation_Numeric )
 		{
 			vsString validString = "0123456789";
@@ -1632,8 +1645,8 @@ vsInput::ValidateString()
 			//
 			// We also support up to one '.', and we may have a '-' on the front.
 
-			if ( *it == '-' && i != 0 )
-				valid = false;
+			if ( *it == '-' && i == 0 )
+				valid = true;
 			else if ( *it == '.' )
 			{
 				if ( hasDot )
