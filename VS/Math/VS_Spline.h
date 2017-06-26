@@ -13,6 +13,46 @@
 #include "VS/Math/VS_Vector.h"
 #include "VS/Graphics/VS_Color.h"
 
+class vsSpline1D
+{
+	float	m_start;
+	float	m_startVelocity;
+	float	m_end;
+	float	m_endVelocity;
+
+public:
+
+	vsSpline1D();
+	vsSpline1D( float start, float startVelocity, float end, float endVelocity );
+
+	void Set( float start, float startVelocity, float end, float endVelocity );
+
+		// evaluates spline position at time 't'.
+		// 't' must be in the range [0..1] from the start to the end of the spline
+    float GetStart() const { return m_start; }
+    float GetEnd() const { return m_end; }
+    float GetStartVelocity() const { return m_startVelocity; }
+    float GetEndVelocity() const { return m_endVelocity; }
+
+	float	PositionAtTime( float t );
+	float	VelocityAtTime( float t );
+
+	bool operator==(const vsSpline1D& b) const
+	{
+		return ( m_start == b.m_start &&
+				m_startVelocity == b.m_startVelocity &&
+				m_end == b.m_end &&
+				m_endVelocity == b.m_endVelocity );
+	}
+	bool operator!=(const vsSpline1D& b) const
+	{
+		return ( m_start != b.m_start ||
+				m_startVelocity != b.m_startVelocity ||
+				m_end != b.m_end ||
+				m_endVelocity != b.m_endVelocity );
+	}
+};
+
 class vsSpline2D
 {
 	vsVector2D	m_start;

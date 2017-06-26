@@ -9,6 +9,64 @@
 
 #include "VS_Spline.h"
 
+vsSpline1D::vsSpline1D()
+{
+	Set(0,0,0,0);
+}
+
+vsSpline1D::vsSpline1D( float start, float startVelocity, float end, float endVelocity )
+{
+	Set( start, startVelocity, end, endVelocity );
+}
+
+void
+vsSpline1D::Set( float start, float startVelocity, float end, float endVelocity )
+{
+	m_start = start;
+	m_startVelocity = startVelocity;
+	m_end = end;
+	m_endVelocity = endVelocity;
+}
+
+float
+vsSpline1D::PositionAtTime( float t )
+{
+	float tSquared = t * t;
+	float tCubed = tSquared * t;
+
+	float a = 2.f * tCubed - 3.f * tSquared + 1.f;	// 2t^3 - 3t^2 + 1
+	float b = tCubed - 2.f * tSquared + t;			// t^3 - 2t^2 + t
+	float c = -2.f * tCubed + 3.f * tSquared;		// -2t^3 + 3t^2
+	float d = tCubed - tSquared;					// t^3 - t^2
+
+	float result =
+		(a * m_start) +
+		(b * m_startVelocity) +
+		(c * m_end) +
+		(d * m_endVelocity);
+
+	return result;
+}
+
+float
+vsSpline1D::VelocityAtTime( float t )
+{
+	float tSquared = t * t;
+
+	float a = 6.f * tSquared - 6.f * t;				// 6t^2 - 6t
+	float b = 3.f * tSquared - 4.f * t + 1;			// 3t^2 - 4t + 1
+	float c = -6.f * tSquared + 6.f * t;			// -6t^2 + 6t
+	float d = 3.f * tSquared - 2.f * t;				// 3t^2 - 2t
+
+	float result =
+		(a * m_start) +
+		(b * m_startVelocity) +
+		(c * m_end) +
+		(d * m_endVelocity);
+
+	return result;
+}
+
 vsSpline2D::vsSpline2D()
 {
 	Set( vsVector2D::Zero, vsVector2D::Zero, vsVector2D::Zero, vsVector2D::Zero );
