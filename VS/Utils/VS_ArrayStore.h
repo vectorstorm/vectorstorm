@@ -109,6 +109,7 @@ public:
 
 	void	AddItem( T *item )
 	{
+		vsAssert( !Contains(item), "We already contain and own that item??" );
 		if ( m_arrayLength < m_arrayStorage )
 		{
 			m_array[ m_arrayLength++ ] = item;
