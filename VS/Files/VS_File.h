@@ -23,19 +23,23 @@ class vsFile
 public:
 	enum Mode
 	{
-		MODE_Read,
-		MODE_Write,
+		MODE_Read,          // open an existing file and read from it.
+		MODE_Write,         // overwrite an existing file.
+		MODE_WriteDirectly, // actually, 'Write' writes into a temporary file and overwrites the existing file when you destroy the vsFile object.  If you *actually* want to write directly into a file, use this mode instead.
 
 		MODE_MAX
 	};
 
 private:
+	vsString m_filename;
+	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
 	vsStore *m_store;
 
 	Mode		m_mode;
 
 	size_t		m_length;
+	bool m_moveOnDestruction;
 
 public:
 

@@ -32,17 +32,38 @@
 #include "VS_EnableDebugNew.h"
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
+	m_filename(filename),
+	m_tempFilename(),
 	m_file(NULL),
 	m_store(NULL),
 	m_mode(mode),
-	m_length(0)
+	m_length(0),
+	m_moveOnDestruction(false)
 {
 	vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
 	if ( mode == MODE_Read )
 		m_file = PHYSFS_openRead( filename.c_str() );
-	else
+	else if ( mode == MODE_Write )
+	{
+		// in normal 'Write' mode, we actually write into a temporary file, and
+		// then move it into position when the file is closed.  We do this so
+		// that crashes in the middle of file writing don't obliterate the
+		// original file (if any), or leave a half-written file.
+		m_tempFilename = vsFormatString("tmp/%s", m_filename.c_str());
+		vsString directoryOnly = m_tempFilename;
+		size_t separator = directoryOnly.rfind("/");
+		directoryOnly.erase(separator);
+		EnsureWriteDirectoryExists(directoryOnly);
+		m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
+		m_moveOnDestruction = true;
+	}
+	else if ( mode == MODE_WriteDirectly )
+	{
 		m_file = PHYSFS_openWrite( filename.c_str() );
+		mode = MODE_Write;
+		m_mode = MODE_Write;
+	}
 
 	if ( m_file )
 	{
@@ -53,9 +74,11 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 
 	if ( mode == MODE_Read )
 	{
-		// in read mode, let's just read out all the data right now and close
-		// the file.  It's much (MUCH) faster to read if the data's already in
-		// memory.  Particularly on Windows.
+		// in read mode, let's just read out all the data right now in a single
+		// big read, and close the file.  It's much (MUCH) faster to read if
+		// the data's already in memory.  Particularly on Windows, where the
+		// speed improvement can be several orders of magnitude, compared against
+		// making lots of calls to read small numbers of bytes from the file.
 		m_store = new vsStore( m_length );
 		Store(m_store);
 
@@ -69,6 +92,11 @@ vsFile::~vsFile()
 	vsDelete( m_store );
 	if ( m_file )
 		PHYSFS_close(m_file);
+	if ( m_moveOnDestruction )
+	{
+		// now we need to move the file we just wrote into its final position.
+		Move( m_tempFilename, m_filename );
+	}
 }
 
 bool
@@ -99,7 +127,7 @@ vsFile::Copy( const vsString &from, const vsString &to )
 		return false;
 
 	vsFile f(from);
-	vsFile t(to, vsFile::MODE_Write);
+	vsFile t(to, vsFile::MODE_WriteDirectly);
 
 	vsStore s( f.GetLength() );
 	f.Store(&s);
