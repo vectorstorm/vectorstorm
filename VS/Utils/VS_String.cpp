@@ -76,8 +76,8 @@ static bool vsIsWhitespace( const utf8::iterator<std::string::iterator>& it )
 	const char *whitespace[] =
 	{
 		"\x09", // tab
-		"\x0a", // tab
-		"\x0d", // tab
+		"\x0a", // line feed
+		"\x0d", // carriage return
 		"\x20", // space
 		"\xc2\xa0", // no-break space
 		"\xe1\x9a\x80", // Ogham space mark
@@ -109,12 +109,12 @@ static bool vsIsWhitespace( const utf8::iterator<std::string::iterator>& it )
 vsString vsTrimWhitespace( const vsString& input )
 {
 	vsString oldString = input;
-	// m_stringModeString = vsEmptyString;
 
 	int length = utf8::distance(oldString.begin(), oldString.end());
 	int nonWhitespaceEnd = 0;
 	int nonWhitespaceStart = length;
 
+	// first, figure out where our content begins and ends
 	{
 		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
 
@@ -129,6 +129,8 @@ vsString vsTrimWhitespace( const vsString& input )
 		}
 	}
 
+	// construct a trimmed string, with only the content; not the
+	// leading/trailing whitespace.
 	vsString result;
 	{
 		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
@@ -141,3 +143,4 @@ vsString vsTrimWhitespace( const vsString& input )
 	}
 	return result;
 }
+
