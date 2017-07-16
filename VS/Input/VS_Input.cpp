@@ -392,8 +392,8 @@ vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
 
 	// first, clamp these positions into legal positions between glyphs
 	int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-	anchorGlyph = vsClamp( anchorGlyph, 0, inLength+1 );
-	floatingGlyph = vsClamp( floatingGlyph, 0, inLength+1 );
+	anchorGlyph = vsClamp( anchorGlyph, 0, inLength );
+	floatingGlyph = vsClamp( floatingGlyph, 0, inLength );
 
 	m_stringModeCursorFirstGlyph = vsMin(anchorGlyph, floatingGlyph);
 	m_stringModeCursorLastGlyph = vsMax(anchorGlyph, floatingGlyph);
