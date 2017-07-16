@@ -16,6 +16,8 @@ vsString vsFormatString( const char* format, ... );
 
 vsString vsNumberString(int number);
 
+vsString vsTrimWhitespace( const vsString& input );
+
 #define STR vsFormatString
 
 extern const vsString vsEmptyString;

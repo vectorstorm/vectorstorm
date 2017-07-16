@@ -11,6 +11,7 @@
 
 //#include <string>
 #include <stdarg.h>
+#include "Utils/utfcpp/utf8.h"
 
 const vsString vsEmptyString = "";
 
@@ -70,4 +71,73 @@ vsString vsNumberString(int number)
 	return result;
 }
 
+static bool vsIsWhitespace( const utf8::iterator<std::string::iterator>& it )
+{
+	const char *whitespace[] =
+	{
+		"\x09", // tab
+		"\x0a", // tab
+		"\x0d", // tab
+		"\x20", // space
+		"\xc2\xa0", // no-break space
+		"\xe1\x9a\x80", // Ogham space mark
+		"\xe2\x80\x80", // en quad
+		"\xe2\x80\x81", // em quad
+		"\xe2\x80\x82", // en space
+		"\xe2\x80\x83", // em space
+		"\xe2\x80\x84", // three-per-em space
+		"\xe2\x80\x85", // four-per-em space
+		"\xe2\x80\x87", // figure space
+		"\xe2\x80\x88", // punctuation space
+		"\xe2\x80\x89", // thin space
+		"\xe2\x80\x8a", // hair space
+		"\xe2\x80\x8b", // zero width space
+		"\xe2\x80\xaf", // narrow no-break space
+		"\xe2\x81\x9f", // medium mathematical space
+		"\xe3\x80\x80"  // ideographic space
+	};
+	const int whitespaceEntries = sizeof(whitespace) / sizeof(char*);
+	for ( int wi = 0; wi < whitespaceEntries; wi++ )
+	{
+		utf8::iterator<const char*> wit( whitespace[wi], whitespace[wi], whitespace[wi] + strlen(whitespace[wi]) );
+		if ( *it == *wit )
+			return true;
+	}
+	return false;
+}
 
+vsString vsTrimWhitespace( const vsString& input )
+{
+	vsString oldString = input;
+	// m_stringModeString = vsEmptyString;
+
+	int length = utf8::distance(oldString.begin(), oldString.end());
+	int nonWhitespaceEnd = 0;
+	int nonWhitespaceStart = length;
+
+	{
+		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
+
+		for ( int i = 0; i < length; i++ )
+		{
+			if ( !vsIsWhitespace( it ) )
+			{
+				nonWhitespaceStart = vsMin(nonWhitespaceStart, i);
+				nonWhitespaceEnd = vsMax(nonWhitespaceEnd, i+1);
+			}
+			it++;
+		}
+	}
+
+	vsString result;
+	{
+		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
+		for ( int i = 0; i < nonWhitespaceEnd; i++ )
+		{
+			if ( i >= nonWhitespaceStart )
+				utf8::append( *it, back_inserter(result) );
+			it++;
+		}
+	}
+	return result;
+}
