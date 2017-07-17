@@ -165,14 +165,14 @@ vsScene::Update( float timeStep )
 	vsEntity *next;
 	while ( entity != m_entityList )
 	{
-		next = entity->GetNext();		// entities might remove themselves during their Update, so pre-cache the next entity
+		// in theory, an entity might get destroyed during its 'Update' call
+		// (although that's a really dangerous practice).  To cope with that
+		// possibility, lets store a pointer to our next child, before we call
+		// into 'Update' on this child.
+		next = entity->GetNext();
 
 		entity->Update( timeStep );
-
-		if ( entity->GetNext() == entity )
-			entity = next;
-		else
-			entity = entity->GetNext();
+		entity = next;
 	}
 
 	if ( m_camera && !m_cameraIsReference )
