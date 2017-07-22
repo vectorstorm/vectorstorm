@@ -574,23 +574,16 @@ vsStore::ReadTransform2D(vsTransform2D *t)
 void
 vsStore::WriteMatrix4x4(const vsMatrix4x4 &m)
 {
-	WriteVector4D( m.x );
-	WriteVector4D( m.y );
-	WriteVector4D( m.z );
-	WriteVector4D( m.w );
+	vsAssert( BytesLeftForWriting() >= sizeof(m), "Tried to write past the end of the vsStore!" );
+	memcpy( m_writeHead, &m, sizeof(m) );
+	m_writeHead += sizeof(m);
 }
 
 void
 vsStore::ReadMatrix4x4(vsMatrix4x4 *m)
 {
-	vsVector4D x,y,z,t;
-
-	ReadVector4D(&x);
-	ReadVector4D(&y);
-	ReadVector4D(&z);
-	ReadVector4D(&t);
-
-	m->Set(x,y,z,t);
+	memcpy( m, m_readHead, sizeof(vsMatrix4x4) );
+	m_readHead += sizeof(vsMatrix4x4);
 }
 
 void
