@@ -39,8 +39,9 @@
 // #define VSPL_PROFILE VSPL_PROFILE_CPU_AND_GPU
 #define VSPL_PROFILE VSPL_PROFILE_NONE
 
+#include "VS_DisableDebugNew.h"
 #include <vector>
-#include <string>
+#include "VS_EnableDebugNew.h"
 
 #define PROFILE_MAX_LEVELS 50
 #define LEVEL_INDENT 2
