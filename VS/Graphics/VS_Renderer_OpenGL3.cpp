@@ -24,6 +24,7 @@
 #include "VS_System.h"
 #include "VS_Texture.h"
 #include "VS_TextureInternal.h"
+#include "VS_Profile.h"
 
 #include "VS_Mutex.h"
 
@@ -640,6 +641,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
+	PROFILE_GL("PostRender");
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
@@ -670,6 +672,7 @@ vsRenderer_OpenGL3::PostRender()
 void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
+	PROFILE_GL("RenderDisplayList");
 	CheckGLError("RenderDisplayList");
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
@@ -1075,12 +1078,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_BindBuffer:
 				{
+					// PROFILE_GL("BindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Bind( &m_state );
 					break;
 				}
 			case vsDisplayList::OpCode_UnbindBuffer:
 				{
+					// PROFILE_GL("UnbindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Unbind( &m_state );
 					break;
@@ -1099,6 +1104,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleListArray:
 				{
+					// PROFILE_GL("TriangleListArray");
 					FlushRenderState();
 
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
@@ -1106,12 +1112,15 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleStripArray:
 				{
+					// PROFILE_GL("TriangleStripArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
 				{
+					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleStripBuffer" : "TriangleStripBufferInstanced";
+					PROFILE_GL(section);
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriStripBuffer(m_currentLocalToWorldCount);
@@ -1119,6 +1128,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
 				{
+					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleListBuffer" : "TriangleListBufferInstanced";
+					PROFILE_GL(section);
+					// PROFILE_GL("TriangleListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriListBuffer(m_currentLocalToWorldCount);
@@ -1127,6 +1139,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
+					// PROFILE_GL("TriangleFanBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriFanBuffer(m_currentLocalToWorldCount);
@@ -1298,6 +1311,7 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
+	// PROFILE_GL("SetMaterial");
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;

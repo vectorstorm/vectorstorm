@@ -367,6 +367,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Pool.h
 	VS/Utils/VS_Preferences.cpp
 	VS/Utils/VS_Preferences.h
+	VS/Utils/VS_Profile.cpp
+	VS/Utils/VS_Profile.h
 	VS/Utils/VS_Primitive.cpp
 	VS/Utils/VS_Primitive.h
 	VS/Utils/VS_Singleton.h

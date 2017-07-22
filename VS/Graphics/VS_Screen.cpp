@@ -223,8 +223,6 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 #endif
 	}
 #ifdef DEBUG_SCENE
-	m_renderer->RenderDisplayList(m_fifo);
-	m_fifo->Clear();
 	m_scene[m_sceneCount-1]->Draw(m_fifo);
 #endif
 	m_renderer->RenderDisplayList(m_fifo);
