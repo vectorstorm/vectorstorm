@@ -18,6 +18,7 @@
 #include "VS_Scene.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
+#include "VS_Profile.h"
 
 #include "VS_TimerSystem.h"
 
@@ -207,11 +208,18 @@ vsScreen::Draw()
 void
 vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 {
+	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
 
-	m_renderer->PreRender(m_defaultRenderSettings);
+	{
+		PROFILE_GL("PreRender");
+		m_renderer->PreRender(m_defaultRenderSettings);
+	}
 	m_fifo->Clear();
-	pipeline->Draw(m_fifo);
+	{
+		PROFILE("GatherRenderables");
+		pipeline->Draw(m_fifo);
+	}
 	vsTimerSystem::Instance()->EndGatherTime();
 	m_fifoUsageLastFrame = m_fifo->GetSize();
 	if ( m_fifoUsageLastFrame > m_fifoHighWater )

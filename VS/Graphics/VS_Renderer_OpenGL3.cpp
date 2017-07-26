@@ -641,11 +641,15 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
-	PROFILE_GL("PostRender");
+	{
+	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
+	}
 
+	{
+		PROFILE_GL("FinishPostRender");
 	m_scene->Bind();
 	m_currentRenderTarget = m_scene;
 	glClearColor(0.0f,0.f,0.f,0.f);
@@ -667,6 +671,7 @@ vsRenderer_OpenGL3::PostRender()
 	m_state.Flush();
 
 	vsTimerSystem::Instance()->EndGPUTime();
+	}
 }
 
 void
@@ -833,12 +838,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetRenderTarget:
 				{
+					PROFILE_GL("SetRenderTarget");
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 					SetRenderTarget(target);
 					break;
 				}
 			case vsDisplayList::OpCode_ClearRenderTarget:
 				{
+					PROFILE_GL("ClearRenderTarget");
 					m_lastShaderId = 0;
 					glUseProgram(0);
 					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
@@ -849,6 +856,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
+					PROFILE_GL("ResolveRenderTarget");
 					m_state.Flush(); // Since resolving a render target can involve a blit, flush render state first.
 					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 					if ( target )
@@ -859,6 +867,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
 				{
+					PROFILE_GL("Blit");
 					m_state.Flush(); // flush our renderer state before blitting!
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
@@ -1078,26 +1087,28 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_BindBuffer:
 				{
-					// PROFILE_GL("BindBuffer");
+					PROFILE_GL("BindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Bind( &m_state );
 					break;
 				}
 			case vsDisplayList::OpCode_UnbindBuffer:
 				{
-					// PROFILE_GL("UnbindBuffer");
+					PROFILE_GL("UnbindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Unbind( &m_state );
 					break;
 				}
 			case vsDisplayList::OpCode_LineListArray:
 				{
+					PROFILE("LineListArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
+					PROFILE("LineStripArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
@@ -1105,6 +1116,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleListArray:
 				{
 					// PROFILE_GL("TriangleListArray");
+					PROFILE("TriangleListArray");
 					FlushRenderState();
 
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
@@ -1113,6 +1125,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleStripArray:
 				{
 					// PROFILE_GL("TriangleStripArray");
+					PROFILE("TriangleStripArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					break;
@@ -1120,7 +1133,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleStripBuffer:
 				{
 					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleStripBuffer" : "TriangleStripBufferInstanced";
-					PROFILE_GL(section);
+					PROFILE(section);
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriStripBuffer(m_currentLocalToWorldCount);
@@ -1129,7 +1142,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TriangleListBuffer:
 				{
 					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleListBuffer" : "TriangleListBufferInstanced";
-					PROFILE_GL(section);
+					PROFILE(section);
 					// PROFILE_GL("TriangleListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
@@ -1139,7 +1152,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
-					// PROFILE_GL("TriangleFanBuffer");
+					PROFILE("TriangleFanBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriFanBuffer(m_currentLocalToWorldCount);
@@ -1147,6 +1160,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_LineListBuffer:
 				{
+					PROFILE("LineListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->LineListBuffer(m_currentLocalToWorldCount);
@@ -1154,6 +1168,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_LineStripBuffer:
 				{
+					PROFILE("LineStripBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->LineStripBuffer(m_currentLocalToWorldCount);
@@ -1161,6 +1176,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleFanArray:
 				{
+					PROFILE("TriangleFanArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					// glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
@@ -1168,6 +1184,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_PointsArray:
 				{
+					PROFILE("PointsArray");
 					FlushRenderState();
 					vsRenderBuffer::DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 					// glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
@@ -1175,6 +1192,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_Light:
 				{
+					PROFILE("Light");
 					if ( m_lightCount < MAX_LIGHTS - 1 )
 					{
 						vsLight &l = op->data.light;
@@ -1298,7 +1316,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
 		// CheckGLError("RenderOp");
-		op = list->PopOp();
+		{
+			PROFILE("PopOp");
+			op = list->PopOp();
+		}
 	}
 }
 
@@ -1311,329 +1332,332 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
-	// PROFILE_GL("SetMaterial");
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
 	}
-	m_invalidateMaterial = true;
-	m_currentMaterialInternal = material;
+	else
+	{
+		PROFILE_GL("SetMaterial");
+		m_invalidateMaterial = true;
+		m_currentMaterialInternal = material;
 
-	if ( m_currentSettings.writeColor )
-	{
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	}
-	else
-	{
-		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-	}
-	if ( m_currentSettings.writeDepth )
-	{
-		m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_DepthMask, false );
-	}
-
-	if ( material->m_stencilRead || material->m_stencilWrite )
-	{
-		m_state.SetBool( vsRendererState::Bool_StencilTest, true );
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-	}
-
-	if ( material->m_stencilRead )
-	{
-		glStencilFunc(GL_EQUAL, 0x1, 0x1);
-	}
-	else
-	{
-		glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	}
-	if ( material->m_stencilWrite )
-	{
-		glStencilMask(0xff);
-		switch ( material->m_stencilOp )
+		if ( m_currentSettings.writeColor )
 		{
-			case StencilOp_None:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-				break;
-			case StencilOp_One:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-				break;
-			case StencilOp_Zero:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-				break;
-			case StencilOp_Inc:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-				break;
-			case StencilOp_Dec:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-				break;
-			case StencilOp_Invert:
-				glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
-				break;
-			default:
-				vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencilOp));
+			glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 		}
-	}
-	else
-		glStencilMask(0x0);
-
-	vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
-	m_currentShader = NULL;
-	if ( material->m_shader )
-	{
-		m_currentShader = material->m_shader;
-	}
-	else
-	{
-		switch( material->m_drawMode )
+		else
 		{
-			case DrawMode_Add:
-			case DrawMode_Subtract:
-			case DrawMode_Normal:
-			case DrawMode_Absolute:
-				if ( material->m_texture[0] )
-				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
-						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
-					else
-						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
-				}
-				else
-				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
-						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
-					else
-						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
-				}
-				break;
-			case DrawMode_Lit:
-				if ( material->m_texture[0] )
-				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
-						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
-					else
-						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
-				}
-				else
-				{
-					if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
-						m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
-					else
-						m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
-				}
-				break;
-			default:
-				vsAssert(0,"Unknown drawmode??");
+			glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 		}
-	}
-
-	/*static bool debugWireframe = false;
-	  if ( debugWireframe )
-	  {
-	  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	  }
-	  else
-	  {
-	  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	  }*/
-	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-	{
-		vsTexture *t = material->GetTexture(i);
-		if ( t )
+		if ( m_currentSettings.writeDepth )
 		{
-			glActiveTexture(GL_TEXTURE0 + i);
-			// glEnable(GL_TEXTURE_2D);
-			if ( t->GetResource()->IsTextureBuffer() )
+			m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
+		}
+		else
+		{
+			m_state.SetBool( vsRendererState::Bool_DepthMask, false );
+		}
+
+		if ( material->m_stencilRead || material->m_stencilWrite )
+		{
+			m_state.SetBool( vsRendererState::Bool_StencilTest, true );
+		}
+		else
+		{
+			m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+		}
+
+		if ( material->m_stencilRead )
+		{
+			glStencilFunc(GL_EQUAL, 0x1, 0x1);
+		}
+		else
+		{
+			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+		}
+		if ( material->m_stencilWrite )
+		{
+			glStencilMask(0xff);
+			switch ( material->m_stencilOp )
 			{
-				GL_CHECK_SCOPED("BufferTexture");
-				glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
-				vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-				buffer->BindAsTexture();
+				case StencilOp_None:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+					break;
+				case StencilOp_One:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+					break;
+				case StencilOp_Zero:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+					break;
+				case StencilOp_Inc:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+					break;
+				case StencilOp_Dec:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+					break;
+				case StencilOp_Invert:
+					glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+					break;
+				default:
+					vsAssert(0, vsFormatString("Unhandled stencil type: %d", material->m_stencilOp));
+			}
+		}
+		else
+			glStencilMask(0x0);
+
+		vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
+		m_currentShader = NULL;
+		if ( material->m_shader )
+		{
+			m_currentShader = material->m_shader;
+		}
+		else
+		{
+			switch( material->m_drawMode )
+			{
+				case DrawMode_Add:
+				case DrawMode_Subtract:
+				case DrawMode_Normal:
+				case DrawMode_Absolute:
+					if ( material->m_texture[0] )
+					{
+						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
+							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
+						else
+							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+					}
+					else
+					{
+						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
+							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
+						else
+							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+					}
+					break;
+				case DrawMode_Lit:
+					if ( material->m_texture[0] )
+					{
+						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
+							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
+						else
+							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+					}
+					else
+					{
+						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
+							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
+						else
+							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+					}
+					break;
+				default:
+					vsAssert(0,"Unknown drawmode??");
+			}
+		}
+
+		/*static bool debugWireframe = false;
+		  if ( debugWireframe )
+		  {
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		  }
+		  else
+		  {
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		  }*/
+		for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+		{
+			vsTexture *t = material->GetTexture(i);
+			if ( t )
+			{
+				glActiveTexture(GL_TEXTURE0 + i);
+				// glEnable(GL_TEXTURE_2D);
+				if ( t->GetResource()->IsTextureBuffer() )
+				{
+					GL_CHECK_SCOPED("BufferTexture");
+					glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
+					vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
+					buffer->BindAsTexture();
+				}
+				else
+				{
+					glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
+					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+				}
 			}
 			else
 			{
-				glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+				// glDisable(GL_TEXTURE_2D);
+			}
+		}
+		// vsTexture *st = material->GetShadowTexture();
+		// if ( st )
+		// {
+		// 	glActiveTexture(GL_TEXTURE0+8);
+		// 	glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
+		// }
+		// vsTexture *bt = material->GetBufferTexture();
+		// if ( bt )
+		// {
+		// 	GL_CHECK_SCOPED("BufferTexture");
+		// 	glActiveTexture(GL_TEXTURE0+9);
+		// 	glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
+		// 	vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
+		// 	buffer->BindAsTexture();
+		// }
+
+		if ( material->m_alphaTest )
+		{
+			// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
+		}
+
+		if ( material->m_zRead || material->m_zWrite )
+		{
+			m_state.SetBool( vsRendererState::Bool_DepthTest, true );
+			m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
+			if ( material->m_zRead )
+			{
+				glDepthFunc( GL_LEQUAL );
+			}
+			else
+			{
+				glDepthFunc( GL_ALWAYS );
 			}
 		}
 		else
 		{
-			// glDisable(GL_TEXTURE_2D);
+			m_state.SetBool( vsRendererState::Bool_DepthTest, false );
 		}
-	}
-	// vsTexture *st = material->GetShadowTexture();
-	// if ( st )
-	// {
-	// 	glActiveTexture(GL_TEXTURE0+8);
-	// 	glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
-	// }
-	// vsTexture *bt = material->GetBufferTexture();
-	// if ( bt )
-	// {
-	// 	GL_CHECK_SCOPED("BufferTexture");
-	// 	glActiveTexture(GL_TEXTURE0+9);
-	// 	glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
-	// 	vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
-	// 	buffer->BindAsTexture();
-	// }
 
-	if ( material->m_alphaTest )
-	{
-		// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
-	}
-
-	if ( material->m_zRead || material->m_zWrite )
-	{
-		m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-		m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
-		if ( material->m_zRead )
+		if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
 		{
-			glDepthFunc( GL_LEQUAL );
+			m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 		}
 		else
 		{
-			glDepthFunc( GL_ALWAYS );
-		}
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_DepthTest, false );
-	}
-
-	if ( material->m_depthBiasConstant == 0.f && material->m_depthBiasFactor == 0.f )
-	{
-		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
-		m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
-	}
-
-	// m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
-	// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
-
-	if ( material->m_cullingType == Cull_None )
-	{
-		m_state.SetBool( vsRendererState::Bool_CullFace, false );
-	}
-	else
-	{
-		m_state.SetBool( vsRendererState::Bool_CullFace, true );
-
-		bool cullingBack = (material->m_cullingType == Cull_Back);
-		if ( m_currentSettings.invertCull )
-		{
-			cullingBack = !cullingBack;
+			m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
+			m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
 		}
 
-		if ( cullingBack )
+		// m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
+		// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
+
+		if ( material->m_cullingType == Cull_None )
 		{
-			m_state.SetInt( vsRendererState::Int_CullFace, GL_BACK );
+			m_state.SetBool( vsRendererState::Bool_CullFace, false );
 		}
 		else
 		{
-			m_state.SetInt( vsRendererState::Int_CullFace, GL_FRONT );
-		}
-	}
+			m_state.SetBool( vsRendererState::Bool_CullFace, true );
 
-	m_state.SetBool( vsRendererState::Bool_Blend, material->m_blend );
-	switch( material->m_drawMode )
-	{
-		case DrawMode_Add:
+			bool cullingBack = (material->m_cullingType == Cull_Back);
+			if ( m_currentSettings.invertCull )
 			{
+				cullingBack = !cullingBack;
+			}
+
+			if ( cullingBack )
+			{
+				m_state.SetInt( vsRendererState::Int_CullFace, GL_BACK );
+			}
+			else
+			{
+				m_state.SetInt( vsRendererState::Int_CullFace, GL_FRONT );
+			}
+		}
+
+		m_state.SetBool( vsRendererState::Bool_Blend, material->m_blend );
+		switch( material->m_drawMode )
+		{
+			case DrawMode_Add:
+				{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_ADD);
+					glBlendEquation(GL_FUNC_ADD);
 #endif
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
-				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-				break;
-			}
-		case DrawMode_Subtract:
-			{
+					glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
+					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_Subtract:
+				{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+					glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 #endif
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-				break;
-			}
-		case DrawMode_Multiply:
-			{
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-				// glBlendFuncSeparate(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-				break;
-			}
-		case DrawMode_Absolute:
-			{
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_Multiply:
+				{
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+					// glBlendFuncSeparate(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_Absolute:
+				{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_ADD);
+					glBlendEquation(GL_FUNC_ADD);
 #endif
-				glBlendFunc(GL_ONE,GL_ZERO);	// absolute
-				break;
-			}
-		case DrawMode_Normal:
-			{
+					glBlendFunc(GL_ONE,GL_ZERO);	// absolute
+					break;
+				}
+			case DrawMode_Normal:
+				{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
-				glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-				// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-				// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
-				break;
-			}
-		case DrawMode_Lit:
-			{
+					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_Lit:
+				{
 #if !TARGET_OS_IPHONE
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
-				glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-// 				m_state.SetBool( vsRendererState::Bool_Lighting, true );
-// 				m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
-// #if !TARGET_OS_IPHONE
-// 				glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
-// #endif
-// 				float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
-//
-// 				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
-// 				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
-				break;
-			}
-		default:
-			vsAssert(0, "Unknown draw mode requested!");
-	}
-
-	if ( material->m_hasColor )
-	{
-		m_currentColor = material->m_color;
-		// const vsColor &c = material->m_color;
-		// glColor4f( c.r, c.g, c.b, c.a );
-
-		if ( material->m_drawMode == DrawMode_Lit )
-		{
-			// const vsColor &specColor = material->m_specularColor;
-			// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
+					// 				m_state.SetBool( vsRendererState::Bool_Lighting, true );
+					// 				m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
+					// #if !TARGET_OS_IPHONE
+					// 				glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
+					// #endif
+					// 				float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
+					//
+					// 				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
+					// 				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
+					break;
+				}
+			default:
+				vsAssert(0, "Unknown draw mode requested!");
 		}
-	}
-	else
-	{
-		m_currentColor = c_white;
+
+		if ( material->m_hasColor )
+		{
+			m_currentColor = material->m_color;
+			// const vsColor &c = material->m_color;
+			// glColor4f( c.r, c.g, c.b, c.a );
+
+			if ( material->m_drawMode == DrawMode_Lit )
+			{
+				// const vsColor &specColor = material->m_specularColor;
+				// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
+			}
+		}
+		else
+		{
+			m_currentColor = c_white;
+		}
 	}
 }
 

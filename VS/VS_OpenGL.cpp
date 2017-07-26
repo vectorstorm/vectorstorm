@@ -34,6 +34,7 @@ void ReportGLError( GLenum errcode, const char* string )
 #ifdef VS_GL_DEBUG
 void CheckGLError(const char* string)
 {
+	PROFILE("CheckGLError");
 	GLenum errcode = glGetError();
 	if ( errcode != GL_NO_ERROR )
 		ReportGLError(errcode, string);
