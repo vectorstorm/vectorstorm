@@ -8,6 +8,7 @@
  */
 
 #include "VS_OpenGL.h"
+#include "VS_Profile.h"
 
 void ReportGLError( GLenum errcode, const char* string )
 {
