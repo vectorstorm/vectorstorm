@@ -1339,7 +1339,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 	else
 	{
 		PROFILE_GL("SetMaterial");
-		m_invalidateMaterial = true;
+		m_invalidateMaterial = false;
 		m_currentMaterialInternal = material;
 
 		if ( m_currentSettings.writeColor )
