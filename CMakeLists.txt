@@ -505,3 +505,8 @@ endif()
 	source_group("Utils" FILES ${UTILS_SOURCES} )
 	source_group("Platform" FILES ${PLATFORM_SOURCES} )
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND UNIX)
+	# Optimise matrix maths, even if we're in a debug build.  I don't actually
+	# need to debug that, and fast matrix math is always nice!
+	set_source_files_properties(VS/Math/VS_Matrix.cpp PROPERTIES COMPILE_FLAGS -O3)
+endif ()
