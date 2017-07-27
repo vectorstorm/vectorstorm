@@ -849,6 +849,9 @@ vsInput::Update(float timeStep)
 								case SDLK_3:
 									m_keyControlState[CID_X] = 1.0f;
 									break;
+								case SDLK_LSHIFT:
+									m_keyControlState[CID_Y] = 1.0f;
+									break;
 								case SDLK_BACKSPACE:
 									m_keyControlState[CID_Back] = 1.0f;
 									break;
@@ -923,6 +926,9 @@ vsInput::Update(float timeStep)
 								break;
 							case SDLK_3:
 								m_keyControlState[CID_X] = 0.0f;
+								break;
+							case SDLK_LSHIFT:
+								m_keyControlState[CID_Y] = 0.0f;
 								break;
 							case SDLK_RETURN:
 								m_keyControlState[CID_Start] = 0.0f;
