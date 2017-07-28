@@ -99,8 +99,6 @@ vsRenderTarget::Resolve(int id)
 		for ( int i = 0; i < m_bufferCount; i++ )
 		{
 			GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
-			if ( m_renderBufferSurface->m_depth )
-				bufferBits |= GL_DEPTH_BUFFER_BIT;
 
 			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
@@ -109,7 +107,17 @@ vsRenderTarget::Resolve(int id)
 					0, 0,
 					m_textureSurface->m_width, m_textureSurface->m_height,
 					bufferBits,
-					GL_NEAREST);
+					GL_LINEAR);
+			if ( m_renderBufferSurface->m_depth )
+			{
+				bufferBits = GL_DEPTH_BUFFER_BIT;
+				glBlitFramebuffer(0, 0,
+						m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
+						0, 0,
+						m_textureSurface->m_width, m_textureSurface->m_height,
+						bufferBits,
+						GL_NEAREST);
+			}
 		}
 	}
 	if ( m_textureSurface )

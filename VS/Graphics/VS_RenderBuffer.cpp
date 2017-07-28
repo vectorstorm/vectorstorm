@@ -12,6 +12,7 @@
 #include "VS_RendererState.h"
 
 #include "VS_OpenGL.h"
+#include "VS_Profile.h"
 
 
 #define POS_ATTRIBUTE (0)
@@ -986,11 +987,29 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 {
 	if ( m_vbo )
 	{
+		int elements = m_activeBytes/sizeof(uint16_t);
+		// vsString prf;// = "TriListBuffer";
+		// if ( elements <= 6 )
+		// 	prf = "TriListBufferTiny";
+		// else if ( elements > 600 )
+		// 	prf = "TriListBufferLarge";
+		// else
+		// 	prf = "TriListBufferJustRight";
+		// {
+		// PROFILE_GL(prf);
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
-		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		glDrawElementsInstanced(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+		if ( instanceCount == 1 )
+		{
+			glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0);
+		}
+		else
+		{
+			glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
+		}
+		// }
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{

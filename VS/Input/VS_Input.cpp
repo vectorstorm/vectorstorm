@@ -849,6 +849,9 @@ vsInput::Update(float timeStep)
 								case SDLK_3:
 									m_keyControlState[CID_X] = 1.0f;
 									break;
+								case SDLK_LSHIFT:
+									m_keyControlState[CID_Y] = 1.0f;
+									break;
 								case SDLK_BACKSPACE:
 									m_keyControlState[CID_Back] = 1.0f;
 									break;
@@ -924,6 +927,9 @@ vsInput::Update(float timeStep)
 							case SDLK_3:
 								m_keyControlState[CID_X] = 0.0f;
 								break;
+							case SDLK_LSHIFT:
+								m_keyControlState[CID_Y] = 0.0f;
+								break;
 							case SDLK_RETURN:
 								m_keyControlState[CID_Start] = 0.0f;
 								break;
@@ -951,7 +957,7 @@ vsInput::Update(float timeStep)
 							core::SetExit();
 							break;
 						case SDL_WINDOWEVENT_EXPOSED:
-							vsLog("Exposed");
+							// vsLog("Exposed");
 							break;
 						case SDL_WINDOWEVENT_RESIZED:
 							{
@@ -971,11 +977,11 @@ vsInput::Update(float timeStep)
 							vsSystem::Instance()->CheckVideoMode();
 							break;
 						case SDL_WINDOWEVENT_SHOWN:
-							vsLog("Shown");
+							// vsLog("Shown");
 							vsSystem::Instance()->SetAppIsVisible( true );
 							break;
 						case SDL_WINDOWEVENT_HIDDEN:
-							vsLog("Hidden");
+							// vsLog("Hidden");
 							vsSystem::Instance()->SetAppIsVisible( false );
 							break;
 						case SDL_WINDOWEVENT_MOVED:
@@ -996,13 +1002,13 @@ vsInput::Update(float timeStep)
 							m_mouseIsInWindow = false;
 							break;
 						case SDL_WINDOWEVENT_MINIMIZED:
-							vsLog("Minimized");
+							// vsLog("Minimized");
 							break;
 						case SDL_WINDOWEVENT_MAXIMIZED:
-							vsLog("Maximized");
+							// vsLog("Maximized");
 							break;
 						case SDL_WINDOWEVENT_RESTORED:
-							vsLog("Restored");
+							// vsLog("Restored");
 							break;
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);

@@ -147,6 +147,21 @@ public:
 		return index != npos;
 	}
 
+	// removes this item, but doesn't destroy it.
+	bool	ReleaseItem( const T *item )
+	{
+		int index = FindEntry(item);
+		if ( index != npos )
+		{
+			for ( int i = index; i < m_arrayLength-1; i++ )
+			{
+				m_array[i] = m_array[i+1];
+			}
+			m_arrayLength--;
+		}
+		return index != npos;
+	}
+
 	vsArrayStoreIterator<T>	RemoveItem( vsArrayStoreIterator<T> &item )
 	{
 		int index = item.m_current;

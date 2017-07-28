@@ -15,6 +15,7 @@
 #include "VS_RenderQueue.h"
 #include "VS_Screen.h"
 #include "VS_System.h"
+#include "VS_Profile.h"
 //#include "VS_Transform.h"
 
 #include "VS_OpenGL.h"
@@ -190,6 +191,7 @@ vsScene::Draw( vsDisplayList *list )
 {
 	if ( !IsEnabled() )
 		return;
+	PROFILE("Scene::Draw");
 	// if ( m_flatShading )
 	// {
 	// 	list->FlatShading();

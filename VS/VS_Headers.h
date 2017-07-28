@@ -31,6 +31,8 @@
 #include <VS/Utils/VS_WeakPointer.h>
 #include <VS/Utils/VS_WeakPointerTarget.h>
 
+#include <VS/Utils/VS_Profile.h>
+
 #ifdef USE_SDL_SOUND
 #include <Sound/VS_Music.h>
 #include <Sound/VS_SoundSample.h>
