@@ -286,6 +286,22 @@ public:
 	void	GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight );
 	void	GetBoundingBox( vsBox3D &box );
 
+	struct Stats
+	{
+		int drawCount;
+		int vertexCount;
+		int triangleCount;
+
+		Stats& operator+=(const Stats& o)
+		{
+			drawCount += o.drawCount;
+			vertexCount += o.vertexCount;
+			triangleCount += o.triangleCount;
+			return *this;
+		}
+	};
+	struct Stats CalculateStats();
+
 	void	ApplyOffset(const vsVector2D &offset);
 
 	void	Append( const vsDisplayList &list );	// appends the passed display list onto us.

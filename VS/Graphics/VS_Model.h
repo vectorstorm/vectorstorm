@@ -88,6 +88,8 @@ public:
 	void					SetBoundingBox(const vsBox3D &box) { m_boundingBox = box; }
 	void					BuildBoundingBox();
 
+	vsDisplayList::Stats	CalculateStats();
+
 	float					GetBoundingRadius() { return m_boundingRadius; }
 
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; }

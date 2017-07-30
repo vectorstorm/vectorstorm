@@ -1634,7 +1634,6 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 	bottomRight = box.GetMax();
 }
 
-
 void
 vsDisplayList::GetBoundingBox( vsBox3D &box )
 {
@@ -1747,6 +1746,53 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 			o = PopOp();
 		}
 	}
+}
+
+struct vsDisplayList::Stats
+vsDisplayList::CalculateStats()
+{
+	Stats s;
+	s.drawCount = 0;
+	s.vertexCount = 0;
+	s.triangleCount = 0;
+
+	Rewind();
+	op *o = PopOp();
+
+	while(o)
+	{
+		if ( o->type == OpCode_VertexArray )
+		{
+			int count = o->data.GetUInt();
+			s.vertexCount += count;
+		}
+		else if ( o->type == OpCode_VertexBuffer )
+		{
+			vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+			s.vertexCount += buffer->GetVector3DArraySize();
+		}
+		else if ( o->type == OpCode_BindBuffer )
+		{
+			vsVector3D pos;
+			vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+			s.vertexCount += buffer->GetPositionCount();
+		}
+		else if ( o->type == OpCode_TriangleListBuffer )
+		{
+			vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+			s.triangleCount += buffer->GetIntArraySize() / 3;
+			s.drawCount++;
+		}
+		else if ( o->type == OpCode_TriangleStripBuffer )
+		{
+			vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+			s.triangleCount += buffer->GetIntArraySize() - 2;
+			s.drawCount++;
+		}
+
+		o = PopOp();
+	}
+	return s;
 }
 
 

@@ -473,6 +473,21 @@ vsModel::BuildBoundingBox()
 	SetBoundingBox( boundingBox );
 }
 
+vsDisplayList::Stats
+vsModel::CalculateStats()
+{
+	vsDisplayList::Stats result = {0,0,0};
+
+	if ( m_displayList )
+		result = m_displayList->CalculateStats();
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		result += iter->GetDisplayList()->CalculateStats();
+	}
+
+	return result;
+}
+
 void
 vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, int lodLevel )
 {
