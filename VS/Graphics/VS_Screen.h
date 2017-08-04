@@ -10,7 +10,7 @@
 #ifndef VS_SCREEN_H
 #define VS_SCREEN_H
 
-#if defined(_DEBUG)
+#ifdef VS_TIMING_BARS
 #define DEBUG_SCENE
 #endif // _DEBUG
 
