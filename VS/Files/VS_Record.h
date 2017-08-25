@@ -39,7 +39,9 @@ class vsRecord
 	float		GetArg(int i);
 
 	void		LoadBinaryV1( vsFile *file );
-	void		SerialiseBinaryV1( vsSerialiser *s );
+	void		SerialiseBinaryV1( vsSerialiser *s, vsArray<vsString>& stringTable );
+	void		PopulateStringTable( vsArray<vsString>& array );
+	void		Clean();
 
 public:
 	vsRecord();

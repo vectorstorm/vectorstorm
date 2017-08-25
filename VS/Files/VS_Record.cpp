@@ -60,16 +60,29 @@ vsRecord::Init()
 }
 
 void
-vsRecord::SerialiseBinaryV1( vsSerialiser *s )
+vsRecord::PopulateStringTable( vsArray<vsString>& stringTable )
 {
-	m_label.SerialiseBinaryV1(s);
+	m_label.PopulateStringTable(stringTable);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+		m_token[i].PopulateStringTable(stringTable);
+	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	{
+		vsRecord *child = *iter;
+		child->PopulateStringTable(stringTable);
+	}
+}
+
+void
+vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsArray<vsString>& stringTable )
+{
+	m_label.SerialiseBinaryV1(s, stringTable);
 
 	uint32_t tokenCount = m_token.ItemCount();
 	s->Uint32(tokenCount);
 	m_token.SetArraySize(tokenCount);
 	for ( int i = 0; i < m_token.ItemCount(); i++ )
 	{
-		m_token[i].SerialiseBinaryV1(s);
+		m_token[i].SerialiseBinaryV1(s, stringTable);
 	}
 
 	uint32_t childCount = m_childList.ItemCount();
@@ -80,7 +93,7 @@ vsRecord::SerialiseBinaryV1( vsSerialiser *s )
 		for ( uint32_t i = 0; i < childCount; i++ )
 		{
 			vsRecord *child = new vsRecord;
-			child->SerialiseBinaryV1(s);
+			child->SerialiseBinaryV1(s, stringTable);
 			AddChild(child);
 		}
 	}
@@ -89,8 +102,26 @@ vsRecord::SerialiseBinaryV1( vsSerialiser *s )
 		for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
 		{
 			vsRecord *child = *iter;
-			child->SerialiseBinaryV1(s);
+			child->SerialiseBinaryV1(s, stringTable);
 		}
+	}
+}
+
+void
+vsRecord::Clean()
+{
+	// remove any tokens which are of type 'none'.
+	for ( int i = 0; i < m_token.ItemCount(); )
+	{
+		if ( m_token[i].GetType() == vsToken::Type_None )
+			m_token.RemoveItem(m_token[i]);
+		else
+			i++;
+	}
+	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	{
+		vsRecord *child = *iter;
+		child->Clean();
 	}
 }
 
@@ -99,6 +130,7 @@ vsRecord::SaveBinary( vsFile *file )
 {
 	vsSerialiserWriteStream ws( file );
 
+	Clean();
 	SerialiseBinary(&ws);
 	// ws.String(m_label);
 }
@@ -116,7 +148,21 @@ vsRecord::SerialiseBinary( vsSerialiser *s )
 {
 	vsString identifier("RecordV1");
 	s->String(identifier);
-	SerialiseBinaryV1(s);
+	vsArray<vsString> stringTable;
+	{
+		if ( s->GetType() == vsSerialiser::Type_Write )
+			PopulateStringTable(stringTable);
+
+		uint32_t stringCount = stringTable.ItemCount();
+		s->Uint32(stringCount);
+		stringTable.SetArraySize(stringCount);
+		for ( uint32_t i = 0; i < stringCount; i++ )
+		{
+			s->String(stringTable[i]);
+		}
+	}
+
+	SerialiseBinaryV1(s, stringTable);
 	return true;
 }
 

@@ -367,7 +367,17 @@ vsToken::AsString()
 }
 
 void
-vsToken::SerialiseBinaryV1( vsSerialiser *s )
+vsToken::PopulateStringTable( vsArray<vsString>& array )
+{
+	if ( m_type == Type_Label || m_type == Type_String )
+	{
+		if ( !array.Contains(m_string) )
+			array.AddItem(m_string);
+	}
+}
+
+void
+vsToken::SerialiseBinaryV1( vsSerialiser *s, const vsArray<vsString>& stringTable )
 {
 	uint32_t type = m_type;
 	s->Uint32(type);
@@ -376,7 +386,19 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s )
 	{
 		case Type_Label:
 		case Type_String:
-			s->String(m_string);
+			{
+				if ( s->GetType() == vsSerialiser::Type_Write )
+				{
+					uint32_t i = stringTable.Find(m_string);
+					s->Uint32(i);
+				}
+				else
+				{
+					uint32_t i = 0;
+					s->Uint32(i);
+					m_string = stringTable[i];
+				}
+			}
 			break;
 		case Type_Float:
 			s->Float(m_float);

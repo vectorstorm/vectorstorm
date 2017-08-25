@@ -10,6 +10,7 @@
 #ifndef FS_TOKEN_H
 #define FS_TOKEN_H
 
+#include "VS/Utils/VS_Array.h"
 class vsSerialiser;
 
 class vsToken
@@ -43,7 +44,8 @@ public:
 	bool		ExtractFrom( vsString &string );
 	vsString	BackToString();			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
 
-	void SerialiseBinaryV1( vsSerialiser *s );
+	void		SerialiseBinaryV1( vsSerialiser *s, const vsArray<vsString>& stringTable );
+	void		PopulateStringTable( vsArray<vsString>& array );
 
 	Type		GetType() const { return m_type; }
 	vsString	AsString();			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
