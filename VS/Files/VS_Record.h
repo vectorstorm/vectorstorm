@@ -11,7 +11,7 @@
 #define FS_RECORD_H
 
 #include "VS/Utils/VS_Array.h"
-#include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Utils/VS_ArrayStore.h"
 #include "VS/Math/VS_Quaternion.h"
 
 class vsVector2D;
@@ -27,7 +27,7 @@ class vsRecord
 
 	vsArray<vsToken>	m_token;
 
-	vsLinkedListStore<vsRecord>	m_childList;
+	vsArrayStore<vsRecord>	m_childList;
 	vsRecord *	m_lastChild;
 
 	bool		m_inBlock;

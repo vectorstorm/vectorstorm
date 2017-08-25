@@ -65,7 +65,7 @@ vsRecord::PopulateStringTable( vsArray<vsString>& stringTable )
 	m_label.PopulateStringTable(stringTable);
 	for ( int i = 0; i < m_token.ItemCount(); i++ )
 		m_token[i].PopulateStringTable(stringTable);
-	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
 	{
 		vsRecord *child = *iter;
 		child->PopulateStringTable(stringTable);
@@ -99,7 +99,7 @@ vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsArray<vsString>& stringTable )
 	}
 	else
 	{
-		for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
 		{
 			vsRecord *child = *iter;
 			child->SerialiseBinaryV1(s, stringTable);
@@ -118,7 +118,7 @@ vsRecord::Clean()
 		else
 			i++;
 	}
-	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
 	{
 		vsRecord *child = *iter;
 		child->Clean();
@@ -200,7 +200,7 @@ vsRecord::ToString( int childLevel )
 		result += "\n";
 		result += tabbing + "{\n";
 
-		for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
 		{
 			vsRecord *child = *iter;
 			result += child->ToString( childLevel+1 );
@@ -237,28 +237,30 @@ vsRecord::SetTokenCount(int count)
 vsRecord *
 vsRecord::GetChild(int i)
 {
-	vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin();
-	while(i-->0)
-	{
-		iter++;
-	}
-	return *iter;
+	return m_childList[i];
+	// vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin();
+	// while(i-->0)
+	// {
+	// 	iter++;
+	// }
+	// return *iter;
 }
 
 int
 vsRecord::GetChildCount(const vsString& label)
 {
-	int count = 0;
-	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin();
-			iter != m_childList.End();
-			iter++ )
-	{
-		if ( (*iter)->GetLabel().AsString() == label )
-		{
-			count++;
-		}
-	}
-	return count;
+	return m_childList.ItemCount();
+	// int count = 0;
+	// for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin();
+	// 		iter != m_childList.End();
+	// 		iter++ )
+	// {
+	// 	if ( (*iter)->GetLabel().AsString() == label )
+	// 	{
+	// 		count++;
+	// 	}
+	// }
+	// return count;
 }
 
 void
