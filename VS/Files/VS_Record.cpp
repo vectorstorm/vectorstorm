@@ -12,7 +12,7 @@
 
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Math/VS_Vector.h"
-
+#include "VS/Memory/VS_Serialiser.h"
 
 vsRecord::vsRecord()
 {
@@ -57,6 +57,75 @@ vsRecord::Init()
 	m_hasLabel = false;
 	m_lineIsOpen = true;
 	m_lastChild = NULL;
+}
+
+void
+vsRecord::SerialiseBinaryV1( vsSerialiser *s )
+{
+	m_label.SerialiseBinaryV1(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV1(s);
+	}
+
+	uint32_t childCount = m_childList.ItemCount();
+	s->Uint32(childCount);
+
+	if ( s->GetType() == vsSerialiser::Type_Read )
+	{
+		for ( uint32_t i = 0; i < childCount; i++ )
+		{
+			vsRecord *child = new vsRecord;
+			child->SerialiseBinaryV1(s);
+			AddChild(child);
+		}
+	}
+	else
+	{
+		for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		{
+			vsRecord *child = *iter;
+			child->SerialiseBinaryV1(s);
+		}
+	}
+}
+
+void
+vsRecord::SaveBinary( vsFile *file )
+{
+	vsSerialiserWriteStream ws( file );
+
+	SerialiseBinary(&ws);
+	// ws.String(m_label);
+}
+
+void
+vsRecord::LoadBinaryV1( vsFile *file )
+{
+	vsSerialiserReadStream ws( file );
+
+	SerialiseBinary(&ws);
+}
+
+bool
+vsRecord::SerialiseBinary( vsSerialiser *s )
+{
+	vsString identifier("RecordV1");
+	s->String(identifier);
+	SerialiseBinaryV1(s);
+	return true;
+}
+
+bool
+vsRecord::LoadBinary( vsFile *file )
+{
+	// TODO:  Check file for version identifier.
+	LoadBinaryV1(file);
+	return true;
 }
 
 vsString

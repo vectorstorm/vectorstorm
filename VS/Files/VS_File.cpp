@@ -321,6 +321,37 @@ vsFile::Record( vsRecord *r )
 }
 
 bool
+vsFile::Record_Binary( vsRecord *r )
+{
+	// utility function;  actually, we do this from the Record side.
+	if ( m_mode == MODE_Write )
+		r->SaveBinary(this);
+	else
+		r->LoadBinary(this);
+	return false;
+	// vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
+    //
+	// if ( m_mode == MODE_Write )
+	// {
+	// 	vsStore recordStore = r->ToBinary();
+    //
+	// 	PHYSFS_write( m_file, recordStore.GetReadHead(), 1, recordStore.BytesLeftForReading() );
+    //
+	// 	return true;
+	// }
+	// else
+	// {
+	// 	// we want to read the next line into this vsRecord class, so initialise
+	// 	// it before we start.
+	// 	r->Init();
+    //
+	// 	return r->Parse(this);
+	// }
+    //
+	// return false;
+}
+
+bool
 vsFile::ReadLine( vsString *line )
 {
 	// const int c_bufSize = 1024;

@@ -17,6 +17,7 @@
 class vsVector2D;
 class vsColor;
 class vsFile;
+class vsSerialiser;
 
 #include "VS_Token.h"
 
@@ -37,6 +38,9 @@ class vsRecord
 
 	float		GetArg(int i);
 
+	void		LoadBinaryV1( vsFile *file );
+	void		SerialiseBinaryV1( vsSerialiser *s );
+
 public:
 	vsRecord();
 	vsRecord( const char* fromString );
@@ -49,6 +53,10 @@ public:
 	bool		ParseString( vsString string );
 	bool		AppendToken( const vsToken &token );		// add this token to me.
 	vsString	ToString( int childLevel = 0 );							// convert this vsRecord into a vsString.
+
+	bool		LoadBinary( vsFile *file );
+	void		SaveBinary( vsFile *file );
+	bool		SerialiseBinary( vsSerialiser *s );
 
 	vsToken &			GetLabel() { return m_label; }
 	void				SetLabel(const vsString &label);

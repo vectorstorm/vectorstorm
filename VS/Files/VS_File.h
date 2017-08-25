@@ -81,6 +81,8 @@ public:
 	bool		PeekLine( vsString *line );
 	bool		ReadLine( vsString *line );
 
+	bool		Record_Binary( vsRecord *record );		// returns true if we found or successfully wrote another record
+
 	void		Rewind();
 
 	void		Store( vsStore *store );		// read/write this raw data directly.

@@ -9,6 +9,8 @@
 
 #include "VS_Token.h"
 
+#include "VS/Memory/VS_Serialiser.h"
+
 #ifdef MSVC
 // visual studio defines its own "secure" sscanf.  So use that to keep
 // Microsoft happy.
@@ -362,6 +364,29 @@ vsToken::AsString()
 	}
 
 	return result;
+}
+
+void
+vsToken::SerialiseBinaryV1( vsSerialiser *s )
+{
+	uint32_t type = m_type;
+	s->Uint32(type);
+	m_type = (Type)type;
+	switch( m_type )
+	{
+		case Type_Label:
+		case Type_String:
+			s->String(m_string);
+			break;
+		case Type_Float:
+			s->Float(m_float);
+			break;
+		case Type_Integer:
+			s->Int32(m_int);
+			break;
+		default:
+			break;
+	}
 }
 
 int
