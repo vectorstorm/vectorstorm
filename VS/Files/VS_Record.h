@@ -11,6 +11,7 @@
 #define FS_RECORD_H
 
 #include "VS/Utils/VS_Array.h"
+#include "VS/Utils/VS_StringTable.h"
 #include "VS/Utils/VS_ArrayStore.h"
 #include "VS/Math/VS_Quaternion.h"
 
@@ -39,8 +40,8 @@ class vsRecord
 	float		GetArg(int i);
 
 	void		LoadBinaryV1( vsFile *file );
-	void		SerialiseBinaryV1( vsSerialiser *s, vsArray<vsString>& stringTable );
-	void		PopulateStringTable( vsArray<vsString>& array );
+	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
+	void		PopulateStringTable( vsStringTable& array );
 	void		Clean();
 
 public:

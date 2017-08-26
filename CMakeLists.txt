@@ -379,6 +379,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Spring.h
 	VS/Utils/VS_String.cpp
 	VS/Utils/VS_String.h
+	VS/Utils/VS_StringTable.cpp
+	VS/Utils/VS_StringTable.h
 	VS/Utils/VS_StrongPointer.h
 	VS/Utils/VS_StrongPointerTarget.h
 	VS/Utils/VS_System.cpp

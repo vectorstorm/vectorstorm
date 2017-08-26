@@ -60,7 +60,7 @@ vsRecord::Init()
 }
 
 void
-vsRecord::PopulateStringTable( vsArray<vsString>& stringTable )
+vsRecord::PopulateStringTable( vsStringTable& stringTable )
 {
 	m_label.PopulateStringTable(stringTable);
 	for ( int i = 0; i < m_token.ItemCount(); i++ )
@@ -73,7 +73,7 @@ vsRecord::PopulateStringTable( vsArray<vsString>& stringTable )
 }
 
 void
-vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsArray<vsString>& stringTable )
+vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 {
 	m_label.SerialiseBinaryV1(s, stringTable);
 
@@ -148,17 +148,18 @@ vsRecord::SerialiseBinary( vsSerialiser *s )
 {
 	vsString identifier("RecordV1");
 	s->String(identifier);
-	vsArray<vsString> stringTable;
+	vsStringTable stringTable;
 	{
 		if ( s->GetType() == vsSerialiser::Type_Write )
 			PopulateStringTable(stringTable);
 
-		uint32_t stringCount = stringTable.ItemCount();
+		vsArray<vsString>& strings = stringTable.GetStrings();
+		uint32_t stringCount = strings.ItemCount();
 		s->Uint32(stringCount);
-		stringTable.SetArraySize(stringCount);
+		strings.SetArraySize(stringCount);
 		for ( uint32_t i = 0; i < stringCount; i++ )
 		{
-			s->String(stringTable[i]);
+			s->String(strings[i]);
 		}
 	}
 
