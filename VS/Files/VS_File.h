@@ -28,6 +28,7 @@ public:
 		MODE_Write,         // overwrite an existing file.
 		MODE_WriteDirectly, // actually, 'Write' writes into a temporary file and overwrites the existing file when you destroy the vsFile object.  If you *actually* want to write directly into a file, use this mode instead.
 
+		MODE_ReadCompressed, // open an existing file and read from it, INFLATEd
 		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
 
 		MODE_MAX

@@ -44,8 +44,10 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 {
 	vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
-	if ( mode == MODE_Read )
+	if ( mode == MODE_Read || mode == MODE_ReadCompressed )
+	{
 		m_file = PHYSFS_openRead( filename.c_str() );
+	}
 	else if ( mode == MODE_Write || mode == MODE_WriteCompressed )
 	{
 		// in normal 'Write' mode, we actually write into a temporary file, and
@@ -102,6 +104,84 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		PHYSFS_close(m_file);
 		m_file = NULL;
 	}
+	else if ( mode == MODE_ReadCompressed )
+	{
+		// in COMPRESSED read mode, we can't do the clever thing we did above
+		// where we just made a single store and loaded the whole file into it
+		// all at once, because we don't know how big the file is going to wind
+		// up being.
+		//
+		// So here's what we're going to do;  we're going to load all the data
+		// into a store (as above), decompress it once just to figure out how
+		// big it's going to be, then decompress it AGAIN, into a store that's
+		// the right size to hold it.
+
+		vsStore *compressedData = new vsStore( m_length );
+		Store(compressedData);
+		PHYSFS_close(m_file);
+		m_file = NULL;
+
+		// we're going to read the compressed data TWICE.
+		// First, we're just going to count how many bytes we inflate into.
+		m_zipStream.zalloc = Z_NULL;
+		m_zipStream.zfree = Z_NULL;
+		m_zipStream.opaque = Z_NULL;
+		int ret = inflateInit(&m_zipStream);
+		if ( ret != Z_OK )
+		{
+			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+			return;
+		}
+
+		int decompressedSize = 0;
+		int zipBufferSize = 1024 * 100;
+		char zipBuffer[zipBufferSize];
+		m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		do
+		{
+			m_zipStream.avail_out = zipBufferSize;
+			m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipStream, Z_NO_FLUSH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+			int decompressedBytes = zipBufferSize - m_zipStream.avail_out;
+			decompressedSize += decompressedBytes;
+
+		}while( m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipStream);
+
+		m_store = new vsStore( decompressedSize );
+
+		// Now let's decompress it FOR REAL.
+		ret = inflateInit(&m_zipStream);
+		if ( ret != Z_OK )
+		{
+			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+			return;
+		}
+
+		m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		do
+		{
+			m_zipStream.avail_out = zipBufferSize;
+			m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipStream, Z_NO_FLUSH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+			int decompressedBytes = zipBufferSize - m_zipStream.avail_out;
+			m_store->WriteBuffer( zipBuffer, decompressedBytes );
+
+		}while( m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipStream);
+
+		// and now that we've decompressed all the data, we can drop into
+		// regular 'Read' mode to serve the data to our clients.
+		m_mode = MODE_Read;
+		m_length = decompressedSize;
+		vsDelete( compressedData );
+	}
 }
 
 vsFile::~vsFile()
@@ -112,10 +192,10 @@ vsFile::~vsFile()
 		char zipBuffer[zipBufferSize];
 		m_zipStream.avail_in = 0;
 		m_zipStream.next_in = NULL;
-		m_zipStream.avail_out = zipBufferSize;
-		m_zipStream.next_out = (Bytef*)zipBuffer;
 		do
 		{
+			m_zipStream.avail_out = zipBufferSize;
+			m_zipStream.next_out = (Bytef*)zipBuffer;
 			int ret = deflate(&m_zipStream, Z_FINISH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
 
@@ -368,26 +448,6 @@ vsFile::Record_Binary( vsRecord *r )
 	else
 		r->LoadBinary(this);
 	return false;
-	// vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
-    //
-	// if ( m_mode == MODE_Write )
-	// {
-	// 	vsStore recordStore = r->ToBinary();
-    //
-	// 	PHYSFS_write( m_file, recordStore.GetReadHead(), 1, recordStore.BytesLeftForReading() );
-    //
-	// 	return true;
-	// }
-	// else
-	// {
-	// 	// we want to read the next line into this vsRecord class, so initialise
-	// 	// it before we start.
-	// 	r->Init();
-    //
-	// 	return r->Parse(this);
-	// }
-    //
-	// return false;
 }
 
 bool
@@ -494,10 +554,10 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 		char zipBuffer[zipBufferSize];
 		m_zipStream.avail_in = bytes;
 		m_zipStream.next_in = (Bytef*)s->GetReadHead();
-		m_zipStream.avail_out = zipBufferSize;
-		m_zipStream.next_out = (Bytef*)zipBuffer;
 		do
 		{
+			m_zipStream.avail_out = zipBufferSize;
+			m_zipStream.next_out = (Bytef*)zipBuffer;
 			int ret = deflate(&m_zipStream, Z_NO_FLUSH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered");
 
