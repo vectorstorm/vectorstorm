@@ -379,8 +379,8 @@ vsToken::PopulateStringTable( vsArray<vsString>& array )
 void
 vsToken::SerialiseBinaryV1( vsSerialiser *s, const vsArray<vsString>& stringTable )
 {
-	uint32_t type = m_type;
-	s->Uint32(type);
+	uint8_t type = m_type;
+	s->Uint8(type);
 	m_type = (Type)type;
 	switch( m_type )
 	{
