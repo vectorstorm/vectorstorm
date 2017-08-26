@@ -45,7 +45,6 @@ vsRecord::vsRecord( const vsString& fromString )
 
 vsRecord::~vsRecord()
 {
-	Init();
 }
 
 void
