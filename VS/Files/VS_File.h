@@ -17,6 +17,7 @@ class vsStore;
 
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_String.h"
+#include <zlib.h>
 
 class vsFile
 {
@@ -27,6 +28,8 @@ public:
 		MODE_Write,         // overwrite an existing file.
 		MODE_WriteDirectly, // actually, 'Write' writes into a temporary file and overwrites the existing file when you destroy the vsFile object.  If you *actually* want to write directly into a file, use this mode instead.
 
+		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
+
 		MODE_MAX
 	};
 
@@ -35,6 +38,7 @@ private:
 	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
 	vsStore *m_store;
+	z_stream m_zipStream;
 
 	Mode		m_mode;
 
