@@ -46,6 +46,8 @@ private:
 	size_t		m_length;
 	bool m_moveOnDestruction;
 
+	void _WriteBytes( void* bytes, size_t byteCount );
+
 public:
 
 			// In general, files should be opened by creating an vsFile;  the vsFile class automatically deals with finding where the file is
