@@ -71,7 +71,8 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			m_zipStream.zalloc = Z_NULL;
 			m_zipStream.zfree = Z_NULL;
 			m_zipStream.opaque = Z_NULL;
-			int ret = deflateInit(&m_zipStream, Z_DEFAULT_COMPRESSION);
+			// int ret = deflateInit(&m_zipStream, Z_DEFAULT_COMPRESSION);
+			int ret = deflateInit(&m_zipStream, 1);
 			if ( ret != Z_OK )
 			{
 				vsLog("deflateInit error: %d", ret);
@@ -219,11 +220,7 @@ vsFile::~vsFile()
 		vsAssert( m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
 		deflateEnd(&m_zipStream);
 	}
-	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
-	{
-		if ( m_store && m_store->BytesLeftForReading() )
-			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
-	}
+	FlushBufferedWrites();
 
 	vsDelete( m_store );
 	if ( m_file )
@@ -232,6 +229,19 @@ vsFile::~vsFile()
 	{
 		// now we need to move the file we just wrote into its final position.
 		Move( m_tempFilename, m_filename );
+	}
+}
+
+void
+vsFile::FlushBufferedWrites()
+{
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
+	{
+		if ( m_store && m_store->BytesLeftForReading() )
+		{
+			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+			m_store->Clear();
+		}
 	}
 }
 

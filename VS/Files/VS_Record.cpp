@@ -19,6 +19,7 @@ vsRecord::vsRecord()
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 }
@@ -28,6 +29,7 @@ vsRecord::vsRecord( const char* fromString )
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -38,6 +40,7 @@ vsRecord::vsRecord( const vsString& fromString )
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -45,11 +48,25 @@ vsRecord::vsRecord( const vsString& fromString )
 
 vsRecord::~vsRecord()
 {
+	Init(); // to clear out our children.
 }
 
 void
 vsRecord::Init()
 {
+	for ( int i = 0; i < m_childList.ItemCount(); i++ )
+	{
+		if ( m_childList[i]->m_pool )
+		{
+			m_childList[i]->Init();
+			m_childList[i]->m_pool->Return(m_childList[i]);
+		}
+		else
+		{
+			vsDelete(m_childList[i]);
+		}
+		// vsDelete(m_childList[i]);
+	}
 	m_childList.Clear();
 	m_token.Clear();
 	m_inBlock = false;
@@ -64,9 +81,9 @@ vsRecord::PopulateStringTable( vsStringTable& stringTable )
 	m_label.PopulateStringTable(stringTable);
 	for ( int i = 0; i < m_token.ItemCount(); i++ )
 		m_token[i].PopulateStringTable(stringTable);
-	for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	for (int i = 0; i < m_childList.ItemCount(); i++ )
 	{
-		vsRecord *child = *iter;
+		vsRecord *child = m_childList[i];
 		child->PopulateStringTable(stringTable);
 	}
 }
@@ -98,9 +115,9 @@ vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 	}
 	else
 	{
-		for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
 		{
-			vsRecord *child = *iter;
+			vsRecord *child = m_childList[i];
 			child->SerialiseBinaryV1(s, stringTable);
 		}
 	}
@@ -117,9 +134,9 @@ vsRecord::Clean()
 		else
 			i++;
 	}
-	for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+	for (int i = 0; i < m_childList.ItemCount(); i++ )
 	{
-		vsRecord *child = *iter;
+		vsRecord *child = m_childList[i];
 		child->Clean();
 	}
 }
@@ -129,7 +146,7 @@ vsRecord::SaveBinary( vsFile *file )
 {
 	vsSerialiserWriteStream ws( file );
 
-	Clean();
+	// Clean();
 	SerialiseBinary(&ws);
 	// ws.String(m_label);
 }
@@ -201,9 +218,9 @@ vsRecord::ToString( int childLevel )
 		result += "\n";
 		result += tabbing + "{\n";
 
-		for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
 		{
-			vsRecord *child = *iter;
+			vsRecord *child = m_childList[i];
 			result += child->ToString( childLevel+1 );
 		}
 

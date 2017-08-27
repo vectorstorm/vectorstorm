@@ -14,6 +14,7 @@
 #include "VS/Utils/VS_StringTable.h"
 #include "VS/Utils/VS_ArrayStore.h"
 #include "VS/Math/VS_Quaternion.h"
+#include "VS/Utils/VS_Pool.h"
 
 class vsVector2D;
 class vsColor;
@@ -28,8 +29,10 @@ class vsRecord
 
 	vsArray<vsToken>	m_token;
 
-	vsArrayStore<vsRecord>	m_childList;
+	vsArray<vsRecord*>	m_childList;
 	vsRecord *	m_lastChild;
+
+	vsPool<vsRecord> *m_pool;
 
 	bool		m_inBlock;
 	bool		m_hasLabel;
@@ -50,6 +53,7 @@ public:
 	vsRecord( const vsString& fromString );
 	~vsRecord();
 
+	void		SetPool( vsPool<vsRecord> *pool ) { m_pool = pool; }
 	void		Init();
 
 	bool		Parse( vsFile *file );				// attempt to fill out this vsRecord from a vsString

@@ -215,10 +215,7 @@ vsSerialiserReadStream::Ensure(size_t bytes)
 	{
 		size_t bytes = m_store->BytesLeftForReading();
 		vsStore temp(bytes);
-		for ( size_t i = 0; i < bytes; i++ )
-		{
-			temp.WriteInt8(m_store->ReadInt8());
-		}
+		temp.WriteBuffer(m_store->GetReadHead(),bytes);
 		m_store->Clear();
 		m_store->Append(&temp);
 		m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
