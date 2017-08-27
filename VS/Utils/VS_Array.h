@@ -110,19 +110,25 @@ public:
 		{
 			// reallocate our array and copy data into it.
 			int newSize = vsMax( 16, m_arrayStorage * 2 );
-
-			T *newArray = new T[newSize];
-			for ( int i = 0; i < m_arrayLength; i++ )
-			{
-				newArray[i] = m_array[i];
-			}
-			vsDeleteArray( m_array );
-			m_array = newArray;
-
-			m_arrayStorage = newSize;
-
+			Reserve(newSize);
 			return AddItem( item );
 		}
+	}
+
+	void Reserve( int newSize )
+	{
+		if ( newSize <= m_arrayLength )
+			return;
+
+		T *newArray = new T[newSize];
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			newArray[i] = m_array[i];
+		}
+		vsDeleteArray( m_array );
+		m_array = newArray;
+
+		m_arrayStorage = newSize;
 	}
 
 	bool	RemoveItem( const T &item )
