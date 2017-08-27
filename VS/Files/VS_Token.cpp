@@ -388,8 +388,9 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 			{
 				if ( s->GetType() == vsSerialiser::Type_Write )
 				{
-					uint32_t i = stringTable.FindString(m_string);
-					s->Uint32(i);
+					s->String(m_string);
+					// uint32_t i = stringTable.FindString(m_string);
+					// s->Uint32(i);
 				}
 				else
 				{

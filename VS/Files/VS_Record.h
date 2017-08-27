@@ -72,6 +72,7 @@ public:
 	int					GetChildCount() { return m_childList.ItemCount(); }
 	int					GetChildCount(const vsString& label);	// returns number of children with this label
 	void				AddChild(vsRecord *record);
+	void				SetExpectedChildCount( int count );
 	//void				SetChildCount( int count );
 
 	bool				Bool();

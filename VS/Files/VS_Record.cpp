@@ -148,6 +148,7 @@ vsRecord::SerialiseBinary( vsSerialiser *s )
 	vsString identifier("RecordV1");
 	s->String(identifier);
 	vsStringTable stringTable;
+	if ( s->GetType() == vsSerialiser::Type_Read )
 	{
 		if ( s->GetType() == vsSerialiser::Type_Write )
 			PopulateStringTable(stringTable);
@@ -268,6 +269,12 @@ vsRecord::AddChild(vsRecord *record)
 {
 	m_childList.AddItem(record);
 	m_lastChild = record;
+}
+
+void
+vsRecord::SetExpectedChildCount( int count )
+{
+	m_childList.Reserve(count);
 }
 
 bool
