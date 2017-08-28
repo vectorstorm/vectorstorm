@@ -71,8 +71,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			m_zipStream.zalloc = Z_NULL;
 			m_zipStream.zfree = Z_NULL;
 			m_zipStream.opaque = Z_NULL;
-			// int ret = deflateInit(&m_zipStream, Z_DEFAULT_COMPRESSION);
-			int ret = deflateInit(&m_zipStream, 1);
+			int ret = deflateInit(&m_zipStream, Z_DEFAULT_COMPRESSION);
 			if ( ret != Z_OK )
 			{
 				vsLog("deflateInit error: %d", ret);
