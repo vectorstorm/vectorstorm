@@ -165,7 +165,7 @@ vsRecord::SerialiseBinary( vsSerialiser *s )
 	vsString identifier("RecordV1");
 	s->String(identifier);
 	vsStringTable stringTable;
-	if ( s->GetType() == vsSerialiser::Type_Read )
+	// if ( s->GetType() == vsSerialiser::Type_Write )
 	{
 		if ( s->GetType() == vsSerialiser::Type_Write )
 			PopulateStringTable(stringTable);
