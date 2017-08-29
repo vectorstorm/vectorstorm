@@ -32,12 +32,17 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
+struct zipdata
+{
+	z_stream m_zipStream;
+};
+
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
 	m_file(NULL),
 	m_store(NULL),
-	m_zipStream(),
+	m_zipData(NULL),
 	m_mode(mode),
 	m_length(0),
 	m_moveOnDestruction(false)
@@ -67,11 +72,11 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		if ( mode == MODE_WriteCompressed )
 		{
 			// we're going to write compressed data!
-			// m_zipStream = new z_stream;
-			m_zipStream.zalloc = Z_NULL;
-			m_zipStream.zfree = Z_NULL;
-			m_zipStream.opaque = Z_NULL;
-			int ret = deflateInit(&m_zipStream, Z_DEFAULT_COMPRESSION);
+			m_zipData = new zipdata;
+			m_zipData->m_zipStream.zalloc = Z_NULL;
+			m_zipData->m_zipStream.zfree = Z_NULL;
+			m_zipData->m_zipStream.opaque = Z_NULL;
+			int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
 			if ( ret != Z_OK )
 			{
 				vsLog("deflateInit error: %d", ret);
@@ -134,10 +139,11 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 
 		// we're going to read the compressed data TWICE.
 		// First, we're just going to count how many bytes we inflate into.
-		m_zipStream.zalloc = Z_NULL;
-		m_zipStream.zfree = Z_NULL;
-		m_zipStream.opaque = Z_NULL;
-		int ret = inflateInit(&m_zipStream);
+		m_zipData = new zipdata;
+		m_zipData->m_zipStream.zalloc = Z_NULL;
+		m_zipData->m_zipStream.zfree = Z_NULL;
+		m_zipData->m_zipStream.opaque = Z_NULL;
+		int ret = inflateInit(&m_zipData->m_zipStream);
 		if ( ret != Z_OK )
 		{
 			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
@@ -147,45 +153,45 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		int decompressedSize = 0;
 		int zipBufferSize = 1024 * 100;
 		char zipBuffer[zipBufferSize];
-		m_zipStream.avail_in = compressedData->BytesLeftForReading();
-		m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
 		do
 		{
-			m_zipStream.avail_out = zipBufferSize;
-			m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = inflate(&m_zipStream, Z_NO_FLUSH);
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
 
-			int decompressedBytes = zipBufferSize - m_zipStream.avail_out;
+			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			decompressedSize += decompressedBytes;
 
-		}while( m_zipStream.avail_out == 0 );
-		inflateEnd(&m_zipStream);
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipData->m_zipStream);
 
 		m_store = new vsStore( decompressedSize );
 
 		// Now let's decompress it FOR REAL.
-		ret = inflateInit(&m_zipStream);
+		ret = inflateInit(&m_zipData->m_zipStream);
 		if ( ret != Z_OK )
 		{
 			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
 			return;
 		}
 
-		m_zipStream.avail_in = compressedData->BytesLeftForReading();
-		m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
 		do
 		{
-			m_zipStream.avail_out = zipBufferSize;
-			m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = inflate(&m_zipStream, Z_NO_FLUSH);
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
 
-			int decompressedBytes = zipBufferSize - m_zipStream.avail_out;
+			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			m_store->WriteBuffer( zipBuffer, decompressedBytes );
 
-		}while( m_zipStream.avail_out == 0 );
-		inflateEnd(&m_zipStream);
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipData->m_zipStream);
 
 		// and now that we've decompressed all the data, we can drop into
 		// regular 'Read' mode to serve the data to our clients.
@@ -201,26 +207,27 @@ vsFile::~vsFile()
 	{
 		int zipBufferSize = 1024 * 100;
 		char zipBuffer[zipBufferSize];
-		m_zipStream.avail_in = 0;
-		m_zipStream.next_in = NULL;
+		m_zipData->m_zipStream.avail_in = 0;
+		m_zipData->m_zipStream.next_in = NULL;
 		do
 		{
-			m_zipStream.avail_out = zipBufferSize;
-			m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = deflate(&m_zipStream, Z_FINISH);
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = deflate(&m_zipData->m_zipStream, Z_FINISH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
 
-			int compressedBytes = zipBufferSize - m_zipStream.avail_out;
+			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
 				_WriteBytes(zipBuffer, compressedBytes);
 				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
-		}while( m_zipStream.avail_out == 0 );
-		vsAssert( m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
-		deflateEnd(&m_zipStream);
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+		deflateEnd(&m_zipData->m_zipStream);
 	}
 	FlushBufferedWrites();
 
+	vsDelete( m_zipData );
 	vsDelete( m_store );
 	if ( m_file )
 		PHYSFS_close(m_file);
@@ -604,22 +611,22 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 	{
 		int zipBufferSize = 1024 * 100;
 		char zipBuffer[zipBufferSize];
-		m_zipStream.avail_in = bytes;
-		m_zipStream.next_in = (Bytef*)s->GetReadHead();
+		m_zipData->m_zipStream.avail_in = bytes;
+		m_zipData->m_zipStream.next_in = (Bytef*)s->GetReadHead();
 		do
 		{
-			m_zipStream.avail_out = zipBufferSize;
-			m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = deflate(&m_zipStream, Z_NO_FLUSH);
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = deflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered");
 
-			int compressedBytes = zipBufferSize - m_zipStream.avail_out;
+			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
 				_WriteBytes(zipBuffer, compressedBytes);
 				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
-		}while( m_zipStream.avail_out == 0 );
-		vsAssert( m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
 	}
 	else
 	{

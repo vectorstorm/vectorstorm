@@ -17,7 +17,8 @@ class vsStore;
 
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_String.h"
-#include <zlib.h>
+
+struct zipdata;
 
 class vsFile
 {
@@ -39,7 +40,7 @@ private:
 	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
 	vsStore *m_store;
-	z_stream m_zipStream;
+	struct zipdata *m_zipData;
 
 	Mode		m_mode;
 
