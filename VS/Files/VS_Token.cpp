@@ -412,6 +412,28 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 	}
 }
 
+void
+vsToken::SerialiseBinaryV2( vsSerialiser *s )
+{
+	uint8_t type = m_type;
+	s->Uint8(type);
+	m_type = (Type)type;
+	switch( m_type )
+	{
+		case Type_Label:
+		case Type_String:
+			s->String(m_string);
+			break;
+		case Type_Float:
+			s->Float(m_float);
+			break;
+		case Type_Integer:
+			s->Int32(m_int);
+			break;
+		default:
+			break;
+	}
+}
 int
 vsToken::AsInteger()
 {

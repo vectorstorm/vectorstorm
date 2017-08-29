@@ -124,6 +124,41 @@ vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 }
 
 void
+vsRecord::SerialiseBinaryV2( vsSerialiser *s )
+{
+	m_label.SerialiseBinaryV2(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV2(s);
+	}
+
+	uint32_t childCount = m_childList.ItemCount();
+	s->Uint32(childCount);
+
+	if ( s->GetType() == vsSerialiser::Type_Read )
+	{
+		for ( uint32_t i = 0; i < childCount; i++ )
+		{
+			vsRecord *child = new vsRecord;
+			child->SerialiseBinaryV2(s);
+			AddChild(child);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
+		{
+			vsRecord *child = m_childList[i];
+			child->SerialiseBinaryV2(s);
+		}
+	}
+}
+
+void
 vsRecord::Clean()
 {
 	// remove any tokens which are of type 'none'.
@@ -162,25 +197,33 @@ vsRecord::LoadBinaryV1( vsFile *file )
 bool
 vsRecord::SerialiseBinary( vsSerialiser *s )
 {
-	vsString identifier("RecordV1");
+	vsString identifier("RecordV2");
 	s->String(identifier);
-	vsStringTable stringTable;
-	// if ( s->GetType() == vsSerialiser::Type_Write )
+	if ( s->GetType() == vsSerialiser::Type_Read )
 	{
-		if ( s->GetType() == vsSerialiser::Type_Write )
-			PopulateStringTable(stringTable);
-
-		vsArray<vsString>& strings = stringTable.GetStrings();
-		uint32_t stringCount = strings.ItemCount();
-		s->Uint32(stringCount);
-		strings.SetArraySize(stringCount);
-		for ( uint32_t i = 0; i < stringCount; i++ )
+		if ( identifier == "RecordV1" )
 		{
-			s->String(strings[i]);
-		}
-	}
+			vsStringTable stringTable;
+			{
+				if ( s->GetType() == vsSerialiser::Type_Write )
+					PopulateStringTable(stringTable);
 
-	SerialiseBinaryV1(s, stringTable);
+				vsArray<vsString>& strings = stringTable.GetStrings();
+				uint32_t stringCount = strings.ItemCount();
+				s->Uint32(stringCount);
+				strings.SetArraySize(stringCount);
+				for ( uint32_t i = 0; i < stringCount; i++ )
+				{
+					s->String(strings[i]);
+				}
+			}
+
+			SerialiseBinaryV1(s, stringTable);
+			return true;
+		}
+		vsAssert( identifier == "RecordV2", "Unsupported save file format??" );
+	}
+	SerialiseBinaryV2(s);
 	return true;
 }
 

@@ -46,6 +46,7 @@ public:
 	vsString	BackToString();			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
 
 	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
+	void		SerialiseBinaryV2( vsSerialiser *s );
 	void		PopulateStringTable( vsStringTable& array );
 
 	Type		GetType() const { return m_type; }

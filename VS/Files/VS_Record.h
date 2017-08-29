@@ -44,6 +44,7 @@ class vsRecord
 
 	void		LoadBinaryV1( vsFile *file );
 	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
+	void		SerialiseBinaryV2( vsSerialiser *s );
 	void		PopulateStringTable( vsStringTable& array );
 	void		Clean();
 
