@@ -24,12 +24,6 @@
 
 static float s_mergeTolerance = 0.4f;
 //static float s_splitFactor = 0.707f;
-#if 0
-struct vsMeshMakerCell
-{
-	std::vector<int> m_vertexIndex;
-};
-#endif // 0
 
 
 class vsMeshMakerTriangleEdge
@@ -84,50 +78,6 @@ vsMeshMakerTriangleVertex::AddTriangle( vsMeshMakerTriangle *triangle )
 		m_firstTriangle = triangle;
 	}
 }
-/*
-void
-vsMeshMakerTriangleVertex::RemoveTriangle( vsMeshMakerTriangle *triangle )
-{
-	for ( int i = 0; i < m_triangleCount; i++ )
-	{
-		if ( m_triangle[i] == triangle )
-		{
-			for ( int j = i; j < m_triangleCount-1; j++ )
-			{
-				m_triangle[j] = m_triangle[j+1];
-			}
-			m_triangleCount--;
-			return;
-		}
-	}
-
-	vsAssert(0, "Unable to find triangle for removal??");
-}
-
-vsMeshMakerTriangle *
-vsMeshMakerTriangleVertex::GetTriangle(int i)
-{
-	vsAssert( i < m_triangleCount, "Out of bounds triangle index requested" );
-
-	return m_triangle[i];
-}*/
-/*
-void
-vsMeshMakerTriangleVertex::CalculateNormal()
-{
-	if ( m_triangleCount == 0 )
-		return;
-
-	vsVector3D normal = vsVector3D::Zero;
-	for ( int i = 0; i < m_triangleCount; i++ )
-	{
-		normal += GetTriangle(i)->m_faceNormal;
-	}
-
-	normal.Normalise();
-
-	SetNormal(normal);
-}*/
 
 void
 vsMeshMakerTriangleVertex::SetPosition( const vsVector3D &pos )
@@ -531,121 +481,12 @@ vsMeshMaker::BuildTriangleStripsForMaterial( int matId )
 		m_internalData->m_mesh->AddTriangleToList( matId, t->m_vertex[0].m_index, t->m_vertex[1].m_index, t->m_vertex[2].m_index );
 		t++;
 	}
-
-	//std::vector<int> strip;
-	//strip.reserve(64);
-
-/*	bool *triangleUsed = new bool[count];
-	for ( int i = 0; i < count; i++ )
-	{
-		triangleUsed[i] = false;
-	}*/
-
-	/*int trianglesUsed = 0;
-	while ( !m_internalData->m_materialTriangle[matId].empty() )
-	{
-		int trianglesUsedAtStartOfLoop = trianglesUsed;
-
-		std::list<vsMeshMakerTriangle>::iterator t = m_internalData->m_materialTriangle[matId].begin();
-
-		while( t != m_internalData->m_materialTriangle[matId].end() )
-		{
-			int stripSize = strip.size();
-
-//			if ( !triangleUsed[i] )
-			{
-				if ( stripSize == 0 )
-				{
-					// drop our first triangle straight in.
-					strip.push_back( t->m_vertex[0].m_index );
-					strip.push_back( t->m_vertex[1].m_index );
-					strip.push_back( t->m_vertex[2].m_index );
-
-					t = m_internalData->m_materialTriangle[matId].erase(t);
-					trianglesUsed++;
-				}
-				else
-				{
-					bool invertWinding = ((stripSize & 0x1) == 1);
-					int a,b;
-
-					if ( invertWinding )
-					{
-						a = strip[stripSize-1];
-						b = strip[stripSize-2];
-					}
-					else
-					{
-						a = strip[stripSize-2];
-						b = strip[stripSize-1];
-					}
-
-					//vsMeshMakerTriangle triangle = *t;
-
-					// now, check whether on one of our triangles, we have an 'a, b' sequence.
-
-					if (t->m_vertex[0].m_index == a && t->m_vertex[1].m_index == b)
-					{
-						strip.push_back( t->m_vertex[2].m_index );
-
-						t = m_internalData->m_materialTriangle[matId].erase(t);
-						trianglesUsed++;
-					}
-					else if (t->m_vertex[1].m_index == a && t->m_vertex[2].m_index == b)
-					{
-						strip.push_back( t->m_vertex[0].m_index );
-
-						t = m_internalData->m_materialTriangle[matId].erase(t);
-						trianglesUsed++;
-					}
-					else if (t->m_vertex[2].m_index == a && t->m_vertex[0].m_index == b)
-					{
-						strip.push_back( t->m_vertex[1].m_index );
-
-						t = m_internalData->m_materialTriangle[matId].erase(t);
-						trianglesUsed++;
-					}
-					else
-					{
-						t++;
-					}
-				}
-			}
-		}
-
-		// we didn't add a triangle to our strip, or we added the final triangle,
-		// so add this strip to our mesh!
-		if ( trianglesUsed == trianglesUsedAtStartOfLoop || trianglesUsed == count )
-		{
-			int stripSize = strip.size();
-			if ( stripSize > 0 )
-			{
-				int *array = new int[ stripSize ];
-				//vsLog("Strip:  %d stripverts (%d total triangles)", stripSize, trianglesUsed);
-				for ( int i = 0; i < stripSize; i++ )
-				{
-					array[i] = strip[i];
-				}
-				m_internalData->m_mesh->AddTriStrip(array, stripSize, m_internalData->m_material[matId]);
-				vsDeleteArray(array);
-				strip.clear();
-			}
-			else
-			{
-				//vsLog("Error:  Tried to create a zero strip??");
-			}
-		}
-	}	*/
 }
 
 vsMesh *
 vsMeshMaker::Bake()
 {
 	vsDelete( m_octree );
-	//for ( int i = 0; i < m_cellCount; i++ )
-	//{
-		//m_cell[i].m_vertexIndex.clear();
-	//}
 	m_cellBounds.Clear();
 	for ( int matId = 0; matId < m_internalData->m_materialCount; matId++ )
 	{
@@ -664,10 +505,6 @@ vsMeshMaker::Bake()
 	}
 	m_cellBounds.Expand( 20.0f );
 	m_octree = new vsPointOctree<vsMeshMakerTriangleVertex>( m_cellBounds, 16 );
-
-	//m_cellDimX = m_cellBounds.Width() / MAKER_CELLS;
-	//m_cellDimY = m_cellBounds.Height() / MAKER_CELLS;
-	//m_cellDimZ = m_cellBounds.Depth() / MAKER_CELLS;
 
 
 	// build a list of unique vertices, converting our triangles to refer to indices, instead.
@@ -735,20 +572,3 @@ vsMeshMaker::Bake()
 	return result;
 }
 
-#if 0
-vsMeshMakerCell *
-vsMeshMaker::GetCellForPosition( const vsVector3D &position )
-{
-	vsVector3D offset = position - m_cellBounds.GetMin();
-
-	int xi = offset.x / m_cellDimX;
-	int yi = offset.y / m_cellDimY;
-	int zi = offset.z / m_cellDimZ;
-
-	vsAssert(xi < MAKER_CELLS && yi < MAKER_CELLS && zi < MAKER_CELLS && xi >= 0 && yi >= 0 && zi >= 0, "Out of bounds!");
-
-	int ci = (MAKER_CELLS*MAKER_CELLS*zi) + (MAKER_CELLS*yi) + xi;
-
-	return &m_cell[ci];
-}
-#endif // 0
