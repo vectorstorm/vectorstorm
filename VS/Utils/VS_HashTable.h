@@ -23,7 +23,7 @@ public:
 
 	vsHashEntry<T> *	m_next;
 
-	vsHashEntry() { m_key = vsEmptyString; m_keyHash = 0, m_next = NULL; }
+	vsHashEntry(): m_key() { m_keyHash = 0, m_next = NULL; }
 	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = NULL; }
 };
 
