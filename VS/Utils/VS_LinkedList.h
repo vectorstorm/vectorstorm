@@ -100,7 +100,7 @@ public:
 template<class T>
 class vsLinkedList
 {
-	vsPool<vsListEntry<T> >	m_entry;
+	// vsPool<vsListEntry<T> >	m_entry;
 	vsListEntry<T>		*m_listEntry;
 	vsListEntry<T>		*m_tail;
 
@@ -123,11 +123,11 @@ public:
 
 	typedef vsListIterator<T> Iterator;
 
-	vsLinkedList():
-		m_entry(4, vsPool<vsListEntry<T> >::Type_Expandable)
+	vsLinkedList()//:
+		// m_entry(4, vsPool<vsListEntry<T> >::Type_Expandable)
 	{
-		m_listEntry = m_entry.Borrow();
-		m_tail = m_entry.Borrow();
+		m_listEntry = new vsListEntry<T>;//m_entry.Borrow();
+		m_tail = new vsListEntry<T>;//m_entry.Borrow();
 
 		m_listEntry->m_next = m_tail;
 		m_tail->m_prev = m_listEntry;
@@ -139,9 +139,11 @@ public:
 		{
 			vsListEntry<T> *toDelete = m_listEntry->m_next;
 			m_listEntry->m_next = m_listEntry->m_next->m_next;
-			m_entry.Return( toDelete );
+			// m_entry.Return( toDelete );
+			vsDelete(toDelete);
 		}
-		m_entry.Return( m_listEntry );
+		vsDelete( m_listEntry );
+		// m_entry.Return( m_listEntry );
 		m_listEntry = NULL;
 		m_tail = NULL;
 	}
@@ -152,13 +154,14 @@ public:
 		{
 			vsListEntry<T> *ent = m_listEntry->m_next;
 			ent->Extract();
-			m_entry.Return(ent);
+			vsDelete(ent);
+			// m_entry.Return(ent);
 		}
 	}
 
 	void	AddItem( const T &item )
 	{
-		vsListEntry<T> *ent = m_entry.Borrow();
+		vsListEntry<T> *ent = new vsListEntry<T>;//m_entry.Borrow();
 		ent->m_item = item;
 
 		m_tail->Prepend( ent );
@@ -173,7 +176,8 @@ public:
 		while( ent && ent != m_tail )	// no removing our tail!
 		{
 			ent->Extract();
-			m_entry.Return(ent);
+			vsDelete(ent);
+			// m_entry.Return(ent);
 
 			ent = FindEntry(item);
 		}
@@ -195,7 +199,7 @@ public:
 
 	void	Prepend( vsListIterator<T> &iter, const T &item )
 	{
-		vsListEntry<T> *ent = m_entry.Borrow();
+		vsListEntry<T> *ent = new vsListEntry<T>;//m_entry.Borrow();
 		iter.GetEntry()->Prepend( ent );
 	}
 
