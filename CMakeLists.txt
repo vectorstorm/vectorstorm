@@ -32,7 +32,7 @@ find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED
 if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
-	find_library(GLEW_LIBRARY GLEW REQUIRED)
+	# find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
 	find_library(PHYSFS_LIBRARY physfs REQUIRED
@@ -405,12 +405,12 @@ set(SOURCES
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
 	)
+set( SOURCES
+	glew.c
+	${SOURCES}
+	)
 if ( MINGW )
 	add_definitions("-D MINGW")
-	set( SOURCES
-		glew.c
-		${SOURCES}
-		)
 endif()
 
 	if ( UNIX )
@@ -473,7 +473,7 @@ endif()
 		${PNG_LIBRARY}
 		${SDL_LIBRARY}
 		${SDL_IMAGE_LIBRARY}
-		${GLEW_LIBRARY}
+		# ${GLEW_LIBRARY}
 		${ZLIB_LIBRARY}
 		${PTHREAD_LIBRARY}
 		${PHYSFS_LIBRARY}
