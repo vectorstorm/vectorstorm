@@ -815,14 +815,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetColors:
 				{
-					m_currentColor = c_white;
+					// m_currentColor = c_white;
 					m_currentColors = (vsColor*)op->data.p;
 					m_currentColorsBuffer = NULL;
 					break;
 				}
 			case vsDisplayList::OpCode_SetColorsBuffer:
 				{
-					m_currentColor = c_white;
+					// m_currentColor = c_white;
 					m_currentColors = NULL;
 					m_currentColorsBuffer = (vsRenderBuffer*)op->data.p;
 					break;
