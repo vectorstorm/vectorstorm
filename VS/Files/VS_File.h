@@ -48,6 +48,7 @@ private:
 	bool m_moveOnDestruction;
 
 	void _WriteBytes( void* bytes, size_t byteCount );
+	void _WriteFinalBytes_Buffered( void* bytes, size_t byteCount );
 
 public:
 
@@ -93,8 +94,8 @@ public:
 
 	void		Rewind();
 
-	void		Store( vsStore *store );		// read/write this raw data directly.
-	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store
+	void		Store( vsStore *store );		// read/write this raw data directly.  STORE IS REWOUND BEFORE READ/WRITE
+	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store.  STORE IS NOT REWOUND BEFORE READ/WRITE
 
 	void		FlushBufferedWrites();
 	/*  These functions are probably deprecated;  use vsRecord objects instead!

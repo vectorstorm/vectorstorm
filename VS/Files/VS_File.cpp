@@ -218,7 +218,7 @@ vsFile::~vsFile()
 
 			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
-				_WriteBytes(zipBuffer, compressedBytes);
+				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
 				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
 		}while( m_zipData->m_zipStream.avail_out == 0 );
@@ -552,14 +552,15 @@ vsFile::Rewind()
 void
 vsFile::Store( vsStore *s )
 {
-	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
+	s->Rewind();
+	if ( m_mode == MODE_Write ||
+			m_mode == MODE_WriteCompressed ||
+			m_mode == MODE_WriteDirectly )
 	{
-		s->Rewind();
-		PHYSFS_write( m_file, s->GetReadHead(), 1, s->Length() );
+		_WriteBytes(s->GetReadHead(), s->BytesLeftForReading());
 	}
 	else
 	{
-		s->Rewind();
 		if ( m_file )
 		{
 			PHYSFS_sint64 n;
@@ -575,11 +576,13 @@ vsFile::Store( vsStore *s )
 }
 
 void
-vsFile::_WriteBytes( void* bytes, size_t byteCount )
+vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
 {
 	vsAssert( m_mode == MODE_Write || m_mode == MODE_WriteCompressed,
 			"Trying to write but we're not in write mode??" );
 
+	if ( m_store )
+	{
 	if ( byteCount < m_store->BytesLeftForWriting() )
 	{
 		m_store->WriteBuffer(bytes, byteCount);
@@ -597,22 +600,27 @@ vsFile::_WriteBytes( void* bytes, size_t byteCount )
 			byteCount -= bytesWeCanWrite;
 		}
 	}
+	}
+	else
+	{
+		// we're not writing in a buffered context.  Just write the bytes directly.
+		PHYSFS_write( m_file, bytes, 1, byteCount );
+	}
 }
 
 void
-vsFile::StoreBytes( vsStore *s, size_t bytes )
+vsFile::_WriteBytes( void* bytes, size_t byteCount )
 {
-	if ( m_mode == MODE_Write )
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteDirectly )
 	{
-		_WriteBytes(s->GetReadHead(), s->BytesLeftForReading());
-		// PHYSFS_write( m_file, s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()) );
+		_WriteFinalBytes_Buffered(bytes, byteCount);
 	}
 	else if ( m_mode == MODE_WriteCompressed )
 	{
 		int zipBufferSize = 1024 * 100;
 		char zipBuffer[zipBufferSize];
-		m_zipData->m_zipStream.avail_in = bytes;
-		m_zipData->m_zipStream.next_in = (Bytef*)s->GetReadHead();
+		m_zipData->m_zipStream.avail_in = byteCount;
+		m_zipData->m_zipStream.next_in = (Bytef*)bytes;
 		do
 		{
 			m_zipData->m_zipStream.avail_out = zipBufferSize;
@@ -622,11 +630,26 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 
 			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
-				_WriteBytes(zipBuffer, compressedBytes);
+				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
 				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
 		}while( m_zipData->m_zipStream.avail_out == 0 );
 		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+	}
+	else
+	{
+		vsAssert(0, "Tried to write bytes when we're not in a 'write' mode??");
+	}
+}
+
+void
+vsFile::StoreBytes( vsStore *s, size_t bytes )
+{
+	if ( m_mode == MODE_Write ||
+			m_mode == MODE_WriteCompressed ||
+			m_mode == MODE_WriteDirectly )
+	{
+		_WriteBytes(s->GetReadHead(), vsMin(bytes,s->BytesLeftForReading()));
 	}
 	else
 	{
