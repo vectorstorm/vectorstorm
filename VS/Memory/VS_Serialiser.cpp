@@ -215,10 +215,7 @@ vsSerialiserReadStream::Ensure(size_t bytes)
 	{
 		size_t bytes = m_store->BytesLeftForReading();
 		vsStore temp(bytes);
-		for ( size_t i = 0; i < bytes; i++ )
-		{
-			temp.WriteInt8(m_store->ReadInt8());
-		}
+		temp.WriteBuffer(m_store->GetReadHead(),bytes);
 		m_store->Clear();
 		m_store->Append(&temp);
 		m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
@@ -294,7 +291,15 @@ vsSerialiserReadStream::Float(float &value)
 void
 vsSerialiserReadStream::String( vsString &value )
 {
-	Ensure(sizeof(vsString));
+	int bytes;
+	Ensure( sizeof(int16_t) );
+
+	// first, check how many bytes in this string.
+	size_t	readHeadPos = m_store->GetReadHeadPosition();
+	bytes = m_store->ReadInt32();
+	m_store->SeekReadHeadTo(readHeadPos);
+
+	Ensure( sizeof(int16_t) + bytes );
 	value = m_store->ReadString();
 }
 
@@ -330,115 +335,114 @@ vsSerialiserWriteStream::vsSerialiserWriteStream(vsFile *file):
 	vsSerialiser(NULL, Type_Write),
 	m_file(file)
 {
-	m_store = new vsStore(1024);
+	m_store = new vsStore(1024 * 100);
 }
 
 vsSerialiserWriteStream::~vsSerialiserWriteStream()
 {
+	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
 	vsDelete(m_store);
+}
+
+void
+vsSerialiserWriteStream::Ensure(size_t bytes)
+{
+	if ( m_store->BytesLeftForWriting() < bytes )
+	{
+		m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
+		m_store->Clear();
+		vsAssert(m_store->BytesLeftForWriting() >= bytes, "Not enough data to fulfill stream?");
+	}
 }
 
 void
 vsSerialiserWriteStream::Bool(bool &value)
 {
+	Ensure(sizeof(int8_t));
 	m_store->WriteInt8(value?1:0);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Int8(int8_t &value)
 {
+	Ensure(sizeof(int8_t));
 	m_store->WriteInt8(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Uint8(uint8_t &value)
 {
+	Ensure(sizeof(uint8_t));
 	m_store->WriteUint8(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Int16(int16_t &value)
 {
+	Ensure(sizeof(int16_t));
 	m_store->WriteInt16(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Uint16(uint16_t &value)
 {
+	Ensure(sizeof(uint16_t));
 	m_store->WriteUint16(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Int32(int32_t &value)
 {
+	Ensure(sizeof(int32_t));
 	m_store->WriteInt32(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Uint32(uint32_t &value)
 {
+	Ensure(sizeof(uint32_t));
 	m_store->WriteUint32(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Float(float &value)
 {
+	Ensure(sizeof(float));
 	m_store->WriteFloat(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::String( vsString &value )
 {
+	Ensure( sizeof(int16_t) + value.size() );
 	m_store->WriteString(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Vector2D( vsVector2D &value )
 {
+	Ensure( sizeof(vsVector2D) );
 	m_store->WriteVector2D(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Vector3D( vsVector3D &value )
 {
+	Ensure( sizeof(vsVector3D) );
 	m_store->WriteVector3D(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Vector4D( vsVector4D &value )
 {
+	Ensure( sizeof(vsVector4D) );
 	m_store->WriteVector4D(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 
 void
 vsSerialiserWriteStream::Color( vsColor &value )
 {
+	Ensure( sizeof(vsColor) );
 	m_store->WriteColor(value);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
-	m_store->Clear();
 }
 

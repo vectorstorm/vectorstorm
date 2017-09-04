@@ -20,6 +20,7 @@ find_library(SDL_LIBRARY SDL2 REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
+find_package(ZLIB REQUIRED)
 
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
@@ -64,8 +65,10 @@ if (USE_BOX2D_PHYSICS)
 		c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 endif()
 
+# find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
+# 	PATH c:/src/buildzone/lib/x86 )
 if(WIN32)
-	# find_file(ZLIB_DLL zlib1.dll REQUIRED
+	# find_file(ZLIB_DLL libzlib.dll REQUIRED
 	# 	PATH c:/src/buildzone/lib/x86 )
 	find_file(PNG_DLL libpng16.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
@@ -379,6 +382,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Spring.h
 	VS/Utils/VS_String.cpp
 	VS/Utils/VS_String.h
+	VS/Utils/VS_StringTable.cpp
+	VS/Utils/VS_StringTable.h
 	VS/Utils/VS_StrongPointer.h
 	VS/Utils/VS_StrongPointerTarget.h
 	VS/Utils/VS_System.cpp

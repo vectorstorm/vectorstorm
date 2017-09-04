@@ -147,6 +147,8 @@ class vsSerialiserWriteStream : public vsSerialiser
 {
 	vsFile * m_file;
 	vsStore * m_store;
+
+	void Ensure(size_t bytes);
 public:
 	vsSerialiserWriteStream( vsFile *file );
 	virtual ~vsSerialiserWriteStream();

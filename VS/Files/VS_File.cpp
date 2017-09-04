@@ -25,26 +25,35 @@
 
 #include <errno.h>
 #include <physfs.h>
+#include <zlib.h>
 
 #include "VS_DisableDebugNew.h"
 #include <vector>
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
+struct zipdata
+{
+	z_stream m_zipStream;
+};
+
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
 	m_file(NULL),
 	m_store(NULL),
+	m_zipData(NULL),
 	m_mode(mode),
 	m_length(0),
 	m_moveOnDestruction(false)
 {
 	vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
-	if ( mode == MODE_Read )
+	if ( mode == MODE_Read || mode == MODE_ReadCompressed )
+	{
 		m_file = PHYSFS_openRead( filename.c_str() );
-	else if ( mode == MODE_Write )
+	}
+	else if ( mode == MODE_Write || mode == MODE_WriteCompressed )
 	{
 		// in normal 'Write' mode, we actually write into a temporary file, and
 		// then move it into position when the file is closed.  We do this so
@@ -57,6 +66,32 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		EnsureWriteDirectoryExists(directoryOnly);
 		m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
 		m_moveOnDestruction = true;
+
+		m_store = new vsStore( 1024 * 1024 );
+
+		if ( mode == MODE_WriteCompressed )
+		{
+			// we're going to write compressed data!
+			m_zipData = new zipdata;
+			m_zipData->m_zipStream.zalloc = Z_NULL;
+			m_zipData->m_zipStream.zfree = Z_NULL;
+			m_zipData->m_zipStream.opaque = Z_NULL;
+			int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
+			if ( ret != Z_OK )
+			{
+				vsLog("deflateInit error: %d", ret);
+				mode = MODE_Write;
+			}
+
+			// What's more, compressed writing doesn't give us nice uniform
+			// blobs of data to write.  Well-behaved clients might ask us to
+			// write a megabyte at a time, and zlib turns around and tells us
+			// that we have 2 bytes of data to write because it's found some
+			// amazing compression scheme, or it simply isn't sure yet how it
+			// wants to compress that data we've given it so far.
+			//
+			// As a result, we want to buffer our writes!
+		}
 	}
 	else if ( mode == MODE_WriteDirectly )
 	{
@@ -85,10 +120,114 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		PHYSFS_close(m_file);
 		m_file = NULL;
 	}
+	else if ( mode == MODE_ReadCompressed )
+	{
+		// in COMPRESSED read mode, we can't do the clever thing we did above
+		// where we just made a single store and loaded the whole file into it
+		// all at once, because we don't know how big the file is going to wind
+		// up being.
+		//
+		// So here's what we're going to do;  we're going to load all the data
+		// into a store (as above), decompress it once just to figure out how
+		// big it's going to be, then decompress it AGAIN, into a store that's
+		// the right size to hold it.
+
+		vsStore *compressedData = new vsStore( m_length );
+		Store(compressedData);
+		PHYSFS_close(m_file);
+		m_file = NULL;
+
+		// we're going to read the compressed data TWICE.
+		// First, we're just going to count how many bytes we inflate into.
+		m_zipData = new zipdata;
+		m_zipData->m_zipStream.zalloc = Z_NULL;
+		m_zipData->m_zipStream.zfree = Z_NULL;
+		m_zipData->m_zipStream.opaque = Z_NULL;
+		int ret = inflateInit(&m_zipData->m_zipStream);
+		if ( ret != Z_OK )
+		{
+			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+			return;
+		}
+
+		int decompressedSize = 0;
+		int zipBufferSize = 1024 * 100;
+		char zipBuffer[zipBufferSize];
+		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		do
+		{
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+			decompressedSize += decompressedBytes;
+
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipData->m_zipStream);
+
+		m_store = new vsStore( decompressedSize );
+
+		// Now let's decompress it FOR REAL.
+		ret = inflateInit(&m_zipData->m_zipStream);
+		if ( ret != Z_OK )
+		{
+			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+			return;
+		}
+
+		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+		do
+		{
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+			m_store->WriteBuffer( zipBuffer, decompressedBytes );
+
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		inflateEnd(&m_zipData->m_zipStream);
+
+		// and now that we've decompressed all the data, we can drop into
+		// regular 'Read' mode to serve the data to our clients.
+		m_mode = MODE_Read;
+		m_length = decompressedSize;
+		vsDelete( compressedData );
+	}
 }
 
 vsFile::~vsFile()
 {
+	if ( m_mode == MODE_WriteCompressed )
+	{
+		int zipBufferSize = 1024 * 100;
+		char zipBuffer[zipBufferSize];
+		m_zipData->m_zipStream.avail_in = 0;
+		m_zipData->m_zipStream.next_in = NULL;
+		do
+		{
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = deflate(&m_zipData->m_zipStream, Z_FINISH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+			if ( compressedBytes > 0 )
+				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
+				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
+
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+		deflateEnd(&m_zipData->m_zipStream);
+	}
+	FlushBufferedWrites();
+
+	vsDelete( m_zipData );
 	vsDelete( m_store );
 	if ( m_file )
 		PHYSFS_close(m_file);
@@ -96,6 +235,19 @@ vsFile::~vsFile()
 	{
 		// now we need to move the file we just wrote into its final position.
 		Move( m_tempFilename, m_filename );
+	}
+}
+
+void
+vsFile::FlushBufferedWrites()
+{
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
+	{
+		if ( m_store && m_store->BytesLeftForReading() )
+		{
+			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+			m_store->Clear();
+		}
 	}
 }
 
@@ -270,7 +422,7 @@ vsFile::PeekRecord( vsRecord *r )
 {
 	vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
 
-	if ( m_mode == MODE_Write )
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
 		vsAssert( m_mode != MODE_Write, "Error:  Not legal to PeekRecord() when writing a file!" );
 		return false;
@@ -300,7 +452,7 @@ vsFile::Record( vsRecord *r )
 {
 	vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
 
-	if ( m_mode == MODE_Write )
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
 		vsString recordString = r->ToString();
 
@@ -317,6 +469,17 @@ vsFile::Record( vsRecord *r )
 		return r->Parse(this);
 	}
 
+	return false;
+}
+
+bool
+vsFile::Record_Binary( vsRecord *r )
+{
+	// utility function;  actually, we do this from the Record side.
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
+		r->SaveBinary(this);
+	else
+		r->LoadBinary(this);
 	return false;
 }
 
@@ -389,14 +552,15 @@ vsFile::Rewind()
 void
 vsFile::Store( vsStore *s )
 {
-	if ( m_mode == MODE_Write )
+	s->Rewind();
+	if ( m_mode == MODE_Write ||
+			m_mode == MODE_WriteCompressed ||
+			m_mode == MODE_WriteDirectly )
 	{
-		s->Rewind();
-		PHYSFS_write( m_file, s->GetReadHead(), 1, s->Length() );
+		_WriteBytes(s->GetReadHead(), s->BytesLeftForReading());
 	}
 	else
 	{
-		s->Rewind();
 		if ( m_file )
 		{
 			PHYSFS_sint64 n;
@@ -412,11 +576,80 @@ vsFile::Store( vsStore *s )
 }
 
 void
+vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
+{
+	vsAssert( m_mode == MODE_Write || m_mode == MODE_WriteCompressed,
+			"Trying to write but we're not in write mode??" );
+
+	if ( m_store )
+	{
+	if ( byteCount < m_store->BytesLeftForWriting() )
+	{
+		m_store->WriteBuffer(bytes, byteCount);
+	}
+	else
+	{
+		while( byteCount > 0 )
+		{
+			size_t bytesWeCanWrite = vsMin( byteCount, m_store->BytesLeftForWriting() );
+			m_store->WriteBuffer(bytes, bytesWeCanWrite);
+			bytes = (char*)(bytes) + bytesWeCanWrite;
+
+			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+			m_store->Clear();
+			byteCount -= bytesWeCanWrite;
+		}
+	}
+	}
+	else
+	{
+		// we're not writing in a buffered context.  Just write the bytes directly.
+		PHYSFS_write( m_file, bytes, 1, byteCount );
+	}
+}
+
+void
+vsFile::_WriteBytes( void* bytes, size_t byteCount )
+{
+	if ( m_mode == MODE_Write || m_mode == MODE_WriteDirectly )
+	{
+		_WriteFinalBytes_Buffered(bytes, byteCount);
+	}
+	else if ( m_mode == MODE_WriteCompressed )
+	{
+		int zipBufferSize = 1024 * 100;
+		char zipBuffer[zipBufferSize];
+		m_zipData->m_zipStream.avail_in = byteCount;
+		m_zipData->m_zipStream.next_in = (Bytef*)bytes;
+		do
+		{
+			m_zipData->m_zipStream.avail_out = zipBufferSize;
+			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+			int ret = deflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered");
+
+			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+			if ( compressedBytes > 0 )
+				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
+				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
+
+		}while( m_zipData->m_zipStream.avail_out == 0 );
+		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+	}
+	else
+	{
+		vsAssert(0, "Tried to write bytes when we're not in a 'write' mode??");
+	}
+}
+
+void
 vsFile::StoreBytes( vsStore *s, size_t bytes )
 {
-	if ( m_mode == MODE_Write )
+	if ( m_mode == MODE_Write ||
+			m_mode == MODE_WriteCompressed ||
+			m_mode == MODE_WriteDirectly )
 	{
-		PHYSFS_write( m_file, s->GetReadHead(), 1, vsMin(bytes, s->BytesLeftForReading()) );
+		_WriteBytes(s->GetReadHead(), vsMin(bytes,s->BytesLeftForReading()));
 	}
 	else
 	{

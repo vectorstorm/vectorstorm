@@ -9,6 +9,8 @@
 
 #include "VS_Token.h"
 
+#include "VS/Memory/VS_Serialiser.h"
+
 #ifdef MSVC
 // visual studio defines its own "secure" sscanf.  So use that to keep
 // Microsoft happy.
@@ -364,6 +366,74 @@ vsToken::AsString()
 	return result;
 }
 
+void
+vsToken::PopulateStringTable( vsStringTable& table )
+{
+	if ( m_type == Type_Label || m_type == Type_String )
+	{
+		table.AddString(m_string);
+	}
+}
+
+void
+vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
+{
+	uint8_t type = m_type;
+	s->Uint8(type);
+	m_type = (Type)type;
+	switch( m_type )
+	{
+		case Type_Label:
+		case Type_String:
+			{
+				if ( s->GetType() == vsSerialiser::Type_Write )
+				{
+					// s->String(m_string);
+					uint32_t i = stringTable.FindString(m_string);
+					s->Uint32(i);
+				}
+				else
+				{
+					uint32_t i = 0;
+					s->Uint32(i);
+					m_string = stringTable.GetStrings()[i];
+					// s->String(m_string);
+				}
+			}
+			break;
+		case Type_Float:
+			s->Float(m_float);
+			break;
+		case Type_Integer:
+			s->Int32(m_int);
+			break;
+		default:
+			break;
+	}
+}
+
+void
+vsToken::SerialiseBinaryV2( vsSerialiser *s )
+{
+	uint8_t type = m_type;
+	s->Uint8(type);
+	m_type = (Type)type;
+	switch( m_type )
+	{
+		case Type_Label:
+		case Type_String:
+			s->String(m_string);
+			break;
+		case Type_Float:
+			s->Float(m_float);
+			break;
+		case Type_Integer:
+			s->Int32(m_int);
+			break;
+		default:
+			break;
+	}
+}
 int
 vsToken::AsInteger()
 {

@@ -11,12 +11,15 @@
 #define FS_RECORD_H
 
 #include "VS/Utils/VS_Array.h"
-#include "VS/Utils/VS_LinkedListStore.h"
+#include "VS/Utils/VS_StringTable.h"
+#include "VS/Utils/VS_ArrayStore.h"
 #include "VS/Math/VS_Quaternion.h"
+#include "VS/Utils/VS_Pool.h"
 
 class vsVector2D;
 class vsColor;
 class vsFile;
+class vsSerialiser;
 
 #include "VS_Token.h"
 
@@ -26,8 +29,10 @@ class vsRecord
 
 	vsArray<vsToken>	m_token;
 
-	vsLinkedListStore<vsRecord>	m_childList;
+	vsArray<vsRecord*>	m_childList;
 	vsRecord *	m_lastChild;
+
+	vsPool<vsRecord> *m_pool;
 
 	bool		m_inBlock;
 	bool		m_hasLabel;
@@ -37,18 +42,29 @@ class vsRecord
 
 	float		GetArg(int i);
 
+	void		LoadBinaryV1( vsFile *file );
+	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
+	void		SerialiseBinaryV2( vsSerialiser *s );
+	void		PopulateStringTable( vsStringTable& array );
+	void		Clean();
+
 public:
 	vsRecord();
 	vsRecord( const char* fromString );
 	vsRecord( const vsString& fromString );
 	~vsRecord();
 
+	void		SetPool( vsPool<vsRecord> *pool ) { m_pool = pool; }
 	void		Init();
 
 	bool		Parse( vsFile *file );				// attempt to fill out this vsRecord from a vsString
 	bool		ParseString( vsString string );
 	bool		AppendToken( const vsToken &token );		// add this token to me.
 	vsString	ToString( int childLevel = 0 );							// convert this vsRecord into a vsString.
+
+	bool		LoadBinary( vsFile *file );
+	void		SaveBinary( vsFile *file );
+	bool		SerialiseBinary( vsSerialiser *s );
 
 	vsToken &			GetLabel() { return m_label; }
 	void				SetLabel(const vsString &label);
@@ -61,6 +77,7 @@ public:
 	int					GetChildCount() { return m_childList.ItemCount(); }
 	int					GetChildCount(const vsString& label);	// returns number of children with this label
 	void				AddChild(vsRecord *record);
+	void				SetExpectedChildCount( int count );
 	//void				SetChildCount( int count );
 
 	bool				Bool();

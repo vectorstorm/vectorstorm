@@ -18,6 +18,8 @@ class vsStore;
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_String.h"
 
+struct zipdata;
+
 class vsFile
 {
 public:
@@ -27,6 +29,9 @@ public:
 		MODE_Write,         // overwrite an existing file.
 		MODE_WriteDirectly, // actually, 'Write' writes into a temporary file and overwrites the existing file when you destroy the vsFile object.  If you *actually* want to write directly into a file, use this mode instead.
 
+		MODE_ReadCompressed, // open an existing file and read from it, INFLATEd
+		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
+
 		MODE_MAX
 	};
 
@@ -35,11 +40,15 @@ private:
 	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
 	vsStore *m_store;
+	struct zipdata *m_zipData;
 
 	Mode		m_mode;
 
 	size_t		m_length;
 	bool m_moveOnDestruction;
+
+	void _WriteBytes( void* bytes, size_t byteCount );
+	void _WriteFinalBytes_Buffered( void* bytes, size_t byteCount );
 
 public:
 
@@ -81,11 +90,14 @@ public:
 	bool		PeekLine( vsString *line );
 	bool		ReadLine( vsString *line );
 
+	bool		Record_Binary( vsRecord *record );		// returns true if we found or successfully wrote another record
+
 	void		Rewind();
 
-	void		Store( vsStore *store );		// read/write this raw data directly.
-	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store
+	void		Store( vsStore *store );		// read/write this raw data directly.  STORE IS REWOUND BEFORE READ/WRITE
+	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store.  STORE IS NOT REWOUND BEFORE READ/WRITE
 
+	void		FlushBufferedWrites();
 	/*  These functions are probably deprecated;  use vsRecord objects instead!
 	 *
 	vsString	ReadLabel();

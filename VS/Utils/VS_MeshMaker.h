@@ -22,9 +22,6 @@ class vsMesh;
 struct vsMeshMakerTriangle;
 class vsMeshMakerTriangleEdge;
 
-#define MAX_EDGES_PER_VERTEX (50)
-//#define MAX_TRIANGLES_PER_VERTEX (50)
-
 struct vsMeshMakerTriangleVertex: public vsPointOctreeElement
 {
 	vsVector3D		m_position;
@@ -37,12 +34,7 @@ struct vsMeshMakerTriangleVertex: public vsPointOctreeElement
 
 	vsMeshMakerTriangleVertex *	m_fakeNormalMergedWith;
 
-//	vsMeshMakerTriangleEdge *	m_edge[MAX_EDGES_PER_VERTEX];
-//	int							m_edgeCount;
-
 	vsMeshMakerTriangle *		m_firstTriangle;
-//	vsMeshMakerTriangle *		m_triangle[MAX_TRIANGLES_PER_VERTEX];
-//	int							m_triangleCount;
 
 public:
 
@@ -64,15 +56,8 @@ public:
 	bool				AttemptMergeWith( vsMeshMakerTriangleVertex *other, const vsVector3D &faceNormalOther );
 	float				GetMergePriorityWith( const vsMeshMakerTriangleVertex &other, const vsVector3D &faceNormalOther );
 
-//	void				AddEdge( vsMeshMakerTriangleEdge *edge );
-//	vsMeshMakerTriangleEdge *	GetEdge(int i);
-//	int							GetEdgeCount() { return m_edgeCount; }
-
 	void					AddTriangle( vsMeshMakerTriangle *triangle );
 	vsMeshMakerTriangle *	GetFirstTriangle() { return m_firstTriangle; }
-	//void					RemoveTriangle( vsMeshMakerTriangle *triangle );
-	//vsMeshMakerTriangle *	GetTriangle(int i);
-	//int						GetTriangleCount() { return m_triangleCount; }
 
 	void					CalculateNormal();
 
@@ -108,12 +93,7 @@ class vsMeshMaker
 	int					m_triangleCount;
 
 	vsPointOctree<vsMeshMakerTriangleVertex> *m_octree;
-	//vsMeshMakerCell		*m_cell;
-	//int					m_cellCount;
 	vsBox3D				m_cellBounds;
-	//float				m_cellDimX;
-	//float				m_cellDimY;
-	//float				m_cellDimZ;
 
 	vsMeshMakerTriangleVertex *m_vertex;
 	int				m_vertexCount;
@@ -127,8 +107,6 @@ class vsMeshMaker
 	int				BakeTriangleVertex( vsMeshMakerTriangleVertex &vertex, const vsVector3D &faceNormal );
 	int				BakeTriangleMaterial( vsMaterial *material );
 	void			BuildTriangleStripsForMaterial( int matId );
-
-	//vsMeshMakerCell *	GetCellForPosition( const vsVector3D &position );
 
 public:
 

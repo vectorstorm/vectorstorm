@@ -193,10 +193,11 @@ vsStore::WriteString( const vsString &string )
 	int16_t s = (int16_t)string.size();
 
 	WriteInt16(s);
-	for ( int16_t i = 0; i < s; i++ )
-	{
-		WriteInt8( string[i] );
-	}
+	WriteBuffer(string.c_str(), s);
+	// for ( int16_t i = 0; i < s; i++ )
+	// {
+	// 	WriteInt8( string[i] );
+	// }
 }
 
 void

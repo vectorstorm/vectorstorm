@@ -12,13 +12,14 @@
 
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Math/VS_Vector.h"
-
+#include "VS/Memory/VS_Serialiser.h"
 
 vsRecord::vsRecord()
 {
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 }
@@ -28,6 +29,7 @@ vsRecord::vsRecord( const char* fromString )
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -38,6 +40,7 @@ vsRecord::vsRecord( const vsString& fromString )
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
+	m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -45,18 +48,191 @@ vsRecord::vsRecord( const vsString& fromString )
 
 vsRecord::~vsRecord()
 {
-	Init();
+	Init(); // to clear out our children.
 }
 
 void
 vsRecord::Init()
 {
+	for ( int i = 0; i < m_childList.ItemCount(); i++ )
+	{
+		if ( m_childList[i]->m_pool )
+		{
+			m_childList[i]->Init();
+			m_childList[i]->m_pool->Return(m_childList[i]);
+		}
+		else
+		{
+			vsDelete(m_childList[i]);
+		}
+		// vsDelete(m_childList[i]);
+	}
 	m_childList.Clear();
 	m_token.Clear();
 	m_inBlock = false;
 	m_hasLabel = false;
 	m_lineIsOpen = true;
 	m_lastChild = NULL;
+}
+
+void
+vsRecord::PopulateStringTable( vsStringTable& stringTable )
+{
+	m_label.PopulateStringTable(stringTable);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+		m_token[i].PopulateStringTable(stringTable);
+	for (int i = 0; i < m_childList.ItemCount(); i++ )
+	{
+		vsRecord *child = m_childList[i];
+		child->PopulateStringTable(stringTable);
+	}
+}
+
+void
+vsRecord::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
+{
+	m_label.SerialiseBinaryV1(s, stringTable);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV1(s, stringTable);
+	}
+
+	uint32_t childCount = m_childList.ItemCount();
+	s->Uint32(childCount);
+
+	if ( s->GetType() == vsSerialiser::Type_Read )
+	{
+		for ( uint32_t i = 0; i < childCount; i++ )
+		{
+			vsRecord *child = new vsRecord;
+			child->SerialiseBinaryV1(s, stringTable);
+			AddChild(child);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
+		{
+			vsRecord *child = m_childList[i];
+			child->SerialiseBinaryV1(s, stringTable);
+		}
+	}
+}
+
+void
+vsRecord::SerialiseBinaryV2( vsSerialiser *s )
+{
+	m_label.SerialiseBinaryV2(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV2(s);
+	}
+
+	uint32_t childCount = m_childList.ItemCount();
+	s->Uint32(childCount);
+
+	if ( s->GetType() == vsSerialiser::Type_Read )
+	{
+		for ( uint32_t i = 0; i < childCount; i++ )
+		{
+			vsRecord *child = new vsRecord;
+			child->SerialiseBinaryV2(s);
+			AddChild(child);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
+		{
+			vsRecord *child = m_childList[i];
+			child->SerialiseBinaryV2(s);
+		}
+	}
+}
+
+void
+vsRecord::Clean()
+{
+	// remove any tokens which are of type 'none'.
+	for ( int i = 0; i < m_token.ItemCount(); )
+	{
+		if ( m_token[i].GetType() == vsToken::Type_None )
+			m_token.RemoveItem(m_token[i]);
+		else
+			i++;
+	}
+	for (int i = 0; i < m_childList.ItemCount(); i++ )
+	{
+		vsRecord *child = m_childList[i];
+		child->Clean();
+	}
+}
+
+void
+vsRecord::SaveBinary( vsFile *file )
+{
+	vsSerialiserWriteStream ws( file );
+
+	// Clean();
+	SerialiseBinary(&ws);
+	// ws.String(m_label);
+}
+
+void
+vsRecord::LoadBinaryV1( vsFile *file )
+{
+	vsSerialiserReadStream ws( file );
+
+	SerialiseBinary(&ws);
+}
+
+bool
+vsRecord::SerialiseBinary( vsSerialiser *s )
+{
+	vsString identifier("RecordV2");
+	s->String(identifier);
+	if ( s->GetType() == vsSerialiser::Type_Read )
+	{
+		if ( identifier == "RecordV1" )
+		{
+			vsStringTable stringTable;
+			{
+				if ( s->GetType() == vsSerialiser::Type_Write )
+					PopulateStringTable(stringTable);
+
+				vsArray<vsString>& strings = stringTable.GetStrings();
+				uint32_t stringCount = strings.ItemCount();
+				s->Uint32(stringCount);
+				strings.SetArraySize(stringCount);
+				for ( uint32_t i = 0; i < stringCount; i++ )
+				{
+					s->String(strings[i]);
+				}
+			}
+
+			SerialiseBinaryV1(s, stringTable);
+			return true;
+		}
+		vsAssert( identifier == "RecordV2", "Unsupported save file format??" );
+	}
+	SerialiseBinaryV2(s);
+	return true;
+}
+
+bool
+vsRecord::LoadBinary( vsFile *file )
+{
+	// TODO:  Check file for version identifier.
+	LoadBinaryV1(file);
+	return true;
 }
 
 vsString
@@ -85,9 +261,9 @@ vsRecord::ToString( int childLevel )
 		result += "\n";
 		result += tabbing + "{\n";
 
-		for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin(); iter != m_childList.End(); iter++ )
+		for (int i = 0; i < m_childList.ItemCount(); i++ )
 		{
-			vsRecord *child = *iter;
+			vsRecord *child = m_childList[i];
 			result += child->ToString( childLevel+1 );
 		}
 
@@ -122,28 +298,30 @@ vsRecord::SetTokenCount(int count)
 vsRecord *
 vsRecord::GetChild(int i)
 {
-	vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin();
-	while(i-->0)
-	{
-		iter++;
-	}
-	return *iter;
+	return m_childList[i];
+	// vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin();
+	// while(i-->0)
+	// {
+	// 	iter++;
+	// }
+	// return *iter;
 }
 
 int
 vsRecord::GetChildCount(const vsString& label)
 {
-	int count = 0;
-	for ( vsLinkedListStore<vsRecord>::Iterator iter = m_childList.Begin();
-			iter != m_childList.End();
-			iter++ )
-	{
-		if ( (*iter)->GetLabel().AsString() == label )
-		{
-			count++;
-		}
-	}
-	return count;
+	return m_childList.ItemCount();
+	// int count = 0;
+	// for ( vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin();
+	// 		iter != m_childList.End();
+	// 		iter++ )
+	// {
+	// 	if ( (*iter)->GetLabel().AsString() == label )
+	// 	{
+	// 		count++;
+	// 	}
+	// }
+	// return count;
 }
 
 void
@@ -151,6 +329,12 @@ vsRecord::AddChild(vsRecord *record)
 {
 	m_childList.AddItem(record);
 	m_lastChild = record;
+}
+
+void
+vsRecord::SetExpectedChildCount( int count )
+{
+	m_childList.Reserve(count);
 }
 
 bool

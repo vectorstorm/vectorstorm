@@ -10,12 +10,12 @@
 #ifndef VS_POOL_H
 #define VS_POOL_H
 
-#include "VS_Array.h"
+#include "VS_VolatileArray.h"
 
 template<class T>
 class vsPool
 {
-	vsArray<T*>				m_unusedList;
+	vsVolatileArray<T*>				m_unusedList;
 
 	int						m_count;
 	int						m_unusedCount;
@@ -65,7 +65,7 @@ public:
 		}
 		m_unusedCount--;
 
-		T* result = m_unusedList[m_unusedList.ItemCount()-1];
+		T* result = m_unusedList[0];
 		m_unusedList.RemoveItem(result);
 		//m_usedList.AddItem(result);
 
