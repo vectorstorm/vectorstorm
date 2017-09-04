@@ -25,8 +25,15 @@
 
 class vsStringTable
 {
+	class Entry
+	{
+	public:
+		Entry(): id(0) {}
+		Entry(int i): id(i) {}
+		int id;
+	};
 	vsArray<vsString> m_strings;
-	vsHashTable<int> m_stringIndex;
+	vsHashTable<Entry> m_stringIndex;
 
 public:
 	vsStringTable();

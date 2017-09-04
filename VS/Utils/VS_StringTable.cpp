@@ -18,9 +18,9 @@ int
 vsStringTable::AddString( const vsString& string )
 {
 	// already in the table?
-	int* indexPtr = m_stringIndex.FindItem(string);
+	Entry* indexPtr = m_stringIndex.FindItem(string);
 	if ( indexPtr )
-		return *indexPtr;
+		return indexPtr->id;
 
 	// add to the table!
 	int index = m_strings.ItemCount();
@@ -33,9 +33,9 @@ int
 vsStringTable::FindString( const vsString& string )
 {
 	// already in the table?
-	int* indexPtr = m_stringIndex.FindItem(string);
+	Entry* indexPtr = m_stringIndex.FindItem(string);
 	if ( indexPtr )
-		return *indexPtr;
+		return indexPtr->id;
 
 	vsAssert(indexPtr, vsFormatString("Requested string '%s' not in string table", string.c_str()));
 	return 0;

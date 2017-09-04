@@ -123,7 +123,7 @@ public:
 		T* result = FindItem(key);
 		if ( result )
 			return *result;
-		T newItem = {0};
+		T newItem;
 		AddItemWithKey( newItem, key );
 		return *FindItem(key);
 	}
