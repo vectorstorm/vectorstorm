@@ -163,17 +163,13 @@ vsScene::Update( float timeStep )
 		return;
 
 	vsEntity *entity = m_entityList->GetNext();
-	vsEntity *next;
 	while ( entity != m_entityList )
 	{
-		// in theory, an entity might get destroyed during its 'Update' call
-		// (although that's a really dangerous practice).  To cope with that
-		// possibility, lets store a pointer to our next child, before we call
-		// into 'Update' on this child.
-		next = entity->GetNext();
-
 		entity->Update( timeStep );
-		entity = next;
+		vsAssert( entity->GetNext()!= entity,
+				"Entity deleted itself during its ::Update()!  That's not okay!" );
+
+		entity = entity->GetNext();
 	}
 
 	if ( m_camera && !m_cameraIsReference )

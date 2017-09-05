@@ -30,8 +30,9 @@ vsEntity::~vsEntity()
 	else
 		Extract();
 
-	// now, delete our children.  Remember that they'll be extracting themselves from our child list as they're deleted,
-	// so we need to check what the next child is before we delete the previous child!
+	// now, delete our children.  Remember that they'll be extracting
+	// themselves from our child list as they're deleted, so we need to check
+	// what the next child is before we delete the previous child!
 
 	vsEntity *child = m_child;
 
@@ -145,14 +146,8 @@ vsEntity::Update( float timeStep )
 
 	while ( child )
 	{
-		// in theory, an entity might get destroyed during its 'Update' call
-		// (although that's a really dangerous practice).  To cope with that
-		// possibility, lets store a pointer to our next child, before we call
-		// into 'Update' on this child.
-		vsEntity *next = child->m_next;
-
 		child->Update( timeStep );
-		child = next;
+		child = child->m_next;
 	}
 }
 
