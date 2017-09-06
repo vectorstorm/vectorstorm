@@ -16,10 +16,17 @@ DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
 {
 #ifdef UNIX
 	intptr_t result;
+
 #else
 	DWORD result;
 #endif
 	vsTask *task = (vsTask*)arg;
+
+#if defined(UNIX) && defined(_DEBUG)
+	if ( task->m_name.size() > 16 )
+		task->m_name.resize(16);
+	pthread_setname_np( pthread_self(), task->m_name.c_str() );
+#endif
 
 	task->m_done = false;
 	result = task->Run();
@@ -33,8 +40,11 @@ DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
 #endif
 }
 
-vsTask::vsTask():
+vsTask::vsTask( const vsString& name ):
 	m_thread(0),
+#ifdef _DEBUG
+	m_name(name),
+#endif // _DEBUG
 	m_done(false)
 {
 }
@@ -57,6 +67,7 @@ vsTask::Start()
 {
 #ifdef UNIX
 	pthread_create( &m_thread, NULL, &vsTask::DoStartThread, (void*)this );
+
 #else
 	m_thread = CreateThread(
 			NULL,                   // default security attributes

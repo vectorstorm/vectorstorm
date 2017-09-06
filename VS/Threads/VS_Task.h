@@ -21,27 +21,32 @@ typedef HANDLE thread_t;
 
 class vsTask
 {
-    thread_t   m_thread;
-    bool        m_done;
+	thread_t m_thread;
+#ifdef _DEBUG
+	vsString m_name;
+#endif // DEBUG
+	bool m_done;
 
 #ifdef UNIX
 	static void *DoStartThread(void* arg);
 #else
 	static DWORD WINAPI DoStartThread( LPVOID arg );
 #endif
+
 protected:
 
-    // return 0 for 'no error'.
-    virtual int Run() = 0;
+	// return 0 for 'no error'.
+	virtual int Run() = 0;
 
 public:
 
-            vsTask();
-    virtual ~vsTask();
+	// name is optional, and will be truncated to 16 characters.  In release
+	// builds, it will be fully ignored.
+	vsTask( const vsString& name = vsEmptyString );
+	virtual ~vsTask();
 
-    void    Start();
-
-    bool    IsDone() { return m_done; }
+	void Start();
+	bool IsDone() { return m_done; }
 
 };
 
