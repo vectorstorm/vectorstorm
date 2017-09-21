@@ -1292,19 +1292,21 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetViewport:
 				{
 					const vsBox2D& box = op->data.box2D;
-					glViewport( (GLsizei)box.GetMin().x * m_viewportWidthPixels,
-							(GLsizei)box.GetMin().y * m_viewportHeightPixels,
-							(GLsizei)box.Width() * m_viewportWidthPixels,
-							(GLsizei)box.Height() * m_viewportHeightPixels );
-					//glViewport( box.GetMin().x,
-					//box.GetMin().y,
-					//box.Width(),
-					//box.Height());
+					{
+						int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
+						int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
+						glViewport( (GLsizei)(box.GetMin().x * currentTargetWidth),
+								(GLsizei)(box.GetMin().y * currentTargetHeight),
+								(GLsizei)(box.Width() * currentTargetWidth),
+								(GLsizei)(box.Height() * currentTargetHeight) );
+					}
 					break;
 				}
 			case vsDisplayList::OpCode_ClearViewport:
 				{
-					glViewport( 0, 0, (GLsizei)m_viewportWidthPixels, (GLsizei)m_viewportHeightPixels );
+					int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
+					int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
+					glViewport( 0, 0, (GLsizei)currentTargetWidth, (GLsizei)currentTargetHeight );
 					break;
 				}
 			case vsDisplayList::OpCode_Debug:
