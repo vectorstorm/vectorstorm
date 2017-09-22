@@ -193,79 +193,112 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
 	m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
 	m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
-	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &m_uniformCount );
+	int activeUniformCount = 0;
+	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &activeUniformCount );
 	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
 
-	m_uniform = new Uniform[m_uniformCount];
-	m_attribute = new Attribute[m_attributeCount];
-
+	// 'activeUniformCount' only counts an array of uniforms as a single thing.
+	// We're going to expand those out so that we can bind values to individual
+	// array elements as if they were separate uniforms.  So the first step is,
+	// we need to count how many *actual* uniforms we're going to create, so
+	// we can allocate enough space.
+	m_uniformCount = 0;
 	const int c_maxNameLength = 256;
 	char nameBuffer[c_maxNameLength];
+	for ( GLint i = 0; i < activeUniformCount; i++ )
+	{
+		GLint arraySize = 0;
+		GLenum type = 0;
+		GLsizei actualLength = 0;
+		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
+		m_uniformCount += arraySize;
+	}
+
+	m_uniform = new Uniform[m_uniformCount];
+
+	int nextUniform = 0;
 	int defaultSamplerBinding = 0;
-	for ( GLint i = 0; i < m_uniformCount; i++ )
+	for ( GLint i = 0; i < activeUniformCount; i++ )
 	{
 		GL_CHECK("Shader::Uniform");
 		GLint arraySize = 0;
 		GLenum type = 0;
 		GLsizei actualLength = 0;
 		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
-		m_uniform[i].name = vsString(nameBuffer);
-		m_uniform[i].loc = glGetUniformLocation(m_shader, nameBuffer);
-		m_uniform[i].type = type;
-		m_uniform[i].arraySize = arraySize;
-		m_uniform[i].b = false;
-		m_uniform[i].f32 = 0.f;
 
-		// initialise to random values, so we definitely set them at least once.
-		switch ( m_uniform[i].type )
+		vsString baseName = vsString(nameBuffer);
+		uint32_t arrayPos = baseName.find("[0]");
+
+		for ( int arrayIndex = 0; arrayIndex < arraySize; arrayIndex++ )
 		{
-			case GL_BOOL:
-			case GL_INT:
-				glGetUniformiv( m_shader, m_uniform[i].loc, &m_uniform[i].b );
-				break;
-			case GL_FLOAT:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].f32 );
-				break;
-			case GL_FLOAT_VEC3:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
-				break;
-			case GL_FLOAT_VEC4:
-				glGetUniformfv( m_shader, m_uniform[i].loc, &m_uniform[i].vec4.x );
-				break;
-			case GL_SAMPLER_2D:
-				m_uniform[i].b = defaultSamplerBinding;
-				defaultSamplerBinding += m_uniform[i].arraySize;
-				break;
-			case GL_UNSIGNED_INT_SAMPLER_BUFFER:
-			case GL_INT_SAMPLER_BUFFER:
-			case GL_SAMPLER_BUFFER:
-				// we're still by default binding buffer textures to slot 9.
-				//
-				// Really what we want is to look at the material's texture slots
-				// to find the first buffer texture in there, and set that slot
-				// index here.  And then if there's another sampler buffer in
-				// the material's slots, and another uniform asking for one,
-				// use that next.  And so on.
-				//
-				// Or alternately, maybe I want to ignore that whole complexity,
-				// and just have samplers get numbered directly regardless of
-				// type, and let the shader simply throw errors if the coder
-				// hasn't lined up the shader's samplers to match the material.
-				// Maybe that'd be most sensible.
-				//
-				// But for right now, stick with hardcoded 9, since that's still
-				// hardcoded on the vsDynamicMaterial.
-				//
-				m_uniform[i].b = 9;
-				// m_uniform[i].b = defaultSamplerBinding;
-				// defaultSamplerBinding += m_uniform[i].arraySize;
-				break;
-			default:
-				break;
+			int ui = nextUniform++;
+
+			vsString name(baseName);
+			if ( arraySize > 1 && arrayPos != vsString::npos)
+			{
+				name.replace( arrayPos, 3, vsFormatString("[%d]", arrayIndex) );
+				// name += vsFormatString("[%d]", arrayIndex);
+			}
+
+			m_uniform[ui].name = name;
+			m_uniform[ui].loc = glGetUniformLocation(m_shader, name.c_str());
+			m_uniform[ui].type = type;
+			m_uniform[ui].arraySize = arraySize;
+			m_uniform[ui].b = false;
+			m_uniform[ui].f32 = 0.f;
+
+			// initialise to random values, so we definitely set them at least once.
+			switch ( m_uniform[ui].type )
+			{
+				case GL_BOOL:
+				case GL_INT:
+					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].b );
+					break;
+				case GL_FLOAT:
+					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].f32 );
+					break;
+				case GL_FLOAT_VEC3:
+					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
+					break;
+				case GL_FLOAT_VEC4:
+					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
+					break;
+				case GL_SAMPLER_2D:
+					m_uniform[ui].b = defaultSamplerBinding;
+					defaultSamplerBinding ++;//= m_uniform[ui].arraySize;
+					break;
+				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
+				case GL_INT_SAMPLER_BUFFER:
+				case GL_SAMPLER_BUFFER:
+					// we're still by default binding buffer textures to slot 9.
+					//
+					// Really what we want is to look at the material's texture slots
+					// to find the first buffer texture in there, and set that slot
+					// index here.  And then if there's another sampler buffer in
+					// the material's slots, and another uniform asking for one,
+					// use that next.  And so on.
+					//
+					// Or alternately, maybe I want to ignore that whole complexity,
+					// and just have samplers get numbered directly regardless of
+					// type, and let the shader simply throw errors if the coder
+					// hasn't lined up the shader's samplers to match the material.
+					// Maybe that'd be most sensible.
+					//
+					// But for right now, stick with hardcoded 9, since that's still
+					// hardcoded on the vsDynamicMaterial.
+					//
+					m_uniform[ui].b = 9;
+					// m_uniform[ui].b = defaultSamplerBinding;
+					// defaultSamplerBinding += m_uniform[ui].arraySize;
+					break;
+				default:
+					break;
+			}
+			GL_CHECK("Shader::Uniform");
 		}
-		GL_CHECK("Shader::Uniform");
 	}
 	GL_CHECK("Shader::Between");
+	m_attribute = new Attribute[m_attributeCount];
 	for ( GLint i = 0; i < m_attributeCount; i++ )
 	{
 		GL_CHECK("Shader::Attribute");
@@ -803,10 +836,10 @@ vsShader::SetUniformValueB( int i, bool value )
 void
 vsShader::SetUniformValueI( int i, int value )
 {
-	for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-	{
-		glUniform1i( m_uniform[i].loc+j, value+j );
-	}
+	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
+	// {
+		glUniform1i( m_uniform[i].loc, value );
+	// }
 }
 
 void
