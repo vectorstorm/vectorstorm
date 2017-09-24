@@ -220,7 +220,7 @@ vsMaterial::BindUniformB( int32_t id, const bool* value )
 bool
 vsMaterial::BindUniformI( int32_t id, const int* value )
 {
-	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_BOOL )
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_INT )
 	{
 		m_uniformValue[id].bind = value;
 		m_uniformValue[id].bound = true;
@@ -289,6 +289,13 @@ vsMaterial::BindUniformB( const vsString& name, const bool* value )
 {
 	int32_t id = UniformId(name);
 	return BindUniformB(id,value);
+}
+
+bool
+vsMaterial::BindUniformI( const vsString& name, const int* value )
+{
+	int32_t id = UniformId(name);
+	return BindUniformI(id,value);
 }
 
 bool

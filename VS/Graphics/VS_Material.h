@@ -76,6 +76,7 @@ public:
 	void SetUniformVec4( const vsString& name, const vsVector4D& value );
 	bool BindUniformF( const vsString& name, const float* value );
 	bool BindUniformB( const vsString& name, const bool* value );
+	bool BindUniformI( const vsString& name, const int* value );
 	bool BindUniformColor( const vsString& name, const vsColor* value );
 	bool BindUniformVec3( const vsString& name, const vsVector3D* value );
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
