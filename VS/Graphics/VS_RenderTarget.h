@@ -28,6 +28,7 @@ public:
 			depth(true),
 			linear(true),
 			mipMaps(false),
+			anisotropy(true),
 			stencil(false)
 		{
 		}
@@ -37,6 +38,7 @@ public:
 		bool	depth;
 		bool	linear;
 		bool	mipMaps;
+		bool	anisotropy;
 		bool	stencil;
 	};
 
