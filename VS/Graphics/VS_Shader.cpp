@@ -739,6 +739,7 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 				}
 			case GL_INT:
 			case GL_SAMPLER_2D:
+			case GL_SAMPLER_2D_SHADOW:
 			case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
