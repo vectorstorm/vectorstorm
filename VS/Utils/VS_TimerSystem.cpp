@@ -328,3 +328,11 @@ vsTimerSystem::PostUpdate( float timeStep )
 	m_startGather = now;
 }
 
+void
+vsTimerSystem::ShowTimingBars(bool show)
+{
+#if defined(DEBUG_TIMING_BAR)
+	m_sprite->SetVisible(show);
+#endif
+}
+

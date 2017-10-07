@@ -358,3 +358,4 @@ vsScreen::GetDebugScene()
 }
 
 #endif // DEBUG_SCENE
+

@@ -10,9 +10,9 @@
 #ifndef VS_SCREEN_H
 #define VS_SCREEN_H
 
-#ifdef VS_TIMING_BARS
+#if defined(VS_TIMING_BARS) || defined(_DEBUG)
 #define DEBUG_SCENE
-#endif // _DEBUG
+#endif
 
 #include "Graphics/VS_Renderer.h"
 #include "Graphics/VS_DisplayList.h"

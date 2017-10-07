@@ -19,7 +19,7 @@
 class vsMaterial;
 class vsRenderBuffer;
 
-#if defined(DEBUG_SCENE)
+#if defined(VS_TIMING_BARS) && defined(DEBUG_SCENE)
 #define DEBUG_TIMING_BAR
 #endif
 
@@ -88,6 +88,8 @@ public:
 	unsigned long		GetGatherTime() { return m_gatherTime / 1000; }
 	unsigned long		GetDrawTime() { return m_drawTime / 1000; }
 	unsigned long		GetCPUTime() { return m_cpuTime / 1000; }
+
+	void ShowTimingBars(bool show);
 
 	static vsTimerSystem *	Instance() { return s_instance; }
 };
