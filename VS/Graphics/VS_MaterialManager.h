@@ -19,8 +19,10 @@ class vsMaterialManager : public vsCache<vsMaterialInternal>
 public:
 	vsMaterialManager();
 	virtual ~vsMaterialManager();
-	
+
 	vsMaterialInternal *	LoadMaterial( const vsString &name );
+
+	void ReloadAll();
 };
 
 

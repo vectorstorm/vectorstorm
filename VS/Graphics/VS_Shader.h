@@ -101,6 +101,7 @@ public:
 
 	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 	static void ReloadAll();
+	void Reload();
 
 	uint32_t GetShaderId() { return m_shader; }
 

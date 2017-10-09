@@ -361,33 +361,38 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 }
 
 void
+vsShader::Reload()
+{
+	if ( m_vertexShaderFile != vsEmptyString && m_fragmentShaderFile != vsEmptyString )
+	{
+		vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
+		vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
+
+		uint32_t vSize = vShader.GetLength();
+		uint32_t fSize = fShader.GetLength();
+
+		vsStore *vStore = new vsStore(vSize);
+		vsStore *fStore = new vsStore(fSize);
+
+		vShader.Store( vStore );
+		fShader.Store( fStore );
+		vsString vString( vStore->GetReadHead(), vSize );
+		vsString fString( fStore->GetReadHead(), fSize );
+
+		Compile( vString, fString, m_litBool, m_textureBool );
+
+		delete vStore;
+		delete fStore;
+	}
+}
+
+void
 vsShader::ReloadAll()
 {
 	vsShader *s = vsShader::GetFirstInstance();
 	while ( s )
 	{
-		if ( s->m_vertexShaderFile != vsEmptyString && s->m_fragmentShaderFile != vsEmptyString )
-		{
-			vsFile vShader( vsString("shaders/") + s->m_vertexShaderFile, vsFile::MODE_Read );
-			vsFile fShader( vsString("shaders/") + s->m_fragmentShaderFile, vsFile::MODE_Read );
-
-			uint32_t vSize = vShader.GetLength();
-			uint32_t fSize = fShader.GetLength();
-
-			vsStore *vStore = new vsStore(vSize);
-			vsStore *fStore = new vsStore(fSize);
-
-			vShader.Store( vStore );
-			fShader.Store( fStore );
-			vsString vString( vStore->GetReadHead(), vSize );
-			vsString fString( fStore->GetReadHead(), fSize );
-
-			s->Compile( vString, fString, s->m_litBool, s->m_textureBool );
-
-			delete vStore;
-			delete fStore;
-		}
-
+		s->Reload();
 		s = s->GetNextInstance();
 	}
 }

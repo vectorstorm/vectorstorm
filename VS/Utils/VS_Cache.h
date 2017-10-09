@@ -88,6 +88,7 @@ public:
 template <typename T>
 class vsCache : public vsSingleton< vsCache<T> >
 {
+protected:
 	vsCacheEntry<T>		*m_bucket;
 	int					m_bucketCount;
 

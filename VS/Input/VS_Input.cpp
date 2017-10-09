@@ -17,6 +17,7 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 
+#include "VS_MaterialManager.h" // TEMP:  For triggering material reload.
 #include "VS_Shader.h" // TEMP:  For triggering shader reload.
 
 #include "VS_Preferences.h"
@@ -879,7 +880,12 @@ vsInput::Update(float timeStep)
 									//							break;
 								case SDLK_p:
 									// reload shaders!
-									vsShader::ReloadAll();
+									// vsShader::ReloadAll();
+									{
+										vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
+										if ( mm )
+											mm->ReloadAll();
+									}
 									break;
 								default:
 									break;

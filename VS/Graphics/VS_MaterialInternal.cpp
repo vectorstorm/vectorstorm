@@ -66,7 +66,10 @@ vsMaterialInternal::vsMaterialInternal():
 	m_blend(true)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
 		m_texture[i] = NULL;
+		m_textureFromFile[i] = false;
+	}
 
 	SetShader();
 }
@@ -100,7 +103,10 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_blend(true)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
 		m_texture[i] = NULL;
+		m_textureFromFile[i] = false;
+	}
 
 	vsString fileName = vsFormatString("materials/%s.mat", name.c_str());
 
@@ -125,11 +131,35 @@ vsMaterialInternal::~vsMaterialInternal()
 }
 
 void
+vsMaterialInternal::Reload()
+{
+	vsString fileName = vsFormatString("materials/%s.mat", GetName().c_str());
+
+	if (vsFile::Exists(fileName))
+	{
+		vsFile materialFile(fileName);
+		LoadFromFile( &materialFile );
+	}
+	else
+	{
+		// not a file-based material;  just reload its shader.
+		m_shader->Reload();
+	}
+}
+
+void
 vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 {
 	vsRecord r, sr;
 
 	bool setFog = false;
+
+	for ( int i = 0; i < m_textureCount; i++ )
+	{
+		if ( m_textureFromFile[i] )
+			vsDelete( m_texture[i] );
+	}
+	m_textureCount = 0;
 
 	while( materialFile->Record(&r) )
 	{
@@ -225,6 +255,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					vsAssert( sr->GetTokenCount() >= 1, "Texture directive with more than one token??" );
 					vsString textureString = sr->String();
 					m_texture[m_textureCount] = new vsTexture( textureString );
+					m_textureFromFile[m_textureCount] = true;
 
 					if ( sr->GetTokenCount() == 2 )
 					{
@@ -236,6 +267,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "shader" )
 				{
+					vsDelete( m_shader );
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
@@ -309,7 +341,7 @@ vsMaterialInternal::HasAnyTextures() const
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
-		if ( m_texture[i] != NULL )
+		if ( m_texture[i] != NULL && m_textureFromFile[i] )
 			return true;
 	}
 	return false;
@@ -320,5 +352,6 @@ vsMaterialInternal::SetTexture(int i, vsTexture *texture)
 {
 	vsDelete(m_texture[i]);
 	m_texture[i] = new vsTexture(texture);
+	m_textureFromFile[i] = false;
 }
 

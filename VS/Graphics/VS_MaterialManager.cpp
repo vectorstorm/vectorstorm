@@ -23,8 +23,28 @@ vsMaterialManager::~vsMaterialManager()
 	vsDelete( vsMaterial::White );
 }
 
-vsMaterialInternal *	
+vsMaterialInternal *
 vsMaterialManager::LoadMaterial( const vsString &name )
 {
 	return Get( name );
 }
+
+void
+vsMaterialManager::ReloadAll()
+{
+	for ( int b = 0; b < m_bucketCount; b++ )
+	{
+		vsCacheEntry< vsMaterialInternal > *bucket = &m_bucket[b];
+		while( bucket )
+		{
+			if ( bucket->m_item )
+			{
+				vsMaterialInternal *m = static_cast<vsMaterialInternal*>(bucket->m_item);
+				m->Reload();
+			}
+
+			bucket = bucket->m_next;
+		}
+	}
+}
+
