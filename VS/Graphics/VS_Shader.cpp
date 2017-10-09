@@ -227,7 +227,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		glGetActiveUniform(m_shader, i, c_maxNameLength, &actualLength, &arraySize, &type, nameBuffer);
 
 		vsString baseName = vsString(nameBuffer);
-		uint32_t arrayPos = baseName.find("[0]");
+		vsString::size_type arrayPos = baseName.find("[0]");
 
 		for ( int arrayIndex = 0; arrayIndex < arraySize; arrayIndex++ )
 		{

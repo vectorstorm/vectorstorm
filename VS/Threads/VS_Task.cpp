@@ -22,10 +22,16 @@ DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
 #endif
 	vsTask *task = (vsTask*)arg;
 
-#if defined(UNIX) && defined(_DEBUG)
+#if defined(_DEBUG)
 	if ( task->m_name.size() > 16 )
 		task->m_name.resize(16);
+
+#if defined(__APPLE_CC__)
+	pthread_setname_np( task->m_name.c_str() );
+#elif defined(UNIX)
 	pthread_setname_np( pthread_self(), task->m_name.c_str() );
+#endif
+
 #endif
 
 	task->m_done = false;
