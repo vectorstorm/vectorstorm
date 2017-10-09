@@ -38,7 +38,7 @@ static const vsString s_cullString[CULL_MAX] =
 
 static int	s_codeMaterialCount = 0;
 vsMaterialInternal::vsMaterialInternal():
-	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
+	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount)),
 	m_textureCount(0),
 	m_shaderIsMine(false),
 	m_shader(NULL),
@@ -65,6 +65,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_hasColor(true),
 	m_blend(true)
 {
+	s_codeMaterialCount++;
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		m_texture[i] = NULL;

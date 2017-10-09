@@ -9,10 +9,12 @@
 
 #ifndef VS_STRING_H
 #define VS_STRING_H
+#include "Utils/fmt/printf.h"
 
 typedef std::string vsString;
 
-vsString vsFormatString( const char* format, ... );
+// vsString vsFormatString( const char* format, ... );
+#define vsFormatString fmt::sprintf
 
 vsString vsNumberString(int number);
 

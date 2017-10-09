@@ -152,7 +152,7 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		}
 		else
 		{
-			vsAssert(0, vsFormatString("Unsupported vertex format: %s", format.c_str()) );
+			vsAssert(0, vsFormatString("Unsupported vertex format: %s", format) );
 		}
 
 		r.String(tag);

@@ -12,6 +12,7 @@
 //#include <string>
 #include <stdarg.h>
 #include "Utils/utfcpp/utf8.h"
+#include "Utils/fmt/printf.h"
 
 const vsString vsEmptyString = "";
 
@@ -21,17 +22,24 @@ const vsString vsEmptyString = "";
 #define gmtime gmtime_s
 #endif
 
-vsString vsFormatString( const char* format, ... )
+vsString test()
 {
-	char sz[1024];
-	va_list marker;
-
-	va_start(marker, format);
-	vsnprintf(sz, 1024, format, marker);
-	va_end(marker);
-
-	return sz;
+	int thing = 42;
+	return fmt::sprintf("Foo %d", thing++);
+	return fmt::sprintf("Foo %d", thing);
 }
+
+// vsString vsFormatString( const char* format, ... )
+// {
+// 	char sz[1024];
+// 	va_list marker;
+//
+// 	va_start(marker, format);
+// 	vsnprintf(sz, 1024, format, marker);
+// 	va_end(marker);
+//
+// 	return sz;
+// }
 
 vsString vsNumberString(int number)
 {

@@ -397,6 +397,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_VolatileArrayStore.h
 	VS/Utils/VS_WeakPointer.h
 	VS/Utils/VS_WeakPointerTarget.h
+	VS/Utils/fmt/format.cc
+	VS/Utils/fmt/format.h
 	)
 set(SOURCES
 	VS/VS_Headers.h
