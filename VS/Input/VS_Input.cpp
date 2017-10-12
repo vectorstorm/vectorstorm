@@ -878,15 +878,16 @@ vsInput::Update(float timeStep)
 									//						case 'Z':
 									//							m_keyControlState[CID_ZoomOut] = 1.f;
 									//							break;
+#ifdef _DEBUG
 								case SDLK_p:
-									// reload shaders!
-									// vsShader::ReloadAll();
+									// reload materials, (DEBUG ONLY)
 									{
 										vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
 										if ( mm )
 											mm->ReloadAll();
 									}
 									break;
+#endif // _DEBUG
 								default:
 									break;
 							}
