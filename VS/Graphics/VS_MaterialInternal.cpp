@@ -339,11 +339,8 @@ vsMaterialInternal::SetShader()
 bool
 vsMaterialInternal::HasAnyTextures() const
 {
-	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-	{
-		if ( m_texture[i] != NULL && m_textureFromFile[i] )
-			return true;
-	}
+	if ( m_texture[0] != NULL )
+		return true;
 	return false;
 }
 
