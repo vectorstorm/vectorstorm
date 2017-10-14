@@ -208,7 +208,11 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	{
 		if ( other->m_type == Type_Window ) // default framebuffer!  Don't use attachments
 			glDrawBuffer(GL_BACK);
+		else
+			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+
 		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+
 
 		glBlitFramebuffer(0, 0,
 				m_viewportWidth, m_viewportHeight,
