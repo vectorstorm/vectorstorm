@@ -33,7 +33,12 @@ protected:
 	bool			m_visible;
 	bool			m_clickable;
 
+	bool			m_processing;
+	bool			m_extractQueued;
+
 	void			DrawChildren( vsRenderQueue *queue );
+
+	void			DoExtract();
 
 public:
 		vsEntity();
@@ -78,6 +83,7 @@ public:
 	void			MoveToBottom();
 
 	void			Extract();
+	void			QueueExtract();
 };
 
 #endif // VS_ENTITY_H

@@ -17,7 +17,9 @@ vsEntity::vsEntity():
 	m_name( vsEmptyString ),
 	m_parent(NULL),
 	m_child(NULL),
-	m_visible(true)
+	m_visible(true),
+	m_processing(false),
+	m_extractQueued(false)
 {
 	m_next = m_prev = this;
 	m_clickable = true;
@@ -28,7 +30,10 @@ vsEntity::~vsEntity()
 	if ( m_parent )
 		m_parent->RemoveChild(this);
 	else
-		Extract();
+	{
+		vsAssert( !m_processing, "Destroyed while processing this entity??" );
+		DoExtract();
+	}
 
 	// now, delete our children.  Remember that they'll be extracting
 	// themselves from our child list as they're deleted, so we need to check
@@ -96,7 +101,7 @@ vsEntity::RemoveChild( vsEntity *sprite )
 }
 
 void
-vsEntity::Extract()
+vsEntity::DoExtract()
 {
 	if ( m_parent )
 	{
@@ -111,6 +116,22 @@ vsEntity::Extract()
 
 		m_prev = m_next = this;
 	}
+	m_extractQueued = false;
+}
+
+void
+vsEntity::Extract()
+{
+	if ( m_processing )
+		m_extractQueued = true;
+	else
+		DoExtract();
+}
+
+void
+vsEntity::QueueExtract()
+{
+	m_extractQueued = true;
 }
 
 void
@@ -132,16 +153,24 @@ vsEntity::DrawChildren( vsRenderQueue *queue )
 void
 vsEntity::Draw( vsRenderQueue *queue )
 {
+	m_processing = true;
+
 	if ( m_visible )
 	{
 		DynamicDraw(queue);
 		DrawChildren(queue);
 	}
+
+	m_processing = false;
+	if ( m_extractQueued )
+		DoExtract();
 }
 
 void
 vsEntity::Update( float timeStep )
 {
+	m_processing = true;
+
 	vsEntity *child = m_child;
 
 	while ( child )
@@ -149,6 +178,10 @@ vsEntity::Update( float timeStep )
 		child->Update( timeStep );
 		child = child->m_next;
 	}
+
+	m_processing = false;
+	if ( m_extractQueued )
+		DoExtract();
 }
 
 void
