@@ -247,13 +247,17 @@ public:
 
 	T*& GetItem(int id)
 	{
-		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		vsAssert(id >= 0 && id < m_arrayLength,
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				);
 		return m_array[id];
 	}
 
 	const T* GetItemConst(int id) const
 	{
-		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		vsAssert(id >= 0 && id < m_arrayLength,
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				);
 		return m_array[id];
 	}
 
