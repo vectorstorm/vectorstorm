@@ -69,6 +69,7 @@ public:
 		m_unusedList.RemoveItem(result);
 		//m_usedList.AddItem(result);
 
+		vsAssert( m_unusedCount == m_unusedList.ItemCount(), "Out of sync pool counts??" );
 		return result;
 	}
 
@@ -78,11 +79,12 @@ public:
 
 		//m_usedList.RemoveItem(item);
 		m_unusedList.AddItem(item);
+		vsAssert( m_unusedCount == m_unusedList.ItemCount(), "Out of sync pool counts??" );
 	}
 
 	bool IsEmpty()
 	{
-		return (m_unusedCount == 0 || m_expandable);
+		return (m_unusedCount == 0 && !m_expandable);
 	}
 };
 

@@ -803,60 +803,60 @@ vsInput::Update(float timeStep)
 						}
 						else // not string mode
 						{
-							switch( event.key.keysym.sym )
+							switch( event.key.keysym.scancode )
 							{
-								case SDLK_q:
+								case SDL_SCANCODE_Q:
 									if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
 									{
 										core::SetExitToMenu();
 									}
 									m_keyControlState[CID_Exit] = 1.0f;
 									break;
-								case SDLK_ESCAPE:
+								case SDL_SCANCODE_ESCAPE:
 									if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
 									{
 										core::SetExit();
 									}
 									m_keyControlState[CID_Escape] = 1.0f;
 									break;
-								case SDLK_w:
-								case SDLK_UP:
+								case SDL_SCANCODE_W:
+								case SDL_SCANCODE_UP:
 									m_keyControlState[CID_Up] = 1.0f;
 									m_keyControlState[CID_LUp] = 1.0f;
 									break;
-								case SDLK_s:
-								case SDLK_DOWN:
+								case SDL_SCANCODE_S:
+								case SDL_SCANCODE_DOWN:
 									m_keyControlState[CID_Down] = 1.0f;
 									m_keyControlState[CID_LDown] = 1.0f;
 									break;
-								case SDLK_a:
-								case SDLK_LEFT:
+								case SDL_SCANCODE_A:
+								case SDL_SCANCODE_LEFT:
 									m_keyControlState[CID_Left] = 1.0f;
 									m_keyControlState[CID_LLeft] = 1.0f;
 									break;
-								case SDLK_d:
-								case SDLK_RIGHT:
+								case SDL_SCANCODE_D:
+								case SDL_SCANCODE_RIGHT:
 									m_keyControlState[CID_Right] = 1.0f;
 									m_keyControlState[CID_LRight] = 1.0f;
 									break;
-								case SDLK_SPACE:
-								case SDLK_1:
+								case SDL_SCANCODE_SPACE:
+								case SDL_SCANCODE_1:
 									m_keyControlState[CID_A] = 1.0f;
 									break;
-								case SDLK_LALT:
-								case SDLK_2:
+								case SDL_SCANCODE_LALT:
+								case SDL_SCANCODE_2:
 									m_keyControlState[CID_B] = 1.0f;
 									break;
-								case SDLK_3:
+								case SDL_SCANCODE_3:
 									m_keyControlState[CID_X] = 1.0f;
 									break;
-								case SDLK_LSHIFT:
+								case SDL_SCANCODE_LSHIFT:
 									m_keyControlState[CID_Y] = 1.0f;
 									break;
-								case SDLK_BACKSPACE:
+								case SDL_SCANCODE_BACKSPACE:
 									m_keyControlState[CID_Back] = 1.0f;
 									break;
-								case SDLK_RETURN:
+								case SDL_SCANCODE_RETURN:
 									{
 										if ( m_keyControlState[CID_Start] == 0.0f )
 										{
@@ -879,7 +879,7 @@ vsInput::Update(float timeStep)
 									//							m_keyControlState[CID_ZoomOut] = 1.f;
 									//							break;
 #ifdef _DEBUG
-								case SDLK_p:
+								case SDL_SCANCODE_P:
 									// reload materials, (DEBUG ONLY)
 									{
 										vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
@@ -896,51 +896,51 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYUP:
 					{
-						switch( event.key.keysym.sym ){
-							case SDLK_q:
+						switch( event.key.keysym.scancode ){
+							case SDL_SCANCODE_Q:
 								m_keyControlState[CID_Exit] = 0.0f;
 								break;
-							case SDLK_ESCAPE:
+							case SDL_SCANCODE_ESCAPE:
 								m_keyControlState[CID_Escape] = 0.0f;
 								break;
-							case SDLK_w:
-							case SDLK_UP:
+							case SDL_SCANCODE_W:
+							case SDL_SCANCODE_UP:
 								m_keyControlState[CID_Up] = 0.0f;
 								m_keyControlState[CID_LUp] = 0.0f;
 								break;
-							case SDLK_s:
-							case SDLK_DOWN:
+							case SDL_SCANCODE_S:
+							case SDL_SCANCODE_DOWN:
 								m_keyControlState[CID_Down] = 0.0f;
 								m_keyControlState[CID_LDown] = 0.0f;
 								break;
-							case SDLK_a:
-							case SDLK_LEFT:
+							case SDL_SCANCODE_A:
+							case SDL_SCANCODE_LEFT:
 								m_keyControlState[CID_Left] = 0.0f;
 								m_keyControlState[CID_LLeft] = 0.0f;
 								break;
-							case SDLK_d:
-							case SDLK_RIGHT:
+							case SDL_SCANCODE_D:
+							case SDL_SCANCODE_RIGHT:
 								m_keyControlState[CID_Right] = 0.0f;
 								m_keyControlState[CID_LRight] = 0.0f;
 								break;
-							case SDLK_SPACE:
-							case SDLK_1:
+							case SDL_SCANCODE_SPACE:
+							case SDL_SCANCODE_1:
 								m_keyControlState[CID_A] = 0.0f;
 								break;
-							case SDLK_LALT:
-							case SDLK_2:
+							case SDL_SCANCODE_LALT:
+							case SDL_SCANCODE_2:
 								m_keyControlState[CID_B] = 0.0f;
 								break;
-							case SDLK_3:
+							case SDL_SCANCODE_3:
 								m_keyControlState[CID_X] = 0.0f;
 								break;
-							case SDLK_LSHIFT:
+							case SDL_SCANCODE_LSHIFT:
 								m_keyControlState[CID_Y] = 0.0f;
 								break;
-							case SDLK_RETURN:
+							case SDL_SCANCODE_RETURN:
 								m_keyControlState[CID_Start] = 0.0f;
 								break;
-							case SDLK_BACKSPACE:
+							case SDL_SCANCODE_BACKSPACE:
 								m_keyControlState[CID_Back] = 0.0f;
 								break;
 								//						case 'a':
