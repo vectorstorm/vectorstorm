@@ -47,6 +47,23 @@ float vsInterpolate( float alpha, float a, float b );
 float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
 float vsProgressFraction_Clamped( float value, float a, float b ); // as above, but result is clamped into [0..1].
 
+inline float vsRemapFloat( float from, float from_min, float from_max, float to_min, float to_max )
+{
+	return vsInterpolate(
+			vsProgressFraction(from, from_min, from_max),
+			to_min,
+			to_max
+			);
+}
+inline float vsRemapFloat_Clamped( float from, float from_min, float from_max, float to_min, float to_max )
+{
+	return vsInterpolate(
+			vsProgressFraction_Clamped(from, from_min, from_max),
+			to_min,
+			to_max
+			);
+}
+
 // vsFadeInOut is a utility function for mapping a single time value into a
 // [0..1..0] sequence.
 //
