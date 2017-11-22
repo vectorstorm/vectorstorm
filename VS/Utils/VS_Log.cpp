@@ -40,21 +40,7 @@ void vsLog_Show()
 	}
 }
 
-char sz[1024*10];
-void vsLog(const char *format, ...)
-{
-	va_list va;
-
-	va_start(va, format);
-	vsnprintf(sz, 1024*10, format, va);
-	va_end(va);
-
-	vsString str = sz;
-
-	vsLog(str);
-}
-
-void vsLog(const vsString &str)
+void vsLog_(const vsString &str)
 {
 	fprintf(stdout, "%s\n", str.c_str());
 	if ( s_log )
@@ -68,20 +54,14 @@ void vsLog(const vsString &str)
 	}
 }
 
-void vsErrorLog(const char *format, ...)
+
+void vsLog(fmt::CStringRef format, fmt::ArgList args)
 {
-	va_list marker;
-
-	va_start(marker, format);
-	vsnprintf(sz, 1024*10, format, marker);
-	va_end(marker);
-
-	vsString str = sz;
-
-	vsErrorLog(str);
+	vsString str = fmt::sprintf(format,args);
+	vsLog_(str);
 }
 
-void vsErrorLog(const vsString &str)
+void vsErrorLog_(const vsString &str)
 {
 	fprintf(stderr, "%s\n", str.c_str() );
 	if ( s_log )
@@ -93,5 +73,11 @@ void vsErrorLog(const vsString &str)
 		PHYSFS_write( s_log, "\n", 1, 1 );
 #endif
 	}
+}
+
+void vsErrorLog(fmt::CStringRef format, fmt::ArgList args)
+{
+	vsString str = fmt::sprintf(format,args);
+	vsErrorLog_(str);
 }
 

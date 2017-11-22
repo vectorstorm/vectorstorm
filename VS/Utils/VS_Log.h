@@ -21,11 +21,19 @@ void vsLog_Start();
 void vsLog_End();
 void vsLog_Show();
 
-void vsLog(const char *format, ...);
-void vsLog(const vsString &str);
+#include "Utils/fmt/printf.h"
 
-void vsErrorLog(const char *format, ...);
-void vsErrorLog(const vsString &str);
+void vsLog(fmt::CStringRef format, fmt::ArgList args);
+FMT_VARIADIC(void, vsLog, fmt::CStringRef)
+
+void vsErrorLog(fmt::CStringRef format, fmt::ArgList args);
+FMT_VARIADIC(void, vsErrorLog, fmt::CStringRef)
+
+// void vsLog(const char *format, ...);
+// void vsLog(const vsString &str);
+
+// void vsErrorLog(const char *format, ...);
+// void vsErrorLog(const vsString &str);
 
 
 // utility macro to trace out this message ONLY ONCE.
