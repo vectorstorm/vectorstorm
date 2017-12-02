@@ -277,6 +277,8 @@ set(MATH_SOURCES
 	VS/Math/VS_Quaternion.h
 	VS/Math/VS_Random.cpp
 	VS/Math/VS_Random.h
+	VS/Math/VS_Span.cpp
+	VS/Math/VS_Span.h
 	VS/Math/VS_Spline.cpp
 	VS/Math/VS_Spline.h
 	VS/Math/VS_Transform.cpp

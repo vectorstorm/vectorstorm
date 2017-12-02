@@ -101,6 +101,7 @@
 #include <VS/Math/VS_Perlin.h>
 #include <VS/Math/VS_Quaternion.h>
 #include <VS/Math/VS_Random.h>
+#include <VS/Math/VS_Span.h>
 #include <VS/Math/VS_Spline.h>
 #include <VS/Math/VS_Transform.h>
 #include <VS/Math/VS_Vector.h>
