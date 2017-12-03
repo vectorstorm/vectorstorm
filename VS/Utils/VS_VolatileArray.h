@@ -68,7 +68,7 @@ public:
 
 	typedef vsVolatileArrayIterator<T> Iterator;
 
-	vsVolatileArray( int initialStorage = 4 )
+	explicit vsVolatileArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
 		m_arrayLength = 0;

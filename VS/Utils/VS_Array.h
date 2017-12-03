@@ -73,7 +73,7 @@ public:
 		}
 	}
 
-	vsArray( int initialStorage = 4 )
+	explicit vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
 		m_arrayLength = 0;
