@@ -103,6 +103,73 @@ vsBox2D::Intersect( const vsBox2D& other )
 	}
 }
 
+bool
+vsBox2D::CollideRay( vsVector2D *result, float *resultT, const vsVector2D &pos, const vsVector2D &dir ) const
+{
+	// handle the easy case;  starting point is inside this box.
+	if ( ContainsPoint(pos) )
+	{
+		*resultT = 0;
+		*result = pos;
+		return true;
+	}
+	// we now know that the ray does not begin inside the box.
+	float inX, outX, inY, outY;
+
+	if ( dir.x > 0.f )
+	{
+		inX = (min.x - pos.x) / dir.x;
+		outX = (max.x - pos.x) / dir.x;
+	}
+	else if ( dir.x < 0.f )
+	{
+		inX = (max.x - pos.x) / dir.x;
+		outX = (min.x - pos.x) / dir.x;
+	}
+	else
+	{
+		// no movement in 'x', so if the position 'x' isn't in our min/max.x, we don't collide.
+		if ( pos.x < min.x || pos.x > max.x )
+			return false;
+
+		inX = -100000.f;		// arbitrary large values
+		outX = 100000.f;
+	}
+
+	if ( dir.y > 0.f )
+	{
+		inY = (min.y - pos.y) / dir.y;
+		outY = (max.y - pos.y) / dir.y;
+	}
+	else if ( dir.y < 0.f )
+	{
+		inY = (max.y - pos.y) / dir.y;
+		outY = (min.y - pos.y) / dir.y;
+	}
+	else
+	{
+		if ( pos.y < min.y || pos.y > max.y )
+			return false;
+
+		inY = -100000.f;		// arbitrary large values
+		outY = 100000.f;
+	}
+
+	float maxIn = vsMax( inX, inY );
+	float minOut = vsMin( outX, outY );
+
+	if ( maxIn >= 0.f && maxIn <= minOut )
+	{
+		if ( maxIn < *resultT )	// are we all in before any previous collision?
+		{
+			*resultT = maxIn;
+			*result = pos + (dir*maxIn);
+			return true;	// all three axes go "in" before any go "out".
+		}
+	}
+	return false;
+}
+
 
 vsBox2D vsInterpolate( float alpha, const vsBox2D& a, const vsBox2D& b )
 {
