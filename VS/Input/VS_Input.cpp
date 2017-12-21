@@ -348,19 +348,6 @@ vsInput::Load()
 	vsInput::Instance()->AddAxis(cid, #cid); \
 	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
 }
-	// for ( int i = 0; i < CID_MAX; i++ )
-	// {
-	// 	vsInputAxis axis;
-	// 	axis.name = s_cidName[i];
-	// 	m_axes.AddItem( axis );
-	// }
-	// static BindDefinition s_bindDefinition[] =
-	// {
-	// 	BIND_KEY(CID_LUp, SDL_SCANCODE_W);
-	// 	BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
-	// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
-	// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_LEFT);
-	// };
 
 	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_W);
 	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
@@ -391,6 +378,7 @@ vsInput::Load()
 
 	DEFAULT_BIND_KEY(CID_Escape, SDL_SCANCODE_ESCAPE);
 	DEFAULT_BIND_KEY(CID_Exit, SDL_SCANCODE_Q);
+	DEFAULT_BIND_KEY(CID_Back, SDL_SCANCODE_BACKSPACE);
 
 	DEFAULT_BIND_MOUSE_BUTTON( CID_MouseLeftButton, SDL_BUTTON_LEFT );
 	DEFAULT_BIND_MOUSE_BUTTON( CID_MouseMiddleButton, SDL_BUTTON_MIDDLE );
@@ -400,14 +388,7 @@ vsInput::Load()
 	DEFAULT_BIND_MOUSE_WHEEL( CID_MouseWheelDown, CD_Negative );
 
 	SUBTRACTION_AXIS( CID_MouseWheel, CID_MouseWheelDown, CID_MouseWheelUp );
-	// vsInput::Instance()->AddAxis( CID_MouseWheel, "CID_MouseWheel");
 
-	// DEFAULT_BIND_MOUSE_BUTTON( CID_MouseWheelUp, SDL_BUTTON_WHEELUP );
-	// DEFAULT_BIND_MOUSE_BUTTON( CID_MouseWheelDown, SDL_BUTTON_WHEELDOWN );
-
-	// m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
-	// m_controlMapping[CID_MouseMiddleButton].Set( CT_MouseButton, SDL_BUTTON_MIDDLE );
-	// m_controlMapping[CID_MouseRightButton].Set( CT_MouseButton, SDL_BUTTON_RIGHT );
 #if 0
 #if !TARGET_OS_IPHONE
 	// set some sensible defaults.  (XBox 360 gamepad)
@@ -702,17 +683,7 @@ vsInput::Correct2DInputForOrientation( const vsVector2D &input )
 void
 vsInput::Update(float timeStep)
 {
-	// UNUSED(timeStep);
-
-	// m_keyControlState[CID_MouseWheelUp] = 0.f;
-	// m_keyControlState[CID_MouseWheelDown] = 0.f;
-	// m_keyControlState[CID_MouseWheel] = 0.f;
-
-	// for ( int i = 0; i < CID_MAX; i++ )
-	// {
-	// 	m_lastControlState[i] = m_controlState[i];
-	// }
-    //
+	UNUSED(timeStep);
 	m_mouseMotion = vsVector2D::Zero;
 	m_wheelValue = 0.f;
 
@@ -1297,18 +1268,8 @@ vsInput::GetWindowMousePosition()
 vsVector2D
 vsInput::GetMousePosition(int scene)
 {
-	/*int x,y;
-
-	  SDL_GetMouseState(&x,&y);
-
-	// this is based on the window size.  (0,0 .. width,height)
-	vsVector2D mousePos = vsVector2D((float)x,(float)y);
-
-	mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
-	mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
-	mousePos -= vsVector2D(1.f,1.f);
-	*/
-	// now mousePos is going from (-1,-1 .. 1,1) as we go from top left to bottom right corner of the window
+	// mousePos is going from (-1,-1 .. 1,1) as we go from top left to bottom
+	// right corner of the window
 
 	vsScene *s = vsScreen::Instance()->GetScene(scene);
 	if ( s->Is3D() )
@@ -1695,28 +1656,6 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 					// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
 					HandleTextInput("");
 				}
-
-				// if ( GetStringModeSelectAll() )
-				// {
-				// 	// we're in "select all" mode, so remove the whole string.
-				// 	m_stringModeString = "";
-				// 	m_stringModeSelectAll = false;
-				// }
-				// else
-				// {
-				// 	//Remove a character from the end
-				// 	size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
-				// 	if ( len > 0 )
-				// 	{
-				// 		len--;
-				// 		// const char* w = m_stringModeString.begin();
-				// 		std::string::iterator w = m_stringModeString.begin();
-				// 		utf8::advance(w, len, m_stringModeString.end());
-				// 		m_stringModeString.erase(w,m_stringModeString.end());
-				// 		// utf8::advance(w,
-				// 		// m_stringModeString.erase( m_stringModeString.length() - 1 );
-				// 	}
-				// }
 			}
 			break;
 		case SDLK_LEFT:
@@ -1850,43 +1789,6 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 			}
 			// m_keyControlState[CID_Escape] = 1.0f;
 			break;
-		// case SDL_SCANCODE_W:
-		// case SDL_SCANCODE_UP:
-		// 	m_keyControlState[CID_Up] = 1.0f;
-		// 	m_keyControlState[CID_LUp] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_S:
-		// case SDL_SCANCODE_DOWN:
-		// 	m_keyControlState[CID_Down] = 1.0f;
-		// 	m_keyControlState[CID_LDown] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_A:
-		// case SDL_SCANCODE_LEFT:
-		// 	m_keyControlState[CID_Left] = 1.0f;
-		// 	m_keyControlState[CID_LLeft] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_D:
-		// case SDL_SCANCODE_RIGHT:
-		// 	m_keyControlState[CID_Right] = 1.0f;
-		// 	m_keyControlState[CID_LRight] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_SPACE:
-		// case SDL_SCANCODE_1:
-		// 	m_keyControlState[CID_A] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_LALT:
-		// case SDL_SCANCODE_2:
-		// 	m_keyControlState[CID_B] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_3:
-		// 	m_keyControlState[CID_X] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_LSHIFT:
-		// 	m_keyControlState[CID_Y] = 1.0f;
-		// 	break;
-		// case SDL_SCANCODE_BACKSPACE:
-		// 	m_keyControlState[CID_Back] = 1.0f;
-		// 	break;
 		case SDL_SCANCODE_RETURN:
 			{
 				// if ( m_keyControlState[CID_Start] == 0.0f )
@@ -1920,52 +1822,6 @@ void
 vsInput::HandleKeyUp( const SDL_Event& event )
 {
 	switch( event.key.keysym.scancode ){
-		// case SDL_SCANCODE_Q:
-		// 	m_keyControlState[CID_Exit] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_ESCAPE:
-		// 	m_keyControlState[CID_Escape] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_W:
-		// case SDL_SCANCODE_UP:
-		// 	m_keyControlState[CID_Up] = 0.0f;
-		// 	m_keyControlState[CID_LUp] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_S:
-		// case SDL_SCANCODE_DOWN:
-		// 	m_keyControlState[CID_Down] = 0.0f;
-		// 	m_keyControlState[CID_LDown] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_A:
-		// case SDL_SCANCODE_LEFT:
-		// 	m_keyControlState[CID_Left] = 0.0f;
-		// 	m_keyControlState[CID_LLeft] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_D:
-		// case SDL_SCANCODE_RIGHT:
-		// 	m_keyControlState[CID_Right] = 0.0f;
-		// 	m_keyControlState[CID_LRight] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_SPACE:
-		// case SDL_SCANCODE_1:
-		// 	m_keyControlState[CID_A] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_LALT:
-		// case SDL_SCANCODE_2:
-		// 	m_keyControlState[CID_B] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_3:
-		// 	m_keyControlState[CID_X] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_LSHIFT:
-		// 	m_keyControlState[CID_Y] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_RETURN:
-		// 	m_keyControlState[CID_Start] = 0.0f;
-		// 	break;
-		// case SDL_SCANCODE_BACKSPACE:
-		// 	m_keyControlState[CID_Back] = 0.0f;
-		// 	break;
 		default:
 			break;
 	}
