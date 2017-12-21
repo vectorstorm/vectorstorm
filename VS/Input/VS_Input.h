@@ -24,7 +24,35 @@
 #include <SDL2/SDL.h>
 #endif
 
-enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN LOAD/SAVE!
+// Macros for defining custom axes to watch.  See vsInput::Load() for
+// an example of their usage.  Note that these really only work properly
+// if you disable the "VS_DEFAULT_VIRTUAL_CONTROLLER" build setting;  these
+// are the macros you use to define your own, custom controller and axes.
+#define DEFAULT_BIND_KEY(cid, scancode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindKey(cid, scancode); \
+}
+#define DEFAULT_BIND_MOUSE_BUTTON(cid, mouseButtonCode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindMouseButton(cid, mouseButtonCode); \
+}
+#define DEFAULT_BIND_MOUSE_WHEEL(cid, cdirection) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindMouseWheel(cid, cdirection); \
+}
+
+#define SUBTRACTION_AXIS(cid, positive, negative) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
+}
+
+#ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
+
+enum ControlID
 {
 	CID_UpDownLAxis,
 	CID_LeftRightLAxis,
@@ -70,6 +98,7 @@ enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN
 
 	CID_MAX
 };
+#endif // VS_DEFAULT_VIRTUAL_CONTROLLER
 
 enum ControlType
 {
@@ -131,6 +160,7 @@ struct vsInputAxis
 	int negativeAxisId;
 
 	vsInputAxis();
+	~vsInputAxis() { positive.Clear(); }
 	void Update();
 };
 
@@ -150,6 +180,8 @@ class vsController
 public:
 	vsController( SDL_GameController *controller, int index );
 	~vsController();
+
+	bool			Matches( SDL_GameController *gc ) { return m_controller == gc; }
 
 	float			ReadHat(int hatID, ControlDirection dir);
 
@@ -241,7 +273,7 @@ private:
 	float			ReadMouseButton( int axisID );
 	// void			ReadMouseButton( int axisID, int cid );
 
-	bool			WasDown( ControlID id );
+	bool			WasDown( int id );
 
 	void			Save();
 	void			Load();
@@ -256,7 +288,7 @@ private:
 	bool StringModeUndo();
 
 	void InitController(int i);
-	void DestroyController(int i);
+	void DestroyController(SDL_GameController *gc);
 
 public:
 
@@ -268,8 +300,8 @@ public:
 
 	virtual void	Update( float timeStep );
 
-	vsVector2D		GetLeftStick() { return vsVector2D( GetState(CID_LeftRightLAxis), GetState(CID_UpDownLAxis) ); }
-	vsVector2D		GetRightStick() { return vsVector2D( GetState(CID_LeftRightRAxis), GetState(CID_UpDownRAxis) ); }
+	// vsVector2D		GetLeftStick() { return vsVector2D( GetState(CID_LeftRightLAxis), GetState(CID_UpDownLAxis) ); }
+	// vsVector2D		GetRightStick() { return vsVector2D( GetState(CID_LeftRightRAxis), GetState(CID_UpDownRAxis) ); }
 
 	bool			HasTouch(int touchID);
 	int				GetMaxTouchCount();
@@ -286,11 +318,11 @@ public:
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }
 
-	float			GetState( ControlID id ) { return m_axes[id].currentValue; } //m_controlState[id]; }
-	bool			IsUp( ControlID id ) { return !IsDown( id ); }
-	bool			IsDown( ControlID id );
-	bool			WasPressed( ControlID id );
-	bool			WasReleased( ControlID id );
+	float			GetState( int id ) { return m_axes[id].currentValue; } //m_controlState[id]; }
+	bool			IsUp( int id ) { return !IsDown( id ); }
+	bool			IsDown( int id );
+	bool			WasPressed( int id );
+	bool			WasReleased( int id );
 
 	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 

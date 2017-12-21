@@ -20,6 +20,7 @@
 
 #define PULSE_DURATION (2.0f)
 
+#ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 
 vsSimpleMenu::vsSimpleMenu(int count, float letterSize, float capSize, float lineSpacing):
 	vsSprite(NULL),
@@ -201,3 +202,5 @@ vsSimpleMenu::SetItemValue( int itemId, const vsString & value )
 	m_itemValue[itemId]->SetColor(c_blue);
 	AddChild( m_itemValue[itemId] );
 }
+
+#endif // VS_DEFAULT_VIRTUAL_CONTROLLER

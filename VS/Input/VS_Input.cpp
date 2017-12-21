@@ -24,6 +24,9 @@
 #include "Utils/utfcpp/utf8.h"
 #include <iterator>
 
+
+#include "VS_Heap.h"
+
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
 #else
@@ -145,126 +148,29 @@ vsController::~vsController()
 	vsDeleteArray( m_axisThrow );
 }
 
+extern vsHeap *g_globalHeap;
+
 void
 vsInput::Deinit()
 {
 	Save();
+	vsHeap::Push(g_globalHeap);
+	m_axes.Clear();
+	vsHeap::Pop(g_globalHeap);
 
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
 		vsDelete( m_controller[i] );
 }
 
-struct BindDefinition
-{
-	int cid;
-	ControlType type;
-	int id;
-	int controllerId;
-	ControlDirection direction;
-};
-
-
-// static BindDefinition s_bindDefinition[] =
-// {
-// 	BIND_KEY(CID_LUp, SDL_SCANCODE_W);
-// 	BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
-// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
-// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_LEFT);
-// };
-// static const int c_bindCount = sizeof( s_bindDefinition ) / sizeof(struct BindDefinition);
-//
-// static vsString s_cidName[CID_MAX] =
-// {
-// 	"CID_UpDownLAxis",
-// 	"CID_LeftRightLAxis",
-// 	"CID_LUp",
-// 	"CID_LDown",
-// 	"CID_LLeft",
-// 	"CID_LRight",
-//
-// 	"CID_UpDownRAxis",
-// 	"CID_LeftRightRAxis",
-// 	"CID_RUp",
-// 	"CID_RDown",
-// 	"CID_RLeft",
-// 	"CID_RRight",
-//
-// 	"CID_Up",
-// 	"CID_Down",
-// 	"CID_Left",
-// 	"CID_Right",
-//
-// 	"CID_Exit",
-// 	"CID_Escape",
-//
-// 	"CID_A",
-// 	"CID_B",
-// 	"CID_X",
-// 	"CID_Y",
-// 	"CID_TriggerR",
-// 	"CID_TriggerL",
-// 	"CID_Start",
-// 	"CID_Back",
-//
-// 	"CID_MouseLeftButton",
-// 	"CID_MouseMiddleButton",
-// 	"CID_MouseRightButton",
-//
-// 	"CID_MouseWheel",
-// 	"CID_MouseWheelUp",
-// 	"CID_MouseWheelDown",
-//
-// 	"CID_TouchA",
-// 	"CID_TouchB"
-// };
-// static vsString s_cidName[CID_MAX] =
-// {
-// 	"CID_UpDownLAxis",
-// 	"CID_LeftRightLAxis",
-// 	"CID_LUp",
-// 	"CID_LDown",
-// 	"CID_LLeft",
-// 	"CID_LRight",
-//
-// 	"CID_UpDownRAxis",
-// 	"CID_LeftRightRAxis",
-// 	"CID_RUp",
-// 	"CID_RDown",
-// 	"CID_RLeft",
-// 	"CID_RRight",
-//
-// 	"CID_Up",
-// 	"CID_Down",
-// 	"CID_Left",
-// 	"CID_Right",
-//
-// 	"CID_Exit",
-// 	"CID_Escape",
-//
-// 	"CID_A",
-// 	"CID_B",
-// 	"CID_X",
-// 	"CID_Y",
-// 	"CID_TriggerR",
-// 	"CID_TriggerL",
-// 	"CID_Start",
-// 	"CID_Back",
-//
-// 	"CID_MouseLeftButton",
-// 	"CID_MouseMiddleButton",
-// 	"CID_MouseRightButton",
-//
-// 	"CID_MouseWheel",
-// 	"CID_MouseWheelUp",
-// 	"CID_MouseWheelDown",
-//
-// 	"CID_TouchA",
-// 	"CID_TouchB"
-// };
-
 void
 vsInput::AddAxis( int cid, const vsString& name )
 {
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
 	if ( m_axes.ItemCount() <= cid )
 	{
 		m_axes.SetArraySize(cid+1);
@@ -274,11 +180,19 @@ vsInput::AddAxis( int cid, const vsString& name )
 	{
 		m_axes[cid].name = name;
 	}
+
+	vsHeap::Pop(g_globalHeap);
 }
 
 void
 vsInput::DefaultBindKey( int cid, int scancode )
 {
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
 	if ( !m_axes[cid].isSet )
 	{
 		DeviceControl dc;
@@ -287,11 +201,19 @@ vsInput::DefaultBindKey( int cid, int scancode )
 
 		m_axes[cid].positive.AddItem(dc);
 	}
+
+	vsHeap::Pop(g_globalHeap);
 }
 
 void
 vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 {
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
 	if ( !m_axes[cid].isSet )
 	{
 		DeviceControl dc;
@@ -300,11 +222,19 @@ vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 
 		m_axes[cid].positive.AddItem(dc);
 	}
+
+	vsHeap::Pop(g_globalHeap);
 }
 
 void
 vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 {
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
 	if ( !m_axes[cid].isSet )
 	{
 		DeviceControl dc;
@@ -313,6 +243,8 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 
 		m_axes[cid].positive.AddItem(dc);
 	}
+
+	vsHeap::Pop(g_globalHeap);
 }
 
 void
@@ -326,29 +258,7 @@ vsInput::SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis)
 void
 vsInput::Load()
 {
-
-#define DEFAULT_BIND_KEY(cid, scancode) \
-{ \
-	vsInput::Instance()->AddAxis(cid, #cid); \
-	vsInput::Instance()->DefaultBindKey(cid, scancode); \
-}
-#define DEFAULT_BIND_MOUSE_BUTTON(cid, mouseButtonCode) \
-{ \
-	vsInput::Instance()->AddAxis(cid, #cid); \
-	vsInput::Instance()->DefaultBindMouseButton(cid, mouseButtonCode); \
-}
-#define DEFAULT_BIND_MOUSE_WHEEL(cid, cdirection) \
-{ \
-	vsInput::Instance()->AddAxis(cid, #cid); \
-	vsInput::Instance()->DefaultBindMouseWheel(cid, cdirection); \
-}
-
-#define SUBTRACTION_AXIS(cid, positive, negative) \
-{ \
-	vsInput::Instance()->AddAxis(cid, #cid); \
-	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
-}
-
+#ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_W);
 	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
 	DEFAULT_BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
@@ -388,6 +298,7 @@ vsInput::Load()
 	DEFAULT_BIND_MOUSE_WHEEL( CID_MouseWheelDown, CD_Negative );
 
 	SUBTRACTION_AXIS( CID_MouseWheel, CID_MouseWheelDown, CID_MouseWheelUp );
+#endif // VS_DEFAULT_VIRTUAL_CONTROLLER
 
 #if 0
 #if !TARGET_OS_IPHONE
@@ -719,37 +630,61 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_CONTROLLERDEVICEADDED:
 					{
+						// WARNING:  'which' tells us the device_index of the
+						// controller which has been added in the 'Added' event,
+						// but tells us the instance_id in the 'Removed' and 'Remapped'
+						// events.  Don't get confused about that!
+						//
+						// The device_index is the index we can use in the
+						// "Open Game Controller" function.  The instance_id is..
+						// well.. not.  Instance_id always increases as controllers
+						// connect and reconnect, whereas device_index can reuse
+						// indices if earlier devices disconnect first.
 						vsLog("Controller connected: %d", event.cdevice.which);
 						InitController(event.cdevice.which);
 						break;
 					}
 				case SDL_CONTROLLERDEVICEREMOVED:
 					{
-						vsLog("Controller removed: %d", event.cdevice.which);
-						DestroyController(event.cdevice.which);
+						// WARNING:  'which' tells us the device_index of the
+						// controller which has been added in the 'Added' event,
+						// but tells us the instance_id in the 'Removed' and 'Remapped'
+						// events.  Don't get confused about that!
+						//
+						// Best thing I can find to do with the instance_id is to
+						// convert it into an SDL_GameController object, and use
+						// that to figure out which vsController is associated
+						// with it!  Then go destroy that vsController.
+
+						vsLog("Controller instance removed: %d", event.cdevice.which);
+						SDL_GameController *gc = SDL_GameControllerFromInstanceID( event.cdevice.which );
+						if ( gc )
+							DestroyController(gc);
 						break;
 					}
 				case SDL_CONTROLLERDEVICEREMAPPED:
 					{
-						vsLog("Controller remapped: %d", event.cdevice.which);
-						InitController(event.cdevice.which);
+						// WARNING:  'which' tells us the device_index of the
+						// controller which has been added in the 'Added' event,
+						// but tells us the instance_id in the 'Removed' and 'Remapped'
+						// events.  Don't get confused about that!
+						//
+						// I can't find any documentation about what one should do
+						// when this event comes in, so for the moment I'm just
+						// going to assume that this is informational, and ignore
+						// it.  (In practice, I probably should be querying the
+						// controller again to verify that it still has the same
+						// number of buttons as before, etc.  But until I can find
+						// a situation where this can happen in practice, I'm
+						// not going to spend much time guessing how I'm supposed
+						// to handle this event type.)
+						vsLog("Controller remap event received, ignored: %d", event.cdevice.which);
 						break;
 					}
 				case SDL_TEXTINPUT:
 					{
 						HandleTextInput(event.text.text);
 						break;
-
-
-						// if ( m_stringModeSelectAll )
-						// {
-						// 	m_stringModeString = event.text.text;
-						// 	m_stringModeSelectAll = false;
-						// }
-						// else
-						// {
-						// 	m_stringModeString += event.text.text;
-						// }
 					}
 					break;
 				case SDL_TEXTEDITING:
@@ -1218,25 +1153,25 @@ vsController::ReadButton( int buttonID )
 }
 
 bool
-vsInput::IsDown( ControlID id )
+vsInput::IsDown( int id )
 {
 	return (m_axes[id].currentValue > 0.f);
 }
 
 bool
-vsInput::WasDown( ControlID id )
+vsInput::WasDown( int id )
 {
 	return (m_axes[id].lastValue > 0.f);
 }
 
 bool
-vsInput::WasPressed( ControlID id )
+vsInput::WasPressed( int id )
 {
 	return (IsDown(id) && !WasDown(id));
 }
 
 bool
-vsInput::WasReleased( ControlID id )
+vsInput::WasReleased( int id )
 {
 	return (!IsDown(id) && WasDown(id));
 }
@@ -1843,10 +1778,10 @@ vsInput::InitController(int i)
 }
 
 void
-vsInput::DestroyController(int i)
+vsInput::DestroyController(SDL_GameController *gc)
 {
-	if ( i < MAX_JOYSTICKS &&
-			m_controller[i] )
+	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
+	if ( m_controller[i] && m_controller[i]->Matches(gc) )
 	{
 		vsDelete( m_controller[i] );
 	}
@@ -1909,8 +1844,8 @@ vsInputAxis::Update()
 
 	if ( isCalculated )
 	{
-		currentValue = vsInput::Instance()->GetState( (ControlID)positiveAxisId ) -
-			vsInput::Instance()->GetState( (ControlID)negativeAxisId );
+		currentValue = vsInput::Instance()->GetState( positiveAxisId ) -
+			vsInput::Instance()->GetState( negativeAxisId );
 	}
 	else
 	{
