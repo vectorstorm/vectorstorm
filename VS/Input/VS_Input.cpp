@@ -67,65 +67,40 @@ vsInput::Init()
 	m_wheelSmoothing = true;
 	m_wheelSpeed = 0.f;
 
-	m_axisCenter = NULL;
-	m_axisThrow = NULL;
-	m_joystickAxes = -1;
-	m_joystickButtons = -1;
-	m_joystickHats = -1;
-	for ( int i = 0; i < CID_MAX; i++ )
-	{
-		m_lastControlState[i] = 0.f;
-		m_controlState[i] = 0.f;
-		m_keyControlState[i] = 0.f;
-	}
-
+	// for ( int i = 0; i < CID_MAX; i++ )
+	// {
+	// 	m_lastControlState[i] = 0.f;
+	// 	m_controlState[i] = 0.f;
+	// 	m_keyControlState[i] = 0.f;
+	// }
+    //
 #if !TARGET_OS_IPHONE
-	m_joystick = NULL;
-	m_controller = NULL;
-	// try to get a joystick
+	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
+		m_controller[i] = NULL;
 
 	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
-	int joystickCount = SDL_NumJoysticks();
-
-	if ( joystickCount )
-	{
-		vsLog("Found %d joysticks.", joystickCount);
-
-		for ( int i = 0; i < joystickCount; i++ )
-		{
-			if ( SDL_IsGameController(i) )
-			{
-				m_controller = SDL_GameControllerOpen(i);
-				const char *name = SDL_GameControllerNameForIndex(i);
-				vsLog("Game controller found: %s", name);
-				if ( m_controller )
-				{
-					m_joystick = SDL_GameControllerGetJoystick(m_controller);
-					break;
-				}
-
-			}
-		}
-
-		if ( m_joystick )
-		{
-			m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
-			m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
-			m_joystickHats = SDL_JoystickNumHats(m_joystick);
-			vsLog("Device has %d axes, %d buttons, %d hats, %d balls", SDL_JoystickNumAxes(m_joystick),
-					SDL_JoystickNumButtons(m_joystick), SDL_JoystickNumHats(m_joystick), SDL_JoystickNumBalls(m_joystick));
-
-			m_axisCenter = new float[m_joystickAxes];
-			m_axisThrow = new float[m_joystickAxes];
-			for ( int i = 0; i < m_joystickAxes; i++ )
-			{
-				m_axisCenter[i] = ReadAxis_Raw(i);
-				m_axisThrow[i] = 1.0f;
-			}
-		}
-	}
-	else
-		vsLog("No joystick found.  Using keyboard input.");
+	// int joystickCount = SDL_NumJoysticks();
+    //
+	// if ( joystickCount )
+	// {
+	// 	vsLog("Found %d joysticks.", joystickCount);
+    //
+	// 	for ( int i = 0; i < joystickCount; i++ )
+	// 	{
+	// 		if ( SDL_IsGameController(i) )
+	// 		{
+	// 			SDL_GameController *gc = SDL_GameControllerOpen(i);
+	// 			if ( gc )
+	// 				m_controller[i] = new vsController(gc, i);
+	// 		}
+	// 		else
+	// 		{
+	// 			vsLog("Controller %d doesn't seem to be a controller??", i);
+	// 		}
+	// 	}
+	// }
+	// else
+	// 	vsLog("No joystick found.  Using keyboard input.");
 
 
 	Load();
@@ -134,68 +109,306 @@ vsInput::Init()
 #endif
 }
 
+vsController::vsController( SDL_GameController *controller, int i )
+{
+	m_controller = controller;
+
+	const char *name = SDL_GameControllerNameForIndex(i);
+	vsLog("Game controller %d found: %s", i, name);
+
+	m_joystick = SDL_GameControllerGetJoystick(m_controller);
+	if ( m_joystick )
+	{
+		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
+		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
+		m_joystickHats = SDL_JoystickNumHats(m_joystick);
+		vsLog("Device has %d axes, %d buttons, %d hats, %d balls",
+				SDL_JoystickNumAxes(m_joystick),
+				SDL_JoystickNumButtons(m_joystick),
+				SDL_JoystickNumHats(m_joystick),
+				SDL_JoystickNumBalls(m_joystick));
+
+		m_axisCenter = new float[m_joystickAxes];
+		m_axisThrow = new float[m_joystickAxes];
+		for ( int i = 0; i < m_joystickAxes; i++ )
+		{
+			m_axisCenter[i] = ReadAxis_Raw(i);
+			m_axisThrow[i] = 1.0f;
+		}
+	}
+}
+
+vsController::~vsController()
+{
+	SDL_GameControllerClose( m_controller );
+	vsDeleteArray( m_axisCenter );
+	vsDeleteArray( m_axisThrow );
+}
+
 void
 vsInput::Deinit()
 {
 	Save();
 
-	if ( m_axisCenter )
-		vsDeleteArray(m_axisCenter);
-	if ( m_axisThrow )
-		vsDeleteArray(m_axisThrow);
+	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
+		vsDelete( m_controller[i] );
 }
 
-static vsString s_cidName[CID_MAX] =
+struct BindDefinition
 {
-	"CID_UpDownLAxis",
-	"CID_LeftRightLAxis",
-	"CID_LUp",
-	"CID_LDown",
-	"CID_LLeft",
-	"CID_LRight",
-
-	"CID_UpDownRAxis",
-	"CID_LeftRightRAxis",
-	"CID_RUp",
-	"CID_RDown",
-	"CID_RLeft",
-	"CID_RRight",
-
-	"CID_Up",
-	"CID_Down",
-	"CID_Left",
-	"CID_Right",
-
-	"CID_Exit",
-	"CID_Escape",
-
-	"CID_A",
-	"CID_B",
-	"CID_X",
-	"CID_Y",
-	"CID_TriggerR",
-	"CID_TriggerL",
-	"CID_Start",
-	"CID_Back",
-
-	"CID_ZoomIn",
-	"CID_ZoomOut",
-
-	"CID_MouseLeftButton",
-	"CID_MouseMiddleButton",
-	"CID_MouseRightButton",
-
-	"CID_MouseWheel",
-	"CID_MouseWheelUp",
-	"CID_MouseWheelDown",
-
-	"CID_TouchA",
-	"CID_TouchB"
+	int cid;
+	ControlType type;
+	int id;
+	int controllerId;
+	ControlDirection direction;
 };
+
+
+// static BindDefinition s_bindDefinition[] =
+// {
+// 	BIND_KEY(CID_LUp, SDL_SCANCODE_W);
+// 	BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
+// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
+// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_LEFT);
+// };
+// static const int c_bindCount = sizeof( s_bindDefinition ) / sizeof(struct BindDefinition);
+//
+// static vsString s_cidName[CID_MAX] =
+// {
+// 	"CID_UpDownLAxis",
+// 	"CID_LeftRightLAxis",
+// 	"CID_LUp",
+// 	"CID_LDown",
+// 	"CID_LLeft",
+// 	"CID_LRight",
+//
+// 	"CID_UpDownRAxis",
+// 	"CID_LeftRightRAxis",
+// 	"CID_RUp",
+// 	"CID_RDown",
+// 	"CID_RLeft",
+// 	"CID_RRight",
+//
+// 	"CID_Up",
+// 	"CID_Down",
+// 	"CID_Left",
+// 	"CID_Right",
+//
+// 	"CID_Exit",
+// 	"CID_Escape",
+//
+// 	"CID_A",
+// 	"CID_B",
+// 	"CID_X",
+// 	"CID_Y",
+// 	"CID_TriggerR",
+// 	"CID_TriggerL",
+// 	"CID_Start",
+// 	"CID_Back",
+//
+// 	"CID_MouseLeftButton",
+// 	"CID_MouseMiddleButton",
+// 	"CID_MouseRightButton",
+//
+// 	"CID_MouseWheel",
+// 	"CID_MouseWheelUp",
+// 	"CID_MouseWheelDown",
+//
+// 	"CID_TouchA",
+// 	"CID_TouchB"
+// };
+// static vsString s_cidName[CID_MAX] =
+// {
+// 	"CID_UpDownLAxis",
+// 	"CID_LeftRightLAxis",
+// 	"CID_LUp",
+// 	"CID_LDown",
+// 	"CID_LLeft",
+// 	"CID_LRight",
+//
+// 	"CID_UpDownRAxis",
+// 	"CID_LeftRightRAxis",
+// 	"CID_RUp",
+// 	"CID_RDown",
+// 	"CID_RLeft",
+// 	"CID_RRight",
+//
+// 	"CID_Up",
+// 	"CID_Down",
+// 	"CID_Left",
+// 	"CID_Right",
+//
+// 	"CID_Exit",
+// 	"CID_Escape",
+//
+// 	"CID_A",
+// 	"CID_B",
+// 	"CID_X",
+// 	"CID_Y",
+// 	"CID_TriggerR",
+// 	"CID_TriggerL",
+// 	"CID_Start",
+// 	"CID_Back",
+//
+// 	"CID_MouseLeftButton",
+// 	"CID_MouseMiddleButton",
+// 	"CID_MouseRightButton",
+//
+// 	"CID_MouseWheel",
+// 	"CID_MouseWheelUp",
+// 	"CID_MouseWheelDown",
+//
+// 	"CID_TouchA",
+// 	"CID_TouchB"
+// };
+
+void
+vsInput::AddAxis( int cid, const vsString& name )
+{
+	if ( m_axes.ItemCount() <= cid )
+	{
+		m_axes.SetArraySize(cid+1);
+	}
+
+	if ( m_axes[cid].name != name )
+	{
+		m_axes[cid].name = name;
+	}
+}
+
+void
+vsInput::DefaultBindKey( int cid, int scancode )
+{
+	if ( !m_axes[cid].isSet )
+	{
+		DeviceControl dc;
+		dc.type = CT_Keyboard;
+		dc.id = scancode;
+
+		m_axes[cid].positive.AddItem(dc);
+	}
+}
+
+void
+vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
+{
+	if ( !m_axes[cid].isSet )
+	{
+		DeviceControl dc;
+		dc.type = CT_MouseButton;
+		dc.id = mouseButtonCode;
+
+		m_axes[cid].positive.AddItem(dc);
+	}
+}
+
+void
+vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
+{
+	if ( !m_axes[cid].isSet )
+	{
+		DeviceControl dc;
+		dc.type = CT_MouseWheel;
+		dc.dir = cd;
+
+		m_axes[cid].positive.AddItem(dc);
+	}
+}
+
+void
+vsInput::SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis)
+{
+	m_axes[cid].isCalculated = true;
+	m_axes[cid].positiveAxisId = positiveAxis;
+	m_axes[cid].negativeAxisId = negativeAxis;
+}
 
 void
 vsInput::Load()
 {
+
+#define DEFAULT_BIND_KEY(cid, scancode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindKey(cid, scancode); \
+}
+#define DEFAULT_BIND_MOUSE_BUTTON(cid, mouseButtonCode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindMouseButton(cid, mouseButtonCode); \
+}
+#define DEFAULT_BIND_MOUSE_WHEEL(cid, cdirection) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->DefaultBindMouseWheel(cid, cdirection); \
+}
+
+#define SUBTRACTION_AXIS(cid, positive, negative) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
+}
+	// for ( int i = 0; i < CID_MAX; i++ )
+	// {
+	// 	vsInputAxis axis;
+	// 	axis.name = s_cidName[i];
+	// 	m_axes.AddItem( axis );
+	// }
+	// static BindDefinition s_bindDefinition[] =
+	// {
+	// 	BIND_KEY(CID_LUp, SDL_SCANCODE_W);
+	// 	BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
+	// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
+	// 	BIND_KEY(CID_LLeft, SDL_SCANCODE_LEFT);
+	// };
+
+	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_W);
+	DEFAULT_BIND_KEY(CID_LUp, SDL_SCANCODE_UP);
+	DEFAULT_BIND_KEY(CID_LLeft, SDL_SCANCODE_A);
+	DEFAULT_BIND_KEY(CID_LLeft, SDL_SCANCODE_LEFT);
+	DEFAULT_BIND_KEY(CID_LRight, SDL_SCANCODE_D);
+	DEFAULT_BIND_KEY(CID_LRight, SDL_SCANCODE_RIGHT);
+	DEFAULT_BIND_KEY(CID_LDown, SDL_SCANCODE_S);
+	DEFAULT_BIND_KEY(CID_LDown, SDL_SCANCODE_DOWN);
+	SUBTRACTION_AXIS( CID_UpDownLAxis, CID_LDown, CID_LUp );
+	SUBTRACTION_AXIS( CID_LeftRightLAxis, CID_LRight, CID_LLeft );
+
+	SUBTRACTION_AXIS( CID_UpDownRAxis, CID_RDown, CID_RUp );
+	SUBTRACTION_AXIS( CID_LeftRightRAxis, CID_RRight, CID_RLeft );
+
+	DEFAULT_BIND_KEY(CID_Up, SDL_SCANCODE_W);
+	DEFAULT_BIND_KEY(CID_Up, SDL_SCANCODE_UP);
+	DEFAULT_BIND_KEY(CID_Left, SDL_SCANCODE_A);
+	DEFAULT_BIND_KEY(CID_Left, SDL_SCANCODE_LEFT);
+	DEFAULT_BIND_KEY(CID_Right, SDL_SCANCODE_D);
+	DEFAULT_BIND_KEY(CID_Right, SDL_SCANCODE_RIGHT);
+	DEFAULT_BIND_KEY(CID_Down, SDL_SCANCODE_S);
+	DEFAULT_BIND_KEY(CID_Down, SDL_SCANCODE_DOWN);
+
+	DEFAULT_BIND_KEY(CID_A, SDL_SCANCODE_SPACE);
+	DEFAULT_BIND_KEY(CID_B, SDL_SCANCODE_LALT);
+	DEFAULT_BIND_KEY(CID_Y, SDL_SCANCODE_LSHIFT);
+
+	DEFAULT_BIND_KEY(CID_Escape, SDL_SCANCODE_ESCAPE);
+	DEFAULT_BIND_KEY(CID_Exit, SDL_SCANCODE_Q);
+
+	DEFAULT_BIND_MOUSE_BUTTON( CID_MouseLeftButton, SDL_BUTTON_LEFT );
+	DEFAULT_BIND_MOUSE_BUTTON( CID_MouseMiddleButton, SDL_BUTTON_MIDDLE );
+	DEFAULT_BIND_MOUSE_BUTTON( CID_MouseRightButton, SDL_BUTTON_RIGHT );
+
+	DEFAULT_BIND_MOUSE_WHEEL( CID_MouseWheelUp, CD_Positive );
+	DEFAULT_BIND_MOUSE_WHEEL( CID_MouseWheelDown, CD_Negative );
+
+	SUBTRACTION_AXIS( CID_MouseWheel, CID_MouseWheelDown, CID_MouseWheelUp );
+	// vsInput::Instance()->AddAxis( CID_MouseWheel, "CID_MouseWheel");
+
+	// DEFAULT_BIND_MOUSE_BUTTON( CID_MouseWheelUp, SDL_BUTTON_WHEELUP );
+	// DEFAULT_BIND_MOUSE_BUTTON( CID_MouseWheelDown, SDL_BUTTON_WHEELDOWN );
+
+	// m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
+	// m_controlMapping[CID_MouseMiddleButton].Set( CT_MouseButton, SDL_BUTTON_MIDDLE );
+	// m_controlMapping[CID_MouseRightButton].Set( CT_MouseButton, SDL_BUTTON_RIGHT );
+#if 0
 #if !TARGET_OS_IPHONE
 	// set some sensible defaults.  (XBox 360 gamepad)
 	if ( m_controller )
@@ -262,12 +475,6 @@ vsInput::Load()
 		}
 	}
 
-	m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
-	m_controlMapping[CID_MouseMiddleButton].Set( CT_MouseButton, SDL_BUTTON_MIDDLE );
-	m_controlMapping[CID_MouseRightButton].Set( CT_MouseButton, SDL_BUTTON_RIGHT );
-	//m_controlMapping[CID_MouseWheelUp].Set( CT_MouseButton, SDL_BUTTON_WHEELUP );
-	//m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
-
 	if ( m_joystick && !m_controller )
 	{
 		const char* nameStr = SDL_JoystickName(0);
@@ -283,17 +490,26 @@ vsInput::Load()
 			vsPreferenceObject *type, *id, *dir;
 
 			type = p.GetPreference( vsFormatString("%sType", s_cidName[i].c_str()), m_controlMapping[i].type, 0, CT_MAX );
-			id = p.GetPreference( vsFormatString("%sId", s_cidName[i].c_str()), m_controlMapping[i].cid, 0, CID_MAX );
+			id = p.GetPreference( vsFormatString("%sId", s_cidName[i].c_str()), m_controlMapping[i].id, 0, CID_MAX );
 			dir = p.GetPreference( vsFormatString("%sDir", s_cidName[i].c_str()), m_controlMapping[i].dir, 0, CD_MAX );
 
 			m_controlMapping[i].type = (ControlType)type->GetValue();
-			m_controlMapping[i].cid = id->GetValue();
+			m_controlMapping[i].id = id->GetValue();
 			m_controlMapping[i].dir = (ControlDirection)dir->GetValue();
 		}
 		p.Save();
 	}
 #endif
-	m_mappingsChanged = false;
+#endif // 0
+
+	// hardcode mapping of mouse buttons to mouse button CIDs.
+	// m_controlMapping[CID_MouseLeftButton].Set( CT_MouseButton, SDL_BUTTON_LEFT );
+	// m_controlMapping[CID_MouseMiddleButton].Set( CT_MouseButton, SDL_BUTTON_MIDDLE );
+	// m_controlMapping[CID_MouseRightButton].Set( CT_MouseButton, SDL_BUTTON_RIGHT );
+	//m_controlMapping[CID_MouseWheelUp].Set( CT_MouseButton, SDL_BUTTON_WHEELUP );
+	//m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
+
+	// m_mappingsChanged = false;
 }
 
 void
@@ -488,25 +704,23 @@ vsInput::Update(float timeStep)
 {
 	// UNUSED(timeStep);
 
-	m_keyControlState[CID_MouseWheelUp] = 0.f;
-	m_keyControlState[CID_MouseWheelDown] = 0.f;
-	m_keyControlState[CID_MouseWheel] = 0.f;
+	// m_keyControlState[CID_MouseWheelUp] = 0.f;
+	// m_keyControlState[CID_MouseWheelDown] = 0.f;
+	// m_keyControlState[CID_MouseWheel] = 0.f;
 
-	for ( int i = 0; i < CID_MAX; i++ )
-	{
-		m_lastControlState[i] = m_controlState[i];
-	}
-
+	// for ( int i = 0; i < CID_MAX; i++ )
+	// {
+	// 	m_lastControlState[i] = m_controlState[i];
+	// }
+    //
 	m_mouseMotion = vsVector2D::Zero;
+	m_wheelValue = 0.f;
 
 #if TARGET_OS_IPHONE
 
 	m_controlState[CID_MouseLeftButton] = ::GetTouch(0);
 	m_controlState[CID_Touch0] = ::GetTouch(0);
 	m_controlState[CID_Touch1] = ::GetTouch(1);
-
-	//extern vsVector2D touch;
-
 
 	m_mousePos = vsVector2D(GetTouchX(0),GetTouchY(0));
 
@@ -535,16 +749,19 @@ vsInput::Update(float timeStep)
 				case SDL_CONTROLLERDEVICEADDED:
 					{
 						vsLog("Controller connected: %d", event.cdevice.which);
+						InitController(event.cdevice.which);
 						break;
 					}
 				case SDL_CONTROLLERDEVICEREMOVED:
 					{
 						vsLog("Controller removed: %d", event.cdevice.which);
+						DestroyController(event.cdevice.which);
 						break;
 					}
 				case SDL_CONTROLLERDEVICEREMAPPED:
 					{
 						vsLog("Controller remapped: %d", event.cdevice.which);
+						InitController(event.cdevice.which);
 						break;
 					}
 				case SDL_TEXTINPUT:
@@ -583,6 +800,7 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_MOUSEWHEEL:
 					{
+						// TODO:  FIX!
 						float wheelAmt = (float)event.wheel.y;
 						if ( m_fingersDownTimer > 0.f )
 						{
@@ -593,14 +811,7 @@ vsInput::Update(float timeStep)
 						{
 							wheelAmt *= vsSystem::Instance()->GetPreferences()->GetMouseWheelScaling();
 						}
-						if ( wheelAmt > 0 )
-						{
-							m_keyControlState[CID_MouseWheelUp] += wheelAmt;
-						}
-						else
-						{
-							m_keyControlState[CID_MouseWheelDown] -= wheelAmt;
-						}
+						m_wheelValue = wheelAmt;
 						break;
 					}
 				case SDL_MOUSEMOTION:
@@ -628,332 +839,14 @@ vsInput::Update(float timeStep)
 				case SDL_KEYDOWN:
 					{
 						if ( m_stringMode )
-						{
-							switch( event.key.keysym.sym )
-							{
-								case SDLK_BACKSPACE:
-									if ( m_stringMode && m_stringModeString.length() != 0 )
-									{
-										if ( m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
-										{
-											if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
-												return;
-											if ( !m_backspaceMode )
-												StringModeSaveUndoState();
-
-											// delete one character
-											vsString oldString = m_stringModeString;
-											m_stringModeString = vsEmptyString;
-											// Okay.  copy all the glyphs up to the cursor MINUS ONE.
-											// then copy the rest.
-											utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
-											int inLength = utf8::distance(oldString.begin(), oldString.end());
-											for ( int i = 0; i < inLength; i++ )
-											{
-												if ( i != m_stringModeCursorFirstGlyph-1 )
-													utf8::append( *in, std::back_inserter(m_stringModeString) );
-												in++;
-											}
-
-											m_backspaceMode = true;
-											m_undoMode = false;
-											SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
-										}
-										else
-										{
-											// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
-											HandleTextInput("");
-										}
-
-										// if ( GetStringModeSelectAll() )
-										// {
-										// 	// we're in "select all" mode, so remove the whole string.
-										// 	m_stringModeString = "";
-										// 	m_stringModeSelectAll = false;
-										// }
-										// else
-										// {
-										// 	//Remove a character from the end
-										// 	size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
-										// 	if ( len > 0 )
-										// 	{
-										// 		len--;
-										// 		// const char* w = m_stringModeString.begin();
-										// 		std::string::iterator w = m_stringModeString.begin();
-										// 		utf8::advance(w, len, m_stringModeString.end());
-										// 		m_stringModeString.erase(w,m_stringModeString.end());
-										// 		// utf8::advance(w,
-										// 		// m_stringModeString.erase( m_stringModeString.length() - 1 );
-										// 	}
-										// }
-									}
-									break;
-								case SDLK_LEFT:
-									{
-										if ( event.key.keysym.mod & KMOD_LSHIFT ||
-												event.key.keysym.mod & KMOD_RSHIFT )
-										{
-											// shift is held down;  move the floating glyph, but not the anchor glyph!
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
-										}
-										else
-										{
-											// shift isn't down;  move the anchor glyph and collapse any selection
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
-										}
-									}
-									break;
-								case SDLK_RIGHT:
-									{
-										if ( event.key.keysym.mod & KMOD_LSHIFT ||
-												event.key.keysym.mod & KMOD_RSHIFT )
-										{
-											// shift is held down;  move the floating glyph, but not the anchor glyph!
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
-										}
-										else
-										{
-											// shift isn't down;  move the anchor glyph and collapse any selection
-											SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
-										}
-									}
-									break;
-								case SDLK_v:
-									{
-#if defined( __APPLE_CC__ )
-										if ( event.key.keysym.mod & KMOD_LGUI ||
-												event.key.keysym.mod & KMOD_RGUI )
-#else
-										if ( event.key.keysym.mod & KMOD_LCTRL ||
-												event.key.keysym.mod & KMOD_RCTRL )
-#endif
-										{
-											vsString clipboardText = SDL_GetClipboardText();
-											if ( !clipboardText.empty() )
-											{
-												StringModeSaveUndoState();
-												HandleTextInput( clipboardText );
-											}
-										}
-										break;
-									}
-								case SDLK_c:
-									{
-#if defined( __APPLE_CC__ )
-										if ( event.key.keysym.mod & KMOD_LGUI ||
-												event.key.keysym.mod & KMOD_RGUI )
-#else
-										if ( event.key.keysym.mod & KMOD_LCTRL ||
-												event.key.keysym.mod & KMOD_RCTRL )
-#endif
-										{
-											// extract the currently selected text
-											vsString sel = GetStringModeSelection();
-											if ( !sel.empty() )
-												SDL_SetClipboardText( sel.c_str() );
-										}
-										break;
-									}
-								case SDLK_x:
-									{
-#if defined( __APPLE_CC__ )
-										if ( event.key.keysym.mod & KMOD_LGUI ||
-												event.key.keysym.mod & KMOD_RGUI )
-#else
-										if ( event.key.keysym.mod & KMOD_LCTRL ||
-												event.key.keysym.mod & KMOD_RCTRL )
-#endif
-										{
-											// extract the currently selected text
-											StringModeSaveUndoState();
-											vsString sel = GetStringModeSelection();
-											if ( !sel.empty() )
-												SDL_SetClipboardText( sel.c_str() );
-											HandleTextInput("");
-										}
-										break;
-									}
-								case SDLK_z:
-									{
-#if defined( __APPLE_CC__ )
-										if ( event.key.keysym.mod & KMOD_LGUI ||
-												event.key.keysym.mod & KMOD_RGUI )
-#else
-										if ( event.key.keysym.mod & KMOD_LCTRL ||
-												event.key.keysym.mod & KMOD_RCTRL )
-#endif
-										{
-											StringModeUndo();
-										}
-										break;
-									}
-								case SDLK_SPACE:
-									StringModeSaveUndoState();
-									break;
-								case SDLK_RETURN:
-									if ( m_stringMode )
-									{
-										StringModeSaveUndoState();
-										SetStringMode(false);
-									}
-									break;
-								default:
-									break;
-							}
-						}
-						else // not string mode
-						{
-							switch( event.key.keysym.scancode )
-							{
-								case SDL_SCANCODE_Q:
-									if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
-									{
-										core::SetExitToMenu();
-									}
-									m_keyControlState[CID_Exit] = 1.0f;
-									break;
-								case SDL_SCANCODE_ESCAPE:
-									if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
-									{
-										core::SetExit();
-									}
-									m_keyControlState[CID_Escape] = 1.0f;
-									break;
-								case SDL_SCANCODE_W:
-								case SDL_SCANCODE_UP:
-									m_keyControlState[CID_Up] = 1.0f;
-									m_keyControlState[CID_LUp] = 1.0f;
-									break;
-								case SDL_SCANCODE_S:
-								case SDL_SCANCODE_DOWN:
-									m_keyControlState[CID_Down] = 1.0f;
-									m_keyControlState[CID_LDown] = 1.0f;
-									break;
-								case SDL_SCANCODE_A:
-								case SDL_SCANCODE_LEFT:
-									m_keyControlState[CID_Left] = 1.0f;
-									m_keyControlState[CID_LLeft] = 1.0f;
-									break;
-								case SDL_SCANCODE_D:
-								case SDL_SCANCODE_RIGHT:
-									m_keyControlState[CID_Right] = 1.0f;
-									m_keyControlState[CID_LRight] = 1.0f;
-									break;
-								case SDL_SCANCODE_SPACE:
-								case SDL_SCANCODE_1:
-									m_keyControlState[CID_A] = 1.0f;
-									break;
-								case SDL_SCANCODE_LALT:
-								case SDL_SCANCODE_2:
-									m_keyControlState[CID_B] = 1.0f;
-									break;
-								case SDL_SCANCODE_3:
-									m_keyControlState[CID_X] = 1.0f;
-									break;
-								case SDL_SCANCODE_LSHIFT:
-									m_keyControlState[CID_Y] = 1.0f;
-									break;
-								case SDL_SCANCODE_BACKSPACE:
-									m_keyControlState[CID_Back] = 1.0f;
-									break;
-								case SDL_SCANCODE_RETURN:
-									{
-										if ( m_keyControlState[CID_Start] == 0.0f )
-										{
-											SDL_Keymod keymod = SDL_GetModState();
-											if ( keymod & KMOD_LALT )
-											{
-												// alt-enter means toggle fullscreen!
-												vsSystem::Instance()->ToggleFullscreen();
-											}
-										}
-										m_keyControlState[CID_Start] = 1.0f;
-										break;
-									}
-									//						case 'a':
-									//						case 'A':
-									//							m_keyControlState[CID_ZoomIn] = 1.f;
-									//							break;
-									//						case 'z':
-									//						case 'Z':
-									//							m_keyControlState[CID_ZoomOut] = 1.f;
-									//							break;
-#ifdef _DEBUG
-								case SDL_SCANCODE_P:
-									// reload materials, (DEBUG ONLY)
-									{
-										vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
-										if ( mm )
-											mm->ReloadAll();
-									}
-									break;
-#endif // _DEBUG
-								default:
-									break;
-							}
-						}
+							HandleStringModeKeyDown(event);
+						else
+							HandleKeyDown(event);
 						break;
 					}
 				case SDL_KEYUP:
 					{
-						switch( event.key.keysym.scancode ){
-							case SDL_SCANCODE_Q:
-								m_keyControlState[CID_Exit] = 0.0f;
-								break;
-							case SDL_SCANCODE_ESCAPE:
-								m_keyControlState[CID_Escape] = 0.0f;
-								break;
-							case SDL_SCANCODE_W:
-							case SDL_SCANCODE_UP:
-								m_keyControlState[CID_Up] = 0.0f;
-								m_keyControlState[CID_LUp] = 0.0f;
-								break;
-							case SDL_SCANCODE_S:
-							case SDL_SCANCODE_DOWN:
-								m_keyControlState[CID_Down] = 0.0f;
-								m_keyControlState[CID_LDown] = 0.0f;
-								break;
-							case SDL_SCANCODE_A:
-							case SDL_SCANCODE_LEFT:
-								m_keyControlState[CID_Left] = 0.0f;
-								m_keyControlState[CID_LLeft] = 0.0f;
-								break;
-							case SDL_SCANCODE_D:
-							case SDL_SCANCODE_RIGHT:
-								m_keyControlState[CID_Right] = 0.0f;
-								m_keyControlState[CID_LRight] = 0.0f;
-								break;
-							case SDL_SCANCODE_SPACE:
-							case SDL_SCANCODE_1:
-								m_keyControlState[CID_A] = 0.0f;
-								break;
-							case SDL_SCANCODE_LALT:
-							case SDL_SCANCODE_2:
-								m_keyControlState[CID_B] = 0.0f;
-								break;
-							case SDL_SCANCODE_3:
-								m_keyControlState[CID_X] = 0.0f;
-								break;
-							case SDL_SCANCODE_LSHIFT:
-								m_keyControlState[CID_Y] = 0.0f;
-								break;
-							case SDL_SCANCODE_RETURN:
-								m_keyControlState[CID_Start] = 0.0f;
-								break;
-							case SDL_SCANCODE_BACKSPACE:
-								m_keyControlState[CID_Back] = 0.0f;
-								break;
-								//						case 'a':
-								//						case 'A':
-								//							m_keyControlState[CID_ZoomIn] = 0.f;
-								//							break;
-								//						case 'z':
-								//						case 'Z':
-								//							m_keyControlState[CID_ZoomOut] = 0.f;
-								//							break;
-							default:
-								break;
-						}
+						HandleKeyUp(event);
 						break;
 					}
 				case SDL_WINDOWEVENT:
@@ -1029,6 +922,7 @@ vsInput::Update(float timeStep)
 		}
 	}
 
+#if 0
 	if ( m_controller )
 	{
 		SDL_JoystickUpdate();
@@ -1105,19 +999,19 @@ vsInput::Update(float timeStep)
 
 				if ( dc->type == CT_Axis )
 				{
-					ReadAxis( dc->cid, dc->dir, i );
+					ReadAxis( dc->id, dc->dir, i );
 				}
 				else if ( dc->type == CT_Button )
 				{
-					ReadButton( dc->cid, i );
+					ReadButton( dc->id, i );
 				}
 				else if ( dc->type == CT_Hat )
 				{
-					ReadHat( dc->cid, dc->dir, i );
+					ReadHat( dc->id, dc->dir, i );
 				}
 				else if ( dc->type == CT_MouseButton )
 				{
-					ReadMouseButton( dc->cid, i );	// now read in the event loop, as mouse clicks are momentary.
+					ReadMouseButton( dc->id, i );	// now read in the event loop, as mouse clicks are momentary.
 				}
 				else
 					m_controlState[i] = 0.f;
@@ -1125,68 +1019,82 @@ vsInput::Update(float timeStep)
 		}
 	}
 	else
-	{
-		for ( int i = 0; i < CID_MAX; i++ )
-		{
-			DeviceControl *dc = &m_controlMapping[i];
+#endif //0
+	// {
+	// 	for ( int i = 0; i < CID_MAX; i++ )
+	// 	{
+	// 		DeviceControl *dc = &m_controlMapping[i];
+    //
+	// 		if ( dc->type == CT_MouseButton )
+	// 		{
+	// 			m_controlState[i] = ReadMouseButton( dc->id );
+	// 		}
+	// 		else
+	// 		{
+	// 			m_controlState[i] = 0.f;
+	// 		}
+	// 	}
+	// }
 
-			if ( dc->type == CT_MouseButton )
-			{
-				ReadMouseButton( dc->cid, i );
-			}
-			else
-			{
-				m_controlState[i] = 0.f;
-			}
-		}
-	}
-
-	for ( int i = 0; i < CID_MAX; i++ )
-	{
-		if ( m_keyControlState[i] > m_controlState[i] )
-			m_controlState[i] = m_keyControlState[i];
-	}
-
-	m_controlState[CID_LeftRightLAxis] = m_controlState[CID_LRight] - m_controlState[CID_LLeft];
-	m_controlState[CID_UpDownLAxis] = m_controlState[CID_LDown] - m_controlState[CID_LUp];
-
-	m_controlState[CID_LeftRightRAxis] = m_controlState[CID_RRight] - m_controlState[CID_RLeft];
-	m_controlState[CID_UpDownRAxis] = m_controlState[CID_RDown] - m_controlState[CID_RUp];
-
-	m_controlState[CID_MouseWheel] = m_controlState[CID_MouseWheelDown] - m_controlState[CID_MouseWheelUp];
-
-	if ( m_fingersDown >= 2 )
-	{
-		m_fingersDownTimer = 1.f;
-	}
-	else
-	{
-		m_fingersDownTimer = vsMax(0.f,m_fingersDownTimer - timeStep);
-	}
-	if ( m_wheelSmoothing && m_fingersDownTimer == 0.f )
-	{
-		// on OSX, you can often get absurd instantaneous mouse movements;  reporting
-		// up to 20 or so wheel 'click's in a single frame.  This is probably in part
-		// because of SDL's attempt to convert OSX's clickless scrolling into the
-		// more usual integral 'clicks' used on other OSes.
-		float current = vsClamp(-2.f, m_controlState[CID_MouseWheel], 2.f);
-
-		const float c_stiffness = 23.f;
-		const float c_damping = 2.f * vsSqrt(c_stiffness);
-		float delta = (current - m_wheelSpeed);
-		m_wheelSpeed += delta * c_stiffness * timeStep;
-		m_wheelSpeed -= delta * c_damping * timeStep;
-
-		m_controlState[CID_MouseWheelUp] = m_wheelSpeed > 0.f ? m_wheelSpeed : 0.f;
-		m_controlState[CID_MouseWheelDown] = m_wheelSpeed < 0.f ? -m_wheelSpeed : 0.f;
-		m_controlState[CID_MouseWheel] = m_wheelSpeed;
-	}
-	else
-	{
-		m_wheelSpeed = 0.f;
-	}
+	// for ( int i = 0; i < CID_MAX; i++ )
+	// {
+	// 	if ( m_keyControlState[i] > m_controlState[i] )
+	// 		m_controlState[i] = m_keyControlState[i];
+	// }
+    //
+	// m_controlState[CID_LeftRightLAxis] = m_controlState[CID_LRight] - m_controlState[CID_LLeft];
+	// m_controlState[CID_UpDownLAxis] = m_controlState[CID_LDown] - m_controlState[CID_LUp];
+    //
+	// m_controlState[CID_LeftRightRAxis] = m_controlState[CID_RRight] - m_controlState[CID_RLeft];
+	// m_controlState[CID_UpDownRAxis] = m_controlState[CID_RDown] - m_controlState[CID_RUp];
+    //
+	// m_controlState[CID_MouseWheel] = m_controlState[CID_MouseWheelDown] - m_controlState[CID_MouseWheelUp];
+    //
+	// if ( m_fingersDown >= 2 )
+	// {
+	// 	m_fingersDownTimer = 1.f;
+	// }
+	// else
+	// {
+	// 	m_fingersDownTimer = vsMax(0.f,m_fingersDownTimer - timeStep);
+	// }
+	// if ( m_wheelSmoothing && m_fingersDownTimer == 0.f )
+	// {
+	// 	// on OSX, you can often get absurd instantaneous mouse movements;  reporting
+	// 	// up to 20 or so wheel 'click's in a single frame.  This is probably in part
+	// 	// because of SDL's attempt to convert OSX's clickless scrolling into the
+	// 	// more usual integral 'clicks' used on other OSes.  Let's clamp it to +-2.
+	// 	float current = vsClamp(-2.f, m_controlState[CID_MouseWheel], 2.f);
+    //
+	// 	const float c_stiffness = 23.f;
+	// 	const float c_damping = 2.f * vsSqrt(c_stiffness);
+	// 	float delta = (current - m_wheelSpeed);
+	// 	m_wheelSpeed += delta * c_stiffness * timeStep;
+	// 	m_wheelSpeed -= delta * c_damping * timeStep;
+    //
+	// 	m_controlState[CID_MouseWheelUp] = m_wheelSpeed > 0.f ? m_wheelSpeed : 0.f;
+	// 	m_controlState[CID_MouseWheelDown] = m_wheelSpeed < 0.f ? -m_wheelSpeed : 0.f;
+	// 	m_controlState[CID_MouseWheel] = m_wheelSpeed;
+	// }
+	// else
+	// {
+	// 	m_wheelSpeed = 0.f;
+	// }
 #endif
 	m_suppressResizeEvent = false;
+
+
+	for ( int i = 0; i < m_axes.ItemCount(); i++ )
+	{
+		if ( !m_axes[i].isCalculated )
+			m_axes[i].Update();
+	}
+
+	for ( int i = 0; i < m_axes.ItemCount(); i++ )
+	{
+		if ( m_axes[i].isCalculated )
+			m_axes[i].Update();
+	}
 }
 
 float
@@ -1224,14 +1132,14 @@ vsInput::ReadMouseButton( int buttonID )
 #endif
 }
 
-void
-vsInput::ReadMouseButton( int buttonID, int cid )
-{
-	m_controlState[cid] = ReadMouseButton(buttonID);
-}
+// void
+// vsInput::ReadMouseButton( int buttonID, int cid )
+// {
+// 	m_controlState[cid] = ReadMouseButton(buttonID);
+// }
 
 float
-vsInput::ReadAxis_Raw( int axisID )
+vsController::ReadAxis_Raw( int axisID )
 {
 #if !TARGET_OS_IPHONE
 	float axisValue;
@@ -1246,8 +1154,11 @@ vsInput::ReadAxis_Raw( int axisID )
 }
 
 float
-vsInput::ReadAxis( int axisID )
+vsController::ReadAxis( int axisID )
 {
+	const float c_deadZone = 0.2f;
+	const float c_oneMinusDeadZone = 1.0f - c_deadZone;
+
 	float axisValue = ReadAxis_Raw( axisID );
 	axisValue -= m_axisCenter[axisID];
 
@@ -1256,22 +1167,22 @@ vsInput::ReadAxis( int axisID )
 
 	axisValue /= m_axisThrow[axisID];
 
-	if ( vsFabs(axisValue) < 0.2f )
+	if ( vsFabs(axisValue) < c_deadZone )
 		axisValue = 0.f;
 	else
 	{
 		if ( axisValue > 0.f )
-			axisValue -= 0.2f;
+			axisValue -= c_deadZone;
 		else
-			axisValue += 0.2f;
-		axisValue *= (1.0f / 0.8f);
+			axisValue += c_deadZone;
+		axisValue *= (1.0f / c_oneMinusDeadZone);
 	}
 
 	return axisValue;
 }
 
-void
-vsInput::ReadAxis( int axisID, ControlDirection dir, int cid )
+float
+vsController::ReadAxis( int axisID, ControlDirection dir )
 {
 	float axisValue = ReadAxis( axisID );
 
@@ -1281,11 +1192,11 @@ vsInput::ReadAxis( int axisID, ControlDirection dir, int cid )
 	if ( axisValue < 0.f )
 		axisValue = 0.f;
 
-	m_controlState[cid] = axisValue;
+	return axisValue;
 }
 
 float
-vsInput::ReadHat(int hatID, ControlDirection dir)
+vsController::ReadHat(int hatID, ControlDirection dir)
 {
 #if !TARGET_OS_IPHONE
 	float result = 0.f;
@@ -1322,16 +1233,8 @@ vsInput::ReadHat(int hatID, ControlDirection dir)
 	return result;
 }
 
-void
-vsInput::ReadHat(int hatID, ControlDirection dir, int cid)
-{
-	float hatValue = ReadHat( hatID, dir );
-
-	m_controlState[cid] = hatValue;
-}
-
 float
-vsInput::ReadButton( int buttonID )
+vsController::ReadButton( int buttonID )
 {
 	float result = 0.f;
 #if !TARGET_OS_IPHONE
@@ -1343,22 +1246,16 @@ vsInput::ReadButton( int buttonID )
 	return result;
 }
 
-void
-vsInput::ReadButton( int buttonID, int cid )
-{
-	m_controlState[cid] = ReadButton(buttonID);
-}
-
 bool
 vsInput::IsDown( ControlID id )
 {
-	return (m_controlState[id] > 0.f);
+	return (m_axes[id].currentValue > 0.f);
 }
 
 bool
 vsInput::WasDown( ControlID id )
 {
-	return (m_lastControlState[id] > 0.f);
+	return (m_axes[id].lastValue > 0.f);
 }
 
 bool
@@ -1758,5 +1655,418 @@ vsInput::StringModeUndo()
 	}
 	vsLog("Failed to undo");
 	return false;
+}
+
+void
+vsInput::HandleStringModeKeyDown( const SDL_Event& event )
+{
+	switch( event.key.keysym.sym )
+	{
+		case SDLK_BACKSPACE:
+			if ( m_stringMode && m_stringModeString.length() != 0 )
+			{
+				if ( m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+				{
+					if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
+						return;
+					if ( !m_backspaceMode )
+						StringModeSaveUndoState();
+
+					// delete one character
+					vsString oldString = m_stringModeString;
+					m_stringModeString = vsEmptyString;
+					// Okay.  copy all the glyphs up to the cursor MINUS ONE.
+					// then copy the rest.
+					utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+					int inLength = utf8::distance(oldString.begin(), oldString.end());
+					for ( int i = 0; i < inLength; i++ )
+					{
+						if ( i != m_stringModeCursorFirstGlyph-1 )
+							utf8::append( *in, std::back_inserter(m_stringModeString) );
+						in++;
+					}
+
+					m_backspaceMode = true;
+					m_undoMode = false;
+					SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
+				}
+				else
+				{
+					// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
+					HandleTextInput("");
+				}
+
+				// if ( GetStringModeSelectAll() )
+				// {
+				// 	// we're in "select all" mode, so remove the whole string.
+				// 	m_stringModeString = "";
+				// 	m_stringModeSelectAll = false;
+				// }
+				// else
+				// {
+				// 	//Remove a character from the end
+				// 	size_t len = utf8::distance( m_stringModeString.begin(), m_stringModeString.end() );
+				// 	if ( len > 0 )
+				// 	{
+				// 		len--;
+				// 		// const char* w = m_stringModeString.begin();
+				// 		std::string::iterator w = m_stringModeString.begin();
+				// 		utf8::advance(w, len, m_stringModeString.end());
+				// 		m_stringModeString.erase(w,m_stringModeString.end());
+				// 		// utf8::advance(w,
+				// 		// m_stringModeString.erase( m_stringModeString.length() - 1 );
+				// 	}
+				// }
+			}
+			break;
+		case SDLK_LEFT:
+			{
+				if ( event.key.keysym.mod & KMOD_LSHIFT ||
+						event.key.keysym.mod & KMOD_RSHIFT )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+				}
+			}
+			break;
+		case SDLK_RIGHT:
+			{
+				if ( event.key.keysym.mod & KMOD_LSHIFT ||
+						event.key.keysym.mod & KMOD_RSHIFT )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+				}
+			}
+			break;
+		case SDLK_v:
+			{
+#if defined( __APPLE_CC__ )
+				if ( event.key.keysym.mod & KMOD_LGUI ||
+						event.key.keysym.mod & KMOD_RGUI )
+#else
+					if ( event.key.keysym.mod & KMOD_LCTRL ||
+							event.key.keysym.mod & KMOD_RCTRL )
+#endif
+					{
+						vsString clipboardText = SDL_GetClipboardText();
+						if ( !clipboardText.empty() )
+						{
+							StringModeSaveUndoState();
+							HandleTextInput( clipboardText );
+						}
+					}
+				break;
+			}
+		case SDLK_c:
+			{
+#if defined( __APPLE_CC__ )
+				if ( event.key.keysym.mod & KMOD_LGUI ||
+						event.key.keysym.mod & KMOD_RGUI )
+#else
+					if ( event.key.keysym.mod & KMOD_LCTRL ||
+							event.key.keysym.mod & KMOD_RCTRL )
+#endif
+					{
+						// extract the currently selected text
+						vsString sel = GetStringModeSelection();
+						if ( !sel.empty() )
+							SDL_SetClipboardText( sel.c_str() );
+					}
+				break;
+			}
+		case SDLK_x:
+			{
+#if defined( __APPLE_CC__ )
+				if ( event.key.keysym.mod & KMOD_LGUI ||
+						event.key.keysym.mod & KMOD_RGUI )
+#else
+					if ( event.key.keysym.mod & KMOD_LCTRL ||
+							event.key.keysym.mod & KMOD_RCTRL )
+#endif
+					{
+						// extract the currently selected text
+						StringModeSaveUndoState();
+						vsString sel = GetStringModeSelection();
+						if ( !sel.empty() )
+							SDL_SetClipboardText( sel.c_str() );
+						HandleTextInput("");
+					}
+				break;
+			}
+		case SDLK_z:
+			{
+#if defined( __APPLE_CC__ )
+				const int undoModifierKeys = KMOD_LGUI | KMOD_RGUI;
+#else
+				const int undoModifierKeys = KMOD_LCTRL | KMOD_RCTRL;
+#endif // defined( __APPLE_CC__ )
+
+				if ( event.key.keysym.mod & undoModifierKeys )
+					StringModeUndo();
+				break;
+			}
+		case SDLK_SPACE:
+			StringModeSaveUndoState();
+			break;
+		case SDLK_RETURN:
+			if ( m_stringMode )
+			{
+				StringModeSaveUndoState();
+				SetStringMode(false);
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+void
+vsInput::HandleKeyDown( const SDL_Event& event )
+{
+	switch( event.key.keysym.scancode )
+	{
+		case SDL_SCANCODE_Q:
+			if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
+			{
+				core::SetExitToMenu();
+			}
+			// m_keyControlState[CID_Exit] = 1.0f;
+			break;
+		case SDL_SCANCODE_ESCAPE:
+			if ( vsSystem::Instance()->IsExitApplicationKeyEnabled() )
+			{
+				core::SetExit();
+			}
+			// m_keyControlState[CID_Escape] = 1.0f;
+			break;
+		// case SDL_SCANCODE_W:
+		// case SDL_SCANCODE_UP:
+		// 	m_keyControlState[CID_Up] = 1.0f;
+		// 	m_keyControlState[CID_LUp] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_S:
+		// case SDL_SCANCODE_DOWN:
+		// 	m_keyControlState[CID_Down] = 1.0f;
+		// 	m_keyControlState[CID_LDown] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_A:
+		// case SDL_SCANCODE_LEFT:
+		// 	m_keyControlState[CID_Left] = 1.0f;
+		// 	m_keyControlState[CID_LLeft] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_D:
+		// case SDL_SCANCODE_RIGHT:
+		// 	m_keyControlState[CID_Right] = 1.0f;
+		// 	m_keyControlState[CID_LRight] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_SPACE:
+		// case SDL_SCANCODE_1:
+		// 	m_keyControlState[CID_A] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_LALT:
+		// case SDL_SCANCODE_2:
+		// 	m_keyControlState[CID_B] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_3:
+		// 	m_keyControlState[CID_X] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_LSHIFT:
+		// 	m_keyControlState[CID_Y] = 1.0f;
+		// 	break;
+		// case SDL_SCANCODE_BACKSPACE:
+		// 	m_keyControlState[CID_Back] = 1.0f;
+		// 	break;
+		case SDL_SCANCODE_RETURN:
+			{
+				// if ( m_keyControlState[CID_Start] == 0.0f )
+				{
+					SDL_Keymod keymod = SDL_GetModState();
+					if ( keymod & KMOD_LALT )
+					{
+						// alt-enter means toggle fullscreen!
+						vsSystem::Instance()->ToggleFullscreen();
+					}
+				}
+				// m_keyControlState[CID_Start] = 1.0f;
+				break;
+			}
+#ifdef _DEBUG
+		case SDL_SCANCODE_P:
+			// reload materials, (DEBUG ONLY)
+			{
+				vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
+				if ( mm )
+					mm->ReloadAll();
+			}
+			break;
+#endif // _DEBUG
+		default:
+			break;
+	}
+}
+
+void
+vsInput::HandleKeyUp( const SDL_Event& event )
+{
+	switch( event.key.keysym.scancode ){
+		// case SDL_SCANCODE_Q:
+		// 	m_keyControlState[CID_Exit] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_ESCAPE:
+		// 	m_keyControlState[CID_Escape] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_W:
+		// case SDL_SCANCODE_UP:
+		// 	m_keyControlState[CID_Up] = 0.0f;
+		// 	m_keyControlState[CID_LUp] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_S:
+		// case SDL_SCANCODE_DOWN:
+		// 	m_keyControlState[CID_Down] = 0.0f;
+		// 	m_keyControlState[CID_LDown] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_A:
+		// case SDL_SCANCODE_LEFT:
+		// 	m_keyControlState[CID_Left] = 0.0f;
+		// 	m_keyControlState[CID_LLeft] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_D:
+		// case SDL_SCANCODE_RIGHT:
+		// 	m_keyControlState[CID_Right] = 0.0f;
+		// 	m_keyControlState[CID_LRight] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_SPACE:
+		// case SDL_SCANCODE_1:
+		// 	m_keyControlState[CID_A] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_LALT:
+		// case SDL_SCANCODE_2:
+		// 	m_keyControlState[CID_B] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_3:
+		// 	m_keyControlState[CID_X] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_LSHIFT:
+		// 	m_keyControlState[CID_Y] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_RETURN:
+		// 	m_keyControlState[CID_Start] = 0.0f;
+		// 	break;
+		// case SDL_SCANCODE_BACKSPACE:
+		// 	m_keyControlState[CID_Back] = 0.0f;
+		// 	break;
+		default:
+			break;
+	}
+}
+
+void
+vsInput::InitController(int i)
+{
+	SDL_GameController *gc = SDL_GameControllerOpen(i);
+	if ( gc && i < MAX_JOYSTICKS )
+	{
+		vsDelete( m_controller[i] );
+		m_controller[i] = new vsController(gc, i);
+	}
+	else
+	{
+		vsLog("...ignoring it.");
+	}
+}
+
+void
+vsInput::DestroyController(int i)
+{
+	if ( i < MAX_JOYSTICKS &&
+			m_controller[i] )
+	{
+		vsDelete( m_controller[i] );
+	}
+}
+
+float
+DeviceControl::Evaluate()
+{
+	float value = 0.f;
+	switch( type )
+	{
+		case CT_Axis:
+			break;
+		case CT_Button:
+			break;
+		case CT_Hat:
+			break;
+		case CT_MouseWheel:
+			{
+				value = vsInput::Instance()->m_wheelValue;
+				if ( dir == CD_Negative )
+					value *= -1.0f;
+
+				value = vsMax( value, 0.f );
+				break;
+			}
+		case CT_MouseButton:
+			{
+				value = vsInput::Instance()->ReadMouseButton(id);
+				break;
+			}
+		case CT_Keyboard:
+			{
+				int keyCount;
+				const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+				if ( id < keyCount )
+					value = keys[id] ? 1.0f : 0.0f;
+				break;
+			}
+		case CT_None:
+		default:
+			break;
+	}
+	return value;
+}
+
+vsInputAxis::vsInputAxis():
+	lastValue(0.f),
+	currentValue(0.f),
+	isSet(false),
+	isCalculated(false)
+{
+}
+
+void
+vsInputAxis::Update()
+{
+	lastValue = currentValue;
+	currentValue = 0.0f;
+
+	if ( isCalculated )
+	{
+		currentValue = vsInput::Instance()->GetState( (ControlID)positiveAxisId ) -
+			vsInput::Instance()->GetState( (ControlID)negativeAxisId );
+	}
+	else
+	{
+		float value;
+		for ( int i = 0; i < positive.ItemCount(); i++ )
+		{
+			value = positive[i].Evaluate();
+			currentValue += value;
+
+			// value = negative[i].Evaluate();
+			// currentValue -= value;
+		}
+	}
 }
 

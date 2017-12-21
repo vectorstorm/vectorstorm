@@ -13,6 +13,7 @@
 #include "Core/CORE_GameSystem.h"
 #include "VS/Math/VS_Vector.h"
 #include "Utils/VS_Singleton.h"
+#include "Utils/VS_Array.h"
 #include "Utils/VS_ArrayStore.h"
 
 #if defined __APPLE__
@@ -56,9 +57,6 @@ enum ControlID		// IF YOU CHANGE THIS ENUM, UPDATE THE "cidName" STRINGS USED IN
 	CID_Start,
 	CID_Back,
 
-	CID_ZoomIn,
-	CID_ZoomOut,
-
 	CID_MouseLeftButton,
 	CID_MouseMiddleButton,
 	CID_MouseRightButton,
@@ -80,6 +78,8 @@ enum ControlType
 	CT_Button,
 	CT_Hat,
 	CT_MouseButton,
+	CT_MouseWheel,
+	CT_Keyboard,
 
 	CT_MAX = CT_MouseButton	// largest legal value
 };
@@ -101,21 +101,45 @@ struct DeviceControl
 {
 public:
 	ControlType		type;
-	int				cid;
+	// 'id' is the axis/button/hat/etc id.  For 'Keyboard' devices, it is the scancode.
+	int				id;
+	// For controller types, 'controllerId' is the controller id value.
+	int				controllerId;
 
 	ControlDirection	dir;	// outputs range from 0..-1, instead of 0..1.  Useful for analog axes.
 
-	DeviceControl() { type = CT_None; cid = 0; dir = CD_Positive; }
-	void	Set(ControlType type_in, int cid_in, ControlDirection dir_in = CD_Positive) { type = type_in; cid = cid_in; dir = dir_in; }
+	DeviceControl() { type = CT_None; id = 0; controllerId = 0; dir = CD_Positive; }
+	void	Set(ControlType type_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; id = id_in; dir = dir_in; }
+	void	Set(ControlType type_in, int controllerId_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; controllerId = controllerId_in; id = id_in; dir = dir_in; }
+
+	float	Evaluate();
 };
 
-class vsInput : public coreGameSystem, public vsSingleton<vsInput>
+struct vsInputAxis
+{
+	vsString name;
+
+	vsArray<DeviceControl> positive;
+	// DeviceControl negative[MAX_CONTROL_BINDS];
+
+	float lastValue;
+	float currentValue;
+	bool isSet;
+	bool isCalculated;
+
+	int positiveAxisId;
+	int negativeAxisId;
+
+	vsInputAxis();
+	void Update();
+};
+
+class vsController
 {
 #if !TARGET_OS_IPHONE
 	SDL_Joystick	*m_joystick;
 	SDL_GameController *m_controller;
 #endif
-
 	int				m_joystickAxes;
 	int				m_joystickButtons;
 	int				m_joystickHats;
@@ -123,14 +147,38 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	float			*m_axisCenter;
 	float			*m_axisThrow;		// how far can this control go from center?
 
-	DeviceControl	m_controlMapping[CID_MAX];
-	DeviceControl	m_pollResult;
-	bool			m_mappingsChanged;
+public:
+	vsController( SDL_GameController *controller, int index );
+	~vsController();
 
-	float			m_keyControlState[CID_MAX];
+	float			ReadHat(int hatID, ControlDirection dir);
 
-	float			m_controlState[CID_MAX];
-	float			m_lastControlState[CID_MAX];
+	float			ReadAxis( int axisID );
+	float			ReadAxis( int axisID, ControlDirection dir );
+	float			ReadButton( int buttonID );
+
+	float			ReadAxis_Raw( int axisID );
+
+};
+
+class vsInput : public coreGameSystem, public vsSingleton<vsInput>
+{
+#define MAX_JOYSTICKS (4)
+	vsController* m_controller[MAX_JOYSTICKS];
+
+	// DeviceControl	m_controlMapping[CID_MAX];
+	// DeviceControl	m_pollResult;
+	// bool			m_mappingsChanged;
+
+
+	vsArray<vsInputAxis> m_axes;
+
+	// float			m_keyControlState[CID_MAX];
+
+	// float			m_controlState[CID_MAX];
+	// float			m_lastControlState[CID_MAX];
+
+	float m_wheelValue;
 
 	vsVector2D		m_mousePos;
 	vsVector2D		m_mouseMotion;					// how much has the mouse moved this frame?
@@ -144,6 +192,10 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 
 	bool			m_preparingToPoll;
 	bool			m_pollingForDeviceControl;			// are we waiting for an arbitrary control input?  (typically for the purposes of mapping device controls to our virtual controller)
+
+	void HandleStringModeKeyDown( const SDL_Event& event );
+	void HandleKeyDown( const SDL_Event& event );
+	void HandleKeyUp( const SDL_Event& event );
 
 public:
 	enum ValidationType
@@ -186,19 +238,8 @@ private:
 	bool			m_wheelSmoothing; // enable or disable wheel "smoothing" support.
 	float			m_wheelSpeed;
 
-	void			ReadAxis( int axisID, ControlDirection dir, int cid );
-	void			ReadButton( int buttonID, int cid );
-
-	float			ReadHat(int hatID, ControlDirection dir);
-	void			ReadHat( int hatID, ControlDirection dir, int cid );
-
-	float			ReadAxis( int axisID );
-	float			ReadButton( int buttonID );
-
 	float			ReadMouseButton( int axisID );
-	void			ReadMouseButton( int axisID, int cid );
-
-	float			ReadAxis_Raw( int axisID );
+	// void			ReadMouseButton( int axisID, int cid );
 
 	bool			WasDown( ControlID id );
 
@@ -213,6 +254,9 @@ private:
 	bool m_stringModeEditing; // set to 'true' if we've modified the string.  Set to 'false' when we move the cursor.
 	void StringModeSaveUndoState();
 	bool StringModeUndo();
+
+	void InitController(int i);
+	void DestroyController(int i);
 
 public:
 
@@ -231,6 +275,10 @@ public:
 	int				GetMaxTouchCount();
 	vsVector2D		GetTouchPosition(int touchID, int scene = 0);
 
+	float			ReadHat(int hatID, ControlDirection dir);
+	float			ReadAxis( int axisID );
+	float			ReadButton( int buttonID );
+
 	bool			MouseIsOnScreen();
 	vsVector2D		GetWindowMousePosition(); // returns the mouse position in pixels, relative to the window.
 	vsVector2D		GetMousePosition(int scene = 0); // returns the mouse position relative to the rendering context of the specified scene.
@@ -238,7 +286,7 @@ public:
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }
 
-	float			GetState( ControlID id ) { return m_controlState[id]; }
+	float			GetState( ControlID id ) { return m_axes[id].currentValue; } //m_controlState[id]; }
 	bool			IsUp( ControlID id ) { return !IsDown( id ); }
 	bool			IsDown( ControlID id );
 	bool			WasPressed( ControlID id );
@@ -264,10 +312,19 @@ public:
 
 	void			StartPollingForDeviceControl() { m_preparingToPoll = true; }
 	bool			IsPolling() { return m_pollingForDeviceControl || m_preparingToPoll; }
-	DeviceControl *	GetPollResult() { return &m_pollResult; }
+	// DeviceControl *	GetPollResult() { return &m_pollResult; }
 
-	DeviceControl *	GetControlMapping( ControlID id ) { return &m_controlMapping[id]; }
-	void			SetControlMapping( ControlID id, DeviceControl *dc ) { m_controlMapping[id] = *dc; m_mappingsChanged = true; }
+	// DeviceControl *	GetControlMapping( ControlID id ) { return &m_controlMapping[id]; }
+	// void			SetControlMapping( ControlID id, DeviceControl *dc ) { m_controlMapping[id] = *dc; m_mappingsChanged = true; }
+
+	void AddAxis( int cid, const vsString& name );
+	void DefaultBindKey( int cid, int scancode );
+	void DefaultBindMouseButton( int cid, int mouseButtonCode );
+	void DefaultBindMouseWheel( int cid, ControlDirection cd );
+	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);
+
+	friend struct vsInputAxis;
+	friend struct DeviceControl;
 };
 
 #endif // VS_INPUT_H
