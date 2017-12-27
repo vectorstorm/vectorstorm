@@ -203,7 +203,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	// bool			m_mappingsChanged;
 
 
-	vsArray<vsInputAxis> m_axes;
+	vsArray<vsInputAxis> m_axis;
 
 	// float			m_keyControlState[CID_MAX];
 
@@ -318,7 +318,7 @@ public:
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }
 
-	float			GetState( int id ) { return m_axes[id].currentValue; } //m_controlState[id]; }
+	float			GetState( int id ) { return m_axis[id].currentValue; } //m_controlState[id]; }
 	bool			IsUp( int id ) { return !IsDown( id ); }
 	bool			IsDown( int id );
 	bool			WasPressed( int id );
@@ -354,6 +354,11 @@ public:
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
 	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);
+
+	int GetAxisCount() const { return m_axis.ItemCount(); }
+	const struct vsInputAxis& GetAxis(int i) { return m_axis[i]; }
+
+	vsString GetBindDescription( const DeviceControl& dc );
 
 	friend struct vsInputAxis;
 	friend struct DeviceControl;

@@ -155,7 +155,7 @@ vsInput::Deinit()
 {
 	Save();
 	vsHeap::Push(g_globalHeap);
-	m_axes.Clear();
+	m_axis.Clear();
 	vsHeap::Pop(g_globalHeap);
 
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
@@ -171,14 +171,14 @@ vsInput::AddAxis( int cid, const vsString& name )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( m_axes.ItemCount() <= cid )
+	if ( m_axis.ItemCount() <= cid )
 	{
-		m_axes.SetArraySize(cid+1);
+		m_axis.SetArraySize(cid+1);
 	}
 
-	if ( m_axes[cid].name != name )
+	if ( m_axis[cid].name != name )
 	{
-		m_axes[cid].name = name;
+		m_axis[cid].name = name;
 	}
 
 	vsHeap::Pop(g_globalHeap);
@@ -193,13 +193,13 @@ vsInput::DefaultBindKey( int cid, int scancode )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axes[cid].isSet )
+	if ( !m_axis[cid].isSet )
 	{
 		DeviceControl dc;
 		dc.type = CT_Keyboard;
 		dc.id = scancode;
 
-		m_axes[cid].positive.AddItem(dc);
+		m_axis[cid].positive.AddItem(dc);
 	}
 
 	vsHeap::Pop(g_globalHeap);
@@ -214,13 +214,13 @@ vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axes[cid].isSet )
+	if ( !m_axis[cid].isSet )
 	{
 		DeviceControl dc;
 		dc.type = CT_MouseButton;
 		dc.id = mouseButtonCode;
 
-		m_axes[cid].positive.AddItem(dc);
+		m_axis[cid].positive.AddItem(dc);
 	}
 
 	vsHeap::Pop(g_globalHeap);
@@ -235,13 +235,13 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axes[cid].isSet )
+	if ( !m_axis[cid].isSet )
 	{
 		DeviceControl dc;
 		dc.type = CT_MouseWheel;
 		dc.dir = cd;
 
-		m_axes[cid].positive.AddItem(dc);
+		m_axis[cid].positive.AddItem(dc);
 	}
 
 	vsHeap::Pop(g_globalHeap);
@@ -250,9 +250,9 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 void
 vsInput::SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis)
 {
-	m_axes[cid].isCalculated = true;
-	m_axes[cid].positiveAxisId = positiveAxis;
-	m_axes[cid].negativeAxisId = negativeAxis;
+	m_axis[cid].isCalculated = true;
+	m_axis[cid].positiveAxisId = positiveAxis;
+	m_axis[cid].negativeAxisId = negativeAxis;
 }
 
 void
@@ -990,16 +990,16 @@ vsInput::Update(float timeStep)
 	m_suppressResizeEvent = false;
 
 
-	for ( int i = 0; i < m_axes.ItemCount(); i++ )
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
 	{
-		if ( !m_axes[i].isCalculated )
-			m_axes[i].Update();
+		if ( !m_axis[i].isCalculated )
+			m_axis[i].Update();
 	}
 
-	for ( int i = 0; i < m_axes.ItemCount(); i++ )
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
 	{
-		if ( m_axes[i].isCalculated )
-			m_axes[i].Update();
+		if ( m_axis[i].isCalculated )
+			m_axis[i].Update();
 	}
 }
 
@@ -1155,13 +1155,13 @@ vsController::ReadButton( int buttonID )
 bool
 vsInput::IsDown( int id )
 {
-	return (m_axes[id].currentValue > 0.f);
+	return (m_axis[id].currentValue > 0.f);
 }
 
 bool
 vsInput::WasDown( int id )
 {
-	return (m_axes[id].lastValue > 0.f);
+	return (m_axis[id].lastValue > 0.f);
 }
 
 bool
@@ -1859,5 +1859,49 @@ vsInputAxis::Update()
 			// currentValue -= value;
 		}
 	}
+}
+
+vsString
+vsInput::GetBindDescription( const DeviceControl& dc )
+{
+	switch ( dc.type )
+	{
+		case CT_None:
+			return "[-]";
+			break;
+		case CT_Axis:
+			return vsFormatString("Axis %d", dc.id);
+			break;
+		case CT_Button:
+			return vsFormatString("Button %d", dc.id);
+			break;
+		case CT_Hat:
+			return vsFormatString("Hat %d", dc.id);
+			break;
+		case CT_MouseButton:
+			switch( dc.id )
+			{
+				case SDL_BUTTON_LEFT:
+					return "Left Mouse Button";
+					break;
+				case SDL_BUTTON_MIDDLE:
+					return "Middle Mouse Button";
+					break;
+				case SDL_BUTTON_RIGHT:
+					return "Right Mouse Button";
+					break;
+			}
+			break;
+		case CT_MouseWheel:
+			if ( dc.dir == CD_Positive )
+				return "Wheel Up";
+			else
+				return "Wheel Down";
+			break;
+		case CT_Keyboard:
+			return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+			break;
+	}
+	return "UNKNOWN";
 }
 
