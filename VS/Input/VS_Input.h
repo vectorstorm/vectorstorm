@@ -28,25 +28,25 @@
 // an example of their usage.  Note that these really only work properly
 // if you disable the "VS_DEFAULT_VIRTUAL_CONTROLLER" build setting;  these
 // are the macros you use to define your own, custom controller and axes.
-#define DEFAULT_BIND_KEY(cid, scancode) \
+#define DEFAULT_BIND_KEY(cid, description, scancode) \
 { \
-	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->DefaultBindKey(cid, scancode); \
 }
-#define DEFAULT_BIND_MOUSE_BUTTON(cid, mouseButtonCode) \
+#define DEFAULT_BIND_MOUSE_BUTTON(cid, description, mouseButtonCode) \
 { \
-	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->DefaultBindMouseButton(cid, mouseButtonCode); \
 }
-#define DEFAULT_BIND_MOUSE_WHEEL(cid, cdirection) \
+#define DEFAULT_BIND_MOUSE_WHEEL(cid, description, cdirection) \
 { \
-	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->DefaultBindMouseWheel(cid, cdirection); \
 }
 
-#define SUBTRACTION_AXIS(cid, positive, negative) \
+#define SUBTRACTION_AXIS(cid, description, positive, negative) \
 { \
-	vsInput::Instance()->AddAxis(cid, #cid); \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
 }
 
@@ -147,6 +147,7 @@ public:
 struct vsInputAxis
 {
 	vsString name;
+	vsString description;
 
 	vsArray<DeviceControl> positive;
 	// DeviceControl negative[MAX_CONTROL_BINDS];
@@ -349,7 +350,7 @@ public:
 	// DeviceControl *	GetControlMapping( ControlID id ) { return &m_controlMapping[id]; }
 	// void			SetControlMapping( ControlID id, DeviceControl *dc ) { m_controlMapping[id] = *dc; m_mappingsChanged = true; }
 
-	void AddAxis( int cid, const vsString& name );
+	void AddAxis( int cid, const vsString& name, const vsString& description );
 	void DefaultBindKey( int cid, int scancode );
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
