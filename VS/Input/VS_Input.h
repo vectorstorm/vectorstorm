@@ -200,7 +200,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	vsController* m_controller[MAX_JOYSTICKS];
 
 	// DeviceControl	m_controlMapping[CID_MAX];
-	// DeviceControl	m_pollResult;
+	DeviceControl	m_pollResult;
 	// bool			m_mappingsChanged;
 
 
@@ -355,6 +355,8 @@ public:
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
 	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);
+
+	void Rebind( int cid, const DeviceControl& dc );
 
 	int GetAxisCount() const { return m_axis.ItemCount(); }
 	const struct vsInputAxis& GetAxis(int i) { return m_axis[i]; }

@@ -990,17 +990,84 @@ vsInput::Update(float timeStep)
 #endif
 	m_suppressResizeEvent = false;
 
-
-	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	if ( m_preparingToPoll )
 	{
-		if ( !m_axis[i].isCalculated )
-			m_axis[i].Update();
+		// wait for everything to be released.
+		bool anythingDown = false;
+
+		// For right now, let's just check for keyboard.
+		int keyCount;
+		const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+
+		// TODO:  It'd probably be *heaps* faster to check this four or eight
+		// bytes at a time, instead of key-by-key.  But then you have to cope
+		// with the end of the array possibly not filling all those bytes up.
+		// And honestly, we're virtually never going through this code at all,
+		// so I'm being silly even considering trying to optimise this test for
+		// any keys being held down.  I'm sorry.
+		for ( int i = 0; i < keyCount; i++ )
+		{
+			if ( keys[i] != 0 )
+			{
+				anythingDown = true;
+				break;
+			}
+		}
+
+		if ( !anythingDown )
+		{
+			m_preparingToPoll = false;
+			m_pollingForDeviceControl = true;
+		}
 	}
-
-	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	else if ( m_pollingForDeviceControl )
 	{
-		if ( m_axis[i].isCalculated )
-			m_axis[i].Update();
+		bool found = false;
+
+		int keyCount;
+		const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+
+		// TODO:  It'd probably be *heaps* faster to check this four or eight
+		// bytes at a time, instead of key-by-key.  But then you have to cope
+		// with the end of the array possibly not filling all those bytes up.
+		// And honestly, we're virtually never going through this code at all,
+		// so I'm being silly even considering trying to optimise this test for
+		// any keys being held down.  I'm sorry.
+		for ( int i = 0; i < keyCount; i++ )
+		{
+			if ( keys[i] != 0 )
+			{
+				m_pollResult.type = CT_Keyboard;
+				m_pollResult.id = i;
+				m_pollResult.dir = CD_Positive;
+				found = true;
+				break;
+			}
+		}
+
+		if ( found )
+		{
+			m_pollingForDeviceControl = false;
+
+			Update(0.f);	// a couple updates to make sure we don't register a 'press' for the button we've pressed, if any.
+			Update(0.f);
+		}
+	}
+	else	// normal operation
+	{
+
+		for ( int i = 0; i < m_axis.ItemCount(); i++ )
+		{
+			if ( !m_axis[i].isCalculated )
+				m_axis[i].Update();
+		}
+
+		for ( int i = 0; i < m_axis.ItemCount(); i++ )
+		{
+			if ( m_axis[i].isCalculated )
+				m_axis[i].Update();
+		}
+
 	}
 }
 
@@ -1904,5 +1971,27 @@ vsInput::GetBindDescription( const DeviceControl& dc )
 			break;
 	}
 	return "UNKNOWN";
+}
+
+void
+vsInput::Rebind( int cid, const DeviceControl& dc )
+{
+	// Okay, this is a little awkward;  need to think more about how I want
+	// this to work.
+	//
+	// Right now, this "Rebind" function changes only the FIRST binding point
+	// for an axis.  If there's no control bound, then we add one.  If there's
+	// more than one, we REPLACE the first one.  So if you have multiple bindings,
+	// the first one can be rebound, the others are static.  Eew.
+
+	if ( m_axis[cid].positive.IsEmpty() )
+	{
+		m_axis[cid].positive.AddItem(dc);
+	}
+	else
+	{
+		m_axis[cid].positive[0] = dc;
+	}
+
 }
 
