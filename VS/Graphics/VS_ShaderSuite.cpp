@@ -26,12 +26,24 @@ vsShaderSuite::~vsShaderSuite()
 }
 
 void
-vsShaderSuite::InitShaders(const vsString &vertexShader, const vsString &fragmentShader)
+vsShaderSuite::InitShaders(const vsString &vertexShader, const vsString &fragmentShader, OwnerType ot )
 {
-	m_shader[Normal] = vsShader::Load(vertexShader, fragmentShader, false, false);
-	m_shader[NormalTex] = vsShader::Load(vertexShader, fragmentShader, false, true);
-	m_shader[Lit] = vsShader::Load(vertexShader, fragmentShader, true, false);
-	m_shader[LitTex] = vsShader::Load(vertexShader, fragmentShader, true, true);
+	m_ownerType = ot;
+
+	if ( ot == OwnerType_System )
+	{
+		m_shader[Normal] = vsShader::Load_System(vertexShader, fragmentShader, false, false);
+		m_shader[NormalTex] = vsShader::Load_System(vertexShader, fragmentShader, false, true);
+		m_shader[Lit] = vsShader::Load_System(vertexShader, fragmentShader, true, false);
+		m_shader[LitTex] = vsShader::Load_System(vertexShader, fragmentShader, true, true);
+	}
+	else
+	{
+		m_shader[Normal] = vsShader::Load(vertexShader, fragmentShader, false, false);
+		m_shader[NormalTex] = vsShader::Load(vertexShader, fragmentShader, false, true);
+		m_shader[Lit] = vsShader::Load(vertexShader, fragmentShader, true, false);
+		m_shader[LitTex] = vsShader::Load(vertexShader, fragmentShader, true, true);
+	}
 }
 
 vsShader *

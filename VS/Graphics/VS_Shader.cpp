@@ -31,6 +31,9 @@ vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader
 	m_attribute(NULL),
 	m_uniformCount(0),
 	m_attributeCount(0),
+	m_vertexShaderFile(""),
+	m_fragmentShaderFile(""),
+	m_system(false),
 	m_shader(-1)
 {
 	GL_CHECK_SCOPED("Shader");
@@ -360,10 +363,27 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 	return result;
 }
 
+vsShader *
+vsShader::Load_System( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
+{
+	vsShader *result = Load(vertexShader, fragmentShader, lit, texture);
+	result->m_system = true;
+	return result;
+}
+
 void
 vsShader::Reload()
 {
-	if ( m_vertexShaderFile != vsEmptyString && m_fragmentShaderFile != vsEmptyString )
+	// system-owned shader;  don't reload it!
+	if ( m_system )
+		return;
+
+	// Note:  If I ever really need to be able to reload system-owned shaders
+	// at runtime (right now, this is only default_v/default_f), this can probably
+	// be made to work by calling	`vsHeap::Push(g_globalHeap);` here at the start
+	// of the function, and popping it back off at the bottom.
+
+	if ( !m_vertexShaderFile.empty() && !m_fragmentShaderFile.empty() )
 	{
 		vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
 		vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );

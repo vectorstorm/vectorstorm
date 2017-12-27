@@ -78,6 +78,8 @@ private:
 	vsString m_vertexShaderFile;
 	vsString m_fragmentShaderFile;
 
+	bool m_system; // system shader;  should not be reloaded!
+
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueI( int i, int value );
@@ -100,6 +102,7 @@ public:
 	virtual ~vsShader();
 
 	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
+	static vsShader *Load_System( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
 	static void ReloadAll();
 	void Reload();
 
