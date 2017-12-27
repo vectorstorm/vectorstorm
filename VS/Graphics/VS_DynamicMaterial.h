@@ -48,7 +48,8 @@ public:
 
 	// NOTE:  Shader must be set LAST, after textures and draw mode are selected
 	void SetShader( const vsString &vShader, const vsString &fShader );
-	void SetShader( vsShader *shader );
+	void SetShader( vsShader *shader, bool own = true );
+	void SetShader_Unowned( vsShader *shader ) { SetShader(shader, false); }
 	void SetShader(); // use this one to set the default shader.
 };
 

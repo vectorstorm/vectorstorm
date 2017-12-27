@@ -17,10 +17,10 @@ vsDynamicMaterial::vsDynamicMaterial():
 }
 
 void
-vsDynamicMaterial::SetShader( vsShader *shader )
+vsDynamicMaterial::SetShader( vsShader *shader, bool owned )
 {
 	GetResource()->m_shader = shader;
-	GetResource()->m_shaderIsMine = true;
+	GetResource()->m_shaderIsMine = owned;
 	SetupParameters();
 }
 

@@ -22,13 +22,19 @@ public:
 		LitTex,
 		SHADERTYPE_MAX
 	};
+	enum OwnerType
+	{
+		OwnerType_Game,
+		OwnerType_System
+	};
 protected:
 	vsShader *	m_shader[SHADERTYPE_MAX];
+	OwnerType m_ownerType;
 public:
 	vsShaderSuite();
 	virtual ~vsShaderSuite();
 
-	virtual void InitShaders(const vsString &vertexShader, const vsString &fragmentShader);
+	virtual void InitShaders(const vsString &vertexShader, const vsString &fragmentShader, OwnerType system);
 
 	vsShader *	GetShader(ShaderType type);
 };

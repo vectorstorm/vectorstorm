@@ -454,7 +454,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 	CheckGLError("Initialising OpenGL rendering");
 
-	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl");
+	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	CheckGLError("Initialising OpenGL rendering");
 
 	// TEMP VAO IMPLEMENTATION
