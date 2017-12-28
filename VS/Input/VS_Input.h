@@ -344,8 +344,9 @@ public:
 	void HandleTextInput( const vsString& input );
 
 	void			StartPollingForDeviceControl() { m_preparingToPoll = true; }
+	void			CancelPollingForDeviceControl() { m_preparingToPoll = m_pollingForDeviceControl = false; }
 	bool			IsPolling() { return m_pollingForDeviceControl || m_preparingToPoll; }
-	// DeviceControl *	GetPollResult() { return &m_pollResult; }
+	DeviceControl *	GetPollResult() { return &m_pollResult; }
 
 	// DeviceControl *	GetControlMapping( ControlID id ) { return &m_controlMapping[id]; }
 	// void			SetControlMapping( ControlID id, DeviceControl *dc ) { m_controlMapping[id] = *dc; m_mappingsChanged = true; }
