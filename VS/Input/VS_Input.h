@@ -357,6 +357,10 @@ public:
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
 	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);
 
+	// Tells us to clear all of our axis and binding information.  Presumably the
+	// game is about to initialise us with something different.
+	void ClearAxes();
+
 	void Rebind( int cid, const DeviceControl& dc );
 
 	int GetAxisCount() const { return m_axis.ItemCount(); }

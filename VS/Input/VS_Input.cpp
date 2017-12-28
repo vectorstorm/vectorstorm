@@ -163,6 +163,16 @@ vsInput::Deinit()
 }
 
 void
+vsInput::ClearAxes()
+{
+	vsHeap::Push(g_globalHeap);
+
+	m_axis.Clear();
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsInput::AddAxis( int cid, const vsString& name, const vsString& description )
 {
 	// Since this function is being called post-initialisation, we need to
