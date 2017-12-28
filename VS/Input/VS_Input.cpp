@@ -20,6 +20,9 @@
 #include "VS_MaterialManager.h" // TEMP:  For triggering material reload.
 #include "VS_Shader.h" // TEMP:  For triggering shader reload.
 
+#include "VS_File.h"
+#include "VS_Record.h"
+
 #include "VS_Preferences.h"
 #include "Utils/utfcpp/utf8.h"
 #include <iterator>
@@ -188,6 +191,17 @@ vsInput::AddAxis( int cid, const vsString& name, const vsString& description )
 
 	if ( m_axis[cid].name != name )
 	{
+		// not already loaded in, here.  Let's check whether we have something with
+		// this name loaded, and copy it into place, if so.
+		for ( int i = 0; i < m_loadedAxis.ItemCount(); i++ )
+		{
+			if ( m_loadedAxis[i].name == name )
+			{
+				m_axis[cid] = m_loadedAxis[i];
+				break;
+			}
+		}
+
 		m_axis[cid].name = name;
 	}
 	m_axis[cid].description = description;
@@ -204,7 +218,7 @@ vsInput::DefaultBindKey( int cid, int scancode )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axis[cid].isSet )
+	if ( !m_axis[cid].isLoaded )
 	{
 		DeviceControl dc;
 		dc.type = CT_Keyboard;
@@ -225,7 +239,7 @@ vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axis[cid].isSet )
+	if ( !m_axis[cid].isLoaded )
 	{
 		DeviceControl dc;
 		dc.type = CT_MouseButton;
@@ -246,7 +260,7 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 	// then treated as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	if ( !m_axis[cid].isSet )
+	if ( !m_axis[cid].isLoaded )
 	{
 		DeviceControl dc;
 		dc.type = CT_MouseWheel;
@@ -266,9 +280,83 @@ vsInput::SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis)
 	m_axis[cid].negativeAxisId = negativeAxis;
 }
 
+const vsString	c_controlTypeString[] =
+{
+	"CT_None",
+	"CT_Axis",
+	"CT_Button",
+	"CT_Hat",
+	"CT_MouseButton",
+	"CT_MouseWheel",
+	"CT_Keyboard"
+};
+
+static ControlType ControlTypeFromString( const vsString& s )
+{
+	for ( int i = 0; i < CT_MAX; i++ )
+	{
+		if ( s == c_controlTypeString[i] )
+			return (ControlType)i;
+	}
+	return CT_None;
+}
+
+const vsString	c_controlDirectionString[] =
+{
+	"CD_Positive",
+	"CD_Negative",
+	"CD_Hat_Up",
+	"CD_Hat_Right",
+	"CD_Hat_Down",
+	"CD_Hat_Left"
+};
+
+static ControlDirection ControlDirectionFromString( const vsString& s )
+{
+	for ( int i = 0; i < CT_MAX; i++ )
+	{
+		if ( s == c_controlDirectionString[i] )
+			return (ControlDirection)i;
+	}
+	return CD_Positive;
+}
+
 void
 vsInput::Load()
 {
+	if ( vsFile::Exists("binds.txt") )
+	{
+		vsFile f("binds.txt", vsFile::MODE_Read);
+
+		vsRecord a;
+		while ( f.Record(&a) )
+		{
+			if ( a.GetLabel().AsString() != "Axis" )
+				continue;
+
+			vsInputAxis axis;
+			for ( int j = 0; j < a.GetChildCount(); j++ )
+			{
+				vsRecord *child = a.GetChild(j);
+				vsString label = child->GetLabel().AsString();
+				if ( label == "name" )
+					axis.name = child->GetToken(0).AsString();
+				else if ( label == "DeviceControl" )
+				{
+					DeviceControl dc;
+					dc.type = ControlTypeFromString( child->GetToken(0).AsString() );
+					dc.dir = ControlDirectionFromString( child->GetToken(1).AsString() );
+					dc.id = child->GetToken(2).AsInteger();
+
+					axis.positive.AddItem(dc);
+				}
+			}
+
+			axis.isLoaded = true;
+			m_loadedAxis.AddItem(axis);
+		}
+	}
+
 #ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 	DEFAULT_BIND_KEY(CID_LUp, "LUp", SDL_SCANCODE_W);
 	DEFAULT_BIND_KEY(CID_LUp, "LUp", SDL_SCANCODE_UP);
@@ -418,6 +506,43 @@ vsInput::Load()
 void
 vsInput::Save()
 {
+	vsFile f("binds.txt", vsFile::MODE_Write);
+
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis &axis = m_axis[i];
+
+		if ( axis.isCalculated )
+			continue; // don't bother saving out calculated fields.
+		if ( axis.name.empty() )
+			continue; // don't bother saving out fields which don't have names.
+
+		vsRecord a;
+		a.SetLabel( "Axis" );
+
+		vsRecord *name = new vsRecord;
+		name->SetLabel( "name" );
+		name->SetTokenCount(1);
+		name->GetToken(0).SetString( axis.name );
+		a.AddChild( name );
+
+		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+		{
+			DeviceControl dc = axis.positive[j];
+
+			vsRecord *dcr = new vsRecord;
+			dcr->SetLabel( "DeviceControl" );
+
+			dcr->SetTokenCount(3);
+			dcr->GetToken(0).SetString( c_controlTypeString[ dc.type ] );
+			dcr->GetToken(1).SetString( c_controlDirectionString[ dc.dir ] );
+			dcr->GetToken(2).SetInteger( dc.id );
+
+			a.AddChild(dcr);
+		}
+		f.Record(&a);
+	}
+
 // #if !TARGET_OS_IPHONE
 // 	if ( m_joystick && m_mappingsChanged )
 // 	{
@@ -1907,9 +2032,11 @@ DeviceControl::Evaluate()
 }
 
 vsInputAxis::vsInputAxis():
+	name(""),
+	description(""),
 	lastValue(0.f),
 	currentValue(0.f),
-	isSet(false),
+	isLoaded(false),
 	isCalculated(false)
 {
 }
@@ -1978,6 +2105,8 @@ vsInput::GetBindDescription( const DeviceControl& dc )
 			break;
 		case CT_Keyboard:
 			return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+			break;
+		default:
 			break;
 	}
 	return "UNKNOWN";

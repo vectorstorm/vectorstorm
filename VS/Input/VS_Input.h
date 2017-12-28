@@ -100,6 +100,8 @@ enum ControlID
 };
 #endif // VS_DEFAULT_VIRTUAL_CONTROLLER
 
+// NOTE:  If you change ControlType, change the string array
+// in the source file to match, or serialisation will break!
 enum ControlType
 {
 	CT_None,
@@ -109,10 +111,11 @@ enum ControlType
 	CT_MouseButton,
 	CT_MouseWheel,
 	CT_Keyboard,
-
-	CT_MAX = CT_MouseButton	// largest legal value
+	CT_MAX
 };
 
+// NOTE:  If you change ControlDirection, change the string array
+// in the source file to match, or serialisation will break!
 enum ControlDirection
 {
 	CD_Positive,
@@ -122,8 +125,7 @@ enum ControlDirection
 	CD_Hat_Right,
 	CD_Hat_Down,
 	CD_Hat_Left,
-
-	CD_MAX = CD_Hat_Left	// largest legal value
+	CD_MAX
 };
 
 struct DeviceControl
@@ -154,7 +156,7 @@ struct vsInputAxis
 
 	float lastValue;
 	float currentValue;
-	bool isSet;
+	bool isLoaded;
 	bool isCalculated;
 
 	int positiveAxisId;
@@ -205,6 +207,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 
 
 	vsArray<vsInputAxis> m_axis;
+	vsArray<vsInputAxis> m_loadedAxis;
 
 	// float			m_keyControlState[CID_MAX];
 
