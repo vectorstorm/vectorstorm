@@ -69,9 +69,9 @@ endif()
 # find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
 # 	PATH c:/src/buildzone/lib/x86 )
 if(WIN32)
-	# find_file(ZLIB_DLL libzlib.dll REQUIRED
-	# 	PATH c:/src/buildzone/lib/x86 )
-	find_file(PNG_DLL libpng16.dll REQUIRED
+	find_file(ZLIB_DLL zlib1.dll REQUIRED
+		PATH c:/src/buildzone/lib/x86 )
+	find_file(PNG_DLL libpng16-16.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
