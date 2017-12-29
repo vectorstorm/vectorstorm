@@ -324,6 +324,7 @@ static ControlDirection ControlDirectionFromString( const vsString& s )
 void
 vsInput::Load()
 {
+	vsHeap::Push(g_globalHeap);
 	if ( vsFile::Exists("binds.txt") )
 	{
 		vsFile f("binds.txt", vsFile::MODE_Read);
@@ -501,6 +502,7 @@ vsInput::Load()
 	//m_controlMapping[CID_MouseWheelDown].Set( CT_MouseButton, SDL_BUTTON_WHEELDOWN );
 
 	// m_mappingsChanged = false;
+	vsHeap::Pop();
 }
 
 void
