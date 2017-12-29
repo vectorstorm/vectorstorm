@@ -127,6 +127,11 @@ vsSystem::~vsSystem()
 void
 vsSystem::Init()
 {
+	m_cursor[CursorStyle_Arrow] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_ARROW );
+	m_cursor[CursorStyle_IBeam] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_IBEAM );
+	m_cursor[CursorStyle_Wait] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_WAIT );
+	m_cursor[CursorStyle_Hand] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_HAND );
+
 	m_preferences->CheckResolutions();
 	int width, height;
 	if ( m_preferences->GetFullscreen() )
@@ -192,6 +197,9 @@ vsSystem::Deinit()
 
 	vsDelete( m_screen );
 	vsDelete( m_textureManager );
+
+	for ( int i = 0; i < CursorStyle_MAX; i++ )
+		SDL_FreeCursor( m_cursor[i] );
 }
 
 void
@@ -275,6 +283,12 @@ vsSystem::ShowCursor(bool show)
 #if !TARGET_OS_IPHONE
 	SDL_ShowCursor( m_showCursor );
 #endif //TARGET_OS_IPHONE
+}
+
+void
+vsSystem::SetCursorStyle(CursorStyle style)
+{
+	SDL_SetCursor( m_cursor[style] );
 }
 
 void
