@@ -171,6 +171,7 @@ vsInput::ClearAxes()
 	vsHeap::Push(g_globalHeap);
 
 	m_axis.Clear();
+	m_loadedAxis.Clear();
 
 	vsHeap::Pop(g_globalHeap);
 }
