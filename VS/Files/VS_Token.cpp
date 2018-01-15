@@ -205,14 +205,34 @@ vsToken::vsToken():
 vsToken::vsToken( vsToken::Type t ):
 	m_type(t)
 {
+	vsAssert(m_type != vsToken::Type_String, "String type");
+	vsAssert(m_type != vsToken::Type_Label, "Label type");
 }
 
 vsToken::vsToken(const vsToken& other):
-	m_type(other.m_type),
-	m_string(other.m_string),
-	m_float(other.m_float),
-	m_int(other.m_int)
+	m_type(other.m_type)
 {
+	switch ( other.m_type )
+	{
+		case Type_Label:
+		case Type_String:
+			m_string = (char*)malloc( strlen(other.m_string)+1 );
+			strcpy(m_string, other.m_string);
+			break;
+		case Type_Float:
+			m_float = other.m_float;
+			break;
+		case Type_Integer:
+			m_int = other.m_int;
+			break;
+		default:
+			break;
+	}
+}
+
+vsToken::~vsToken()
+{
+	SetInteger(0); // cleanup any string data we had lying around
 }
 
 bool
@@ -226,8 +246,7 @@ vsToken::ExtractFrom( vsString &string )
 	{
 		if ( string[0] == '\"' )
 		{
-			m_string = ExtractStringToken(string);
-			m_type = Type_String;
+			SetString( ExtractStringToken(string) );
 			return true;
 		}
 		else if ( string[0] == '{' )
@@ -250,8 +269,7 @@ vsToken::ExtractFrom( vsString &string )
 		}
 		else if ( ::IsAlpha(string[0]) )
 		{
-			m_string = ExtractLabelToken(string);
-			m_type = Type_Label;
+			SetLabel( ExtractLabelToken(string) );
 			return true;
 		}
 		else if ( ::IsNumeric( string[0]) )
@@ -260,24 +278,25 @@ vsToken::ExtractFrom( vsString &string )
 
 			if ( token == "-" ) // Ugly:  handle negative nans as zeroes.
 			{
-				m_int = 0;
-				m_type = Type_Integer;
+				SetInteger(0);
 				return false;
 			}
 
 			bool isAFloat = ( token.find('.') != token.npos );
 			if ( isAFloat )
 			{
-				bool success = (sscanf( token.c_str(), "%f", &m_float )!=0);
+				float val = 0.f;
+				bool success = (sscanf( token.c_str(), "%f", &val )!=0);
 				vsAssert(success, "Couldn't find a floating value where we expected one?");
-				m_type = Type_Float;
+				SetFloat(val);
 				return true;
 			}
 			else
 			{
-				bool success = sscanf( token.c_str(), "%d", &m_int) != 0;
+				int val = 0;
+				bool success = sscanf( token.c_str(), "%d", &val) != 0;
 				vsAssert(success, "Couldn't find an integer value?" );
-				m_type = Type_Integer;
+				SetInteger(val);
 				return true;
 			}
 		}
@@ -296,8 +315,7 @@ vsToken::ExtractFrom( vsString &string )
 		{
 			// no clue what it was!  Just treat it as a string, breaking at the next whitespace
 
-			m_string = ExtractWhitespaceStringToken(string);
-			m_type = Type_String;
+			SetString( ExtractWhitespaceStringToken(string) );
 			return true;
 		}
 	}
@@ -337,7 +355,7 @@ vsToken::BackToString()
 }
 
 vsString
-vsToken::AsString()
+vsToken::AsString() const
 {
 	vsString result = vsEmptyString;
 
@@ -396,8 +414,7 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 				{
 					uint32_t i = 0;
 					s->Uint32(i);
-					m_string = stringTable.GetStrings()[i];
-					// s->String(m_string);
+					SetString( stringTable.GetStrings()[i] );
 				}
 			}
 			break;
@@ -422,8 +439,19 @@ vsToken::SerialiseBinaryV2( vsSerialiser *s )
 	{
 		case Type_Label:
 		case Type_String:
-			s->String(m_string);
-			break;
+			{
+				vsString string;
+				if ( s->GetType() == vsSerialiser::Type_Write )
+					string = m_string;
+				s->String(string);
+				if ( s->GetType() == vsSerialiser::Type_Read )
+				{
+					m_string = NULL; // set null to avoid bad deallocation,
+					// since we'd set our 'type', above.
+					SetString(string);
+				}
+				break;
+			}
 		case Type_Float:
 			s->Float(m_float);
 			break;
@@ -453,24 +481,41 @@ vsToken::AsFloat()
 		return (float)m_int;
 }
 
+void
+vsToken::SetStringField( const vsString& s )
+{
+	m_string = (char*)malloc( s.size()+1 );
+	strcpy(m_string, s.c_str());
+}
 
 void
 vsToken::SetString(const vsString &value)
 {
-	m_string = value;
+	if ( m_string &&
+			(m_type == Type_String || m_type == Type_Label) )
+		free( m_string );
+
+	SetStringField(value);
 	m_type = Type_String;
 }
 
 void
 vsToken::SetLabel(const vsString &value)
 {
-	m_string = value;
+	if ( m_string &&
+			(m_type == Type_String || m_type == Type_Label) )
+		free( m_string );
+
+	SetStringField(value);
 	m_type = Type_Label;
 }
 
 void
 vsToken::SetInteger(int value)
 {
+	if ( m_type == Type_String || m_type == Type_Label )
+		free( m_string );
+
 	m_int = value;
 	m_type = Type_Integer;
 }
@@ -478,6 +523,9 @@ vsToken::SetInteger(int value)
 void
 vsToken::SetFloat(float value)
 {
+	if ( m_type == Type_String || m_type == Type_Label )
+		free( m_string );
+
 	m_float = value;
 	m_type = Type_Float;
 }
@@ -489,7 +537,32 @@ vsToken::IsType( vsToken::Type t )
 }
 
 bool
-vsToken::operator==( vsToken& other )
+vsToken::operator==( const vsToken& other )
 {
 	return AsString() == other.AsString();
 }
+
+vsToken&
+vsToken::operator=( const vsToken& other )
+{
+	switch ( other.m_type )
+	{
+		case Type_Label:
+			SetLabel(other.m_string);
+			break;
+		case Type_String:
+			SetString(other.m_string);
+			break;
+		case Type_Float:
+			m_float = other.m_float;
+			break;
+		case Type_Integer:
+			m_int = other.m_int;
+			break;
+		default:
+			break;
+	}
+	m_type = other.m_type;
+	return *this;
+}
+

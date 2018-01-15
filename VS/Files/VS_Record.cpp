@@ -14,7 +14,9 @@
 #include "VS/Math/VS_Vector.h"
 #include "VS/Memory/VS_Serialiser.h"
 
-vsRecord::vsRecord()
+vsRecord::vsRecord():
+	m_token(0),
+	m_childList(0)
 {
 	m_childList.Clear();
 	m_hasLabel = false;
@@ -24,7 +26,9 @@ vsRecord::vsRecord()
 	Init();
 }
 
-vsRecord::vsRecord( const char* fromString )
+vsRecord::vsRecord( const char* fromString ):
+	m_token(0),
+	m_childList(0)
 {
 	m_childList.Clear();
 	m_hasLabel = false;
@@ -35,7 +39,9 @@ vsRecord::vsRecord( const char* fromString )
 	ParseString( fromString );
 }
 
-vsRecord::vsRecord( const vsString& fromString )
+vsRecord::vsRecord( const vsString& fromString ):
+	m_token(0),
+	m_childList(0)
 {
 	m_childList.Clear();
 	m_hasLabel = false;

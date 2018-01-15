@@ -33,14 +33,19 @@ public:
 	};
 private:
 	Type		m_type;
-	vsString	m_string;
-	float		m_float;
-	int32_t		m_int;
+	union
+	{
+		char*	m_string;
+		float		m_float;
+		int32_t		m_int;
+	};
+	void SetStringField( const vsString& s );
 public:
 
 	vsToken();
 	vsToken(Type t);
 	vsToken(const vsToken& other);
+	~vsToken();
 
 	bool		ExtractFrom( vsString &string );
 	vsString	BackToString();			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
@@ -50,7 +55,7 @@ public:
 	void		PopulateStringTable( vsStringTable& array );
 
 	Type		GetType() const { return m_type; }
-	vsString	AsString();			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
+	vsString	AsString() const;			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
 	int			AsInteger();
 	float		AsFloat();
 
@@ -62,8 +67,9 @@ public:
 	bool		IsType( Type type );
 	bool		IsNumeric() { return IsType( Type_Float ) || IsType( Type_Integer ); }
 
-	bool operator==( vsToken& other );
-	bool operator!=( vsToken& other ) { return ! ((*this) == other); }
+	vsToken& operator=( const vsToken& other );
+	bool operator==( const vsToken& other );
+	bool operator!=( const vsToken& other ) { return ! ((*this) == other); }
 };
 
 #endif // FS_TOKEN_H
