@@ -117,7 +117,7 @@ public:
 		else
 		{
 			// reallocate our array and copy data into it.
-			int newSize = vsMax( 16, m_arrayStorage * 2 );
+			int newSize = vsMax( 4, m_arrayStorage * 2 );
 			Reserve( newSize );
 			return AddItem( item );
 		}

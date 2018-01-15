@@ -104,7 +104,7 @@ public:
 		else
 		{
 			// reallocate our array and copy data into it.
-			int newSize = vsMax( 16, m_arrayStorage * 2 );
+			int newSize = vsMax( 4, m_arrayStorage * 2 );
 
 			T *newArray = new T[newSize];
 			for ( int i = 0; i < m_arrayLength; i++ )
