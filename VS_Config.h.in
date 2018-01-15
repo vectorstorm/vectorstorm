@@ -6,4 +6,4 @@
 #cmakedefine BACKTRACE_SUPPORTED
 #cmakedefine VS_GL_DEBUG
 #cmakedefine VS_TIMING_BARS
-
+#cmakedefine VS_DEFAULT_VIRTUAL_CONTROLLER

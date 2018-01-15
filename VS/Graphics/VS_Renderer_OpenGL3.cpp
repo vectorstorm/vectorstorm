@@ -1491,6 +1491,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			else
 			{
 				// glDisable(GL_TEXTURE_2D);
+				glActiveTexture(GL_TEXTURE0 + i);
+				glBindTexture( GL_TEXTURE_BUFFER, 0);
 			}
 		}
 		// vsTexture *st = material->GetShadowTexture();

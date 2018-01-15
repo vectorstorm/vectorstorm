@@ -10,6 +10,8 @@
 #ifndef VS_MENU_H
 #define VS_MENU_H
 
+#ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
+
 #include "VS/Graphics/VS_Font.h"
 #include "VS/Graphics/VS_Sprite.h"
 
@@ -84,6 +86,7 @@ public:
 	void					SetItemLabel( int itemId, const vsString & label );
 	void					SetItemValue( int itemId, const vsString & value );
 };
+#endif // VS_DEFAULT_VIRTUAL_CONTROLLER
 
 #endif // VS_MENU_H
 

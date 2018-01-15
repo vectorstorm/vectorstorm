@@ -18,6 +18,7 @@ class vsPreferenceObject;
 class vsSystemPreferences;
 class vsScreen;
 class vsTextureManager;
+struct SDL_Cursor;
 
 enum Weekday
 {
@@ -49,6 +50,15 @@ enum Orientation
 	Orientation_Nine
 };
 
+enum CursorStyle
+{
+	CursorStyle_Arrow,
+	CursorStyle_IBeam,
+	CursorStyle_Wait,
+	CursorStyle_Hand,
+	CursorStyle_MAX
+};
+
 class vsSystem
 {
 	static vsSystem *	s_instance;
@@ -60,6 +70,8 @@ class vsSystem
 	bool				m_exitGameKeyEnabled;
 	bool				m_exitApplicationKeyEnabled;
 	int					m_minBuffers; // how many color buffers on our main render target?
+
+	SDL_Cursor *		m_cursor[CursorStyle_MAX];
 
 	Orientation			m_orientation;
 
@@ -107,6 +119,9 @@ public:
 
 	void	ShowCursor(bool show);
 	void	HideCursor() { ShowCursor(false); }
+
+	void	SetCursorStyle(CursorStyle style);
+
 	void	SetWindowCaption(const vsString &caption);
 	bool	AppHasFocus() { return m_focused; }
 	void	SetAppHasFocus( bool focus ) { m_focused = focus; }
