@@ -149,11 +149,11 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 		}
 
 		vsVector3D vertexPosition;
-		if ( offsetPre != offsetPost )
+		if ( offsetPre.Dot(offsetPost) < 0.99f  )
 		{
-			vsVector3D closestPre, closestPost;
-			vsVector3D insidePre = point[preI] - (offsetPre * halfWidth);
-			vsVector3D insidePost = point[postI] - (offsetPost * halfWidth);
+			vsVector2D closestPre, closestPost;
+			vsVector2D insidePre = point[preI] - (offsetPre * halfWidth);
+			vsVector2D insidePost = point[postI] - (offsetPost * halfWidth);
 
 			vsSqDistanceBetweenLineSegments( insidePre,
 					insidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),
@@ -171,11 +171,11 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 		va[vertexCursor+0].position = (vertexPosition - point[midI]) + vertexPosition;
 		va[vertexCursor+1].position = vertexPosition;
 
-		if ( offsetPre != offsetPost )
+		if ( offsetPre.Dot(offsetPost) < 0.99f  )
 		{
-			vsVector3D closestPre, closestPost;
-			vsVector3D outsidePre = point[preI] + (offsetPre * halfWidth);
-			vsVector3D outsidePost = point[postI] + (offsetPost * halfWidth);
+			vsVector2D closestPre, closestPost;
+			vsVector2D outsidePre = point[preI] + (offsetPre * halfWidth);
+			vsVector2D outsidePost = point[postI] + (offsetPost * halfWidth);
 
 			vsSqDistanceBetweenLineSegments( outsidePre,
 					outsidePre + dirOfTravelPre * (distanceOfTravelPre + 3.f * halfWidth),

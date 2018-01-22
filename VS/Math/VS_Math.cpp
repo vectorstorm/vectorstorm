@@ -182,4 +182,99 @@ float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3
 	return distance;
 }
 
+bool vsLineSegmentsIntersect( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *where )
+{
+	vsVector2D deltaA = endA - startA;
+	vsVector2D deltaB = endB - startB;
+	float delta = deltaB.x * deltaA.y - deltaB.y * deltaA.x;
+	if ( delta == 0.0 )
+		return false; // parallel
+
+	float s = (deltaA.x * (deltaB.y - deltaA.y) + deltaA.y * (deltaA.x - deltaB.x)) / delta;
+	float t = (deltaB.x * (deltaA.y - deltaB.y) + deltaB.y * (deltaB.x - deltaA.x)) / (-delta);
+	return ( s >= 0.f && s <= 1.f &&
+			t >= 0.f && t <= 1.f);
+}
+
+float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB )
+{
+	vsVector2D dirA = endA - startA;
+	vsVector2D dirB = endB - startB;
+	dirA.NormaliseSafe();
+	dirB.NormaliseSafe();
+
+	// Okay.  We need to calculate the intersection point between two rays:
+	//
+	// point P = startA + dirA * u
+	//   AND
+	//       P = startB + dirB * v
+	//
+	// Or to put that differently:
+	//
+	//       0 = (startA + dirA * u) - (startB + dirB * v)
+	//
+	// SO:
+
+	vsVector2D delta = startB - startA;
+	float det = dirB.x * dirA.y - dirB.y * dirA.x;
+	if ( det == 0.0f ) // no intersection!
+	{
+		return 0.0;
+	}
+	float u = (delta.y * dirB.x - delta.x * dirB.y) / det;
+	float v = (delta.y * dirA.x - delta.x * dirA.y) / det;
+
+	vsVector2D closestPointOnA = startA + dirA * u;
+	vsVector2D closestPointOnB = startB + dirB * v;
+
+	if ( closestA )
+		*closestA = closestPointOnA;
+	if ( closestB )
+		*closestB = closestPointOnB;
+
+	return (closestPointOnB - closestPointOnA).SqLength();
+}
+
+float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB )
+{
+	vsVector2D deltaA = endA - startA;
+	vsVector2D deltaB = endB - startB;
+	vsVector2D dirA = deltaA;
+	vsVector2D dirB = deltaB;
+	float lenA = dirA.Length();
+	float lenB = dirB.Length();
+	dirA.NormaliseSafe();
+	dirB.NormaliseSafe();
+
+	// Okay.  We need to calculate the intersection point between two rays:
+	//
+	// point P = startA + dirA * u
+	//   AND
+	//       P = startB + dirB * v
+	//
+	// Or to put that differently:
+	//
+	//       0 = (startA + dirA * u) - (startB + dirB * v)
+	//
+	// SO:
+
+	vsVector2D delta = startB - startA;
+	float det = dirB.x * dirA.y - dirB.y * dirA.x;
+	if ( det == 0.0f ) // no intersection!
+	{
+		return 0.0;
+	}
+	float u = vsClamp(0.f, (delta.y * dirB.x - delta.x * dirB.y) / det, lenA);
+	float v = vsClamp(0.f, (delta.y * dirA.x - delta.x * dirA.y) / det, lenB);
+
+	vsVector2D closestPointOnA = startA + dirA * u;
+	vsVector2D closestPointOnB = startB + dirB * v;
+
+	if ( closestA )
+		*closestA = closestPointOnA;
+	if ( closestB )
+		*closestB = closestPointOnB;
+
+	return (closestPointOnB - closestPointOnA).SqLength();
+}
 

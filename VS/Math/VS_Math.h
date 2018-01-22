@@ -40,6 +40,7 @@ inline int vsCeil( float value )
 
 int		vsNextPowerOfTwo( int value );
 
+class vsVector2D;
 class vsVector3D;
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v);
 
@@ -77,6 +78,8 @@ inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVe
 {
 	return vsSqrt( vsSqDistanceBetweenLineSegments( startA, endA, startB, endB, closestA, closestB ) );
 }
+float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB );
+float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB );
 
 #endif // VS_MATH_H
 
