@@ -242,6 +242,12 @@ vsToken::ExtractFrom( vsString &string )
 			string.erase(0,1);
 			return true;
 		}
+		else if ( string[0] == ';' )
+		{
+			m_type = Type_Semicolon;
+			string.erase(0,1);
+			return true;
+		}
 		else if ( string[0] == '\n' )
 		{
 			m_type = Type_NewLine;
@@ -359,6 +365,8 @@ vsToken::AsString()
 		case Type_Equals:
 			result = "=";
 			break;
+		case Type_Semicolon:
+			result = ";";
 		default:
 			break;
 	}

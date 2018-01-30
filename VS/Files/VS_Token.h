@@ -28,6 +28,7 @@ public:
 		Type_CloseBrace,
 		Type_Equals,
 		Type_NewLine,
+		Type_Semicolon,
 
 		TYPE_MAX
 	};
