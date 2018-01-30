@@ -477,10 +477,16 @@ vsFile::Record_Binary( vsRecord *r )
 {
 	// utility function;  actually, we do this from the Record side.
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
+	{
 		r->SaveBinary(this);
+		return true;
+	}
 	else
-		r->LoadBinary(this);
-	return false;
+	{
+		if ( AtEnd() )
+			return false;
+		return r->LoadBinary(this);
+	}
 }
 
 bool
