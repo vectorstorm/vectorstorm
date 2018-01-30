@@ -200,11 +200,15 @@ vsSerialiserReadStream::vsSerialiserReadStream(vsFile *file):
 	m_file(file)
 {
 	m_store = new vsStore(1024);
-	m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
+	m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
+	// m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
 }
 
 vsSerialiserReadStream::~vsSerialiserReadStream()
 {
+	m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
+	// Okay.  Any bytes that we didn't actually read, back up the file's
+	// internal read head by that much.
 	vsDelete(m_store);
 }
 
@@ -216,9 +220,11 @@ vsSerialiserReadStream::Ensure(size_t bytes)
 		size_t bytes = m_store->BytesLeftForReading();
 		vsStore temp(bytes);
 		temp.WriteBuffer(m_store->GetReadHead(),bytes);
+		m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
 		m_store->Clear();
 		m_store->Append(&temp);
-		m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
+		m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
+		// m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
 		vsAssert(m_store->BytesLeftForReading() >= bytes, "Not enough data to fulfill stream?");
 	}
 }
