@@ -1467,7 +1467,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		  {
 		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		  }*/
-		for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+		for ( int i = 0; i < 16; i++ )
 		{
 			vsTexture *t = material->GetTexture(i);
 			if ( t )
@@ -1491,8 +1491,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			else
 			{
 				// glDisable(GL_TEXTURE_2D);
-				glActiveTexture(GL_TEXTURE0 + i);
-				glBindTexture( GL_TEXTURE_BUFFER, 0);
+				// glActiveTexture(GL_TEXTURE0 + i);
+				// glBindTexture( GL_TEXTURE_2D, 0);
 			}
 		}
 		// vsTexture *st = material->GetShadowTexture();

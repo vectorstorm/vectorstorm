@@ -268,7 +268,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 					break;
 				case GL_SAMPLER_2D:
 					m_uniform[ui].b = defaultSamplerBinding;
-					defaultSamplerBinding ++;//= m_uniform[ui].arraySize;
+					defaultSamplerBinding += m_uniform[ui].arraySize;
 					break;
 				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 				case GL_INT_SAMPLER_BUFFER:
@@ -530,11 +530,11 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
 	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
 	//
-	// if ( m_textureLoc >= 0 )
-	// {
-	// 	const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-	// 	glUniform1iv( m_textureLoc, 8, value );
-	// }
+	if ( m_textureLoc >= 0 )
+	{
+		const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+		glUniform1iv( m_textureLoc, 8, value );
+	}
 	// if ( m_shadowTextureLoc >= 0 )
 	// {
 	// 	glUniform1i( m_shadowTextureLoc, 8 );

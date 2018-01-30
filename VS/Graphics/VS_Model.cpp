@@ -91,6 +91,20 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
 		}
+		else if ( format == "PNT" )
+		{
+			vsRenderBuffer::PNT *buffer = new vsRenderBuffer::PNT[ vertexCount ];
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
+				r.Vector2D(buffer[i].texel);
+			}
+			vbo->SetArray(buffer, vertexCount);
+			vsDeleteArray(buffer);
+		}
 		else if ( format == "PCT" )
 		{
 			vsRenderBuffer::PCT *buffer = new vsRenderBuffer::PCT[ vertexCount ];
