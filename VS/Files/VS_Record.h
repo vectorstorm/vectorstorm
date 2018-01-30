@@ -62,6 +62,8 @@ public:
 	bool		AppendToken( const vsToken &token );		// add this token to me.
 	vsString	ToString( int childLevel = 0 );							// convert this vsRecord into a vsString.
 
+	void LoadFromFilename( const vsString& filename );
+
 	bool		LoadBinary( vsFile *file );
 	void		SaveBinary( vsFile *file );
 	bool		SerialiseBinary( vsSerialiser *s );

@@ -241,6 +241,21 @@ vsRecord::LoadBinary( vsFile *file )
 	return true;
 }
 
+void
+vsRecord::LoadFromFilename( const vsString& filename )
+{
+	if ( vsFile::Exists( filename + ".vz" ) )
+	{
+		vsFile f( filename + ".vz", vsFile::MODE_ReadCompressed );
+		f.Record_Binary(this);
+	}
+	else
+	{
+		vsFile f( filename, vsFile::MODE_Read );
+		f.Record(this);
+	}
+}
+
 vsString
 vsRecord::ToString( int childLevel )
 {
