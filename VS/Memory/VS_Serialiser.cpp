@@ -213,19 +213,14 @@ vsSerialiserReadStream::~vsSerialiserReadStream()
 }
 
 void
-vsSerialiserReadStream::Ensure(size_t bytes)
+vsSerialiserReadStream::Ensure(size_t bytes_required)
 {
-	if ( m_store->BytesLeftForReading() < bytes )
+	if ( m_store->BytesLeftForReading() < bytes_required )
 	{
-		size_t bytes = m_store->BytesLeftForReading();
-		vsStore temp(bytes);
-		temp.WriteBuffer(m_store->GetReadHead(),bytes);
 		m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
 		m_store->Clear();
-		m_store->Append(&temp);
 		m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
-		// m_file->StoreBytes(m_store, m_store->BytesLeftForWriting());
-		vsAssert(m_store->BytesLeftForReading() >= bytes, "Not enough data to fulfill stream?");
+		vsAssert(m_store->BytesLeftForReading() >= bytes_required, "Not enough data to fulfill stream?");
 	}
 }
 
@@ -302,7 +297,7 @@ vsSerialiserReadStream::String( vsString &value )
 
 	// first, check how many bytes in this string.
 	size_t	readHeadPos = m_store->GetReadHeadPosition();
-	bytes = m_store->ReadInt32();
+	bytes = m_store->ReadInt16();
 	m_store->SeekReadHeadTo(readHeadPos);
 
 	Ensure( sizeof(int16_t) + bytes );
