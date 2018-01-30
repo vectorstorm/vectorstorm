@@ -96,6 +96,8 @@ public:
 
 	void		Store( vsStore *store );		// read/write this raw data directly.  STORE IS REWOUND BEFORE READ/WRITE
 	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store.  STORE IS NOT REWOUND BEFORE READ/WRITE
+	void		PeekBytes( vsStore *store, size_t bytes );	// ONLY IN READ OPERATIONS.  Peek the requested number of bytes.
+	void		ConsumeBytes( size_t bytes ); // ONLY IN READ OPERATIONS.  Count this many bytes as having been read.  (Usually used in combination with the above)
 
 	void		FlushBufferedWrites();
 	/*  These functions are probably deprecated;  use vsRecord objects instead!

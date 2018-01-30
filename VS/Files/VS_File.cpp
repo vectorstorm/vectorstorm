@@ -665,6 +665,24 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 	}
 }
 
+// ONLY IN READ OPERATIONS.  Peek the requested number of bytes.
+void
+vsFile::PeekBytes( vsStore *s, size_t bytes )
+{
+	vsAssert( m_mode != MODE_Write &&
+			m_mode != MODE_WriteCompressed &&
+			m_mode != MODE_WriteDirectly, "PeekBytes() called in Write mode?" );
+
+	size_t actualBytes = vsMin(bytes, m_store->BytesLeftForReading());
+	s->WriteBuffer( m_store->GetReadHead(), actualBytes );
+}
+
+void
+vsFile::ConsumeBytes( size_t bytes )
+{
+	m_store->AdvanceReadHead(bytes);
+}
+
 vsString
 vsFile::GetFullFilename(const vsString &filename_in)
 {
