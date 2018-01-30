@@ -236,6 +236,7 @@ vsRecord::SerialiseBinary( vsSerialiser *s )
 bool
 vsRecord::LoadBinary( vsFile *file )
 {
+	Init();
 	// TODO:  Check file for version identifier.
 	LoadBinaryV1(file);
 	return true;
