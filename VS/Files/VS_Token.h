@@ -55,6 +55,7 @@ public:
 	void		SerialiseBinaryV2( vsSerialiser *s );
 	void		PopulateStringTable( vsStringTable& array );
 
+	void		SetType(Type t);
 	Type		GetType() const { return m_type; }
 	vsString	AsString() const;			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
 	int			AsInteger();

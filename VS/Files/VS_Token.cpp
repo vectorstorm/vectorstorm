@@ -203,15 +203,18 @@ vsToken::vsToken():
 }
 
 vsToken::vsToken( vsToken::Type t ):
-	m_type(t)
+	m_type(t),
+	m_string(NULL)
 {
 	vsAssert(m_type != vsToken::Type_String, "String type");
 	vsAssert(m_type != vsToken::Type_Label, "Label type");
 }
 
 vsToken::vsToken(const vsToken& other):
-	m_type(other.m_type)
+	m_type(Type_None),
+	m_string(NULL)
 {
+	SetType(other.m_type);
 	switch ( other.m_type )
 	{
 		case Type_Label:
@@ -238,7 +241,7 @@ vsToken::~vsToken()
 bool
 vsToken::ExtractFrom( vsString &string )
 {
-	m_type = Type_None;
+	SetType( Type_None );
 
 	RemoveLeadingWhitespace(string);
 
@@ -251,25 +254,25 @@ vsToken::ExtractFrom( vsString &string )
 		}
 		else if ( string[0] == '{' )
 		{
-			m_type = Type_OpenBrace;
+			SetType( Type_OpenBrace );
 			string.erase(0,1);
 			return true;
 		}
 		else if ( string[0] == '}' )
 		{
-			m_type = Type_CloseBrace;
+			SetType( Type_CloseBrace );
 			string.erase(0,1);
 			return true;
 		}
 		else if ( string[0] == ';' )
 		{
-			m_type = Type_Semicolon;
+			SetType( Type_Semicolon );
 			string.erase(0,1);
 			return true;
 		}
 		else if ( string[0] == '\n' )
 		{
-			m_type = Type_NewLine;
+			SetType( Type_NewLine );
 			string.erase(0,1);
 			return true;
 		}
@@ -313,7 +316,7 @@ vsToken::ExtractFrom( vsString &string )
 		}
 		else if ( string[0] == '=' )
 		{
-			m_type = Type_Equals;
+			SetType( Type_Equals );
 			string.erase(0,1);
 			return true;
 		}
@@ -404,6 +407,8 @@ vsToken::PopulateStringTable( vsStringTable& table )
 void
 vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 {
+	SetType(Type_Integer);
+
 	uint8_t type = m_type;
 	s->Uint8(type);
 	m_type = (Type)type;
@@ -440,6 +445,8 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 void
 vsToken::SerialiseBinaryV2( vsSerialiser *s )
 {
+	SetType(Type_Integer);
+
 	uint8_t type = m_type;
 	s->Uint8(type);
 	m_type = (Type)type;
@@ -499,43 +506,40 @@ vsToken::SetStringField( const vsString& s )
 void
 vsToken::SetString(const vsString &value)
 {
-	if ( m_string &&
-			(m_type == Type_String || m_type == Type_Label) )
-		free( m_string );
-
+	SetType( Type_String );
 	SetStringField(value);
-	m_type = Type_String;
 }
 
 void
 vsToken::SetLabel(const vsString &value)
 {
-	if ( m_string &&
-			(m_type == Type_String || m_type == Type_Label) )
-		free( m_string );
-
+	SetType( Type_Label );
 	SetStringField(value);
-	m_type = Type_Label;
 }
 
 void
 vsToken::SetInteger(int value)
 {
-	if ( m_type == Type_String || m_type == Type_Label )
-		free( m_string );
-
+	SetType( Type_Integer );
 	m_int = value;
-	m_type = Type_Integer;
 }
 
 void
 vsToken::SetFloat(float value)
 {
-	if ( m_type == Type_String || m_type == Type_Label )
-		free( m_string );
-
+	SetType( Type_Float );
 	m_float = value;
-	m_type = Type_Float;
+}
+
+void
+vsToken::SetType(Type t)
+{
+	if ( m_string && (m_type == Type_String || m_type == Type_Label) )
+	{
+		free( m_string );
+		m_string = NULL;
+	}
+	m_type = t;
 }
 
 bool
@@ -553,6 +557,7 @@ vsToken::operator==( const vsToken& other )
 vsToken&
 vsToken::operator=( const vsToken& other )
 {
+	SetType( other.m_type );
 	switch ( other.m_type )
 	{
 		case Type_Label:
@@ -570,7 +575,6 @@ vsToken::operator=( const vsToken& other )
 		default:
 			break;
 	}
-	m_type = other.m_type;
 	return *this;
 }
 
