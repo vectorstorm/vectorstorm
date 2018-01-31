@@ -558,6 +558,7 @@ vsToken&
 vsToken::operator=( const vsToken& other )
 {
 	SetType( other.m_type );
+	m_string = NULL;
 	switch ( other.m_type )
 	{
 		case Type_Label:
