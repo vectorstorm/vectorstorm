@@ -56,9 +56,8 @@ class vsFontRenderer
 	bool m_hasSnap;
 	bool m_buildMapping;
 
-#define MAX_WRAPPED_LINES (5000)
-	vsString	m_wrappedLine[MAX_WRAPPED_LINES];
-	int m_wrappedLineCount;
+// #define MAX_WRAPPED_LINES (5000)
+	vsArray<vsString> m_wrappedLine;
 
 	void		WrapStringSizeTop(const vsString &string, float *size_out, float *top_out);
 	void		WrapLine(const vsString &string, float size);

@@ -109,7 +109,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 		fits = true;
 		if ( m_bounds.y > 0.f )
 		{
-			float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
+			float totalScaledHeight = size * ((lineHeight * m_wrappedLine.ItemCount()) + (lineMargin * (m_wrappedLine.ItemCount()-1)));
 			if ( totalScaledHeight > m_bounds.y )
 			{
 				fits = false;
@@ -119,7 +119,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 		}
 		if ( fits && m_bounds.x > 0.f )
 		{
-			for ( int i = 0; i < m_wrappedLineCount; i++ )
+			for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 			{
 				float totalScaledWidth = m_font->Size(size)->GetStringWidth( m_wrappedLine[i], size );
 				if ( totalScaledWidth > m_bounds.x )
@@ -132,7 +132,7 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 	}
 	m_texSize = size;
 
-	float totalHeight = (lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1));
+	float totalHeight = (lineHeight * m_wrappedLine.ItemCount()) + (lineMargin * (m_wrappedLine.ItemCount()-1));
 	float baseOffsetDown = 0.f;
 
 	if ( m_justification == Justification_BottomLeft || m_justification == Justification_BottomRight || m_justification == Justification_BottomCenter )
@@ -211,12 +211,12 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 	if ( m_buildMapping )
 	{
-		for ( int i = 0; i < m_wrappedLineCount; i++ )
+		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 		{
 			size_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
 			constructor.glyphCount += glyphs;
 		}
-		constructor.lineCount = m_wrappedLineCount;
+		constructor.lineCount = m_wrappedLine.ItemCount();
 		if ( constructor.glyphCount > 0 )
 		{
 			constructor.glyphBox = new vsBox2D[constructor.glyphCount];
@@ -230,7 +230,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	int nextGlyph = 0;
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(size)->m_lineSpacing;
-	for ( int i = 0; i < m_wrappedLineCount; i++ )
+	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
@@ -334,7 +334,7 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 
 	vsVector2D offset(0.f,topLinePosition);
 
-	for ( int i = 0; i < m_wrappedLineCount; i++ )
+	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 		s_tempFontList.Clear();
@@ -447,14 +447,14 @@ vsFontRenderer::GetStringDimensions( const vsString& string )
 	WrapStringSizeTop(string, &size, &topLinePosition);
 
 	vsVector2D result;
-	for ( int i = 0; i < m_wrappedLineCount; i++ )
+	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 	{
 		float width = m_font->Size(size)->GetStringWidth(m_wrappedLine[i], size);
 		result.x = vsMax( width, result.x );
 	}
 	float lineHeight = 1.0;
 	float lineMargin = m_font->Size(size)->m_lineSpacing;
-	float totalScaledHeight = size * ((lineHeight * m_wrappedLineCount) + (lineMargin * (m_wrappedLineCount-1)));
+	float totalScaledHeight = size * ((lineHeight * m_wrappedLine.ItemCount()) + (lineMargin * (m_wrappedLine.ItemCount()-1)));
 	result.y = totalScaledHeight;
 	return result;
 #endif
@@ -472,7 +472,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 
 	float maxWidth = m_bounds.x;
 
-	m_wrappedLineCount = 0;
+	m_wrappedLine.Clear();
 
 	while ( remainingString != vsEmptyString )
 	{
@@ -505,22 +505,15 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 			remainingString.erase(0,lineEnd+1);
 			// we've gone too far, and need to wrap!  Wrap to the last safe wrap point we found.
 
-			m_wrappedLine[m_wrappedLineCount++] = line;
+			m_wrappedLine.AddItem( line );
 
 			lineEnd = 0;
 			seekPosition = 0;
-
-			if ( m_wrappedLineCount >= MAX_WRAPPED_LINES )
-				return;
 		}
 		else if ( seekPosition == vsString::npos )
 		{
-			m_wrappedLine[m_wrappedLineCount] = remainingString;
-			m_wrappedLineCount++;
+			m_wrappedLine.AddItem( remainingString );
 			remainingString = vsEmptyString;
-
-			if ( m_wrappedLineCount >= MAX_WRAPPED_LINES )
-				return;
 		}
 		else
 		{
