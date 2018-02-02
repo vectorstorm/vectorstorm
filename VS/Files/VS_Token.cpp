@@ -445,11 +445,11 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 void
 vsToken::SerialiseBinaryV2( vsSerialiser *s )
 {
-	SetType(Type_Integer);
-
 	uint8_t type = m_type;
 	s->Uint8(type);
-	m_type = (Type)type;
+	if ( s->GetType() == vsSerialiser::Type_Read )
+		SetType((Type)type);
+
 	switch( m_type )
 	{
 		case Type_Label:
