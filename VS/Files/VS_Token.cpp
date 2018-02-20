@@ -534,10 +534,14 @@ vsToken::SetFloat(float value)
 void
 vsToken::SetType(Type t)
 {
-	if ( m_string && (m_type == Type_String || m_type == Type_Label) )
+	if ( m_type == Type_String || m_type == Type_Label )
 	{
-		free( m_string );
-		m_string = NULL;
+		// if we're currently a string time, clear our string.
+		if ( m_string != NULL )
+		{
+			free( m_string );
+			m_string = NULL;
+		}
 	}
 	m_type = t;
 }
