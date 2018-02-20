@@ -589,23 +589,23 @@ vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
 
 	if ( m_store )
 	{
-	if ( byteCount < m_store->BytesLeftForWriting() )
-	{
-		m_store->WriteBuffer(bytes, byteCount);
-	}
-	else
-	{
-		while( byteCount > 0 )
+		if ( byteCount < m_store->BytesLeftForWriting() )
 		{
-			size_t bytesWeCanWrite = vsMin( byteCount, m_store->BytesLeftForWriting() );
-			m_store->WriteBuffer(bytes, bytesWeCanWrite);
-			bytes = (char*)(bytes) + bytesWeCanWrite;
-
-			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
-			m_store->Clear();
-			byteCount -= bytesWeCanWrite;
+			m_store->WriteBuffer(bytes, byteCount);
 		}
-	}
+		else
+		{
+			while( byteCount > 0 )
+			{
+				size_t bytesWeCanWrite = vsMin( byteCount, m_store->BytesLeftForWriting() );
+				m_store->WriteBuffer(bytes, bytesWeCanWrite);
+				bytes = (char*)(bytes) + bytesWeCanWrite;
+
+				PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+				m_store->Clear();
+				byteCount -= bytesWeCanWrite;
+			}
+		}
 	}
 	else
 	{
