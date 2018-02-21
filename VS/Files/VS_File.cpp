@@ -205,24 +205,7 @@ vsFile::~vsFile()
 {
 	if ( m_mode == MODE_WriteCompressed )
 	{
-		int zipBufferSize = 1024 * 100;
-		char zipBuffer[zipBufferSize];
-		m_zipData->m_zipStream.avail_in = 0;
-		m_zipData->m_zipStream.next_in = NULL;
-		do
-		{
-			m_zipData->m_zipStream.avail_out = zipBufferSize;
-			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = deflate(&m_zipData->m_zipStream, Z_FINISH);
-			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-
-			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
-			if ( compressedBytes > 0 )
-				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
-				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
-
-		}while( m_zipData->m_zipStream.avail_out == 0 );
-		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+		_PumpCompression( NULL, 0, true );
 		deflateEnd(&m_zipData->m_zipStream);
 	}
 	FlushBufferedWrites();
@@ -623,29 +606,37 @@ vsFile::_WriteBytes( void* bytes, size_t byteCount )
 	}
 	else if ( m_mode == MODE_WriteCompressed )
 	{
-		int zipBufferSize = 1024 * 100;
-		char zipBuffer[zipBufferSize];
-		m_zipData->m_zipStream.avail_in = byteCount;
-		m_zipData->m_zipStream.next_in = (Bytef*)bytes;
-		do
-		{
-			m_zipData->m_zipStream.avail_out = zipBufferSize;
-			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = deflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered");
-
-			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
-			if ( compressedBytes > 0 )
-				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
-				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
-
-		}while( m_zipData->m_zipStream.avail_out == 0 );
-		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
+		_PumpCompression( bytes, byteCount, false );
 	}
 	else
 	{
 		vsAssert(0, "Tried to write bytes when we're not in a 'write' mode??");
 	}
+}
+
+void
+vsFile::_PumpCompression( void* bytes, size_t byteCount, bool finish )
+{
+	vsAssert( m_mode == MODE_WriteCompressed, "Trying to pump compression when we're not in WriteCompressed mode??" );
+
+	int zipBufferSize = 1024 * 100;
+	char zipBuffer[zipBufferSize];
+	m_zipData->m_zipStream.avail_in = byteCount;
+	m_zipData->m_zipStream.next_in = (Bytef*)bytes;
+	do
+	{
+		m_zipData->m_zipStream.avail_out = zipBufferSize;
+		m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+		int ret = deflate(&m_zipData->m_zipStream, finish ? Z_FINISH : Z_NO_FLUSH);
+		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered by deflate()");
+
+		int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+		if ( compressedBytes > 0 )
+			_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
+		// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
+
+	}while( m_zipData->m_zipStream.avail_out == 0 );
+	vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
 }
 
 void

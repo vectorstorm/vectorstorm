@@ -50,6 +50,9 @@ private:
 	void _WriteBytes( void* bytes, size_t byteCount );
 	void _WriteFinalBytes_Buffered( void* bytes, size_t byteCount );
 
+	// do some processing of file compression.
+	void _PumpCompression( void* bytes, size_t byteCount, bool finish );
+
 public:
 
 			// In general, files should be opened by creating an vsFile;  the vsFile class automatically deals with finding where the file is
