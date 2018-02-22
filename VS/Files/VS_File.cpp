@@ -32,6 +32,15 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
+// PhysFS added a new function:  PHYSFS_writeBytes in version 2.1.0, and deprecated
+// the old function, PHYSFS_write.  With multiple platforms running different
+// versions of physfs (I know, I'm the worst;  I need to fix that) for right now,
+// I need to just make everything work.
+
+#if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
+#define PHYSFS_writeBytes(file, bytes, count) PHYSFS_write(file, bytes, 1, count)
+#endif
+
 struct zipdata
 {
 	z_stream m_zipStream;
@@ -219,7 +228,6 @@ vsFile::~vsFile()
 			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
 				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
-				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
 		}while( m_zipData->m_zipStream.avail_out == 0 );
 		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
@@ -245,7 +253,7 @@ vsFile::FlushBufferedWrites()
 	{
 		if ( m_store && m_store->BytesLeftForReading() )
 		{
-			PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+			PHYSFS_writeBytes( m_file, m_store->GetReadHead(), m_store->BytesLeftForReading() );
 			m_store->Clear();
 		}
 	}
@@ -456,7 +464,7 @@ vsFile::Record( vsRecord *r )
 	{
 		vsString recordString = r->ToString();
 
-		PHYSFS_write( m_file, recordString.c_str(), 1, recordString.size() );
+		PHYSFS_writeBytes( m_file, recordString.c_str(), recordString.size() );
 
 		return true;
 	}
@@ -601,7 +609,7 @@ vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
 				m_store->WriteBuffer(bytes, bytesWeCanWrite);
 				bytes = (char*)(bytes) + bytesWeCanWrite;
 
-				PHYSFS_write( m_file, m_store->GetReadHead(), 1, m_store->BytesLeftForReading() );
+				PHYSFS_writeBytes( m_file, m_store->GetReadHead(), m_store->BytesLeftForReading() );
 				m_store->Clear();
 				byteCount -= bytesWeCanWrite;
 			}
@@ -610,7 +618,7 @@ vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
 	else
 	{
 		// we're not writing in a buffered context.  Just write the bytes directly.
-		PHYSFS_write( m_file, bytes, 1, byteCount );
+		PHYSFS_writeBytes( m_file, bytes, byteCount );
 	}
 }
 
@@ -637,7 +645,6 @@ vsFile::_WriteBytes( void* bytes, size_t byteCount )
 			int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 			if ( compressedBytes > 0 )
 				_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
-				// PHYSFS_write( m_file, zipBuffer, 1, compressedBytes );
 
 		}while( m_zipData->m_zipStream.avail_out == 0 );
 		vsAssert( m_zipData->m_zipStream.avail_in == 0, "Didn't compress all the available input data?" );
