@@ -982,6 +982,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_VertexArray:
 				{
+					m_currentVertexArray = (vsVector3D*)op->data.p;
+					m_currentVertexArrayCount = op->data.i;
+					m_currentVertexBuffer = NULL;
 					vsRenderBuffer::BindVertexArray( &m_state, op->data.p, op->data.i );
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 					break;
@@ -989,6 +992,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_VertexBuffer:
 				{
 					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentVertexArray = NULL;
+					m_currentVertexArrayCount = 0;
 					m_currentVertexBuffer->BindVertexBuffer( &m_state );
 					break;
 				}
@@ -1008,9 +1013,9 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ClearVertexArray:
 				{
 					m_currentVertexBuffer = NULL;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
+					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearNormalArray:
