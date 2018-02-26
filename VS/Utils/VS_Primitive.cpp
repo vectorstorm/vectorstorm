@@ -542,6 +542,8 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsCol
 
 vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
 {
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+
 	vsVector3D va[4] =
 	{
 		box.GetMin(),
@@ -569,14 +571,18 @@ vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &of
 	{
 		list->SetColor( *colorOverride );
 	}
-	list->VertexArray(va,4);
+
+	vbo->SetArray(va,4);
+
+	list->BindBuffer(vbo);
 //	list->TexelArray(tex,4);
 	list->TriangleStripArray(ts,4);
-	list->ClearVertexArray();
+	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
 	fragment->SetDisplayList(list);
 	fragment->SetMaterial( material );
+	fragment->AddBuffer(vbo);
 
 	return fragment;
 }
@@ -636,7 +642,6 @@ vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, v
 
 
 	list->BindBuffer(vb);
-//	list->TexelArray(tex,4);
 	list->TriangleListBuffer(ib);
 	list->ClearVertexArray();
 
@@ -661,6 +666,9 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, vsColor *colorOverride )
 {
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer::PT pt[4];
+
 	vsVector3D va[4] =
 	{
 		box.GetMin(),
@@ -680,21 +688,27 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 		0,2,1,3
 	};
 
+	for ( int i = 0; i < 4; i++ )
+	{
+		pt[i].position = va[i];
+		pt[i].texel = tex[i];
+	}
+
 	vsDisplayList *list = new vsDisplayList(128);
 
 	if ( colorOverride )
 	{
 		list->SetColor( *colorOverride );
 	}
-	list->VertexArray(va,4);
-	list->TexelArray(tex,4);
+	vbo->SetArray(pt, 4);
+	list->BindBuffer(vbo);
 	list->TriangleStripArray(ts,4);
-	list->ClearVertexArray();
-	list->ClearTexelArray();
+	list->ClearArrays();
 
 	vsFragment *fragment = new vsFragment;
 	fragment->SetDisplayList(list);
 	fragment->SetMaterial( material );
+	fragment->AddBuffer(vbo);
 
 	return fragment;
 }
