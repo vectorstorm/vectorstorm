@@ -234,6 +234,7 @@ public:
 	void	Bind( vsRendererState *state );		// for non-custom types
 	void	Unbind( vsRendererState *state );	// for non-custom types
 
+	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
 	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
 	static void BindVertexArray( vsRendererState *state, void* buffer, int vertexCount );
 	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );

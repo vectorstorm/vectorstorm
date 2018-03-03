@@ -691,6 +691,42 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	// For these immediate-mode style "arrays embedded directly in the display list"
+	// situations, we need to make sure that we have enough space to push all the
+	// data directly;  that we won't run out partway through.  This means that we
+	// couldn't bind the arrays immediately as they came in, but instead needed to
+	// hold on to them until now, right before we draw.  So let's make sure we
+	// have space for all the data, then bind it all at once!
+	if ( m_currentColorArray || m_currentNormalArray || m_currentTexelArray || m_currentVertexArray )
+	{
+		vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal(
+			m_currentVertexArrayCount,
+			m_currentColorArrayCount,
+			m_currentTexelArrayCount,
+			m_currentNormalArrayCount
+			);
+	}
+	if ( m_currentColorArray )
+	{
+		vsRenderBuffer::BindColorArray( &m_state, m_currentColorArray, m_currentColorArrayCount );
+		m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+	}
+	if ( m_currentNormalArray )
+	{
+		vsRenderBuffer::BindNormalArray( &m_state, m_currentNormalArray, m_currentNormalArrayCount );
+		m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+	}
+	if ( m_currentTexelArray )
+	{
+		vsRenderBuffer::BindTexelArray( &m_state, m_currentTexelArray, m_currentTexelArrayCount );
+		m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	}
+	if ( m_currentVertexArray )
+	{
+		vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
+		m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
+	}
+	// CheckGLError("EnsureSpaceForVertex");
 	// CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
 	static vsShaderValues *s_previousShaderValues = NULL;
@@ -755,6 +791,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		vsAssert(0, "Trying to flush render state with no shader set?");
 		glUseProgram( 0 );
 	}
+
 }
 
 void
@@ -985,8 +1022,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexArray = (vsVector3D*)op->data.p;
 					m_currentVertexArrayCount = op->data.i;
 					m_currentVertexBuffer = NULL;
-					vsRenderBuffer::BindVertexArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_VertexBuffer:
@@ -999,14 +1034,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_NormalArray:
 				{
-					vsRenderBuffer::BindNormalArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+					m_currentNormalArray = (vsVector3D*)op->data.p;
+					m_currentNormalArrayCount = op->data.i;
 					break;
 				}
 			case vsDisplayList::OpCode_NormalBuffer:
 				{
 					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentNormalBuffer->BindNormalBuffer( &m_state );
+					m_currentNormalArray = NULL;
+					m_currentNormalArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 					break;
 				}
@@ -1028,6 +1065,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TexelArray:
 				{
+					m_currentTexelArray = (vsVector2D*)op->data.p;
+					m_currentTexelArrayCount = op->data.i;
 					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
 					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 					break;
@@ -1035,6 +1074,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TexelBuffer:
 				{
 					m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
+					m_currentTexelArray = NULL;
+					m_currentTexelArrayCount = 0;
 					m_currentTexelBuffer->BindTexelBuffer( &m_state );
 					break;
 				}
@@ -1045,14 +1086,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ColorArray:
 				{
-					vsRenderBuffer::BindColorArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+					m_currentColorArray = (vsColor*)op->data.p;
+					m_currentColorArrayCount = op->data.i;
 					break;
 				}
 			case vsDisplayList::OpCode_ColorBuffer:
 				{
 					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentColorBuffer->BindColorBuffer( &m_state );
+					m_currentColorArray = 0;
+					m_currentColorArrayCount = 0;
 					break;
 				}
 			case vsDisplayList::OpCode_ClearColorArray:
@@ -1093,6 +1136,19 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_BindBuffer:
 				{
 					PROFILE_GL("BindBuffer");
+					m_currentColorArray = NULL;
+					m_currentColorBuffer = NULL;
+					m_currentColorArrayCount = 0;
+					m_currentTexelBuffer = NULL;
+					m_currentTexelArray = NULL;
+					m_currentTexelArrayCount = 0;
+					m_currentNormalBuffer = NULL;
+					m_currentNormalArray = NULL;
+					m_currentNormalArrayCount = 0;
+					m_currentVertexBuffer = NULL;
+					m_currentVertexArray = NULL;
+					m_currentVertexArrayCount = 0;
+
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					buffer->Bind( &m_state );
 					break;

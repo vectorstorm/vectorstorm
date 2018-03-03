@@ -1074,6 +1074,7 @@ static int g_vboCursor = VBO_SIZE;
 void
 vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount )
 {
+	vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
 	if ( g_vbo == 0xffffffff )
 	{
 		glGenBuffers(1, &g_vbo);
@@ -1083,7 +1084,10 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 
 	if ( g_vboCursor + bufferSize >= VBO_SIZE )
 	{
-		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_STREAM_DRAW);
+		// This shouldn't happen any more;  we should always catch this in the
+		// "EnsureSpaceForVertexColorTexelNormal()" function below.  But leave this
+		// here just for safety for the moment.
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_DYNAMIC_DRAW);
 		g_vboCursor = 0;
 	}
 	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
@@ -1092,6 +1096,31 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	g_vboCursor += bufferSize;
+}
+
+void
+vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount )
+{
+	int bufferSize = vertexCount * sizeof(vsVector3D) +
+		colorCount * sizeof(vsColor) +
+		texelCount * sizeof(vsVector2D) +
+		normalCount * sizeof(vsVector2D);
+
+	if ( g_vboCursor + bufferSize >= VBO_SIZE )
+	{
+		vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
+		if ( g_vbo == 0xffffffff )
+		{
+			glGenBuffers(1, &g_vbo);
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+
+		// orphan the buffer and start on the new one.
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_DYNAMIC_DRAW);
+		g_vboCursor = 0;
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
 }
 
 void
