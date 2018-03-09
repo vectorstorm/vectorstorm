@@ -214,7 +214,6 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		exit(1);
 	}
 
-	vsLog("UserDir: %s", PHYSFS_getUserDir());
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
 #if defined(__APPLE_CC__)
@@ -262,11 +261,20 @@ vsSystem::EnableGameDirectory( const vsString &directory )
 	PHYSFS_mount(d.c_str(), NULL, 1);
 }
 
+#if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
+
+	// We're in a PhysFS version before 2.1.0.  This means that
+	// PHYSFS_unmount() doesn't exist yet;  it's still PHYSFS_removeFromSearchPath().
+	// Let's make a PHYSFS_unmount() for us to use even under old PhysFS!
+#define PHYSFS_unmount(x) PHYSFS_removeFromSearchPath(x)
+
+#endif
+
 void
 vsSystem::DisableGameDirectory( const vsString &directory )
 {
 	std::string d = m_dataDirectory + "/" + directory;
-	PHYSFS_removeFromSearchPath(d.c_str());
+	PHYSFS_unmount(d.c_str());
 }
 
 void

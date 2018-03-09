@@ -47,11 +47,11 @@ private:
 	size_t		m_length;
 	bool m_moveOnDestruction;
 
-	void _WriteBytes( void* bytes, size_t byteCount );
-	void _WriteFinalBytes_Buffered( void* bytes, size_t byteCount );
+	void _WriteBytes( const void* bytes, size_t byteCount );
+	void _WriteFinalBytes_Buffered( const void* bytes, size_t byteCount );
 
 	// do some processing of file compression.
-	void _PumpCompression( void* bytes, size_t byteCount, bool finish );
+	void _PumpCompression( const void* bytes, size_t byteCount, bool finish );
 
 public:
 
@@ -101,6 +101,8 @@ public:
 	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store.  STORE IS NOT REWOUND BEFORE READ/WRITE
 	void		PeekBytes( vsStore *store, size_t bytes );	// ONLY IN READ OPERATIONS.  Peek the requested number of bytes.
 	void		ConsumeBytes( size_t bytes ); // ONLY IN READ OPERATIONS.  Count this many bytes as having been read.  (Usually used in combination with the above)
+
+	void		WriteBytes( const void* data, size_t bytes ); // this is a more direct version of 'Store'.  Will assert if we're not in a Write mode.
 
 	void		FlushBufferedWrites();
 	/*  These functions are probably deprecated;  use vsRecord objects instead!

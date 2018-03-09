@@ -710,7 +710,18 @@ vsFile::Store( vsStore *s )
 }
 
 void
-vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
+vsFile::WriteBytes( const void* data, size_t bytes )
+{
+	vsAssert( m_mode == MODE_Write ||
+			m_mode == MODE_WriteCompressed ||
+			m_mode == MODE_WriteDirectly, "Tried to write into a file which is in read mode?" );
+	{
+		_WriteBytes(data, bytes);
+	}
+}
+
+void
+vsFile::_WriteFinalBytes_Buffered( const void* bytes, size_t byteCount )
 {
 	vsAssert( m_mode == MODE_Write || m_mode == MODE_WriteCompressed,
 			"Trying to write but we're not in write mode??" );
@@ -743,7 +754,7 @@ vsFile::_WriteFinalBytes_Buffered( void* bytes, size_t byteCount )
 }
 
 void
-vsFile::_WriteBytes( void* bytes, size_t byteCount )
+vsFile::_WriteBytes( const void* bytes, size_t byteCount )
 {
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteDirectly )
 	{
@@ -760,7 +771,7 @@ vsFile::_WriteBytes( void* bytes, size_t byteCount )
 }
 
 void
-vsFile::_PumpCompression( void* bytes, size_t byteCount, bool finish )
+vsFile::_PumpCompression( const void* bytes, size_t byteCount, bool finish )
 {
 	vsAssert( m_mode == MODE_WriteCompressed, "Trying to pump compression when we're not in WriteCompressed mode??" );
 
