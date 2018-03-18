@@ -1205,7 +1205,6 @@ vsInput::Update(float timeStep)
 			if ( m_axis[i].isCalculated )
 				m_axis[i].Update();
 		}
-
 	}
 }
 
@@ -2021,10 +2020,15 @@ DeviceControl::Evaluate()
 			}
 		case CT_Keyboard:
 			{
-				int keyCount;
-				const Uint8* keys = SDL_GetKeyboardState(&keyCount);
-				if ( id < keyCount )
-					value = keys[id] ? 1.0f : 0.0f;
+				if ( vsInput::Instance()->InStringMode() )
+					value = 0;
+				else
+				{
+					int keyCount;
+					const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+					if ( id < keyCount )
+						value = keys[id] ? 1.0f : 0.0f;
+				}
 				break;
 			}
 		case CT_None:
