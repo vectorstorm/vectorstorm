@@ -92,6 +92,7 @@
 			else
 			{
 				vsAssert(false, vsFormatString("No clue what file type this is: %s", filename));
+				return 0;
 			}
 		}
 		stat->modtime = PHYSFS_getLastModTime(filename);
