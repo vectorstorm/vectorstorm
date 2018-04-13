@@ -273,6 +273,9 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 		list->SnapMatrix();
 	if ( m_hasColor )
 		list->SetColor( m_color );
+	else
+		list->SetColor( c_white );
+
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
 	if ( doSnap )
