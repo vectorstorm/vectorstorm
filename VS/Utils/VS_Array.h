@@ -252,6 +252,18 @@ public:
 		}
 	}
 
+	bool operator==( const vsArray<T>& other ) const
+	{
+		if ( ItemCount() != other.ItemCount() )
+			return false;
+		for ( int i = 0; i < ItemCount(); i++ )
+		{
+			if ( m_array[i] != other.m_array[i] )
+				return false;
+		}
+		return true;
+	}
+
 	static const int npos = -1;
 };
 
