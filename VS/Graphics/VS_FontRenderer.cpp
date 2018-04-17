@@ -34,6 +34,7 @@ vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type
 	m_hasSnap(false),
 	m_buildMapping(false)
 {
+	vsAssert( m_font, "No font set??" );
 }
 
 void
@@ -97,6 +98,7 @@ vsFontRenderer::SetNoColor()
 void
 vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float *top_out)
 {
+	vsAssert( m_font, "No font set??" );
 	float size = m_size;
 	bool fits = false;
 
