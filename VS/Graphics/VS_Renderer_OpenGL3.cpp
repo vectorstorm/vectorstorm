@@ -293,13 +293,22 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( flags & Flag_Fullscreen )
 	{
 		if ( flags & Flag_FullscreenWindow )
+		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+			m_windowType = WindowType_FullscreenWindow;
+		}
 		else
+		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN;
-		videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+			m_windowType = WindowType_Fullscreen;
+		}
 	}
-	else if ( flags & Flag_Resizable )
-		videoFlags |= SDL_WINDOW_RESIZABLE;
+	else
+	{
+		if ( flags & Flag_Resizable )
+			videoFlags |= SDL_WINDOW_RESIZABLE;
+		m_windowType = WindowType_Window;
+	}
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	// SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
@@ -560,15 +569,11 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 		switch( windowType )
 		{
 			case WindowType_Window:
-				{
-					vsInput::Instance()->SuppressResizeEvent();
-					SDL_SetWindowFullscreen(g_sdlWindow, 0);
-					SDL_SetWindowSize(g_sdlWindow, width, height);
-					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-					break;
-				}
+				SDL_SetWindowFullscreen(g_sdlWindow, 0);
+				SDL_SetWindowSize(g_sdlWindow, width, height);
+				SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+				break;
 			case WindowType_Fullscreen:
-				vsInput::Instance()->SuppressResizeEvent();
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
 				break;
