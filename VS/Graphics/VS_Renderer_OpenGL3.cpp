@@ -556,6 +556,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 void
 vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType windowType, int bufferCount, bool antialias, bool vsync)
 {
+	vsLog("UPDATE VIDEO MODE:  %dx%dx%d, windowType %d", width, height, depth, windowType);
 	UNUSED(depth);
 	GL_CHECK_SCOPED("vsRenderer_OpenGL3::UpdateVideoMode");
 	//vsAssert(0, "Not yet implemented");
@@ -574,7 +575,6 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 				break;
 			case WindowType_Fullscreen:
-				SDL_SetWindowSize(g_sdlWindow, width, height);
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
 				break;
 			case WindowType_FullscreenWindow:
@@ -584,12 +584,23 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				break;
 		}
 	}
-	else if ( m_windowType == WindowType_Window || m_windowType == WindowType_Fullscreen )
+	else if ( m_windowType == WindowType_Window )
 	{
-		int nowWidth, nowHeight;
-		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
-		if ( nowWidth != width || nowHeight != height )
-			SDL_SetWindowSize(g_sdlWindow, width, height);
+		SDL_SetWindowSize(g_sdlWindow, width, height);
+	}
+	else if ( m_windowType == WindowType_Fullscreen )
+	{
+		SDL_DisplayMode target, closest;
+		target.w = width;
+		target.h = height;
+		target.format = 0;
+		target.refresh_rate = 0;
+		target.driverdata = 0;
+
+		if ( SDL_GetClosestDisplayMode(0, &target, &closest) == NULL )
+			vsLog("No suitable display mode for %dx%d found!", width, height);
+		else
+			SDL_SetWindowDisplayMode(g_sdlWindow, &closest);
 	}
 	m_windowType = windowType;
 
