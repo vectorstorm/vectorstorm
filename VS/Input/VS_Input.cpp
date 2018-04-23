@@ -958,10 +958,12 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_RESTORED:
 							// vsLog("Restored");
 							break;
+							/*
 						case SDL_WINDOWEVENT_TAKE_FOCUS:
 							break;
 						case SDL_WINDOWEVENT_HIT_TEST:
 							break;
+							*/
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);
 							break;

@@ -34,6 +34,10 @@
 
 #include "VS_Input.h" // flag event queue to ignore resize events while we're changing window type
 
+#if SDL_VERSION_ATLEAST(2,0,5)
+#define HAS_SDL_SET_RESIZABLE
+#endif
+
 
 #if TARGET_OS_IPHONE
 
@@ -305,8 +309,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 	else
 	{
-		if ( flags & Flag_Resizable )
-			videoFlags |= SDL_WINDOW_RESIZABLE;
 		m_windowType = WindowType_Window;
 	}
 
@@ -596,8 +598,12 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 			case WindowType_Window:
 				SDL_SetWindowFullscreen(g_sdlWindow, 0);
 				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
+#ifdef HAS_SDL_SET_RESIZABLE
 				if ( m_flags & Flag_Resizable )
+				{
 					SDL_SetWindowResizable(g_sdlWindow,SDL_TRUE);
+				}
+#endif
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				if ( changedWindowType )
 					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
