@@ -58,7 +58,12 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 		flags |= vsRenderer::Flag_HighDPI;
 	flags |= vsRenderer::Flag_Resizable;
 
-	m_renderer = new vsRenderer_OpenGL3(width, height, depth, flags, bufferCount);
+	vsLog("Width before:  %d", m_width);
+	m_renderer = new vsRenderer_OpenGL3(m_width, m_height, m_depth, flags, bufferCount);
+
+	m_width = m_renderer->GetWidth();
+	m_height = m_renderer->GetHeight();
+	vsLog("Width after:  %d", m_width);
 
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	vsLog("Screen Ratio:  %f", m_aspectRatio);
@@ -73,6 +78,29 @@ vsScreen::~vsScreen()
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
 	s_instance = NULL;
+}
+
+void
+vsScreen::NotifyResized(int width, int height)
+{
+	m_width = width;
+	m_height = height;
+	m_renderer->NotifyResized(width, height);
+	for ( int i = 0; i < m_sceneCount; i++ )
+	{
+		m_scene[i]->UpdateVideoMode();
+	}
+
+	// vsAssert(m_width == m_renderer->GetWidth() && m_height == m_renderer->GetHeight(), "Whaaa?");
+
+	//delete m_renderer;
+
+    vsTextureManager::Instance()->CollectGarbage(); // flush any unused client-side textures now, so they don't accidentally go away and go into the global heap.
+
+	m_aspectRatio = ((float)m_width)/((float)m_height);
+	vsLog("Screen aspect ratio:  %f", m_aspectRatio);
+	m_resized = true;
+	BuildDefaultPipeline();
 }
 
 void
@@ -109,7 +137,6 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 	vsLog("Screen aspect ratio:  %f", m_aspectRatio);
 	m_resized = true;
 	BuildDefaultPipeline();
-
 }
 
 void

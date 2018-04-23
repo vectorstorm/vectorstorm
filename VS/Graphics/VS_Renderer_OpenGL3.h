@@ -115,7 +115,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 	virtual void		SetMaterial(vsMaterial *material);
 	//virtual void		SetDrawMode(vsDrawMode mode);
 
-	void Resize();
+	void ResizeRenderTargetsToMatchWindow();
 
 	void	SetRenderTarget( vsRenderTarget *target );
 
@@ -128,6 +128,7 @@ public:
 
 	bool	CheckVideoMode();
 	virtual void UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync);
+	virtual void NotifyResized(int width, int height);
 
 	void	PreRender( const Settings &s );
 	void	RenderDisplayList( vsDisplayList *list );

@@ -904,23 +904,26 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_EXPOSED:
 							// vsLog("Exposed");
 							break;
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+							{
+								vsLog("SIZE_CHANGED EVENT");
+								vsSystem::Instance()->CheckVideoMode();
+								break;
+							}
 						case SDL_WINDOWEVENT_RESIZED:
 							{
 								if ( m_suppressResizeEvent )
 									m_suppressResizeEvent = false;
 								else
 								{
-									vsLog("Resize event:  %d, %d", event.window.data1, event.window.data2);
+									vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
+									// vsSystem::Instance()->CheckVideoMode();
 									int windowWidth = event.window.data1;
 									int windowHeight = event.window.data2;
-									vsSystem::Instance()->UpdateVideoMode(windowWidth, windowHeight);
+									vsSystem::Instance()->NotifyResized(windowWidth, windowHeight);
 								}
 								break;
 							}
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							vsLog("Size Changed");
-							vsSystem::Instance()->CheckVideoMode();
-							break;
 						case SDL_WINDOWEVENT_SHOWN:
 							// vsLog("Shown");
 							vsSystem::Instance()->SetAppIsVisible( true );
@@ -954,6 +957,10 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_RESTORED:
 							// vsLog("Restored");
+							break;
+						case SDL_WINDOWEVENT_TAKE_FOCUS:
+							break;
+						case SDL_WINDOWEVENT_HIT_TEST:
 							break;
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);

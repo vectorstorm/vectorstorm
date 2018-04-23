@@ -66,6 +66,7 @@ public:
 	vsRenderTarget *	GetPresentTarget();
 
 	void			UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync);
+	void			NotifyResized(int width, int height);
 	void			CheckVideoMode();
 
 	// The following width/height/aspect ratio functions operate in terms of

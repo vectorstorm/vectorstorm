@@ -113,6 +113,7 @@ public:
 
 	void UpdateVideoMode();
 	void UpdateVideoMode(int width, int height);
+	void NotifyResized(int width, int height);
 	void CheckVideoMode();
 
 	void ToggleFullscreen();

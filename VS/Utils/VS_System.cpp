@@ -146,8 +146,13 @@ vsSystem::Init()
 		height = m_preferences->GetWindowResolutionY();
 	}
 
-	vsLog("Init:  Initialising [%dx%d] resolution (%s)...", width, height,
-			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
+	if ( m_preferences->GetFullscreenWindow() )
+		vsLog("Init:  Initialising fullscreen window");
+	else
+	{
+		vsLog("Init:  Initialising [%dx%d] resolution (%s)...", width, height,
+				m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
+	}
 
 #if !TARGET_OS_IPHONE
 	m_showCursor = !m_preferences->GetFullscreen();
@@ -314,6 +319,12 @@ vsSystem::UpdateVideoMode()
 }
 
 void
+vsSystem::NotifyResized(int width, int height)
+{
+	GetScreen()->NotifyResized(width, height);
+}
+
+void
 vsSystem::UpdateVideoMode(int width, int height)
 {
 	// this function is called when we change video mode while the game is
@@ -365,7 +376,7 @@ vsSystem::UpdateVideoMode(int width, int height)
 			m_preferences->GetAntialias(),
 			m_preferences->GetVSync()
 			);
-    //vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
+	//vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
 	vsHeap::Pop(g_globalHeap);
 

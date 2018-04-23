@@ -89,6 +89,7 @@ public:
 
 	virtual bool	CheckVideoMode() = 0;
 	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync) = 0;
+	virtual void	NotifyResized(int width, int height) = 0;
 
 	virtual void	PreRender( const Settings &s ) = 0;
 	virtual void	RenderDisplayList( vsDisplayList *list ) = 0;
@@ -98,6 +99,8 @@ public:
 	// virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) = 0;
 	// virtual bool	PostRenderTarget( vsRenderTarget *target ) = 0;
 
+	int		GetWidth() const { return m_width; }
+	int		GetHeight() const { return m_height; }
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }
 	void	SetViewportWidthPixels( int width ) { m_widthPixels = width; }

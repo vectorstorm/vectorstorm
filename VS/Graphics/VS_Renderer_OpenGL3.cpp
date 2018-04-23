@@ -205,14 +205,14 @@ static void printAttributes ()
 		{GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, "NVidia-only:  Currently available video memory"},
 		{GL_TEXTURE_FREE_MEMORY_ATI, "ATI-only:  Currently available video memory"}
 	};
-    int nAttr = sizeof(a) / sizeof(struct attr);
-
-	GLint value;
-    for (int i = 0; i < nAttr; i++)
+	int nAttr = sizeof(a) / sizeof(struct attr);
+	//
+	// GLint value;
+	for (int i = 0; i < nAttr; i++)
 	{
-		glGetIntegerv( a[i].name, &value );
-        vsLog("%s: %d", a[i].label, value );
-    }
+	// 	glGetIntegerv( a[i].name, &value );
+	// 	vsLog("%s: %d", a[i].label, value );
+	}
 
 	// now clear the GL error state;  one of the texture memory stats will
 	// probably have generated an "invalid enum" error, since those texture
@@ -332,12 +332,18 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
+	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	if ( !g_sdlWindow ){
-		fprintf(stderr, "Couldn't set %dx%dx%d video mode: %s\n",
+		vsLog("Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+	if ( m_windowType != WindowType_Window )
+	{
+		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
+	}
+
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
 	{
@@ -471,7 +477,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glBindVertexArray(m_vao);
 	CheckGLError("Initialising OpenGL rendering");
 
-	Resize();
+	ResizeRenderTargetsToMatchWindow();
 
 	CheckGLError("Initialising OpenGL rendering");
 
@@ -494,9 +500,9 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 }
 
 void
-vsRenderer_OpenGL3::Resize()
+vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 {
-	GL_CHECK_SCOPED("vsRenderer_OpenGL3::Resize");
+	GL_CHECK_SCOPED("vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow");
 	vsDelete( m_window );
 	vsDelete( m_scene );
 
@@ -538,6 +544,21 @@ vsRenderer_OpenGL3::Resize()
 bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
+// 	int nowWidth, nowHeight;
+// 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+//
+// 	if ( nowWidth != m_width || nowHeight != m_height )
+// 	{
+// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+// #ifdef HIGHDPI_SUPPORTED
+// 		if ( m_flags & Flag_HighDPI )
+// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+// #endif
+// 		m_viewportWidthPixels = m_widthPixels;
+// 		m_viewportHeightPixels = m_heightPixels;
+// 		ResizeRenderTargetsToMatchWindow();
+// 	}
 #ifdef HIGHDPI_SUPPORTED
 	if ( m_flags & Flag_HighDPI )
 	{
@@ -565,60 +586,139 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	m_bufferCount = bufferCount;
 	m_antialias = antialias;
 	m_vsync = vsync;
-	if ( m_windowType != windowType )
+	bool changedWindowType = (m_windowType != windowType);
+
+	// first, set window type.
+	// if ( changedWindowType )
 	{
 		switch( windowType )
 		{
 			case WindowType_Window:
 				SDL_SetWindowFullscreen(g_sdlWindow, 0);
+				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
+				if ( m_flags & Flag_Resizable )
+					SDL_SetWindowResizable(g_sdlWindow,SDL_TRUE);
 				SDL_SetWindowSize(g_sdlWindow, width, height);
-				SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+				if ( changedWindowType )
+					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 				break;
 			case WindowType_Fullscreen:
-				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
-				break;
+				{
+					if ( m_windowType == WindowType_Fullscreen ) // we're already in fullscreen!
+					{
+						SDL_SetWindowFullscreen(g_sdlWindow,SDL_FALSE); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
+						SDL_Delay(1);
+					}
+					SDL_DisplayMode target, closest;
+					target.w = width;
+					target.h = height;
+					target.format = 0;
+					target.refresh_rate = 0;
+					target.driverdata = 0;
+
+					if ( SDL_GetClosestDisplayMode(0, &target, &closest) == NULL )
+						vsLog("No suitable display mode for %dx%d found!", width, height);
+					else
+					{
+						if ( SDL_SetWindowDisplayMode(g_sdlWindow, &closest) != 0 )
+						{
+							vsLog("SDL_SetWindowDisplayMode failed:  %s", SDL_GetError() );
+							vsAssert(0, "Failed set display mode!");
+						}
+					}
+
+					m_viewportWidth = m_width = closest.w;
+					m_viewportHeight = m_height = closest.h;
+					SDL_SetWindowSize(g_sdlWindow, m_width, m_height);
+					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+					SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
+					SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
+					break;
+				}
 			case WindowType_FullscreenWindow:
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
+				SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
+
+				int nowWidth, nowHeight;
+				SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+				m_viewportWidth = m_width = m_widthPixels = nowWidth;
+				m_viewportHeight = m_height = m_heightPixels = nowHeight;
 				break;
 			default:
 				break;
 		}
 	}
-	else if ( m_windowType == WindowType_Window )
-	{
-		SDL_SetWindowSize(g_sdlWindow, width, height);
-	}
-	else if ( m_windowType == WindowType_Fullscreen )
-	{
-		SDL_DisplayMode target, closest;
-		target.w = width;
-		target.h = height;
-		target.format = 0;
-		target.refresh_rate = 0;
-		target.driverdata = 0;
 
-		if ( SDL_GetClosestDisplayMode(0, &target, &closest) == NULL )
-			vsLog("No suitable display mode for %dx%d found!", width, height);
-		else
-			SDL_SetWindowDisplayMode(g_sdlWindow, &closest);
-	}
+	// if ( m_windowType == WindowType_Window )
+	// {
+	// }
+	// else if ( m_windowType == WindowType_Fullscreen )
+	// else if ( m_windowType == WindowType_FullscreenWindow )
+	// {
+	// 	SDL_DisplayMode desktopMode;
+	// 	if ( SDL_GetDesktopDisplayMode(0, &desktopMode) == 0 )
+	// 	{
+	// 		SDL_SetWindowDisplayMode(g_sdlWindow, &desktopMode);
+	// 	}
+	// 	else
+	// 	{
+	// 		vsLog("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError() );
+	// 	}
+	// 	SDL_SetWindowSize(g_sdlWindow, desktopMode.w, desktopMode.h);
+	// }
+	// if ( vsInput::Exists() )
+	// {
+	// 	vsLog("Before input pump");
+	// 	vsInput::Instance()->Update(0.f);
+	// 	vsLog("After input pump");
+	// }
+    //
+	// now, set SIZE.
+
 	m_windowType = windowType;
 
-	{
-		int nowWidth, nowHeight;
-		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
-		m_widthPixels = width;
-		m_heightPixels = height;
+// 	{
+// 		int nowWidth, nowHeight;
+// 		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
 #ifdef HIGHDPI_SUPPORTED
 		if ( m_flags & Flag_HighDPI )
 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
 		m_viewportWidthPixels = m_widthPixels;
 		m_viewportHeightPixels = m_heightPixels;
-		Resize();
-	}
+// 		ResizeRenderTargetsToMatchWindow();
+// 	}
 	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) == -1 )
 		vsLog("Couldn't set vsync");
+
+	NotifyResized( m_width, m_height );
+}
+
+void
+vsRenderer_OpenGL3::NotifyResized( int width, int height )
+{
+	// if ( m_windowType == WindowType_Window )
+	{
+		int nowWidth, nowHeight;
+		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+
+		vsAssert( width == nowWidth && height == nowHeight, "Whaa?" );
+
+		vsLog("Notified of %dx%d, have %dx%d", width, height, nowWidth, nowHeight);
+
+		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+#ifdef HIGHDPI_SUPPORTED
+		if ( m_flags & Flag_HighDPI )
+			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+#endif
+		m_viewportWidthPixels = m_widthPixels;
+		m_viewportHeightPixels = m_heightPixels;
+		ResizeRenderTargetsToMatchWindow();
+	}
 }
 
 void
@@ -688,6 +788,12 @@ vsRenderer_OpenGL3::PostRender()
 
 	vsTimerSystem::Instance()->EndGPUTime();
 	}
+	// {
+	// 	int nowWidth, nowHeight;
+	// 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+	// 	vsLog("Size:  %dx%d", nowWidth, nowHeight);
+	// 	vsLog("Viewport:  %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
+	// }
 }
 
 void
