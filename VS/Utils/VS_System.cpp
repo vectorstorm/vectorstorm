@@ -321,7 +321,15 @@ vsSystem::UpdateVideoMode()
 void
 vsSystem::NotifyResized(int width, int height)
 {
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially changing video
+	// mode doesn't get charged to the currently active game, and then treated
+	// as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
 	GetScreen()->NotifyResized(width, height);
+
+	vsHeap::Pop(g_globalHeap);
 }
 
 void
