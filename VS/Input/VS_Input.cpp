@@ -69,6 +69,7 @@ vsInput::Init()
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
+	m_stringModeClearing = false;
 	vsSystem::Instance()->GetPreferences();
 	m_wheelSmoothing = true;
 	m_wheelSpeed = 0.f;
@@ -597,6 +598,7 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 		{
 			SDL_StopTextInput();
 			m_stringMode = false;
+			m_stringModeClearing = true;
 		}
 	}
 }
@@ -883,10 +885,13 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYDOWN:
 					{
-						if ( m_stringMode )
-							HandleStringModeKeyDown(event);
-						else
-							HandleKeyDown(event);
+						if ( !m_stringModeClearing )
+						{
+							if ( m_stringMode )
+								HandleStringModeKeyDown(event);
+							else
+								HandleKeyDown(event);
+						}
 						break;
 					}
 				case SDL_KEYUP:
@@ -1137,29 +1142,16 @@ vsInput::Update(float timeStep)
 #endif
 	m_suppressResizeEvent = false;
 
+	if ( m_stringModeClearing )
+	{
+		bool anythingDown = AnythingIsDown();
+		if ( !anythingDown )
+			m_stringModeClearing = false;
+	}
 	if ( m_preparingToPoll )
 	{
 		// wait for everything to be released.
-		bool anythingDown = false;
-
-		// For right now, let's just check for keyboard.
-		int keyCount;
-		const Uint8* keys = SDL_GetKeyboardState(&keyCount);
-
-		// TODO:  It'd probably be *heaps* faster to check this four or eight
-		// bytes at a time, instead of key-by-key.  But then you have to cope
-		// with the end of the array possibly not filling all those bytes up.
-		// And honestly, we're virtually never going through this code at all,
-		// so I'm being silly even considering trying to optimise this test for
-		// any keys being held down.  I'm sorry.
-		for ( int i = 0; i < keyCount; i++ )
-		{
-			if ( keys[i] != 0 )
-			{
-				anythingDown = true;
-				break;
-			}
-		}
+		bool anythingDown = AnythingIsDown();
 
 		if ( !anythingDown )
 		{
@@ -1740,6 +1732,19 @@ vsInput::StringModeSaveUndoState()
 	// vsLog("Saved undo state");
 }
 
+void
+vsInput::StringModeCancel()
+{
+	if ( !m_stringModeUndoStack.IsEmpty() )
+	{
+		vsArrayStoreIterator<StringModeState> first = m_stringModeUndoStack.Back();
+		m_stringModeString = first->string;
+
+		m_stringModeUndoStack.Clear();
+	}
+	SetStringMode(false);
+}
+
 bool
 vsInput::StringModeUndo()
 {
@@ -1914,6 +1919,12 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				SetStringMode(false);
 			}
 			break;
+		case SDLK_ESCAPE:
+			if ( m_stringMode )
+			{
+				StringModeCancel();
+			}
+			break;
 		default:
 			break;
 	}
@@ -2029,7 +2040,7 @@ DeviceControl::Evaluate()
 			}
 		case CT_Keyboard:
 			{
-				if ( vsInput::Instance()->InStringMode() )
+				if ( vsInput::Instance()->IsKeyboardSuppressed() )
 					value = 0;
 				else
 				{
@@ -2150,3 +2161,28 @@ vsInput::Rebind( int cid, const DeviceControl& dc )
 
 }
 
+bool
+vsInput::AnythingIsDown()
+{
+	bool anythingDown = false;
+
+	// For right now, let's just check for keyboard.
+	int keyCount;
+	const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+
+	// TODO:  It'd probably be *heaps* faster to check this four or eight
+	// bytes at a time, instead of key-by-key.  But then you have to cope
+	// with the end of the array possibly not filling all those bytes up.
+	// And honestly, we're virtually never going through this code at all,
+	// so I'm being silly even considering trying to optimise this test for
+	// any keys being held down.  I'm sorry.
+	for ( int i = 0; i < keyCount; i++ )
+	{
+		if ( keys[i] != 0 )
+		{
+			anythingDown = true;
+			break;
+		}
+	}
+	return anythingDown;
+}

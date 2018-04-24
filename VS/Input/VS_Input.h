@@ -233,6 +233,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	void HandleKeyDown( const SDL_Event& event );
 	void HandleKeyUp( const SDL_Event& event );
 
+	bool AnythingIsDown();
+
 public:
 	enum ValidationType
 	{
@@ -245,6 +247,7 @@ public:
 private:
 
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
+	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
 
 	class StringModeState
@@ -290,6 +293,7 @@ private:
 	bool m_stringModeEditing; // set to 'true' if we've modified the string.  Set to 'false' when we move the cursor.
 	void StringModeSaveUndoState();
 	bool StringModeUndo();
+	void StringModeCancel();
 
 	void InitController(int i);
 	void DestroyController(SDL_GameController *gc);
@@ -333,6 +337,7 @@ public:
 	void			SetStringMode(bool mode, ValidationType = Validation_None);
 	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
 	bool			InStringMode() { return m_stringMode; }
+	bool			IsKeyboardSuppressed() { return m_stringMode || m_stringModeClearing; }
 	void			SetStringModeString( const vsString &s );
 	vsString		GetStringModeString() { return m_stringModeString; }
 	vsString		GetStringModeSelection();
