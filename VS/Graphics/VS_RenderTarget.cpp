@@ -47,7 +47,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 
 	m_bufferCount = settings.buffers;
 	m_texture = new vsTexture*[m_bufferCount];
-	for ( int i = 0; i < settings.buffers; i++ )
+	for ( int i = 0; i < m_bufferCount; i++ )
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 		vsTextureInternal *ti = new vsTextureInternal(name,
