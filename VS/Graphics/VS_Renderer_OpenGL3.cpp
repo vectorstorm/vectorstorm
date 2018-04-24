@@ -310,6 +310,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	else
 	{
 		m_windowType = WindowType_Window;
+		videoFlags |= SDL_WINDOW_RESIZABLE;
 	}
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
