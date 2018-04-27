@@ -12,8 +12,8 @@
 
 #include <math.h>
 
-#define vsMin(a,b) ((a<b)?a:b)
-#define vsMax(a,b) ((a>b)?a:b)
+#define vsMin(a,b) (((a)<(b))?(a):(b))
+#define vsMax(a,b) (((a)>(b))?(a):(b))
 #define vsClamp(a,min,max) ( vsMin( (max), vsMax( (min), (a) ) ) )
 
 inline bool	vsIsNaN(float x) { volatile float o_x = x; return (x != o_x); }	// NaN != NaN.  Any number which doesn't equal itself must be NaN!
