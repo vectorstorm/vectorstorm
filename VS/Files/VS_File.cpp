@@ -847,8 +847,14 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	return result;
 #else
 	vsString filename(filename_in);
-	vsString dir = PHYSFS_getRealDir( filename.c_str() );
-	return dir + "/" + filename;
+	const char* physDir = PHYSFS_getRealDir( filename.c_str() );
+	if ( physDir )
+	{
+		vsString dir(physDir);
+		return dir + "/" + filename;
+	}
+	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
+	return filename;
 #endif
 }
 
