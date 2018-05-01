@@ -98,7 +98,7 @@ protected:
 
 public:
 
-	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
+	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, const vsString& vfilename = vsEmptyString, const vsString& ffilename = vsEmptyString );
 	virtual ~vsShader();
 
 	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );

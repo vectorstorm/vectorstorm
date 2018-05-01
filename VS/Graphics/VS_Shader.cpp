@@ -26,13 +26,18 @@ static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
 
 
-vsShader::vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture ):
+vsShader::vsShader( const vsString &vertexShader,
+		const vsString &fragmentShader,
+		bool lit,
+		bool texture,
+		const vsString& vFilename,
+		const vsString& fFilename ):
 	m_uniform(NULL),
 	m_attribute(NULL),
 	m_uniformCount(0),
 	m_attributeCount(0),
-	m_vertexShaderFile(""),
-	m_fragmentShaderFile(""),
+	m_vertexShaderFile(vFilename),
+	m_fragmentShaderFile(fFilename),
 	m_system(false),
 	m_shader(-1)
 {
@@ -159,8 +164,11 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 		fString = "#define TEXTURE 1\n" + fString;
 	}
 
-	vString = version + vString;
-	fString = version + fString;
+	vsString vFilename = vsFormatString("// filename: %s\n", m_vertexShaderFile.c_str());
+	vsString fFilename = vsFormatString("// filename: %s\n", m_fragmentShaderFile.c_str());
+
+	vString = version + vFilename + vString;
+	fString = version + fFilename + fString;
 
 #if !TARGET_OS_IPHONE
 	if ( m_shader == 0xffffffff )
@@ -334,10 +342,10 @@ vsShader::~vsShader()
 }
 
 vsShader *
-vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
+vsShader::Load( const vsString &vFile, const vsString &fFile, bool lit, bool texture )
 {
-	vsFile vShader( vsString("shaders/") + vertexShader, vsFile::MODE_Read );
-	vsFile fShader( vsString("shaders/") + fragmentShader, vsFile::MODE_Read );
+	vsFile vShader( vsString("shaders/") + vFile, vsFile::MODE_Read );
+	vsFile fShader( vsString("shaders/") + fFile, vsFile::MODE_Read );
 
 	uint32_t vSize = vShader.GetLength();
 	uint32_t fSize = fShader.GetLength();
@@ -350,9 +358,7 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 	vsString vString( vStore->GetReadHead(), vSize );
 	vsString fString( fStore->GetReadHead(), fSize );
 
-	vsShader *result =  new vsShader(vString, fString, lit, texture);
-	result->m_vertexShaderFile = vertexShader;
-	result->m_fragmentShaderFile = fragmentShader;
+	vsShader *result = new vsShader(vString, fString, lit, texture, vFile, fFile);
 	result->m_litBool = lit;
 	result->m_textureBool = texture;
 
@@ -364,9 +370,9 @@ vsShader::Load( const vsString &vertexShader, const vsString &fragmentShader, bo
 }
 
 vsShader *
-vsShader::Load_System( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture )
+vsShader::Load_System( const vsString &vFile, const vsString &fFile, bool lit, bool texture )
 {
-	vsShader *result = Load(vertexShader, fragmentShader, lit, texture);
+	vsShader *result = Load(vFile, fFile, lit, texture);
 	result->m_system = true;
 	return result;
 }
