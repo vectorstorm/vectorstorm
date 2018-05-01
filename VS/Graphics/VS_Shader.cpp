@@ -164,9 +164,9 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 
 #if !TARGET_OS_IPHONE
 	if ( m_shader == 0xffffffff )
-		m_shader = vsRenderer_OpenGL3::Compile( vString.c_str(), fString.c_str(), vString.size(), fString.size() );
+		m_shader = vsRenderer_OpenGL3::Compile( vString, fString );
 	else
-		vsRenderer_OpenGL3::Compile( m_shader, vString.c_str(), fString.c_str(), vString.size(), fString.size(), false );
+		vsRenderer_OpenGL3::Compile( m_shader, vString, fString, false );
 	// vsLog("Created shader %d", m_shader);
 #endif // TARGET_OS_IPHONE
 

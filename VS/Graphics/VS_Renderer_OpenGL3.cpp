@@ -1856,12 +1856,12 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 }
 
 GLuint
-vsRenderer_OpenGL3::Compile(const char *vert, const char *frag, int vLength, int fLength )
+vsRenderer_OpenGL3::Compile(const vsString &vert, const vsString &frag )
 {
 	GLuint program;
 	program = glCreateProgram();
 
-	Compile(program, vert, frag, vLength, fLength, true );
+	Compile(program, vert, frag, true );
 
 	return program;
 }
@@ -1880,25 +1880,20 @@ static void PrintAnnotatedSource( const vsString& str_in )
 }
 
 void
-vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, int vLength, int fLength, bool requireSuccess )
+vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsString &frag_in, bool requireSuccess )
 {
 	GLuint vertShader = -1;
 	GLuint fragShader = -1;
 	GLchar buf[256];
 	GLint success = true;
 
-	GLint *vLengthPtr = NULL;
-	GLint *fLengthPtr = NULL;
-
-	if ( vLength > 0 )
-		vLengthPtr = (GLint*)&vLength;
-	if ( fLength > 0 )
-		fLengthPtr = (GLint*)&fLength;
-
 	vertShader = glCreateShader(GL_VERTEX_SHADER);
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(vertShader, 1, (const GLchar**) &vert, vLengthPtr);
+	const GLchar* vert = vert_in.c_str();
+	const GLchar* frag = frag_in.c_str();
+
+	glShaderSource(vertShader, 1, &vert, NULL);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
 	if (!success)
@@ -1913,7 +1908,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 
 	if ( success )
 	{
-		glShaderSource(fragShader, 1, (const GLchar**) &frag, fLengthPtr);
+		glShaderSource(fragShader, 1, &frag, NULL);
 		glCompileShader(fragShader);
 		glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
 		if (!success)
@@ -1942,8 +1937,14 @@ vsRenderer_OpenGL3::Compile(GLuint program, const char *vert, const char *frag, 
 		glGetProgramiv(program, GL_LINK_STATUS, &success);
 		if (!success)
 		{
+			vsLog("Shader link error:");
 			glGetProgramInfoLog(program, sizeof(buf), 0, buf);
 			vsLog(buf);
+			vsLog("Failing vertex shader:");
+			PrintAnnotatedSource(vert);
+			vsLog("Failing fragment shader:");
+			PrintAnnotatedSource(frag);
+
 			vsAssert(success || !requireSuccess,"Unable to link shaders.\n");
 		}
 		glDetachShader(program,vertShader);
