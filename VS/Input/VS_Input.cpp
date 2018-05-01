@@ -2068,7 +2068,13 @@ DeviceControl::Evaluate()
 					int keyCount;
 					const Uint8* keys = SDL_GetKeyboardState(&keyCount);
 					if ( id < keyCount )
-						value = keys[id] ? 1.0f : 0.0f;
+					{
+						SDL_Keymod actual_keymod = SDL_GetModState();
+						if ( actual_keymod == keymod )
+							value = keys[id] ? 1.0f : 0.0f;
+						else
+							value = 0.0f;
+					}
 				}
 				break;
 			}

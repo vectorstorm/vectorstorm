@@ -133,13 +133,15 @@ struct DeviceControl
 public:
 	ControlType		type;
 	// 'id' is the axis/button/hat/etc id.  For 'Keyboard' devices, it is the scancode.
+	// Also for 'Keyboard' devices, 'keymod' is any required keyboard modifiers.  (alt/etc)
 	int				id;
+	int				keymod;
 	// For controller types, 'controllerId' is the controller id value.
 	int				controllerId;
 
 	ControlDirection	dir;	// outputs range from 0..-1, instead of 0..1.  Useful for analog axes.
 
-	DeviceControl() { type = CT_None; id = 0; controllerId = 0; dir = CD_Positive; }
+	DeviceControl() { type = CT_None; id = 0; keymod = 0; controllerId = 0; dir = CD_Positive; }
 	void	Set(ControlType type_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; id = id_in; dir = dir_in; }
 	void	Set(ControlType type_in, int controllerId_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; controllerId = controllerId_in; id = id_in; dir = dir_in; }
 
