@@ -946,6 +946,7 @@ vsInput::Update(float timeStep)
 							vsSystem::Instance()->SetAppHasFocus( false );
 							break;
 						case SDL_WINDOWEVENT_FOCUS_GAINED:
+							vsLog("FocusGained");
 							vsSystem::Instance()->SetAppHasFocus( true );
 							break;
 						case SDL_WINDOWEVENT_ENTER:
@@ -969,6 +970,28 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_HIT_TEST:
 							break;
 							*/
+#if SDL_VERSION_ATLEAST( 2, 0, 5 ) // new window events added in SDL 2.0.5
+						case SDL_WINDOWEVENT_TAKE_FOCUS:
+							// On Linux, Window Manager is asking us whether
+							// we want to take focus.  We don't;  the window
+							// manager will give focus to us if it wants to;
+							// we don't need to demand it.
+							//
+							// Also, in all my tests so far, we don't receive
+							// this event until after the window manager has
+							// already given us focus anyhow.
+							break;
+						case SDL_WINDOWEVENT_HIT_TEST:
+							// window had a hit test that wasn't
+							// SDL_HITTEST_NORMAL.  That is, we've swallowed
+							// a mouse event because it didn't hit the window
+							// content, but instead hit a window resize control
+							// or something in the title bar.  Not sure why
+							// we care about that, but this fix came from
+							// the nice Unreal folks, so they presumably had an
+							// issue around this somewhere.
+							break;
+#endif
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);
 							break;
