@@ -2070,7 +2070,9 @@ DeviceControl::Evaluate()
 					if ( id < keyCount )
 					{
 						SDL_Keymod actual_keymod = SDL_GetModState();
-						if ( actual_keymod == keymod )
+						const int keymodsWeCareAbout =
+							KMOD_ALT | KMOD_CTRL | KMOD_GUI;
+						if ( (actual_keymod & keymodsWeCareAbout) == keymod )
 							value = keys[id] ? 1.0f : 0.0f;
 						else
 							value = 0.0f;
