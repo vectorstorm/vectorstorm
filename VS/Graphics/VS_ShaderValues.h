@@ -31,6 +31,8 @@ class vsShaderValues
 			const void* bind;
 		};
 		bool bound;
+
+		Value(): bound (false) {}
 	};
 
 	vsHashTable<Value> m_value;
