@@ -206,23 +206,15 @@ vsTimerSystem::Deinit()
 #endif // DEBUG_TIMING_BAR
 }
 
-unsigned long
+uint64_t
 vsTimerSystem::GetMicroseconds()
 {
-#if defined(_WIN32)
-	if ( !QueryPerformanceCounter(&g_liCurrent) )
-		vsLog("QPC() failed with error %d\n", GetLastError());
-
-	return (unsigned long)((g_liCurrent.QuadPart * 1000000) / g_liFrequency.QuadPart);
-#else	// !_WIN32
-	struct timeval time;
-	gettimeofday(&time, NULL);
-
-	return (time.tv_sec * 1000000) + (time.tv_usec);
-#endif	// !_WIN32
+	uint64_t counter = SDL_GetPerformanceCounter();
+	counter *= (1000000 / SDL_GetPerformanceFrequency());
+	return counter;
 }
 
-unsigned long
+uint64_t
 vsTimerSystem::GetMicrosecondsSinceInit()
 {
 	return GetMicroseconds() - m_initTime;
@@ -241,13 +233,13 @@ vsTimerSystem::Update( float timeStep )
 	m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
 #endif // DEBUG_TIMING_BAR
 
-	//	unsigned long now = SDL_GetTicks();
-	unsigned long now = GetMicroseconds();
+	//	uint64_t now = SDL_GetTicks();
+	uint64_t now = GetMicroseconds();
 
-	unsigned long minTicksPerRound = 15000;
-	unsigned long desiredTicksPerRound = 16000;
+	uint64_t minTicksPerRound = 15000;
+	uint64_t desiredTicksPerRound = 16000;
 
-	unsigned long roundTime = now - m_startCpu;
+	uint64_t roundTime = now - m_startCpu;
 
 	// slow down our frame rate by a lot, if our window isn't visible.
 	if ( !vsSystem::Instance()->AppIsVisible() )
@@ -297,7 +289,7 @@ vsTimerSystem::EndGatherTime()
 {
 	// Note that we don't set our 'cpuTime' until now (after our Draw() has
 	// been called), because we need last frame's cpuTime during our Draw().
-	unsigned long now = GetMicroseconds();
+	uint64_t now = GetMicroseconds();
 	m_gatherTime = (now - m_startGather);
 	m_cpuTime = (m_startGather - m_startCpu);
 	m_startDraw = now;
@@ -306,7 +298,7 @@ vsTimerSystem::EndGatherTime()
 void
 vsTimerSystem::EndDrawTime()
 {
-	unsigned long now = GetMicroseconds();
+	uint64_t now = GetMicroseconds();
 	m_drawTime = (now - m_startDraw);
 	m_startGpu = now;
 }
@@ -314,7 +306,7 @@ vsTimerSystem::EndDrawTime()
 void
 vsTimerSystem::EndGPUTime()
 {
-	unsigned long now = GetMicroseconds();
+	uint64_t now = GetMicroseconds();
 	m_gpuTime = (now - m_startGpu);
 }
 
@@ -322,8 +314,8 @@ void
 vsTimerSystem::PostUpdate( float timeStep )
 {
 	UNUSED(timeStep);
-	//	unsigned long now = SDL_GetTicks();
-	unsigned long now = GetMicroseconds();
+	//	uint64_t now = SDL_GetTicks();
+	uint64_t now = GetMicroseconds();
 
 	m_startGather = now;
 }
