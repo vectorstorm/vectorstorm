@@ -161,7 +161,7 @@ template< class T >
 const T *
 vsWeakPointer<T>::operator->() const
 {
-	assert( m_target != NULL );
+	vsAssert( m_target != NULL, "NULL" );
 	return Target();
 }
 
@@ -172,7 +172,7 @@ template< class T >
 T *
 vsWeakPointer<T>::operator->()
 {
-	assert( m_target != NULL );
+	vsAssert( m_target != NULL, "NULL" );
 	return Target();
 }
 
