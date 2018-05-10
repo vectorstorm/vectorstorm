@@ -210,7 +210,7 @@ uint64_t
 vsTimerSystem::GetMicroseconds()
 {
 	uint64_t counter = SDL_GetPerformanceCounter();
-	counter *= (1000000 / SDL_GetPerformanceFrequency());
+	counter = (counter * 1000000) / SDL_GetPerformanceFrequency();
 	return counter;
 }
 
