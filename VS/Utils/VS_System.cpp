@@ -329,6 +329,11 @@ vsSystem::NotifyResized(int width, int height)
 
 	GetScreen()->NotifyResized(width, height);
 
+	if ( !m_preferences->GetFullscreen() )
+	{
+		m_preferences->SetWindowResolution( width, height );
+	}
+
 	vsHeap::Pop(g_globalHeap);
 }
 
