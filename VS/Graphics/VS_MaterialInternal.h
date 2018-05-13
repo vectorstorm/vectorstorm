@@ -98,6 +98,7 @@ public:
 	bool		m_glow;
 	bool		m_preGlow;
 	bool		m_postGlow;
+	bool		m_postGeneric;
 	bool		m_hasColor;
 	bool		m_blend;
 

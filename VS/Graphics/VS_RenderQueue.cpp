@@ -367,8 +367,8 @@ vsRenderQueueStage::EndRender()
 vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
 	m_parent(NULL),
 	m_genericList(new vsDisplayList(genericListSize)),
-	m_stage(new vsRenderQueueStage[stageCount]),
-	m_stageCount(stageCount),
+	m_stage(new vsRenderQueueStage[4]),
+	m_stageCount(4),
 	m_transformStack(),
 	m_transformStackLevel(0)
 	// m_orthographic(true)
@@ -413,11 +413,12 @@ vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& wo
 void
 vsRenderQueue::Draw( vsDisplayList *list )
 {
-	for ( int i = 0; i < m_stageCount; i++ )
+	for ( int i = 0; i < 3; i++ )
 	{
 		m_stage[i].Draw(list);
 	}
 	list->Append(*m_genericList);
+	m_stage[3].Draw(list);
 
 	DeinitialiseTransformStack();
 	vsAssert( m_transformStackLevel == 0, "Unbalanced push/pop of transforms?");
@@ -697,6 +698,10 @@ vsRenderQueue::GetWorldToViewMatrix()
 int
 vsRenderQueue::PickStageForMaterial( vsMaterial *material )
 {
+	if ( material->GetResource()->m_postGeneric )
+	{
+		return 3;
+	}
 	if ( material->GetResource()->m_postGlow )
 	{
 		return 2;

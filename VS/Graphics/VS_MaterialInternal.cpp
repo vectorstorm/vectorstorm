@@ -62,6 +62,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
+	m_postGeneric(false),
 	m_hasColor(true),
 	m_blend(true)
 {
@@ -100,6 +101,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
+	m_postGeneric(false),
 	m_hasColor(true),
 	m_blend(true)
 {
@@ -226,6 +228,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "postglow" )
 				{
 					m_postGlow = sr->Bool();
+				}
+				else if ( label == "postgeneric" )
+				{
+					m_postGeneric = sr->Bool();
 				}
 				else if ( label == "fog" )
 				{

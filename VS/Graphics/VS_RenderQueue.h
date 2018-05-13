@@ -92,6 +92,14 @@ class vsRenderQueue
 	void			DeinitialiseTransformStack();
 
 public:
+	// stageCount is historic;  it is now ignored;  the queue uses exactly
+	// as many render stages as it itself wants to use.  (Previously, it
+	// assumed that everyone was going to pass in a value of '3', and would
+	// misbehave if not.  Now it just always works, but ignores that parameter,
+	// instead)
+	//
+	// TODO is to remove that parameter.
+	//
 	vsRenderQueue( int stageCount, int genericListSize);
 	~vsRenderQueue();
 
