@@ -29,19 +29,6 @@
 
 vsTimerSystem *	vsTimerSystem::s_instance = NULL;
 
-#if defined(_WIN32)
-
-#include <windows.h>
-
-static LARGE_INTEGER g_liFrequency;
-static LARGE_INTEGER g_liCurrent;
-
-#else
-
-#include <sys/time.h>
-
-#endif
-
 vsTimerSystemSprite::vsTimerSystemSprite():
 	m_vertices( new vsRenderBuffer(vsRenderBuffer::Type_Stream) ),
 	m_indices( new vsRenderBuffer(vsRenderBuffer::Type_Static) )
@@ -175,10 +162,6 @@ vsTimerSystem::~vsTimerSystem()
 void
 vsTimerSystem::Init()
 {
-#if defined(_WIN32)
-	if (!QueryPerformanceFrequency(&g_liFrequency))
-		vsLog("QPF() failed with error %d\n", GetLastError());
-#endif
 	m_initTime = GetMicroseconds();
 	//	m_startCpu = SDL_GetTicks();
 	//	m_startGpu = SDL_GetTicks();
