@@ -261,6 +261,10 @@ public:
 		return m_array[id];
 	}
 
+	const T* operator[](int id) const
+	{
+		return GetItemConst(id);
+	}
 	T*& operator[](int id)
 	{
 		return GetItem(id);
