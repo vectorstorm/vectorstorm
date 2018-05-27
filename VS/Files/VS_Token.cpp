@@ -478,7 +478,7 @@ vsToken::SerialiseBinaryV2( vsSerialiser *s )
 	}
 }
 int
-vsToken::AsInteger()
+vsToken::AsInteger() const
 {
 	vsAssert(m_type == Type_Integer, "Tried to read non-integer token as integer!");
 
@@ -486,7 +486,7 @@ vsToken::AsInteger()
 }
 
 float
-vsToken::AsFloat()
+vsToken::AsFloat() const
 {
 	vsAssert(m_type == Type_Float || m_type == Type_Integer, "Tried to read non-numeric token as float!");
 
@@ -556,6 +556,12 @@ bool
 vsToken::operator==( const vsToken& other )
 {
 	return AsString() == other.AsString();
+}
+
+bool
+vsToken::operator==( const vsString& str )
+{
+	return AsString() == str;
 }
 
 vsToken&

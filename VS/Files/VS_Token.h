@@ -58,8 +58,8 @@ public:
 	void		SetType(Type t);
 	Type		GetType() const { return m_type; }
 	vsString	AsString() const;			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
-	int			AsInteger();
-	float		AsFloat();
+	int			AsInteger() const;
+	float		AsFloat() const;
 
 	void		SetString(const vsString &value);
 	void		SetLabel(const vsString &value);
@@ -72,6 +72,9 @@ public:
 	vsToken& operator=( const vsToken& other );
 	bool operator==( const vsToken& other );
 	bool operator!=( const vsToken& other ) { return ! ((*this) == other); }
+
+	bool operator==( const vsString& str );
+	bool operator!=( const vsString& str ) { return ! ((*this) == str); }
 };
 
 #endif // FS_TOKEN_H
