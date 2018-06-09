@@ -15,6 +15,7 @@ option( BACKTRACE_SUPPORTED "If enabled, generate backtraces in the event of a c
 option( VS_GL_DEBUG "If enabled, try to create an OpenGL Debug context and spit out any errors to the log.  Additionally, perform extra OpenGL error testing." NO )
 option( VS_TIMING_BARS "If enabled, we'll draw timing bars at the bottom left of the screen" YES )
 option( VS_DEFAULT_VIRTUAL_CONTROLLER "If enabled, we use the default controller settings.  If disabled, games must provide their own." YES )
+option( VS_TOOL "Various adjustments for tool (non-game) support" YES )
 
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED

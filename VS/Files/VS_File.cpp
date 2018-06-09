@@ -833,6 +833,10 @@ vsFile::ConsumeBytes( size_t bytes )
 vsString
 vsFile::GetFullFilename(const vsString &filename_in)
 {
+#if defined(VS_TOOL)
+	return filename_in;
+#endif
+
 #if TARGET_OS_IPHONE
 	vsString filename = filename_in;
 
