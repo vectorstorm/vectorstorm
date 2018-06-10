@@ -13,6 +13,7 @@
 #include "VS_Matrix.h"
 
 vsShaderValues::vsShaderValues():
+	m_parent(NULL),
 	m_value(16)
 {
 }
@@ -140,7 +141,8 @@ vsShaderValues::BindUniformMat4( const vsString& id, const vsMatrix4x4* value )
 bool
 vsShaderValues::Has( const vsString& name )
 {
-	return m_value.FindItem(name) != NULL;
+	return (m_value.FindItem(name) != NULL) ||
+		( m_parent && m_parent->Has(name) );
 }
 
 // float
@@ -185,7 +187,11 @@ vsShaderValues::UniformF( const vsString& id, float& out )
 {
 	Value* v = m_value.FindItem(id);
 	if ( !v )
+	{
+		if ( m_parent )
+			return m_parent->UniformF(id,out);
 		return false;
+	}
 	if ( v->bound )
 		out = *(float*)v->bind;
 	else
@@ -198,7 +204,11 @@ vsShaderValues::UniformB( const vsString& id, bool& out )
 {
 	Value* v = m_value.FindItem(id);
 	if ( !v )
+	{
+		if ( m_parent )
+			return m_parent->UniformB(id,out);
 		return false;
+	}
 	if ( v->bound )
 		out = *(bool*)v->bind;
 	else
@@ -211,7 +221,11 @@ vsShaderValues::UniformVec4( const vsString& id, vsVector4D& out )
 {
 	Value* v = m_value.FindItem(id);
 	if ( !v )
+	{
+		if ( m_parent )
+			return m_parent->UniformVec4(id,out);
 		return false;
+	}
 	if ( v->bound )
 		out = *(vsVector4D*)v->bind;
 	else
@@ -224,10 +238,15 @@ vsShaderValues::UniformMat4( const vsString& id, vsMatrix4x4& out )
 {
 	Value* v = m_value.FindItem(id);
 	if ( !v )
+	{
+		if ( m_parent )
+			return m_parent->UniformMat4(id,out);
 		return false;
+	}
 	if ( v->bound )
 		out = *(vsMatrix4x4*)v->bind;
 	// else
 	// 	out = *(vsMatrix4x4*)v->mat4;
 	return true;
 }
+

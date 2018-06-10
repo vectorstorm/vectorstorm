@@ -35,10 +35,14 @@ class vsShaderValues
 		Value(): bound (false) {}
 	};
 
+	vsShaderValues *m_parent;
 	vsHashTable<Value> m_value;
 public:
 
 	vsShaderValues();
+
+	// a parent object will handle any uniforms which we don't set ourselves.
+	void SetParent( vsShaderValues *parent ) { m_parent = parent; }
 
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
