@@ -104,7 +104,7 @@ protected:
 		// (uint32_t::max / golden_ratio) (adjusted to be odd),
 		// and then shift down to produce the right number of bits.
 		//
-		const uint32_t factor = 2654435839;
+		const uint32_t factor = 2654435839U;
 		return (hash * factor) >> m_shift;
 	}
 
