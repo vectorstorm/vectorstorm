@@ -65,7 +65,7 @@
 #include <cstdio>
 #include <string.h>
 #include <exception> // for std::bad_alloc
-#include "VS/Math/VS_Math.h"
+
 #include "VS/Utils/VS_Debug.h"
 #include "VS/Utils/VS_String.h"
 #include "VS/Utils/VS_Log.h"
@@ -106,6 +106,8 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 
 #endif	// normal Linux/BSD/etc section
+
+#include "VS/Math/VS_Math.h"
 
 #endif // __cplusplus
 
