@@ -33,10 +33,26 @@ class vsHashTable
 	vsHashEntry<T>		*m_bucket;
 	int					m_bucketCount;
 
+	// we're going to need to shift our results to the right to give ourselves
+	// the right number of bits to index into a bucket.  Our hashes are 32-bit,
+	// so if we have two buckets, we need to shift right by 31 bits.  If we have
+	// four buckets, we need to shift right by 30 bits.  And so on.
+	int					m_shift;
+
+	uint32_t HashToBucket(uint32_t hash)
+	{
+		// Fibonocci hash.  We're going to multiply by
+		// (uint32_t::max / golden_ratio) (adjusted to be odd),
+		// and then shift down to produce the right number of bits.
+		//
+		const uint32_t factor = 2654435839;
+		return (hash * factor) >> m_shift;
+	}
+
 	vsHashEntry<T>*		FindHashEntry( const vsString &key )
 	{
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = hash % m_bucketCount;
+		int bucket = HashToBucket(hash);
 
 		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
 		while( ent )
@@ -54,7 +70,8 @@ public:
 
 	vsHashTable(int bucketCount)
 	{
-		m_bucketCount = bucketCount;
+		m_bucketCount = vsNextPowerOfTwo(bucketCount);
+		m_shift = 32 - vsHighBitPosition(m_bucketCount);
 
 		m_bucket = new vsHashEntry<T>[m_bucketCount];
 	}
@@ -79,7 +96,7 @@ public:
 		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		vsHashEntry<T> *ent = new vsHashEntry<T>( item, key, hash );
 
-		int bucket = hash % m_bucketCount;
+		int bucket = HashToBucket(hash);
 
 		ent->m_next = m_bucket[bucket].m_next;
 		m_bucket[bucket].m_next = ent;
@@ -88,7 +105,7 @@ public:
 	void	RemoveItemWithKey( const T &item, const vsString &key )
 	{
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = hash % m_bucketCount;
+		int bucket = HashToBucket(hash);
 		bool found = false;
 
 		vsHashEntry<T> *ent = &m_bucket[bucket];

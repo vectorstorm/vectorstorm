@@ -41,7 +41,7 @@ float vsATan2(float opp, float adj)
 	return atan2f(opp, adj);
 }
 
-int vsNextPowerOfTwo( int value )
+uint32_t vsNextPowerOfTwo( uint32_t value )
 {
 	value--;
 	value |= value >> 1;
@@ -52,6 +52,24 @@ int vsNextPowerOfTwo( int value )
 	value++;
 
 	return value;	// it's like magic!
+}
+
+uint8_t vsHighBitPosition( uint32_t n )
+{
+	uint8_t r = 0;
+	while ( n >>= 1 )
+		r++;
+	return r;
+}
+
+uint32_t vsHighBit( uint32_t n )
+{
+	n |= (n >> 1);
+	n |= (n >> 2);
+	n |= (n >> 4);
+	n |= (n >> 8);
+	n |= (n >> 16);
+	return n - (n >> 1);
 }
 
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v)

@@ -38,7 +38,34 @@ inline int vsCeil( float value )
 	return (int)ceil(value);
 }
 
-int		vsNextPowerOfTwo( int value );
+// Badly named function;  I should really fix this.  This actually
+// gives us the power of two that's EQUAL OR GREATER than the passed
+// value, not (as is implied by the function name) strictly greater.
+//
+// So for example:
+// 32 -> 32
+// 33 -> 64
+// 55 -> 64
+// 64 -> 64
+uint32_t		vsNextPowerOfTwo( uint32_t value );
+
+// Returns the POSITION of the highest bit set in the value.
+// For example:
+// 0 -> 0 (by definition)
+// 1 -> 0
+// 2 -> 1
+// 3 -> 1
+// 4 -> 2
+uint8_t		vsHighBitPosition( uint32_t value );
+
+// Returns the value with ONLY its highest bit set.  This is equivalent
+// to rounding DOWN to the nearest power of two.
+// For example:
+// 32 -> 32
+// 33 -> 32
+// 55 -> 32
+// 64 -> 64
+uint32_t		vsHighBit( uint32_t value );
 
 class vsVector2D;
 class vsVector3D;
