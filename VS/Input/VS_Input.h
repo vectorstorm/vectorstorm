@@ -145,7 +145,7 @@ public:
 	void	Set(ControlType type_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; id = id_in; dir = dir_in; }
 	void	Set(ControlType type_in, int controllerId_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; controllerId = controllerId_in; id = id_in; dir = dir_in; }
 
-	float	Evaluate();
+	float	Evaluate(bool hasFocus);
 };
 
 struct vsInputAxis
@@ -166,7 +166,7 @@ struct vsInputAxis
 
 	vsInputAxis();
 	~vsInputAxis() { positive.Clear(); }
-	void Update();
+	void Update( bool hasFocus, bool hadFocus );
 };
 
 class vsController
@@ -251,6 +251,9 @@ private:
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
+
+	bool m_hasFocus;
+	bool m_hadFocus;
 
 	class StringModeState
 	{

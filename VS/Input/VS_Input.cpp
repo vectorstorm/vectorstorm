@@ -38,6 +38,8 @@
 
 vsInput::vsInput():
 	m_stringMode(false),
+	m_hasFocus(true),
+	m_hadFocus(true),
 	m_stringValidationType(Validation_None),
 	m_mouseIsInWindow(false),
 	m_backspaceMode(false)
@@ -738,6 +740,7 @@ vsInput::Update(float timeStep)
 	UNUSED(timeStep);
 	m_mouseMotion = vsVector2D::Zero;
 	m_wheelValue = 0.f;
+	m_hadFocus = m_hasFocus;
 
 #if TARGET_OS_IPHONE
 
@@ -943,9 +946,11 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
 							vsSystem::Instance()->SetAppHasFocus( false );
+							m_hasFocus = false;
 							break;
 						case SDL_WINDOWEVENT_FOCUS_GAINED:
 							vsSystem::Instance()->SetAppHasFocus( true );
+							m_hasFocus = true;
 							break;
 						case SDL_WINDOWEVENT_ENTER:
 							m_mouseIsInWindow = true;
@@ -1219,13 +1224,13 @@ vsInput::Update(float timeStep)
 		for ( int i = 0; i < m_axis.ItemCount(); i++ )
 		{
 			if ( !m_axis[i].isCalculated )
-				m_axis[i].Update();
+				m_axis[i].Update(m_hasFocus, m_hadFocus);
 		}
 
 		for ( int i = 0; i < m_axis.ItemCount(); i++ )
 		{
 			if ( m_axis[i].isCalculated )
-				m_axis[i].Update();
+				m_axis[i].Update(m_hasFocus, m_hadFocus);
 		}
 	}
 }
@@ -2034,8 +2039,15 @@ vsInput::DestroyController(SDL_GameController *gc)
 }
 
 float
-DeviceControl::Evaluate()
+DeviceControl::Evaluate(bool hasFocus)
 {
+	// TODO:  Really hasFocus should only affect keyboard and mouse events.
+	// Gamepad stuff should still work.  But we don't have Gamepads implemented
+	// yet in this new input system, so for the moment, ignore that and just
+	// stop input entirely, if we have no focus.
+	if ( !hasFocus )
+		return 0.f;
+
 	float value = 0.f;
 	switch( type )
 	{
@@ -2069,13 +2081,19 @@ DeviceControl::Evaluate()
 					const Uint8* keys = SDL_GetKeyboardState(&keyCount);
 					if ( id < keyCount )
 					{
-						SDL_Keymod actual_keymod = SDL_GetModState();
-						const int keymodsWeCareAbout =
-							KMOD_ALT | KMOD_CTRL | KMOD_GUI;
-						if ( (actual_keymod & keymodsWeCareAbout) == keymod )
+						// SDL_Keymod actual_keymod = SDL_GetModState();
+						// const int keymodsWeCareAbout =
+						// 	KMOD_ALT | KMOD_CTRL | KMOD_GUI;
+						// bool doMasking = false;
+                        //
+						// if ( id == SDL_SCANCODE_LALT || id == SDL_SCANCODE_LCTRL ||
+						// 		id == SDL_SCANCODE_LGUI )
+						// 	doMasking = false;
+                        //
+						// if ( !doMasking || ((actual_keymod & keymodsWeCareAbout) == keymod) )
 							value = keys[id] ? 1.0f : 0.0f;
-						else
-							value = 0.0f;
+						// else
+						// 	value = 0.0f;
 					}
 				}
 				break;
@@ -2098,7 +2116,7 @@ vsInputAxis::vsInputAxis():
 }
 
 void
-vsInputAxis::Update()
+vsInputAxis::Update( bool hasFocus, bool hadFocus )
 {
 	lastValue = currentValue;
 	currentValue = 0.0f;
@@ -2113,12 +2131,18 @@ vsInputAxis::Update()
 		float value;
 		for ( int i = 0; i < positive.ItemCount(); i++ )
 		{
-			value = positive[i].Evaluate();
+			value = positive[i].Evaluate( hasFocus );
 			currentValue += value;
 
 			// value = negative[i].Evaluate();
 			// currentValue -= value;
 		}
+
+		// we go straight to "IsDown", with no "Pressed" in between, if
+		// we've just gained focus, since the press happened whilst somebody
+		// else had focus.
+		if ( hasFocus && !hadFocus )
+			lastValue = currentValue;
 	}
 }
 
