@@ -526,13 +526,6 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 	settings.stencil = true;
 	settings.buffers = m_bufferCount;
 
-	// HACK:  third buffer is floating point.  This is needed by MMORPG Tycoon 2;
-	// I need to expose some way for games to specify which buffers need to be
-	// which format.  Or maybe the engine itself shouldn't be creating
-	// this "scene" render buffer, and that's something that games themselves
-	// should be managing?  Hm.  Must think about this.
-	settings.bufferSettings[2].floating = true;
-
 	if ( m_antialias )
 	{
 		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
