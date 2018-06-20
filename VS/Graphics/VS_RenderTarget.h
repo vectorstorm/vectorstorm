@@ -21,25 +21,39 @@ public:
 	class Settings
 	{
 	public:
+		class Buffer
+		{
+		public:
+			bool floating;
+			bool linear;
+			bool anisotropy;
+
+			Buffer():
+				floating(false),
+				linear(true),
+				anisotropy(true)
+			{
+			}
+		};
+
 		Settings():
 			width(512),
 			height(512),
 			buffers(1),
 			depth(true),
-			linear(true),
 			mipMaps(false),
-			anisotropy(true),
 			stencil(false)
 		{
 		}
-		int		width;
-		int		height;
-		int		buffers;
-		bool	depth;
-		bool	linear;
-		bool	mipMaps;
-		bool	anisotropy;
-		bool	stencil;
+
+		int width;
+		int height;
+
+		Buffer bufferSettings[4];
+		int buffers;
+		bool depth;
+		bool mipMaps; // currently unused
+		bool stencil;
 	};
 
 
@@ -52,6 +66,8 @@ public:
 	GLuint	m_fbo;
 
 	bool	m_isRenderbuffer;
+
+	Settings m_settings;
 
 	vsSurface( int width, int height );	// for main window.
 	vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare );

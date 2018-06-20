@@ -269,7 +269,8 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
-	m_isRenderbuffer(false)
+	m_isRenderbuffer(false),
+	m_settings(settings)
 {
 	GL_CHECK_SCOPED("vsSurface");
 
@@ -279,11 +280,6 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
 		maxSamples = vsMin(maxSamples,4);
 	}
-
-	GLenum internalFormat = GL_RGBA16F;
-	GLenum format = GL_RGBA;
-	GLenum type = GL_FLOAT;
-	GLenum filter = settings.linear ? GL_LINEAR : GL_NEAREST;
 
 	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
@@ -305,6 +301,18 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		for ( int i = 0; i < m_textureCount; i++ )
 		{
+			const Settings::Buffer& settings = m_settings.bufferSettings[i];
+
+			GLenum internalFormat = GL_RGBA8;
+			GLenum format = GL_RGBA;
+			GLenum type = GL_UNSIGNED_BYTE;
+			if ( settings.floating )
+			{
+				internalFormat = GL_RGBA16F;
+				type = GL_FLOAT;
+			}
+			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
+
 			if (multisample)
 			{
 				glGenRenderbuffers(1, &m_texture[i]);
@@ -455,9 +463,17 @@ vsSurface::Resize( int width, int height )
 	{
 		if ( m_texture[i] )
 		{
-			GLenum internalFormat = GL_RGBA16F;
+			const Settings::Buffer& settings = m_settings.bufferSettings[i];
+
+			GLenum internalFormat = GL_RGBA8;
 			GLenum format = GL_RGBA;
-			GLenum type = GL_FLOAT;
+			GLenum type = GL_UNSIGNED_BYTE;
+			if ( settings.floating )
+			{
+				internalFormat = GL_RGBA16F;
+				type = GL_FLOAT;
+			}
+
 			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
 			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
 		}
