@@ -182,8 +182,11 @@ class vsController
 	float			*m_axisCenter;
 	float			*m_axisThrow;		// how far can this control go from center?
 
+	void Init();
+
 public:
 	vsController( SDL_GameController *controller, int index );
+	vsController( SDL_Joystick *joystick, int index );
 	~vsController();
 
 	bool			Matches( SDL_GameController *gc ) { return m_controller == gc; }

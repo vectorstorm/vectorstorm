@@ -88,70 +88,37 @@ vsInput::Init()
 		m_controller[i] = NULL;
 
 	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
-	// int joystickCount = SDL_NumJoysticks();
-    //
-	// if ( joystickCount )
-	// {
-	// 	vsLog("Found %d joysticks.", joystickCount);
-    //
-	// 	for ( int i = 0; i < joystickCount; i++ )
-	// 	{
-	// 		if ( SDL_IsGameController(i) )
-	// 		{
-	// 			SDL_GameController *gc = SDL_GameControllerOpen(i);
-	// 			if ( gc )
-	// 				m_controller[i] = new vsController(gc, i);
-	// 		}
-	// 		else
-	// 		{
-	// 			vsLog("Controller %d doesn't seem to be a controller??", i);
-	// 		}
-	// 	}
-	// }
-	// else
-	// 	vsLog("No joystick found.  Using keyboard input.");
+	int joystickCount = SDL_NumJoysticks();
+
+	if ( joystickCount )
+	{
+		vsLog("Found %d joysticks.", joystickCount);
+
+		for ( int i = 0; i < joystickCount; i++ )
+		{
+			if ( SDL_IsGameController(i) )
+			{
+				SDL_GameController *gc = SDL_GameControllerOpen(i);
+				if ( gc )
+					m_controller[i] = new vsController(gc, i);
+			}
+			else
+			{
+				// vsLog("Controller %d doesn't seem to be a controller??", i);
+				SDL_Joystick *joy = SDL_JoystickOpen(i);
+				if ( joy )
+					m_controller[i] = new vsController(joy, i);
+			}
+		}
+	}
+	else
+		vsLog("No joystick found.  Using keyboard input.");
 
 
 	Load();
 
 	Update(0.0f);	// run a zero-time update, so we can correctly identify key presses vs. holds on the first frame.
 #endif
-}
-
-vsController::vsController( SDL_GameController *controller, int i )
-{
-	m_controller = controller;
-
-	const char *name = SDL_GameControllerNameForIndex(i);
-	vsLog("Game controller %d found: %s", i, name);
-
-	m_joystick = SDL_GameControllerGetJoystick(m_controller);
-	if ( m_joystick )
-	{
-		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
-		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
-		m_joystickHats = SDL_JoystickNumHats(m_joystick);
-		vsLog("Device has %d axes, %d buttons, %d hats, %d balls",
-				SDL_JoystickNumAxes(m_joystick),
-				SDL_JoystickNumButtons(m_joystick),
-				SDL_JoystickNumHats(m_joystick),
-				SDL_JoystickNumBalls(m_joystick));
-
-		m_axisCenter = new float[m_joystickAxes];
-		m_axisThrow = new float[m_joystickAxes];
-		for ( int i = 0; i < m_joystickAxes; i++ )
-		{
-			m_axisCenter[i] = ReadAxis_Raw(i);
-			m_axisThrow[i] = 1.0f;
-		}
-	}
-}
-
-vsController::~vsController()
-{
-	SDL_GameControllerClose( m_controller );
-	vsDeleteArray( m_axisCenter );
-	vsDeleteArray( m_axisThrow );
 }
 
 extern vsHeap *g_globalHeap;
@@ -1275,6 +1242,61 @@ vsInput::ReadMouseButton( int buttonID )
 // {
 // 	m_controlState[cid] = ReadMouseButton(buttonID);
 // }
+
+vsController::vsController( SDL_GameController *controller, int i ):
+	m_joystick(NULL),
+	m_controller(controller)
+{
+	const char *name = SDL_GameControllerNameForIndex(i);
+	vsLog("Game controller %d found: %s", i, name);
+
+	m_joystick = SDL_GameControllerGetJoystick(m_controller);
+	Init();
+}
+
+vsController::vsController( SDL_Joystick *joystick, int i ):
+	m_joystick(joystick),
+	m_controller(NULL)
+{
+	m_controller = NULL;
+
+	const char *name = SDL_JoystickNameForIndex(i);
+	vsLog("Joystick %d found: %s", i, name);
+
+	Init();
+}
+
+
+void
+vsController::Init()
+{
+	if ( m_joystick )
+	{
+		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
+		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
+		m_joystickHats = SDL_JoystickNumHats(m_joystick);
+		vsLog("Device has %d axes, %d buttons, %d hats, %d balls",
+				SDL_JoystickNumAxes(m_joystick),
+				SDL_JoystickNumButtons(m_joystick),
+				SDL_JoystickNumHats(m_joystick),
+				SDL_JoystickNumBalls(m_joystick));
+
+		m_axisCenter = new float[m_joystickAxes];
+		m_axisThrow = new float[m_joystickAxes];
+		for ( int i = 0; i < m_joystickAxes; i++ )
+		{
+			m_axisCenter[i] = ReadAxis_Raw(i);
+			m_axisThrow[i] = 1.0f;
+		}
+	}
+}
+
+vsController::~vsController()
+{
+	SDL_GameControllerClose( m_controller );
+	vsDeleteArray( m_axisCenter );
+	vsDeleteArray( m_axisThrow );
+}
 
 float
 vsController::ReadAxis_Raw( int axisID )
