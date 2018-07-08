@@ -543,7 +543,7 @@ vsSystemPreferences::vsSystemPreferences():
 	m_fullscreenDisplay = m_preferences->GetPreference("FullscreenDisplay", 0, 0, 0);
 
 	// DO NOT COMMIT
-	m_fullscreenDisplay->SetValue(1);
+	// m_fullscreenDisplay->SetValue(1);
 
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
