@@ -17,7 +17,7 @@ struct lightSourceParameters
 	vec4 specular;             // Scli
 	vec3 position;             // Ppli
 	vec3 halfVector;           // Derived: Hi
-}; 
+};
 
 uniform lightSourceParameters lightSource[4];
 in vec3 fragNormal;
@@ -62,6 +62,7 @@ void main(void)
 	// 		pow(NdotHV, shininess);
 	// }
 	color = ambientPart + diffusePart;
+	color.r = 1.0;
 #endif // LIT
 
 	vec3 finalColor = mix(fogColor.rgb, color.rgb, fogFactor );

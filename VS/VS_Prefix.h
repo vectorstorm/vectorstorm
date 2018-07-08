@@ -10,9 +10,7 @@
 #ifndef VS_PREFIX_H
 #define VS_PREFIX_H
 
-#if defined VECTORSTORM_INTERNAL
 #include "VS_Config.h"
-#endif
 
 #if defined __APPLE__
 #include <TargetConditionals.h>
