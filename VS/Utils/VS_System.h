@@ -189,6 +189,14 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_effectVolume;
 	vsPreferenceObject *	m_musicVolume;
 
+	// NEW IDEA:
+	//
+	// Okay.  All I need to do is just create resolutions for ALL DEVICES, and
+	// then just dump them into this list.  "Resolution" should have a new
+	// "device" identifier, and then we're done.  Our existing interfaces should
+	// (mostly) work, and we can push the data through to the renderer to create
+	// windows in the right positions.  Simple!
+	//
 	Resolution*	m_supportedResolution;
 	int			m_supportedResolutionCount;
 
