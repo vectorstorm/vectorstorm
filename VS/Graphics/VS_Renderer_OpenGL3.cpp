@@ -231,7 +231,7 @@ static void printAttributes ()
 
 //static bool s_vertexBuffersSupported = false;
 
-vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
+vsRenderer_OpenGL3::vsRenderer_OpenGL3(int displayId, int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
 	m_flags(flags),
 	m_window(NULL),
@@ -255,29 +255,31 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 			vsLog("Display #%d %s (%dx%d)\n", i, SDL_GetDisplayName(i), bounds.w , bounds.h );
 	}
 
-	int x = SDL_WINDOWPOS_UNDEFINED;
-	int y = SDL_WINDOWPOS_UNDEFINED;
+	int x = SDL_WINDOWPOS_CENTERED_DISPLAY(displayId);
+	int y = SDL_WINDOWPOS_CENTERED_DISPLAY(displayId);
+	// int x = SDL_WINDOWPOS_UNDEFINED;
+	// int y = SDL_WINDOWPOS_UNDEFINED;
 #if defined(_DEBUG)
-	if ( displayCount > 1 )
-	{
-		// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
-		// object, maybe?  Or alternately, the host game could tell us where to
-		// put the window, maybe?
-		//
-		// flags |= Flag_Fullscreen;
-		// x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// SDL_DisplayMode mode;
-		// SDL_Rect bounds;
-		// SDL_GetDesktopDisplayMode(1, &mode);
-		// if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
-		// {
-		// 	x = bounds.x;
-		// 	y = bounds.y;
-		// 	width = bounds.w;
-		// 	height = bounds.h;
-		// }
-	}
+	// if ( displayCount > 1 )
+	// {
+	// 	// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
+	// 	// object, maybe?  Or alternately, the host game could tell us where to
+	// 	// put the window, maybe?
+	// 	//
+	// 	flags |= Flag_Fullscreen;
+	// 	x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+	// 	y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+	// 	SDL_DisplayMode mode;
+	// 	SDL_Rect bounds;
+	// 	SDL_GetDesktopDisplayMode(1, &mode);
+	// 	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
+	// 	{
+	// 		// x = bounds.x;
+	// 		// y = bounds.y;
+	// 		width = bounds.w;
+	// 		height = bounds.h;
+	// 	}
+	// }
 #endif
 
 	m_viewportWidth = m_width = width;
@@ -336,16 +338,30 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
 	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
+
+	// SDL_Rect bounds;
+	// if ( SDL_GetDisplayBounds(displayId, &bounds) == 0 )
+	// {
+	// 	x = bounds.x;
+	// 	y = bounds.y;
+	// }
+	m_displayId = displayId;
+
+
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	if ( !g_sdlWindow ){
 		vsLog("Couldn't set %dx%dx%d video mode: %s\n",
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+#if !defined(_DEBUG)
+	// don't grab in debug builds, because I might be wanting to do stuff across
+	// two monitors.
 	if ( m_windowType != WindowType_Window )
 	{
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
+#endif
 
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
@@ -606,7 +622,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 #endif
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				if ( changedWindowType )
-					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED_DISPLAY(m_displayId), SDL_WINDOWPOS_CENTERED_DISPLAY(m_displayId));
 				break;
 			case WindowType_Fullscreen:
 				{

@@ -175,7 +175,7 @@ vsSystem::Init()
 		else
 			wt = vsRenderer::WindowType_Fullscreen;
 	}
-	m_screen = new vsScreen( width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	m_screen = new vsScreen( m_preferences->GetFullscreenDisplay(), width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
 #endif
 	LogSystemDetails();
 
@@ -232,6 +232,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	// directory.  So we need to detect that situation, and if it happens, move our
 	// data directory up by one.
 	vsString baseDirectory = PHYSFS_getBaseDir();
+	vsLog("Foo: %s", baseDirectory);
 	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
@@ -531,13 +532,19 @@ vsSystem::GetNumberOfCores()
 	return numCPU;
 }
 
-vsSystemPreferences::vsSystemPreferences()
+vsSystemPreferences::vsSystemPreferences():
+	m_supportedResolution(NULL)
 {
 	m_preferences = new vsPreferences("vectorstorm");
 
 	m_resolution = 0;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 1, 0, 1);
 	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 1, 0, 1);
+	m_fullscreenDisplay = m_preferences->GetPreference("FullscreenDisplay", 0, 0, 0);
+
+	// DO NOT COMMIT
+	m_fullscreenDisplay->SetValue(1);
+
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
@@ -573,13 +580,14 @@ vsSystemPreferences::CheckResolutions()
 	int modeCount;
 	int maxWidth = 0;
 	int maxHeight = 0;
+	int displayId = GetFullscreenDisplay();
 	/* Get available fullscreen/hardware modes */
-	modeCount = SDL_GetNumDisplayModes(0);
+	modeCount = SDL_GetNumDisplayModes(displayId);
 	modes = new SDL_DisplayMode[modeCount];
 
 	for ( int i = 0; i < modeCount; i++ )
 	{
-		SDL_GetDisplayMode(0, i, &modes[i]);
+		SDL_GetDisplayMode(displayId, i, &modes[i]);
 	}
 
 	/* Check if there are any modes available */
@@ -587,6 +595,8 @@ vsSystemPreferences::CheckResolutions()
 		vsLog("No modes available!");
 		exit(-1);
 	}
+
+	delete [] m_supportedResolution;
 
 	/* Check if our resolution is restricted */
 	{
@@ -894,6 +904,20 @@ bool
 vsSystemPreferences::GetFullscreenWindow()
 {
 	return !!m_fullscreenWindow->m_value;
+}
+
+int
+vsSystemPreferences::GetFullscreenDisplay()
+{
+	return m_fullscreenDisplay->m_value;
+}
+
+void
+vsSystemPreferences::SetFullscreenDisplay(int display)
+{
+	m_fullscreenDisplay->m_value = display;
+
+	CheckResolutions();
 }
 
 void

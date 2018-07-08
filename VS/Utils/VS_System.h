@@ -177,6 +177,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_windowResolutionY;
 	vsPreferenceObject *	m_fullscreen;
 	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
+	vsPreferenceObject *	m_fullscreenDisplay; // which display do we want to do fullscreen on?
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_antialias;
@@ -217,6 +218,9 @@ public:
 
 	bool			GetFullscreenWindow();
 	void			SetFullscreenWindow(bool fullscreen);
+
+	int				GetFullscreenDisplay();
+	void			SetFullscreenDisplay(int display);
 
 	void			ToggleFullscreen();
 

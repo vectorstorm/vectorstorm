@@ -25,7 +25,7 @@
 const int c_fifoSize = 1024 * 2000;		// 2mb for our FIFO display list
 vsScreen *	vsScreen::s_instance = NULL;
 
-vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
+vsScreen::vsScreen(int displayId, int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
 	m_renderer(NULL),
 	m_pipeline(NULL),
 	m_scene(NULL),
@@ -59,7 +59,7 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 	flags |= vsRenderer::Flag_Resizable;
 
 	vsLog("Width before:  %d", m_width);
-	m_renderer = new vsRenderer_OpenGL3(m_width, m_height, m_depth, flags, bufferCount);
+	m_renderer = new vsRenderer_OpenGL3(displayId, m_width, m_height, m_depth, flags, bufferCount);
 
 	m_width = m_renderer->GetWidth();
 	m_height = m_renderer->GetHeight();

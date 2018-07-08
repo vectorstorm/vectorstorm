@@ -108,6 +108,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	// we'll treat our rendering like OpenGL2 and just continually reconfigure
 	// a single global Vertex Array Object..
 
+	int m_displayId; // if we're fullscreen, this is the display we're on.
+
 	WindowType m_windowType;
 
 	void				FlushRenderState();
@@ -121,7 +123,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 public:
 
-	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
+	vsRenderer_OpenGL3(int displayId, int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
 
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
