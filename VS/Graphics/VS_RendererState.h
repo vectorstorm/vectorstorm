@@ -110,10 +110,10 @@ public:
 		//Bool_Smooth,
 		//Bool_Texture2D,
 		Bool_DepthMask,
-		ClientBool_VertexArray,
-		ClientBool_NormalArray,
-		ClientBool_ColorArray,
-		ClientBool_TextureCoordinateArray,
+		// ClientBool_VertexArray,
+		// ClientBool_NormalArray,
+		// ClientBool_ColorArray,
+		// ClientBool_TextureCoordinateArray,
 		BOOL_COUNT
 	};
 	enum Float

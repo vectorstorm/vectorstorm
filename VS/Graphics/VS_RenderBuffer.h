@@ -87,6 +87,10 @@ private:
 	bool			m_vbo;
 	BindType		m_bindType;
 
+	unsigned int	m_vaoID;
+	bool			m_vao;
+	bool			m_vaoDirty;
+
 	void	SetArray_Internal( char *data, int bytes, BindType bindType);
 	void	SetArraySize_Internal( int bytes );
 	void	ResizeArray_Internal( int bytes ); // like the above, but retain saved array data.
@@ -231,6 +235,7 @@ public:
 	void	BindColorBuffer( vsRendererState *state );
 	void	UnbindColorBuffer( vsRendererState *state );
 
+	void	SetupVAO();		// for non-custom types
 	void	Bind( vsRendererState *state );		// for non-custom types
 	void	Unbind( vsRendererState *state );	// for non-custom types
 

@@ -41,7 +41,8 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_contentType(ContentType_Custom),
     m_bufferID(-1),
     m_vbo(false),
-    m_bindType(BindType_Array)
+    m_bindType(BindType_Array),
+	m_vao(false)
 {
 	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
@@ -60,6 +61,12 @@ vsRenderBuffer::~vsRenderBuffer()
 	if ( m_vbo )
 	{
 		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+	}
+	if ( m_vao )
+	{
+		glDeleteVertexArrays( 1, &m_vaoID );
+		m_vaoID = -1;
+		m_vao = false;
 	}
 
 	{
@@ -94,6 +101,7 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 	}
 	vsAssert(size != 0, "Zero-sized buffer?");
     SetActiveSize(size);
+	m_vaoDirty = true;
 }
 
 void
@@ -156,6 +164,8 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		SetArraySize_Internal( size );
 		memcpy(m_array,data,size);
 	}
+
+	m_vaoDirty = true;
 }
 
 void
@@ -385,7 +395,7 @@ vsRenderBuffer::BindAsTexture()
 void
 vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	glEnableVertexAttribArray(POS_ATTRIBUTE);
 
 	if ( m_vbo )
 	{
@@ -403,13 +413,13 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, BindType_ElementArray );
+	glDisableVertexAttribArray(POS_ATTRIBUTE);
 }
 
 void
 vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+	glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
 
 	if ( m_vbo )
 	{
@@ -426,13 +436,13 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindNormalBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+	glDisableVertexAttribArray(NORMAL_ATTRIBUTE);
 }
 
 void
 vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 
 	if ( m_vbo )
 	{
@@ -450,13 +460,13 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindTexelBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	glDisableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 }
 
 void
 vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+	glEnableVertexAttribArray(COLOR_ATTRIBUTE);
 
 	if ( m_vbo )
 	{
@@ -473,11 +483,11 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 void
 vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+	glDisableVertexAttribArray(COLOR_ATTRIBUTE);
 }
 
 void
-vsRenderBuffer::Bind( vsRendererState *state )
+vsRenderBuffer::SetupVAO()
 {
 	switch( m_contentType )
 	{
@@ -485,7 +495,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			int stride = sizeof(P);
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -506,8 +516,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(COLOR_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -531,8 +541,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -556,8 +566,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -584,9 +594,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+			glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -617,10 +627,10 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+			glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+			glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -651,9 +661,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+			glEnableVertexAttribArray(COLOR_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -682,9 +692,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			glEnableVertexAttribArray(POS_ATTRIBUTE);
+			glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+			glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
 
 			if ( m_vbo )
 			{
@@ -712,49 +722,316 @@ vsRenderBuffer::Bind( vsRendererState *state )
 }
 
 void
+vsRenderBuffer::Bind( vsRendererState *state )
+{
+	// Okay.  We needed to put the VAO creation here, because we need to ensure
+	// that the VAO is created from within the render thread, not when the VBO itself
+	// was created!
+	//
+	// Another problem, though, is that shaders aren't necessarily applying all
+	// their vertex attributes properly, if we change VAO in here (as shaders might
+	// have been applied earlier or later and had their attributes going into
+	// the wrong places).  Proper VAO usage may simply not work for us without
+	// a revamp to our rendering structure?
+
+	GL_CHECK_SCOPED("vsRenderBuffer::Bind");
+	if ( m_vaoDirty )
+	{
+		if ( !m_vao )
+		{
+			glGenVertexArrays(1, &m_vaoID);
+			m_vao = true;
+		}
+
+		glBindVertexArray(m_vaoID);
+		SetupVAO();
+		glBindVertexArray(0);
+		m_vaoDirty = false;
+	}
+	{
+		GL_CHECK_SCOPED("vsRenderBuffer::Bind");
+		vsAssert( m_vao, "Trying to bind a buffer with no vao??" );
+		glBindVertexArray(m_vaoID);
+	}
+
+	// switch( m_contentType )
+	// {
+	// 	case ContentType_P:
+	// 	{
+	// 		int stride = sizeof(P);
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PC:
+	// 	{
+	// 		PC dummyArray[2];
+	// 		int stride = sizeof(PC);
+	// 		size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+	// 		GLvoid* cStartPtr = (GLvoid*)cStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PC*)m_array)[0].color );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PT:
+	// 	{
+	// 		PT dummyArray[2];
+	// 		int stride = sizeof(PT);
+	// 		size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		GLvoid* tStartPtr = (GLvoid*)tStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PN:
+	// 	{
+	// 		PN dummyArray[2];
+	// 		int stride = sizeof(PN);
+	// 		size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		GLvoid* nStartPtr = (GLvoid*)nStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+    //
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PN*)m_array)[0].normal );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PNT:
+	// 	{
+	// 		PNT dummyArray[2];
+	// 		int stride = sizeof(PNT);
+	// 		size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		GLvoid* nStartPtr = (GLvoid*)nStart;
+	// 		GLvoid* tStartPtr = (GLvoid*)tStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+    //
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].normal );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PCNT:
+	// 	{
+	// 		PCNT dummyArray[2];
+	// 		int stride = sizeof(PCNT);
+	// 		size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+	// 		GLvoid* cStartPtr = (GLvoid*)cStart;
+	// 		GLvoid* nStartPtr = (GLvoid*)nStart;
+	// 		GLvoid* tStartPtr = (GLvoid*)tStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+    //
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCNT*)m_array)[0].color );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PCN:
+	// 	{
+	// 		PCN dummyArray[2];
+	// 		int stride = sizeof(PCN);
+	// 		size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+	// 		GLvoid* cStartPtr = (GLvoid*)cStart;
+	// 		GLvoid* nStartPtr = (GLvoid*)nStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+    //
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCN*)m_array)[0].color );
+	// 		}
+	// 		break;
+	// 	}
+	// 	case ContentType_PCT:
+	// 	{
+	// 		PCT dummyArray[2];
+	// 		int stride = sizeof(PCT);
+	// 		size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+	// 		size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+	// 		GLvoid* cStartPtr = (GLvoid*)cStart;
+	// 		GLvoid* tStartPtr = (GLvoid*)tStart;
+    //
+	// 		glEnableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(COLOR_ATTRIBUTE);
+	// 		glEnableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //
+	// 		if ( m_vbo )
+	// 		{
+	// 			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+    //
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+    //
+	// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// 		}
+	// 		else
+	// 		{
+	// 			glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+	// 			glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
+	// 			glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
+	// 		}
+	// 		break;
+	// 	}
+	// 	default:
+	// 	{
+	// 		vsAssert(0, "Unknown content type!");
+	// 	}
+	// }
+}
+
+void
 vsRenderBuffer::Unbind( vsRendererState *state )
 {
-	switch( m_contentType )
-	{
-        case ContentType_P:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-            break;
-        case ContentType_PC:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-            break;
-        case ContentType_PNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PCT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        default:
-            vsAssert(0, "Unknown content type!");
-	}
+	vsAssert( m_vao, "Trying to bind a buffer with no vao??" );
+	glBindVertexArray(0);
+	// switch( m_contentType )
+	// {
+    //     case ContentType_P:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PC:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(COLOR_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PT:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PN:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(NORMAL_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PNT:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PCN:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(COLOR_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PCT:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(COLOR_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //         break;
+    //     case ContentType_PCNT:
+	// 		glDisableVertexAttribArray(POS_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(NORMAL_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(COLOR_ATTRIBUTE);
+	// 		glDisableVertexAttribArray(TEXCOORD_ATTRIBUTE);
+    //         break;
+    //     default:
+    //         vsAssert(0, "Unknown content type!");
+	// }
 }
 
 int
