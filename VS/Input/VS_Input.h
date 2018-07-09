@@ -169,6 +169,31 @@ struct vsInputAxis
 	void Update( bool hasFocus, bool hadFocus );
 };
 
+// ----------------------------------------------------------------------------
+// Okay, here's the design:  'vsController' should be exactly like vsInput, but
+// not a singleton.  Instead, there's one per 'player'.  You can add axes to it
+// just like you do to the vsInput.  (In fact, the vsInput should really become
+// a very thin layer around one or more vsController instances, plus string mode)
+//
+// vsControllers should NOT (as they currently are) be wrappers around
+// SDL_Joystick or SDL_GameController;  instead, they should just be bindings
+// against the joysticks and gamepads which are owned by vsInput.  So if we have
+// two joysticks, we should be able to map BOTH of them to different axes on a
+// single vsController.  Once this setup is complete, a game should be able to:
+//
+//   1.  Create a vsController.
+//   2.  Add axes to the vsController.  These axes should freely be able to include
+//   axes from ALL controllers and ALL joysticks, as well as keyboard keys.
+//   3.  Present binding information for those axes and allow users to rebind them.
+//
+// ALTERNATE
+//
+//   What if I leave the vsController as it is now, and instead let people bind
+//   vsInput configurable axes to point to controller axes?  So like, bind
+//   "move left/right" onto axis 0 from vsController number 0.  This gets me to
+//   simple support for joysticks and gamepads much faster.  But.. I do not know.
+// ----------------------------------------------------------------------------
+
 class vsController
 {
 #if !TARGET_OS_IPHONE
@@ -198,7 +223,6 @@ public:
 	float			ReadButton( int buttonID );
 
 	float			ReadAxis_Raw( int axisID );
-
 };
 
 class vsInput : public coreGameSystem, public vsSingleton<vsInput>
