@@ -117,7 +117,8 @@ set(CMAKE_REQUIRED_LIBRARIES ${SDL_LIBRARY})
 include(CheckFunctionExists)
 check_function_exists( SDL_GL_GetDrawableSize HIGHDPI_SUPPORTED )
 
-# include_directories("${PROJECT_BINARY_DIR}/config")
+include_directories(vectorstorm PUBLIC "${PROJECT_BINARY_DIR}/config")
+set( VECTORSTORM_INCLUDE_PATHS "${PROJECT_BINARY_DIR}/config" PARENT_SCOPE)
 configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
 
@@ -522,5 +523,3 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND UNIX)
 	# need to debug that, and fast matrix math is always nice!
 	set_source_files_properties(VS/Math/VS_Matrix.cpp PROPERTIES COMPILE_FLAGS -O3)
 endif ()
-target_include_directories(vectorstorm PUBLIC "${PROJECT_BINARY_DIR}/config")
-set( VECTORSTORM_INCLUDE_PATHS "${PROJECT_BINARY_DIR}/config" PARENT_SCOPE)
