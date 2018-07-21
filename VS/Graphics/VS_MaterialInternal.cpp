@@ -64,7 +64,8 @@ vsMaterialInternal::vsMaterialInternal():
 	m_postGlow(false),
 	m_postGeneric(false),
 	m_hasColor(true),
-	m_blend(true)
+	m_blend(true),
+	m_flags(0)
 {
 	s_codeMaterialCount++;
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
@@ -103,7 +104,8 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_postGlow(false),
 	m_postGeneric(false),
 	m_hasColor(true),
-	m_blend(true)
+	m_blend(true),
+	m_flags(0)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
@@ -296,6 +298,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "layer" )
 				{
 					m_layer = sr->Int();
+				}
+				else if ( label == "flags" )
+				{
+					m_flags = sr->Int();
 				}
 				else if ( label == "stencilOp" )
 				{

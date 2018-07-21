@@ -102,6 +102,8 @@ public:
 	bool		m_hasColor;
 	bool		m_blend;
 
+	int			m_flags;
+
 	vsMaterialInternal(); // no material name;  we'll create our own name instead.
 	vsMaterialInternal( const vsString & name ); // for loading this material from a file
 	vsMaterialInternal( const vsString & textureName, vsDrawMode mode, const vsColor &c, const vsColor &sc = c_black );

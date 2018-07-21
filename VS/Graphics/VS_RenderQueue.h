@@ -78,6 +78,8 @@ class vsRenderQueue
 	vsRenderQueueStage *	m_stage;
 	int						m_stageCount;
 
+	int m_materialHideFlags;
+
 	vsMatrix4x4				m_projection;
 	vsMatrix4x4				m_worldToView;
 	vsMatrix4x4				m_transformStack[MAX_STACK_DEPTH];
@@ -103,8 +105,8 @@ public:
 	vsRenderQueue( int stageCount, int genericListSize);
 	~vsRenderQueue();
 
-	void			StartRender( vsScene *scene );
-	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix);
+	void			StartRender( vsScene *scene, int materialHideFlags = 0 );
+	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags = 0);
 	void			Draw( vsDisplayList *list );	// write our queue contents into here.  Called internally.
 	void			EndRender();
 

@@ -92,7 +92,7 @@ public:
 #endif // DEBUG_SCENE
 
 	void			Update( float timeStep );
-	void			Draw( vsDisplayList *list );
+	void			Draw( vsDisplayList *list, int flags = 0 );
 
 	void			RegisterEntityOnTop( vsEntity *sprite );
 	void			RegisterEntityOnBottom( vsEntity *sprite );

@@ -382,8 +382,9 @@ vsRenderQueue::~vsRenderQueue()
 }
 
 void
-vsRenderQueue::StartRender(vsScene *parent)
+vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 {
+	m_materialHideFlags = materialHideFlags;
 	m_parent = parent;
 	InitialiseTransformStack();
 
@@ -395,8 +396,9 @@ vsRenderQueue::StartRender(vsScene *parent)
 }
 
 void
-vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix)
+vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags )
 {
+	m_materialHideFlags = materialHideFlags;
 	m_parent = NULL;
 	m_projection = projection;
 	m_worldToView = worldToView;
@@ -538,6 +540,9 @@ vsRenderQueue::DeinitialiseTransformStack()
 void
 vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch )
 {
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
 	int stageId = PickStageForMaterial( material );
 
 	m_stage[stageId].AddBatch( material, matrix, batch );
@@ -546,6 +551,9 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 void
 vsRenderQueue::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values )
 {
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
 	int stageId = PickStageForMaterial( material );
 	m_stage[stageId].AddInstanceBatch( material, matrixBuffer, colorBuffer, batch, values );
 }
@@ -553,6 +561,9 @@ vsRenderQueue::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuf
 void
 vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch, vsShaderValues *values)
 {
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
 	int stageId = PickStageForMaterial( material );
 	m_stage[stageId].AddInstanceBatch( material, matrix, color, instanceCount, batch, values );
 }
@@ -560,6 +571,9 @@ vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix
 void
 vsRenderQueue::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch )
 {
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
 	int stageId = PickStageForMaterial( material );
 	m_stage[stageId].AddInstanceBatch( material, matrix, instanceCount, batch );
 }

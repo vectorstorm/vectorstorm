@@ -183,7 +183,7 @@ vsScene::Update( float timeStep )
 }
 
 void
-vsScene::Draw( vsDisplayList *list )
+vsScene::Draw( vsDisplayList *list, int flags )
 {
 	if ( !IsEnabled() )
 		return;
@@ -202,7 +202,7 @@ vsScene::Draw( vsDisplayList *list )
 		list->SetViewport( m_viewport );
 	}
 
-	m_queue->StartRender(this);
+	m_queue->StartRender(this, flags);
 
 	if ( m_is3d )
 	{
