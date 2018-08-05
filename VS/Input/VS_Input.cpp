@@ -601,6 +601,7 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 			SDL_StopTextInput();
 			m_stringMode = false;
 			m_stringModeClearing = true;
+			m_stringModeUndoStack.Clear();
 		}
 	}
 }
