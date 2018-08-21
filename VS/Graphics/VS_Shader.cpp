@@ -735,7 +735,7 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 				}
 			case GL_FLOAT:
 				{
-					if ( m_uniform[i].arraySize == 1 )
+					// if ( m_uniform[i].arraySize == 1 )
 					{
 						float f;
 						if ( !values || !values->UniformF( m_uniform[i].name, f ) )
