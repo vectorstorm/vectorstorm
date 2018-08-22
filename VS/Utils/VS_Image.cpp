@@ -319,3 +319,12 @@ vsImage::BakePNG(int compression)
 	return result;
 }
 
+void
+vsImage::SavePNG(int compression, const vsString& filename)
+{
+	vsStore *store = BakePNG(compression);
+	vsFile file( filename, vsFile::MODE_Write );
+	file.Store(store);
+	vsDelete(store);
+}
+

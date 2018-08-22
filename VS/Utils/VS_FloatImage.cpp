@@ -303,3 +303,12 @@ vsFloatImage::BakePNG(int compression)
 	return result;
 }
 
+void
+vsFloatImage::SavePNG(int compression, const vsString& filename)
+{
+	vsStore *store = BakePNG(compression);
+	vsFile file( filename, vsFile::MODE_Write );
+	file.Store(store);
+	vsDelete(store);
+}
+
