@@ -1768,7 +1768,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 #if !TARGET_OS_IPHONE
 					glBlendEquation(GL_FUNC_ADD);
 #endif
-					glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
+					// glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 					break;
@@ -1804,7 +1805,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				{
 #if !TARGET_OS_IPHONE
 					glBlendEquation(GL_FUNC_ADD);
-					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
