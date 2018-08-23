@@ -1673,8 +1673,10 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				else
 				{
 					glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					if ( material->m_clampU )
+						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					if ( material->m_clampV )
+						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 				}
 			}
 			else

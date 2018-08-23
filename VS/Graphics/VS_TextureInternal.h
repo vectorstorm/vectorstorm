@@ -68,6 +68,8 @@ public:
 	int		GetHeight() { return m_height; }
     bool        IsDepth() { return m_depth; }
 
+	void	ClampUV( bool u, bool v );
+
 	int		GetGLWidth() { return m_glTextureWidth; }
 	int		GetGLHeight() { return m_glTextureHeight; }
 

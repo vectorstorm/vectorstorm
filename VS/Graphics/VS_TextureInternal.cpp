@@ -443,3 +443,12 @@ vsTextureInternal::SafeAddColour(uint32_t acolour, uint32_t bcolour)
 	return result;
 
 }
+
+void
+vsTextureInternal::ClampUV( bool u, bool v )
+{
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, u ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, v ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+}
+
