@@ -27,11 +27,13 @@ public:
 			bool floating;
 			bool linear;
 			bool anisotropy;
+			bool singleChannel;
 
 			Buffer():
 				floating(false),
 				linear(true),
-				anisotropy(true)
+				anisotropy(true),
+				singleChannel(false)
 			{
 			}
 		};
