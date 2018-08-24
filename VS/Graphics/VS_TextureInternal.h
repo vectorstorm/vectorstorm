@@ -38,6 +38,7 @@ class vsTextureInternal : public vsResource
 
 	void		ProcessSurface( SDL_Surface *surface );
 
+	bool		m_nearestSampling;
 
 public:
 
@@ -46,6 +47,9 @@ public:
 	vsTextureInternal( const vsString &name, vsFloatImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
+
+	// SetSurface() is for filling in the 'surface' later, if we were created for a surface without actually having the surface yet.
+	void SetSurface( vsSurface* surface, int surfaceBuffer, bool depth );
 
 	// for hooking up to OpenGL textures created elsewhere.
 	// TODO:  THIS SHOULD GO AWAY!  Textures should all be created by VectorStorm!

@@ -11,7 +11,7 @@
 
 static int s_renderTargetCount = 0;
 
-vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
+vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred ):
 	m_settings(settings),
 	m_texture(NULL),
 	m_depthTexture(NULL),
@@ -19,29 +19,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 	m_textureSurface(NULL),
 	m_type(t)
 {
-	GL_CHECK_SCOPED("RenderTarget");
-	bool isDepth = ( t == Type_Depth || t == Type_DepthCompare );
-
-	if ( m_type == Type_Window )
-	{
-		m_textureSurface = new vsSurface( settings.width, settings.height );
-
-		m_texWidth = 1.f;
-		m_texHeight = 1.f;
-	}
-	else
-	{
-		if ( m_type == Type_Multisample )
-		{
-			vsSurface::Settings rbs = settings;
-			rbs.mipMaps = false;
-			m_renderBufferSurface = new vsSurface(rbs, false, true, false);
-		}
-		m_textureSurface = new vsSurface(settings, isDepth, false, m_type == Type_DepthCompare );
-		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
-		m_texHeight = 1.0;//settings.height / (float)vsNextPowerOfTwo(settings.height);
-	}
-
+	bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
 	m_viewportWidth = settings.width;
 	m_viewportHeight = settings.height;
 
@@ -69,7 +47,43 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings ):
 		m_depthTexture = new vsTexture(name);
 	}
 
-	Clear();
+	if ( !deferred )
+		Create();
+}
+
+void
+vsRenderTarget::Create()
+{
+	GL_CHECK_SCOPED("RenderTarget");
+	bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
+
+	if ( m_type == Type_Window )
+	{
+		m_textureSurface = new vsSurface( m_settings.width, m_settings.height );
+
+		m_texWidth = 1.f;
+		m_texHeight = 1.f;
+	}
+	else
+	{
+		if ( m_type == Type_Multisample )
+		{
+			vsSurface::Settings rbs = m_settings;
+			rbs.mipMaps = false;
+			m_renderBufferSurface = new vsSurface(rbs, false, true, false);
+		}
+		m_textureSurface = new vsSurface(m_settings, isDepth, false, m_type == Type_DepthCompare );
+		m_texWidth = 1.0;//settings.width / (float)vsNextPowerOfTwo(settings.width);
+		m_texHeight = 1.0;//settings.height / (float)vsNextPowerOfTwo(settings.height);
+	}
+	for ( int i = 0; i < m_bufferCount; i++ )
+	{
+		m_texture[i]->GetResource()->SetSurface(m_textureSurface, i, isDepth);
+	}
+	if ( m_depthTexture )
+		m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
+
+	// Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
@@ -120,7 +134,7 @@ vsRenderTarget::Resolve(int id)
 			}
 		}
 	}
-	if ( m_textureSurface )
+	// if ( m_textureSurface )
 	{
 		// TODO:  Consider whether to re-generate mipmaps on the textures,
 		// since somebody's asked for them, such as with the following
@@ -136,12 +150,15 @@ vsRenderTarget::Resolve(int id)
 		return GetTexture(id);
 	}
 
-	return NULL;
+	// return NULL;
 }
 
 void
 vsRenderTarget::Bind()
 {
+	if ( m_textureSurface == NULL )
+		Create();
+
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
 	{
