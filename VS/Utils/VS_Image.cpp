@@ -97,34 +97,8 @@ vsImage::vsImage( vsTexture * texture )
 	}
 	else
 	{
-		size_t bytesPerPixel = 4;	// RGBA
-		size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
-
-		uint8_t* pixels = new uint8_t[imageSizeInBytes];
-
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_pixel);
 		glBindTexture( GL_TEXTURE_2D, 0 );
-
-		for ( unsigned int y = 0; y < m_height; y++ )
-		{
-			int rowStart = y * m_width * bytesPerPixel;
-
-			for ( unsigned int x = 0; x < m_width; x++ )
-			{
-				int rInd = rowStart + (x*bytesPerPixel);
-				int gInd = rInd+1;
-				int bInd = rInd+2;
-				int aInd = rInd+3;
-
-				int rVal = pixels[rInd];
-				int gVal = pixels[gInd];
-				int bVal = pixels[bInd];
-				int aVal = pixels[aInd];
-
-				SetPixel(x,y, vsColor(rVal/255.f, gVal/255.f, bVal/255.f, aVal/255.f) );
-			}
-		}
-		vsDeleteArray( pixels );
 	}
 }
 

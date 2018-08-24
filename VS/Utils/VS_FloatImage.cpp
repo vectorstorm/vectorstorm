@@ -94,34 +94,8 @@ vsFloatImage::vsFloatImage( vsTexture * texture )
 	}
 	else
 	{
-		size_t floatsPerPixel = 4;	// RGBA
-		size_t imageSizeInFloats = floatsPerPixel * size_t(m_width) * size_t(m_height);
-
-		float* pixels = new float[imageSizeInFloats];
-
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, pixels);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, m_pixel);
 		glBindTexture( GL_TEXTURE_2D, 0 );
-
-		for ( unsigned int y = 0; y < m_height; y++ )
-		{
-			int rowStart = y * m_width * floatsPerPixel;
-
-			for ( unsigned int x = 0; x < m_width; x++ )
-			{
-				int rInd = rowStart + (x*floatsPerPixel);
-				int gInd = rInd+1;
-				int bInd = rInd+2;
-				int aInd = rInd+3;
-
-				float rVal = pixels[rInd];
-				float gVal = pixels[gInd];
-				float bVal = pixels[bInd];
-				float aVal = pixels[aInd];
-
-				SetPixel(x,y, vsColor(rVal, gVal, bVal, aVal) );
-			}
-		}
-		vsDeleteArray( pixels );
 	}
 }
 
