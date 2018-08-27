@@ -302,3 +302,19 @@ vsImage::SavePNG(int compression, const vsString& filename)
 	vsDelete(store);
 }
 
+void
+vsImage::SavePNG_FullAlpha(int compression, const vsString& filename)
+{
+	vsImage dup( m_width, m_height );
+	for ( size_t y = 0; y < m_height; y++ )
+	{
+		for ( size_t x = 0; x < m_width; x++ )
+		{
+			vsColor c = GetPixel(x,y);
+			c.a = 1.0;
+			dup.SetPixel(x,y,c);
+		}
+	}
+	dup.SavePNG(compression, filename);
+}
+

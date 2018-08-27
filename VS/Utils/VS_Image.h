@@ -51,6 +51,7 @@ public:
 
 	vsStore *		BakePNG(int compression);
 	void			SavePNG(int compression, const vsString& filename);
+	void			SavePNG_FullAlpha(int compression, const vsString& filename);
 	void *			RawData() { return m_pixel; }
 };
 
