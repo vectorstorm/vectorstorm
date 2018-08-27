@@ -81,7 +81,17 @@ vsScene::~vsScene()
 	vsDelete( m_queue );
 	vsDelete( m_defaultCamera3D );
 	vsDelete( m_defaultCamera );
-	vsDelete( m_entityList );
+
+	// should we be deleting everything in this scene?
+	while ( m_entityList )
+	{
+		vsEntity *next = m_entityList->GetNext();
+		if ( next == m_entityList )
+			next = NULL;
+
+		vsDelete( m_entityList );
+		m_entityList = next;
+	}
 }
 
 void
