@@ -1500,7 +1500,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_Debug:
 				{
-					vsRenderDebug( op->data.string );
+					if ( op->data.string == "screenshot" )
+					{
+						static int foo = 0;
+						vsImage img(m_currentRenderTarget->Resolve(0));
+						img.SavePNG_FullAlpha(5, vsFormatString("screenshot-%d.png", foo++));
+					}
+					else
+						vsRenderDebug( op->data.string );
 					break;
 				}
 			default:
