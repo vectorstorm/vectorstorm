@@ -36,6 +36,8 @@ public:
     vsImage( vsTexture *texture );
 	~vsImage();
 
+	void			Read( vsTexture *texture );
+
 	int				GetWidth() { return m_width; }
 	int				GetHeight() { return m_height; }
 
@@ -46,6 +48,7 @@ public:
 	void			SetRawPixel(unsigned int u, unsigned int v, uint32_t c);
 
 	void			Clear( const vsColor &clearColor );
+	void			Copy( vsImage *other );
 
 	vsTexture *		Bake();
 

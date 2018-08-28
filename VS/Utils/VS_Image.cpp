@@ -53,15 +53,35 @@ vsImage::vsImage( const vsString &filename_in )
 #endif
 }
 
-vsImage::vsImage( vsTexture * texture )
+vsImage::vsImage( vsTexture * texture ):
+	m_pixel(NULL),
+	m_width(0),
+	m_height(0)
+{
+	Read(texture);
+}
+
+vsImage::~vsImage()
+{
+	vsDeleteArray( m_pixel );
+}
+
+void
+vsImage::Read( vsTexture *texture )
 {
 	GL_CHECK_SCOPED("vsImage");
 
-	m_width = texture->GetResource()->GetWidth();
-	m_height = texture->GetResource()->GetHeight();
+	if ( m_width != (unsigned int)texture->GetResource()->GetWidth() ||
+			m_height != (unsigned int)texture->GetResource()->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
 
-	m_pixelCount = m_width * m_height;
-	m_pixel = new uint32_t[m_pixelCount];
+		m_width = texture->GetResource()->GetWidth();
+		m_height = texture->GetResource()->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new uint32_t[m_pixelCount];
+	}
 
 	bool depthTexture = texture->GetResource()->IsDepth();
 
@@ -97,14 +117,10 @@ vsImage::vsImage( vsTexture * texture )
 	}
 	else
 	{
+		// TODO:  THis would be faster if it was BGRA.
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_pixel);
 		glBindTexture( GL_TEXTURE_2D, 0 );
 	}
-}
-
-vsImage::~vsImage()
-{
-	vsDeleteArray( m_pixel );
 }
 
 uint32_t
@@ -142,6 +158,23 @@ vsImage::Clear( const vsColor &clearColor )
 	{
 		m_pixel[i] = cc;
 	}
+}
+
+void
+vsImage::Copy( vsImage *other )
+{
+	if ( m_width != (unsigned int)other->GetWidth() ||
+			m_height != (unsigned int)other->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
+
+		m_width = other->GetWidth();
+		m_height = other->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new uint32_t[m_pixelCount];
+	}
+	memcpy( m_pixel, other->m_pixel, sizeof(uint32_t) * m_pixelCount);
 }
 
 vsTexture *

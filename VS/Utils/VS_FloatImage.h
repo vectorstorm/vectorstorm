@@ -43,7 +43,9 @@ public:
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
 
 	void			Clear( const vsColor &clearColor );
+	void			Copy( vsFloatImage *other );
 
+	void			Read( vsTexture *texture );
 	vsTexture *		Bake();
 
 	vsStore *		BakePNG(int compression);

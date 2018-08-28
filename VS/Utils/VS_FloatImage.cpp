@@ -51,14 +51,35 @@ vsFloatImage::vsFloatImage( const vsString &filename_in )
 #endif
 }
 
-vsFloatImage::vsFloatImage( vsTexture * texture )
+vsFloatImage::vsFloatImage( vsTexture * texture ):
+	m_pixel(NULL),
+	m_width(0),
+	m_height(0)
+{
+	Read(texture);
+}
+
+vsFloatImage::~vsFloatImage()
+{
+	vsDeleteArray( m_pixel );
+}
+
+void
+vsFloatImage::Read( vsTexture *texture )
 {
 	GL_CHECK_SCOPED("vsFloatImage");
-	m_width = texture->GetResource()->GetWidth();
-	m_height = texture->GetResource()->GetHeight();
 
-	m_pixelCount = m_width * m_height;
-	m_pixel = new vsColor[m_pixelCount];
+	if ( m_width != (unsigned int)texture->GetResource()->GetWidth() ||
+			m_height != (unsigned int)texture->GetResource()->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
+
+		m_width = texture->GetResource()->GetWidth();
+		m_height = texture->GetResource()->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new vsColor[m_pixelCount];
+	}
 
 	bool depthTexture = texture->GetResource()->IsDepth();
 
@@ -99,11 +120,6 @@ vsFloatImage::vsFloatImage( vsTexture * texture )
 	}
 }
 
-vsFloatImage::~vsFloatImage()
-{
-	vsDeleteArray( m_pixel );
-}
-
 vsColor
 vsFloatImage::GetPixel(unsigned int u, unsigned int v) const
 {
@@ -126,6 +142,24 @@ vsFloatImage::Clear( const vsColor &clearColor )
 		m_pixel[i] = clearColor;
 	}
 }
+
+void
+vsFloatImage::Copy( vsFloatImage *other )
+{
+	if ( m_width != (unsigned int)other->GetWidth() ||
+			m_height != (unsigned int)other->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
+
+		m_width = other->GetWidth();
+		m_height = other->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new vsColor[m_pixelCount];
+	}
+	memcpy( m_pixel, other->m_pixel, sizeof(vsColor) * m_pixelCount);
+}
+
 
 vsTexture *
 vsFloatImage::Bake()
