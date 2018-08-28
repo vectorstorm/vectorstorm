@@ -11,6 +11,7 @@
 #define VS_IMAGE_H
 
 #include "VS/Graphics/VS_Texture.h"
+#include "VS_OpenGL.h"
 
 class vsStore;
 class vsColor;
@@ -25,10 +26,15 @@ class vsImage
 
 	static int		m_textureMakerCount;
 
+	uint32_t m_pbo;
+	GLsync m_sync;
+
 	int				PixelIndex(int u, int v) const { return u + (v*m_width); }
 
     void            LoadFromSurface( SDL_Surface *source );
+protected:
 
+	void		CopyTo( vsImage *other );
 public:
 
 	vsImage( unsigned int width, unsigned int height );
@@ -37,6 +43,9 @@ public:
 	~vsImage();
 
 	void			Read( vsTexture *texture );
+	void			AsyncRead( vsTexture *texture );
+	void			AsyncReadRenderTarget(vsRenderTarget *target, int buffer);
+	bool			AsyncReadIsReady();
 
 	int				GetWidth() { return m_width; }
 	int				GetHeight() { return m_height; }

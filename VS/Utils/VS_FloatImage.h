@@ -11,6 +11,7 @@
 #define VS_FLOATIMAGE_H
 
 #include "VS/Graphics/VS_Texture.h"
+#include "VS_OpenGL.h"
 
 class vsStore;
 class vsColor;
@@ -29,6 +30,13 @@ class vsFloatImage
 
     void            LoadFromSurface( SDL_Surface *source );
 
+	uint32_t m_pbo;
+	GLsync m_sync;
+
+protected:
+
+	void		CopyTo( vsFloatImage *other );
+
 public:
 
 	vsFloatImage( unsigned int width, unsigned int height );
@@ -46,6 +54,10 @@ public:
 	void			Copy( vsFloatImage *other );
 
 	void			Read( vsTexture *texture );
+	void			AsyncRead( vsTexture *texture );
+	void			AsyncReadRenderTarget(vsRenderTarget *target, int buffer);
+	bool			AsyncReadIsReady();
+
 	vsTexture *		Bake();
 
 	vsStore *		BakePNG(int compression);

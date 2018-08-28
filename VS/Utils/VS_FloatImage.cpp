@@ -13,6 +13,7 @@
 #include "VS_Texture.h"
 #include "VS_TextureManager.h"
 #include "VS_TextureInternal.h"
+#include "VS_RenderTarget.h"
 
 #include "VS_File.h"
 #include "VS_Store.h"
@@ -33,14 +34,18 @@ vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
 	m_pixel(NULL),
 	m_pixelCount(0),
 	m_width(width),
-	m_height(height)
+	m_height(height),
+	m_pbo(0),
+	m_sync(0)
 {
 	m_pixelCount = width * height;
 
 	m_pixel = new vsColor[m_pixelCount];
 }
 
-vsFloatImage::vsFloatImage( const vsString &filename_in )
+vsFloatImage::vsFloatImage( const vsString &filename_in ):
+	m_pbo(0),
+	m_sync(0)
 {
 #if !TARGET_OS_IPHONE
 	vsString filename = vsFile::GetFullFilename(filename_in);
@@ -54,7 +59,9 @@ vsFloatImage::vsFloatImage( const vsString &filename_in )
 vsFloatImage::vsFloatImage( vsTexture * texture ):
 	m_pixel(NULL),
 	m_width(0),
-	m_height(0)
+	m_height(0),
+	m_pbo(0),
+	m_sync(0)
 {
 	Read(texture);
 }
@@ -62,12 +69,17 @@ vsFloatImage::vsFloatImage( vsTexture * texture ):
 vsFloatImage::~vsFloatImage()
 {
 	vsDeleteArray( m_pixel );
+	if ( m_pbo != 0 )
+	{
+		glDeleteBuffers( 1, (GLuint*)&m_pbo );
+		glDeleteSync( m_sync );
+	}
 }
 
 void
 vsFloatImage::Read( vsTexture *texture )
 {
-	GL_CHECK_SCOPED("vsFloatImage");
+	// GL_CHECK_SCOPED("vsFloatImage");
 
 	if ( m_width != (unsigned int)texture->GetResource()->GetWidth() ||
 			m_height != (unsigned int)texture->GetResource()->GetHeight() )
@@ -120,6 +132,81 @@ vsFloatImage::Read( vsTexture *texture )
 	}
 }
 
+void
+vsFloatImage::AsyncRead( vsTexture *texture )
+{
+	// GL_CHECK_SCOPED("AsyncRead");
+	if ( m_pbo == 0 )
+		glGenBuffers(1, &m_pbo);
+	else
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+
+	size_t width = texture->GetResource()->GetWidth();
+	size_t height = texture->GetResource()->GetHeight();
+	if ( width != m_width || height != m_height )
+	{
+		m_width = width;
+		m_height = height;
+		int bytes = width * height * sizeof(vsColor);
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_STREAM_READ );
+	}
+	// int bytes = sizeof(uint32_t) * width * height;
+
+	// GL_CHECK("BindBuffer");
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 0);
+	glBindTexture( GL_TEXTURE_2D, 0 );
+	// GL_CHECK("ReadPixels");
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+
+	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+	// GL_CHECK("FenceSync");
+}
+
+void
+vsFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
+{
+	if ( m_pbo == 0 )
+		glGenBuffers(1, &m_pbo);
+	else
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+
+	size_t width = target->GetWidth();
+	size_t height = target->GetHeight();
+	if ( width != m_width || height != m_height )
+	{
+		m_width = width;
+		m_height = height;
+		int bytes = width * height * sizeof(vsColor);
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_STREAM_READ );
+	}
+
+	target->Bind();
+	glReadBuffer(GL_COLOR_ATTACHMENT0+buffer);
+	glReadPixels(0,0,width,height, GL_RGBA, GL_FLOAT, 0);
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+
+	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+}
+
+bool
+vsFloatImage::AsyncReadIsReady()
+{
+	// GL_CHECK_SCOPED("AsyncReadIsReady");
+	if ( glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0 ) != GL_TIMEOUT_EXPIRED )
+	{
+		return true;
+	}
+	return false;
+}
+
 vsColor
 vsFloatImage::GetPixel(unsigned int u, unsigned int v) const
 {
@@ -144,6 +231,27 @@ vsFloatImage::Clear( const vsColor &clearColor )
 }
 
 void
+vsFloatImage::CopyTo( vsFloatImage *other )
+{
+	// in CopyTo, we've already validated that 'other' can contain our data.
+	int bytes = m_width * m_height * sizeof(vsColor);
+	if ( m_pbo )
+	{
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+		void* ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+		memcpy(other->m_pixel, ptr, bytes);
+		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		// glGetBufferSubData( GL_PIXEL_PACK_BUFFER, 0, bytes, other->m_pixel );
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	}
+	else
+	{
+		memcpy( other->m_pixel, m_pixel, bytes );
+	}
+}
+
+
+void
 vsFloatImage::Copy( vsFloatImage *other )
 {
 	if ( m_width != (unsigned int)other->GetWidth() ||
@@ -157,7 +265,7 @@ vsFloatImage::Copy( vsFloatImage *other )
 		m_pixelCount = m_width * m_height;
 		m_pixel = new vsColor[m_pixelCount];
 	}
-	memcpy( m_pixel, other->m_pixel, sizeof(vsColor) * m_pixelCount);
+	other->CopyTo(this);
 }
 
 
