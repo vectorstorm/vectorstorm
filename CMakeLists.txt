@@ -383,6 +383,7 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Singleton.h
 	VS/Utils/VS_SingletonManager.cpp
 	VS/Utils/VS_SingletonManager.h
+	VS/Utils/VS_SingleFloatImage.cpp
 	VS/Utils/VS_Spring.cpp
 	VS/Utils/VS_Spring.h
 	VS/Utils/VS_String.cpp
