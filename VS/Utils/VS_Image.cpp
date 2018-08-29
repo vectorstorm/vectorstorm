@@ -70,13 +70,20 @@ vsImage::vsImage( vsTexture * texture ):
 
 vsImage::~vsImage()
 {
-	vsDeleteArray( m_pixel );
-
 	if ( m_pbo != 0 )
 	{
+		if ( m_pixel )
+			AsyncUnmap();
+
 		glDeleteBuffers( 1, (GLuint*)&m_pbo );
 		glDeleteSync( m_sync );
+
+		vsAssert( m_pixel == NULL, "async-mapped pixel data not cleared during destruction??" );
+		m_pbo = 0;
+		m_sync = 0;
 	}
+
+	vsDeleteArray( m_pixel );
 }
 
 void
@@ -153,7 +160,7 @@ vsImage::AsyncRead( vsTexture *texture )
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(uint32_t);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_STREAM_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
 	}
 
 	// int bytes = sizeof(uint32_t) * width * height;
@@ -190,7 +197,7 @@ vsImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(uint32_t);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_STREAM_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
 	}
 
 	target->Bind();
@@ -212,6 +219,24 @@ vsImage::AsyncReadIsReady()
 		return true;
 	}
 	return false;
+}
+
+void
+vsImage::AsyncMap()
+{
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	m_pixel = (uint32_t*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+	m_pixelCount = m_width * m_height;
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void
+vsImage::AsyncUnmap()
+{
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	m_pixel = NULL;
 }
 
 uint32_t

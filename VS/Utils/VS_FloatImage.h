@@ -58,6 +58,9 @@ public:
 	void			AsyncReadRenderTarget(vsRenderTarget *target, int buffer);
 	bool			AsyncReadIsReady();
 
+	void			AsyncMap(); // map our async-read data into ourselves so we can be accessed to get pixels directly
+	void			AsyncUnmap(); // unmap
+
 	vsTexture *		Bake();
 
 	vsStore *		BakePNG(int compression);
