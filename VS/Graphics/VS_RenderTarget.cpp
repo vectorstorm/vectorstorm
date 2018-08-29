@@ -325,13 +325,13 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			GLenum type = GL_UNSIGNED_BYTE;
 			if ( settings.floating )
 			{
-				internalFormat = GL_RGBA16F;
+				internalFormat = GL_RGBA32F;
 				type = GL_FLOAT;
 
 				if ( settings.singleChannel )
 				{
 					format = GL_RED;
-					internalFormat = GL_R16F;
+					internalFormat = GL_R32F;
 				}
 			}
 			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;

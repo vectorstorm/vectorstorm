@@ -142,7 +142,6 @@ vsFloatImage::AsyncRead( vsTexture *texture )
 		glDeleteSync( m_sync );
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
-
 	size_t width = texture->GetResource()->GetWidth();
 	size_t height = texture->GetResource()->GetHeight();
 	if ( width != m_width || height != m_height )

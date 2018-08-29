@@ -191,7 +191,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
-			GL_RGBA16F,
+			GL_RGBA32F,
 			w, h,
 			0,
 			GL_RGBA,
