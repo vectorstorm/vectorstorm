@@ -170,7 +170,7 @@ vsImage::AsyncRead( vsTexture *texture )
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA8, GL_UNSIGNED_BYTE, 0);
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	// GL_CHECK("ReadPixels");

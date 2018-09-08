@@ -493,8 +493,13 @@ vsSurface::Resize( int width, int height )
 			GLenum type = GL_UNSIGNED_BYTE;
 			if ( settings.floating )
 			{
-				internalFormat = GL_RGBA16F;
+				internalFormat = GL_RGBA32F;
 				type = GL_FLOAT;
+				if ( settings.singleChannel )
+				{
+					format = GL_RED;
+					internalFormat = GL_R32F;
+				}
 			}
 
 			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
