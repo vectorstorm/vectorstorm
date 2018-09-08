@@ -39,6 +39,7 @@ protected:
 
 public:
 
+	vsSingleFloatImage();
 	vsSingleFloatImage( unsigned int width, unsigned int height );
     vsSingleFloatImage( const vsString &filename_in );
     vsSingleFloatImage( vsTexture *texture );
@@ -52,8 +53,14 @@ public:
 
 	void			Clear( float clearValue );
 	void			Copy( vsSingleFloatImage *other );
-
 	void			Read( vsTexture *texture );
+
+	// sometimes, we're going to use a single vsImage lots of times for repeatedly
+	// reading back a single texture.  In that case, you can call this Prep function
+	// to pre-allocate space, so that it happens at a desirable time, instead of
+	// stuttering the first time you read back data.
+	void			PrepForAsyncRead( vsTexture *texture );
+
 	void			AsyncRead( vsTexture *texture );
 	void			AsyncReadRenderTarget(vsRenderTarget *target, int buffer);
 	bool			AsyncReadIsReady();

@@ -34,6 +34,10 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 				isDepth);
 		vsTextureManager::Instance()->Add(ti);
 		m_texture[i] = new vsTexture(name);
+		// pre-set some values, so they can be used even in the case of deferred
+		// creation..
+		m_texture[i]->GetResource()->m_width = settings.width;
+		m_texture[i]->GetResource()->m_height = settings.height;
 	}
 
 	if ( settings.depth && !isDepth )

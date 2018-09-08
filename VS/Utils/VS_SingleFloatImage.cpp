@@ -30,6 +30,16 @@
 
 int vsSingleFloatImage::m_textureMakerCount = 0;
 
+vsSingleFloatImage::vsSingleFloatImage():
+	m_pixel(NULL),
+	m_pixelCount(0),
+	m_width(0),
+	m_height(0),
+	m_pbo(0),
+	m_sync(0)
+{
+}
+
 vsSingleFloatImage::vsSingleFloatImage(unsigned int width, unsigned int height):
 	m_pixel(NULL),
 	m_pixelCount(0),
@@ -122,13 +132,10 @@ vsSingleFloatImage::Read( vsTexture *texture )
 }
 
 void
-vsSingleFloatImage::AsyncRead( vsTexture *texture )
+vsSingleFloatImage::PrepForAsyncRead( vsTexture *texture )
 {
-	// GL_CHECK_SCOPED("AsyncRead");
 	if ( m_pbo == 0 )
 		glGenBuffers(1, &m_pbo);
-	else
-		glDeleteSync( m_sync );
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	size_t width = texture->GetResource()->GetWidth();
@@ -140,7 +147,18 @@ vsSingleFloatImage::AsyncRead( vsTexture *texture )
 		int bytes = width * height * sizeof(float);
 		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
 	}
-	// int bytes = sizeof(uint32_t) * width * height;
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void
+vsSingleFloatImage::AsyncRead( vsTexture *texture )
+{
+	PrepForAsyncRead( texture );
+	if ( m_sync != 0 )
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 
 	// GL_CHECK("BindBuffer");
 	glActiveTexture( GL_TEXTURE0 );
@@ -158,22 +176,14 @@ vsSingleFloatImage::AsyncRead( vsTexture *texture )
 void
 vsSingleFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 {
-	if ( m_pbo == 0 )
-		glGenBuffers(1, &m_pbo);
-	else
+	PrepForAsyncRead( target->GetTexture(0) );
+	if ( m_sync != 0 )
 		glDeleteSync( m_sync );
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 
 	size_t width = target->GetWidth();
 	size_t height = target->GetHeight();
-	if ( width != m_width || height != m_height )
-	{
-		m_width = width;
-		m_height = height;
-		int bytes = width * height * sizeof(float);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
-	}
 
 	target->Bind();
 	glReadBuffer(GL_COLOR_ATTACHMENT0+buffer);

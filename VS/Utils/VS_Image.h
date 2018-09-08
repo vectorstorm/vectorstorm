@@ -37,10 +37,17 @@ protected:
 	void		CopyTo( vsImage *other );
 public:
 
+    vsImage();
 	vsImage( unsigned int width, unsigned int height );
     vsImage( const vsString &filename_in );
     vsImage( vsTexture *texture );
 	~vsImage();
+
+	// sometimes, we're going to use a single vsImage lots of times for repeatedly
+	// reading back a single texture.  In that case, you can call this Prep function
+	// to pre-allocate space, so that it happens at a desirable time, instead of
+	// stuttering the first time you read back data.
+	void			PrepForAsyncRead( vsTexture *texture );
 
 	void			Read( vsTexture *texture );
 	void			AsyncRead( vsTexture *texture );
