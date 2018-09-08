@@ -146,9 +146,9 @@ vsSingleFloatImage::AsyncRead( vsTexture *texture )
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_R32F, 0);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
 	glBindTexture( GL_TEXTURE_2D, 0 );
-	// GL_CHECK("ReadPixels");
+	GL_CHECK("ReadPixels");
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
 
 	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
