@@ -36,6 +36,7 @@ public:
 	~vsModelInstance();
 
 	void SetVisible( bool visible );
+	bool IsVisible() const { return visible; }
 	void SetMatrix( const vsMatrix4x4& mat );
 	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
 	void SetLodLevel( size_t lodLevel );
