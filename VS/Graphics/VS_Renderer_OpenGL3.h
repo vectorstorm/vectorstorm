@@ -143,6 +143,11 @@ public:
 	void	SetLoadingContext();
 	void	ClearLoadingContext();
 
+	// If we have the loading context on the current thread, we can
+	// call "FenceLoadingContext" to block until the current context's
+	// contents have all become available from the main thread.
+	void	FenceLoadingContext();
+
 	int		GetWidthPixels() const { return m_widthPixels; }
 	int		GetHeightPixels() const { return m_heightPixels; }
 	void	SetViewportWidthPixels( int width ) { m_widthPixels = width; }

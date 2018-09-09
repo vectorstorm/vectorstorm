@@ -2133,6 +2133,15 @@ vsRenderer_OpenGL3::SetLoadingContext()
 void
 vsRenderer_OpenGL3::ClearLoadingContext()
 {
+	FenceLoadingContext();
+	CheckGLError("ClearLoadingContext");
+	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
+	m_loadingGlContextMutex.Unlock();
+}
+
+void
+vsRenderer_OpenGL3::FenceLoadingContext()
+{
 	CheckGLError("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	GLenum result;
@@ -2141,9 +2150,7 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
 		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
 	}
-	CheckGLError("ClearLoadingContext");
-	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
-	m_loadingGlContextMutex.Unlock();
+	glDeleteSync(fenceId);
 }
 
 vsShader*
