@@ -117,12 +117,24 @@ public:
 	vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred = false );
 	~vsRenderTarget();
 
+	// if deferred, create us now!  Only to be called from the render thread!
+	// This is basically here to let games untangle complex render target
+	// dependencies for targets which were created in a deferred fashion from a
+	// background thread.  Normally, we "create" a deferred render target the
+	// first time we bind it as a render target, but sometimes you can get a
+	// loop where one render target is used as a texture for writing into a second
+	// render target, which itself uses its texture to draw back into the first
+	// render target.  In that situation, we can't safely do either draw to get
+	// the deferred creation to occur;  instead, we need to manually trigger one
+	// or both of the targets to get created, before we start drawing.
+	void		CreateDeferred();
+
+	void		Bind();
+
 	/* if we're a multisample target, Resolve() copies the multisample data into
 	 * our renderable texture.  If not, it does nothing.
 	 * We always need to call this function before using the render target as a texture.
 	 */
-
-	void		Bind();
 	vsTexture *	Resolve(int id=0);
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }

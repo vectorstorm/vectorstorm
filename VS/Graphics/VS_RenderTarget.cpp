@@ -158,6 +158,13 @@ vsRenderTarget::Resolve(int id)
 }
 
 void
+vsRenderTarget::CreateDeferred()
+{
+	if ( m_textureSurface == NULL )
+		Create();
+}
+
+void
 vsRenderTarget::Bind()
 {
 	if ( m_textureSurface == NULL )
