@@ -62,10 +62,6 @@ vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
 		if ( !linear )
 			GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
 	}
-	else
-	{
-		vsDelete( GetResource()->m_texture[i] );
-	}
 }
 
 void

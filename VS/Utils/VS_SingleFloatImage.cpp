@@ -1,13 +1,13 @@
 /*
- *  VS_FloatImage.cpp
+ *  VS_SingleFloatImage.cpp
  *  VectorStorm
  *
- *  Created by Trevor Powell on 24/12/2014
- *  Copyright 2014 Trevor Powell.  All rights reserved.
+ *  Created by Trevor Powell on 29/08/2018
+ *  Copyright 2018 Trevor Powell.  All rights reserved.
  *
  */
 
-#include "VS_FloatImage.h"
+#include "VS_SingleFloatImage.h"
 
 #include "VS_Color.h"
 #include "VS_Texture.h"
@@ -28,9 +28,19 @@
 #endif // _WIN32
 #endif // TARGET_OS_IPHONE
 
-int vsFloatImage::m_textureMakerCount = 0;
+int vsSingleFloatImage::m_textureMakerCount = 0;
 
-vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
+vsSingleFloatImage::vsSingleFloatImage():
+	m_pixel(NULL),
+	m_pixelCount(0),
+	m_width(0),
+	m_height(0),
+	m_pbo(0),
+	m_sync(0)
+{
+}
+
+vsSingleFloatImage::vsSingleFloatImage(unsigned int width, unsigned int height):
 	m_pixel(NULL),
 	m_pixelCount(0),
 	m_width(width),
@@ -40,10 +50,10 @@ vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
 {
 	m_pixelCount = width * height;
 
-	m_pixel = new vsColor[m_pixelCount];
+	m_pixel = new float[m_pixelCount];
 }
 
-vsFloatImage::vsFloatImage( const vsString &filename_in ):
+vsSingleFloatImage::vsSingleFloatImage( const vsString &filename_in ):
 	m_pbo(0),
 	m_sync(0)
 {
@@ -56,7 +66,7 @@ vsFloatImage::vsFloatImage( const vsString &filename_in ):
 #endif
 }
 
-vsFloatImage::vsFloatImage( vsTexture * texture ):
+vsSingleFloatImage::vsSingleFloatImage( vsTexture * texture ):
 	m_pixel(NULL),
 	m_width(0),
 	m_height(0),
@@ -66,7 +76,7 @@ vsFloatImage::vsFloatImage( vsTexture * texture ):
 	Read(texture);
 }
 
-vsFloatImage::~vsFloatImage()
+vsSingleFloatImage::~vsSingleFloatImage()
 {
 	if ( m_pbo != 0 )
 	{
@@ -81,12 +91,13 @@ vsFloatImage::~vsFloatImage()
 		m_sync = 0;
 	}
 
+	vsDeleteArray( m_pixel );
 }
 
 void
-vsFloatImage::Read( vsTexture *texture )
+vsSingleFloatImage::Read( vsTexture *texture )
 {
-	// GL_CHECK_SCOPED("vsFloatImage");
+	// GL_CHECK_SCOPED("vsSingleFloatImage");
 
 	if ( m_width != (unsigned int)texture->GetResource()->GetWidth() ||
 			m_height != (unsigned int)texture->GetResource()->GetHeight() )
@@ -97,7 +108,7 @@ vsFloatImage::Read( vsTexture *texture )
 		m_height = texture->GetResource()->GetHeight();
 
 		m_pixelCount = m_width * m_height;
-		m_pixel = new vsColor[m_pixelCount];
+		m_pixel = new float[m_pixelCount];
 	}
 
 	bool depthTexture = texture->GetResource()->IsDepth();
@@ -111,42 +122,20 @@ vsFloatImage::Read( vsTexture *texture )
 
 	if ( depthTexture )
 	{
-		size_t imageSizeInFloats = size_t(m_width) * size_t(m_height);
-
-		float* pixels = new float[imageSizeInFloats];
-
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
-		glBindTexture( GL_TEXTURE_2D, 0 );
-
-		for ( unsigned int y = 0; y < m_height; y++ )
-		{
-			int rowStart = y * m_width;
-
-			for ( unsigned int x = 0; x < m_width; x++ )
-			{
-				int rInd = rowStart + (x);
-				float rVal = pixels[rInd];
-
-				SetPixel(x,y, vsColor(rVal, rVal, rVal, 1.0f) );
-			}
-		}
-		vsDeleteArray( pixels );
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, m_pixel);
 	}
 	else
 	{
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, m_pixel);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, m_pixel);
 		glBindTexture( GL_TEXTURE_2D, 0 );
 	}
 }
 
 void
-vsFloatImage::AsyncRead( vsTexture *texture )
+vsSingleFloatImage::PrepForAsyncRead( vsTexture *texture )
 {
-	// GL_CHECK_SCOPED("AsyncRead");
 	if ( m_pbo == 0 )
 		glGenBuffers(1, &m_pbo);
-	else
-		glDeleteSync( m_sync );
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	size_t width = texture->GetResource()->GetWidth();
@@ -155,18 +144,29 @@ vsFloatImage::AsyncRead( vsTexture *texture )
 	{
 		m_width = width;
 		m_height = height;
-		int bytes = width * height * sizeof(vsColor);
+		int bytes = width * height * sizeof(float);
 		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
 	}
-	// int bytes = sizeof(uint32_t) * width * height;
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void
+vsSingleFloatImage::AsyncRead( vsTexture *texture )
+{
+	PrepForAsyncRead( texture );
+	if ( m_sync != 0 )
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 
 	// GL_CHECK("BindBuffer");
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 0);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
 	glBindTexture( GL_TEXTURE_2D, 0 );
-	// GL_CHECK("ReadPixels");
+	GL_CHECK("ReadPixels");
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
 
 	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
@@ -174,28 +174,20 @@ vsFloatImage::AsyncRead( vsTexture *texture )
 }
 
 void
-vsFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
+vsSingleFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 {
-	if ( m_pbo == 0 )
-		glGenBuffers(1, &m_pbo);
-	else
+	PrepForAsyncRead( target->GetTexture(0) );
+	if ( m_sync != 0 )
 		glDeleteSync( m_sync );
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 
 	size_t width = target->GetWidth();
 	size_t height = target->GetHeight();
-	if ( width != m_width || height != m_height )
-	{
-		m_width = width;
-		m_height = height;
-		int bytes = width * height * sizeof(vsColor);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
-	}
 
 	target->Bind();
 	glReadBuffer(GL_COLOR_ATTACHMENT0+buffer);
-	glReadPixels(0,0,width,height, GL_RGBA, GL_FLOAT, 0);
+	glReadPixels(0,0,width,height, GL_RED, GL_FLOAT, 0);
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
 
@@ -203,7 +195,7 @@ vsFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 }
 
 bool
-vsFloatImage::AsyncReadIsReady()
+vsSingleFloatImage::AsyncReadIsReady()
 {
 	// GL_CHECK_SCOPED("AsyncReadIsReady");
 	if ( glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0 ) != GL_TIMEOUT_EXPIRED )
@@ -214,16 +206,16 @@ vsFloatImage::AsyncReadIsReady()
 }
 
 void
-vsFloatImage::AsyncMap()
+vsSingleFloatImage::AsyncMap()
 {
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
-	m_pixel = (vsColor*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+	m_pixel = (float*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 	m_pixelCount = m_width * m_height;
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
 }
 
 void
-vsFloatImage::AsyncUnmap()
+vsSingleFloatImage::AsyncUnmap()
 {
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
@@ -231,34 +223,34 @@ vsFloatImage::AsyncUnmap()
 	m_pixel = NULL;
 }
 
-vsColor
-vsFloatImage::GetPixel(unsigned int u, unsigned int v) const
+float
+vsSingleFloatImage::GetPixel(unsigned int u, unsigned int v) const
 {
 	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
 	return m_pixel[ PixelIndex(u,v) ];
 }
 
 void
-vsFloatImage::SetPixel(unsigned int u, unsigned int v, const vsColor &c)
+vsSingleFloatImage::SetPixel(unsigned int u, unsigned int v, float c)
 {
 	vsAssert(u >= 0 && u < m_width && v >= 0 && v < m_height, "Texel out of bounds!");
 	m_pixel[ PixelIndex(u,v) ] = c;
 }
 
 void
-vsFloatImage::Clear( const vsColor &clearColor )
+vsSingleFloatImage::Clear( float clearValue )
 {
 	for ( int i = 0; i < m_pixelCount; i++ )
 	{
-		m_pixel[i] = clearColor;
+		m_pixel[i] = clearValue;
 	}
 }
 
 void
-vsFloatImage::CopyTo( vsFloatImage *other )
+vsSingleFloatImage::CopyTo( vsSingleFloatImage *other )
 {
 	// in CopyTo, we've already validated that 'other' can contain our data.
-	int bytes = m_width * m_height * sizeof(vsColor);
+	int bytes = m_width * m_height * sizeof(float);
 	if ( m_pbo )
 	{
 		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
@@ -276,7 +268,7 @@ vsFloatImage::CopyTo( vsFloatImage *other )
 
 
 void
-vsFloatImage::Copy( vsFloatImage *other )
+vsSingleFloatImage::Copy( vsSingleFloatImage *other )
 {
 	if ( m_width != (unsigned int)other->GetWidth() ||
 			m_height != (unsigned int)other->GetHeight() )
@@ -287,25 +279,25 @@ vsFloatImage::Copy( vsFloatImage *other )
 		m_height = other->GetHeight();
 
 		m_pixelCount = m_width * m_height;
-		m_pixel = new vsColor[m_pixelCount];
+		m_pixel = new float[m_pixelCount];
 	}
 	other->CopyTo(this);
 }
 
 
-vsTexture *
-vsFloatImage::Bake()
-{
-	vsString name = vsFormatString("FloatMakerTexture%d", m_textureMakerCount++);
-
-	vsTextureInternal *ti = new vsTextureInternal(name, this);
-	vsTextureManager::Instance()->Add(ti);
-
-	return new vsTexture(name);
-}
+// vsTexture *
+// vsSingleFloatImage::Bake()
+// {
+// 	vsString name = vsFormatString("FloatMakerTexture%d", m_textureMakerCount++);
+//
+// 	vsTextureInternal *ti = new vsTextureInternal(name, this);
+// 	vsTextureManager::Instance()->Add(ti);
+//
+// 	return new vsTexture(name);
+// }
 
 void
-vsFloatImage::LoadFromSurface( SDL_Surface *source )
+vsSingleFloatImage::LoadFromSurface( SDL_Surface *source )
 {
 #if !TARGET_OS_IPHONE
 	//	SDL_Surface *screen = SDL_GetVideoSurface();
@@ -352,7 +344,7 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 	// now lets copy our image data
 
 	m_pixelCount = w*h;
-	m_pixel = new vsColor[m_pixelCount];
+	m_pixel = new float[m_pixelCount];
 
 	for ( int v = 0; v < h; v++ )
 	{
@@ -360,17 +352,14 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 		{
 			int i = v*image->pitch + u*4;
 			int ri = i;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
+			// int gi = ri+1;
+			// int bi = ri+2;
+			// int ai = ri+3;
 
 			unsigned char r = ((unsigned char*)image->pixels)[ri];
-			unsigned char g = ((unsigned char*)image->pixels)[gi];
-			unsigned char b = ((unsigned char*)image->pixels)[bi];
-			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,(w-1)-v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			SetPixel(u,(w-1)-v, r / 255.f );
 		}
 	}
 
@@ -379,7 +368,7 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 }
 
 vsStore *
-vsFloatImage::BakePNG(int compression)
+vsSingleFloatImage::BakePNG(int compression)
 {
 	// first, create an SDL_Surface from our raw pixel data.
 	SDL_Surface *image = SDL_CreateRGBSurface(
@@ -413,12 +402,12 @@ vsFloatImage::BakePNG(int compression)
 			int ai = ri+3;
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = GetPixel(u,(m_height-1)-v);
+			float pixel = GetPixel(u,(m_height-1)-v);
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel);
+			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel);
+			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel);
+			((unsigned char*)image->pixels)[ai] = (unsigned char)(255);
 		}
 	}
 	//
@@ -444,7 +433,7 @@ vsFloatImage::BakePNG(int compression)
 }
 
 void
-vsFloatImage::SavePNG(int compression, const vsString& filename)
+vsSingleFloatImage::SavePNG(int compression, const vsString& filename)
 {
 	vsStore *store = BakePNG(compression);
 	vsFile file( filename, vsFile::MODE_Write );

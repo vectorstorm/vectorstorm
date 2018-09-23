@@ -13,6 +13,7 @@
 #include "VS_Texture.h"
 #include "VS_TextureManager.h"
 #include "VS_TextureInternal.h"
+#include "VS_RenderTarget.h"
 
 #include "VS_File.h"
 #include "VS_Store.h"
@@ -29,11 +30,23 @@
 
 int vsImage::m_textureMakerCount = 0;
 
+vsImage::vsImage():
+	m_pixel(NULL),
+	m_pixelCount(0),
+	m_width(0),
+	m_height(0),
+	m_pbo(0),
+	m_sync(0)
+{
+}
+
 vsImage::vsImage(unsigned int width, unsigned int height):
 	m_pixel(NULL),
 	m_pixelCount(0),
 	m_width(width),
-	m_height(height)
+	m_height(height),
+	m_pbo(0),
+	m_sync(0)
 {
 	m_pixelCount = width * height;
 
@@ -41,7 +54,9 @@ vsImage::vsImage(unsigned int width, unsigned int height):
 	memset(m_pixel,0,sizeof(uint32_t)*m_pixelCount);
 }
 
-vsImage::vsImage( const vsString &filename_in )
+vsImage::vsImage( const vsString &filename_in ):
+	m_pbo(0),
+	m_sync(0)
 {
 #if !TARGET_OS_IPHONE
 	vsString filename = vsFile::GetFullFilename(filename_in);
@@ -53,15 +68,50 @@ vsImage::vsImage( const vsString &filename_in )
 #endif
 }
 
-vsImage::vsImage( vsTexture * texture )
+vsImage::vsImage( vsTexture * texture ):
+	m_pixel(NULL),
+	m_width(0),
+	m_height(0),
+	m_pbo(0),
+	m_sync(0)
 {
-	GL_CHECK_SCOPED("vsImage");
+	Read(texture);
+}
 
-	m_width = texture->GetResource()->GetWidth();
-	m_height = texture->GetResource()->GetHeight();
+vsImage::~vsImage()
+{
+	if ( m_pbo != 0 )
+	{
+		if ( m_pixel )
+			AsyncUnmap();
 
-	m_pixelCount = m_width * m_height;
-	m_pixel = new uint32_t[m_pixelCount];
+		glDeleteBuffers( 1, (GLuint*)&m_pbo );
+		glDeleteSync( m_sync );
+
+		vsAssert( m_pixel == NULL, "async-mapped pixel data not cleared during destruction??" );
+		m_pbo = 0;
+		m_sync = 0;
+	}
+
+	vsDeleteArray( m_pixel );
+}
+
+void
+vsImage::Read( vsTexture *texture )
+{
+	// GL_CHECK_SCOPED("vsImage");
+
+	if ( m_width != (unsigned int)texture->GetResource()->GetWidth() ||
+			m_height != (unsigned int)texture->GetResource()->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
+
+		m_width = texture->GetResource()->GetWidth();
+		m_height = texture->GetResource()->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new uint32_t[m_pixelCount];
+	}
 
 	bool depthTexture = texture->GetResource()->IsDepth();
 
@@ -97,40 +147,102 @@ vsImage::vsImage( vsTexture * texture )
 	}
 	else
 	{
-		size_t bytesPerPixel = 4;	// RGBA
-		size_t imageSizeInBytes = bytesPerPixel * size_t(m_width) * size_t(m_height);
-
-		uint8_t* pixels = new uint8_t[imageSizeInBytes];
-
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		// TODO:  THis would be faster if it was BGRA.
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_pixel);
 		glBindTexture( GL_TEXTURE_2D, 0 );
-
-		for ( unsigned int y = 0; y < m_height; y++ )
-		{
-			int rowStart = y * m_width * bytesPerPixel;
-
-			for ( unsigned int x = 0; x < m_width; x++ )
-			{
-				int rInd = rowStart + (x*bytesPerPixel);
-				int gInd = rInd+1;
-				int bInd = rInd+2;
-				int aInd = rInd+3;
-
-				int rVal = pixels[rInd];
-				int gVal = pixels[gInd];
-				int bVal = pixels[bInd];
-				int aVal = pixels[aInd];
-
-				SetPixel(x,y, vsColor(rVal/255.f, gVal/255.f, bVal/255.f, aVal/255.f) );
-			}
-		}
-		vsDeleteArray( pixels );
 	}
 }
 
-vsImage::~vsImage()
+void
+vsImage::PrepForAsyncRead( vsTexture *texture )
 {
-	vsDeleteArray( m_pixel );
+	if ( m_pbo == 0 )
+		glGenBuffers(1, &m_pbo);
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	size_t width = texture->GetResource()->GetWidth();
+	size_t height = texture->GetResource()->GetHeight();
+	if ( width != m_width || height != m_height )
+	{
+		m_width = width;
+		m_height = height;
+		int bytes = width * height * sizeof(uint32_t);
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
+	}
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void
+vsImage::AsyncRead( vsTexture *texture )
+{
+	PrepForAsyncRead(texture);
+
+	if ( m_sync != 0 )
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, texture->GetResource()->GetTexture() );
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glBindTexture( GL_TEXTURE_2D, 0 );
+
+	// GL_CHECK("glGetTexImage");
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+
+	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+}
+
+void
+vsImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
+{
+	PrepForAsyncRead(target->Resolve(0));
+
+	if ( m_sync != 0 )
+		glDeleteSync( m_sync );
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+
+	target->Bind();
+	int width = target->GetWidth();
+	int height = target->GetHeight();
+	glReadBuffer(GL_COLOR_ATTACHMENT0+buffer);
+	glReadPixels(0,0,width,height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+
+	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+}
+
+bool
+vsImage::AsyncReadIsReady()
+{
+	// GL_CHECK_SCOPED("AsyncReadIsReady");
+	if ( glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0 ) != GL_TIMEOUT_EXPIRED )
+	{
+		return true;
+	}
+	return false;
+}
+
+void
+vsImage::AsyncMap()
+{
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	m_pixel = (uint32_t*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+	m_pixelCount = m_width * m_height;
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void
+vsImage::AsyncUnmap()
+{
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	m_pixel = NULL;
 }
 
 uint32_t
@@ -168,6 +280,43 @@ vsImage::Clear( const vsColor &clearColor )
 	{
 		m_pixel[i] = cc;
 	}
+}
+
+void
+vsImage::CopyTo( vsImage *other )
+{
+	// in CopyTo, we've already validated that 'other' can contain our data.
+	int bytes = m_width * m_height * sizeof(uint32_t);
+	if ( m_pbo )
+	{
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+		// glGetBufferSubData( GL_PIXEL_PACK_BUFFER, 0, bytes, other->m_pixel );
+		void* ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+		memcpy(other->m_pixel, ptr, bytes);
+		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	}
+	else
+	{
+		memcpy( other->m_pixel, m_pixel, bytes );
+	}
+}
+
+void
+vsImage::Copy( vsImage *other )
+{
+	if ( m_width != (unsigned int)other->GetWidth() ||
+			m_height != (unsigned int)other->GetHeight() )
+	{
+		vsDeleteArray(m_pixel);
+
+		m_width = other->GetWidth();
+		m_height = other->GetHeight();
+
+		m_pixelCount = m_width * m_height;
+		m_pixel = new uint32_t[m_pixelCount];
+	}
+	other->CopyTo(this);
 }
 
 vsTexture *
@@ -326,5 +475,21 @@ vsImage::SavePNG(int compression, const vsString& filename)
 	vsFile file( filename, vsFile::MODE_Write );
 	file.Store(store);
 	vsDelete(store);
+}
+
+void
+vsImage::SavePNG_FullAlpha(int compression, const vsString& filename)
+{
+	vsImage dup( m_width, m_height );
+	for ( size_t y = 0; y < m_height; y++ )
+	{
+		for ( size_t x = 0; x < m_width; x++ )
+		{
+			vsColor c = GetPixel(x,y);
+			c.a = 1.0;
+			dup.SetPixel(x,y,c);
+		}
+	}
+	dup.SavePNG(compression, filename);
 }
 

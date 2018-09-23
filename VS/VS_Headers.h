@@ -131,6 +131,7 @@
 #include <VS/Utils/VS_Preferences.h>
 #include <VS/Utils/VS_Primitive.h>
 #include <VS/Utils/VS_SingletonManager.h>
+#include <VS/Utils/VS_SingleFloatImage.h>
 #include <VS/Utils/VS_String.h>
 #include <VS/Utils/VS_System.h>
 #include <VS/Utils/VS_VolatileArray.h>

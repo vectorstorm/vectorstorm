@@ -34,6 +34,7 @@ static int power_of_two(int input)
 	return value;
 }
 
+
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
@@ -43,6 +44,7 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsString filename = vsFile::GetFullFilename(filename_in);
 
 	m_texture = ::loadTexture( filename.c_str() );
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
@@ -51,14 +53,18 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	m_premultipliedAlpha(true),
 	m_tbo(NULL)
 {
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
 	vsResource(name),
-	m_texture( (depth) ? surface->m_depth : surface->m_texture ),
+	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL)
 {
+	if ( surface )
+		m_texture = (depth) ? surface->m_depth : surface->m_texture;
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
@@ -70,6 +76,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	GLuint t;
 	glGenTextures(1, &t);
 	m_texture = t;
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::~vsTextureInternal()
@@ -97,6 +104,23 @@ static int power_of_two(int input)
 	return value;
 }
 
+void
+vsTextureInternal::SetSurface( vsSurface* surface, int surfaceBuffer, bool depth )
+{
+	// to be used for deferred texture creation  (We went through the vsSurface
+	// constructor with a NULL argument;  now we're providing the surface)
+
+	m_texture = (depth) ? surface->m_depth : surface->m_texture[surfaceBuffer];
+
+	m_glTextureWidth = surface->m_width;
+	m_glTextureHeight = surface->m_height;
+	m_width = surface->m_width;
+	m_height = surface->m_height;
+
+	if ( m_nearestSampling )
+		SetNearestSampling();
+}
+
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
@@ -110,6 +134,7 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
 	ProcessSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
@@ -141,6 +166,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 			GL_UNSIGNED_INT_8_8_8_8_REV,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
@@ -165,13 +191,14 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
-			GL_RGBA16F,
+			GL_RGBA32F,
 			w, h,
 			0,
 			GL_RGBA,
 			GL_FLOAT,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
@@ -183,6 +210,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	GLuint t;
 	glGenTextures(1, &t);
 	m_texture = t;
+	m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId ):
@@ -191,6 +219,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 	m_premultipliedAlpha(false),
 	m_tbo(NULL)
 {
+	m_nearestSampling = false;
 }
 
 
@@ -224,15 +253,20 @@ vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer, bool depth ):
 	vsResource(name),
-	m_texture((depth) ? surface->m_depth : surface->m_texture[surfaceBuffer] ),
-	m_glTextureWidth(surface->m_width),
-	m_glTextureHeight(surface->m_height),
-	m_width(surface->m_width),
-	m_height(surface->m_height),
+	m_texture(0),
+	m_glTextureWidth(0),
+	m_glTextureHeight(0),
+	m_width(0),
+	m_height(0),
 	m_depth(depth),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL)
 {
+	if ( surface )
+	{
+		SetSurface(surface, surfaceBuffer, depth);
+	}
+	m_nearestSampling = false;
 }
 
 void
@@ -380,6 +414,7 @@ vsTextureInternal::SetNearestSampling()
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	m_nearestSampling = true;
 }
 
 void
@@ -391,6 +426,7 @@ vsTextureInternal::SetLinearSampling(bool linearMipmaps)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	else
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_nearestSampling = false;
 }
 
 #endif // TARGET_OS_IPHONE
@@ -443,3 +479,12 @@ vsTextureInternal::SafeAddColour(uint32_t acolour, uint32_t bcolour)
 	return result;
 
 }
+
+void
+vsTextureInternal::ClampUV( bool u, bool v )
+{
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, u ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, v ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+}
+

@@ -110,10 +110,11 @@ private:
 	float		m_texHeight;
 	Type		m_type;
 
+	void		Create(); // If we were deferred, this creates us.
+
 public:
 
-
-	vsRenderTarget( Type t, const vsSurface::Settings &settings );
+	vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred = false );
 	~vsRenderTarget();
 
 	/* if we're a multisample target, Resolve() copies the multisample data into

@@ -1500,7 +1500,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_Debug:
 				{
-					vsRenderDebug( op->data.string );
+					if ( op->data.string == "screenshot" )
+					{
+						static int foo = 0;
+						vsImage img(m_currentRenderTarget->Resolve(0));
+						img.SavePNG_FullAlpha(5, vsFormatString("screenshot-%d.png", foo++));
+					}
+					else
+						vsRenderDebug( op->data.string );
 					break;
 				}
 			default:
@@ -1673,8 +1680,10 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				else
 				{
 					glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					if ( material->m_clampU )
+						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					if ( material->m_clampV )
+						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 				}
 			}
 			else
@@ -2124,6 +2133,15 @@ vsRenderer_OpenGL3::SetLoadingContext()
 void
 vsRenderer_OpenGL3::ClearLoadingContext()
 {
+	FenceLoadingContext();
+	CheckGLError("ClearLoadingContext");
+	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
+	m_loadingGlContextMutex.Unlock();
+}
+
+void
+vsRenderer_OpenGL3::FenceLoadingContext()
+{
 	CheckGLError("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	GLenum result;
@@ -2132,9 +2150,7 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
 		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
 	}
-	CheckGLError("ClearLoadingContext");
-	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
-	m_loadingGlContextMutex.Unlock();
+	glDeleteSync(fenceId);
 }
 
 vsShader*
