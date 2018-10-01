@@ -452,6 +452,8 @@ vsImage::BakePNG(int compression)
 	const int pngDataSize = 1024*1024*10;
 	char* pngData = new char[pngDataSize];
 	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
+	if ( !dst )
+		vsLog( "%s", SDL_GetError() );
 	int retval = IMG_SavePNG_RW(image,
 			dst,
 			false);
