@@ -25,12 +25,14 @@ public:
 		{
 		public:
 			bool floating;
+			bool halfFloating;
 			bool linear;
 			bool anisotropy;
 			bool singleChannel;
 
 			Buffer():
 				floating(false),
+				halfFloating(false),
 				linear(true),
 				anisotropy(true),
 				singleChannel(false)

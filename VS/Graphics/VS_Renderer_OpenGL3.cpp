@@ -519,6 +519,7 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 	// Create 3D Scene Surface
 	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
 
+	settings.bufferSettings[2].halfFloating = true;
 	settings.width = GetWidthPixels();
 	settings.height = GetHeightPixels();
 	settings.depth = true;
