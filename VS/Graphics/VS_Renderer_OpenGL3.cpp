@@ -2140,6 +2140,12 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 	m_loadingGlContextMutex.Unlock();
 }
 
+bool
+vsRenderer_OpenGL3::IsLoadingContext()
+{
+	return (m_loadingGlContext == SDL_GL_GetCurrentContext());
+}
+
 void
 vsRenderer_OpenGL3::FenceLoadingContext()
 {

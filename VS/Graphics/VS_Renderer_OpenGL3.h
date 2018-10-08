@@ -143,6 +143,8 @@ public:
 	void	SetLoadingContext();
 	void	ClearLoadingContext();
 
+	bool	IsLoadingContext(); // returns true if we're on the loading context.
+
 	// If we have the loading context on the current thread, we can
 	// call "FenceLoadingContext" to block until the current context's
 	// contents have all become available from the main thread.
