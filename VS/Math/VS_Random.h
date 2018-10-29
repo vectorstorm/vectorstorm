@@ -18,7 +18,7 @@
 
 class vsRandomSource
 {
-	uint64_t s[16];
+	uint64_t s[4];
 	int p;
 
 	uint64_t Next();

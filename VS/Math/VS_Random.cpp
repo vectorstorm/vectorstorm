@@ -35,9 +35,9 @@ vsRandomSource::~vsRandomSource()
 void
 vsRandomSource::InitWithSeed( uint64_t seed )
 {
-	// our Xorshift pseudo-random number generators need a non-zero seed in
-	// order to produce useful output, so if we've been given a zero seed,
-	// let's set it to some other arbitrary (but repeatable) value.
+	// our Xorshift and Xoshiro pseudo-random number generators need a non-zero
+	// seed in order to produce useful output, so if we've been given a zero
+	// seed, let's set it to some other arbitrary (but repeatable) value.
 
 	if ( seed == 0 )
 	{
@@ -46,7 +46,7 @@ vsRandomSource::InitWithSeed( uint64_t seed )
 	}
 
 	// We actually need a lot more state data than just this 64 bits -- we're
-	// going to be using Xorshift1024*, which requires 1024 bits of state.  So
+	// going to be using Xoshiro256**, which requires 256 bits of state.  So
 	// we're going to use our 64 bits of seed data as the state of an
 	// Xorshift64* PRNG, and use that to generate the initial state for our
 	// real, full PRNG.
@@ -55,7 +55,7 @@ vsRandomSource::InitWithSeed( uint64_t seed )
 	//
 	// http://xorshift.di.unimi.it/xorshift64star.c
 
-	for ( int i = 0; i < 16; i++ )
+	for ( int i = 0; i < 4; i++ )
 	{
 		seed ^= seed >> 12; // a
 		seed ^= seed << 25; // b
@@ -65,6 +65,11 @@ vsRandomSource::InitWithSeed( uint64_t seed )
 	p = 0;
 }
 
+static inline uint64_t rotate64(const uint64_t x, int k)
+{
+	return (x << k) | (x >> (64-k));
+}
+
 uint64_t
 vsRandomSource::Next()
 {
@@ -72,18 +77,25 @@ vsRandomSource::Next()
 	// generates 64 bits of pseudo-random data, which can then be consumed by
 	// the other (externally visible) functions on this class.
 	//
-	// What follows is an implementation of xorshift1024*;  an xorshift-based
-	// PRNG which uses 1024 bits of state, adapted from the implementation
+	// What follows is an implementation of xoshiro256**;  an xoshiro-based
+	// PRNG which uses 256 bits of state, adapted from the implementation
 	// here:
 	//
-	// http://xorshift.di.unimi.it/xorshift1024star.c.
+	// http://xoshiro.di.unimi.it/xoshiro256starstar.c
 
-	uint64_t s0 = s[ p ];
-	uint64_t s1 = s[ p = ( p + 1 ) & 15 ];
-	s1 ^= s1 << 31; // a
-	s1 ^= s1 >> 11; // b
-	s0 ^= s0 >> 30; // c
-	return ( s[ p ] = s0 ^ s1 ) * 1181783497276652981LL;
+	const uint64_t result = rotate64(s[1] * 5, 7) * 9;
+	const uint64_t t = s[1] << 17;
+
+	s[2] ^= s[0];
+	s[3] ^= s[1];
+	s[1] ^= s[2];
+	s[0] ^= s[3];
+
+	s[2] ^= t;
+
+	s[3] = rotate64(s[3], 45);
+
+	return result;
 }
 
 void
