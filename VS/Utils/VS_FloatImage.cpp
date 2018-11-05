@@ -80,7 +80,7 @@ vsFloatImage::~vsFloatImage()
 		m_pbo = 0;
 		m_sync = 0;
 	}
-
+	vsDeleteArray(m_pixel);
 }
 
 void
