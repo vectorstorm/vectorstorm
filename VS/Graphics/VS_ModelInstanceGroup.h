@@ -58,6 +58,7 @@ public:
 
 	// find the bounds of our matrix translations.
 	void CalculateMatrixBounds( vsBox3D& out );
+	void CalculateBounds( vsBox3D& out );
 
 	virtual void Draw( vsRenderQueue *queue );
 };
@@ -83,6 +84,7 @@ public:
 
 	// find the bounds of our matrix translations.
 	void CalculateMatrixBounds( vsBox3D& out );
+	void CalculateBounds( vsBox3D& out );
 
 	virtual void Draw( vsRenderQueue *queue );
 };

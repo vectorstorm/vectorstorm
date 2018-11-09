@@ -210,6 +210,21 @@ vsModelInstanceLodGroup::CalculateMatrixBounds( vsBox3D& out )
 		out.ExpandToInclude( m_matrix[i].w );
 }
 
+void
+vsModelInstanceLodGroup::CalculateBounds( vsBox3D& out )
+{
+	vsBox3D box = GetModel()->GetBoundingBox();
+	out.Clear();
+	for ( int i = 0; i < m_matrix.ItemCount(); i++ )
+	{
+		for ( int c = 0; c < 8; c++ )
+		{
+			vsVector3D pos = m_matrix[i].ApplyTo( box.Corner(c) );
+			out.ExpandToInclude( pos );
+		}
+	}
+}
+
 vsModelInstanceGroup::vsModelInstanceGroup( vsModel *model ):
 	m_model( model ),
 	m_lod( model->GetLodCount() )
@@ -319,6 +334,19 @@ vsModelInstanceGroup::CalculateMatrixBounds( vsBox3D& out )
 	{
 		m_lod[i]->CalculateMatrixBounds(a);
 		out.ExpandToInclude(a);
+	}
+}
+
+void
+vsModelInstanceGroup::CalculateBounds( vsBox3D& out )
+{
+	out.Clear();
+	vsBox3D o;
+
+	for ( int i = 0; i < m_lod.ItemCount(); i++ )
+	{
+		m_lod[i]->CalculateBounds(o);
+		out.ExpandToInclude(o);
 	}
 }
 
