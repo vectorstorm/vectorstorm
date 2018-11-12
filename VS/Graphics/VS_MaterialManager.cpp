@@ -32,6 +32,10 @@ vsMaterialManager::LoadMaterial( const vsString &name )
 void
 vsMaterialManager::ReloadAll()
 {
+	// get rid of any materials we don't need any more, so we're not reloading
+	// anything we don't actually need right now.
+	CollectGarbage();
+
 	for ( int b = 0; b < m_bucketCount; b++ )
 	{
 		vsCacheEntry< vsMaterialInternal > *bucket = &m_bucket[b];
