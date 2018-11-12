@@ -87,8 +87,6 @@ template<class T> T* GetNextInstance( T* currentInstance )
 template<class T>
 vsAutomaticInstanceList<T>::vsAutomaticInstanceList()
 {
-	//const size_t offset = (size_t)(T*)1 - (size_t)(vsAutomaticInstanceList<T>*)(T*)1;
-	//T *thisT = (T*)((size_t)this + offset);
 	T *thisT = (T*)this;
 
 	m_nextInstance = NULL;
@@ -112,8 +110,9 @@ template<class T>
 vsAutomaticInstanceList<T>::vsAutomaticInstanceList( const vsAutomaticInstanceList<T>
 												   &otherObject )
 {
-	const size_t offset = (size_t)(T*)1 - (size_t)(vsAutomaticInstanceList<T>*)(T*)1;
-	T *thisT = (T*)((size_t)this + offset);
+	// const size_t offset = (size_t)(T*)1 - (size_t)(vsAutomaticInstanceList<T>*)(T*)1;
+	// T *thisT = (T*)((size_t)this + offset);
+	T *thisT = (T*)this;
 
 	m_nextInstance = NULL;
 	m_previousInstance = s_lastInstance;
@@ -147,8 +146,7 @@ vsAutomaticInstanceList<T>::operator =( const vsAutomaticInstanceList<T> &otherO
 template<class T>
 vsAutomaticInstanceList<T>::~vsAutomaticInstanceList()
 {
-	const size_t offset = (size_t)(T*)1 - (size_t)(vsAutomaticInstanceList<T>*)(T*)1;
-	T *thisT = (T*)((size_t)this + offset);
+	T *thisT = (T*)this;
 
 	// must be at least one instance if *we're* destructing!
 	vsAssert( s_firstInstance != NULL, "No instance??" );
