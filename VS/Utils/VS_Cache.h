@@ -19,19 +19,23 @@ class vsResource
 {
 	vsString		m_name;
 	int				m_refCount;
+	bool			m_transient; // if true, we get destroyed immediately if our refcount reaches 0.
 
 public:
 
-						vsResource( const vsString &name ) { m_name = name; m_refCount = 0; }
+						vsResource( const vsString &name ) { m_name = name; m_refCount = 0; m_transient = false; }
 	virtual				~vsResource()
 	{
 		if ( GetReferenceCount() != 0 )
 			vsLog("Error:  %d references to %s still exist.", GetReferenceCount(), m_name.c_str());
 	}
 
+	void				SetTransient() { m_transient = true; }
+
 	void				AddReference()	{ m_refCount++; }
 	void				ReleaseReference()	{ m_refCount--; }
-	int					GetReferenceCount() { return m_refCount; }
+	int					GetReferenceCount() const { return m_refCount; }
+	bool				IsTransient() const { return m_transient; }
 
 	const vsString &	GetName() const { return m_name; }
 };
@@ -214,6 +218,12 @@ public:
 		if ( ce )
 		{
 			ce->ReleaseReference();
+
+			if ( ce->m_item->IsTransient() &&
+					ce->m_item->GetReferenceCount() == 0 )
+			{
+				Remove( object );
+			}
 		}
 	}
 

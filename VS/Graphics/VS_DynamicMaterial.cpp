@@ -14,6 +14,7 @@
 vsDynamicMaterial::vsDynamicMaterial():
 	vsMaterial()
 {
+	GetResource()->SetTransient();	// dynamic materials are transient;  once the material is destroyed, its internal storage should also be destroyed.
 }
 
 void
