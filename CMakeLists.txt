@@ -31,6 +31,12 @@ endif()
 find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED
 	PATH c:/src/buildzone/include)
 
+if(UNIX OR MINGW)
+	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+		set(CMAKE_CXX_FLAGS "-march=x86-64 -msse -msse2 ${CMAKE_CXX_FLAGS}")
+	endif()
+endif()
+
 if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
@@ -446,7 +452,7 @@ include_directories(
 if ((CMAKE_COMPILER_IS_GNUCXX) OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
 	set(CMAKE_CXX_FLAGS_DEBUG "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_DEBUG}" )
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-include VS_Prefix_Debug.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-	set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -mfpmath=sse -msse2 ${CMAKE_CXX_FLAGS_RELEASE}" )
+	set(CMAKE_CXX_FLAGS_RELEASE "-include VS_Prefix.h -Wall -Werror ${CMAKE_CXX_FLAGS_RELEASE}" )
 
 	if ( MINGW AND BACKTRACE_SUPPORTED )
 		set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_DEBUG}" )
@@ -523,4 +529,5 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND UNIX)
 	# Optimise matrix maths, even if we're in a debug build.  I don't actually
 	# need to debug that, and fast matrix math is always nice!
 	set_source_files_properties(VS/Math/VS_Matrix.cpp PROPERTIES COMPILE_FLAGS -O3)
+	set_source_files_properties(VS/Math/VS_Quaternion.cpp PROPERTIES COMPILE_FLAGS -O3)
 endif ()
