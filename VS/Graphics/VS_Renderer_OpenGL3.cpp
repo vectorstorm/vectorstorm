@@ -712,9 +712,8 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 		int nowWidth, nowHeight;
 		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 
+		vsLog("SDL window resize event showing window size as %dx%d, SDL_GetWindowSize() shows size as %dx%d", width, height, nowWidth, nowHeight);
 		vsAssert( width == nowWidth && height == nowHeight, "Whaa?" );
-
-		vsLog("Notified of %dx%d, have %dx%d", width, height, nowWidth, nowHeight);
 
 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
