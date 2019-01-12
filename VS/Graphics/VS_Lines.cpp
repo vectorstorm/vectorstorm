@@ -333,7 +333,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::PCT *va = new vsRenderBuffer::PCT[vertexCount];
+	vsRenderBuffer::PCNT *va = new vsRenderBuffer::PCNT[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -410,8 +410,12 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 			vertexPosition = point[midI] - offsetPre * halfWidth;
 		}
 
+		dirOfTravel = (dirOfTravelPre + dirOfTravelPost);
+		dirOfTravel.Normalise();
+
 		va[vertexCursor].position = vertexPosition;
 		va[vertexCursor].texel.Set( 0.0, distance / texScale );
+		va[vertexCursor].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( offsetPre != offsetPost )
 		{
@@ -434,6 +438,8 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 
 		va[vertexCursor+1].position = vertexPosition;
 		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
+		va[vertexCursor+1].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
+
 		distance += (point[postI] - point[midI]).Length();
 
 		if ( color )
@@ -554,7 +560,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::PCT *va = new vsRenderBuffer::PCT[vertexCount];
+	vsRenderBuffer::PCNT *va = new vsRenderBuffer::PCNT[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
@@ -596,6 +602,9 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 		dirOfTravelPre.NormaliseSafe();
 		dirOfTravelPost.NormaliseSafe();
 
+		dirOfTravel = (dirOfTravelPre + dirOfTravelPost);
+		dirOfTravel.Normalise();
+
 		vsVector3D up(0.f,1.f,0.f);
 
 		vsVector3D offsetPre = dirOfTravelPre.Cross(up);
@@ -625,6 +634,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 		va[vertexCursor].position = vertexPosition;
 		va[vertexCursor].texel.Set( 0.0, distance );
+		va[vertexCursor].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( offsetPre != offsetPost )
 		{
@@ -647,6 +657,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor 
 
 		va[vertexCursor+1].position = vertexPosition;
 		va[vertexCursor+1].texel.Set( width, distance );
+		va[vertexCursor+1].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( color )
 		{
