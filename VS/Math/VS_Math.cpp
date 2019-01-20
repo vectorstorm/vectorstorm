@@ -175,16 +175,18 @@ float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3
 
 	float timeA, timeB;
 
+	vsVector3D StartAToStartB = startB-startA;
+
 	if ( perp == vsVector3D::Zero )
 	{
 		// since our line segments are parallel, let's just
-		timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp), 0.f, 1.f );
-		timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp), 0.f, 1.f );
+		timeA = timeB = 0.0f;
 	}
 	else
 	{
-		timeA = vsClamp( (startB-startA).Cross(deltaB).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
-		timeB = vsClamp( (startB-startA).Cross(deltaA).Dot(perp) / perp.Dot(perp), 0.f, 1.f );
+		float perpDotPerp = perp.Dot(perp);
+		timeA = vsClamp( StartAToStartB.Cross(deltaB).Dot(perp) / perpDotPerp, 0.f, 1.f );
+		timeB = vsClamp( StartAToStartB.Cross(deltaA).Dot(perp) / perpDotPerp, 0.f, 1.f );
 	}
 
 	vsVector3D closestPointA = startA + timeA * deltaA;
