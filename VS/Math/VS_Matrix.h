@@ -58,7 +58,6 @@ public:
 	vsVector4D		w;
 
 	vsMatrix4x4();
-	vsMatrix4x4(const vsMatrix4x4& other): x(other.x), y(other.y), z(other.z), w(other.w) {}
 
 	vsMatrix4x4( const vsVector3D &forward, const vsVector3D &up );	// from a forward and an up vector, we can create a rotation matrix!
 	vsMatrix4x4( const vsVector4D &x, const vsVector4D &y, const vsVector4D &z, const vsVector4D &t );
