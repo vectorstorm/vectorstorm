@@ -427,7 +427,7 @@ vsMatrix4x4::Inverse() const
 	temp.x.z= m21 * m32 - m22 * m31;
 
 	/* Compute determinant as early as possible using these cofactors. */
-	register float det;
+	float det;
 	det= m11 * temp.x.x + m12 * temp.x.y + m13 * temp.x.z;
 
 	/* Run singularity test. */
@@ -438,7 +438,7 @@ vsMatrix4x4::Inverse() const
 	}
 
 	float d12, d13, d23, d24, d34, d41;
-	register float im11, im12, im13, im14;
+	float im11, im12, im13, im14;
 
 	det= 1.0f / det;
 
