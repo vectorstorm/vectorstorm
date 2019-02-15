@@ -60,6 +60,13 @@ struct vsGlyph
 	float		xAdvance;         // how far do we need to move our cursor, after drawing this glyph?
 };
 
+struct vsKerning
+{
+	uint32_t glyphA;
+	uint32_t glyphB;
+	float xAdvance;
+};
+
 class vsFontSize
 {
 	vsRenderBuffer * m_ptBuffer;
@@ -68,6 +75,9 @@ class vsFontSize
 	int              m_glyphCount;
 	float            m_size;
 	float            m_lineSpacing;
+
+	vsKerning* m_kerning;
+	int m_kerningCount;
 
 	vsRenderBuffer   m_glyphTriangleList;
 
@@ -82,8 +92,17 @@ public:
 
 	float			GetNativeSize() { return m_size; }
 
-	float			GetCharacterAdvance(uint32_t letter, float size);
+	// GetCharacterWidth() returns how wide this character physically is.  For
+	// example, a 'T' is quite wide.
 	float			GetCharacterWidth(uint32_t letter, float size);
+	// GetCharacterAdvance() returns the generic amount we'd move for this glyph.
+	// This is usually pretty similar to the width value, above.
+	float			GetCharacterAdvance(uint32_t letter, float size);
+	// GetCharacterKerning() returns an adjustment to add to the generic amount
+	// we'd move for this glyph, based upon the NEXT glyph.  For example, if we're
+	// drawing 'To', then we might have a much lower offset, since the 'o' can
+	// fit into the space underneath the cross-bar of the T.
+	float			GetCharacterKerning( uint32_t pChar, uint32_t nChar, float size );
 	float			GetStringWidth(const vsString &string, float size);
 
 	friend class vsFontRenderer;

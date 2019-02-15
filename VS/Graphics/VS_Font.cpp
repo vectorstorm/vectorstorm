@@ -27,7 +27,9 @@
 
 vsFontSize::vsFontSize( const vsString &filename ):
 	m_glyph(NULL),
-	m_glyphCount(0)
+	m_glyphCount(0),
+	m_kerning(NULL),
+	m_kerningCount(0)
 {
 	uint16_t indices[6] = { 0, 2, 1, 1, 2, 3 };
 	m_glyphTriangleList.SetArray( indices, 6 );
@@ -47,6 +49,7 @@ vsFontSize::vsFontSize( const vsString &filename ):
 vsFontSize::~vsFontSize()
 {
 	vsDeleteArray( m_glyph );
+	vsDeleteArray( m_kerning );
 	vsDelete( m_material );
 	vsDelete( m_ptBuffer );
 }
@@ -211,7 +214,8 @@ vsFontSize::LoadBMFont( vsFile *file )
 {
 	vsFile &fontData = *file;
 	vsRecord r;
-	int i = 0;
+	int i = 0; // incrementer for glyphs
+	int ki = 0; // incrementer for kerning information
 
 	float width = 512;
 	float height = 512;
@@ -283,6 +287,18 @@ vsFontSize::LoadBMFont( vsFile *file )
 			}
 			i++;
 		}
+		else if ( r.GetLabel().AsString() == "kernings" )
+		{
+			m_kerningCount = GetBMFontValue(&r, "count")->AsInteger();
+			m_kerning = new vsKerning[m_kerningCount];
+		}
+		else if ( r.GetLabel().AsString() == "kerning" )
+		{
+			m_kerning[ki].glyphA = GetBMFontValue_Integer(&r, "first");
+			m_kerning[ki].glyphB = GetBMFontValue_Integer(&r, "second");
+			m_kerning[ki].xAdvance = GetBMFontValue_Integer(&r, "amount") / m_size;
+			ki++;
+		}
 	}
 
 	m_ptBuffer = new vsRenderBuffer;
@@ -334,7 +350,10 @@ vsFontSize::GetStringWidth( const vsString &string, float size )
 		if ( i == length-1 )
 			width += GetCharacterWidth( string[i], size ); // last character, use the full character width
 		else
+		{
 			width += GetCharacterAdvance( string[i], size ); // other characters, just use the distance we advance
+			// width += GetCharacterKerning( string[i], string[i+1], size ); // also, adjust for kerning
+		}
 	}
 	return width;
 }
@@ -367,6 +386,20 @@ vsFontSize::GetCharacterAdvance( uint32_t c, float size )
 	}
 
 	return width * size;
+}
+
+float
+vsFontSize::GetCharacterKerning( uint32_t pChar, uint32_t nChar, float size )
+{
+	// TODO:  Make less absurd than this linear search
+	for ( int i = 0; i < m_kerningCount; i++ )
+	{
+		if ( m_kerning[i].glyphA == pChar && m_kerning[i].glyphB == nChar )
+		{
+			return m_kerning[i].xAdvance * size;
+		}
+	}
+	return 0.f;
 }
 
 vsFont::vsFont(const vsString& filename)

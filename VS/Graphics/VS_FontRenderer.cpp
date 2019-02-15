@@ -567,12 +567,13 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	const char* w = string;
 	size_t startGlyphId = nextGlyphId;
 	size_t endGlyphId = nextGlyphId + len;
-	float fontSize = m_texSize;
+	vsFontSize *fontSize = m_font->Size(m_texSize);
+	float sizeScale = m_texSize / fontSize->GetNativeSize();
 
 	for ( size_t glyphId = startGlyphId; glyphId < endGlyphId; glyphId++ )
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
-		vsGlyph *g = m_font->Size(fontSize)->FindGlyphForCharacter( cp );
+		vsGlyph *g = fontSize->FindGlyphForCharacter( cp );
 
 		if ( cp == '\r' )
 			continue;
@@ -585,10 +586,10 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 
-			g = m_font->Size(fontSize)->FindGlyphForCharacter(L'□');
+			g = fontSize->FindGlyphForCharacter(L'□');
 
 			if ( !g )
-				g = m_font->Size(fontSize)->FindGlyphForCharacter( '?' );
+				g = fontSize->FindGlyphForCharacter( '?' );
 		}
 		if ( g )
 		{
@@ -649,6 +650,14 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			constructor->tlIndex += 6;
 
 			offset.x += g->xAdvance;
+
+			if ( glyphId < endGlyphId-1 )
+			{
+				const char* stringEnd = string + strlen(string);
+				uint32_t ncp = utf8::peek_next(w, stringEnd);
+				offset.x += fontSize->GetCharacterKerning( cp, ncp, sizeScale );
+			}
+
 			nextGlyphId++;
 			glyphCount++;
 		}
@@ -674,11 +683,13 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 void
 vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType j, const vsVector2D &offset_in)
 {
+	vsFontSize *fontSize = m_font->Size(size);
+	float sizeScale = size / fontSize->GetNativeSize();
 	vsVector2D offset = offset_in;
 
 	if ( j != Justification_Left && j != Justification_TopLeft && j != Justification_BottomLeft )
 	{
-		float width = m_font->Size(size)->GetStringWidth(string, size);
+		float width = fontSize->GetStringWidth(string, size);
 
 		if ( j == Justification_Right || j == Justification_TopRight || j == Justification_BottomRight )
 			offset.x = -width;
@@ -698,14 +709,15 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	}
 	transform.SetScale( vsVector2D(size,ysize) );
 	list->PushTransform(transform);
-	list->BindBuffer( m_font->Size(size)->m_ptBuffer );
+	list->BindBuffer( fontSize->m_ptBuffer );
 
-	size_t len = utf8::distance(string, string + strlen(string));
+	const char* stringEnd = string + strlen(string);
+	size_t len = utf8::distance(string, stringEnd);
 	const char* w = string;
 	for ( size_t i = 0; i < len; i++ )
 	{
-		uint32_t cp = utf8::next(w, string + strlen(string));
-		vsGlyph *g = m_font->Size(size)->FindGlyphForCharacter( cp );
+		uint32_t cp = utf8::next(w, stringEnd);
+		vsGlyph *g = fontSize->FindGlyphForCharacter( cp );
 
 		if ( !g )
 		{
@@ -714,10 +726,10 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 			// check whether we have a "missing symbol" glyph.
 
-			g = m_font->Size(size)->FindGlyphForCharacter(L'□');
+			g = fontSize->FindGlyphForCharacter(L'□');
 
 			if ( !g )
-				g = m_font->Size(size)->FindGlyphForCharacter( '?' );
+				g = fontSize->FindGlyphForCharacter( '?' );
 		}
 
 		if ( g )
@@ -725,7 +737,14 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 			list->PushTranslation(offset - g->baseline);
 			list->TriangleStripBuffer( &g->tsBuffer );
 			list->PopTransform();
+
 			offset.x += g->xAdvance;
+
+			if ( i < len-1 )
+			{
+				uint32_t ncp = utf8::peek_next(w, stringEnd);
+				offset.x += fontSize->GetCharacterKerning( cp, ncp, sizeScale );
+			}
 		}
 	}
 
