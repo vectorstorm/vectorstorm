@@ -75,6 +75,8 @@ class vsFontSize
 	int              m_glyphCount;
 	float            m_size;
 	float            m_lineSpacing;
+	float            m_baseline; // how far down the 'baseline' of this font is.
+	float            m_capHeight; // how tall is a standard capital letter?
 
 	vsKerning* m_kerning;
 	int m_kerningCount;
@@ -104,6 +106,7 @@ public:
 	// fit into the space underneath the cross-bar of the T.
 	float			GetCharacterKerning( uint32_t pChar, uint32_t nChar, float size );
 	float			GetStringWidth(const vsString &string, float size);
+	float			GetCapHeight(float size) const { return m_capHeight * size; }
 
 	friend class vsFontRenderer;
 };

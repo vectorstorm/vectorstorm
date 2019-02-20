@@ -149,12 +149,19 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 		// If we're justifying the top of our text to this point, we need to
 		// move our text up far enough so that the TOP of the FIRST LINE
 		// of the wrapped text sits here.
-		baseOffsetDown = totalHeight;
+		if ( m_wrappedLine.ItemCount() == 1 ) // only one line, just offset down by cap height
+			baseOffsetDown = m_font->Size(size)->GetCapHeight(1.f);
+		else
+			baseOffsetDown = totalHeight;
+
 	}
 	else
 	{
 		// We're centering the MIDDLE of our text to this point.
-		baseOffsetDown = totalHeight * 0.5f;
+		if ( m_wrappedLine.ItemCount() == 1 ) // only one line, just offset down by cap height
+			baseOffsetDown = m_font->Size(size)->GetCapHeight(1.f) * 0.5f - (1.f/size);
+		else
+			baseOffsetDown = totalHeight * 0.5f;
 	}
 	float topLinePosition = baseOffsetDown - totalHeight + lineHeight;
 

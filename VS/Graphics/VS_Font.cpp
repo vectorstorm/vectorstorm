@@ -28,6 +28,8 @@
 vsFontSize::vsFontSize( const vsString &filename ):
 	m_glyph(NULL),
 	m_glyphCount(0),
+	m_baseline(1.f),
+	m_capHeight(1.f),
 	m_kerning(NULL),
 	m_kerningCount(0)
 {
@@ -233,6 +235,7 @@ vsFontSize::LoadBMFont( vsFile *file )
 			width = (float)GetBMFontValue_Integer(&r, "scaleW");
 			height = (float)GetBMFontValue_Integer(&r, "scaleH");
 			m_lineSpacing = (GetBMFontValue_Integer(&r, "lineHeight") - m_size) / m_size;
+			m_baseline = (float)(GetBMFontValue_Integer(&r, "base")+0) / m_size;
 		}
 		else if ( r.GetLabel().AsString() == "page" )
 		{
@@ -259,13 +262,28 @@ vsFontSize::LoadBMFont( vsFile *file )
 
 			m_glyph[i].xAdvance = GetBMFontValue_Integer(&r, "xadvance") / m_size;
 
+			// EXAMPLE:
+			//     glyph height 85
+			//     yoffset 40
+			//     baseline 120
+			//
+			//     bottom of glyph is at == glyph height + yoffset == 85+40 == 125
+			//       This means that the glyph extends 5 pixels below the baseline!
+			//
+			//     height of glyph from baseline == baseline - yoffset == 120 - 40 == 80
+			//       Only 80 of the glyph's 85 pixels are above the baseline!
+
+			if ( m_glyph[i].glyph == 'H' ) // assume we always have an 'H'
+				m_capHeight = m_baseline + m_glyph[i].baseline.y;
+
 			{
-				// my original code was measuring from the bottom --
-				// BMFont format measures from the top.  So we need to
-				// lift our characters up by one character-height in order
-				// to draw in the same position as the old font code.
+				// I like to lay out text such that the baseline is at 0.
+				// This raised glyph geometry compensates for how BMFont
+				// wants to put the baseline at m_baseline pixels BELOW 0.
+				// With this, we can render in a BMFont-approved way, and
+				// still wind up with our glyphs visibly appearing above 0.
 				float l = 0.f;
-				float t = -1.f;
+				float t = -m_baseline;//-1.f;//-1.f;
 				float w = glyphWidth;
 				float h = glyphHeight;
 
