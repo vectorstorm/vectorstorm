@@ -472,6 +472,15 @@ vsFontRenderer::GetStringDimensions( const vsString& string )
 #endif
 }
 
+int
+vsFontRenderer::GetLineCount( const vsString& string )
+{
+	float size;
+	float topLinePosition;
+	WrapStringSizeTop(string, &size, &topLinePosition);
+	return m_wrappedLine.ItemCount();
+}
+
 
 void
 vsFontRenderer::WrapLine(const vsString &string, float size)
