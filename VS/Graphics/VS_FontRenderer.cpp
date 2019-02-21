@@ -256,7 +256,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	fragment->AddBuffer( ptBuffer );
 	fragment->AddBuffer( tlBuffer );
 
-	vsDisplayList *list = new vsDisplayList(128);
+	vsDisplayList *list = new vsDisplayList(256);
 	bool doSnap = ShouldSnap( context );
 
 	list->BindBuffer( ptBuffer );
