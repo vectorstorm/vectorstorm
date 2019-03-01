@@ -72,6 +72,7 @@ vsMaterial::SetupParameters()
 		SetUniformF( "alphaRef", GetResource()->m_alphaRef );
 		SetUniformB( "fog", GetResource()->m_fog );
 		BindUniformB( "glow", &GetResource()->m_glow );
+		BindUniformF( "glowFactor", &GetResource()->m_glowFactor );
 
 	}
 }

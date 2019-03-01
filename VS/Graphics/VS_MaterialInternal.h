@@ -85,6 +85,7 @@ public:
 	float		m_alphaRef;
 	float		m_depthBiasConstant;
 	float		m_depthBiasFactor;
+	float		m_glowFactor;
 	int			m_layer;
 	StencilOp	m_stencilOp;
 	bool		m_stencilRead;

@@ -49,6 +49,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_alphaRef(0.f),
 	m_depthBiasConstant(0.f),
 	m_depthBiasFactor(0.f),
+	m_glowFactor(1.f),
 	m_layer(0),
 	m_stencilOp(StencilOp_None),
 	m_stencilRead(false),
@@ -222,6 +223,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "glow" )
 				{
 					m_glow = sr->Bool();
+				}
+				else if ( label == "glowFactor" )
+				{
+					m_glowFactor = sr->GetToken(0).AsFloat();
 				}
 				else if ( label == "preglow" )
 				{
