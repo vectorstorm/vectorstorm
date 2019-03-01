@@ -661,10 +661,10 @@ vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsC
 
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
 {
-	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,1.f), colorOverride);
+	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,1.f), vsVector2D::Zero, colorOverride);
 }
 
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset, vsColor *colorOverride )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	vsRenderBuffer::PT pt[4];
@@ -678,10 +678,10 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 	};
 	vsVector2D tex[4] =
 	{
-		vsVector2D( 0.f * texScale.x, 0.f * texScale.y),
-		vsVector2D( 1.f * texScale.x, 0.f * texScale.y),
-		vsVector2D( 0.f * texScale.x, 1.f * texScale.y),
-		vsVector2D( 1.f * texScale.x, 1.f * texScale.y)
+		vsVector2D( 0.f * texScale.x, 0.f * texScale.y) + texOffset,
+		vsVector2D( 1.f * texScale.x, 0.f * texScale.y) + texOffset,
+		vsVector2D( 0.f * texScale.x, 1.f * texScale.y) + texOffset,
+		vsVector2D( 1.f * texScale.x, 1.f * texScale.y) + texOffset
 	};
 	int ts[4] =
 	{
@@ -715,7 +715,7 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 
 vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
 {
-	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,-1.f), colorOverride);
+	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,-1.f), vsVector2D(0.f,1.f), colorOverride);
 }
 
 vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle, vsColor *colorOverride )

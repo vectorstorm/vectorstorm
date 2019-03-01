@@ -54,7 +54,7 @@ vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, v
 
 vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset = vsVector2D::Zero, vsColor *colorOverride = NULL );
 // a variant of the above which flips V coordinates.  Useful if we're going to draw this box in a 3D context, where Y is inverted.
 vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
 vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = NULL );
