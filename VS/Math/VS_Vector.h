@@ -35,6 +35,8 @@ public:
 	vsVector2D  operator-( const vsVector2D &b ) const {return vsVector2D(x-b.x, y-b.y);}
 	vsVector2D  operator*( float b ) const {return vsVector2D(x*b,y*b);}
 	vsVector2D  operator*=( float b ) {x*=b; y*=b; return *this;}
+	vsVector2D  operator/( float b ) const {return vsVector2D(x/b,y/b);}
+	vsVector2D  operator/=( float b ) {x/=b; y/=b; return *this;}
 	vsVector2D  operator+=( const vsVector2D &b ) {*this = *this+b; return *this; }
 	vsVector2D  operator-=( const vsVector2D &b ) {*this = *this-b; return *this; }
 
@@ -81,6 +83,8 @@ public:
 	inline vsVector3D  operator-( const vsVector3D &b ) const {return vsVector3D(x-b.x, y-b.y, z-b.z);}
 	inline vsVector3D  operator*( float b ) const {return vsVector3D(x*b,y*b,z*b);}
 	inline vsVector3D&  operator*=( float b ) {x*=b; y*=b; z*=b; return *this;}
+	inline vsVector3D  operator/( float b ) const {return vsVector3D(x/b,y/b,z/b);}
+	inline vsVector3D&  operator/=( float b ) {x/=b; y/=b; z/=b; return *this;}
 	inline vsVector3D&  operator+=( const vsVector3D &b ) {x+=b.x; y+=b.y; z+=b.z; return *this; }
 	inline vsVector3D&  operator-=( const vsVector3D &b ) {x-=b.x; y-=b.y; z-=b.z; return *this; }
 
@@ -142,6 +146,8 @@ public:
 	vsVector4D  operator-( const vsVector4D &b ) const {return vsVector4D(x-b.x, y-b.y, z-b.z, w-b.w);}
 	vsVector4D  operator*( float b ) const {return vsVector4D(x*b,y*b,z*b,w*b);}
 	vsVector4D  operator*=( float b ) {x*=b; y*=b; z*=b; w*=b; return *this;}
+	vsVector4D  operator/( float b ) const {return vsVector4D(x/b,y/b,z/b,w/b);}
+	vsVector4D  operator/=( float b ) {x/=b; y/=b; z/=b; w/=b; return *this;}
 	vsVector4D  operator+=( const vsVector4D &b ) {*this = *this+b; return *this; }
 	vsVector4D  operator-=( const vsVector4D &b ) {*this = *this-b; return *this; }
 	float &		operator[]( int n );
