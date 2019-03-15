@@ -1193,3 +1193,153 @@ void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *poin
 	}
 }
 
+vsLineBuilder2D::vsLineBuilder2D()
+{
+}
+
+vsLineBuilder2D::touches
+vsLineBuilder2D::touchesStripId( const vsVector2D& v )
+{
+	vsLineBuilder2D::touches result;
+	result.stripId = -1;
+	result.end = End_Start;
+
+	for ( int i = 0; i < m_strip.ItemCount(); i++ )
+	{
+		if ( m_strip[i].loop ) // if we're a closed loop, don't match against it.
+			continue;
+
+		if ( *m_strip[i].vert.Front() == v )
+		{
+			result.stripId = i;
+			result.end = End_Start;
+			break;
+		}
+		if ( *m_strip[i].vert.Back() == v )
+		{
+			result.stripId = i;
+			result.end = End_End;
+			break;
+		}
+	}
+
+	return result;
+}
+
+void
+vsLineBuilder2D::AddLineSegment( const vsVector2D& from, const vsVector2D& to )
+{
+	if ( from == to ) // no zero-length lines!
+		return;
+
+	// find a strip which touches our start and end
+
+	touches fromTouch = touchesStripId(from);
+	touches toTouch = touchesStripId(to);
+
+	// Okay.  Now we have four cases:
+	//
+	// 1.  Neither point touches an existing strip.
+	if ( fromTouch.stripId < 0 && toTouch.stripId < 0 )
+	{
+		strip s;
+		s.vert.AddItem(from);
+		s.vert.AddItem(to);
+		m_strip.AddItem(s);
+	}
+	// 2. Both points touch THE SAME STRIP
+	else if ( fromTouch.stripId == toTouch.stripId )
+	{
+		// we should just be closing this strip?
+		vsAssert( fromTouch.end != toTouch.end, "vsLineBuilder2D::AddLineSegment confusion" );
+
+		m_strip[fromTouch.stripId].loop = true;
+	}
+	// 3. Both points touch DIFFERENT STRIPS
+	else if ( fromTouch.stripId >= 0 && toTouch.stripId >= 0 )
+	{
+		// Okay.  These strips are now going to be linked up, using this new
+		// line segment!  We're going to join the LATER strip onto the EARLIER.
+
+		int laterStripId = fromTouch.stripId;
+		bool addBackward = (fromTouch.end == End_End);
+		if ( fromTouch.stripId < toTouch.stripId ) // whoops!  Let's actually do this from the other end
+		{
+			laterStripId = toTouch.stripId;
+			addBackward = (toTouch.end == End_End);
+		}
+		strip held = m_strip[laterStripId];
+		//ugly!
+		vsArrayIterator<strip> it = m_strip.Begin();
+		for( int i = 0; i < laterStripId; i++ )
+			it++;
+		m_strip.RemoveItem( it );
+
+		// Now, we're going to add our joining segment, and then the segments
+		// from the strip.
+
+		AddLineSegment( from, to );
+
+		// And now, let's add everything from the 'held' strip.
+
+		if ( addBackward )
+		{
+			for ( int i = held.vert.ItemCount()-2; i >= 0; i-- )
+			{
+				AddLineSegment( held.vert[i], held.vert[i+1] );
+			}
+		}
+		else
+		{
+			for ( int i = 0; i < held.vert.ItemCount()-1; i++ )
+			{
+				AddLineSegment( held.vert[i], held.vert[i+1] );
+			}
+		}
+
+		// And we're merged!
+	}
+	// 3. One or the other touches an existing strip
+	else
+	{
+		if ( fromTouch.stripId >= 0 )
+		{
+			AddVertToStrip( to, fromTouch.stripId, fromTouch.end );
+		}
+		else if ( toTouch.stripId >= 0 )
+		{
+			AddVertToStrip( from, toTouch.stripId, toTouch.end );
+		}
+	}
+
+}
+
+void
+vsLineBuilder2D::AddVertToStrip( const vsVector2D& v, int stripId, End whichEnd )
+{
+	if ( whichEnd == End_Start )
+	{
+		// Ew.  We've got to prepend this.
+		m_strip[stripId].vert.SetArraySize( m_strip[stripId].vert.ItemCount()+1 );
+		for ( int i = m_strip[stripId].vert.ItemCount()-1; i > 0; i-- )
+			m_strip[stripId].vert[i] = m_strip[stripId].vert[i-1];
+
+		m_strip[stripId].vert[0] = v;
+	}
+	else
+	{
+		m_strip[stripId].vert.AddItem(v);
+	}
+}
+
+vsFragment *
+vsLineBuilder2D::Bake( const vsString& material, float width )
+{
+	if ( m_strip.ItemCount() == 1 )
+	{
+		return vsLineStrip2D( material, &m_strip[0].vert[0], NULL, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
+	}
+	return vsLineStrip2D( material, &m_strip[0].vert[0], NULL, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
+	return NULL;
+}
+

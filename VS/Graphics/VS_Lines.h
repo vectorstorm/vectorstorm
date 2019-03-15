@@ -15,6 +15,38 @@
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Model.h"
 
+class vsLineBuilder2D
+{
+	enum End
+	{
+		End_Start,
+		End_End
+	};
+	class strip
+	{
+	public:
+		vsArray<vsVector2D> vert;
+		bool loop;
+		strip(): loop(false) {}
+	};
+	vsArray<strip> m_strip;
+
+	struct touches
+	{
+		int stripId;
+		End end;
+	};
+	touches touchesStripId( const vsVector2D& v );
+	void AddVertToStrip( const vsVector2D& v, int stripId, End whichEnd );
+
+public:
+	vsLineBuilder2D();
+
+	void AddLineSegment( const vsVector2D& from, const vsVector2D& to );
+
+	vsFragment *Bake( const vsString& material, float width );
+};
+
 class vsMaterial;
 class vsRenderQueue;
 
