@@ -89,3 +89,9 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 	}
 }
 
+void vsFailedAssertF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
+{
+	vsString msgFormatted = fmt::sprintf(msg,args);
+	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
+}
+
