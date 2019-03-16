@@ -10,6 +10,8 @@
 #ifndef VS_HASHTABLE_H
 #define VS_HASHTABLE_H
 
+#include "VS/Utils/VS_Debug.h"
+#include "VS/Math/VS_Math.h"
 
 uint32_t vsCalculateHash(const char * data, uint32_t len);
 
