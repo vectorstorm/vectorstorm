@@ -29,7 +29,7 @@ vsSpline1D::Set( float start, float startVelocity, float end, float endVelocity 
 }
 
 float
-vsSpline1D::PositionAtTime( float t )
+vsSpline1D::PositionAtTime( float t ) const
 {
 	float tSquared = t * t;
 	float tCubed = tSquared * t;
@@ -49,7 +49,7 @@ vsSpline1D::PositionAtTime( float t )
 }
 
 float
-vsSpline1D::VelocityAtTime( float t )
+vsSpline1D::VelocityAtTime( float t ) const
 {
 	float tSquared = t * t;
 
@@ -65,6 +65,22 @@ vsSpline1D::VelocityAtTime( float t )
 		(d * m_endVelocity);
 
 	return result;
+}
+
+vsSpline1D
+vsSpline1D::Slice( float t1, float t2 ) const
+{
+	vsAssertF( t1 >= 0.f && t1 <= 1.f, "t1 value of %f is outside the range [0..1]!", t1 );
+	vsAssertF( t2 >= 0.f && t2 <= 1.f, "t2 value of %f is outside the range [0..1]!", t1 );
+
+	float newDuration = (t2 - t1);
+	float velocityConversion = newDuration;
+
+	vsSpline1D segment(
+			PositionAtTime(t1), VelocityAtTime(t1) * velocityConversion,
+			PositionAtTime(t2), VelocityAtTime(t2) * velocityConversion
+			);
+	return segment;
 }
 
 vsSpline2D::vsSpline2D()
@@ -87,7 +103,7 @@ vsSpline2D::Set( const vsVector2D &start, const vsVector2D &startVelocity, const
 }
 
 vsVector2D
-vsSpline2D::PositionAtTime( float t )
+vsSpline2D::PositionAtTime( float t ) const
 {
 	float tSquared = t * t;
 	float tCubed = tSquared * t;
@@ -107,7 +123,7 @@ vsSpline2D::PositionAtTime( float t )
 }
 
 vsVector2D
-vsSpline2D::VelocityAtTime( float t )
+vsSpline2D::VelocityAtTime( float t ) const
 {
 	float tSquared = t * t;
 
@@ -123,6 +139,22 @@ vsSpline2D::VelocityAtTime( float t )
 		(d * m_endVelocity);
 
 	return result;
+}
+
+vsSpline2D
+vsSpline2D::Slice( float t1, float t2 ) const
+{
+	vsAssertF( t1 >= 0.f && t1 <= 1.f, "t1 value of %f is outside the range [0..1]!", t1 );
+	vsAssertF( t2 >= 0.f && t2 <= 1.f, "t2 value of %f is outside the range [0..1]!", t1 );
+
+	float newDuration = (t2 - t1);
+	float velocityConversion = newDuration;
+
+	vsSpline2D segment(
+			PositionAtTime(t1), VelocityAtTime(t1) * velocityConversion,
+			PositionAtTime(t2), VelocityAtTime(t2) * velocityConversion
+			);
+	return segment;
 }
 
 vsSpline3D::vsSpline3D()
@@ -182,7 +214,7 @@ vsSpline3D::VelocityAtTime( float t ) const
 }
 
 float
-vsSpline3D::ClosestTimeTo( const vsVector3D& position )
+vsSpline3D::ClosestTimeTo( const vsVector3D& position ) const
 {
 	//lastBestT is a composite value;
 	//the whole part is the "before" knot, and the fraction
@@ -211,13 +243,13 @@ vsSpline3D::ClosestTimeTo( const vsVector3D& position )
 	return lastBestT;
 }
 vsVector3D
-vsSpline3D::ClosestPointTo( const vsVector3D& position )
+vsSpline3D::ClosestPointTo( const vsVector3D& position ) const
 {
 	return PositionAtTime( ClosestTimeTo(position) );
 }
 
 float
-vsSpline3D::Length()
+vsSpline3D::Length() const
 {
 	// let's take 100 samples, and take the linear distance.
 	vsVector3D cursor = m_start;
@@ -234,7 +266,7 @@ vsSpline3D::Length()
 }
 
 float
-vsSpline3D::TimeAtLength(float target)
+vsSpline3D::TimeAtLength(float target) const
 {
 	// let's take 100 samples, and take the linear distance.
 	float distance = 0.f;
@@ -258,6 +290,22 @@ vsSpline3D::TimeAtLength(float target)
 		timeCursor = nextTime;
 	}
 	return timeCursor;
+}
+
+vsSpline3D
+vsSpline3D::Slice( float t1, float t2 ) const
+{
+	vsAssertF( t1 >= 0.f && t1 <= 1.f, "t1 value of %f is outside the range [0..1]!", t1 );
+	vsAssertF( t2 >= 0.f && t2 <= 1.f, "t2 value of %f is outside the range [0..1]!", t1 );
+
+	float newDuration = (t2 - t1);
+	float velocityConversion = newDuration;
+
+	vsSpline3D segment(
+			PositionAtTime(t1), VelocityAtTime(t1) * velocityConversion,
+			PositionAtTime(t2), VelocityAtTime(t2) * velocityConversion
+			);
+	return segment;
 }
 
 vsSplineColor::vsSplineColor()
@@ -315,3 +363,22 @@ vsSplineColor::VelocityAtTime( float t ) const
 
 	return result;
 }
+
+vsSplineColor
+vsSplineColor::Slice( float t1, float t2 ) const
+{
+	vsAssertF( t1 >= 0.f && t1 <= 1.f, "t1 value of %f is outside the range [0..1]!", t1 );
+	vsAssertF( t2 >= 0.f && t2 <= 1.f, "t2 value of %f is outside the range [0..1]!", t1 );
+
+	float newDuration = (t2 - t1);
+	float velocityConversion = newDuration;
+
+	vsSplineColor segment;
+	segment.m_start = ColorAtTime(t1);
+	segment.m_startVelocity = VelocityAtTime(t1) * velocityConversion;
+	segment.m_end = ColorAtTime(t2);
+	segment.m_endVelocity = VelocityAtTime(t2) * velocityConversion;
+
+	return segment;
+}
+

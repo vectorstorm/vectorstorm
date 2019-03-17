@@ -34,8 +34,9 @@ public:
     float GetStartVelocity() const { return m_startVelocity; }
     float GetEndVelocity() const { return m_endVelocity; }
 
-	float	PositionAtTime( float t );
-	float	VelocityAtTime( float t );
+	float PositionAtTime( float t ) const;
+	float VelocityAtTime( float t ) const;
+	vsSpline1D Slice( float t1, float t2 ) const;
 
 	bool operator==(const vsSpline1D& b) const
 	{
@@ -74,8 +75,9 @@ public:
     const vsVector2D & GetStartVelocity() const { return m_startVelocity; }
     const vsVector2D & GetEndVelocity() const { return m_endVelocity; }
 
-	vsVector2D	PositionAtTime( float t );
-	vsVector2D	VelocityAtTime( float t );		// TODO:  IMPLEMENT THIS!  It will be important later!
+	vsVector2D	PositionAtTime( float t ) const;
+	vsVector2D	VelocityAtTime( float t ) const;
+	vsSpline2D Slice( float t1, float t2 ) const;
 
 	bool operator==(const vsSpline2D& b) const
 	{
@@ -117,14 +119,27 @@ public:
 	vsVector3D PositionAtTime( float t ) const;
 	vsVector3D VelocityAtTime( float t ) const;
 
-	float Length();
-	float TimeAtLength(float distance);
+	float Length() const;
+	float TimeAtLength(float distance) const;
 
 	// Note:  In general, use ClosestTimeTo in preference to ClosestPointTo,
 	// as these are expensive functions, and once you have the time you can
 	// get the position or whatever else you want.
-	float ClosestTimeTo( const vsVector3D& position );
-	vsVector3D ClosestPointTo( const vsVector3D& position );
+	float ClosestTimeTo( const vsVector3D& position ) const;
+	vsVector3D ClosestPointTo( const vsVector3D& position ) const;
+
+	// Slice() carves out a segment of this spline into a new spline, exactly
+	// matching the spline position during the specified interval of this
+	// spline within the new spline's [0..1] range.  This isn't an immediately
+	// intuitive operation, so I'm putting it here as a convenience operation.
+	//
+	// Note that it IS legal to take a backward slice, with t1 > t2!
+	//
+	// The only tricky bit here is that we need to adjust velocity values,
+	// since velocity is the rate a position changes over time, and we're
+	// changing the time over which the position changes.  So.. while position
+	// values will match precisely, velocity values will not!
+	vsSpline3D Slice( float t1, float t2 ) const;
 
 	bool operator==(const vsSpline3D& b) const
 	{
@@ -166,6 +181,8 @@ public:
 
 	vsColor	ColorAtTime( float t ) const;
 	vsColor	VelocityAtTime( float t ) const;
+
+	vsSplineColor Slice( float t1, float t2 ) const;
 
 	bool operator==(const vsSplineColor& b) const
 	{
