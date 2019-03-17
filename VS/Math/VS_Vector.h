@@ -10,6 +10,8 @@
 #ifndef VS_VECTOR_H
 #define VS_VECTOR_H
 
+#include "VS/Math/VS_Math.h"
+
 class vsVector2D;
 class vsVector3D;
 class vsVector4D;
