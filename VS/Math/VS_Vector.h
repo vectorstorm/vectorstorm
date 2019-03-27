@@ -52,6 +52,8 @@ public:
 	float	SqMagnitude() const { return SqLength(); }
 	void	Normalise();
 	void	NormaliseSafe();
+	vsVector2D Normalised();
+	vsVector2D NormalisedSafe();
 
 	float	Dot( const vsVector2D &b ) const { return ( x*b.x +
 										   y*b.y ); }
@@ -98,6 +100,8 @@ public:
 	inline float	SqLength() const { return (x*x+y*y+z*z); }
 	void	Normalise();
 	void	NormaliseSafe();
+	vsVector3D Normalised();
+	vsVector3D NormalisedSafe();
 
 	vsVector3D	Cross( const vsVector3D &b ) const { return vsVector3D( y*b.z - z*b.y,
 														   z*b.x - x*b.z,
@@ -160,6 +164,7 @@ public:
 	inline float	Length() const { return vsSqrt( SqLength() ); }
 	inline float	SqLength() const { return (x*x+y*y+z*z+w*w); }
 	void	Normalise();
+	vsVector4D Normalised();
 
 	float	Dot( const vsVector4D &b ) const { return ( x*b.x +
 													   y*b.y +

@@ -58,6 +58,23 @@ vsVector2D::NormaliseSafe()
 		Normalise();
 }
 
+vsVector2D
+vsVector2D::Normalised()
+{
+	float length = Length();
+
+	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	return vsVector2D(x/length, y/length);
+}
+
+vsVector2D
+vsVector2D::NormalisedSafe()
+{
+	if ( SqLength() > 0.f )
+		return Normalised();
+	return *this;
+}
+
 vsVector3D::vsVector3D( const vsVector4D &b ):
 	x(b.x),
 	y(b.y),
@@ -82,6 +99,23 @@ vsVector3D::NormaliseSafe()
 	{
 		Normalise();
 	}
+}
+
+vsVector3D
+vsVector3D::Normalised()
+{
+	float length = Length();
+
+	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	return vsVector3D(x/length, y/length, z/length);
+}
+
+vsVector3D
+vsVector3D::NormalisedSafe()
+{
+	if ( SqLength() > 0.f )
+		return Normalised();
+	return *this;
 }
 
 void
@@ -109,6 +143,15 @@ vsVector3D::operator[](int n) const
 void vsVector4D::Normalise()
 {
 	*this *= (1.0f/Length());
+}
+
+vsVector4D
+vsVector4D::Normalised()
+{
+	float length = Length();
+	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+
+	return (*this * (1.0f/Length()));
 }
 
 float & vsVector4D::operator[]( int n )
