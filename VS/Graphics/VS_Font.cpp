@@ -221,6 +221,7 @@ vsFontSize::LoadBMFont( vsFile *file )
 
 	float width = 512;
 	float height = 512;
+	m_descenderHeight = 0.f;
 
 	while( fontData.Record(&r) )
 	{
@@ -275,6 +276,14 @@ vsFontSize::LoadBMFont( vsFile *file )
 
 			if ( m_glyph[i].glyph == 'H' ) // assume we always have an 'H'
 				m_capHeight = m_baseline + m_glyph[i].baseline.y;
+
+			if ( m_glyph[i].glyph == 'j' ||
+					m_glyph[i].glyph == 'y' ||
+					m_glyph[i].glyph == ',' ) // even all-cap fonts should have a comma
+			{
+				float glyphDescender = (-m_glyph[i].baseline.y + glyphHeight) - m_baseline;
+				m_descenderHeight = vsMax( m_descenderHeight, glyphDescender );
+			}
 
 			{
 				// I like to lay out text such that the baseline is at 0.
