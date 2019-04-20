@@ -15,6 +15,8 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 
+	// [TODO] These draw modes are outdated historical oddities;  I should really
+	// be exposing blend modes directly, instead of these!
 enum vsDrawMode
 {
 	DrawMode_Absolute,
@@ -22,7 +24,8 @@ enum vsDrawMode
 	DrawMode_Lit,
 	DrawMode_Add,
 	DrawMode_Subtract,
-	DrawMode_Multiply,
+	DrawMode_Multiply,         // multiply, modulated by source alpha
+	DrawMode_MultiplyAbsolute, // multiply all channels, including alpha
 
 	DRAWMODE_MAX
 };
