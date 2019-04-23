@@ -382,7 +382,7 @@ set(UTILS_SOURCES
 	VS/Utils/VS_LocalisationTable.h
 	VS/Utils/VS_Log.cpp
 	VS/Utils/VS_Log.h
-	VS/Utils/VS_Menu.cpp
+	#VS/Utils/VS_Menu.cpp
 	VS/Utils/VS_Menu.h
 	VS/Utils/VS_MeshMaker.cpp
 	VS/Utils/VS_MeshMaker.h
