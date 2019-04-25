@@ -867,6 +867,8 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_MOUSEMOTION:
 					{
+						if ( event.motion.which == SDL_TOUCH_MOUSEID ) // touch event;  ignore!
+							break;
 						m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
 
 						m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
