@@ -66,6 +66,8 @@ vsInput::Init()
 		SDL_StopTextInput();
 	}
 
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+
 	m_fingersDown = 0;
 	m_fingersDownTimer = 0.f;
 	m_preparingToPoll = false;
