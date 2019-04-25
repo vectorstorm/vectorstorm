@@ -51,7 +51,8 @@ endif()
 if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
-	find_library(GLEW_LIBRARY GLEW REQUIRED)
+	# find_library(GLEW_LIBRARY GLEW REQUIRED)
+	find_package(GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
 else()
 	find_library(PHYSFS_LIBRARY physfs REQUIRED
@@ -63,7 +64,7 @@ else()
 	if ( MSVC )
 		add_definitions("-D MSVC")
 		# MSVC links glew32 in.  MinGW compiles it in.
-		find_library(GLEW_LIBRARY glew32 REQUIRED
+		find_library(GLEW_LIBRARIES glew32 REQUIRED
 				PATH c:/src/buildzone/lib/Release/Win32)
 	endif()
 endif()
@@ -155,7 +156,7 @@ if(APPLE)
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )
 	set(GUI_TYPE MACOSX_BUNDLE)
 	add_definitions("-D__apple_cc__")
-	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARY)
+	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARIES)
 	include_directories(${GLEW_INCLUDE_DIR} ${BOX2D_INCLUDE_DIR})
 	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
 	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
@@ -498,7 +499,7 @@ endif()
 		${PNG_LIBRARY}
 		${SDL_LIBRARY}
 		${SDL_IMAGE_LIBRARY}
-		${GLEW_LIBRARY}
+		${GLEW_LIBRARIES}
 		${ZLIB_LIBRARY}
 		${PTHREAD_LIBRARY}
 		${PHYSFS_LIBRARY}
