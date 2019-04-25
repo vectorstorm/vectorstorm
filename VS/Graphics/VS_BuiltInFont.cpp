@@ -169,7 +169,7 @@ vsBuiltInFont::Init()
 		uint16_t indices[100];
 		int z = 0;
 
-		int cursorPos;
+		int cursorPos = 0;
 
 		while ( strokes[z] >= 0 )
 		{
