@@ -347,6 +347,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
 
+	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
+	if ( !m_loadingGlContext )
+	{
+		vsLog("Failed to create OpenGL context for loading??");
+		exit(1);
+	}
+
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
 	{
@@ -383,14 +390,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsLog("High DPI backing store is: %dx%d", m_widthPixels, m_heightPixels);
 	}
 
-
-	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
-	if ( !m_loadingGlContext )
-	{
-		vsLog("Failed to create OpenGL context for loading??");
-		exit(1);
-	}
-	SDL_GL_MakeCurrent( g_sdlWindow, m_sdlGlContext);
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
