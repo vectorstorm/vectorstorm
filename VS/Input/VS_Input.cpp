@@ -66,7 +66,11 @@ vsInput::Init()
 		SDL_StopTextInput();
 	}
 
+	// Ability to turn off "simulated mouse events" for touch events was added
+	// in SDL 2.0.7
+#if SDL_VERSION_ATLEAST( 2, 0, 7 )
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
 
 	m_fingersDown = 0;
 	m_fingersDownTimer = 0.f;
