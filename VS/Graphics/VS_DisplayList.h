@@ -21,6 +21,8 @@
 #include "VS/Graphics/VS_Light.h"
 #include "VS/Graphics/VS_Material.h"
 
+#include "VS/Utils/VS_Array.h"
+
 class vsRecord;
 class vsStore;
 class vsRenderBuffer;
@@ -285,6 +287,12 @@ public:
 	float	GetBoundingRadius();
 	void	GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight );
 	void	GetBoundingBox( vsBox3D &box );
+
+	struct Triangle
+	{
+		vsVector3D vert[3];
+	};
+	int	GetTriangles(vsArray<struct Triangle>& result);
 
 	struct Stats
 	{

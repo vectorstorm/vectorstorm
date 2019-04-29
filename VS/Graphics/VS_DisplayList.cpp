@@ -1748,6 +1748,109 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 	}
 }
 
+int
+vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
+{
+	int count = 0;
+	if ( m_instanceParent )
+	{
+		return m_instanceParent->GetTriangles(result);
+	}
+	else
+	{
+		vsMatrix4x4			transformStack[20];
+		transformStack[0] = vsMatrix4x4::Identity;
+		int				transformStackLevel = 0;
+		vsVector3D		*currentVertexArray = NULL;
+		//int			currentVertexArraySize = 0;
+
+		Rewind();
+		op *o = PopOp();
+
+		while(o)
+		{
+			if ( o->type == OpCode_PushMatrix4x4 )
+			{
+				transformStack[transformStackLevel+1] = transformStack[transformStackLevel] * o->data.matrix4x4;
+				transformStackLevel++;
+			}
+			if ( o->type == OpCode_SetMatrix4x4 )
+			{
+				transformStack[++transformStackLevel] = o->data.matrix4x4;
+			}
+			else if ( o->type == OpCode_SetMatrices4x4 )
+			{
+				vsMatrix4x4 *mat = (vsMatrix4x4*)o->data.p;
+				transformStack[++transformStackLevel] = *mat;
+			}
+			else if ( o->type == OpCode_PopTransform )
+			{
+				transformStackLevel--;
+			}
+			else if ( o->type == OpCode_VertexArray )
+			{
+				vsVector3D pos;
+				int count = o->data.GetUInt();
+				float *shuttle = (float *) o->data.p;
+				currentVertexArray = (vsVector3D *)shuttle;
+			}
+			else if ( o->type == OpCode_VertexBuffer )
+			{
+				vsVector3D pos;
+				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+				currentVertexArray = buffer->GetVector3DArray();
+			}
+			else if ( o->type == OpCode_BindBuffer )
+			{
+				vsVector3D pos;
+				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+				currentVertexArray = buffer->GetVector3DArray();
+			}
+			else if ( o->type == OpCode_TriangleListBuffer )
+			{
+				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+				uint16_t *shuttle = buffer->GetIntArray();
+
+				for ( int i = 0; i < buffer->GetIntArraySize(); i+=3 )
+				{
+					uint16_t index0 = shuttle[i];
+					uint16_t index1 = shuttle[i+1];
+					uint16_t index2 = shuttle[i+2];
+
+					Triangle t;
+					t.vert[0] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+					t.vert[1] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+					t.vert[2] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					result.AddItem(t);
+					count++;
+				}
+			}
+			else if ( o->type == OpCode_TriangleStripBuffer )
+			{
+				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
+				uint16_t *shuttle = buffer->GetIntArray();
+
+				for ( int i = 2; i < buffer->GetIntArraySize(); i++ )
+				{
+					uint16_t index0 = shuttle[i-2];
+					uint16_t index1 = shuttle[i-1];
+					uint16_t index2 = shuttle[i];
+
+					Triangle t;
+					t.vert[0] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+					t.vert[1] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+					t.vert[2] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					result.AddItem(t);
+					count++;
+				}
+			}
+
+			o = PopOp();
+		}
+	}
+	return count;
+}
+
 struct vsDisplayList::Stats
 vsDisplayList::CalculateStats()
 {
