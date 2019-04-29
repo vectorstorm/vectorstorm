@@ -164,6 +164,12 @@ vsTransform3D::ApplyTo( const vsVector3D &v ) const
 	return GetMatrix().ApplyTo(v);
 }
 
+vsVector3D
+vsTransform3D::ApplyInverseTo( const vsVector3D &v ) const
+{
+	return GetMatrix().Inverse().ApplyTo(v);
+}
+
 const vsMatrix4x4 &
 vsTransform3D::GetMatrix() const
 {

@@ -42,6 +42,7 @@ public:
 	bool			IsVisible() { return m_visible; }
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }
+	const vsDisplayList *	GetDisplayList() const { return m_displayList; }
 
 	void	Draw( vsDisplayList *list );
 };

@@ -99,11 +99,13 @@ public:
 	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			ClearFragments();
 	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
-	int				GetFragmentCount() { return GetLodFragmentCount(0); }
+	const vsFragment *	GetFragment(int i) const { return GetLodFragment(0,i); }
+	int				GetFragmentCount() const { return GetLodFragmentCount(0); }
 
-	int				GetLodCount() { return m_lod.ItemCount(); }
-	int				GetLodFragmentCount( int lodId );
+	int				GetLodCount() const { return m_lod.ItemCount(); }
+	int				GetLodFragmentCount( int lodId ) const;
 	vsFragment *	GetLodFragment(int lodId, int fragmentId) { return m_lod[lodId]->fragment[fragmentId]; }
+	const vsFragment *	GetLodFragment(int lodId, int fragmentId) const { return m_lod[lodId]->fragment[fragmentId]; }
 	void			SetLodCount(int count);
 	void			SetLodLevel(int level) { m_lodLevel = level; }
 	int				GetLodLevel() { return m_lodLevel; }
@@ -113,7 +115,7 @@ public:
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, int lodLevel );
 	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, int lodLevel );
 
-	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir);
 };
 
 #endif // VS_MODEL_H

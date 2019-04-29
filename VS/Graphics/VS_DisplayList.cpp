@@ -1762,6 +1762,7 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 		transformStack[0] = vsMatrix4x4::Identity;
 		int				transformStackLevel = 0;
 		vsVector3D		*currentVertexArray = NULL;
+		vsRenderBuffer		*currentVertexBuffer = NULL;
 		//int			currentVertexArraySize = 0;
 
 		Rewind();
@@ -1790,21 +1791,23 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 			else if ( o->type == OpCode_VertexArray )
 			{
 				vsVector3D pos;
-				int count = o->data.GetUInt();
 				float *shuttle = (float *) o->data.p;
 				currentVertexArray = (vsVector3D *)shuttle;
+				currentVertexBuffer = NULL;
 			}
 			else if ( o->type == OpCode_VertexBuffer )
 			{
 				vsVector3D pos;
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
 				currentVertexArray = buffer->GetVector3DArray();
+				currentVertexBuffer = NULL;
 			}
 			else if ( o->type == OpCode_BindBuffer )
 			{
 				vsVector3D pos;
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				currentVertexArray = buffer->GetVector3DArray();
+				currentVertexArray = NULL;//buffer->GetVector3DArray();
+				currentVertexBuffer = buffer;
 			}
 			else if ( o->type == OpCode_TriangleListBuffer )
 			{
@@ -1818,9 +1821,20 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 					uint16_t index2 = shuttle[i+2];
 
 					Triangle t;
-					t.vert[0] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
-					t.vert[1] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
-					t.vert[2] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					if ( currentVertexArray )
+					{
+						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					}
+					else if ( currentVertexBuffer )
+					{
+						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
+						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
+						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
+					}
+					else
+						break;
 					result.AddItem(t);
 					count++;
 				}
@@ -1837,9 +1851,20 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 					uint16_t index2 = shuttle[i];
 
 					Triangle t;
-					t.vert[0] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
-					t.vert[1] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
-					t.vert[2] =  transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					if ( currentVertexArray )
+					{
+						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+					}
+					else if ( currentVertexBuffer )
+					{
+						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
+						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
+						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
+					}
+					else
+						break;
 					result.AddItem(t);
 					count++;
 				}

@@ -604,19 +604,38 @@ vsModel::SetLodCount(int count)
 }
 
 int
-vsModel::GetLodFragmentCount( int lodId )
+vsModel::GetLodFragmentCount( int lodId ) const
 {
 	return m_lod[lodId]->fragment.ItemCount();
 }
 
 bool
-vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
+vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir)
 {
 	vsVector3D localPos = m_transform.ApplyInverseTo(pos);
 	vsVector3D localDir = m_transform.GetRotation().Inverse().ApplyTo(dir);
 
 	// now we need to collision test against all our triangles.
 	vsArray<vsDisplayList::Triangle> triangles;
-	// ForEachTriangle( triangle );
+	if ( m_displayList )
+		m_displayList->GetTriangles(triangles);
+	for ( int i = 0; i < GetFragmentCount(); i++ )
+	{
+		m_lod[0]->fragment[i]->GetDisplayList()->GetTriangles(triangles);
+	}
+
+	for ( int i = 0; i < triangles.ItemCount(); i++ )
+	{
+		float u, v;
+		vsDisplayList::Triangle &t = triangles[i];
+		if ( vsCollideRayVsTriangle( localPos, localDir,
+					t.vert[0], t.vert[1], t.vert[2],
+					resultT, &u, &v ) )
+		{
+			*result = pos + dir * (*resultT);
+			return true;
+		}
+	}
+	return false;
 }
 
