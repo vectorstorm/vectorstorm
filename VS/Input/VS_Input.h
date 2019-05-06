@@ -50,6 +50,12 @@
 	vsInput::Instance()->SetAxisAsSubtraction(cid, positive, negative); \
 }
 
+#define DEFAULT_BIND_CONTROLLERAXIS(cid, description, controllerAxis, cdirection) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
+	vsInput::Instance()->DefaultBindControllerAxis(cid, controllerAxis, cdirection); \
+}
+
 #ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 
 enum ControlID
@@ -283,6 +289,8 @@ private:
 	float			m_wheelSpeed;
 
 	float			ReadMouseButton( int axisID );
+
+	vsController *GetController();
 	// void			ReadMouseButton( int axisID, int cid );
 
 	bool			WasDown( int id );
@@ -331,6 +339,8 @@ public:
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }
 
+	bool			HasController() { return GetController() != NULL; }
+
 	float			GetState( int id ) { return m_axis[id].currentValue; } //m_controlState[id]; }
 	bool			IsUp( int id ) { return !IsDown( id ); }
 	bool			IsDown( int id );
@@ -366,6 +376,7 @@ public:
 
 	void AddAxis( int cid, const vsString& name, const vsString& description );
 	void DefaultBindKey( int cid, int scancode );
+	void DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd );
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
 	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);

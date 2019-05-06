@@ -241,6 +241,28 @@ vsInput::DefaultBindKey( int cid, int scancode )
 }
 
 void
+vsInput::DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd )
+{
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
+	if ( !m_axis[cid].isLoaded )
+	{
+		DeviceControl dc;
+		dc.type = CT_Axis;
+		dc.id = controllerAxis;
+		dc.dir = cd;
+
+		m_axis[cid].positive.AddItem(dc);
+	}
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 {
 	// Since this function is being called post-initialisation, we need to
@@ -1279,11 +1301,14 @@ vsInput::ReadMouseButton( int buttonID )
 #endif
 }
 
-// void
-// vsInput::ReadMouseButton( int buttonID, int cid )
-// {
-// 	m_controlState[cid] = ReadMouseButton(buttonID);
-// }
+vsController *
+vsInput::GetController()
+{
+	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
+		if ( m_controller[i] )
+			return m_controller[i];
+	return NULL;
+}
 
 float
 vsController::ReadAxis_Raw( int axisID )
@@ -2050,19 +2075,34 @@ vsInput::DestroyController(SDL_GameController *gc)
 float
 DeviceControl::Evaluate(bool hasFocus)
 {
-	// TODO:  Really hasFocus should only affect keyboard and mouse events.
-	// Gamepad stuff should still work.  But we don't have Gamepads implemented
-	// yet in this new input system, so for the moment, ignore that and just
-	// stop input entirely, if we have no focus.
-	if ( !hasFocus )
+	// If we don't have focus, don't obey keyboard or mouse controls.
+	// DO still obey gamepad/joystick controls.
+	if ( !hasFocus &&
+			(type == CT_Keyboard ||
+			type == CT_MouseButton ||
+			type == CT_MouseWheel )
+	   )
+	{
 		return 0.f;
+	}
 
 	float value = 0.f;
 	switch( type )
 	{
 		case CT_Axis:
-			break;
+			{
+				vsController *c = vsInput::Instance()->GetController();
+				if ( c )
+					value = c->ReadAxis(id, dir);
+				break;
+			}
 		case CT_Button:
+			{
+				vsController *c = vsInput::Instance()->GetController();
+				if ( c )
+					value = c->ReadButton(id);
+				break;
+			}
 			break;
 		case CT_Hat:
 			break;
