@@ -952,6 +952,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_currentVertexBuffer = NULL;
 	m_currentTexelArray = NULL;
 	m_currentTexelBuffer = NULL;
+	m_currentNormalArray = NULL;
+	m_currentNormalBuffer = NULL;
 	m_currentColorArray = NULL;
 	m_currentColorBuffer = NULL;
 	m_currentTransformStackLevel = 0;
