@@ -816,7 +816,8 @@ vsDisplayList::TexelBuffer( vsRenderBuffer *buffer )
 void
 vsDisplayList::ColorBuffer( vsRenderBuffer *buffer )
 {
-	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom,
+	vsAssert(buffer->GetContentType() == vsRenderBuffer::ContentType_Custom ||
+			buffer->GetContentType() == vsRenderBuffer::ContentType_Color,
 			"Non-custom render buffer types should use ::BindBuffer");
 	m_fifo->WriteUint8( OpCode_ColorBuffer );
 	m_fifo->WriteVoidStar( buffer );
