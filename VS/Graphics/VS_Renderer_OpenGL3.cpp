@@ -859,6 +859,13 @@ vsRenderer_OpenGL3::FlushRenderState()
 	static vsShaderValues *s_previousShaderValues = NULL;
 	m_state.Flush();
 	// CheckGLError("PostStateFlush");
+
+	if ( !m_currentShader )
+	{
+		SetMaterialInternal(vsMaterial::White->GetResource());
+		SetMaterial(vsMaterial::White);
+	}
+
 	if ( m_currentShader )
 	{
 		if ( m_lastShaderId != m_currentShader->GetShaderId() )
