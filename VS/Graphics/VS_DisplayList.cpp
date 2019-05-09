@@ -170,6 +170,19 @@ vsDisplayList::Load_Vec_SingleRecord( vsDisplayList *loader, vsRecord *r )
 {
 	vsString label = r->GetLabel().AsString();
 
+	if ( label == "MoveTo" ) // we don't support MoveTo opcode any more!
+	{
+		vsVector2D where = r->Vector2D();
+		loader->MoveTo(where);
+		return;
+	}
+	else if ( label == "LineTo" ) // we don't support LineTo opcode any more!
+	{
+		vsVector2D where = r->Vector2D();
+		loader->LineTo(where);
+		return;
+	}
+
 	for ( int i = 0; i < OpCode_MAX; i++ )
 	{
 		if ( label == g_opCodeName[i] )
