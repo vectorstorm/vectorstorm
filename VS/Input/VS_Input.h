@@ -321,8 +321,10 @@ public:
 
 	virtual void	Update( float timeStep );
 
-	// vsVector2D		GetLeftStick() { return vsVector2D( GetState(CID_LeftRightLAxis), GetState(CID_UpDownLAxis) ); }
-	// vsVector2D		GetRightStick() { return vsVector2D( GetState(CID_LeftRightRAxis), GetState(CID_UpDownRAxis) ); }
+#ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
+	vsVector2D		GetLeftStick() { return vsVector2D( GetState(CID_LeftRightLAxis), GetState(CID_UpDownLAxis) ); }
+	vsVector2D		GetRightStick() { return vsVector2D( GetState(CID_LeftRightRAxis), GetState(CID_UpDownRAxis) ); }
+#endif
 
 	bool			HasTouch(int touchID);
 	int				GetMaxTouchCount();

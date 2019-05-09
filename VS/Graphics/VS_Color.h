@@ -50,6 +50,21 @@ public:
 	float	Magnitude() { return vsSqrt( r*r + g*g + b*b + a*a ); }
 
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
+
+	static const vsColor PureWhite;
+	static const vsColor White;
+	static const vsColor Grey;
+	static const vsColor Blue;
+	static const vsColor Green;
+	static const vsColor LightGreen;
+	static const vsColor Yellow;
+	static const vsColor Orange;
+	static const vsColor LightBlue;
+	static const vsColor DarkBlue;
+	static const vsColor Red;
+	static const vsColor Purple;
+	static const vsColor Black;
+	static const vsColor Clear;
 };
 
 class vsColorPacked

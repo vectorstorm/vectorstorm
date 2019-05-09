@@ -24,6 +24,21 @@ const vsColor c_purple(1.0f,0.2f,1.0f,1.0f);
 const vsColor c_black(0.0f,0.0f,0.0f,1.0f);
 const vsColor c_clear(0.0f,0.0f,0.0f,0.0f);
 
+const vsColor vsColor::PureWhite = vsColor(1,1,1,1);
+const vsColor vsColor::White = vsColor(1,1,1,1);
+const vsColor vsColor::Grey = vsColor(0.5f,0.5f,0.5f,1.0f);
+const vsColor vsColor::Blue = vsColor(0.2f,0.2f,1.0f,1.0f);
+const vsColor vsColor::LightBlue = vsColor(0.5f,0.5f,1.0f,1.0f);
+const vsColor vsColor::DarkBlue = vsColor(0.0f,0.0f,0.25f,1.0f);
+const vsColor vsColor::Red = vsColor(1.0f,0.2f,0.2f,1.0f);
+const vsColor vsColor::Green = vsColor(0.2f,1.0f,0.2f,1.0f);
+const vsColor vsColor::LightGreen = vsColor(0.5f,1.0f,0.5f,1.0f);
+const vsColor vsColor::Yellow = vsColor(1.0f,1.0f,0.2f,1.0f);
+const vsColor vsColor::Orange = vsColor(1.0f,0.5f,0.2f,1.0f);
+const vsColor vsColor::Purple = vsColor(1.0f,0.2f,1.0f,1.0f);
+const vsColor vsColor::Black = vsColor(0.0f,0.0f,0.0f,1.0f);
+const vsColor vsColor::Clear = vsColor(0.0f,0.0f,0.0f,0.0f);
+
 vsColor
 vsColor::FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
