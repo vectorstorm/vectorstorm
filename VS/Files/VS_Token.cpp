@@ -427,7 +427,10 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 				{
 					uint32_t i = 0;
 					s->Uint32(i);
-					SetString( stringTable.GetStrings()[i] );
+					if ( m_type == Type_Label )
+						SetLabel( stringTable.GetStrings()[i] );
+					else
+						SetString( stringTable.GetStrings()[i] );
 				}
 			}
 			break;
@@ -463,7 +466,10 @@ vsToken::SerialiseBinaryV2( vsSerialiser *s )
 				{
 					m_string = NULL; // set null to avoid bad deallocation,
 					// since we'd set our 'type', above.
-					SetString(string);
+					if ( m_type == Type_Label )
+						SetLabel(string);
+					else
+						SetString(string);
 				}
 				break;
 			}
