@@ -241,6 +241,27 @@ vsInput::DefaultBindKey( int cid, int scancode )
 }
 
 void
+vsInput::DefaultBindControllerButton( int cid, int controllerButton )
+{
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
+	if ( !m_axis[cid].isLoaded )
+	{
+		DeviceControl dc;
+		dc.type = CT_Button;
+		dc.id = controllerButton;
+
+		m_axis[cid].positive.AddItem(dc);
+	}
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsInput::DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd )
 {
 	// Since this function is being called post-initialisation, we need to
@@ -1410,7 +1431,11 @@ vsController::ReadButton( int buttonID )
 {
 	float result = 0.f;
 #if !TARGET_OS_IPHONE
-	bool buttonDown = !!SDL_JoystickGetButton(m_joystick, buttonID);
+	bool buttonDown = false;
+	if ( m_controller )
+		buttonDown = !!SDL_GameControllerGetButton(m_controller, (SDL_GameControllerButton)buttonID);
+	else
+		buttonDown = !!SDL_JoystickGetButton(m_joystick, buttonID);
 
 	if ( buttonDown )
 		result = 1.0f;

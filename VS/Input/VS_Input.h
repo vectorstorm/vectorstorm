@@ -56,6 +56,12 @@
 	vsInput::Instance()->DefaultBindControllerAxis(cid, controllerAxis, cdirection); \
 }
 
+#define DEFAULT_BIND_CONTROLLERBUTTON(cid, description, controllerButton ) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
+	vsInput::Instance()->DefaultBindControllerButton(cid, controllerButton ); \
+}
+
 #ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 
 enum ControlID
@@ -377,6 +383,7 @@ public:
 	void AddAxis( int cid, const vsString& name, const vsString& description );
 	void DefaultBindKey( int cid, int scancode );
 	void DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd );
+	void DefaultBindControllerButton( int cid, int controllerButton );
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
 	void DefaultBindMouseWheel( int cid, ControlDirection cd );
 	void SetAxisAsSubtraction( int cid, int positiveAxis, int negativeAxis);
