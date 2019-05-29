@@ -280,8 +280,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 #endif
 
-	m_viewportWidth = m_width = width;
-	m_viewportHeight = m_height = height;
 	m_invalidateMaterial = false;
 
 #if !TARGET_OS_IPHONE
@@ -342,6 +340,16 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 				width, height, depth, SDL_GetError() );
 		exit(1);
 	}
+	if ( flags & Flag_FullscreenWindow )
+	{
+		// with FullscreenWindow, we don't use the specified width/height values,
+		// but instead SET them based upon window we created!
+
+		SDL_GetWindowSize( g_sdlWindow, &width, &height );
+		SDL_SetWindowSize( g_sdlWindow, width, height );
+	}
+	m_viewportWidth = m_width = width;
+	m_viewportHeight = m_height = height;
 	if ( m_windowType != WindowType_Window )
 	{
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
