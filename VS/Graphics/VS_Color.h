@@ -83,7 +83,7 @@ public:
 
 	float	Magnitude();
 
-	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red*255; g=green*255; b=blue*255; a=alpha*255; };
+	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=(uint8_t)(red*255); g=(uint8_t)(green*255); b=(uint8_t)(blue*255); a=(uint8_t)(alpha*255); };
 };
 
 class vsColorHSV

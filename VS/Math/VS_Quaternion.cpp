@@ -147,9 +147,9 @@ vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q )
 	double sqy = q.y*q.y;
 	double sqz = q.z*q.z;
 
-	result.bank = vsATan2(2.0 * (q.x*q.y + q.z*q.w),(sqx - sqy - sqz + sqw));
-	result.pitch = vsATan2(2.0 * (q.y*q.z + q.x*q.w),(-sqx - sqy + sqz + sqw));
-	result.yaw = vsASin(-2.0 * (q.x*q.z - q.y*q.w)/(sqx + sqy + sqz + sqw));
+	result.bank = vsATan2((float)(2.0 * (q.x*q.y + q.z*q.w)),(float)((sqx - sqy - sqz + sqw)));
+	result.pitch = vsATan2((float)(2.0 * (q.y*q.z + q.x*q.w)),(float)((-sqx - sqy + sqz + sqw)));
+	result.yaw = vsASin((float)(-2.0 * (q.x*q.z - q.y*q.w)/(sqx + sqy + sqz + sqw)));
 
 	return result;
 }

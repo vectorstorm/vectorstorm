@@ -178,7 +178,7 @@ vsHeap::Alloc(size_t size_requested, const char *file, int line, int allocType)
 		strncpy( block->m_filename, file, 127 );
 	}
 	block->m_line = line;
-	block->m_blockId = m_totalAllocations++;
+	block->m_blockId = (int)m_totalAllocations++;
 	block->m_allocType = allocType;
 	block->m_sizeRequested = size_requested;
 

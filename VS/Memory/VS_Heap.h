@@ -98,7 +98,7 @@ public:
 	void	CheckForLeaks();
 	void	TraceMemoryBlocks();
 
-	void	SetMarkForLeakTesting() { m_leakMark = m_totalAllocations; }
+	void	SetMarkForLeakTesting() { m_leakMark = (int)m_totalAllocations; }
 };
 
 

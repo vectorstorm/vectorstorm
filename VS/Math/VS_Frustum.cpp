@@ -154,7 +154,7 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	// it's not actually inside.  And it'll still reject things which are
 	// well-and-truly outside our view.
 	//
-	const float sqrtThree = 1.732051; // approximately
+	const float sqrtThree = 1.732051f; // approximately
 	float longestDimension = vsMax(box.Width(), vsMax(box.Height(), box.Depth()));
 	float radius = longestDimension * 0.5f * sqrtThree;
 	vsVector3D middle = box.Middle();
