@@ -27,7 +27,8 @@ find_library(SDL_LIBRARY SDL2 REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
-find_package(ZLIB REQUIRED)
+#find_package(ZLIB)
+find_library(ZLIB_LIBRARY zlib REQUIRED)
 
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
@@ -85,8 +86,8 @@ if (USE_BOX2D_PHYSICS)
 		c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
 endif()
 
-# find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
-# 	PATH c:/src/buildzone/lib/x86 )
+find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
+	PATH c:/src/buildzone/lib/x86 )
 if(WIN32)
 	find_file(ZLIB_DLL zlib1.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
@@ -136,7 +137,7 @@ include(CheckFunctionExists)
 check_function_exists( SDL_GL_GetDrawableSize HIGHDPI_SUPPORTED )
 
 include_directories(vectorstorm PUBLIC "${PROJECT_BINARY_DIR}/config")
-set( VECTORSTORM_INCLUDE_PATHS "${PROJECT_BINARY_DIR}/config" PARENT_SCOPE)
+set( VECTORSTORM_INCLUDE_PATHS "${PROJECT_BINARY_DIR}/config" "${CURRENT_BINARY_DIR}/config" PARENT_SCOPE)
 configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 	"${PROJECT_BINARY_DIR}/config/VS_Config.h" )
 
