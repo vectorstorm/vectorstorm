@@ -283,7 +283,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		}
 
 		int decompressedSize = 0;
-		int zipBufferSize = 1024 * 100;
+		const int zipBufferSize = 1024 * 100;
 		char zipBuffer[zipBufferSize];
 		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
 		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
@@ -776,7 +776,7 @@ vsFile::_PumpCompression( const void* bytes, size_t byteCount, bool finish )
 {
 	vsAssert( m_mode == MODE_WriteCompressed, "Trying to pump compression when we're not in WriteCompressed mode??" );
 
-	int zipBufferSize = 1024 * 100;
+	const int zipBufferSize = 1024 * 100;
 	char zipBuffer[zipBufferSize];
 	m_zipData->m_zipStream.avail_in = byteCount;
 	m_zipData->m_zipStream.next_in = (Bytef*)bytes;
@@ -855,7 +855,12 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	if ( physDir )
 	{
 		vsString dir(physDir);
+
+#if defined(_WIN32)
+		return dir + "\\" + filename;
+#else
 		return dir + "/" + filename;
+#endif
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;

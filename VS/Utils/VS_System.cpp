@@ -262,7 +262,11 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 void
 vsSystem::EnableGameDirectory( const vsString &directory )
 {
+#if defined(_WIN32)
+	std::string d = m_dataDirectory + "\\" + directory;
+#else
 	std::string d = m_dataDirectory + "/" + directory;
+#endif
 	PHYSFS_mount(d.c_str(), NULL, 1);
 }
 
