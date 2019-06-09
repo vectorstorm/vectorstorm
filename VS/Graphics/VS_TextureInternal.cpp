@@ -23,18 +23,6 @@
 
 #include "VS_TextureInternalIPhone.h"
 
-/* Quick utility function for texture creation */
-static int power_of_two(int input)
-{
-	int value = 1;
-
-	while ( value < input ) {
-		value <<= 1;
-	}
-	return value;
-}
-
-
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
@@ -94,16 +82,6 @@ vsTextureInternal::~vsTextureInternal()
 #include <SDL2/SDL_image.h>
 
 /* Quick utility function for texture creation */
-static int power_of_two(int input)
-{
-	int value = 1;
-
-	while ( value < input ) {
-		value <<= 1;
-	}
-	return value;
-}
-
 void
 vsTextureInternal::SetSurface( vsSurface* surface, int surfaceBuffer, bool depth )
 {
@@ -280,8 +258,8 @@ vsTextureInternal::ProcessSurface( SDL_Surface *source )
 	m_width = source->w;
 	m_height = source->h;
 
-	int w = power_of_two(source->w);
-	int h = power_of_two(source->h);
+	int w = source->w;//vsNextPowerOfTwo(source->w);
+	int h = source->h;//vsNextPowerOfTwo(source->h);
 
 	m_glTextureWidth = w;
 	m_glTextureHeight = h;
