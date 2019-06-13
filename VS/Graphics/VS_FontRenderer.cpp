@@ -86,7 +86,7 @@ vsFontRenderer::SetDropShadow( const vsColor& color, int xOff, int yOff )
 	m_hasColor = true;
 	m_hasDropShadow = true;
 	m_dropShadowColor = color;
-	m_dropShadowOffset.Set(xOff,yOff);
+	m_dropShadowOffset.Set((float)xOff,(float)yOff);
 }
 
 void
@@ -222,7 +222,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	{
 		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 		{
-			size_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+			ptrdiff_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
 			constructor.glyphCount += glyphs;
 		}
 		constructor.lineCount = m_wrappedLine.ItemCount();
@@ -245,8 +245,8 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 
 		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i );
 
-		size_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
-		nextGlyph += glyphsInThisLine;
+		ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+		nextGlyph += (int)glyphsInThisLine;
 	}
 
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
@@ -602,7 +602,8 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			utf8::append(cp, glyphString);
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 
-			g = fontSize->FindGlyphForCharacter(L'□');
+			const char* missingGlyphString = u8"□";
+			g = fontSize->FindGlyphForCharacter(utf8::next(missingGlyphString, missingGlyphString + strlen(missingGlyphString)));
 
 			if ( !g )
 				g = fontSize->FindGlyphForCharacter( '?' );
@@ -742,7 +743,8 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 			vsLog("Missing character in font: %d (%s)", cp, glyphString);
 			// check whether we have a "missing symbol" glyph.
 
-			g = fontSize->FindGlyphForCharacter(L'□');
+			const char* missingGlyphString = u8"□";
+			g = fontSize->FindGlyphForCharacter( utf8::next(missingGlyphString, missingGlyphString + strlen(missingGlyphString)) );
 
 			if ( !g )
 				g = fontSize->FindGlyphForCharacter( '?' );

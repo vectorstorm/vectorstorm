@@ -25,7 +25,7 @@ class vsFontRenderer
 
 		// if 'm_buildMapping' is set, these contain boxes for each generated glyph
 		vsBox2D *glyphBox;
-		int glyphCount;
+		size_t glyphCount;
 		// if 'm_buildMapping' is set, these contain boxes around each
 		// generated wrapped line.  Note that these are NOT "exact" boxes;
 		// they cover top to bottom of the main portion of the line, they do
@@ -34,7 +34,7 @@ class vsFontRenderer
 		vsBox2D *lineBox;
 		int *lineFirstGlyph;
 		int *lineLastGlyph;
-		int lineCount;
+		size_t lineCount;
 	};
 
 	// reference only -- do not deallocate!
@@ -143,10 +143,10 @@ class vsFontFragment: public vsFragment
 	vsBox2D *m_lineBox; // contains a box around each wrapped line.
 	int *m_lineFirstGlyph; // the first glyph on each line.
 	int *m_lineLastGlyph; // the last glyph on each line.
-	int m_lineCount;
+	size_t m_lineCount;
 
 	vsBox2D *m_glyphBox; // contains a box around each glyph.
-	int m_glyphCount;
+	size_t m_glyphCount;
 
 	bool m_attached;
 
@@ -156,12 +156,12 @@ public:
 
 	// If our font renderer had mapping enabled, these functions provide access
 	// to the generated glyph mapping.
-	int GetGlyphMappingCount() const { return m_glyphCount; }
+	size_t GetGlyphMappingCount() const { return m_glyphCount; }
 	const vsBox2D& GetGlyphMapping(int glyph) const { return m_glyphBox[glyph]; }
 
 	// If our font renderer had mapping enabled, these functions provide access
 	// to the generated line mapping.
-	int GetLineMappingCount() const { return m_lineCount; }
+	size_t GetLineMappingCount() const { return m_lineCount; }
 	const vsBox2D& GetLineMapping(int line) const { return m_lineBox[line]; }
 	int GetLineFirstGlyph(int line) const { return m_lineFirstGlyph[line]; }
 	int GetLineLastGlyph(int line) const { return m_lineLastGlyph[line]; }
