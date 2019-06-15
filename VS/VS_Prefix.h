@@ -59,6 +59,7 @@
 #include <cstdlib>
 #ifdef UNIX
 #include <stdint.h>
+#include <stddef.h>
 #endif
 #include <cstdio>
 #include <string.h>
