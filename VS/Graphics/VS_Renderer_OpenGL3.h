@@ -160,6 +160,7 @@ public:
 	const Settings& GetCurrentSettings() const { return m_currentSettings; }
 
 	vsImage*	Screenshot();
+	vsImage*	Screenshot_Async();
 	vsImage*	ScreenshotBack();
 	vsImage*	ScreenshotDepth();
 	vsImage*	ScreenshotAlpha();

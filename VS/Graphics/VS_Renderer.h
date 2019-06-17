@@ -112,6 +112,7 @@ public:
 	const Settings& GetCurrentSettings() const { return m_currentSettings; }
 
 	virtual vsImage*	Screenshot() = 0;
+	virtual vsImage*	Screenshot_Async() = 0;
 	virtual vsImage*	ScreenshotBack() = 0;
 	virtual vsImage*	ScreenshotDepth() = 0;
 	virtual vsImage*	ScreenshotAlpha() = 0;

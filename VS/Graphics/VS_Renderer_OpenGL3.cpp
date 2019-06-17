@@ -2030,6 +2030,20 @@ vsRenderer_OpenGL3::Screenshot()
 	return image;
 }
 
+vsImage *
+vsRenderer_OpenGL3::Screenshot_Async()
+{
+	// Take an asynchronous screenshot.  This is like what we do for regular
+	// Screenshot(), but we'll transfer the pixel data asynchronously using a PBO.
+	// Client is responsible for holding on to the vsImage and waiting for it to
+	// signal that it has all the data.
+	//
+	vsImage *image = new vsImage;
+	image->AsyncReadRenderTarget( m_scene, 0 );
+
+	return image;
+}
+
 vsImage*
 vsRenderer_OpenGL3::ScreenshotBack()
 {

@@ -359,6 +359,12 @@ vsScreen::Screenshot()
 }
 
 vsImage *
+vsScreen::Screenshot_Async()
+{
+	return m_renderer->Screenshot_Async();
+}
+
+vsImage *
 vsScreen::ScreenshotBack()
 {
 	return m_renderer->ScreenshotBack();
