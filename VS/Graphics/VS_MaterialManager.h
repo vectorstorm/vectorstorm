@@ -10,8 +10,8 @@
 #ifndef VS_MATERIAL_MANAGER_H
 #define VS_MATERIAL_MANAGER_H
 
-#include "VS_Cache.h"
-#include "VS_MaterialInternal.h"
+#include "VS/Utils/VS_Cache.h"
+#include "VS/Graphics/VS_MaterialInternal.h"
 
 
 class vsMaterialManager : public vsCache<vsMaterialInternal>
