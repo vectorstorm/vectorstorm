@@ -198,22 +198,30 @@ vsImage::AsyncRead( vsTexture *texture )
 void
 vsImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 {
+	GL_CHECK_SCOPED("AsyncReadRenderTarget");
 	PrepForAsyncRead(target->Resolve(0));
+	GL_CHECK("Prepped");
 
 	if ( m_sync != 0 )
 		glDeleteSync( m_sync );
+	GL_CHECK("Deleted Sync");
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+	GL_CHECK("BindBuffer");
 
 	target->Bind();
 	int width = target->GetWidth();
 	int height = target->GetHeight();
 	glReadBuffer(GL_COLOR_ATTACHMENT0+buffer);
+	GL_CHECK("glReadBuffer");
 	glReadPixels(0,0,width,height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	GL_CHECK("glReadPixels");
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	GL_CHECK("glUnbindBuffer");
 
 	m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+	GL_CHECK("glFenceSync");
 }
 
 bool
@@ -468,6 +476,82 @@ vsImage::BakePNG(int compression)
 	delete [] pngData;
 
 	return result;
+}
+
+vsStore *
+vsImage::BakeJPG(int quality)
+{
+	// first, create an SDL_Surface from our raw pixel data.
+	SDL_Surface *image = SDL_CreateRGBSurface(
+			SDL_SWSURFACE,
+			m_width, m_height,
+			32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
+			0x000000FF,
+			0x0000FF00,
+			0x00FF0000,
+			0xFF000000
+#else
+			0xFF000000,
+			0x00FF0000,
+			0x0000FF00,
+			0x000000FF
+#endif
+			);
+	vsAssert(image, "Error??");
+	int err = SDL_LockSurface( image );
+	vsAssert(!err, "Couldn't lock surface??");
+	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
+	for ( size_t v = 0; v < m_height; v++ )
+	{
+		for ( size_t u = 0; u < m_width; u++ )
+		{
+			int i = v*image->pitch + u*4;
+			int ri = i;
+			int gi = ri+1;
+			int bi = ri+2;
+			int ai = ri+3;
+
+			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
+			vsColor pixel = GetPixel(u,(m_height-1)-v);
+
+			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
+			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
+			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
+			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+		}
+	}
+	//
+	// now, let's save out our surface.
+	const int pngDataSize = 1024*1024*10;
+	char* pngData = new char[pngDataSize];
+	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
+	if ( !dst )
+		vsLog( "%s", SDL_GetError() );
+	int retval = IMG_SaveJPG_RW(image,
+			dst,
+			false,
+			quality);
+	SDL_UnlockSurface( image );
+	if ( retval == -1 )
+		vsLog( "%s", SDL_GetError() );
+	int bytes = (int)SDL_RWtell(dst);
+	vsStore *result = new vsStore(bytes);
+	result->WriteBuffer(pngData,bytes);
+	SDL_RWclose(dst);
+	SDL_FreeSurface(image);
+	delete [] pngData;
+
+	return result;
+}
+
+void
+vsImage::SaveJPG(int quality, const vsString& filename)
+{
+	vsStore *store = BakeJPG(quality);
+	vsFile file( filename, vsFile::MODE_Write );
+	file.Store(store);
+	vsDelete(store);
 }
 
 void
