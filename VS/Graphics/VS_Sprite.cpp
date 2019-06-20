@@ -215,6 +215,13 @@ vsSprite::AddFragment( vsFragment *fragment )
 }
 
 void
+vsSprite::DestroyFragment( vsFragment *fragment )
+{
+	if ( fragment )
+		m_fragment.RemoveItem( fragment );
+}
+
+void
 vsSprite::ClearFragments()
 {
 	m_fragment.Clear();

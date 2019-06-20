@@ -97,6 +97,7 @@ public:
 
 	void			SetDisplayList( vsDisplayList *list );
 	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
+	void			DestroyFragment( vsFragment *fragment );
 	void			ClearFragments();
 	vsFragment *	GetFragment(int i) { return GetLodFragment(0,i); }
 	const vsFragment *	GetFragment(int i) const { return GetLodFragment(0,i); }

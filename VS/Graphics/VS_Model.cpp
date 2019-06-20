@@ -448,6 +448,13 @@ vsModel::AddLodFragment( int lodLevel, vsFragment *fragment )
 }
 
 void
+vsModel::DestroyFragment( vsFragment *fragment )
+{
+	for ( int i = 0; i < m_lod.ItemCount(); i++ )
+		m_lod[i]->fragment.RemoveItem( fragment );
+}
+
+void
 vsModel::ClearFragments()
 {
 	m_lod[0]->fragment.Clear();

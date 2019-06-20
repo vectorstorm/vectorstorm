@@ -72,6 +72,7 @@ public:
 
 	void				SetDisplayList( vsDisplayList *list );
 	void				AddFragment( vsFragment *fragment );
+	void				DestroyFragment( vsFragment *fragment );
 	void				ClearFragments();
 	vsFragment *		GetFragment(int i) { return m_fragment[i]; }
 	size_t				GetFragmentCount() { return m_fragment.ItemCount(); }
