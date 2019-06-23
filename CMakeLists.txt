@@ -27,8 +27,8 @@ find_library(SDL_LIBRARY SDL2 REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
 find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
 	PATH c:/src/buildzone/lib/x86/)
-#find_package(ZLIB)
-find_library(ZLIB_LIBRARY zlib REQUIRED)
+find_package(ZLIB)
+# find_library(ZLIB_LIBRARY zlib REQUIRED)
 
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
