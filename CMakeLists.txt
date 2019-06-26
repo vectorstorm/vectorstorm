@@ -16,6 +16,8 @@ option( VS_GL_DEBUG "If enabled, try to create an OpenGL Debug context and spit 
 option( VS_TIMING_BARS "If enabled, we'll draw timing bars at the bottom left of the screen" YES )
 option( VS_DEFAULT_VIRTUAL_CONTROLLER "If enabled, we use the default controller settings.  If disabled, games must provide their own." YES )
 option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
+option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
+option( VS_PRISTINE_BINDINGS "If enabled, we clear bindings after using them" NO )
 
 # If we have a choice between legacy libgl.so and more modern
 # libOpenGL.so (the "GL Vendor-Neutral Dispatch" library), let's

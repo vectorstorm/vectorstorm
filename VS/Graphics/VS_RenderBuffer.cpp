@@ -147,7 +147,9 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 			}
 		}
 
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(bindPoint, 0);
+#endif
 	}
 	m_activeBytes = size;
 
@@ -330,13 +332,17 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, GL_FALSE, 64, (void*)16);
 		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, GL_FALSE, 64, (void*)32);
 		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, GL_FALSE, 64, (void*)48);
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
 	}
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
+#endif
 	}
 	else
 	{
@@ -391,7 +397,9 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
 	}
 	else
 	{
@@ -415,7 +423,9 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif //VS_PRISTINE_BINDINGS
 	}
 	else
 	{
@@ -438,7 +448,9 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 	}
 	else
 	{
@@ -462,7 +474,9 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, 0 );
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 	}
 	else
 	{
@@ -491,7 +505,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -515,7 +531,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -540,7 +558,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -566,7 +586,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -596,7 +618,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -631,7 +655,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -663,7 +689,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -694,7 +722,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
+#ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 			}
 			else
 			{
@@ -973,7 +1003,9 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
 		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 	}
 	else
 	{
@@ -1175,7 +1207,9 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 
 	glDrawElementsInstanced(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor), instanceCount );
 
+#ifdef VS_PRISTINE_BINDINGS
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 
 	g_evboCursor += bufferSize;
 }
@@ -1209,7 +1243,9 @@ vsRenderBuffer::UnbindRange( void* ptr )
 	{
 		int bindPoint = GL_ARRAY_BUFFER;
 		glUnmapBuffer(bindPoint);
+#ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(bindPoint, 0);
+#endif // VS_PRISTINE_BINDINGS
 	}
 	// nothing to do, if no VBO.
 }

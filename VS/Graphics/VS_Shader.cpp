@@ -524,7 +524,9 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 				}
 			}
 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+#ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 		}
 	}
 	// CheckGLError("SetColors");
@@ -641,7 +643,9 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
 			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+#ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 		}
 	}
 }
