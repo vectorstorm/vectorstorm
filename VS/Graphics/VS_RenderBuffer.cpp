@@ -389,9 +389,9 @@ vsRenderBuffer::BindAsTexture()
 }
 
 void
-vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
+vsRenderBuffer::BindVertexBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
 
 	if ( m_vbo )
 	{
@@ -409,15 +409,15 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindVertexBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, BindType_ElementArray );
+	state->SetBool( vsAttributeState::ClientBool_VertexArray, BindType_ElementArray );
 }
 
 void
-vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
+vsRenderBuffer::BindNormalBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+	state->SetBool( vsAttributeState::ClientBool_NormalArray, true );
 
 	if ( m_vbo )
 	{
@@ -434,15 +434,15 @@ vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::UnbindNormalBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindNormalBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+	state->SetBool( vsAttributeState::ClientBool_NormalArray, false );
 }
 
 void
-vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
+vsRenderBuffer::BindTexelBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+	state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, true );
 
 	if ( m_vbo )
 	{
@@ -460,15 +460,15 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::UnbindTexelBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindTexelBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
 }
 
 void
-vsRenderBuffer::BindColorBuffer( vsRendererState *state )
+vsRenderBuffer::BindColorBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+	state->SetBool( vsAttributeState::ClientBool_ColorArray, true );
 
 	if ( m_vbo )
 	{
@@ -485,13 +485,13 @@ vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindColorBuffer( vsAttributeState *state )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+	state->SetBool( vsAttributeState::ClientBool_ColorArray, false );
 }
 
 void
-vsRenderBuffer::Bind( vsRendererState *state )
+vsRenderBuffer::Bind( vsAttributeState *state )
 {
 	switch( m_contentType )
 	{
@@ -499,7 +499,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			int stride = sizeof(P);
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
 
 			if ( m_vbo )
 			{
@@ -522,8 +522,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, true );
 
 			if ( m_vbo )
 			{
@@ -549,8 +549,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, true );
 
 			if ( m_vbo )
 			{
@@ -576,8 +576,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, true );
 
 			if ( m_vbo )
 			{
@@ -606,9 +606,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, true );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, true );
 
 			if ( m_vbo )
 			{
@@ -641,10 +641,10 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, true );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, true );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, true );
 
 			if ( m_vbo )
 			{
@@ -677,9 +677,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, true );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, true );
 
 			if ( m_vbo )
 			{
@@ -710,9 +710,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, true );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, true );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, true );
 
 			if ( m_vbo )
 			{
@@ -742,45 +742,45 @@ vsRenderBuffer::Bind( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::Unbind( vsRendererState *state )
+vsRenderBuffer::Unbind( vsAttributeState *state )
 {
 	switch( m_contentType )
 	{
         case ContentType_P:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
             break;
         case ContentType_PC:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, false );
             break;
         case ContentType_PT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
             break;
         case ContentType_PN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, false );
             break;
         case ContentType_PNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, false );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
             break;
         case ContentType_PCN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, false );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, false );
             break;
         case ContentType_PCT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, false );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
             break;
         case ContentType_PCNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsAttributeState::ClientBool_VertexArray, false );
+			state->SetBool( vsAttributeState::ClientBool_NormalArray, false );
+			state->SetBool( vsAttributeState::ClientBool_ColorArray, false );
+			state->SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
             break;
         default:
             vsAssert(0, "Unknown content type!");
@@ -1156,28 +1156,28 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 }
 
 void
-vsRenderBuffer::BindVertexArray( vsRendererState *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindVertexArray( vsAttributeState *state, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsVector3D);
 	BindArrayToAttribute(buffer,bufferSize,POS_ATTRIBUTE,3);
 }
 
 void
-vsRenderBuffer::BindColorArray( vsRendererState *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindColorArray( vsAttributeState *state, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsColor);
 	BindArrayToAttribute(buffer,bufferSize,COLOR_ATTRIBUTE,4);
 }
 
 void
-vsRenderBuffer::BindTexelArray( vsRendererState *state, void* buffer, int count )
+vsRenderBuffer::BindTexelArray( vsAttributeState *state, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector2D);
 	BindArrayToAttribute(buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 
 void
-vsRenderBuffer::BindNormalArray( vsRendererState *state, void* buffer, int count )
+vsRenderBuffer::BindNormalArray( vsAttributeState *state, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector3D);
 	BindArrayToAttribute(buffer,bufferSize,NORMAL_ATTRIBUTE,3);

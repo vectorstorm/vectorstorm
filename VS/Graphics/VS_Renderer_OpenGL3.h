@@ -21,6 +21,7 @@
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
+#include "VS_AttributeBinding.h"
 
 class vsCamera2D;
 class vsDisplayList;
@@ -103,7 +104,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
 	bool                 m_vsync;
-	uint32_t			m_vao;	// temporary -- for our global VAO.
+	vsAttributeBinding	 m_globalVao;
+	// uint32_t			m_vao;	// temporary -- for our global VAO.
 	// VAOs should really be integrated more nicely somewhere, but for now,
 	// we'll treat our rendering like OpenGL2 and just continually reconfigure
 	// a single global Vertex Array Object..

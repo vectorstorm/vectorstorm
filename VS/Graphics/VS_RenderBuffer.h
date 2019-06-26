@@ -15,7 +15,7 @@
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
-class vsRendererState;
+class vsAttributeState;
 
 struct vsVector4D_i32
 {
@@ -219,27 +219,27 @@ public:
 	void	BindAsAttribute( int attributeId );
 	void	BindAsTexture();
 
-	void	BindVertexBuffer( vsRendererState *state );
-	void	UnbindVertexBuffer( vsRendererState *state );
+	void	BindVertexBuffer( vsAttributeState *state );
+	void	UnbindVertexBuffer( vsAttributeState *state );
 
-	void	BindNormalBuffer( vsRendererState *state );
-	void	UnbindNormalBuffer( vsRendererState *state );
+	void	BindNormalBuffer( vsAttributeState *state );
+	void	UnbindNormalBuffer( vsAttributeState *state );
 
-	void	BindTexelBuffer( vsRendererState *state );
-	void	UnbindTexelBuffer( vsRendererState *state );
+	void	BindTexelBuffer( vsAttributeState *state );
+	void	UnbindTexelBuffer( vsAttributeState *state );
 
-	void	BindColorBuffer( vsRendererState *state );
-	void	UnbindColorBuffer( vsRendererState *state );
+	void	BindColorBuffer( vsAttributeState *state );
+	void	UnbindColorBuffer( vsAttributeState *state );
 
-	void	Bind( vsRendererState *state );		// for non-custom types
-	void	Unbind( vsRendererState *state );	// for non-custom types
+	void	Bind( vsAttributeState *state );		// for non-custom types
+	void	Unbind( vsAttributeState *state );	// for non-custom types
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
 	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
-	static void BindVertexArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindTexelArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindNormalArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindVertexArray( vsAttributeState *state, void* buffer, int vertexCount );
+	static void BindColorArray( vsAttributeState *state, void* buffer, int vertexCount );
+	static void BindTexelArray( vsAttributeState *state, void* buffer, int vertexCount );
+	static void BindNormalArray( vsAttributeState *state, void* buffer, int vertexCount );
 
 	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
 

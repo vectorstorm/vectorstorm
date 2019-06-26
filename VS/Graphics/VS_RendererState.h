@@ -30,6 +30,11 @@ public:
 		m_nextValue = newValue;
 	}
 
+	T Get() const
+	{
+		return m_nextValue;
+	}
+
 	virtual void DoFlush() = 0;
 
 	void Flush()
@@ -110,10 +115,6 @@ public:
 		//Bool_Smooth,
 		//Bool_Texture2D,
 		Bool_DepthMask,
-		ClientBool_VertexArray,
-		ClientBool_NormalArray,
-		ClientBool_ColorArray,
-		ClientBool_TextureCoordinateArray,
 		BOOL_COUNT
 	};
 	enum Float
@@ -151,6 +152,31 @@ public:
 	void	Flush();
 	void	Force();
 
+};
+
+class vsAttributeState
+{
+public:
+	enum Bool
+	{
+		ClientBool_VertexArray,
+		ClientBool_NormalArray,
+		ClientBool_ColorArray,
+		ClientBool_TextureCoordinateArray,
+		BOOL_COUNT
+	};
+private:
+	StateSetter<bool> *m_boolState[BOOL_COUNT];
+
+public:
+    vsAttributeState();
+    ~vsAttributeState();
+
+	void SetBool( Bool key, bool value );
+	bool GetBool( Bool key );
+
+	void Flush();
+	void Force();
 };
 
 #endif // VS_RENDERER_STATE_H
