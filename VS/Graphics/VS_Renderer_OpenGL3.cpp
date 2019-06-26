@@ -1173,7 +1173,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
 					// m_currentVertexBuffer->BindVertexBuffer( &m_state );
-					m_globalVao.SetAttribute( 0, m_currentVertexBuffer );
+					m_globalVao.SetAttribute( 0, m_currentVertexBuffer, 3 );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalArray:
@@ -1189,7 +1189,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentNormalArray = NULL;
 					m_currentNormalArrayCount = 0;
 					// m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
-					m_globalVao.SetAttribute( 2, m_currentNormalBuffer );
+					m_globalVao.SetAttribute( 2, m_currentNormalBuffer, 3 );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
@@ -1224,7 +1224,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentTexelArray = NULL;
 					m_currentTexelArrayCount = 0;
 					// m_currentTexelBuffer->BindTexelBuffer( &m_state );
-					m_globalVao.SetAttribute( 1, m_currentTexelBuffer );
+					m_globalVao.SetAttribute( 1, m_currentTexelBuffer, 2 );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
@@ -1243,7 +1243,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
 					// m_currentColorBuffer->BindColorBuffer( &m_state );
-					m_globalVao.SetAttribute( 3, m_currentColorBuffer );
+					m_globalVao.SetAttribute( 3, m_currentColorBuffer, 4 );
 					m_currentColorArray = 0;
 					m_currentColorArrayCount = 0;
 					break;

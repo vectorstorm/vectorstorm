@@ -217,6 +217,7 @@ public:
 	ContentType	GetContentType() { return m_contentType; }
 
 	void	BindAsAttribute( int attributeId );
+	void	BindAsAttribute( int attributeId, int size, int stride = 0, void* offset = NULL );
 	void	BindAsTexture();
 
 	void	BindVertexBuffer( vsAttributeState *state );

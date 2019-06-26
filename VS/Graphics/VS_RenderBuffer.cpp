@@ -351,6 +351,17 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 }
 
 void
+vsRenderBuffer::BindAsAttribute( int attributeId, int size, int stride, void* offset )
+{
+	// [TODO]:  HANDLE size > 4, as in the 'Matrix' case above.
+	glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+	glVertexAttribPointer(attributeId, size, GL_FLOAT, GL_FALSE, stride, offset);
+#ifdef VS_PRISTINE_BINDINGS
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
+}
+
+void
 vsRenderBuffer::BindAsTexture()
 {
 	GL_CHECK_SCOPED("BufferTexture");
@@ -1106,9 +1117,11 @@ static int g_vboCursor = VBO_SIZE;
 void
 vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount )
 {
+	GL_CHECK_SCOPED("BindArrayToAttribute");
 	vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
 	if ( g_vbo == 0xffffffff )
 	{
+		GL_CHECK_SCOPED("BindArrayToAttribute");
 		glGenBuffers(1, &g_vbo);
 	}
 
@@ -1116,15 +1129,22 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 
 	if ( g_vboCursor + bufferSize >= VBO_SIZE )
 	{
+		GL_CHECK_SCOPED("BindArrayToAttribute");
 		// This shouldn't happen any more;  we should always catch this in the
 		// "EnsureSpaceForVertexColorTexelNormal()" function below.  But leave this
 		// here just for safety for the moment.
 		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_DYNAMIC_DRAW);
 		g_vboCursor = 0;
 	}
+	{
+		GL_CHECK_SCOPED("BindArrayToAttribute");
 	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
+	}
 
+	{
+		GL_CHECK_SCOPED("BindArrayToAttribute");
 	glVertexAttribPointer( attribute, elementCount, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid*>(g_vboCursor) );
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	g_vboCursor += bufferSize;

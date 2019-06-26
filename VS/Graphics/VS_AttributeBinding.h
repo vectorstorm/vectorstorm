@@ -22,12 +22,15 @@ class vsAttributeBinding
 	struct Binding
 	{
 		vsRenderBuffer *buffer;
+		int size;
+		int stride;
+		void* offset;
 
 		float *p;
-		int typeCount;
-		int floatCount;
+		int vertexCount;
+		int floatsPerVertex;
 
-		Binding(): buffer(NULL), p(NULL), typeCount(0), floatCount(0) {}
+		Binding(): buffer(NULL), p(NULL), vertexCount(0), floatsPerVertex(0) {}
 	};
 	// TODO:  This vsAttributeState may just go away, shortly.
 	vsAttributeState m_attributeState;
@@ -46,7 +49,7 @@ public:
 	~vsAttributeBinding();
 
 	void SetVertexAttributes( vsRenderBuffer *buffer );
-	void SetAttribute( int attribute, vsRenderBuffer *buffer );
+	void SetAttribute( int attribute, vsRenderBuffer *buffer, int size, int stride = 0, void* offset = NULL );
 
 	void SetAttribute( int attribute, vsVector3D *p, int count );
 	void SetAttribute( int attribute, vsVector2D *p, int count );
