@@ -23,6 +23,8 @@ class vsAttributeBinding
 	{
 		vsRenderBuffer *buffer;
 		int size;
+		int type; // GL_FLOAT or GL_UNSIGNED_BYTE, usually
+		bool normalised;
 		int stride;
 		void* offset;
 
@@ -34,7 +36,7 @@ class vsAttributeBinding
 	};
 	// TODO:  This vsAttributeState may just go away, shortly.
 	vsAttributeState m_attributeState;
-	vsRenderBuffer *m_vertexAttributes; // attributes [0-3]
+	// vsRenderBuffer *m_vertexAttributes; // attributes [0-3]
 
 	vsArray<Binding> m_attribute; // attributes [4+]
 
@@ -49,7 +51,7 @@ public:
 	~vsAttributeBinding();
 
 	void SetVertexAttributes( vsRenderBuffer *buffer );
-	void SetAttribute( int attribute, vsRenderBuffer *buffer, int size, int stride = 0, void* offset = NULL );
+	void SetAttribute( int attribute, vsRenderBuffer *buffer, int size, int type, bool normalised, int stride = 0, void* offset = NULL );
 
 	void SetAttribute( int attribute, vsVector3D *p, int count );
 	void SetAttribute( int attribute, vsVector2D *p, int count );

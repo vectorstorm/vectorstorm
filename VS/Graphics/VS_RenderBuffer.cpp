@@ -10,6 +10,7 @@
 #include "VS_RenderBuffer.h"
 
 #include "VS_RendererState.h"
+#include "VS_AttributeBinding.h"
 
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
@@ -351,11 +352,13 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 }
 
 void
-vsRenderBuffer::BindAsAttribute( int attributeId, int size, int stride, void* offset )
+vsRenderBuffer::BindAsAttribute( int attributeId, int size, int type, bool normalised, int stride, void* offset )
 {
+	vsAssert( size > 0 && size <= 4, "Invalid 'size' value" );
+	vsAssert( m_vbo, "not a VBO?" );
 	// [TODO]:  HANDLE size > 4, as in the 'Matrix' case above.
 	glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-	glVertexAttribPointer(attributeId, size, GL_FLOAT, GL_FALSE, stride, offset);
+	glVertexAttribPointer(attributeId, size, type, normalised, stride, offset);
 #ifdef VS_PRISTINE_BINDINGS
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif
@@ -743,6 +746,109 @@ vsRenderBuffer::Bind( vsAttributeState *state )
 				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
 			}
+			break;
+		}
+		default:
+		{
+			vsAssert(0, "Unknown content type!");
+		}
+	}
+}
+
+void
+vsRenderBuffer::ApplyAttributeBindingsTo( vsAttributeBinding *binding )
+{
+	switch( m_contentType )
+	{
+		case ContentType_P:
+		{
+			int stride = sizeof(P);
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			break;
+		}
+		case ContentType_PC:
+		{
+			PC dummyArray[2];
+			int stride = sizeof(PC);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			GLvoid* cStartPtr = (GLvoid*)cStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( COLOR_ATTRIBUTE, this, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+			break;
+		}
+		case ContentType_PT:
+		{
+			PT dummyArray[2];
+			int stride = sizeof(PT);
+			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			GLvoid* tStartPtr = (GLvoid*)tStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( TEXCOORD_ATTRIBUTE, this, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+			break;
+		}
+		case ContentType_PN:
+		{
+			PN dummyArray[2];
+			int stride = sizeof(PN);
+			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+			GLvoid* nStartPtr = (GLvoid*)nStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( NORMAL_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+			break;
+		}
+		case ContentType_PNT:
+		{
+			PNT dummyArray[2];
+			int stride = sizeof(PNT);
+			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			GLvoid* nStartPtr = (GLvoid*)nStart;
+			GLvoid* tStartPtr = (GLvoid*)tStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( NORMAL_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+			binding->SetAttribute( TEXCOORD_ATTRIBUTE, this, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+			break;
+		}
+		case ContentType_PCNT:
+		{
+			PCNT dummyArray[2];
+			int stride = sizeof(PCNT);
+			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			GLvoid* cStartPtr = (GLvoid*)cStart;
+			GLvoid* nStartPtr = (GLvoid*)nStart;
+			GLvoid* tStartPtr = (GLvoid*)tStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( COLOR_ATTRIBUTE, this, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+			binding->SetAttribute( NORMAL_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+			binding->SetAttribute( TEXCOORD_ATTRIBUTE, this, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
+			break;
+		}
+		case ContentType_PCN:
+		{
+			PCN dummyArray[2];
+			int stride = sizeof(PCN);
+			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			GLvoid* cStartPtr = (GLvoid*)cStart;
+			GLvoid* nStartPtr = (GLvoid*)nStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( COLOR_ATTRIBUTE, this, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+			binding->SetAttribute( NORMAL_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
+			break;
+		}
+		case ContentType_PCT:
+		{
+			PCT dummyArray[2];
+			int stride = sizeof(PCT);
+			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			GLvoid* cStartPtr = (GLvoid*)cStart;
+			GLvoid* tStartPtr = (GLvoid*)tStart;
+			binding->SetAttribute( POS_ATTRIBUTE, this, 3, GL_FLOAT, GL_FALSE, stride, 0 );
+			binding->SetAttribute( COLOR_ATTRIBUTE, this, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
+			binding->SetAttribute( TEXCOORD_ATTRIBUTE, this, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 			break;
 		}
 		default:

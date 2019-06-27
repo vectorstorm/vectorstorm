@@ -16,6 +16,7 @@
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
 class vsAttributeState;
+class vsAttributeBinding;
 
 struct vsVector4D_i32
 {
@@ -102,7 +103,7 @@ public:
 	{
 		vsVector3D		position;
 		vsColorPacked			color;
-		float			padding[1];		// total:  32 bytes.
+		// total:  16 bytes.
 	};
 
 	struct PT
@@ -129,26 +130,26 @@ public:
 	struct PCT
 	{
 		vsVector3D		position;
-		vsColorPacked			color;
-		vsVector2D		texel;			// total:  36 bytes.
-		float			padding[7];		// seven more floats brings us up to 64 bytes.
+		vsColorPacked	color;
+		vsVector2D		texel;			// total:  24 bytes.
+		float			padding[3];		// three more floats brings us up to 32 bytes.
 	};
 
 	struct PCN
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColorPacked			color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
-		float			padding[6];		// six more floats brings us up to 64 bytes.
+		vsColorPacked	color;			// total:  28 bytes.
+		float			padding[4];		// four more floats brings us up to 32 bytes.
 	};
 
 	struct PCNT
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColorPacked			color;
-		vsVector2D		texel;			// total:  48 bytes.
-		float			padding[4];		// four more floats brings us to 64 bytes.
+		vsColorPacked	color;
+		vsVector2D		texel;			// total:  33 bytes, eeeew.
+		float			padding[7];		// seven more floats brings us to 64 bytes.
 	};
 
 
@@ -217,7 +218,7 @@ public:
 	ContentType	GetContentType() { return m_contentType; }
 
 	void	BindAsAttribute( int attributeId );
-	void	BindAsAttribute( int attributeId, int size, int stride = 0, void* offset = NULL );
+	void	BindAsAttribute( int attributeId, int size, int type, bool normalised, int stride = 0, void* offset = NULL );
 	void	BindAsTexture();
 
 	void	BindVertexBuffer( vsAttributeState *state );
@@ -234,6 +235,8 @@ public:
 
 	void	Bind( vsAttributeState *state );		// for non-custom types
 	void	Unbind( vsAttributeState *state );	// for non-custom types
+
+	void	ApplyAttributeBindingsTo( vsAttributeBinding *bindings );
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
 	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
