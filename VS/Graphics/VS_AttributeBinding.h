@@ -32,13 +32,11 @@ class vsAttributeBinding
 		int vertexCount;
 		int floatsPerVertex;
 
-		Binding(): buffer(NULL), p(NULL), vertexCount(0), floatsPerVertex(0) {}
-	};
-	// TODO:  This vsAttributeState may just go away, shortly.
-	vsAttributeState m_attributeState;
-	// vsRenderBuffer *m_vertexAttributes; // attributes [0-3]
+		bool dirty;
 
-	vsArray<Binding> m_attribute; // attributes [4+]
+		Binding(): buffer(NULL), p(NULL), vertexCount(0), floatsPerVertex(0), dirty(0) {}
+	};
+	vsArray<Binding> m_attribute;
 
 	bool m_dirty;
 	uint32_t m_vao;

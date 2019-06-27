@@ -13,7 +13,6 @@
 #include "VS_OpenGL.h"
 
 vsAttributeBinding::vsAttributeBinding(int attributeCount):
-	// m_vertexAttributes(NULL),
 	m_attribute(attributeCount),
 	m_dirty(true),
 	m_vao(0)
@@ -29,20 +28,12 @@ vsAttributeBinding::~vsAttributeBinding()
 void
 vsAttributeBinding::SetVertexAttributes( vsRenderBuffer *buffer )
 {
-	// "VertexAttributes" implicitly clears attributes 0-4
+	// "SetVertexAttributes" implicitly clears attributes 0-4
 	ClearAttribute(0);
 	ClearAttribute(1);
 	ClearAttribute(2);
 	ClearAttribute(3);
 	buffer->ApplyAttributeBindingsTo( this );
-	// m_vertexAttributes = buffer;
-
-	// SetAttribute(0, buffer);
-	// SetAttribute(1, buffer);
-	// SetAttribute(2, buffer);
-	// SetAttribute(3, buffer);
-
-	m_dirty = true;
 }
 
 void
@@ -51,20 +42,19 @@ vsAttributeBinding::SetAttribute( int attribute, vsRenderBuffer *buffer, int siz
 	if ( m_attribute.ItemCount() <= attribute )
 		m_attribute.SetArraySize(attribute+1);
 
-	m_attribute[attribute].buffer = buffer;
-	m_attribute[attribute].size = size;
-	m_attribute[attribute].type = type;
-	m_attribute[attribute].normalised = normalised;
-	m_attribute[attribute].stride = stride;
-	m_attribute[attribute].offset = offset;
+	Binding &b = m_attribute[attribute];
 
-	if ( m_attribute[attribute].p != NULL )
-		m_attribute[attribute].p = NULL;
+	b.buffer = buffer;
+	b.size = size;
+	b.type = type;
+	b.normalised = normalised;
+	b.stride = stride;
+	b.offset = offset;
 
-	m_dirty = true;
+	if ( b.p != NULL )
+		b.p = NULL;
 
-	// if ( attribute == 0 )
-	// 	m_vertexAttributes = NULL; // bah.  This is SO so ugly
+	b.dirty = m_dirty = true;
 }
 
 void
@@ -78,7 +68,6 @@ vsAttributeBinding::Bind()
 	else
 	{
 		glBindVertexArray(m_vao);
-		// m_attributeState.Flush();
 	}
 }
 
@@ -89,35 +78,14 @@ vsAttributeBinding::SetupAndBindVAO()
 		glGenVertexArrays(1, &m_vao);
 
 	glBindVertexArray(m_vao);
-	// if ( m_vertexAttributes )
-	// {
-	// 	GL_CHECK_SCOPED("vsAttributeBinding::BindVertexAttributes");
-	// 	m_attributeState.SetBool( vsAttributeState::ClientBool_VertexArray, false );
-	// 	m_attributeState.SetBool( vsAttributeState::ClientBool_ColorArray, false );
-	// 	m_attributeState.SetBool( vsAttributeState::ClientBool_NormalArray, false );
-	// 	m_attributeState.SetBool( vsAttributeState::ClientBool_TextureCoordinateArray, false );
-	// 	m_vertexAttributes->Bind(&m_attributeState);
-	// 	m_attributeState.Force();
-	// }
-	// else
+
+	for ( int i = 0; i < m_attribute.ItemCount(); i++ )
 	{
-		for ( int i = 0; i < 4; i++ )
-		{
+		if ( m_attribute[i].dirty )
 			DoBindAttribute(i);
-		}
 	}
 
-	for ( int i = 4; i < m_attribute.ItemCount(); i++ )
-	{
-		DoBindAttribute(i);
-	}
-
-	// m_attributeState.Flush();
-	// if ( m_attributeState.GetBool( ClientBool_VertexArray ) )
-	// 	glEnableVertexAttribArray( 0 );
-	// else
-	// 	glDisableVertexAttribArray( 0 );
-
+	m_dirty = false;
 }
 
 void
@@ -147,6 +115,8 @@ vsAttributeBinding::DoBindAttribute(int i)
 	{
 		glDisableVertexAttribArray( i );
 	}
+
+	b.dirty = false;
 }
 
 void
@@ -155,17 +125,16 @@ vsAttributeBinding::SetAttribute( int attribute, vsVector3D *p, int count )
 	if ( m_attribute.ItemCount() <= attribute )
 		m_attribute.SetArraySize(attribute+1);
 
-	m_attribute[attribute].p = (float*)p;
-	m_attribute[attribute].floatsPerVertex = 3;
-	m_attribute[attribute].vertexCount = count;
+	Binding &b = m_attribute[attribute];
 
-	if ( m_attribute[attribute].buffer != NULL )
-		m_attribute[attribute].buffer = NULL;
+	b.p = (float*)p;
+	b.floatsPerVertex = 3;
+	b.vertexCount = count;
+	b.dirty = true;
+
+	if ( b.buffer != NULL )
+		b.buffer = NULL;
 	m_dirty = true;
-	// vsRenderBuffer::BindArrayToAttribute( p, sizeof(vsVector3D) * count, attribute, count );
-
-	// if ( attribute == 0 )
-	// 	m_vertexAttributes = NULL; // bah.  This is SO so ugly
 }
 
 
@@ -175,16 +144,16 @@ vsAttributeBinding::SetAttribute( int attribute, vsVector2D *p, int count )
 	if ( m_attribute.ItemCount() <= attribute )
 		m_attribute.SetArraySize(attribute+1);
 
-	m_attribute[attribute].p = (float*)p;
-	m_attribute[attribute].floatsPerVertex = 2;
-	m_attribute[attribute].vertexCount = count;
+	Binding &b = m_attribute[attribute];
 
-	if ( m_attribute[attribute].buffer != NULL )
-		m_attribute[attribute].buffer = NULL;
+	b.p = (float*)p;
+	b.floatsPerVertex = 2;
+	b.vertexCount = count;
+	b.dirty = true;
+
+	if ( b.buffer != NULL )
+		b.buffer = NULL;
 	m_dirty = true;
-	// vsRenderBuffer::BindArrayToAttribute( p, sizeof(vsVector2D) * count, attribute, count );
-	// if ( attribute == 0 )
-	// 	m_vertexAttributes = NULL; // bah.  This is SO so ugly
 }
 
 void
@@ -193,16 +162,16 @@ vsAttributeBinding::SetAttribute( int attribute, vsColor *p, int count )
 	if ( m_attribute.ItemCount() <= attribute )
 		m_attribute.SetArraySize(attribute+1);
 
-	m_attribute[attribute].p = (float*)p;
-	m_attribute[attribute].floatsPerVertex = 4;
-	m_attribute[attribute].vertexCount = count;
+	Binding &b = m_attribute[attribute];
 
-	if ( m_attribute[attribute].buffer != NULL )
-		m_attribute[attribute].buffer = NULL;
+	b.p = (float*)p;
+	b.floatsPerVertex = 4;
+	b.vertexCount = count;
+	b.dirty = true;
+
+	if ( b.buffer != NULL )
+		b.buffer = NULL;
 	m_dirty = true;
-	// vsRenderBuffer::BindArrayToAttribute( p, sizeof(vsColor) * count, attribute, count );
-	// if ( attribute == 0 )
-	// 	m_vertexAttributes = NULL; // bah.  This is SO so ugly
 }
 
 void
@@ -211,16 +180,17 @@ vsAttributeBinding::ClearAttribute( int attribute )
 	if ( m_attribute.ItemCount() <= attribute )
 		return;
 
-	if ( m_attribute[attribute].p != NULL )
-	{
-		m_attribute[attribute].p = NULL;
-		m_dirty = true;
-	}
-	if ( m_attribute[attribute].buffer != NULL )
-	{
-		m_attribute[attribute].buffer = NULL;
-		m_dirty = true;
-	}
+	Binding &b = m_attribute[attribute];
 
+	if ( b.p != NULL )
+	{
+		b.p = NULL;
+		b.dirty = m_dirty = true;
+	}
+	if ( b.buffer != NULL )
+	{
+		b.buffer = NULL;
+		b.dirty = m_dirty = true;
+	}
 }
 
