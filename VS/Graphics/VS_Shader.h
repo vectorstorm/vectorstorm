@@ -14,6 +14,7 @@ class vsDisplayList;
 class vsRenderBuffer;
 class vsMatrix4x4;
 class vsShaderValues;
+class vsAttributeBinding;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
@@ -111,10 +112,10 @@ public:
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
-	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
-	void SetInstanceColors( vsRenderBuffer *colors );
-	void SetInstanceColors( const vsColor* color, int matCount );
-	void SetLocalToWorld( vsRenderBuffer* buffer );
+	void SetInstanceColors( vsRenderBuffer *colors, vsAttributeBinding *binding );
+	void SetInstanceColors( const vsColor* color, int matCount, vsAttributeBinding *binding  );
+	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount, vsAttributeBinding *binding );
+	void SetLocalToWorld( vsRenderBuffer* buffer, vsAttributeBinding *binding );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 

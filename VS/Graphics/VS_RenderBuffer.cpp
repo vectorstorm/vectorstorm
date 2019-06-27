@@ -15,6 +15,7 @@
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
 
+#define VS_PRISTINE_BINDINGS
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
@@ -399,6 +400,31 @@ vsRenderBuffer::BindAsTexture()
 	else
 	{
 		vsAssert(0, "Not yet implemented");
+	}
+}
+
+void
+vsRenderBuffer::ApplyInstanceAttributeBindingsTo( vsAttributeBinding *binding, int attributeId )
+{
+	switch( m_contentType )
+	{
+		case ContentType_Matrix:
+		{
+			binding->SetInstanceAttribute( attributeId+0, this, 4, GL_FLOAT, GL_FALSE, 64, 0 );
+			binding->SetInstanceAttribute( attributeId+1, this, 4, GL_FLOAT, GL_FALSE, 64, (void*)16 );
+			binding->SetInstanceAttribute( attributeId+2, this, 4, GL_FLOAT, GL_FALSE, 64, (void*)32 );
+			binding->SetInstanceAttribute( attributeId+3, this, 4, GL_FLOAT, GL_FALSE, 64, (void*)48 );
+			break;
+		}
+		case ContentType_Color:
+		{
+			binding->SetInstanceAttribute( attributeId, this, 4, GL_FLOAT, GL_FALSE, 0, 0 );
+			break;
+		}
+		default:
+		{
+			vsAssert(0, "Unhandled content type");
+		}
 	}
 }
 

@@ -33,6 +33,8 @@ vsAttributeBinding::SetVertexAttributes( vsRenderBuffer *buffer )
 	ClearAttribute(1);
 	ClearAttribute(2);
 	ClearAttribute(3);
+	// if the renderbuffer doesn't provide one, set our color attribute to pure white
+	SetExplicitValue( 3, vsVector4D(1,1,1,1) );
 	buffer->ApplyAttributeBindingsTo( this );
 }
 
@@ -51,8 +53,8 @@ vsAttributeBinding::SetAttribute( int attribute, vsRenderBuffer *buffer, int siz
 	b.stride = stride;
 	b.offset = offset;
 
-	if ( b.p != NULL )
-		b.p = NULL;
+	b.p = NULL;
+	b.hasExplicitValue = false;
 
 	b.dirty = m_dirty = true;
 }
@@ -64,6 +66,11 @@ vsAttributeBinding::Bind()
 	if ( m_dirty )
 	{
 		SetupAndBindVAO();
+		for ( int i = 0; i < m_attribute.ItemCount(); i++ )
+		{
+			if ( m_attribute[i].hasExplicitValue )
+				DoBindAttribute(i);
+		}
 	}
 	else
 	{
@@ -81,6 +88,10 @@ vsAttributeBinding::SetupAndBindVAO()
 
 	for ( int i = 0; i < m_attribute.ItemCount(); i++ )
 	{
+		// Explicit values are NOT bound to the VAO, and must be bound explicitly!
+		//
+		// OpenGL recommends we not use those, so.. need to come up with a clever
+		// idea about how to work around that.
 		if ( m_attribute[i].dirty )
 			DoBindAttribute(i);
 	}
@@ -101,6 +112,7 @@ vsAttributeBinding::DoBindAttribute(int i)
 	{
 		b.buffer->BindAsAttribute(i, b.size, b.type, b.normalised, b.stride, b.offset);
 		glEnableVertexAttribArray( i );
+		glVertexAttribDivisor(i, b.divisor);
 	}
 	else if ( b.p )
 	{
@@ -110,6 +122,12 @@ vsAttributeBinding::DoBindAttribute(int i)
 				i,
 				b.floatsPerVertex );
 		glEnableVertexAttribArray( i );
+		glVertexAttribDivisor(i, b.divisor);
+	}
+	else if ( b.hasExplicitValue )
+	{
+		glDisableVertexAttribArray( i );
+		glVertexAttrib4f(i, b.explicitValue.x, b.explicitValue.y, b.explicitValue.z, b.explicitValue.w );
 	}
 	else
 	{
@@ -117,6 +135,33 @@ vsAttributeBinding::DoBindAttribute(int i)
 	}
 
 	b.dirty = false;
+}
+
+void
+vsAttributeBinding::SetExplicitValue( int attribute, const vsVector4D& value )
+{
+	if ( m_attribute.ItemCount() <= attribute )
+		m_attribute.SetArraySize(attribute+1);
+
+	Binding &b = m_attribute[attribute];
+	if ( b.hasExplicitValue && b.explicitValue == value )
+	{
+		// if ( attribute == 8 )
+		{
+			vsVector4D cur;
+			glGetVertexAttribfv( attribute, GL_CURRENT_VERTEX_ATTRIB, (GLfloat*)&cur );
+			if ( cur != value )
+				vsLog("ERROR:  We don't know the value??");
+		}
+		return;
+	}
+
+	b.p = NULL;
+	b.buffer = NULL;
+	b.hasExplicitValue = true;
+	b.explicitValue = value;
+	b.dirty = true;
+	m_dirty = true;
 }
 
 void
@@ -132,8 +177,17 @@ vsAttributeBinding::SetAttribute( int attribute, vsVector3D *p, int count )
 	b.vertexCount = count;
 	b.dirty = true;
 
-	if ( b.buffer != NULL )
-		b.buffer = NULL;
+	b.buffer = NULL;
+	b.hasExplicitValue = false;
+	m_dirty = true;
+}
+
+void
+vsAttributeBinding::SetInstanceAttribute( int attribute, vsRenderBuffer *buffer, int size, int type, bool normalised, int stride, void* offset )
+{
+	SetAttribute(attribute, buffer, size, type, normalised, stride, offset);
+	m_attribute[attribute].divisor = 1;
+	m_attribute[attribute].dirty = true;
 	m_dirty = true;
 }
 
@@ -151,8 +205,8 @@ vsAttributeBinding::SetAttribute( int attribute, vsVector2D *p, int count )
 	b.vertexCount = count;
 	b.dirty = true;
 
-	if ( b.buffer != NULL )
-		b.buffer = NULL;
+	b.buffer = NULL;
+	b.hasExplicitValue = false;
 	m_dirty = true;
 }
 
@@ -169,8 +223,8 @@ vsAttributeBinding::SetAttribute( int attribute, vsColor *p, int count )
 	b.vertexCount = count;
 	b.dirty = true;
 
-	if ( b.buffer != NULL )
-		b.buffer = NULL;
+	b.buffer = NULL;
+	b.hasExplicitValue = false;
 	m_dirty = true;
 }
 
@@ -190,6 +244,11 @@ vsAttributeBinding::ClearAttribute( int attribute )
 	if ( b.buffer != NULL )
 	{
 		b.buffer = NULL;
+		b.dirty = m_dirty = true;
+	}
+	if ( b.hasExplicitValue )
+	{
+		b.hasExplicitValue = false;
 		b.dirty = m_dirty = true;
 	}
 }

@@ -486,6 +486,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// glGenVertexArrays(1, &m_vao);
 	// glBindVertexArray(m_vao);
 	// CheckGLError("Initialising OpenGL rendering");
+	m_globalVao.Bind();
 
 	ResizeRenderTargetsToMatchWindow();
 
@@ -738,6 +739,7 @@ void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
 	m_currentVao = &m_globalVao;
+	m_currentVao->Bind();
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
@@ -771,6 +773,8 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
+	m_currentVao = &m_globalVao;
+	m_currentVao->Bind();
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
@@ -868,8 +872,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 		// m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 	}
 
-	m_currentVao->Bind();
-
 	// CheckGLError("EnsureSpaceForVertex");
 	// CheckGLError("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
@@ -896,11 +898,11 @@ vsRenderer_OpenGL3::FlushRenderState()
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
-			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
+			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer, m_currentVao );
 		else if ( m_currentLocalToWorldCount > 0 )
-			m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
+			m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount, m_currentVao );
 		else
-			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
+			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1, m_currentVao );
 
 		if ( m_currentMaterial->GetResource()->m_glow )
 		{
@@ -913,11 +915,11 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		m_currentShader->SetColor( m_currentColor );
 		if ( m_currentColorsBuffer )
-			m_currentShader->SetInstanceColors( m_currentColorsBuffer );
+			m_currentShader->SetInstanceColors( m_currentColorsBuffer, m_currentVao );
 		else if ( m_currentColors )
-			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
+			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount, m_currentVao );
 		else
-			m_currentShader->SetInstanceColors( &c_white, 1 );
+			m_currentShader->SetInstanceColors( &c_white, 1, m_currentVao );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
 		int i = 0;
@@ -935,6 +937,8 @@ vsRenderer_OpenGL3::FlushRenderState()
 		vsAssert(0, "Trying to flush render state with no shader set?");
 		glUseProgram( 0 );
 	}
+
+	m_currentVao->Bind();
 
 }
 
@@ -1528,11 +1532,27 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					break;
 				}
 			case vsDisplayList::OpCode_SetAttributeBinding:
+				{
+					m_currentColorArray = NULL;
+					m_currentColorBuffer = NULL;
+					m_currentColorArrayCount = 0;
+					m_currentTexelBuffer = NULL;
+					m_currentTexelArray = NULL;
+					m_currentTexelArrayCount = 0;
+					m_currentNormalBuffer = NULL;
+					m_currentNormalArray = NULL;
+					m_currentNormalArrayCount = 0;
+					m_currentVertexBuffer = NULL;
+					m_currentVertexArray = NULL;
+					m_currentVertexArrayCount = 0;
 					m_currentVao = (vsAttributeBinding*)op->data.p;
-				break;
+					m_currentVao->Bind();
+					break;
+				}
 			case vsDisplayList::OpCode_ClearAttributeBinding:
 				{
 					m_currentVao = &m_globalVao;
+					m_currentVao->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_Debug:

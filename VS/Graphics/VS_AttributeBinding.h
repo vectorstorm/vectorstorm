@@ -12,6 +12,7 @@
 
 #include "VS/Utils/VS_Array.h"
 #include "VS_RendererState.h"
+#include "VS/Math/VS_Vector.h"
 class vsRenderBuffer;
 class vsVector2D;
 class vsVector3D;
@@ -32,9 +33,13 @@ class vsAttributeBinding
 		int vertexCount;
 		int floatsPerVertex;
 
+		bool hasExplicitValue;
+		vsVector4D explicitValue;
+
+		int divisor;
 		bool dirty;
 
-		Binding(): buffer(NULL), p(NULL), vertexCount(0), floatsPerVertex(0), dirty(0) {}
+		Binding(): buffer(NULL), p(NULL), vertexCount(0), floatsPerVertex(0), hasExplicitValue(false), divisor(0), dirty(0) {}
 	};
 	vsArray<Binding> m_attribute;
 
@@ -50,10 +55,13 @@ public:
 
 	void SetVertexAttributes( vsRenderBuffer *buffer );
 	void SetAttribute( int attribute, vsRenderBuffer *buffer, int size, int type, bool normalised, int stride = 0, void* offset = NULL );
+	void SetInstanceAttribute( int attribute, vsRenderBuffer *buffer, int size, int type, bool normalised, int stride = 0, void* offset = NULL );
 
 	void SetAttribute( int attribute, vsVector3D *p, int count );
 	void SetAttribute( int attribute, vsVector2D *p, int count );
 	void SetAttribute( int attribute, vsColor *p, int count );
+
+	void SetExplicitValue( int attribute, const vsVector4D& value );
 
 	vsRenderBuffer * GetAttributeBuffer( int attribute );
 	void* GetAttributeArray( int attribute );

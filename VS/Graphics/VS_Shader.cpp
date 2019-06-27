@@ -22,8 +22,8 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
-static bool m_localToWorldAttribIsActive = false;
-static bool m_colorAttribIsActive = false;
+// static bool m_localToWorldAttribIsActive = false;
+// static bool m_colorAttribIsActive = false;
 
 
 vsShader::vsShader( const vsString &vertexShader,
@@ -447,31 +447,33 @@ vsShader::SetColor( const vsColor& color )
 		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
 	}
 	// this is vertex color;  don't set that!
-	glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
 }
 
 void
-vsShader::SetInstanceColors( vsRenderBuffer *colors )
+vsShader::SetInstanceColors( vsRenderBuffer *colors, vsAttributeBinding *binding )
 {
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
-		if ( !m_colorAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-			glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-			m_colorAttribIsActive = true;
-		}
+		// if ( !m_colorAttribIsActive )
+		// {
+		// 	glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+		// 	glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+		// 	m_colorAttribIsActive = true;
+		// }
 
-		colors->BindAsAttribute( m_instanceColorAttributeLoc );
+		// colors->BindAsAttribute( m_instanceColorAttributeLoc );
+		colors->ApplyInstanceAttributeBindingsTo( binding, m_instanceColorAttributeLoc );
+
 	}
 	// CheckGLError("SetColors");
 }
 
 void
-vsShader::SetInstanceColors( const vsColor* color, int matCount )
+vsShader::SetInstanceColors( const vsColor* color, int matCount, vsAttributeBinding *binding  )
 {
 	if ( matCount <= 0 )
 		return;
+
 	// CheckGLError("SetInstanceColors");
 	// if ( m_colorLoc >= 0 )
 	// {
@@ -482,52 +484,54 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_colorAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_instanceColorAttributeLoc);
-				m_colorAttribIsActive = false;
-			}
-
-			glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
+			vsVector4D val(color[0].r, color[0].g, color[0].b, color[0].a);
+			binding->SetExplicitValue(m_instanceColorAttributeLoc, val);
+			// if ( m_colorAttribIsActive )
+			// {
+			// 	glDisableVertexAttribArray(m_instanceColorAttributeLoc);
+			// 	m_colorAttribIsActive = false;
+			// }
+            //
+			// glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
 		}
-		else
-		{
-			if ( !m_colorAttribIsActive )
-			{
-				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-				m_colorAttribIsActive = true;
-			}
-
-			GLuint size = sizeof(vsColor)*matCount;
-			static GLuint g_vbo = 0xffffffff;
-			static GLuint g_vboSize = 0;
-			// this could be a lot smarter.
-			if ( g_vbo == 0xffffffff )
-			{
-				glGenBuffers(1, &g_vbo);
-			}
-
-			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-			if ( size > g_vboSize )
-			{
-				glBufferData(GL_ARRAY_BUFFER, size, color, GL_STREAM_DRAW);
-				g_vboSize = size;
-			}
-			else
-			{
-				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-				if ( ptr )
-				{
-					memcpy(ptr, color, size);
-					glUnmapBuffer(GL_ARRAY_BUFFER);
-				}
-			}
-			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
-#ifdef VS_PRISTINE_BINDINGS
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
-		}
+// 		else
+// 		{
+// 			if ( !m_colorAttribIsActive )
+// 			{
+// 				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+// 				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+// 				m_colorAttribIsActive = true;
+// 			}
+//
+// 			GLuint size = sizeof(vsColor)*matCount;
+// 			static GLuint g_vbo = 0xffffffff;
+// 			static GLuint g_vboSize = 0;
+// 			// this could be a lot smarter.
+// 			if ( g_vbo == 0xffffffff )
+// 			{
+// 				glGenBuffers(1, &g_vbo);
+// 			}
+//
+// 			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+// 			if ( size > g_vboSize )
+// 			{
+// 				glBufferData(GL_ARRAY_BUFFER, size, color, GL_STREAM_DRAW);
+// 				g_vboSize = size;
+// 			}
+// 			else
+// 			{
+// 				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+// 				if ( ptr )
+// 				{
+// 					memcpy(ptr, color, size);
+// 					glUnmapBuffer(GL_ARRAY_BUFFER);
+// 				}
+// 			}
+// 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+// #ifdef VS_PRISTINE_BINDINGS
+// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+// #endif // VS_PRISTINE_BINDINGS
+// 		}
 	}
 	// CheckGLError("SetColors");
 }
@@ -554,29 +558,29 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
-vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
+vsShader::SetLocalToWorld( vsRenderBuffer* buffer, vsAttributeBinding *binding )
 {
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
-		if ( !m_localToWorldAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-			m_localToWorldAttribIsActive = true;
-		}
+		// if ( !m_localToWorldAttribIsActive )
+		// {
+		// 	glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+		// 	glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+		// 	glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+		// 	glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+		// 	glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+		// 	glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+		// 	glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+		// 	glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
+		// 	m_localToWorldAttribIsActive = true;
+		// }
 
-		buffer->BindAsAttribute( m_localToWorldAttributeLoc );
+		buffer->ApplyInstanceAttributeBindingsTo( binding, m_localToWorldAttributeLoc );
 	}
 }
 
 void
-vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
+vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount, vsAttributeBinding *binding )
 {
 	if ( m_localToWorldLoc >= 0 )
 	{
@@ -586,67 +590,75 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_localToWorldAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				m_localToWorldAttribIsActive = false;
-			}
+			binding->SetExplicitValue(m_localToWorldAttributeLoc, localToWorld->x);
+			binding->SetExplicitValue(m_localToWorldAttributeLoc+1, localToWorld->y);
+			binding->SetExplicitValue(m_localToWorldAttributeLoc+2, localToWorld->z);
+			binding->SetExplicitValue(m_localToWorldAttributeLoc+3, localToWorld->w);
 
-			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
+// 			if ( m_localToWorldAttribIsActive )
+// 			{
+// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
+// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
+// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
+// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
+// 				m_localToWorldAttribIsActive = false;
+// 			}
+//
+			// glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
+			// glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
+			// glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
+			// glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
 		}
-		else
-		{
-			if ( !m_localToWorldAttribIsActive )
-			{
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-				m_localToWorldAttribIsActive = true;
-			}
+		// else
+		// {
+// 			if ( !m_localToWorldAttribIsActive )
+// 			{
+// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
+// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
+// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
+// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
+// 				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
+// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
+// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
+// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
+// 				m_localToWorldAttribIsActive = true;
+// 			}
+//
+			// static GLuint g_vbo = 0xffffffff;
+			// static GLuint g_vboSize = 0;
+			// GLuint size = sizeof(vsMatrix4x4) * matCount;
+			// // this could be a lot smarter.
+			// if ( g_vbo == 0xffffffff )
+			// {
+			// 	glGenBuffers(1, &g_vbo);
+			// }
+			// glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+			// if ( size > g_vboSize )
+			// {
+			// 	glBufferData(GL_ARRAY_BUFFER, size, localToWorld, GL_STREAM_DRAW);
+			// 	g_vboSize = size;
+			// }
+			// else
+			// {
+			// 	void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+			// 	if ( ptr )
+			// 	{
+			// 		memcpy(ptr, localToWorld, size);
+			// 		glUnmapBuffer(GL_ARRAY_BUFFER);
+			// 	}
+			// }
+			// vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
 
-			static GLuint g_vbo = 0xffffffff;
-			static GLuint g_vboSize = 0;
-			GLuint size = sizeof(vsMatrix4x4) * matCount;
-			// this could be a lot smarter.
-			if ( g_vbo == 0xffffffff )
-			{
-				glGenBuffers(1, &g_vbo);
-			}
-			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-			if ( size > g_vboSize )
-			{
-				glBufferData(GL_ARRAY_BUFFER, size, localToWorld, GL_STREAM_DRAW);
-				g_vboSize = size;
-			}
-			else
-			{
-				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-				if ( ptr )
-				{
-					memcpy(ptr, localToWorld, size);
-					glUnmapBuffer(GL_ARRAY_BUFFER);
-				}
-			}
-			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
-#ifdef VS_PRISTINE_BINDINGS
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
-		}
+			// buffer->ApplyInstanceAttributeBindingsTo( binding, m_localToWorldAttributeLoc );
+
+// 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
+// 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
+// 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
+// 			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+// #ifdef VS_PRISTINE_BINDINGS
+// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+// #endif // VS_PRISTINE_BINDINGS
+		// }
 	}
 }
 

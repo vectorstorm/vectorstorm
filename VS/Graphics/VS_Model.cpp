@@ -187,10 +187,17 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		result->AddBuffer(vbo);
 		result->AddBuffer(ibo);
 
+		vsAttributeBinding *vao = new vsAttributeBinding;
+		result->AddAttributeBinding(vao);
+
+		vao->SetVertexAttributes(vbo);
+
 		vsDisplayList *list = new vsDisplayList(128);
-		list->BindBuffer(vbo);
+		list->SetAttributeBinding(vao);
+		// list->BindBuffer(vbo);
 		list->TriangleListBuffer(ibo);
-		list->ClearArrays();
+		// list->ClearArrays();
+		list->ClearAttributeBinding();
 
 		result->SetDisplayList(list);
 	}

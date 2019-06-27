@@ -221,6 +221,7 @@ public:
 	void	BindAsTexture();
 
 	void	ApplyAttributeBindingsTo( vsAttributeBinding *bindings );
+	void	ApplyInstanceAttributeBindingsTo( vsAttributeBinding *bindings, int attributeId );
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
 	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );

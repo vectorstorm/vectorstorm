@@ -13,6 +13,7 @@
 class vsRecord;
 class vsDisplayList;
 
+#include "VS/Graphics/VS_AttributeBinding.h"
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Material.h"
 #include "VS/Utils/VS_ArrayStore.h"
@@ -23,6 +24,7 @@ class vsFragment
 	vsDisplayList *					m_displayList;
 
 	vsArrayStore<vsRenderBuffer>	m_bufferList;
+	vsArrayStore<vsAttributeBinding>	m_attributeBindingList;
 	bool m_visible;
 
 public:
@@ -37,6 +39,7 @@ public:
 	void	SetMaterial( const vsString &name );
 	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; }
 	void	AddBuffer( vsRenderBuffer *buffer );
+	void	AddAttributeBinding( vsAttributeBinding *binding );
 	void	Clear();
 
 	bool			IsVisible() { return m_visible; }

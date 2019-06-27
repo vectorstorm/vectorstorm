@@ -354,6 +354,12 @@ vsFragment::AddBuffer( vsRenderBuffer *buffer )
 }
 
 void
+vsFragment::AddAttributeBinding( vsAttributeBinding *binding )
+{
+	m_attributeBindingList.AddItem( binding );
+}
+
+void
 vsFragment::Clear()
 {
 	vsDelete(m_material);
