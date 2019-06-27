@@ -737,6 +737,7 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
+	m_currentVao = &m_globalVao;
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
@@ -844,30 +845,30 @@ vsRenderer_OpenGL3::FlushRenderState()
 	}
 	if ( m_currentColorArray )
 	{
-		m_globalVao.SetAttribute( 3, m_currentColorArray, m_currentColorArrayCount );
+		m_currentVao->SetAttribute( 3, m_currentColorArray, m_currentColorArrayCount );
 		// vsRenderBuffer::BindColorArray( &m_state, m_currentColorArray, m_currentColorArrayCount );
 		// m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
 	}
 	if ( m_currentNormalArray )
 	{
-		m_globalVao.SetAttribute( 2, m_currentNormalArray, m_currentNormalArrayCount );
+		m_currentVao->SetAttribute( 2, m_currentNormalArray, m_currentNormalArrayCount );
 		// vsRenderBuffer::BindNormalArray( &m_state, m_currentNormalArray, m_currentNormalArrayCount );
 		// m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 	}
 	if ( m_currentTexelArray )
 	{
-		m_globalVao.SetAttribute( 1, m_currentTexelArray, m_currentTexelArrayCount );
+		m_currentVao->SetAttribute( 1, m_currentTexelArray, m_currentTexelArrayCount );
 		// vsRenderBuffer::BindTexelArray( &m_state, m_currentTexelArray, m_currentTexelArrayCount );
 		// m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 	}
 	if ( m_currentVertexArray )
 	{
-		m_globalVao.SetAttribute( 0, m_currentVertexArray, m_currentVertexArrayCount );
+		m_currentVao->SetAttribute( 0, m_currentVertexArray, m_currentVertexArrayCount );
 		// vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
 		// m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 	}
 
-	m_globalVao.Bind();
+	m_currentVao->Bind();
 
 	// CheckGLError("EnsureSpaceForVertex");
 	// CheckGLError("PreFlush");
@@ -1172,7 +1173,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
-					m_globalVao.SetAttribute( 0, m_currentVertexBuffer, 3, GL_FLOAT, GL_FALSE );
+					m_currentVao->SetAttribute( 0, m_currentVertexBuffer, 3, GL_FLOAT, GL_FALSE );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalArray:
@@ -1188,7 +1189,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentNormalArray = NULL;
 					m_currentNormalArrayCount = 0;
 					// m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
-					m_globalVao.SetAttribute( 2, m_currentNormalBuffer, 3, GL_FLOAT, GL_FALSE );
+					m_currentVao->SetAttribute( 2, m_currentNormalBuffer, 3, GL_FLOAT, GL_FALSE );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
@@ -1196,7 +1197,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = NULL;
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
-					m_globalVao.ClearAttribute( 0 );
+					m_currentVao->ClearAttribute( 0 );
 					// m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					break;
 				}
@@ -1205,7 +1206,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentNormalBuffer = NULL;
 					m_currentNormalArray = NULL;
 					m_currentNormalArrayCount = 0;
-					m_globalVao.ClearAttribute( 2 );
+					m_currentVao->ClearAttribute( 2 );
 					// m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 					break;
 				}
@@ -1223,13 +1224,13 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentTexelArray = NULL;
 					m_currentTexelArrayCount = 0;
 					// m_currentTexelBuffer->BindTexelBuffer( &m_state );
-					m_globalVao.SetAttribute( 1, m_currentTexelBuffer, 2, GL_FLOAT, GL_FALSE );
+					m_currentVao->SetAttribute( 1, m_currentTexelBuffer, 2, GL_FLOAT, GL_FALSE );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
 				{
 					// m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-					m_globalVao.ClearAttribute( 1 );
+					m_currentVao->ClearAttribute( 1 );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorArray:
@@ -1242,14 +1243,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
 					// m_currentColorBuffer->BindColorBuffer( &m_state );
-					m_globalVao.SetAttribute( 3, m_currentColorBuffer, 4, GL_FLOAT, GL_FALSE );
+					m_currentVao->SetAttribute( 3, m_currentColorBuffer, 4, GL_FLOAT, GL_FALSE );
 					m_currentColorArray = 0;
 					m_currentColorArrayCount = 0;
 					break;
 				}
 			case vsDisplayList::OpCode_ClearColorArray:
 				{
-					m_globalVao.ClearAttribute( 3 );
+					m_currentVao->ClearAttribute( 3 );
 					if ( m_currentColorBuffer )
 					{
 						//m_currentColorBuffer->UnbindColorBuffer();
@@ -1262,10 +1263,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_ClearArrays:
 				{
-					m_globalVao.ClearAttribute( 0 );
-					m_globalVao.ClearAttribute( 1 );
-					m_globalVao.ClearAttribute( 2 );
-					m_globalVao.ClearAttribute( 3 );
+					m_currentVao->ClearAttribute( 0 );
+					m_currentVao->ClearAttribute( 1 );
+					m_currentVao->ClearAttribute( 2 );
+					m_currentVao->ClearAttribute( 3 );
 					m_currentColorArray = NULL;
 					m_currentColorBuffer = NULL;
 					m_currentColorArrayCount = 0;
@@ -1305,7 +1306,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					// buffer->Bind( &m_state );
-					m_globalVao.SetVertexAttributes( buffer );
+					m_currentVao->SetVertexAttributes( buffer );
 					break;
 				}
 			case vsDisplayList::OpCode_UnbindBuffer:
@@ -1313,7 +1314,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					PROFILE_GL("UnbindBuffer");
 					// vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
 					// buffer->Unbind( &m_state );
-					m_globalVao.SetVertexAttributes( NULL );
+					m_currentVao->SetVertexAttributes( NULL );
 					break;
 				}
 			case vsDisplayList::OpCode_LineListArray:
@@ -1524,6 +1525,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
 					int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
 					glViewport( 0, 0, (GLsizei)currentTargetWidth, (GLsizei)currentTargetHeight );
+					break;
+				}
+			case vsDisplayList::OpCode_SetAttributeBinding:
+					m_currentVao = (vsAttributeBinding*)op->data.p;
+				break;
+			case vsDisplayList::OpCode_ClearAttributeBinding:
+				{
+					m_currentVao = &m_globalVao;
 					break;
 				}
 			case vsDisplayList::OpCode_Debug:

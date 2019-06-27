@@ -23,6 +23,7 @@
 
 #include "VS/Utils/VS_Array.h"
 
+class vsAttributeBinding;
 class vsRecord;
 class vsStore;
 class vsRenderBuffer;
@@ -114,6 +115,9 @@ public:
 		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix push.
 
 		OpCode_SetShaderValues, // set supplementary shader values which may be used by any current shader
+
+		OpCode_SetAttributeBinding,
+		OpCode_ClearAttributeBinding,
 
 		OpCode_Debug,
 
@@ -273,6 +277,9 @@ public:
 	void	ClearRenderTarget(); // clears the currently set render target.
 	void	ResolveRenderTarget( vsRenderTarget *target );
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
+
+	void	SetAttributeBinding( vsAttributeBinding *binding );
+	void	ClearAttributeBinding();
 
 	void	Light( const vsLight &light );
 	void	ClearLights();

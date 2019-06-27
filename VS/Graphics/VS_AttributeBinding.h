@@ -55,6 +55,9 @@ public:
 	void SetAttribute( int attribute, vsVector2D *p, int count );
 	void SetAttribute( int attribute, vsColor *p, int count );
 
+	vsRenderBuffer * GetAttributeBuffer( int attribute );
+	void* GetAttributeArray( int attribute );
+
 	void ClearAttribute( int attribute );
 
 	// "Bind()' is only to be called from the main thread.

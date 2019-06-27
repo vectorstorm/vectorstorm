@@ -194,3 +194,21 @@ vsAttributeBinding::ClearAttribute( int attribute )
 	}
 }
 
+vsRenderBuffer *
+vsAttributeBinding::GetAttributeBuffer( int attribute )
+{
+	if ( m_attribute.ItemCount() <= attribute )
+		return NULL;
+
+	return m_attribute[attribute].buffer;
+}
+
+void*
+vsAttributeBinding::GetAttributeArray( int attribute )
+{
+	if ( m_attribute.ItemCount() <= attribute )
+		return NULL;
+
+	return m_attribute[attribute].p;
+}
+

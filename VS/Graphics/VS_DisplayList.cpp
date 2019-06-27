@@ -12,6 +12,7 @@
 #include "VS_Record.h"
 #include "VS_Store.h"
 
+#include "VS_AttributeBinding.h"
 #include "VS_Box.h"
 #include "VS_Light.h"
 #include "VS_MaterialInternal.h"
@@ -104,6 +105,9 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SnapMatrix",
 
 	"SetShaderValues",
+
+	"SetAttributeBinding",
+	"ClearAttributeBinding",
 
 	"Debug"
 };
@@ -697,6 +701,19 @@ vsDisplayList::SetShaderValues( vsShaderValues *values )
 }
 
 void
+vsDisplayList::SetAttributeBinding( vsAttributeBinding *binding )
+{
+	m_fifo->WriteUint8( OpCode_SetAttributeBinding );
+	m_fifo->WriteVoidStar( (char*)binding );
+}
+
+void
+vsDisplayList::ClearAttributeBinding()
+{
+	m_fifo->WriteUint8( OpCode_ClearAttributeBinding );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -1184,6 +1201,7 @@ vsDisplayList::PopOp()
 			case OpCode_ColorBuffer:
 			case OpCode_BindBuffer:
 			case OpCode_UnbindBuffer:
+			case OpCode_SetAttributeBinding:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
@@ -1311,6 +1329,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
+			case OpCode_ClearAttributeBinding:
 			default:
 				break;
 		}
@@ -1457,6 +1476,12 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 		case OpCode_ClearViewport:
 			ClearViewport();
 			break;
+		case OpCode_SetAttributeBinding:
+			SetAttributeBinding( reinterpret_cast<vsAttributeBinding*>(o->data.p) );
+			break;
+		case OpCode_ClearAttributeBinding:
+			ClearAttributeBinding();
+			break;
 		case OpCode_Debug:
 			Debug( o->data.GetString() );
 			break;
@@ -1578,6 +1603,10 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 				case OpCode_BindBuffer:
 					currentVertexArray = NULL;
 					currentVertexBuffer = (vsRenderBuffer *)o->data.p;
+					break;
+				case OpCode_SetAttributeBinding:
+					// currentVertexArray = ((vsAttributeBinding*)o->data.p)->GetAttributeArray(0);
+					// currentVertexBuffer = ((vsAttributeBinding*)o->data.p)->GetAttributeBuffer(0);
 					break;
 				case OpCode_LineListBuffer:
 				case OpCode_LineStripBuffer:
@@ -1705,6 +1734,25 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 
 					box.ExpandToInclude( pos );
 				}
+			}
+			else if ( o->type == OpCode_SetAttributeBinding )
+			{
+				vsVector3D pos;
+				vsRenderBuffer *buffer = ((vsAttributeBinding*)o->data.p)->GetAttributeBuffer(0);
+				if ( buffer )
+				{
+
+					int positionCount = buffer->GetPositionCount();
+
+					for ( int i = 0; i < positionCount; i++ )
+					{
+						pos = buffer->GetPosition(i);
+						pos = transformStack[transformStackLevel].ApplyTo( pos );
+
+						box.ExpandToInclude( pos );
+					}
+				}
+				break;
 			}
 			else if ( o->type == OpCode_BindBuffer )
 			{

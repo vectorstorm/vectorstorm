@@ -54,6 +54,7 @@
 #include <Utils/VS_Timer.h>
 #include <Utils/VS_Tween.h>
 
+#include <VS/Graphics/VS_AttributeBinding.h>
 #include <VS/Graphics/VS_BuiltInFont.h>
 #include <VS/Graphics/VS_Camera.h>
 #include <VS/Graphics/VS_Color.h>

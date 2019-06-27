@@ -105,6 +105,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 	bool                 m_antialias;
 	bool                 m_vsync;
 	vsAttributeBinding	 m_globalVao;
+	vsAttributeBinding	 *m_currentVao;
 	// uint32_t			m_vao;	// temporary -- for our global VAO.
 	// VAOs should really be integrated more nicely somewhere, but for now,
 	// we'll treat our rendering like OpenGL2 and just continually reconfigure
