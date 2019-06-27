@@ -15,7 +15,6 @@
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
-class vsAttributeState;
 class vsAttributeBinding;
 
 struct vsVector4D_i32
@@ -221,29 +220,10 @@ public:
 	void	BindAsAttribute( int attributeId, int size, int type, bool normalised, int stride = 0, void* offset = NULL );
 	void	BindAsTexture();
 
-	void	BindVertexBuffer( vsAttributeState *state );
-	void	UnbindVertexBuffer( vsAttributeState *state );
-
-	void	BindNormalBuffer( vsAttributeState *state );
-	void	UnbindNormalBuffer( vsAttributeState *state );
-
-	void	BindTexelBuffer( vsAttributeState *state );
-	void	UnbindTexelBuffer( vsAttributeState *state );
-
-	void	BindColorBuffer( vsAttributeState *state );
-	void	UnbindColorBuffer( vsAttributeState *state );
-
-	void	Bind( vsAttributeState *state );		// for non-custom types
-	void	Unbind( vsAttributeState *state );	// for non-custom types
-
 	void	ApplyAttributeBindingsTo( vsAttributeBinding *bindings );
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
 	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
-	static void BindVertexArray( vsAttributeState *state, void* buffer, int vertexCount );
-	static void BindColorArray( vsAttributeState *state, void* buffer, int vertexCount );
-	static void BindTexelArray( vsAttributeState *state, void* buffer, int vertexCount );
-	static void BindNormalArray( vsAttributeState *state, void* buffer, int vertexCount );
 
 	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
 
