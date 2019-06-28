@@ -16,7 +16,9 @@
 vsFragment::vsFragment():
 	m_material(NULL),
 	m_displayList(NULL),
-	m_visible(true)
+	m_visible(true),
+	m_vbo(NULL),
+	m_ibo(NULL)
 {
 }
 
@@ -348,6 +350,17 @@ vsFragment::SetMaterial( const vsString &name )
 }
 
 void
+vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type )
+{
+	m_simpleType = type;
+	m_vbo = vbo;
+	m_ibo = ibo;
+
+	AddBuffer(vbo);
+	AddBuffer(ibo);
+}
+
+void
 vsFragment::AddBuffer( vsRenderBuffer *buffer )
 {
 	m_bufferList.AddItem( buffer );
@@ -358,6 +371,7 @@ vsFragment::Clear()
 {
 	vsDelete(m_material);
 	vsDelete(m_displayList);
+	m_vbo = m_ibo = NULL;
 	m_bufferList.Clear();
 }
 

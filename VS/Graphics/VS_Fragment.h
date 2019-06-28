@@ -19,11 +19,25 @@ class vsDisplayList;
 
 class vsFragment
 {
+public:
+	enum SimpleType
+	{
+		SimpleType_TriangleList,
+		SimpleType_TriangleFan,
+		SimpleType_TriangleStrip,
+	};
+private:
+
+
 	vsMaterial *					m_material;
 	vsDisplayList *					m_displayList;
 
 	vsArrayStore<vsRenderBuffer>	m_bufferList;
 	bool m_visible;
+
+	SimpleType m_simpleType;
+	vsRenderBuffer *m_vbo;
+	vsRenderBuffer *m_ibo;
 
 public:
 
@@ -38,6 +52,14 @@ public:
 	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; }
 	void	AddBuffer( vsRenderBuffer *buffer );
 	void	Clear();
+
+	// A "Simple" fragment has no display list;  it just binds the vbo and
+	// draws the ibo as a triangle list.
+	void	SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type );
+	bool	IsSimple() const { return m_vbo && m_ibo; }
+	SimpleType GetSimpleType() const { return m_simpleType; }
+	vsRenderBuffer * GetSimpleVBO() { return m_vbo; }
+	vsRenderBuffer * GetSimpleIBO() { return m_ibo; }
 
 	bool			IsVisible() { return m_visible; }
 	vsMaterial *	GetMaterial() { return m_material; }

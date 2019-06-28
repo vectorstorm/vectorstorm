@@ -13,6 +13,7 @@
 #include "VS/Math/VS_Vector.h"
 #include "VS/Math/VS_Transform.h"
 #include "VS/Graphics/VS_DisplayList.h"
+#include "VS/Graphics/VS_Fragment.h"
 #include "VS/Graphics/VS_Screen.h"
 #include "VS/Utils/VS_LinkedList.h"
 #include "VS/Utils/VS_LinkedListStore.h"
@@ -26,46 +27,7 @@ class vsFog;
 class vsLight;
 class vsFragment;
 class vsShaderValues;
-
-
-class vsRenderQueueStage
-{
-public:
-	struct BatchMap;
-	struct BatchElement;
-	struct Batch;
-private:
-
-	BatchMap*			m_batchMap;
-	Batch*				m_batch;
-	int					m_batchCount;
-
-	Batch *				m_batchPool;
-	BatchElement * 		m_batchElementPool;
-
-	vsLinkedListStore<vsDisplayList>	m_temporaryLists;
-
-	Batch *			FindBatch( vsMaterial *material );
-
-
-public:
-
-	vsRenderQueueStage();
-	~vsRenderQueueStage();
-
-	void			StartRender();
-	void			Draw( vsDisplayList *list );	// write our batches into here.
-	void			EndRender();
-
-	// Add a batch to this stage
-	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
-	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch, vsShaderValues *values = NULL );
-	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
-	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = NULL );
-
-	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
-	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
-};
+class vsRenderQueueStage;
 
 #define MAX_STACK_DEPTH (20)
 
@@ -134,11 +96,17 @@ public:
 	// Identity-matrix batches.
 	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
 
+	// Simple batch with no display list
+	void			AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsFragment::SimpleType simpleType );
+
 	// batches which will draw in multiple places.
 	// Note that the passed array of matrices must exist until the Draw phase ends!
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch, vsShaderValues *values = NULL);
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = NULL );
+	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType, vsShaderValues *values = NULL );
+	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType );
+	void			AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType, vsShaderValues *values = NULL );
 
 
 	// ultra-convenience for fragments.
