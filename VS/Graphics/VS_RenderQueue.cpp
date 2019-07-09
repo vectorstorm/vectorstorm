@@ -258,6 +258,11 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 	// in this batch.  If I find one, we'll merge together.
 	//
 	// "Compatible" means:  VBO is the same format and simpleType is the same.
+	// And no instance data;  batching doesn't work with instanced draws!
+	//
+	// Actually..  I can ignore 'simpleType' and just convert everything into
+	// triangle lists.  That'd get around the issue of primitive restarts in
+	// the case of fans and strips.
 	//
 	// Also, I probably want to have a rule like "if we add the size of their
 	// VBO array to the size of our VBO array, the total size should be under
@@ -265,28 +270,62 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 	// with a three-attribute vertex format like PCT, you can do 300 vertices.
 	// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
-	if ( !m_batchElementPool )
+	BatchElement *mergeCandidate = batch->elementList;
+	while(mergeCandidate)
 	{
-		m_batchElementPool = new BatchElement;
+		// [TODO] I should also be checking whether there's space in the
+		// mergeCandidate's buffer to merge with it.
+		//
+		// Also, we really don't want to merge into a renderbuffer *every*
+		// time, because each time it would initiate a transfer to the GPU.
+		// Instead, we want to be doing these merges into CPU-side memory
+		// and only push into a GPU buffer once we're *done* merging!
+		if ( mergeCandidate->instanceMatrix == NULL &&
+				mergeCandidate->vbo &&
+				mergeCandidate->vbo->GetContentType() == vbo->GetContentType() )
+			break;
+		mergeCandidate = mergeCandidate->next;
 	}
 
-	BatchElement *element = m_batchElementPool;
-	m_batchElementPool = element->next;
-	element->next = NULL;
-	element->Clear();
+	if (mergeCandidate)
+	{
+		vsLog("Found merge candidate!");
+		// Okay.  So what we're going to do is this:
+		//
+		// First, we need to understand whether this batch is already a "merge"
+		// batch, because if so we can safely add ourself to it.  If NOT, we
+		// must create a "merge" batch and add BOTH the merge candidate AND
+		// this batch to it, then remove the mergeCandidate.
+		//
+		// This implies that we need to have some set of "merge" batches around
+		// and ready for use.  And we need a way to mark which BatchElements
+		// represent these "merge" batches
+	}
+	else
+	{
+		if ( !m_batchElementPool )
+		{
+			m_batchElementPool = new BatchElement;
+		}
 
-	element->material = material;
-	element->matrix = matrix;
-	element->list = NULL;
-	element->vbo = vbo;
-	element->ibo = ibo;
-	element->simpleType = simpleType;
-	element->instanceMatrix = NULL;
-	element->instanceMatrixBuffer = NULL;
-	element->instanceColorBuffer = NULL;
+		BatchElement *element = m_batchElementPool;
+		m_batchElementPool = element->next;
+		element->next = NULL;
+		element->Clear();
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+		element->material = material;
+		element->matrix = matrix;
+		element->list = NULL;
+		element->vbo = vbo;
+		element->ibo = ibo;
+		element->simpleType = simpleType;
+		element->instanceMatrix = NULL;
+		element->instanceMatrixBuffer = NULL;
+		element->instanceColorBuffer = NULL;
+
+		element->next = batch->elementList;
+		batch->elementList = element;
+	}
 }
 
 void
