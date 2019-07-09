@@ -352,6 +352,7 @@ vsFragment::SetMaterial( const vsString &name )
 void
 vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type )
 {
+	m_displayList = NULL;
 	m_simpleType = type;
 	m_vbo = vbo;
 	m_ibo = ibo;

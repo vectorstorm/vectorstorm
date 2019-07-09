@@ -49,7 +49,7 @@ public:
 	void	SetVisible(bool visible) { m_visible = visible; }
 	void	SetMaterial( vsMaterial *material );
 	void	SetMaterial( const vsString &name );
-	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; }
+	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; m_vbo = NULL; m_ibo = NULL; }
 	void	AddBuffer( vsRenderBuffer *buffer );
 	void	Clear();
 

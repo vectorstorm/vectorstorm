@@ -287,16 +287,17 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
 
 	fragment->SetMaterial( m_font->Size(m_texSize)->m_material );
-	fragment->AddBuffer( ptBuffer );
-	fragment->AddBuffer( tlBuffer );
+	// fragment->AddBuffer( ptBuffer );
+	// fragment->AddBuffer( tlBuffer );
 
-	vsDisplayList *list = new vsDisplayList(256);
-
-	list->BindBuffer( ptBuffer );
-	list->TriangleListBuffer( tlBuffer );
-	list->ClearArrays();
-
-	fragment->SetDisplayList( list );
+	// vsDisplayList *list = new vsDisplayList(256);
+    //
+	// list->BindBuffer( ptBuffer );
+	// list->TriangleListBuffer( tlBuffer );
+	// list->ClearArrays();
+    //
+	// fragment->SetDisplayList( list );
+	fragment->SetSimple( ptBuffer, tlBuffer, vsFragment::SimpleType_TriangleList );
 	vsFontFragment* ff = dynamic_cast<vsFontFragment*>(fragment);
 	if ( ff )
 	{
@@ -372,7 +373,8 @@ vsFontRenderer::Fragment2D( const vsString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
 	CreateString_InFragment(FontContext_2D, fragment, string);
 	m_font->RegisterFragment(fragment);
-	if ( fragment->GetDisplayList() == NULL )
+	if ( fragment->GetDisplayList() == NULL &&
+			!fragment->IsSimple() )
 	{
 		vsDelete(fragment);
 		return NULL;
@@ -387,7 +389,8 @@ vsFontRenderer::Fragment3D( const vsString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
 	CreateString_InFragment(FontContext_3D, fragment, string);
 	m_font->RegisterFragment(fragment);
-	if ( fragment->GetDisplayList() == NULL )
+	if ( fragment->GetDisplayList() == NULL &&
+			!fragment->IsSimple() )
 	{
 		vsDelete(fragment);
 		return NULL;
