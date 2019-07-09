@@ -272,6 +272,7 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 		}
 	}
 	offset = baseOffset;
+	nextGlyph = 0;
 	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
@@ -656,7 +657,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 				}
 				if ( dropShadow )
 				{
-					color = m_dropShadowColor;
+					color *= m_dropShadowColor;
 				}
 
 				scaledPosition = v + characterOffset;
