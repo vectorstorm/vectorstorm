@@ -244,9 +244,18 @@ vsSprite::BuildBoundingBox()
 	for ( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
-		fragment->GetDisplayList()->GetBoundingBox(tl,br);
-		boundingBox.ExpandToInclude(tl);
-		boundingBox.ExpandToInclude(br);
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+				boundingBox.ExpandToInclude( b->GetPosition(i) );
+		}
+		else
+		{
+			fragment->GetDisplayList()->GetBoundingBox(tl,br);
+			boundingBox.ExpandToInclude(tl);
+			boundingBox.ExpandToInclude(br);
+		}
 	}
 
 	vsEntity *c = m_child;
@@ -276,13 +285,22 @@ vsSprite::CalculateBoundingRadius()
 		m_boundingRadius = m_displayList->GetBoundingRadius();
 
 		/*vsVector2D tl, br;
-		m_displayList->GetBoundingBox(tl,br);
-		m_boundingBox.Set(tl,br);*/
+		  m_displayList->GetBoundingBox(tl,br);
+		  m_boundingBox.Set(tl,br);*/
 	}
 	for ( vsArrayStoreIterator<vsFragment> iter = m_fragment.Begin(); iter != m_fragment.End(); iter++ )
 	{
 		vsFragment *fragment = *iter;
-		m_boundingRadius = vsMax( m_boundingRadius, fragment->GetDisplayList()->GetBoundingRadius() );
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+				m_boundingRadius = vsMax( m_boundingRadius, b->GetPosition(i).Length() );
+		}
+		else
+		{
+			m_boundingRadius = vsMax( m_boundingRadius, fragment->GetDisplayList()->GetBoundingRadius() );
+		}
 	}
 	BuildBoundingBox();
 }
