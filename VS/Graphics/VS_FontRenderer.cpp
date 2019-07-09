@@ -183,6 +183,12 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	size_t requiredSize = stringLength * 4;      // we need a maximum of four verts for each character in the string.
 	size_t requiredTriangles = stringLength * 6; // three indices per triangle, two triangles per character, max.
 
+	if ( m_hasDropShadow )
+	{
+		requiredSize *= 2;
+		requiredTriangles *= 2;
+	}
+
 	vsRenderBuffer::PCT *ptArray = new vsRenderBuffer::PCT[ requiredSize ];
 	uint16_t *tlArray = new uint16_t[ requiredTriangles ];
 
@@ -216,8 +222,6 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 		size_vec.y *= -1.f;	// upside down, in 3D context!
 	}
 
-	vsVector2D offset(0.f,topLinePosition);
-
 	if ( m_buildMapping )
 	{
 		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
@@ -236,18 +240,48 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	}
 
 
+	vsVector2D baseOffset(0.f,topLinePosition);
+	vsVector2D offset(0.f,topLinePosition);
 	int nextGlyph = 0;
 	float lineHeight = 1.f;
 	float lineMargin = lineHeight * m_font->Size(size)->m_lineSpacing;
+
+	bool doSnap = ShouldSnap( context );
+	if ( doSnap )
+	{
+		vsVector4D t = m_transform.GetTranslation();
+		t.x = (float)vsFloor(t.x + 0.5f);
+		t.y = (float)vsFloor(t.y + 0.5f);
+		t.z = (float)vsFloor(t.z + 0.5f);
+		m_transform.SetTranslation(t);
+	}
+
+	if ( m_hasDropShadow )
+	{
+		// BLAH.  Seems like our x offset is in pixels, and our y offset is scaled by font size?
+		// That's terrible;  must fix!
+		offset = baseOffset;
+		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+		{
+			offset.y = topLinePosition + (i*(lineHeight+lineMargin));
+
+			AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, true );
+
+			ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+			nextGlyph += (int)glyphsInThisLine;
+		}
+	}
+	offset = baseOffset;
 	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 	{
 		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
-		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i );
+		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, false );
 
 		ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
 		nextGlyph += (int)glyphsInThisLine;
 	}
+
 
 	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
 	tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
@@ -257,42 +291,10 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 	fragment->AddBuffer( tlBuffer );
 
 	vsDisplayList *list = new vsDisplayList(256);
-	bool doSnap = ShouldSnap( context );
 
 	list->BindBuffer( ptBuffer );
-	if ( m_transform != vsTransform3D::Identity )
-		list->PushTransform( m_transform );
-
-	if ( m_hasDropShadow )
-	{
-		// vsTransform3D shadow;
-		// shadow.SetTranslation( m_dropShadowOffset );
-		// list->PushTransform( shadow );
-		list->PushTranslation( m_dropShadowOffset );
-		if ( doSnap )
-			list->SnapMatrix();
-		list->SetColor( m_dropShadowColor );
-		list->TriangleListBuffer( tlBuffer );
-		if ( doSnap )
-			list->PopTransform();
-		list->PopTransform();
-	}
-
-	if ( doSnap )
-		list->SnapMatrix();
-	if ( m_hasColor )
-		list->SetColor( m_color );
-	else
-		list->SetColor( c_white );
-
 	list->TriangleListBuffer( tlBuffer );
 	list->ClearArrays();
-	if ( doSnap )
-		list->PopTransform();
-	if ( m_hasColor )
-		list->SetColor( c_white );
-	if ( m_transform != vsTransform3D::Identity )
-		list->PopTransform();
 
 	fragment->SetDisplayList( list );
 	vsFontFragment* ff = dynamic_cast<vsFontFragment*>(fragment);
@@ -545,7 +547,7 @@ vsFontRenderer::WrapLine(const vsString &string, float size)
 }
 
 void
-vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in, int nextGlyphId, int lineId)
+vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType j, const vsVector2D &offset_in, int nextGlyphId, int lineId, bool dropShadow)
 {
 	if ( m_buildMapping )
 	{
@@ -572,10 +574,18 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			// snap our offsets!
 			offset.x = (float)(int)(offset.x);
 		}
+
 		offset.x *= (1.f / size.x);
 
 		s_tempFontList.Clear();
 	}
+
+	if ( dropShadow )
+	{
+		offset.x += m_dropShadowOffset.x / size.x;
+		offset.y += m_dropShadowOffset.y / size.y;
+	}
+
 
 	uint16_t glyphIndices[6] = { 0, 2, 1, 1, 2, 3 };
 
@@ -637,12 +647,22 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 				{
 					color = m_glyphColor[glyphId];
 				}
+				if ( !dropShadow && m_hasColor )
+				{
+					color *= m_color;
+				}
+				if ( dropShadow )
+				{
+					color = m_dropShadowColor;
+				}
 
 				scaledPosition = v + characterOffset;
 				scaledPosition.x *= size.x;
 				scaledPosition.y *= size.y;
 
-				constructor->ptArray[ constructor->ptIndex+i ].position = scaledPosition;
+				vsVector3D transformedPosition = m_transform.ApplyTo(scaledPosition);
+
+				constructor->ptArray[ constructor->ptIndex+i ].position = transformedPosition;
 				constructor->ptArray[ constructor->ptIndex+i ].color = color;
 				constructor->ptArray[ constructor->ptIndex+i ].texel = g->texel[i];
 

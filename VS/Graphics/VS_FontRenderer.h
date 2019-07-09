@@ -64,7 +64,7 @@ class vsFontRenderer
 	// vsFragment* CreateString_Fragment( FontContext context, const vsString& string );
 	void		CreateString_InFragment( FontContext context, vsFontFragment *fragment, const vsString& string );
 	void		CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string );
-	void		AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType type, const vsVector2D &offset, int nextGlyphId, int lineId);
+	void		AppendStringToArrays( vsFontRenderer::FragmentConstructor *constructor, FontContext context, const char* string, const vsVector2D &size, JustificationType type, const vsVector2D &offset, int nextGlyphId, int lineId, bool dropShadow);
 	void		BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType type, const vsVector2D &offset);
 
 	bool		ShouldSnap( FontContext context );
