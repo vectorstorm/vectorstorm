@@ -254,6 +254,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 {
 	Batch *batch = FindBatch(material);
 
+#if 0
 	// [TODO]:  Right here, I need to check for compatible simple BatchElements
 	// in this batch.  If I find one, we'll merge together.
 	//
@@ -302,6 +303,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 		// represent these "merge" batches
 	}
 	else
+#endif //0
 	{
 		if ( !m_batchElementPool )
 		{
