@@ -28,6 +28,8 @@ vsDynamicBatch::Supports( vsRenderBuffer::ContentType type )
 	// As I'm rolling this out, add the supported types here.
 	switch( type )
 	{
+		case vsRenderBuffer::ContentType_PC:
+		case vsRenderBuffer::ContentType_PT:
 		case vsRenderBuffer::ContentType_PCT:
 			return true;
 		default:
@@ -61,7 +63,39 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 
 	int indexOfFirstVertex = 0;//m_vbo.GetPositionCount();
 
-	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PCT )
+	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PT )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PT);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::PT* i = fvbo->GetPTArray();
+		vsRenderBuffer::PT* o = m_vbo.GetPTArray();
+
+		int oo = size / sizeof(vsRenderBuffer::PT);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].texel = i[ii].texel;
+			oo++;
+		}
+	}
+	else if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PC )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PC);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::PC* i = fvbo->GetPCArray();
+		vsRenderBuffer::PC* o = m_vbo.GetPCArray();
+
+		int oo = size / sizeof(vsRenderBuffer::PC);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].color = i[ii].color;
+			oo++;
+		}
+	}
+	else if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PCT )
 	{
 		int size = first ? 0 : m_vbo.GetGenericArraySize();
 		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PCT);
