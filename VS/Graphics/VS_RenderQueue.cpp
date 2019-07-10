@@ -14,6 +14,9 @@
 #include "VS_Scene.h"
 #include "VS_System.h"
 
+#include "VS_DynamicBatch.h"
+#include "VS_DynamicBatchManager.h"
+
 #include "VS_MaterialInternal.h"
 
 #include "VS/VS_DisableDebugNew.h"
@@ -81,6 +84,8 @@ struct vsRenderQueueStage::BatchElement
 	vsFragment::SimpleType simpleType;
 	BatchElement *	next;
 
+	vsDynamicBatch * batch;
+
 	BatchElement():
 		material(NULL),
 		shaderValues(NULL),
@@ -92,7 +97,8 @@ struct vsRenderQueueStage::BatchElement
 		list(NULL),
 		vbo(NULL),
 		ibo(NULL),
-		next(NULL)
+		next(NULL),
+		batch(NULL)
 	{
 	}
 
@@ -108,6 +114,7 @@ struct vsRenderQueueStage::BatchElement
 		list = NULL;
 		vbo = NULL;
 		ibo = NULL;
+		batch = NULL;
 	}
 };
 
@@ -270,26 +277,30 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 	// with a three-attribute vertex format like PCT, you can do 300 vertices.
 	// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
-	BatchElement *mergeCandidate = batch->elementList;
-	while(mergeCandidate)
+	BatchElement *mergeCandidate = NULL;
+	// if ( vsDynamicBatch::Supports( vbo->GetContentType() ) )
 	{
-		// [TODO] I should also be checking whether there's space in the
-		// mergeCandidate's buffer to merge with it.
-		//
-		// Also, we really don't want to merge into a renderbuffer *every*
-		// time, because each time it would initiate a transfer to the GPU.
-		// Instead, we want to be doing these merges into CPU-side memory
-		// and only push into a GPU buffer once we're *done* merging!
-		if ( mergeCandidate->instanceMatrix == NULL &&
-				mergeCandidate->vbo &&
-				mergeCandidate->vbo->GetContentType() == vbo->GetContentType() )
-			break;
-		mergeCandidate = mergeCandidate->next;
+		mergeCandidate = batch->elementList;
+		while(mergeCandidate)
+		{
+			// [TODO] I should also be checking whether there's space in the
+			// mergeCandidate's buffer to merge with it.
+			//
+			// Also, we really don't want to merge into a renderbuffer *every*
+			// time, because each time it would initiate a transfer to the GPU.
+			// Instead, we want to be doing these merges into CPU-side memory
+			// and only push into a GPU buffer once we're *done* merging!
+			if ( mergeCandidate->instanceMatrix == NULL &&
+					mergeCandidate->vbo &&
+					mergeCandidate->vbo->GetContentType() == vbo->GetContentType() )
+				break;
+			mergeCandidate = mergeCandidate->next;
+		}
 	}
 
-	if (mergeCandidate)
+	if (mergeCandidate && vsDynamicBatch::Supports( vbo->GetContentType() ) )
 	{
-		vsLog("Found merge candidate!");
+		// vsLog("Found merge candidate!");
 		// Okay.  So what we're going to do is this:
 		//
 		// First, we need to understand whether this batch is already a "merge"
@@ -300,6 +311,16 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 		// This implies that we need to have some set of "merge" batches around
 		// and ready for use.  And we need a way to mark which BatchElements
 		// represent these "merge" batches
+
+		if ( mergeCandidate->batch == NULL )
+		{
+			mergeCandidate->batch = vsDynamicBatchManager::Instance()->GetNewBatch();
+			mergeCandidate->batch->StartBatch( mergeCandidate->vbo,
+					mergeCandidate->ibo,
+					mergeCandidate->matrix,
+					mergeCandidate->simpleType );
+		}
+		mergeCandidate->batch->AddToBatch( vbo, ibo, matrix, simpleType );
 	}
 	else
 	{
@@ -522,32 +543,39 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 		for (BatchElement *e = b->elementList; e; e = e->next)
 		{
 			list->SetMaterial( e->material );
-			if ( e->instanceMatrixBuffer )
-				list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
-			else if ( e->instanceMatrix )
-				list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
-			else
-				list->SetMatrix4x4( e->matrix );
-			list->SetShaderValues( e->shaderValues );
-			if ( e->instanceColorBuffer )
-				list->SetColorsBuffer( e->instanceColorBuffer );
-			else if ( e->instanceColor )
-				list->SetColors( e->instanceColor, e->instanceMatrixCount );
-
-			if ( e->list )
-				list->Append( *e->list );
-			else if ( e->vbo && e->ibo )
+			if ( e->batch )
 			{
-				list->BindBuffer( e->vbo );
-				if ( e->simpleType == vsFragment::SimpleType_TriangleList )
-					list->TriangleListBuffer( e->ibo );
-				else if ( e->simpleType == vsFragment::SimpleType_TriangleFan )
-					list->TriangleFanBuffer( e->ibo );
-				else if ( e->simpleType == vsFragment::SimpleType_TriangleStrip )
-					list->TriangleStripBuffer( e->ibo );
-				list->ClearArrays();
+				e->batch->Draw(list);
 			}
-			list->PopTransform();
+			else
+			{
+				if ( e->instanceMatrixBuffer )
+					list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
+				else if ( e->instanceMatrix )
+					list->SetMatrices4x4( e->instanceMatrix, e->instanceMatrixCount );
+				else
+					list->SetMatrix4x4( e->matrix );
+				list->SetShaderValues( e->shaderValues );
+				if ( e->instanceColorBuffer )
+					list->SetColorsBuffer( e->instanceColorBuffer );
+				else if ( e->instanceColor )
+					list->SetColors( e->instanceColor, e->instanceMatrixCount );
+
+				if ( e->list )
+					list->Append( *e->list );
+				else if ( e->vbo && e->ibo )
+				{
+					list->BindBuffer( e->vbo );
+					if ( e->simpleType == vsFragment::SimpleType_TriangleList )
+						list->TriangleListBuffer( e->ibo );
+					else if ( e->simpleType == vsFragment::SimpleType_TriangleFan )
+						list->TriangleFanBuffer( e->ibo );
+					else if ( e->simpleType == vsFragment::SimpleType_TriangleStrip )
+						list->TriangleStripBuffer( e->ibo );
+					list->ClearArrays();
+				}
+				list->PopTransform();
+			}
 		}
 	}
 }

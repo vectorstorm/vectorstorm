@@ -16,6 +16,7 @@
 #include "VS_Preferences.h"
 #include "VS_Random.h"
 #include "VS_Screen.h"
+#include "VS_DynamicBatchManager.h"
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
 
@@ -186,6 +187,7 @@ void
 vsSystem::InitGameData()
 {
 	m_materialManager = new vsMaterialManager;
+	m_dynamicBatchManager = new vsDynamicBatchManager;
 }
 
 void
@@ -193,6 +195,7 @@ vsSystem::DeinitGameData()
 {
 	vsDelete( m_materialManager );
 	m_textureManager->CollectGarbage();
+	vsDelete( m_dynamicBatchManager );
 }
 
 void

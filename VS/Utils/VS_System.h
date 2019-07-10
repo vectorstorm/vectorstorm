@@ -12,6 +12,7 @@
 
 #include "Utils/VS_Singleton.h"
 
+class vsDynamicBatchManager;
 class vsMaterialManager;
 class vsPreferences;
 class vsPreferenceObject;
@@ -77,6 +78,7 @@ class vsSystem
 
 	vsTextureManager *	m_textureManager;
 	vsMaterialManager *	m_materialManager;
+	vsDynamicBatchManager *m_dynamicBatchManager;
 
 	vsString			m_title;
 	vsScreen *			m_screen;

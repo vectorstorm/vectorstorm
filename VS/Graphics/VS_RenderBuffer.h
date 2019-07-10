@@ -101,7 +101,7 @@ public:
 	struct PC
 	{
 		vsVector3D		position;
-		vsColorPacked			color;
+		vsColorPacked	color;
 		float			padding[1];		// total:  32 bytes.
 	};
 
@@ -129,7 +129,7 @@ public:
 	struct PCT
 	{
 		vsVector3D		position;
-		vsColorPacked			color;
+		vsColorPacked	color;
 		vsVector2D		texel;			// total:  36 bytes.
 		float			padding[7];		// seven more floats brings us up to 64 bytes.
 	};
@@ -138,7 +138,7 @@ public:
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColorPacked			color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
+		vsColorPacked	color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
 		float			padding[6];		// six more floats brings us up to 64 bytes.
 	};
 
@@ -146,7 +146,7 @@ public:
 	{
 		vsVector3D		position;
 		vsVector3D		normal;
-		vsColorPacked			color;
+		vsColorPacked	color;
 		vsVector2D		texel;			// total:  48 bytes.
 		float			padding[4];		// four more floats brings us to 64 bytes.
 	};
@@ -177,11 +177,11 @@ public:
 	void	SetActiveSize( int size );
 
 	void			SetVector3DArraySize( int size );
-	int				GetVector3DArraySize() { return m_arrayBytes/sizeof(vsVector3D); }
+	int				GetVector3DArraySize() { return m_activeBytes/sizeof(vsVector3D); }
 	vsVector3D *	GetVector3DArray() { return (vsVector3D*)m_array; }
 
 	void			SetIntArraySize( int size );
-	int				GetIntArraySize() { return m_arrayBytes/sizeof(uint16_t); }
+	int				GetIntArraySize() { return m_activeBytes/sizeof(uint16_t); }
 	uint16_t *		GetIntArray() { return (uint16_t*)m_array; }
 
 	void			SetColorArraySize( int size );
@@ -190,8 +190,9 @@ public:
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
 	void*			GetGenericArray() { return m_array; }
+	int				GetGenericArraySize() { return m_activeBytes; }
 
-	int				GetMatrix4x4ArraySize() { return m_arrayBytes/sizeof(vsMatrix4x4); }
+	int				GetMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 	int				GetActiveMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 
 	P *				GetPArray() { return (P*)m_array; }
@@ -214,7 +215,8 @@ public:
 
 	// Probably only useful for santity checking that the correct drawing
 	// functions are being called, for our known buffer types.
-	ContentType	GetContentType() { return m_contentType; }
+	ContentType	GetContentType() const { return m_contentType; }
+	void	SetContentType(ContentType ct) { m_contentType = ct; }
 
 	void	BindAsAttribute( int attributeId );
 	void	BindAsTexture();
