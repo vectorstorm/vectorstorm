@@ -95,27 +95,27 @@ public:
 
 	struct P
 	{
-		vsVector3D		position;
+		vsVector3D		position; // 12 bytes
+		float			padding;  // 16 bytes
 	};
 
 	struct PC
 	{
-		vsVector3D		position;
-		vsColorPacked	color;
-		float			padding[1];		// total:  32 bytes.
+		vsVector3D		position; // Total: 12 bytes
+		vsColorPacked	color;    // Total: 16 bytes
 	};
 
 	struct PT
 	{
-		vsVector3D		position;
-		vsVector2D		texel;			// total:  20 bytes
-		float			padding[3];		// three more floats brings us to 32 bytes
+		vsVector3D		position;       // 12
+		vsVector2D		texel;			// 20
+		float			padding[3];		// 32 bytes
 	};
 
 	struct PN
 	{
-		vsVector3D		position;
-		vsVector3D		normal;			// total:  24 bytes
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24 bytes
 		float			padding[2];		// two more floats brings us to 32 bytes
 	};
 
@@ -128,27 +128,27 @@ public:
 
 	struct PCT
 	{
-		vsVector3D		position;
-		vsColorPacked	color;
-		vsVector2D		texel;			// total:  36 bytes.
-		float			padding[7];		// seven more floats brings us up to 64 bytes.
+		vsVector3D		position;		// 12
+		vsColorPacked	color;			// 16
+		vsVector2D		texel;			// 24
+		float			padding[2];		// 32
 	};
 
 	struct PCN
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsColorPacked	color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
-		float			padding[6];		// six more floats brings us up to 64 bytes.
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24
+		vsColorPacked	color;			// 28
+		float			padding;		// 32
 	};
 
 	struct PCNT
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsColorPacked	color;
-		vsVector2D		texel;			// total:  48 bytes.
-		float			padding[4];		// four more floats brings us to 64 bytes.
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24
+		vsColorPacked	color;			// 28
+		vsVector2D		texel;			// 36
+		float			padding[7];		// four more floats brings us to 64 bytes.
 	};
 
 

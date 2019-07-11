@@ -133,7 +133,9 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 				break;
 		}
 
-		m_ibo.SetIntArraySize( oo + (3*trianglesForNewFragment) );
+		int newIndexCount = oo + (3*trianglesForNewFragment);
+		m_ibo.ResizeArray( newIndexCount * sizeof(uint16_t) );
+		// m_ibo.SetIntArraySize( oo + (3*trianglesForNewFragment) );
 
 		uint16_t* i = fibo->GetIntArray();
 		uint16_t* o = m_ibo.GetIntArray();

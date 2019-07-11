@@ -19,6 +19,7 @@
 #include "VS/Graphics/VS_Scene.h"
 #include "VS/Graphics/VS_Screen.h"
 #include "VS/Graphics/VS_Sprite.h"
+#include "VS/Graphics/VS_DynamicBatchManager.h"
 #include "VS/Utils/VS_System.h"
 
 //REGISTER_GAME("Empty", coreGame)
@@ -205,6 +206,7 @@ coreGame::Go()
 			m_system[i]->PostUpdate( m_timeStep );
 
 	DrawFrame();
+	vsDynamicBatchManager::Instance()->FrameRendered();
 }
 
 void

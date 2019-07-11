@@ -102,7 +102,8 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 	if ( m_array && size > m_arrayBytes )
 	{
 		char* newArray = new char[size];
-		memcpy(newArray, m_array, m_arrayBytes);
+		memset(newArray, 0, size);
+		memcpy(newArray, m_array, m_activeBytes);
 		m_arrayBytes = size;
 		vsDeleteArray( m_array );
 		m_array = newArray;
@@ -113,6 +114,13 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
+	// NOTE TO ME:
+	//
+	// Hi, Trevor!
+	//
+	// The trouble I seem to be having with dynamic batches seems to be occuring
+	// on frames where a batch VBO gets bigger.  Investigate!
+	//
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
 
 	int bindPoints[BindType_MAX] =
