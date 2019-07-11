@@ -31,7 +31,9 @@ vsDynamicBatch::Supports( vsRenderBuffer::ContentType type )
 		case vsRenderBuffer::ContentType_P:
 		case vsRenderBuffer::ContentType_PC:
 		case vsRenderBuffer::ContentType_PT:
+		case vsRenderBuffer::ContentType_PN:
 		case vsRenderBuffer::ContentType_PCT:
+		case vsRenderBuffer::ContentType_PCNT:
 			return true;
 		default:
 			return false;
@@ -79,6 +81,22 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 			oo++;
 		}
 	}
+	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PN )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PN);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::PN* i = fvbo->GetPNArray();
+		vsRenderBuffer::PN* o = m_vbo.GetPNArray();
+
+		int oo = size / sizeof(vsRenderBuffer::PN);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].normal = mat.ApplyRotationTo( i[ii].normal );
+			oo++;
+		}
+	}
 	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PT )
 	{
 		int size = first ? 0 : m_vbo.GetGenericArraySize();
@@ -123,6 +141,24 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
 		{
 			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].color = i[ii].color;
+			o[oo].texel = i[ii].texel;
+			oo++;
+		}
+	}
+	else if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PCNT )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PCNT);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::PCNT* i = fvbo->GetPCNTArray();
+		vsRenderBuffer::PCNT* o = m_vbo.GetPCNTArray();
+
+		int oo = size / sizeof(vsRenderBuffer::PCNT);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].normal = mat.ApplyRotationTo( i[ii].normal );
 			o[oo].color = i[ii].color;
 			o[oo].texel = i[ii].texel;
 			oo++;
