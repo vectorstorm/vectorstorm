@@ -47,6 +47,7 @@ public:
 private:
 	int32_t m_colorLoc;
 	int32_t m_instanceColorAttributeLoc;
+	int32_t m_hasInstanceColorsLoc;
 	int32_t m_resolutionLoc;
 	int32_t m_mouseLoc;
 	int32_t m_fogColorId;

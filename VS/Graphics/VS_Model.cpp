@@ -472,8 +472,17 @@ vsModel::BuildBoundingBox()
 	{
 		vsFragment *fragment = *iter;
 		vsBox3D fragmentBox;
-		fragment->GetDisplayList()->GetBoundingBox( fragmentBox );
-		boundingBox.ExpandToInclude( fragmentBox );
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+				boundingBox.ExpandToInclude( b->GetPosition(i) );
+		}
+		else
+		{
+			fragment->GetDisplayList()->GetBoundingBox( fragmentBox );
+			boundingBox.ExpandToInclude( fragmentBox );
+		}
 	}
 
 	vsEntity *c = m_child;

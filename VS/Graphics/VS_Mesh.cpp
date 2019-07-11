@@ -353,7 +353,6 @@ vsMesh::MakeFragment(int listId)
 		return NULL;
 	}
 
-	fragment->AddBuffer(buffer);
 
 	vsRenderBuffer *indexBuffer = new vsRenderBuffer;
 	int intsUsed = m_triangleListIndexCount[listId];
@@ -362,17 +361,19 @@ vsMesh::MakeFragment(int listId)
 	indexBuffer->BakeIndexArray();
 
 	fragment->SetMaterial( m_triangleListMaterial[listId] );
-	fragment->AddBuffer(indexBuffer);
-
-	vsAssert( m_triangleListMaterial[listId], "No material set?" );
-
-	vsDisplayList *list = new vsDisplayList(36);
-
-	list->BindBuffer( buffer );
-	list->TriangleListBuffer( indexBuffer );
-	list->ClearArrays();
-
-	fragment->SetDisplayList( list );
+	fragment->SetSimple(buffer, indexBuffer, vsFragment::SimpleType_TriangleList);
+	// fragment->AddBuffer(buffer);
+	// fragment->AddBuffer(indexBuffer);
+    //
+	// vsAssert( m_triangleListMaterial[listId], "No material set?" );
+    //
+	// vsDisplayList *list = new vsDisplayList(36);
+    //
+	// list->BindBuffer( buffer );
+	// list->TriangleListBuffer( indexBuffer );
+	// list->ClearArrays();
+    //
+	// fragment->SetDisplayList( list );
 
 	return fragment;
 }

@@ -93,6 +93,8 @@ public:
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }
 
+	bool MatchesForBatching( vsMaterial *other ) const;
+
 	static vsMaterial *	White;
 };
 

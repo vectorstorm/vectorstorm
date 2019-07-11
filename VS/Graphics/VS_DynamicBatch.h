@@ -37,6 +37,7 @@ public:
 
 	void Reset();
 	static bool Supports( vsRenderBuffer::ContentType type );
+	bool CanFitVertices( int vertexCount ) const;
 
 	void StartBatch( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsMatrix4x4& mat, vsFragment::SimpleType type );
 	void AddToBatch( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsMatrix4x4& mat, vsFragment::SimpleType type );

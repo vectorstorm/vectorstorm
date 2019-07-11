@@ -34,10 +34,17 @@ vsDynamicBatch::Supports( vsRenderBuffer::ContentType type )
 		case vsRenderBuffer::ContentType_PN:
 		case vsRenderBuffer::ContentType_PCT:
 		case vsRenderBuffer::ContentType_PCNT:
+		case vsRenderBuffer::ContentType_PCN:
 			return true;
 		default:
 			return false;
 	}
+}
+
+bool
+vsDynamicBatch::CanFitVertices( int vertexCount ) const
+{
+	return (m_vbo.GetPositionCount() + vertexCount) <= 300;
 }
 
 void
@@ -143,6 +150,23 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 			o[oo].position = mat.ApplyTo( i[ii].position );
 			o[oo].color = i[ii].color;
 			o[oo].texel = i[ii].texel;
+			oo++;
+		}
+	}
+	else if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PCN )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::PCN);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::PCN* i = fvbo->GetPCNArray();
+		vsRenderBuffer::PCN* o = m_vbo.GetPCNArray();
+
+		int oo = size / sizeof(vsRenderBuffer::PCN);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			o[oo].normal = mat.ApplyRotationTo( i[ii].normal );
+			o[oo].color = i[ii].color;
 			oo++;
 		}
 	}

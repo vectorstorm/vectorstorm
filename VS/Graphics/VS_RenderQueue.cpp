@@ -278,7 +278,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 	// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
 	BatchElement *mergeCandidate = NULL;
-	// if ( vsDynamicBatch::Supports( vbo->GetContentType() ) )
+	if ( vsDynamicBatch::Supports( vbo->GetContentType() ) )
 	{
 		mergeCandidate = batch->elementList;
 		while(mergeCandidate)
@@ -292,13 +292,26 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 			// and only push into a GPU buffer once we're *done* merging!
 			if ( mergeCandidate->instanceMatrix == NULL &&
 					mergeCandidate->vbo &&
-					mergeCandidate->vbo->GetContentType() == vbo->GetContentType() )
+					mergeCandidate->vbo->GetContentType() == vbo->GetContentType() &&
+					mergeCandidate->material->MatchesForBatching( material ) )
+			{
 				break;
+				// if ( mergeCandidate->batch == NULL )
+				// {
+				// 	if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 300 )
+				// 		break;
+				// }
+				// else
+				// {
+				// 	if ( mergeCandidate->batch->CanFitVertices( vbo->GetPositionCount() ) )
+				// 		break;
+				// }
+			}
 			mergeCandidate = mergeCandidate->next;
 		}
 	}
 
-	if (mergeCandidate && vsDynamicBatch::Supports( vbo->GetContentType() ) )
+	if (mergeCandidate)
 	{
 		// vsLog("Found merge candidate!");
 		// Okay.  So what we're going to do is this:
@@ -545,7 +558,9 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 			list->SetMaterial( e->material );
 			if ( e->batch )
 			{
+				list->SetMatrix4x4( vsMatrix4x4::Identity );
 				e->batch->Draw(list);
+				list->PopTransform();
 			}
 			else
 			{

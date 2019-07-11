@@ -789,7 +789,7 @@ vsRenderBuffer::Unbind( vsRendererState *state )
 }
 
 int
-vsRenderBuffer::GetPositionCount()
+vsRenderBuffer::GetPositionCount() const
 {
 	switch( m_contentType )
 	{

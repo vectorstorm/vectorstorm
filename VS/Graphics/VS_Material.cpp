@@ -382,3 +382,55 @@ vsMaterial::UniformMat4( int32_t id )
 	return vsMatrix4x4();
 }
 
+bool
+vsMaterial::MatchesForBatching( vsMaterial *other ) const
+{
+	if ( GetResource() != other->GetResource() )
+		return false;
+
+	//shouldn't happen?
+	if ( m_uniformCount != other->m_uniformCount )
+		return false;
+
+	for (int i = 0; i < m_uniformCount; i++)
+	{
+		Value &v = m_uniformValue[i];
+		Value &ov = other->m_uniformValue[i];
+
+		if ( v.bound != ov.bound )
+			return false;
+		if ( v.bound )
+		{
+			if ( v.bind != ov.bind )
+				return false;
+		}
+		else
+		{
+			switch( GetResource()->m_shader->GetUniform(i)->type )
+			{
+				case GL_FLOAT:
+					if ( v.f32 != ov.f32 )
+						return false;
+					break;
+				case GL_INT:
+				case GL_BOOL:
+				case GL_SAMPLER_2D:
+				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
+				case GL_INT_SAMPLER_BUFFER:
+				case GL_SAMPLER_BUFFER:
+					if ( v.b != ov.b )
+						return false;
+					break;
+				case GL_FLOAT_VEC3:
+				case GL_FLOAT_VEC4:
+					if ( v.vec4[0] != ov.vec4[0] ||
+							v.vec4[1] != ov.vec4[1] ||
+							v.vec4[2] != ov.vec4[2] ||
+							v.vec4[3] != ov.vec4[3] )
+						return false;
+					break;
+			}
+		}
+	}
+	return true;
+}

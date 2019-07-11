@@ -201,7 +201,7 @@ public:
 	void	BakeArray();	// bake any modified array values into our GPU-based storage, if any.
 	void	BakeIndexArray();	// bake any modified array values into our GPU-based storage, if any.
 
-	int		GetPositionCount();		// for new-style buffers, which don't offer direct array access.
+	int		GetPositionCount() const;		// for new-style buffers, which don't offer direct array access.
 	vsVector3D	GetPosition(int i);
 	vsVector3D	GetNormal(int i);
 	vsVector2D	GetTexel(int i);
