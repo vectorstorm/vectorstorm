@@ -96,7 +96,6 @@ public:
 	struct P
 	{
 		vsVector3D		position; // 12 bytes
-		float			padding;  // 16 bytes
 	};
 
 	struct PC
@@ -109,14 +108,12 @@ public:
 	{
 		vsVector3D		position;       // 12
 		vsVector2D		texel;			// 20
-		float			padding[3];		// 32 bytes
 	};
 
 	struct PN
 	{
 		vsVector3D		position;		// 12
 		vsVector3D		normal;			// 24 bytes
-		float			padding[2];		// two more floats brings us to 32 bytes
 	};
 
 	struct PNT
@@ -131,7 +128,6 @@ public:
 		vsVector3D		position;		// 12
 		vsColorPacked	color;			// 16
 		vsVector2D		texel;			// 24
-		float			padding[2];		// 32
 	};
 
 	struct PCN
@@ -139,7 +135,6 @@ public:
 		vsVector3D		position;		// 12
 		vsVector3D		normal;			// 24
 		vsColorPacked	color;			// 28
-		float			padding;		// 32
 	};
 
 	struct PCNT
@@ -148,7 +143,6 @@ public:
 		vsVector3D		normal;			// 24
 		vsColorPacked	color;			// 28
 		vsVector2D		texel;			// 36
-		float			padding[7];		// four more floats brings us to 64 bytes.
 	};
 
 

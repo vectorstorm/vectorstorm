@@ -28,6 +28,7 @@ vsDynamicBatch::Supports( vsRenderBuffer::ContentType type )
 	// As I'm rolling this out, add the supported types here.
 	switch( type )
 	{
+		case vsRenderBuffer::ContentType_P:
 		case vsRenderBuffer::ContentType_PC:
 		case vsRenderBuffer::ContentType_PT:
 		case vsRenderBuffer::ContentType_PCT:
@@ -63,6 +64,21 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 
 	int indexOfFirstVertex = 0;//m_vbo.GetPositionCount();
 
+	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_P )
+	{
+		int size = first ? 0 : m_vbo.GetGenericArraySize();
+		indexOfFirstVertex = size / sizeof(vsRenderBuffer::P);
+		m_vbo.ResizeArray( size + fvbo->GetGenericArraySize() );
+		vsRenderBuffer::P* i = fvbo->GetPArray();
+		vsRenderBuffer::P* o = m_vbo.GetPArray();
+
+		int oo = size / sizeof(vsRenderBuffer::P);
+		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
+		{
+			o[oo].position = mat.ApplyTo( i[ii].position );
+			oo++;
+		}
+	}
 	if ( fvbo->GetContentType() == vsRenderBuffer::ContentType_PT )
 	{
 		int size = first ? 0 : m_vbo.GetGenericArraySize();
