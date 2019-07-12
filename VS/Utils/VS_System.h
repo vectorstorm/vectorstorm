@@ -181,6 +181,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
+	vsPreferenceObject *	m_dynamicBatching;
 	vsPreferenceObject *	m_antialias;
 	vsPreferenceObject *	m_highDPI;
 	vsPreferenceObject *	m_wheelSmoothing;
@@ -227,6 +228,9 @@ public:
 
 	bool			GetBloom();
 	void			SetBloom(bool enabled);
+
+	bool			GetDynamicBatching();
+	void			SetDynamicBatching(bool enabled);
 
 	bool			GetAntialias();
 	void			SetAntialias(bool enabled);

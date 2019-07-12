@@ -547,6 +547,7 @@ vsSystemPreferences::vsSystemPreferences()
 	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 1, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
+	m_dynamicBatching = m_preferences->GetPreference("DynamicBatching", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
 	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 100, 0, 100);
@@ -937,5 +938,17 @@ int
 vsSystemPreferences::GetMusicVolume()
 {
 	return m_musicVolume->m_value;
+}
+
+bool
+vsSystemPreferences::GetDynamicBatching()
+{
+	return m_dynamicBatching->m_value;
+}
+
+void
+vsSystemPreferences::SetDynamicBatching(bool enabled)
+{
+	m_dynamicBatching->m_value = enabled;
 }
 
