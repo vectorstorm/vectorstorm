@@ -258,7 +258,8 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count
 
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width, const vsColor *color_in, float texScale )
 {
-	const vsColor *color = (color_in) ? color_in : &c_white;
+	const vsColor color = (color_in) ? *color_in : c_white;
+	const vsColor colorTransparent(color.r, color.g, color.b, 0.f);
 	size_t vertexCount = (count/2) * 4;
 	size_t indexCount = (count/2) * 6;
 
@@ -287,10 +288,10 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
 		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
 
-		va[vertexCursor].color = *color;
-		va[vertexCursor+1].color = *color;
-		va[vertexCursor+2].color = *color;
-		va[vertexCursor+3].color = *color;
+		va[vertexCursor].color = color;
+		va[vertexCursor+1].color = color;
+		va[vertexCursor+2].color = color;
+		va[vertexCursor+3].color = color;
 
 		va[vertexCursor].texel.Set( 0.0, 0.0);
 		va[vertexCursor+1].texel.Set( 0.0, 0.0);
@@ -495,14 +496,17 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 // color array version
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, vsColor *color, int count, float width)
 {
-	size_t vertexCount = (count/2) * 4;
-	size_t indexCount = (count/2) * 6;
+	size_t lineCount = count/2;         // number of lines we're going to draw.
+	size_t vertexCount = lineCount * 8; // number of vertices we're going to output
+	size_t triCount = lineCount * 6;    // number of triangles required to draw those vertices
+	size_t indexCount = triCount * 3;;  // number of indices required to draw those triangles
 
 	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
 	uint16_t *ia = new uint16_t[indexCount];
 	int vertexCursor = 0;
 	int indexCursor = 0;
 	float halfWidth = width * 0.5f;
+	float fadeWidth = width * 1.0f;
 
 	for ( int i = 0; i < count; i+=2 )
 	{
@@ -517,24 +521,51 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, vsColor *
 		vsVector3D offsetPre = dirOfTravel.Cross(up);
 		offsetPre.NormaliseSafe();
 
-		va[vertexCursor].position = point[preI] - (offsetPre * halfWidth);
+		// [0..4] are our main full-alpha parts of the line.  [5,7] are to the left, and [6,8] are to the right
+
+		va[vertexCursor+0].position = point[preI] - (offsetPre * halfWidth);
 		va[vertexCursor+1].position = point[preI] + (offsetPre * halfWidth);
 		va[vertexCursor+2].position = point[postI] - (offsetPre * halfWidth);
 		va[vertexCursor+3].position = point[postI] + (offsetPre * halfWidth);
 
-		va[vertexCursor].color = color[preI];
-		va[vertexCursor+1].color = color[preI];
-		va[vertexCursor+2].color = color[postI];
-		va[vertexCursor+3].color = color[postI];
+		va[vertexCursor+4].position = point[preI] - (offsetPre * fadeWidth);
+		va[vertexCursor+5].position = point[preI] + (offsetPre * fadeWidth);
+		va[vertexCursor+6].position = point[postI] - (offsetPre * fadeWidth);
+		va[vertexCursor+7].position = point[postI] + (offsetPre * fadeWidth);
 
-		ia[indexCursor] = vertexCursor;
+		va[vertexCursor+0].color = va[vertexCursor+4].color = color[preI];
+		va[vertexCursor+1].color = va[vertexCursor+5].color = color[preI];
+		va[vertexCursor+2].color = va[vertexCursor+6].color = color[postI];
+		va[vertexCursor+3].color = va[vertexCursor+7].color = color[postI];
+
+		va[vertexCursor+4].color.a = 0.f;
+		va[vertexCursor+5].color.a = 0.f;
+		va[vertexCursor+6].color.a = 0.f;
+		va[vertexCursor+7].color.a = 0.f;
+
+		ia[indexCursor+0] = vertexCursor;
 		ia[indexCursor+1] = vertexCursor+1;
 		ia[indexCursor+2] = vertexCursor+2;
 		ia[indexCursor+3] = vertexCursor+2;
 		ia[indexCursor+4] = vertexCursor+1;
 		ia[indexCursor+5] = vertexCursor+3;
-		indexCursor += 6;
-		vertexCursor += 4;
+
+		ia[indexCursor+6] = vertexCursor+4;
+		ia[indexCursor+7] = vertexCursor+0;
+		ia[indexCursor+8] = vertexCursor+6;
+		ia[indexCursor+9] = vertexCursor+6;
+		ia[indexCursor+10] = vertexCursor+0;
+		ia[indexCursor+11] = vertexCursor+2;
+
+		ia[indexCursor+12] = vertexCursor+1;
+		ia[indexCursor+13] = vertexCursor+5;
+		ia[indexCursor+14] = vertexCursor+3;
+		ia[indexCursor+15] = vertexCursor+3;
+		ia[indexCursor+16] = vertexCursor+5;
+		ia[indexCursor+17] = vertexCursor+7;
+
+		indexCursor += 18;
+		vertexCursor += 8;
 	}
 
 	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
