@@ -25,6 +25,7 @@
 
 #include <time.h>
 #include <SDL2/SDL_filesystem.h>
+#include <SDL2/SDL_image.h>
 
 #if defined(MSVC)
 // MSVC
@@ -91,6 +92,10 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 		exit(1);
 	}
 	atexit(SDL_Quit);
+
+	int initialisedFormats = IMG_Init( IMG_INIT_JPG | IMG_INIT_PNG );
+	vsAssert( initialisedFormats & IMG_INIT_JPG, "Failed to initialise JPEG reading?");
+	vsAssert( initialisedFormats & IMG_INIT_PNG, "Failed to initialise PNG reading?");
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 #if defined(USE_SDL_SOUND)
