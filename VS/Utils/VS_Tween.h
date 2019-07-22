@@ -32,7 +32,7 @@ public:
 
 	void SetValue(const T &value)
 	{
-		m_current = value;
+		m_start = m_end = m_current = value;
 		m_tweening = false;
 	}
 
@@ -53,11 +53,7 @@ public:
 
 	void TweenTo(const T &value, float time)
 	{
-		if ( value == m_current )
-		{
-			m_tweening = false;
-		}
-		else if ( time == 0.f )
+		if ( value == m_current || time == 0.f )
 		{
 			m_start = m_end = m_current = value;
 			m_tweening = false;
