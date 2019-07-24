@@ -83,10 +83,17 @@ vsFontRenderer::SetColor( const vsColor& color )
 void
 vsFontRenderer::SetDropShadow( const vsColor& color, int xOff, int yOff )
 {
+	vsVector3D v((float)xOff,(float)yOff,0.f);
+	SetDropShadow(color, v);
+}
+
+void
+vsFontRenderer::SetDropShadow( const vsColor& color, const vsVector3D& offset )
+{
 	m_hasColor = true;
 	m_hasDropShadow = true;
 	m_dropShadowColor = color;
-	m_dropShadowOffset.Set((float)xOff,(float)yOff);
+	m_dropShadowOffset = offset;
 }
 
 void
@@ -558,7 +565,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 		constructor->lineFirstGlyph[lineId] = nextGlyphId;
 	}
 
-	vsVector2D offset = offset_in;
+	vsVector3D offset = offset_in;
 	vsBox2D lineBox;
 	int glyphCount = 0;
 
@@ -588,6 +595,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		offset.x += m_dropShadowOffset.x / size.x;
 		offset.y += m_dropShadowOffset.y / size.y;
+		offset.z += m_dropShadowOffset.z;
 	}
 
 
@@ -624,8 +632,8 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 		}
 		if ( g )
 		{
-			vsVector2D characterOffset = offset - g->baseline;
-			vsVector2D scaledPosition;
+			vsVector3D characterOffset = offset - g->baseline;
+			vsVector3D scaledPosition;
 
 			// now, add our four verts and two triangles onto the arrays.
 

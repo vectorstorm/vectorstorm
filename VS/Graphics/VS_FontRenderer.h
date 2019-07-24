@@ -49,7 +49,7 @@ class vsFontRenderer
 	vsArray<vsColor> m_glyphColor;
 	vsColor m_color;
 	vsColor m_dropShadowColor;
-	vsVector2D m_dropShadowOffset;
+	vsVector3D m_dropShadowOffset;
 	bool m_hasColor;
 	bool m_hasDropShadow;
 	bool m_snap;
@@ -94,6 +94,7 @@ public:
 
 	// if set, we'll draw a second copy of the text offset and behind the main text.
 	void SetDropShadow( const vsColor& color, int xOff=1, int yOff=1 );
+	void SetDropShadow( const vsColor& color, const vsVector3D& offset );
 
 	// if true, the text will snap to integer coordinates.  If false, it won't.
 	// If not set either way, the text will snap in a 2D context, and won't snap
