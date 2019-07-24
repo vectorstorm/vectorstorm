@@ -170,6 +170,23 @@ vsTransform3D::ApplyInverseTo( const vsVector3D &v ) const
 	return GetMatrix().Inverse().ApplyTo(v);
 }
 
+vsTransform3D
+vsTransform3D::ApplyTo( const vsTransform3D &o ) const
+{
+	vsTransform3D result;
+
+	vsMatrix4x4 resultMat = GetMatrix() * o.GetMatrix();
+	result.SetTranslation( resultMat.w );
+	result.SetRotation( vsQuaternion(resultMat.z, resultMat.y) );
+	result.SetScale( vsVector3D(
+				resultMat.x.Length(),
+				resultMat.y.Length(),
+				resultMat.z.Length()
+				) );
+
+	return result;
+}
+
 const vsMatrix4x4 &
 vsTransform3D::GetMatrix() const
 {

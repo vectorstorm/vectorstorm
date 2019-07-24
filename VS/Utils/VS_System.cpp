@@ -16,6 +16,7 @@
 #include "VS_Preferences.h"
 #include "VS_Random.h"
 #include "VS_Screen.h"
+#include "VS_DynamicBatchManager.h"
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
 
@@ -24,6 +25,7 @@
 
 #include <time.h>
 #include <SDL2/SDL_filesystem.h>
+#include <SDL2/SDL_image.h>
 
 #if defined(MSVC)
 // MSVC
@@ -90,6 +92,10 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 		exit(1);
 	}
 	atexit(SDL_Quit);
+
+	int initialisedFormats = IMG_Init( IMG_INIT_JPG | IMG_INIT_PNG );
+	vsAssert( initialisedFormats & IMG_INIT_JPG, "Failed to initialise JPEG reading?");
+	vsAssert( initialisedFormats & IMG_INIT_PNG, "Failed to initialise PNG reading?");
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 #if defined(USE_SDL_SOUND)
@@ -186,6 +192,7 @@ void
 vsSystem::InitGameData()
 {
 	m_materialManager = new vsMaterialManager;
+	m_dynamicBatchManager = new vsDynamicBatchManager;
 }
 
 void
@@ -193,6 +200,7 @@ vsSystem::DeinitGameData()
 {
 	vsDelete( m_materialManager );
 	m_textureManager->CollectGarbage();
+	vsDelete( m_dynamicBatchManager );
 }
 
 void
@@ -544,6 +552,7 @@ vsSystemPreferences::vsSystemPreferences()
 	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 1, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
+	m_dynamicBatching = m_preferences->GetPreference("DynamicBatching", 1, 0, 1);
 	m_antialias = m_preferences->GetPreference("Antialias", 0, 0, 1);
 	m_highDPI = m_preferences->GetPreference("HighDPI", 0, 0, 1);
 	m_effectVolume = m_preferences->GetPreference("EffectVolume", 100, 0, 100);
@@ -934,5 +943,17 @@ int
 vsSystemPreferences::GetMusicVolume()
 {
 	return m_musicVolume->m_value;
+}
+
+bool
+vsSystemPreferences::GetDynamicBatching()
+{
+	return m_dynamicBatching->m_value;
+}
+
+void
+vsSystemPreferences::SetDynamicBatching(bool enabled)
+{
+	m_dynamicBatching->m_value = enabled;
 }
 

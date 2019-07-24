@@ -12,6 +12,7 @@
 
 #include "Utils/VS_Singleton.h"
 
+class vsDynamicBatchManager;
 class vsMaterialManager;
 class vsPreferences;
 class vsPreferenceObject;
@@ -77,6 +78,7 @@ class vsSystem
 
 	vsTextureManager *	m_textureManager;
 	vsMaterialManager *	m_materialManager;
+	vsDynamicBatchManager *m_dynamicBatchManager;
 
 	vsString			m_title;
 	vsScreen *			m_screen;
@@ -179,6 +181,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
+	vsPreferenceObject *	m_dynamicBatching;
 	vsPreferenceObject *	m_antialias;
 	vsPreferenceObject *	m_highDPI;
 	vsPreferenceObject *	m_wheelSmoothing;
@@ -225,6 +228,9 @@ public:
 
 	bool			GetBloom();
 	void			SetBloom(bool enabled);
+
+	bool			GetDynamicBatching();
+	void			SetDynamicBatching(bool enabled);
 
 	bool			GetAntialias();
 	void			SetAntialias(bool enabled);

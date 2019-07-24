@@ -29,7 +29,7 @@ void ReportGLError( GLenum errcode, const char* string )
 
 	vsString errString = vsFormatString("OpenGL %s in '%s'", enums[errcode], string);
 	vsLog(errString);
-	vsAssert(false,errString);
+	// vsAssert(false,errString);
 }
 
 #ifdef VS_GL_DEBUG

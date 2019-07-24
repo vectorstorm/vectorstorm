@@ -30,6 +30,7 @@
 
 #include "VS_OpenGL.h"
 
+#include "VS_DynamicBatchManager.h"
 #include "VS_TimerSystem.h"
 
 #include "VS_Input.h" // flag event queue to ignore resize events while we're changing window type
@@ -807,6 +808,8 @@ vsRenderer_OpenGL3::PostRender()
 	// 	vsLog("Size:  %dx%d", nowWidth, nowHeight);
 	// 	vsLog("Viewport:  %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
 	// }
+
+	vsDynamicBatchManager::Instance()->FrameRendered();
 }
 
 void

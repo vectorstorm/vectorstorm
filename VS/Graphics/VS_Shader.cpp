@@ -180,6 +180,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 
 	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
 	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
+	m_hasInstanceColorsLoc = glGetUniformLocation(m_shader, "hasInstanceColors");
 	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
 	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
 	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
@@ -453,6 +454,8 @@ vsShader::SetColor( const vsColor& color )
 void
 vsShader::SetInstanceColors( vsRenderBuffer *colors )
 {
+	if ( m_hasInstanceColorsLoc >= 0 )
+		glUniform1i( m_hasInstanceColorsLoc, true );
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
 		if ( !m_colorAttribIsActive )
@@ -470,6 +473,8 @@ vsShader::SetInstanceColors( vsRenderBuffer *colors )
 void
 vsShader::SetInstanceColors( const vsColor* color, int matCount )
 {
+	if ( m_hasInstanceColorsLoc >= 0 )
+		glUniform1i( m_hasInstanceColorsLoc, ( matCount >= 2 ) );
 	if ( matCount <= 0 )
 		return;
 	// CheckGLError("SetInstanceColors");
@@ -478,6 +483,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 	// 	glUniform4f( m_colorLoc, color[0].r, color[0].g, color[0].b, color[0].a );
 	// }
 	// glVertexAttrib4f( 3, color[0].r, color[0].g, color[0].b, color[0].a );
+
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
 		if ( matCount == 1 )
@@ -580,7 +586,14 @@ vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 {
 	if ( m_localToWorldLoc >= 0 )
 	{
-		glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
+ 		if ( matCount == 1 )
+			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
+		else
+		{
+			vsMatrix4x4 inv;
+			inv.x.x = -2.f;
+			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&inv );
+		}
 	}
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{

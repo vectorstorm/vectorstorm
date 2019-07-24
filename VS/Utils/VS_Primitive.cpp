@@ -142,45 +142,6 @@ vsGem::vsGem( float radius, int resolution, const vsString &materialName )
 }
 
 
-vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
-{
-	vsVector3D va[4] =
-	{
-		box.GetMin(),
-		vsVector2D(box.GetMax().x,box.GetMin().y),
-		vsVector2D(box.GetMin().x,box.GetMax().y),
-		box.GetMax()
-	};
-/*	vsVector2D tex[4] =
-	{
-		vsVector2D( 0.f, 0.f),
-		vsVector2D( 1.f, 0.f),
-		vsVector2D( 0.f, 1.f),
-		vsVector2D( 1.f, 1.f)
-	};*/
-	int ts[4] =
-	{
-		0,2,1,3
-	};
-
-	vsDisplayList *list = new vsDisplayList(128);
-
-	if ( colorOverride )
-	{
-		list->SetColor( *colorOverride );
-	}
-	list->VertexArray(va,4);
-//	list->TexelArray(tex,4);
-	list->TriangleStripArray(ts,4);
-	list->ClearVertexArray();
-
-	vsFragment *fragment = new vsFragment;
-	fragment->SetDisplayList(list);
-	fragment->SetMaterial( material );
-
-	return fragment;
-}
-
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
 {
 	vsVector3D va[4] =
@@ -542,47 +503,33 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsCol
 
 vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
 {
-	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer::PC va[4];
+	va[0].position = box.GetMin();
+	va[0].color = colorOverride ? *colorOverride : c_white;
+	va[1].position = vsVector2D(box.GetMax().x,box.GetMin().y);
+	va[1].color = colorOverride ? *colorOverride : c_white;
+	va[2].position = vsVector2D(box.GetMin().x,box.GetMax().y);
+	va[2].color = colorOverride ? *colorOverride : c_white;
+	va[3].position = box.GetMax();
+	va[3].color = colorOverride ? *colorOverride : c_white;
 
-	vsVector3D va[4] =
-	{
-		box.GetMin(),
-		vsVector2D(box.GetMax().x,box.GetMin().y),
-		vsVector2D(box.GetMin().x,box.GetMax().y),
-		box.GetMax()
-	};
-	for ( int i = 0; i < 4; i++ )
-		va[i] += offset;
-/*	vsVector2D tex[4] =
-	{
-		vsVector2D( 0.f, 0.f),
-		vsVector2D( 1.f, 0.f),
-		vsVector2D( 0.f, 1.f),
-		vsVector2D( 1.f, 1.f)
-	};*/
-	int ts[4] =
+	for (int i = 0; i<4; i++)
+		va[i].position += offset;
+
+	uint16_t ts[4] =
 	{
 		0,2,1,3
 	};
 
-	vsDisplayList *list = new vsDisplayList(128);
-
-	if ( colorOverride )
-	{
-		list->SetColor( *colorOverride );
-	}
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 
 	vbo->SetArray(va,4);
-
-	list->BindBuffer(vbo);
-//	list->TexelArray(tex,4);
-	list->TriangleStripArray(ts,4);
-	list->ClearArrays();
+	ibo->SetArray(ts,4);
 
 	vsFragment *fragment = new vsFragment;
-	fragment->SetDisplayList(list);
+	fragment->SetSimple(vbo,ibo,vsFragment::SimpleType_TriangleStrip);
 	fragment->SetMaterial( material );
-	fragment->AddBuffer(vbo);
 
 	return fragment;
 }

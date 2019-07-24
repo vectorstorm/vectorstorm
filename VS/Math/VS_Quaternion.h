@@ -54,4 +54,6 @@ public:
 vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &a, const vsQuaternion &b );
 vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q );
 
+inline vsQuaternion vsInterpolate( float alpha, const vsQuaternion &a, const vsQuaternion &b ) { return vsQuaternionSlerp(alpha,a,b); }
+
 #endif // VS_QUATERNION_H

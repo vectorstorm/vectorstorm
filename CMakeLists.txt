@@ -96,6 +96,8 @@ if(WIN32)
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(PNG_DLL libpng16-16.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
+	find_file(JPEG_DLL libjpeg-9.dll REQUIRED
+		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_DLL SDL2.dll REQUIRED
 		PATH c:/src/buildzone/lib/x86 )
 	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
@@ -125,7 +127,7 @@ if(WIN32)
 			PATH c:/src/buildzone/bin/Release/Win32 )
 	endif()
 
-	set(VS_PLATFORM_DLLS ${PNG_DLL} ${GLEW_DLL}
+	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
 		${PHYSFS_DLL} ${OGG_DLL} ${DBGHELP_DLL}
@@ -203,6 +205,10 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Color.h
 	VS/Graphics/VS_DisplayList.cpp
 	VS/Graphics/VS_DisplayList.h
+	VS/Graphics/VS_DynamicBatch.cpp
+	VS/Graphics/VS_DynamicBatch.h
+	VS/Graphics/VS_DynamicBatchManager.cpp
+	VS/Graphics/VS_DynamicBatchManager.h
 	VS/Graphics/VS_DynamicMaterial.cpp
 	VS/Graphics/VS_DynamicMaterial.h
 	VS/Graphics/VS_Entity.cpp

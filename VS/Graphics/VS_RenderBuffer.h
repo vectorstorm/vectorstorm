@@ -95,28 +95,25 @@ public:
 
 	struct P
 	{
-		vsVector3D		position;
+		vsVector3D		position; // 12 bytes
 	};
 
 	struct PC
 	{
-		vsVector3D		position;
-		vsColorPacked			color;
-		float			padding[1];		// total:  32 bytes.
+		vsVector3D		position; // Total: 12 bytes
+		vsColorPacked	color;    // Total: 16 bytes
 	};
 
 	struct PT
 	{
-		vsVector3D		position;
-		vsVector2D		texel;			// total:  20 bytes
-		float			padding[3];		// three more floats brings us to 32 bytes
+		vsVector3D		position;       // 12
+		vsVector2D		texel;			// 20
 	};
 
 	struct PN
 	{
-		vsVector3D		position;
-		vsVector3D		normal;			// total:  24 bytes
-		float			padding[2];		// two more floats brings us to 32 bytes
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24 bytes
 	};
 
 	struct PNT
@@ -128,27 +125,24 @@ public:
 
 	struct PCT
 	{
-		vsVector3D		position;
-		vsColorPacked			color;
-		vsVector2D		texel;			// total:  36 bytes.
-		float			padding[7];		// seven more floats brings us up to 64 bytes.
+		vsVector3D		position;		// 12
+		vsColorPacked	color;			// 16
+		vsVector2D		texel;			// 24
 	};
 
 	struct PCN
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsColorPacked			color;			// total:  40 bytes.  Eew, we're supposed to be a multiple of 32, ideally
-		float			padding[6];		// six more floats brings us up to 64 bytes.
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24
+		vsColorPacked	color;			// 28
 	};
 
 	struct PCNT
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsColorPacked			color;
-		vsVector2D		texel;			// total:  48 bytes.
-		float			padding[4];		// four more floats brings us to 64 bytes.
+		vsVector3D		position;		// 12
+		vsVector3D		normal;			// 24
+		vsColorPacked	color;			// 28
+		vsVector2D		texel;			// 36
 	};
 
 
@@ -177,11 +171,11 @@ public:
 	void	SetActiveSize( int size );
 
 	void			SetVector3DArraySize( int size );
-	int				GetVector3DArraySize() { return m_arrayBytes/sizeof(vsVector3D); }
+	int				GetVector3DArraySize() { return m_activeBytes/sizeof(vsVector3D); }
 	vsVector3D *	GetVector3DArray() { return (vsVector3D*)m_array; }
 
 	void			SetIntArraySize( int size );
-	int				GetIntArraySize() { return m_arrayBytes/sizeof(uint16_t); }
+	int				GetIntArraySize() { return m_activeBytes/sizeof(uint16_t); }
 	uint16_t *		GetIntArray() { return (uint16_t*)m_array; }
 
 	void			SetColorArraySize( int size );
@@ -190,8 +184,9 @@ public:
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
 	void*			GetGenericArray() { return m_array; }
+	int				GetGenericArraySize() { return m_activeBytes; }
 
-	int				GetMatrix4x4ArraySize() { return m_arrayBytes/sizeof(vsMatrix4x4); }
+	int				GetMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 	int				GetActiveMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
 
 	P *				GetPArray() { return (P*)m_array; }
@@ -206,7 +201,7 @@ public:
 	void	BakeArray();	// bake any modified array values into our GPU-based storage, if any.
 	void	BakeIndexArray();	// bake any modified array values into our GPU-based storage, if any.
 
-	int		GetPositionCount();		// for new-style buffers, which don't offer direct array access.
+	int		GetPositionCount() const;		// for new-style buffers, which don't offer direct array access.
 	vsVector3D	GetPosition(int i);
 	vsVector3D	GetNormal(int i);
 	vsVector2D	GetTexel(int i);
@@ -214,7 +209,8 @@ public:
 
 	// Probably only useful for santity checking that the correct drawing
 	// functions are being called, for our known buffer types.
-	ContentType	GetContentType() { return m_contentType; }
+	ContentType	GetContentType() const { return m_contentType; }
+	void	SetContentType(ContentType ct) { m_contentType = ct; }
 
 	void	BindAsAttribute( int attributeId );
 	void	BindAsTexture();

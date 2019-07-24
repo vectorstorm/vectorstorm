@@ -76,7 +76,7 @@ vsRenderBuffer::ResizeArray( int size )
 void
 vsRenderBuffer::SetActiveSize( int size )
 {
-	vsAssert(size != 0, "Zero-sized buffer??");
+	// vsAssert(size != 0, "Zero-sized buffer??");
 	m_activeBytes = size;
 }
 
@@ -87,12 +87,12 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 	{
 		vsDeleteArray( m_array );
 	}
-	if ( m_array == NULL )
+	if ( m_array == NULL && size > 0 )
 	{
 		m_array = new char[size];
 		m_arrayBytes = size;
 	}
-	vsAssert(size != 0, "Zero-sized buffer?");
+	// vsAssert(size != 0, "Zero-sized buffer?");
     SetActiveSize(size);
 }
 
@@ -102,7 +102,8 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 	if ( m_array && size > m_arrayBytes )
 	{
 		char* newArray = new char[size];
-		memcpy(newArray, m_array, m_arrayBytes);
+		memset(newArray, 0, size);
+		memcpy(newArray, m_array, m_activeBytes);
 		m_arrayBytes = size;
 		vsDeleteArray( m_array );
 		m_array = newArray;
@@ -403,7 +404,7 @@ vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 	}
 	else
 	{
-		vsRenderBuffer::BindVertexArray( state, m_array, m_arrayBytes/sizeof(vsVector3D) );
+		vsRenderBuffer::BindVertexArray( state, m_array, m_activeBytes/sizeof(vsVector3D) );
 		// glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
@@ -454,7 +455,7 @@ vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 	}
 	else
 	{
-		BindTexelArray( state, m_array, m_arrayBytes / sizeof(vsVector2D) );
+		BindTexelArray( state, m_array, m_activeBytes / sizeof(vsVector2D) );
 		// glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
@@ -788,33 +789,33 @@ vsRenderBuffer::Unbind( vsRendererState *state )
 }
 
 int
-vsRenderBuffer::GetPositionCount()
+vsRenderBuffer::GetPositionCount() const
 {
 	switch( m_contentType )
 	{
 		case ContentType_P:
-			return m_arrayBytes / sizeof(P);
+			return m_activeBytes / sizeof(P);
 			break;
 		case ContentType_PC:
-			return m_arrayBytes / sizeof(PC);
+			return m_activeBytes / sizeof(PC);
 			break;
 		case ContentType_PT:
-			return m_arrayBytes / sizeof(PT);
+			return m_activeBytes / sizeof(PT);
 			break;
 		case ContentType_PN:
-			return m_arrayBytes / sizeof(PN);
+			return m_activeBytes / sizeof(PN);
 			break;
 		case ContentType_PNT:
-			return m_arrayBytes / sizeof(PNT);
+			return m_activeBytes / sizeof(PNT);
 			break;
 		case ContentType_PCN:
-			return m_arrayBytes / sizeof(PCN);
+			return m_activeBytes / sizeof(PCN);
 			break;
 		case ContentType_PCT:
-			return m_arrayBytes / sizeof(PCT);
+			return m_activeBytes / sizeof(PCT);
 			break;
 		case ContentType_PCNT:
-			return m_arrayBytes / sizeof(PCNT);
+			return m_activeBytes / sizeof(PCNT);
 			break;
         default:
             vsAssert(0, "Unknown content type!");
