@@ -36,6 +36,9 @@
 #include <SDL2/SDL.h>
 #endif
 
+extern SDL_Window *g_sdlWindow;
+
+
 vsInput::vsInput():
 	m_stringMode(false),
 	m_hasFocus(true),
@@ -1515,6 +1518,35 @@ vsInput::GetMousePosition(int scene)
 	return mousePos;
 }
 
+void
+vsInput::WarpMouseTo( int scene, const vsVector2D& position_in )
+{
+	vsScene *s = vsScreen::Instance()->GetScene(scene);
+	if ( s->Is3D() )
+	{
+		// convert from normalised device coordinates to something useful
+		vsVector2D position = position_in;
+		position.y *= -1.0f; // SDL considers its y coordinates opposite from OpenGL
+		position += vsVector2D(1.f,1.f);
+		position.x *= (.5f * vsScreen::Instance()->GetTrueWidth());
+		position.y *= (.5f * vsScreen::Instance()->GetTrueHeight());
+		SDL_WarpMouseInWindow( g_sdlWindow, position.x, position.y );
+		return;
+	}
+
+	vsCamera2D *c = s->GetCamera();
+
+	vsTransform2D t = c->GetCameraTransform();
+	vsVector2D scale = t.GetScale();
+	scale.y *= 0.5f;
+	scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
+	t.SetScale(scale);
+	vsVector2D screenPos = t.ApplyInverseTo( m_mousePos );
+
+	SDL_WarpMouseInWindow( g_sdlWindow, screenPos.x, screenPos.y );
+
+}
+
 vsVector2D
 vsInput::GetMouseMotion(int scene)
 {
@@ -1588,10 +1620,6 @@ vsInput::GetTouchPosition(int touchID, int scene)
 #endif // TARGET_OS_IPHONE
 }
 
-
-// #ifndef _WIN32
-extern SDL_Window *g_sdlWindow;
-// #endif
 
 void
 vsInput::CaptureMouse( bool capture )

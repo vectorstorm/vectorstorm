@@ -399,6 +399,8 @@ public:
 
 	vsString GetBindDescription( const DeviceControl& dc );
 
+	void WarpMouseTo( int scene, const vsVector2D& position );
+
 	friend struct vsInputAxis;
 	friend struct DeviceControl;
 };
