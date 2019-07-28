@@ -396,6 +396,7 @@ public:
 
 	int GetAxisCount() const { return m_axis.ItemCount(); }
 	const struct vsInputAxis& GetAxis(int i) { return m_axis[i]; }
+	const struct vsInputAxis* GetAxis(const vsString& name);
 
 	vsString GetBindDescription( const DeviceControl& dc );
 

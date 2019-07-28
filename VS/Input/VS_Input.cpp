@@ -2248,6 +2248,18 @@ vsInputAxis::Update( bool hasFocus, bool hadFocus )
 	}
 }
 
+const struct vsInputAxis*
+vsInput::GetAxis(const vsString& name)
+{
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		if ( m_axis[i].name == name )
+			return &m_axis[i];
+	}
+	vsLog("vsLog: Unable to find requested axis '%s'", name);
+	return NULL;
+}
+
 vsString
 vsInput::GetBindDescription( const DeviceControl& dc )
 {
