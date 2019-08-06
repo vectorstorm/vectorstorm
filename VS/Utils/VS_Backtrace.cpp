@@ -9,6 +9,8 @@
 
 #include "VS_Backtrace.h"
 
+#include "VS_File.h"
+
 #ifdef BACKTRACE_SUPPORTED
 #ifdef _WIN32
 
@@ -20,6 +22,8 @@
 
 void vsBacktrace()
 {
+	vsFile f("crash.rpt", vsFile::MODE_WriteDirectly);
+
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = GetCurrentThread();
 
@@ -76,11 +80,16 @@ void vsBacktrace()
 		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 		symbol->MaxNameLen = MAX_SYM_NAME;
 
+		// vsString s = vsFormatString("[%d] %x\n", i, (unsigned int)stackframe.AddrPC.Offset);
+		char strin[2000];
+		sprintf(strin, "[%i] %#010x\n", i, (unsigned int)stackframe.AddrPC.Offset);
+		f.WriteBytes( strin, strlen(strin) );
+
 		// DWORD64 displacement = 0;
 		// if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
 		// 	printf("[%i] %s\n", i, symbol->Name);
 		// } else {
-			printf("[%i] %#010x\n", i, (unsigned int)stackframe.AddrPC.Offset);
+			printf(strin);
 		// }
 
 	}
