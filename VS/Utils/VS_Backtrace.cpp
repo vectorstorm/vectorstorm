@@ -12,7 +12,7 @@
 #ifdef BACKTRACE_SUPPORTED
 #ifdef _WIN32
 
-#include "exchndl.h"
+// #include "exchndl.h"
 #include <dbghelp.h>
 
 #include <stdio.h>
@@ -69,19 +69,19 @@ void vsBacktrace()
 				&stackframe, &context, NULL,
 				SymFunctionTableAccess64, SymGetModuleBase64, NULL);
 
-		if (!result) { break; }
+		if (!result) { continue; }
 
 		char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
 		PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
 		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 		symbol->MaxNameLen = MAX_SYM_NAME;
 
-		DWORD64 displacement = 0;
-		if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
-			printf("[%i] %s\n", i, symbol->Name);
-		} else {
+		// DWORD64 displacement = 0;
+		// if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
+		// 	printf("[%i] %s\n", i, symbol->Name);
+		// } else {
 			printf("[%i] %#010x\n", i, (unsigned int)stackframe.AddrPC.Offset);
-		}
+		// }
 
 	}
 
@@ -90,7 +90,7 @@ void vsBacktrace()
 
 void vsInstallBacktraceHandler()
 {
-	ExcHndlInit();
+	// ExcHndlInit();
 }
 
 #else

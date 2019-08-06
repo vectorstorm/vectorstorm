@@ -109,13 +109,20 @@ if(WIN32)
 
 	if ( MINGW )
 		if ( BACKTRACE_SUPPORTED )
-			find_file(DBGHELP_DLL dbghelp.dll REQUIRED )
-			find_file(EXCHNDL_DLL exchndl.dll REQUIRED )
-			find_file(MGWHELP_DLL mgwhelp.dll REQUIRED )
-			find_file(SYMSRV_DLL symsrv.dll REQUIRED )
-			find_file(SYMSRV_YES symsrv.yes REQUIRED )
-			find_library(EXCHNDL_LIBRARY exchndl REQUIRED )
+			find_library(DBGHELP_LIBRARY dbghelp REQUIRED )
+
+			# For unknown reasons, order of library link is important
+			# for making MinGW's "static linkage" functionality work
+			# correctly.  dbghelp was pulling in libstdc++ as a dependency,
+			# even thuogh we'd said to link that library statically.  By
+			# explicitly adding stdc++ as a link dependency FIRST, we
+			# ensure that it gets pulled in statically.  (Whereas if
+			# we tried to link dbghelp first, it would be pulled in
+			# dynamically, and then we we later tried to link it statically, it
+			# would just leave it dynamic
+			SET( PRE_LIBRARIES "stdc++" )
 		endif()
+
 		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		if ( USE_SDL_SOUND )
 			find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
@@ -130,9 +137,14 @@ if(WIN32)
 	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
-		${PHYSFS_DLL} ${OGG_DLL} ${DBGHELP_DLL}
-		${EXCHNDL_DLL} ${MGWHELP_DLL} ${SYMSRV_DLL}
-		${SYMSRV_YES} PARENT_SCOPE)
+		${PHYSFS_DLL} ${OGG_DLL}
+		# ${DBGHELP_DLL}
+		# ${EXCHNDL_DLL}
+		# ${MGWHELP_DLL}
+		# ${SYMSRV_DLL}
+		# ${SYMSRV_YES}
+		# ${STDCPP_DLL}
+		PARENT_SCOPE)
 endif()
 
 # Check our build environment and set any variables
@@ -505,6 +517,8 @@ endif()
 		)
 
 	set( LIBRARIES
+		${PRE_LIBRARIES}
+		${DBGHELP_LIBRARY}
 		${OPENGL_LIBRARIES}
 		${PNG_LIBRARY}
 		${SDL_LIBRARY}
@@ -514,6 +528,7 @@ endif()
 		${PTHREAD_LIBRARY}
 		${PHYSFS_LIBRARY}
 		${EXCHNDL_LIBRARY}
+		# ${PLATFORM_LIBRARIES}
 		)
 	if ( USE_SDL_SOUND )
 		set( LIBRARIES ${LIBRARIES}
