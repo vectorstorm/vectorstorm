@@ -170,6 +170,8 @@ struct vsInputAxis
 
 	float lastValue;
 	float currentValue;
+	bool wasPressed;
+	bool wasReleased;
 	bool isLoaded;
 	bool isCalculated;
 
@@ -246,6 +248,7 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	void HandleStringModeKeyDown( const SDL_Event& event );
 	void HandleKeyDown( const SDL_Event& event );
 	void HandleKeyUp( const SDL_Event& event );
+	void HandleMouseButtonEvent( const SDL_Event& event );
 
 	bool AnythingIsDown();
 

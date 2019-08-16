@@ -791,6 +791,16 @@ void
 vsInput::Update(float timeStep)
 {
 	UNUSED(timeStep);
+
+	// clear 'was pressed' and 'was released' flags
+	//
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis& axis = m_axis[i];
+		axis.wasPressed = false;
+		axis.wasReleased = false;
+	}
+
 	m_mouseMotion = vsVector2D::Zero;
 	m_wheelValue = 0.f;
 	m_hadFocus = m_hasFocus;
@@ -955,6 +965,12 @@ vsInput::Update(float timeStep)
 				case SDL_KEYUP:
 					{
 						HandleKeyUp(event);
+						break;
+					}
+				case SDL_MOUSEBUTTONDOWN:
+				case SDL_MOUSEBUTTONUP:
+					{
+						HandleMouseButtonEvent(event);
 						break;
 					}
 				case SDL_WINDOWEVENT:
@@ -1288,6 +1304,16 @@ vsInput::Update(float timeStep)
 				m_axis[i].Update(m_hasFocus, m_hadFocus);
 		}
 	}
+
+	// set 'pressed' and 'released' flags generically
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis& axis = m_axis[i];
+		if ( IsDown(i) && !WasDown(i) )
+			axis.wasPressed = true;
+		if ( WasDown(i) && !IsDown(i) )
+			axis.wasReleased = true;
+	}
 }
 
 float
@@ -1461,13 +1487,13 @@ vsInput::WasDown( int id )
 bool
 vsInput::WasPressed( int id )
 {
-	return (IsDown(id) && !WasDown(id));
+	return (m_axis[id].wasPressed);
 }
 
 bool
 vsInput::WasReleased( int id )
 {
-	return (!IsDown(id) && WasDown(id));
+	return (m_axis[id].wasReleased);
 }
 
 bool
@@ -2046,6 +2072,17 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 void
 vsInput::HandleKeyDown( const SDL_Event& event )
 {
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis& axis = m_axis[i];
+		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+		{
+			if ( axis.positive[j].type == CT_Keyboard &&
+					axis.positive[j].id == event.key.keysym.scancode )
+				axis.wasPressed = true;
+		}
+	}
+
 	switch( event.key.keysym.scancode )
 	{
 		case SDL_SCANCODE_Q:
@@ -2094,9 +2131,40 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 void
 vsInput::HandleKeyUp( const SDL_Event& event )
 {
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis& axis = m_axis[i];
+		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+		{
+			if ( axis.positive[j].type == CT_Keyboard &&
+					axis.positive[j].id == event.key.keysym.scancode )
+				axis.wasReleased = true;
+		}
+	}
+
 	switch( event.key.keysym.scancode ){
 		default:
 			break;
+	}
+}
+
+void
+vsInput::HandleMouseButtonEvent( const SDL_Event& event )
+{
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		vsInputAxis& axis = m_axis[i];
+		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+		{
+			if ( axis.positive[j].type == CT_MouseButton &&
+					axis.positive[j].id == event.button.button )
+			{
+				if ( event.type == SDL_MOUSEBUTTONDOWN )
+					axis.wasPressed = true;
+				else
+					axis.wasReleased = true;
+			}
+		}
 	}
 }
 
@@ -2212,6 +2280,8 @@ vsInputAxis::vsInputAxis():
 	description(""),
 	lastValue(0.f),
 	currentValue(0.f),
+	wasPressed(false),
+	wasReleased(false),
 	isLoaded(false),
 	isCalculated(false)
 {
