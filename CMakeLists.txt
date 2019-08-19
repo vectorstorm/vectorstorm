@@ -110,6 +110,12 @@ if(WIN32)
 	if ( MINGW )
 		if ( BACKTRACE_SUPPORTED )
 			find_library(DBGHELP_LIBRARY dbghelp REQUIRED )
+			find_file(DBGHELP_DLL dbghelp.dll REQUIRED )
+			find_file(EXCHNDL_DLL exchndl.dll REQUIRED )
+			find_file(MGWHELP_DLL mgwhelp.dll REQUIRED )
+			find_file(SYMSRV_DLL symsrv.dll REQUIRED )
+			find_file(SYMSRV_YES symsrv.yes REQUIRED )
+			find_library(EXCHNDL_LIBRARY exchndl REQUIRED )
 
 			# For unknown reasons, order of library link is important
 			# for making MinGW's "static linkage" functionality work
@@ -138,12 +144,12 @@ if(WIN32)
 		${ZLIB_DLL} ${SDL2_DLL} ${SDL2_IMAGE_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
 		${PHYSFS_DLL} ${OGG_DLL}
-		# ${DBGHELP_DLL}
-		# ${EXCHNDL_DLL}
-		# ${MGWHELP_DLL}
-		# ${SYMSRV_DLL}
-		# ${SYMSRV_YES}
-		# ${STDCPP_DLL}
+		${DBGHELP_DLL}
+		${EXCHNDL_DLL}
+		${MGWHELP_DLL}
+		${SYMSRV_DLL}
+		${SYMSRV_YES}
+		${STDCPP_DLL}
 		PARENT_SCOPE)
 endif()
 

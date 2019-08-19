@@ -14,7 +14,7 @@
 #ifdef BACKTRACE_SUPPORTED
 #ifdef _WIN32
 
-// #include "exchndl.h"
+#include "exchndl.h"
 #include <dbghelp.h>
 
 #include <stdio.h>
@@ -99,7 +99,7 @@ void vsBacktrace()
 
 void vsInstallBacktraceHandler()
 {
-	// ExcHndlInit();
+	ExcHndlInit();
 }
 
 #else
