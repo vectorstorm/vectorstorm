@@ -457,7 +457,9 @@ vsImage::BakePNG(int compression)
 	}
 	//
 	// now, let's save out our surface.
-	const int pngDataSize = 1024*1024*10;
+	// raw image size will be width*height*4 bytes.  So let's allocate that much
+	// space to start with;  our PNG should be no bigger than that!.
+	const int pngDataSize = m_width*m_height*4;
 	char* pngData = new char[pngDataSize];
 	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
 	if ( !dst )
