@@ -87,6 +87,9 @@ private:
 	bool			m_vbo;
 	BindType		m_bindType;
 
+	bool			m_dirty;
+
+	void	DoUpdateVBO();
 	void	SetArray_Internal( char *data, int bytes, BindType bindType);
 	void	SetArraySize_Internal( int bytes );
 	void	ResizeArray_Internal( int bytes ); // like the above, but retain saved array data.

@@ -39,20 +39,13 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_activeBytes(0),
     m_type(type),
     m_contentType(ContentType_Custom),
-    m_bufferID(-1),
+    m_bufferID(std::numeric_limits<unsigned int>::max()),
     m_vbo(false),
-    m_bindType(BindType_Array)
+    m_bindType(BindType_Array),
+	m_dirty(false)
 {
 	vsAssert( sizeof( uint16_t ) == 2, "I've gotten the size wrong??" );
 
-	// TESTING:  Seems like iPhone runs SLOWER with VBOs than with arrays, so just use our vsRenderBuffer in "array" mode.
-#if !TARGET_OS_IPHONE
-	if ( glGenBuffers && m_type != Type_NoVBO )
-	{
-		glGenBuffers(1, (GLuint*)&m_bufferID);
-		m_vbo = true;
-	}
-#endif
 }
 
 vsRenderBuffer::~vsRenderBuffer()
@@ -114,7 +107,30 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
-	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
+	m_activeBytes = size;
+	m_dirty = true;
+	m_bindType = bindType;
+
+	if ( data != m_array )
+	{
+		SetArraySize_Internal( size );
+		memcpy(m_array,data,size);
+	}
+}
+
+void
+vsRenderBuffer::DoUpdateVBO()
+{
+	// TESTING:  Seems like iPhone runs SLOWER with VBOs than with arrays, so just use our vsRenderBuffer in "array" mode.
+#if !TARGET_OS_IPHONE
+	if ( m_bufferID == std::numeric_limits<unsigned int>::max() && glGenBuffers && m_type != Type_NoVBO )
+	{
+		glGenBuffers(1, (GLuint*)&m_bufferID);
+		m_vbo = true;
+	}
+#endif
+
+	vsAssert( m_activeBytes, "Error:  Tried to set a zero-length GPU buffer!" );
 
 	int bindPoints[BindType_MAX] =
 	{
@@ -122,28 +138,24 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		GL_ELEMENT_ARRAY_BUFFER,
 		GL_TEXTURE_BUFFER
 	};
-	int bindPoint = bindPoints[bindType];
-
-	m_bindType = bindType;
+	int bindPoint = bindPoints[m_bindType];
 
 	if ( m_vbo )
 	{
 		glBindBuffer(bindPoint, m_bufferID);
 
-		if ( size > m_glArrayBytes )
+		if ( m_activeBytes > m_glArrayBytes )
 		{
-			glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
-			m_glArrayBytes = size;
+			glBufferData(bindPoint, m_activeBytes, m_array, s_glBufferType[m_type]);
+			m_glArrayBytes = m_activeBytes;
 		}
 		else
 		{
-			// glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
-			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 			if ( ptr )
 			{
-				memcpy(ptr, data, size);
+				memcpy(ptr, m_array, m_activeBytes);
 				glUnmapBuffer(bindPoint);
 			}
 		}
@@ -152,13 +164,7 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		glBindBuffer(bindPoint, 0);
 #endif
 	}
-	m_activeBytes = size;
-
-	if ( data != m_array )
-	{
-		SetArraySize_Internal( size );
-		memcpy(m_array,data,size);
-	}
+	m_dirty = false;
 }
 
 void
@@ -326,6 +332,9 @@ vsRenderBuffer::BakeIndexArray()
 void
 vsRenderBuffer::BindAsAttribute( int attributeId )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
@@ -354,6 +363,9 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 void
 vsRenderBuffer::BindAsTexture()
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	GL_CHECK_SCOPED("BufferTexture");
 	if ( m_contentType == ContentType_Float && m_vbo )
 	{
@@ -392,6 +404,9 @@ vsRenderBuffer::BindAsTexture()
 void
 vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	state->SetBool( vsRendererState::ClientBool_VertexArray, true );
 
 	if ( m_vbo )
@@ -418,6 +433,9 @@ vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
 void
 vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	state->SetBool( vsRendererState::ClientBool_NormalArray, true );
 
 	if ( m_vbo )
@@ -443,6 +461,9 @@ vsRenderBuffer::UnbindNormalBuffer( vsRendererState *state )
 void
 vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 
 	if ( m_vbo )
@@ -469,6 +490,9 @@ vsRenderBuffer::UnbindTexelBuffer( vsRendererState *state )
 void
 vsRenderBuffer::BindColorBuffer( vsRendererState *state )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	state->SetBool( vsRendererState::ClientBool_ColorArray, true );
 
 	if ( m_vbo )
@@ -494,6 +518,9 @@ vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
 void
 vsRenderBuffer::Bind( vsRendererState *state )
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	switch( m_contentType )
 	{
 		case ContentType_P:
@@ -998,6 +1025,9 @@ vsRenderBuffer::GetColor(int i)
 void
 vsRenderBuffer::TriStripBuffer(int instanceCount)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
@@ -1018,6 +1048,9 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 void
 vsRenderBuffer::TriListBuffer(int instanceCount)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_vbo )
 	{
 		int elements = m_activeBytes/sizeof(uint16_t);
@@ -1054,6 +1087,9 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 void
 vsRenderBuffer::TriFanBuffer(int instanceCount)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
@@ -1071,6 +1107,9 @@ vsRenderBuffer::TriFanBuffer(int instanceCount)
 void
 vsRenderBuffer::LineStripBuffer(int instanceCount)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
@@ -1087,6 +1126,9 @@ vsRenderBuffer::LineStripBuffer(int instanceCount)
 void
 vsRenderBuffer::LineListBuffer(int instanceCount)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
@@ -1218,6 +1260,9 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 void*
 vsRenderBuffer::BindRange(int startByte, int length)
 {
+	if ( m_dirty )
+		DoUpdateVBO();
+
 	GL_CHECK_SCOPED("BindRange");
 	if ( m_vbo )
 	{
