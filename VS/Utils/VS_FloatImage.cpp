@@ -66,6 +66,17 @@ vsFloatImage::vsFloatImage( vsTexture * texture ):
 	Read(texture);
 }
 
+vsFloatImage::vsFloatImage( vsFloatImage& other )
+{
+	m_pixel = (vsColor*)malloc( other.m_pixelCount * sizeof(vsColor) );
+	memcpy(m_pixel, other.m_pixel, other.m_pixelCount * sizeof(vsColor));
+	m_pixelCount = other.m_pixelCount;
+	m_width = other.m_width;
+	m_height = other.m_height;
+	m_pbo = 0;
+	m_sync = 0;
+}
+
 vsFloatImage::~vsFloatImage()
 {
 	if ( m_pbo != 0 )

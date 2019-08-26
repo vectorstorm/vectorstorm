@@ -78,6 +78,18 @@ vsImage::vsImage( vsTexture * texture ):
 	Read(texture);
 }
 
+vsImage::vsImage( vsImage& other )
+{
+	m_pixel = (uint32_t*)malloc( other.m_pixelCount * sizeof(uint32_t) );
+	memcpy(m_pixel, other.m_pixel, other.m_pixelCount * sizeof(uint32_t));
+	m_pixelCount = other.m_pixelCount;
+	m_width = other.m_width;
+	m_height = other.m_height;
+	m_pbo = 0;
+	m_sync = 0;
+}
+
+
 vsImage::~vsImage()
 {
 	if ( m_pbo != 0 )
@@ -404,7 +416,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,(h-1)-v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			SetPixel(u,v/*(h-1)-v*/, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
 		}
 	}
 

@@ -27,11 +27,14 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
 	m_premultipliedAlpha(true),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
-	vsString filename = vsFile::GetFullFilename(filename_in);
+	// vsString filename = vsFile::GetFullFilename(filename_in);
 
-	m_texture = ::loadTexture( filename.c_str() );
+	m_imageToLoad = new vsImage(filename_in);
+	// m_texture = ::loadTexture( filename.c_str() );
 	m_nearestSampling = false;
 }
 
@@ -39,8 +42,11 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
+	m_imageToLoad = new vsImage(*maker);
 	m_nearestSampling = false;
 }
 
@@ -48,7 +54,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
 	if ( surface )
 		m_texture = (depth) ? surface->m_depth : surface->m_texture;
@@ -59,11 +67,13 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(false),
-	m_tbo(buffer)
+	m_tbo(buffer),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
+	// GLuint t;
+	// glGenTextures(1, &t);
+	// m_texture = t;
 	m_nearestSampling = false;
 }
 
@@ -104,15 +114,18 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_texture(0),
 	m_depth(false),
 	m_premultipliedAlpha(false),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
-	vsString filename = vsFile::GetFullFilename(filename_in);
-
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
-	ProcessSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
-	m_nearestSampling = false;
+	m_imageToLoad = new vsImage(filename_in);
+	// vsString filename = vsFile::GetFullFilename(filename_in);
+    //
+	// SDL_Surface *loadedImage = IMG_Load(filename.c_str());
+	// vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
+	// ProcessSurface(loadedImage);
+	// SDL_FreeSurface(loadedImage);
+	// m_nearestSampling = false;
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
@@ -120,31 +133,11 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	m_texture(0),
 	m_depth(false),
 	m_premultipliedAlpha(false),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
-	int w = image->GetWidth();
-	int h = image->GetHeight();
-
-	m_width = w;
-	m_height = w;
-
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
-
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA,
-			w, h,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_INT_8_8_8_8_REV,
-			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
-	m_nearestSampling = false;
+	m_imageToLoad = new vsImage(*image);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
@@ -152,38 +145,20 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_texture(0),
 	m_depth(false),
 	m_premultipliedAlpha(false),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
-	int w = image->GetWidth();
-	int h = image->GetHeight();
-
-	m_width = w;
-	m_height = w;
-
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
-
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA32F,
-			w, h,
-			0,
-			GL_RGBA,
-			GL_FLOAT,
-			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
-	m_nearestSampling = false;
+	m_floatImageToLoad = new vsFloatImage(*image);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(false),
-	m_tbo(buffer)
+	m_tbo(buffer),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
 	GLuint t;
 	glGenTextures(1, &t);
@@ -195,9 +170,82 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 	vsResource(name),
 	m_texture(glTextureId),
 	m_premultipliedAlpha(false),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
 	m_nearestSampling = false;
+}
+
+void
+vsTextureInternal::DoLoadFromImage()
+{
+	int w = m_imageToLoad->GetWidth();
+	int h = m_imageToLoad->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8_REV,
+			m_imageToLoad->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+	m_nearestSampling = false;
+
+	vsDelete( m_imageToLoad );
+}
+
+void
+vsTextureInternal::DoLoadFromFloatImage()
+{
+	int w = m_floatImageToLoad->GetWidth();
+	int h = m_floatImageToLoad->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA32F,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_FLOAT,
+			m_floatImageToLoad->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+	m_nearestSampling = false;
+
+	vsDelete( m_floatImageToLoad );
+}
+
+void
+vsTextureInternal::EnsureLoaded()
+{
+	if ( m_texture == 0 )
+	{
+		GLuint t;
+		glGenTextures(1, &t);
+		m_texture = t;
+	}
+	if ( m_imageToLoad )
+	{
+		DoLoadFromImage();
+	}
+	if ( m_floatImageToLoad )
+	{
+		DoLoadFromFloatImage();
+	}
 }
 
 
@@ -238,7 +286,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	m_height(0),
 	m_depth(depth),
 	m_premultipliedAlpha(true),
-	m_tbo(NULL)
+	m_tbo(NULL),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
 {
 	if ( surface )
 	{

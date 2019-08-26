@@ -1678,6 +1678,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			vsTexture *t = material->GetTexture(i);
 			if ( t )
 			{
+				t->GetResource()->EnsureLoaded();
+
 				glActiveTexture(GL_TEXTURE0 + i);
 				// glEnable(GL_TEXTURE_2D);
 				if ( t->GetResource()->IsTextureBuffer() )

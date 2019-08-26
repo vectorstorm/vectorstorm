@@ -42,6 +42,7 @@ public:
 	vsFloatImage( unsigned int width, unsigned int height );
     vsFloatImage( const vsString &filename_in );
     vsFloatImage( vsTexture *texture );
+    vsFloatImage( vsFloatImage& other );
 	~vsFloatImage();
 
 	int				GetWidth() { return m_width; }

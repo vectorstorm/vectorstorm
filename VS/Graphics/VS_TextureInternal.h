@@ -36,9 +36,16 @@ class vsTextureInternal : public vsResource
 
 	vsRenderBuffer *m_tbo;
 
+	vsImage *m_imageToLoad;
+	vsFloatImage *m_floatImageToLoad;
+
+
 	void		ProcessSurface( SDL_Surface *surface );
 
 	bool		m_nearestSampling;
+
+	void		DoLoadFromImage();
+	void		DoLoadFromFloatImage();
 
 public:
 
@@ -62,6 +69,8 @@ public:
 
 	void		SetNearestSampling();
 	void		SetLinearSampling(bool linearMipmaps = true);
+
+	void		EnsureLoaded();
 
 	uint32_t		GetTexture() { return m_texture; }
 

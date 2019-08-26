@@ -41,6 +41,7 @@ public:
 	vsImage( unsigned int width, unsigned int height );
     vsImage( const vsString &filename_in );
     vsImage( vsTexture *texture );
+    vsImage( vsImage& other );
 	~vsImage();
 
 	// sometimes, we're going to use a single vsImage lots of times for repeatedly
