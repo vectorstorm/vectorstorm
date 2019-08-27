@@ -252,29 +252,41 @@ vsTextureInternal::EnsureLoaded()
 void
 vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
 {
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexSubImage2D(GL_TEXTURE_2D,
-			0,
-			(int)where.x, (int)where.y,
-			image->GetWidth(), image->GetHeight(),
-			GL_RGBA,
-			GL_UNSIGNED_INT_8_8_8_8_REV,
-			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+	// if ( vsRenderer_OpenGL3::Instance()->IsLoadingContext() )
+	// [TODO]  It's possible for these Blit functions to be called from
+	// a background thread.  These blit operations (this one and
+	// the one below) will have to be queued up as well, I guess!
+	vsDelete( m_imageToLoad );
+	m_imageToLoad = new vsImage(*image);
+	// EnsureLoaded();
+    //
+	// glBindTexture(GL_TEXTURE_2D, m_texture);
+	// glTexSubImage2D(GL_TEXTURE_2D,
+	// 		0,
+	// 		(int)where.x, (int)where.y,
+	// 		image->GetWidth(), image->GetHeight(),
+	// 		GL_RGBA,
+	// 		GL_UNSIGNED_INT_8_8_8_8_REV,
+	// 		image->RawData());
+	// glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void
 vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 {
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexSubImage2D(GL_TEXTURE_2D,
-			0,
-			(int)where.x, (int)where.y,
-			image->GetWidth(), image->GetHeight(),
-			GL_RGBA,
-			GL_FLOAT,
-			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+	vsDelete( m_floatImageToLoad );
+	m_floatImageToLoad = new vsFloatImage(*image);
+	// EnsureLoaded();
+    //
+	// glBindTexture(GL_TEXTURE_2D, m_texture);
+	// glTexSubImage2D(GL_TEXTURE_2D,
+	// 		0,
+	// 		(int)where.x, (int)where.y,
+	// 		image->GetWidth(), image->GetHeight(),
+	// 		GL_RGBA,
+	// 		GL_FLOAT,
+	// 		image->RawData());
+	// glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer, bool depth ):

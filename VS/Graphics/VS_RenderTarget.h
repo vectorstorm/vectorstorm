@@ -113,6 +113,7 @@ private:
 	Type		m_type;
 
 	void		Create(); // If we were deferred, this creates us.
+	void		EnsureLoaded();
 
 public:
 

@@ -108,6 +108,7 @@ vsTexture *
 vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
+	EnsureLoaded();
 
 	if ( m_renderBufferSurface )
 	{
@@ -165,10 +166,21 @@ vsRenderTarget::CreateDeferred()
 }
 
 void
+vsRenderTarget::EnsureLoaded()
+{
+	for ( int i = 0; i < m_bufferCount; i++ )
+		m_texture[i]->GetResource()->EnsureLoaded();
+	if ( m_depthTexture )
+		m_depthTexture->GetResource()->EnsureLoaded();
+}
+
+void
 vsRenderTarget::Bind()
 {
 	if ( m_textureSurface == NULL )
 		Create();
+
+	EnsureLoaded();
 
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
@@ -221,6 +233,9 @@ vsRenderTarget::Clear()
 void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
+	EnsureLoaded();
+	other->EnsureLoaded();
+
 	if ( m_renderBufferSurface )
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 	else
