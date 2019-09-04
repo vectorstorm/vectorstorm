@@ -181,151 +181,158 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 {
 	fragment->Clear();
 
-	size_t stringLength = string.length();
-	float size = m_size;
-
-	if ( stringLength == 0 )
-		return;
-
-	size_t requiredSize = stringLength * 4;      // we need a maximum of four verts for each character in the string.
-	size_t requiredTriangles = stringLength * 6; // three indices per triangle, two triangles per character, max.
-
-	if ( m_hasDropShadow )
+	try
 	{
-		requiredSize *= 2;
-		requiredTriangles *= 2;
-	}
+		size_t stringLength = string.length();
+		float size = m_size;
 
-	vsRenderBuffer::PCT *ptArray = new vsRenderBuffer::PCT[ requiredSize ];
-	uint16_t *tlArray = new uint16_t[ requiredTriangles ];
+		if ( stringLength == 0 )
+			return;
 
-	vsRenderBuffer *ptBuffer = new vsRenderBuffer;
-	vsRenderBuffer *tlBuffer = new vsRenderBuffer;
+		size_t requiredSize = stringLength * 4;      // we need a maximum of four verts for each character in the string.
+		size_t requiredTriangles = stringLength * 6; // three indices per triangle, two triangles per character, max.
 
-	FragmentConstructor constructor;
-	constructor.ptArray = ptArray;
-	constructor.tlArray = tlArray;
-	constructor.ptIndex = constructor.tlIndex = 0;
-
-	constructor.glyphBox = NULL;
-	constructor.glyphCount = 0;
-	constructor.lineBox = NULL;
-	constructor.lineFirstGlyph = NULL;
-	constructor.lineLastGlyph = NULL;
-	constructor.lineCount = 0;
-
-	// figure out our wrapping and final render size
-	float topLinePosition;
-	WrapStringSizeTop(string, &size, &topLinePosition);
-	if ( ShouldSnap( context ) )
-	{
-		int positionInPixels = (int)(topLinePosition * m_size);
-		topLinePosition = positionInPixels / m_size;
-	}
-
-	vsVector2D size_vec(size, size);
-	if ( context == FontContext_3D )
-	{
-		size_vec.y *= -1.f;	// upside down, in 3D context!
-	}
-
-	if ( m_buildMapping )
-	{
-		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+		if ( m_hasDropShadow )
 		{
-			ptrdiff_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
-			constructor.glyphCount += glyphs;
+			requiredSize *= 2;
+			requiredTriangles *= 2;
 		}
-		constructor.lineCount = m_wrappedLine.ItemCount();
-		if ( constructor.glyphCount > 0 )
+
+		vsRenderBuffer::PCT *ptArray = new vsRenderBuffer::PCT[ requiredSize ];
+		uint16_t *tlArray = new uint16_t[ requiredTriangles ];
+
+		vsRenderBuffer *ptBuffer = new vsRenderBuffer;
+		vsRenderBuffer *tlBuffer = new vsRenderBuffer;
+
+		FragmentConstructor constructor;
+		constructor.ptArray = ptArray;
+		constructor.tlArray = tlArray;
+		constructor.ptIndex = constructor.tlIndex = 0;
+
+		constructor.glyphBox = NULL;
+		constructor.glyphCount = 0;
+		constructor.lineBox = NULL;
+		constructor.lineFirstGlyph = NULL;
+		constructor.lineLastGlyph = NULL;
+		constructor.lineCount = 0;
+
+		// figure out our wrapping and final render size
+		float topLinePosition;
+		WrapStringSizeTop(string, &size, &topLinePosition);
+		if ( ShouldSnap( context ) )
 		{
-			constructor.glyphBox = new vsBox2D[constructor.glyphCount];
-			constructor.lineBox = new vsBox2D[constructor.lineCount];
-			constructor.lineFirstGlyph = new int[constructor.lineCount];
-			constructor.lineLastGlyph = new int[constructor.lineCount];
+			int positionInPixels = (int)(topLinePosition * m_size);
+			topLinePosition = positionInPixels / m_size;
 		}
-	}
+
+		vsVector2D size_vec(size, size);
+		if ( context == FontContext_3D )
+		{
+			size_vec.y *= -1.f;	// upside down, in 3D context!
+		}
+
+		if ( m_buildMapping )
+		{
+			for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+			{
+				ptrdiff_t glyphs = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+				constructor.glyphCount += glyphs;
+			}
+			constructor.lineCount = m_wrappedLine.ItemCount();
+			if ( constructor.glyphCount > 0 )
+			{
+				constructor.glyphBox = new vsBox2D[constructor.glyphCount];
+				constructor.lineBox = new vsBox2D[constructor.lineCount];
+				constructor.lineFirstGlyph = new int[constructor.lineCount];
+				constructor.lineLastGlyph = new int[constructor.lineCount];
+			}
+		}
 
 
-	vsVector2D baseOffset(0.f,topLinePosition);
-	vsVector2D offset(0.f,topLinePosition);
-	int nextGlyph = 0;
-	float lineHeight = 1.f;
-	float lineMargin = lineHeight * m_font->Size(size)->m_lineSpacing;
+		vsVector2D baseOffset(0.f,topLinePosition);
+		vsVector2D offset(0.f,topLinePosition);
+		int nextGlyph = 0;
+		float lineHeight = 1.f;
+		float lineMargin = lineHeight * m_font->Size(size)->m_lineSpacing;
 
-	bool doSnap = ShouldSnap( context );
-	if ( doSnap )
-	{
-		vsVector4D t = m_transform.GetTranslation();
-		t.x = (float)vsFloor(t.x + 0.5f);
-		t.y = (float)vsFloor(t.y + 0.5f);
-		t.z = (float)vsFloor(t.z + 0.5f);
-		m_transform.SetTranslation(t);
-	}
+		bool doSnap = ShouldSnap( context );
+		if ( doSnap )
+		{
+			vsVector4D t = m_transform.GetTranslation();
+			t.x = (float)vsFloor(t.x + 0.5f);
+			t.y = (float)vsFloor(t.y + 0.5f);
+			t.z = (float)vsFloor(t.z + 0.5f);
+			m_transform.SetTranslation(t);
+		}
 
-	if ( m_hasDropShadow )
-	{
-		// BLAH.  Seems like our x offset is in pixels, and our y offset is scaled by font size?
-		// That's terrible;  must fix!
+		if ( m_hasDropShadow )
+		{
+			// BLAH.  Seems like our x offset is in pixels, and our y offset is scaled by font size?
+			// That's terrible;  must fix!
+			offset = baseOffset;
+			for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+			{
+				offset.y = topLinePosition + (i*(lineHeight+lineMargin));
+
+				AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, true );
+
+				ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
+				nextGlyph += (int)glyphsInThisLine;
+			}
+		}
 		offset = baseOffset;
+		nextGlyph = 0;
 		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
 		{
 			offset.y = topLinePosition + (i*(lineHeight+lineMargin));
 
-			AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, true );
+			AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, false );
 
 			ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
 			nextGlyph += (int)glyphsInThisLine;
 		}
+
+
+		ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
+		tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
+
+		fragment->SetMaterial( m_font->Size(m_texSize)->m_material );
+		// fragment->AddBuffer( ptBuffer );
+		// fragment->AddBuffer( tlBuffer );
+
+		// vsDisplayList *list = new vsDisplayList(256);
+		//
+		// list->BindBuffer( ptBuffer );
+		// list->TriangleListBuffer( tlBuffer );
+		// list->ClearArrays();
+		//
+		// fragment->SetDisplayList( list );
+		fragment->SetSimple( ptBuffer, tlBuffer, vsFragment::SimpleType_TriangleList );
+		vsFontFragment* ff = dynamic_cast<vsFontFragment*>(fragment);
+		if ( ff )
+		{
+			ff->m_glyphBox = constructor.glyphBox;
+			ff->m_glyphCount = constructor.glyphCount;
+			ff->m_lineBox = constructor.lineBox;
+			ff->m_lineFirstGlyph = constructor.lineFirstGlyph;
+			ff->m_lineLastGlyph = constructor.lineLastGlyph;
+			ff->m_lineCount = constructor.lineCount;
+		}
+		else
+		{
+			vsDeleteArray( constructor.glyphBox );
+			vsDeleteArray( constructor.lineBox );
+			vsDeleteArray( constructor.lineFirstGlyph );
+			vsDeleteArray( constructor.lineLastGlyph );
+		}
+
+		vsDeleteArray( ptArray );
+		vsDeleteArray( tlArray );
 	}
-	offset = baseOffset;
-	nextGlyph = 0;
-	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+	catch(...)
 	{
-		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
-
-		AppendStringToArrays( &constructor, context, m_wrappedLine[i].c_str(), size_vec, m_justification, offset, nextGlyph, i, false );
-
-		ptrdiff_t glyphsInThisLine = utf8::distance( m_wrappedLine[i].c_str(), m_wrappedLine[i].c_str() + m_wrappedLine[i].size() );
-		nextGlyph += (int)glyphsInThisLine;
+		vsLog("Failed to build renderable text fragment for utf string: %s", string);
 	}
-
-
-	ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
-	tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
-
-	fragment->SetMaterial( m_font->Size(m_texSize)->m_material );
-	// fragment->AddBuffer( ptBuffer );
-	// fragment->AddBuffer( tlBuffer );
-
-	// vsDisplayList *list = new vsDisplayList(256);
-    //
-	// list->BindBuffer( ptBuffer );
-	// list->TriangleListBuffer( tlBuffer );
-	// list->ClearArrays();
-    //
-	// fragment->SetDisplayList( list );
-	fragment->SetSimple( ptBuffer, tlBuffer, vsFragment::SimpleType_TriangleList );
-	vsFontFragment* ff = dynamic_cast<vsFontFragment*>(fragment);
-	if ( ff )
-	{
-		ff->m_glyphBox = constructor.glyphBox;
-		ff->m_glyphCount = constructor.glyphCount;
-		ff->m_lineBox = constructor.lineBox;
-		ff->m_lineFirstGlyph = constructor.lineFirstGlyph;
-		ff->m_lineLastGlyph = constructor.lineLastGlyph;
-		ff->m_lineCount = constructor.lineCount;
-	}
-	else
-	{
-		vsDeleteArray( constructor.glyphBox );
-		vsDeleteArray( constructor.lineBox );
-		vsDeleteArray( constructor.lineFirstGlyph );
-		vsDeleteArray( constructor.lineLastGlyph );
-	}
-
-	vsDeleteArray( ptArray );
-	vsDeleteArray( tlArray );
 }
 
 bool
@@ -338,40 +345,47 @@ vsFontRenderer::ShouldSnap( FontContext context )
 void
 vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *list, const vsString &string )
 {
-	bool doSnap = ShouldSnap( context );
-
-	list->SetMaterial( m_font->Size(m_texSize)->m_material );
-	if ( m_hasColor )
-		list->SetColor( m_color );
-
-	if ( m_transform != vsTransform3D::Identity )
-		list->PushTransform( m_transform );
-	if ( doSnap )
-		list->SnapMatrix();
-
-	float size, topLinePosition;
-	WrapStringSizeTop(string, &size, &topLinePosition);
-
-	float lineHeight = 1.f;
-	float lineMargin = m_font->Size(size)->m_lineSpacing;
-
-	vsVector2D offset(0.f,topLinePosition);
-
-	for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+	try
 	{
-		offset.y = topLinePosition + (i*(lineHeight+lineMargin));
-		s_tempFontList.Clear();
-		BuildDisplayListGeometryFromString( context, &s_tempFontList, m_wrappedLine[i].c_str(), m_size, m_justification, offset );
-		list->Append(s_tempFontList);
+		bool doSnap = ShouldSnap( context );
+
+		list->SetMaterial( m_font->Size(m_texSize)->m_material );
+		if ( m_hasColor )
+			list->SetColor( m_color );
+
+		if ( m_transform != vsTransform3D::Identity )
+			list->PushTransform( m_transform );
+		if ( doSnap )
+			list->SnapMatrix();
+
+		float size, topLinePosition;
+		WrapStringSizeTop(string, &size, &topLinePosition);
+
+		float lineHeight = 1.f;
+		float lineMargin = m_font->Size(size)->m_lineSpacing;
+
+		vsVector2D offset(0.f,topLinePosition);
+
+		for ( int i = 0; i < m_wrappedLine.ItemCount(); i++ )
+		{
+			offset.y = topLinePosition + (i*(lineHeight+lineMargin));
+			s_tempFontList.Clear();
+			BuildDisplayListGeometryFromString( context, &s_tempFontList, m_wrappedLine[i].c_str(), m_size, m_justification, offset );
+			list->Append(s_tempFontList);
+		}
+
+		if ( m_hasColor )
+			list->SetColor( c_white );
+
+		if ( doSnap )
+			list->PopTransform();
+		if ( m_transform != vsTransform3D::Identity )
+			list->PopTransform();
 	}
-
-	if ( m_hasColor )
-		list->SetColor( c_white );
-
-	if ( doSnap )
-		list->PopTransform();
-	if ( m_transform != vsTransform3D::Identity )
-		list->PopTransform();
+	catch(...)
+	{
+		vsLog("Failed to build renderable text display list for utf string: %s", string);
+	}
 }
 
 vsFontFragment*
