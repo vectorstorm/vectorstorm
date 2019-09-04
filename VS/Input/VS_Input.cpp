@@ -662,13 +662,20 @@ vsString
 vsInput::GetStringModeSelection()
 {
 	vsString result;
-	utf8::iterator<std::string::iterator> str( m_stringModeString.begin(), m_stringModeString.begin(), m_stringModeString.end() );
-	int length = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-	for ( int i = 0; i < length; i++ )
+	try
 	{
-		if ( i >= m_stringModeCursorFirstGlyph && i < m_stringModeCursorLastGlyph )
-			utf8::append( *str, back_inserter(result) );
-		str++;
+		utf8::iterator<std::string::iterator> str( m_stringModeString.begin(), m_stringModeString.begin(), m_stringModeString.end() );
+		int length = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+		for ( int i = 0; i < length; i++ )
+		{
+			if ( i >= m_stringModeCursorFirstGlyph && i < m_stringModeCursorLastGlyph )
+				utf8::append( *str, back_inserter(result) );
+			str++;
+		}
+	}
+	catch(...)
+	{
+		vsLog("Failed to get string mode selection");
 	}
 	return result;
 }
@@ -682,28 +689,35 @@ vsInput::SetStringModeCursor( int anchorGlyph, bool endEdit )
 void
 vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
 {
-	m_undoMode = false; // if we're moving the cursor around, we're not in undo mode any more!
-	if ( endEdit && m_stringModeEditing )
+	try
 	{
-		StringModeSaveUndoState();
-		m_stringModeEditing = false;
+		m_undoMode = false; // if we're moving the cursor around, we're not in undo mode any more!
+		if ( endEdit && m_stringModeEditing )
+		{
+			StringModeSaveUndoState();
+			m_stringModeEditing = false;
+		}
+		else if ( endEdit && anchorGlyph != floatingGlyph && m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+		{
+			// if we're makign a wide selection and previously we had an I-beam-style cursor,
+			// save the I-beam-style position.
+			StringModeSaveUndoState();
+		}
+
+		// first, clamp these positions into legal positions between glyphs
+		int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+		anchorGlyph = vsClamp( anchorGlyph, 0, inLength );
+		floatingGlyph = vsClamp( floatingGlyph, 0, inLength );
+
+		m_stringModeCursorFirstGlyph = vsMin(anchorGlyph, floatingGlyph);
+		m_stringModeCursorLastGlyph = vsMax(anchorGlyph, floatingGlyph);
+		m_stringModeCursorAnchorGlyph = anchorGlyph;
+		m_stringModeCursorFloatingGlyph = floatingGlyph;
 	}
-	else if ( endEdit && anchorGlyph != floatingGlyph && m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+	catch(...)
 	{
-		// if we're makign a wide selection and previously we had an I-beam-style cursor,
-		// save the I-beam-style position.
-		StringModeSaveUndoState();
+		vsLog("Failed to set string mode cursor position!");
 	}
-
-	// first, clamp these positions into legal positions between glyphs
-	int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-	anchorGlyph = vsClamp( anchorGlyph, 0, inLength );
-	floatingGlyph = vsClamp( floatingGlyph, 0, inLength );
-
-	m_stringModeCursorFirstGlyph = vsMin(anchorGlyph, floatingGlyph);
-	m_stringModeCursorLastGlyph = vsMax(anchorGlyph, floatingGlyph);
-	m_stringModeCursorAnchorGlyph = anchorGlyph;
-	m_stringModeCursorFloatingGlyph = floatingGlyph;
 }
 
 int
@@ -733,31 +747,46 @@ vsInput::GetStringModeCursorFloatingGlyph()
 void
 vsInput::SetStringModeSelectAll( bool selectAll )
 {
-	int lastGlyph = utf8::distance(
-			m_stringModeString.c_str(),
-			m_stringModeString.c_str() + m_stringModeString.size()
-			);
+	try
+	{
+		int lastGlyph = utf8::distance(
+				m_stringModeString.c_str(),
+				m_stringModeString.c_str() + m_stringModeString.size()
+				);
 
-	if ( selectAll )
-	{
-		SetStringModeCursor( 0, lastGlyph+1, true);
+		if ( selectAll )
+		{
+			SetStringModeCursor( 0, lastGlyph+1, true);
+		}
+		else
+		{
+			SetStringModeCursor( lastGlyph+1, true );
+		}
 	}
-	else
+	catch(...)
 	{
-		SetStringModeCursor( lastGlyph+1, true );
+		vsLog("SetStringModeSelectAll failed");
 	}
 }
 
 bool
 vsInput::GetStringModeSelectAll()
 {
-	int lastGlyph = utf8::distance(
-			m_stringModeString.c_str(),
-			m_stringModeString.c_str() + m_stringModeString.size()
-			);
+	try
+	{
+		int lastGlyph = utf8::distance(
+				m_stringModeString.c_str(),
+				m_stringModeString.c_str() + m_stringModeString.size()
+				);
 
-	return ( m_stringModeCursorFirstGlyph == 0 &&
-			m_stringModeCursorLastGlyph == lastGlyph+1 );
+		return ( m_stringModeCursorFirstGlyph == 0 &&
+				m_stringModeCursorLastGlyph == lastGlyph+1 );
+	}
+	catch(...)
+	{
+		vsLog("GetStringModeSelectAll failed");
+	}
+	return false;
 }
 
 vsVector2D
@@ -1713,39 +1742,48 @@ vsInput::HandleTextInput( const vsString& _input )
 	vsString oldString = m_stringModeString;
 	m_stringModeString = vsEmptyString;
 
-	// Okay.  First, let's copy all the glyphs up to the cursor
-	// to the new string
-	utf8::iterator<std::string::iterator> old( oldString.begin(), oldString.begin(), oldString.end() );
-	int oldLength = utf8::distance(oldString.begin(), oldString.end());
-	for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
-		utf8::append( *(old++), back_inserter(m_stringModeString) );
+	try
+	{
+		// Okay.  First, let's copy all the glyphs up to the cursor
+		// to the new string
+		utf8::iterator<std::string::iterator> old( oldString.begin(), oldString.begin(), oldString.end() );
+		int oldLength = utf8::distance(oldString.begin(), oldString.end());
+		for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
+			utf8::append( *(old++), back_inserter(m_stringModeString) );
 
-	// skip any glyphs which were inside a cursor selection;  they'll be
-	// replaced by the new input.
-	for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
-		old++;
+		// skip any glyphs which were inside a cursor selection;  they'll be
+		// replaced by the new input.
+		for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
+			old++;
 
-	// Now, append our new input onto the string we're building up.
-	// Important point:  use utf8::append() to build up the string!  Otherwise,
-	// we're just stuffing raw code points onto the end of the string, instead of
-	// UTF8-encoded text!
-	//
-	// Note that we copy the input out into a separate string to do this, as I
-	// haven't found a way to make utfcpp play nicely with const_iterators.
-	vsString inputString(_input);
-	utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
-	int inputLength = utf8::distance(inputString.begin(), inputString.end());
-	for ( int i = 0; i < inputLength; i++ )
-		utf8::append( *(input++), back_inserter(m_stringModeString) );
+		// Now, append our new input onto the string we're building up.
+		// Important point:  use utf8::append() to build up the string!  Otherwise,
+		// we're just stuffing raw code points onto the end of the string, instead of
+		// UTF8-encoded text!
+		//
+		// Note that we copy the input out into a separate string to do this, as I
+		// haven't found a way to make utfcpp play nicely with const_iterators.
+		vsString inputString(_input);
+		utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
+		int inputLength = utf8::distance(inputString.begin(), inputString.end());
+		for ( int i = 0; i < inputLength; i++ )
+			utf8::append( *(input++), back_inserter(m_stringModeString) );
 
-	// now add the end of our original input string;  anything which was past
-	// the end of the cursor selection
-	for ( int i = m_stringModeCursorLastGlyph; i < oldLength; i++ )
-		utf8::append( *(old++), back_inserter(m_stringModeString));
+		// now add the end of our original input string;  anything which was past
+		// the end of the cursor selection
+		for ( int i = m_stringModeCursorLastGlyph; i < oldLength; i++ )
+			utf8::append( *(old++), back_inserter(m_stringModeString));
 
-	SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength, false );
+		SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength, false );
 
-	ValidateString();
+		ValidateString();
+	}
+	catch (...)
+	{
+		vsLog("Failed to handle UTF8 text input!");
+		vsLog("  String: %s", oldString);
+		vsLog("  New input: %s", _input);
+	}
 }
 
 void
@@ -1754,59 +1792,22 @@ vsInput::ValidateString()
 	vsString oldString = m_stringModeString;
 	m_stringModeString = vsEmptyString;
 
-	utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
-
-	int length = utf8::distance(oldString.begin(), oldString.end());
-
-	bool hasDot = false;
-	int glyphsSoFar = 0;
-
-	for ( int i = 0; i < length; i++ )
+	try
 	{
-		bool valid = true;
+		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
 
-		if ( m_stringValidationType == Validation_PositiveInteger )
-		{
-			vsString validString = "0123456789";
-			valid = false;
-			utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
-			for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
-			{
-				if ( *it == *(vit++) )
-					valid = true;
-			}
-		}
-		else if ( m_stringValidationType == Validation_Integer )
-		{
-			vsString validString = "0123456789";
-			valid = false;
-			utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
-			for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
-			{
-				if ( *it == *(vit++) )
-					valid = true;
-			}
-			if ( *it == '-' && i == 0 )
-				valid = true;
-		}
-		else if ( m_stringValidationType == Validation_Numeric )
-		{
-			vsString validString = "0123456789";
-			// we support only [0-9].
-			//
-			// We also support up to one '.', and we may have a '-' on the front.
+		int length = utf8::distance(oldString.begin(), oldString.end());
 
-			if ( *it == '-' && i == 0 )
-				valid = true;
-			else if ( *it == '.' )
+		bool hasDot = false;
+		int glyphsSoFar = 0;
+
+		for ( int i = 0; i < length; i++ )
+		{
+			bool valid = true;
+
+			if ( m_stringValidationType == Validation_PositiveInteger )
 			{
-				if ( hasDot )
-					valid = false;
-				else
-					hasDot = true;
-			}
-			else
-			{
+				vsString validString = "0123456789";
 				valid = false;
 				utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
 				for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
@@ -1815,39 +1816,83 @@ vsInput::ValidateString()
 						valid = true;
 				}
 			}
-		}
-		else if ( m_stringValidationType == Validation_Filename )
-		{
-			vsString invalidString = "!@#$%^&*()_{}][/\\.,';\":>?<";
-			utf8::iterator<std::string::iterator> vit( invalidString.begin(), invalidString.begin(), invalidString.end() );
-			for ( int l = 0; l < utf8::distance(invalidString.begin(), invalidString.end()); l++ )
+			else if ( m_stringValidationType == Validation_Integer )
 			{
-				if ( *it == *(vit++) )
-					valid = false;
+				vsString validString = "0123456789";
+				valid = false;
+				utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+				for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+				{
+					if ( *it == *(vit++) )
+						valid = true;
+				}
+				if ( *it == '-' && i == 0 )
+					valid = true;
 			}
+			else if ( m_stringValidationType == Validation_Numeric )
+			{
+				vsString validString = "0123456789";
+				// we support only [0-9].
+				//
+				// We also support up to one '.', and we may have a '-' on the front.
+
+				if ( *it == '-' && i == 0 )
+					valid = true;
+				else if ( *it == '.' )
+				{
+					if ( hasDot )
+						valid = false;
+					else
+						hasDot = true;
+				}
+				else
+				{
+					valid = false;
+					utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+					for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+					{
+						if ( *it == *(vit++) )
+							valid = true;
+					}
+				}
+			}
+			else if ( m_stringValidationType == Validation_Filename )
+			{
+				vsString invalidString = "!@#$%^&*()_{}][/\\.,';\":>?<";
+				utf8::iterator<std::string::iterator> vit( invalidString.begin(), invalidString.begin(), invalidString.end() );
+				for ( int l = 0; l < utf8::distance(invalidString.begin(), invalidString.end()); l++ )
+				{
+					if ( *it == *(vit++) )
+						valid = false;
+				}
+			}
+
+			if ( valid && (m_stringModeMaxLength < 0 || glyphsSoFar < m_stringModeMaxLength) )
+			{
+				glyphsSoFar++;
+				utf8::append( *it, back_inserter(m_stringModeString) );
+			}
+			else
+			{
+				// This glyph wasn't valid!  Therefore, we're removing it, and we
+				// need to adjust the cursor positioning.
+
+				if ( m_stringModeCursorFirstGlyph > glyphsSoFar )
+					m_stringModeCursorFirstGlyph--;
+				if ( m_stringModeCursorLastGlyph > glyphsSoFar )
+					m_stringModeCursorLastGlyph--;
+			}
+
+			it++;
 		}
 
-		if ( valid && (m_stringModeMaxLength < 0 || glyphsSoFar < m_stringModeMaxLength) )
-		{
-			glyphsSoFar++;
-			utf8::append( *it, back_inserter(m_stringModeString) );
-		}
-		else
-		{
-			// This glyph wasn't valid!  Therefore, we're removing it, and we
-			// need to adjust the cursor positioning.
-
-			if ( m_stringModeCursorFirstGlyph > glyphsSoFar )
-				m_stringModeCursorFirstGlyph--;
-			if ( m_stringModeCursorLastGlyph > glyphsSoFar )
-				m_stringModeCursorLastGlyph--;
-		}
-
-		it++;
+		m_stringModeCursorFirstGlyph = vsMin( m_stringModeCursorFirstGlyph, glyphsSoFar );
+		m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph, glyphsSoFar );
 	}
-
-	m_stringModeCursorFirstGlyph = vsMin( m_stringModeCursorFirstGlyph, glyphsSoFar );
-	m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph, glyphsSoFar );
+	catch( ... )
+	{
+		vsLog("Failed to validate utf8 for string: %s", oldString );
+	}
 }
 
 void
@@ -1926,23 +1971,30 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 					if ( !m_backspaceMode )
 						StringModeSaveUndoState();
 
-					// delete one character
-					vsString oldString = m_stringModeString;
-					m_stringModeString = vsEmptyString;
-					// Okay.  copy all the glyphs up to the cursor MINUS ONE.
-					// then copy the rest.
-					utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
-					int inLength = utf8::distance(oldString.begin(), oldString.end());
-					for ( int i = 0; i < inLength; i++ )
+					try
 					{
-						if ( i != m_stringModeCursorFirstGlyph-1 )
-							utf8::append( *in, std::back_inserter(m_stringModeString) );
-						in++;
-					}
+						// delete one character
+						vsString oldString = m_stringModeString;
+						m_stringModeString = vsEmptyString;
+						// Okay.  copy all the glyphs up to the cursor MINUS ONE.
+						// then copy the rest.
+						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+						int inLength = utf8::distance(oldString.begin(), oldString.end());
+						for ( int i = 0; i < inLength; i++ )
+						{
+							if ( i != m_stringModeCursorFirstGlyph-1 )
+								utf8::append( *in, std::back_inserter(m_stringModeString) );
+							in++;
+						}
 
-					m_backspaceMode = true;
-					m_undoMode = false;
-					SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
+						m_backspaceMode = true;
+						m_undoMode = false;
+						SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
+					}
+					catch(...)
+					{
+						vsLog("Failed to handle backspace!");
+					}
 				}
 				else
 				{
