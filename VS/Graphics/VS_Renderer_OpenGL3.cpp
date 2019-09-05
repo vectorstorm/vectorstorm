@@ -253,7 +253,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	{
 		SDL_Rect bounds;
 		if(SDL_GetDisplayBounds(i, &bounds) == 0)
-			vsLog("Display #%d %s (%dx%d)\n", i, SDL_GetDisplayName(i), bounds.w , bounds.h );
+			vsLog("Display #%d %s (%dx%d)", i, SDL_GetDisplayName(i), bounds.w , bounds.h );
 	}
 
 	int x = SDL_WINDOWPOS_UNDEFINED;
