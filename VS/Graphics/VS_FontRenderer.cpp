@@ -634,9 +634,9 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 
 		if ( !g )
 		{
-			char glyphString[5];
-			utf8::append(cp, glyphString);
-			vsLog("Missing character in font: %d (%s)", cp, glyphString);
+			vsString glyph;
+			utf8::append( cp, back_inserter(glyph) );
+			vsLog("Missing character in font: %d (%s)", cp, glyph);
 
 			const char* missingGlyphString = u8"□";
 			g = fontSize->FindGlyphForCharacter(utf8::next(missingGlyphString, missingGlyphString + strlen(missingGlyphString)));
