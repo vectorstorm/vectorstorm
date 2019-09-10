@@ -1310,6 +1310,24 @@ vsInput::Update(float timeStep)
 			}
 		}
 
+		// Now let's also check for mouse wheel
+		if ( !found )
+		{
+			if ( vsFabs(m_wheelValue) >= 1.f )
+			{
+				m_pollResult.type = CT_MouseWheel;
+				m_pollResult.id = 0;
+				m_pollResult.dir = ( m_wheelValue > 0.f ) ? CD_Positive : CD_Negative;
+				found = true;
+			}
+
+		}
+
+		for ( int i = 0; i < m_axis.ItemCount(); i++ )
+		{
+			m_axis[i].lastValue = m_axis[i].currentValue = 0.f;
+		}
+
 		if ( found )
 		{
 			m_pollingForDeviceControl = false;
