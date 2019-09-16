@@ -458,6 +458,29 @@ vsFile::DeleteDirectory( const vsString &filename )
 	return false;
 }
 
+bool
+vsFile::MoveDirectory( const vsString& from_in, const vsString& to_in )
+{
+	vsString filename(from_in);
+	vsString from, to;
+	const char* physDir = PHYSFS_getRealDir( filename.c_str() );
+	if ( physDir )
+	{
+		vsString dir(physDir);
+
+#if defined(_WIN32)
+		from = dir + "\\" + filename;
+		to = dir + "\\" + to_in;
+#else
+		from = dir + "/" + filename;
+		to = dir + "/" + to_in;
+#endif
+		return (0 == rename( from.c_str(), to.c_str() ));
+	}
+
+	return false;
+}
+
 class sortFilesByModificationDate
 {
 	vsString m_dirName;
