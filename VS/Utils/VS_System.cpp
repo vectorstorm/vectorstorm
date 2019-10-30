@@ -35,12 +35,23 @@
 #endif
 
 #if defined(_WIN32)
+
 //#include <shellapi.h>
 #include <winsock2.h>
-#else
-// #include <sys/param.h>
-// #include <sys/sysctl.h>
+
+#elif defined(__APPLE_CC__)
+
+// sys/sysctl is deprecated on Linux, but still needed on OSX to figure out
+// number of processors.
+
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <unistd.h>
+
+#else
+
+#include <unistd.h>
+
 #endif
 
 #if !TARGET_OS_IPHONE
@@ -510,35 +521,22 @@ vsSystem::Launch( const vsString &target )
 int
 vsSystem::GetNumberOfCores()
 {
-	int numCPU = 1;
-#if defined(_WIN32)
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo( &sysinfo );
-	numCPU = sysinfo.dwNumberOfProcessors;
-#elif defined(__APPLE_CC__)
-	int mib[4];
-	size_t len = sizeof(numCPU);
+	int numCPU = SDL_GetCPUCount();
 
-	/* set the mib for hw.ncpu */
-	mib[0] = CTL_HW;
-	mib[1] = HW_AVAILCPU;  // alternatively, try HW_NCPU;
-
-	/* get the number of CPUs from the system */
-	sysctl(mib, 2, &numCPU, &len, NULL, 0);
-
-	if( numCPU < 1 )
-	{
-		mib[1] = HW_NCPU;
-		sysctl( mib, 2, &numCPU, &len, NULL, 0 );
-
-		if( numCPU < 1 )
-		{
-			numCPU = 1;
-		}
-	}
-#else
-	 numCPU = sysconf( _SC_NPROCESSORS_ONLN );
-#endif
+	// note that SDL_GetCPUCount() returns the number of LOGICAL cores, not
+	// the number of ACTUAL cores.  These days, most people talk about this
+	// value as the number of "hardware threads".  So for example, my current
+	// development machine is an quad-core i7 machine with hyperthreading
+	// enabled, and this function returns the value 8;  I have four physical
+	// cores which can each run two threads, so two LOGICAL cores.
+	//
+	// I should really rename this function to make it more obvious, but for
+	// right now it's just easier to leave it this way.
+	//
+	// Future-Trevor:  If you ever want to go back to the old custom
+	// platform-specific implementations for some reason (or to just see
+	// their implementations for some other reason), those are in git
+	// commit 5903c79d10a43c and earlier.
 
 	return numCPU;
 }
@@ -765,7 +763,7 @@ void
 vsSystem::LogSystemDetails()
 {
 	vsLog("CPU:  %s", CPUDescription().c_str());
-	vsLog("Number of hardware threads:  %d", GetNumberOfCores());
+	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
 }
 
 Resolution *

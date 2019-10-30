@@ -135,7 +135,7 @@ public:
 	Orientation	GetOrientation() { return m_orientation; }
 
 	static void Launch( const vsString &string );
-	int		GetNumberOfCores();		// estimates the number of cores on this computer.
+	int		GetNumberOfCores();		// estimates the number of LOGICAL cores on this computer.  (includes hyperthreading, if available/enabled).  In effect, this returns the number of hardware threads.
 	vsString CPUDescription(); // tries to build a string describing the system.
 
 	void LogSystemDetails();
