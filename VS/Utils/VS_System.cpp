@@ -38,8 +38,8 @@
 //#include <shellapi.h>
 #include <winsock2.h>
 #else
-#include <sys/param.h>
-#include <sys/sysctl.h>
+// #include <sys/param.h>
+// #include <sys/sysctl.h>
 #include <unistd.h>
 #endif
 
