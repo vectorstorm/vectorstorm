@@ -296,8 +296,7 @@ void
 vsSystem::EnableGameDirectory( const vsString &directory )
 {
 	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
-	vsString baseDir = PHYSFS_getBaseDir();
-	std::string archiveName = baseDir + directory + ".zip";
+	std::string archiveName = d + ".zip";
 	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
 	PHYSFS_mount(archiveName.c_str(), NULL, 1);
 	PHYSFS_mount(d.c_str(), NULL, 1);
