@@ -191,11 +191,11 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		m_mode = MODE_Read;
 		m_length = m_store->BufferLength();
 
-		vsLog("File cache hit:  %s", filename);
+		// vsLog("File cache hit:  %s", filename);
 	}
 	else
 	{
-		vsLog("Filename: %s", filename.c_str());
+		// vsLog("Filename: %s", filename.c_str());
 		if ( mode == MODE_Read || mode == MODE_ReadCompressed )
 		{
 			m_file = PHYSFS_openRead( filename.c_str() );
