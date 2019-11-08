@@ -404,16 +404,16 @@ vsFile::Exists( const vsString &filename ) // static method
 	{
 		return true; // exists!
 	}
-	PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
-	const char* str = PHYSFS_getErrorByCode(code);
-	vsLog( "vsFile::Exists() failed: (%d) %s", code, str );
-	char** searchPath = PHYSFS_getSearchPath();
-	int pathId = 0;
-	while ( searchPath[pathId] )
-	{
-		vsLog("Search path: %s",searchPath[pathId]);
-		pathId++;
-	}
+	// PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
+	// const char* str = PHYSFS_getErrorByCode(code);
+	// vsLog( "vsFile::Exists(%s) failed: (%d) %s", filename, code, str );
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 	return false;
 }
 
