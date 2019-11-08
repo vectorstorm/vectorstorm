@@ -186,16 +186,19 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	if ( (mode == MODE_Read || mode == MODE_ReadCompressed) &&
 			vsFileCache::IsFileInCache( filename ) )
 	{
+		// unsigned long start = vsTimerSystem::Instance()->GetMicroseconds();
 		vsStore *c = vsFileCache::GetFileContents( filename );
 		m_store = new vsStore(*c);
 		m_mode = MODE_Read;
 		m_length = m_store->BufferLength();
 
 		// vsLog("File cache hit:  %s", filename);
+		// unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
+		// vsLog("CACHED '%s':  %f milliseconds", filename.c_str(), (now - start) / 1000.f);
 	}
 	else
 	{
-		// vsLog("Filename: %s", filename.c_str());
+		unsigned long start = vsTimerSystem::Instance()->GetMicroseconds();
 		if ( mode == MODE_Read || mode == MODE_ReadCompressed )
 		{
 			m_file = PHYSFS_openRead( filename.c_str() );
@@ -355,6 +358,8 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			if ( shouldCache )
 				vsFileCache::SetFileContents( filename, *m_store );
 		}
+		unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
+		vsLog("Profiler '%s':  %f milliseconds", filename.c_str(), (now - start) / 1000.f);
 	}
 }
 
@@ -398,6 +403,16 @@ vsFile::Exists( const vsString &filename ) // static method
 	if ( PHYSFS_stat(filename.c_str(), &stat) )
 	{
 		return true; // exists!
+	}
+	PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
+	const char* str = PHYSFS_getErrorByCode(code);
+	vsLog( "vsFile::Exists() failed: (%d) %s", code, str );
+	char** searchPath = PHYSFS_getSearchPath();
+	int pathId = 0;
+	while ( searchPath[pathId] )
+	{
+		vsLog("Search path: %s",searchPath[pathId]);
+		pathId++;
 	}
 	return false;
 }
@@ -770,6 +785,17 @@ vsFile::WriteBytes( const void* data, size_t bytes )
 	{
 		_WriteBytes(data, bytes);
 	}
+}
+
+int
+vsFile::ReadBytes( void* data, size_t bytes )
+{
+	vsAssert( m_mode == MODE_Read, "Tried to read bytes when not in read mode?" );
+
+	int bytesToRead = vsMin(bytes, m_store->BytesLeftForReading());
+	memcpy( data, m_store->GetReadHead(), bytesToRead );
+	m_store->AdvanceReadHead(bytesToRead);
+	return bytesToRead;
 }
 
 void

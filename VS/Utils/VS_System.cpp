@@ -241,6 +241,14 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		exit(1);
 	}
 
+	PHYSFS_Version compiled;
+	PHYSFS_Version linked;
+
+	PHYSFS_VERSION(&compiled);
+	PHYSFS_getLinkedVersion(&linked);
+	vsLog("PhysFS compiled version: %d.%d.%d", compiled.major, compiled.minor, compiled.patch);
+	vsLog("PhysFS linked version: %d.%d.%d", linked.major, linked.minor, linked.patch);
+
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
 #if defined(__APPLE_CC__)
@@ -258,38 +266,48 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
-	m_dataDirectory = baseDirectory + "\\Data";
+	m_dataDirectory = baseDirectory + "Data";
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
 #endif
-	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
+	// success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
+	//
+	// 0 parameter means PREPEND;  each new mount takes priority over the line before
 	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount((m_dataDirectory+".zip").c_str(), NULL, 0);
 	if ( !success )
 	{
-		vsLog("Failed to mount %s", m_dataDirectory.c_str());
+		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
 		exit(1);
 	}
 	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
-	char** searchPath = PHYSFS_getSearchPath();
-	int pathId = 0;
-	while ( searchPath[pathId] )
-	{
-		vsLog("Search path: %s",searchPath[pathId]);
-		pathId++;
-	}
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
 
 void
 vsSystem::EnableGameDirectory( const vsString &directory )
 {
-#if defined(_WIN32)
-	std::string d = m_dataDirectory + "\\" + directory;
-#else
-	std::string d = m_dataDirectory + "/" + directory;
-#endif
+	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
+	vsString baseDir = PHYSFS_getBaseDir();
+	std::string archiveName = baseDir + directory + ".zip";
+	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
+	PHYSFS_mount(archiveName.c_str(), NULL, 1);
 	PHYSFS_mount(d.c_str(), NULL, 1);
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
 
 #if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
@@ -306,6 +324,7 @@ vsSystem::DisableGameDirectory( const vsString &directory )
 {
 	std::string d = m_dataDirectory + "/" + directory;
 	PHYSFS_unmount(d.c_str());
+	PHYSFS_unmount((d+".zip").c_str());
 }
 
 void

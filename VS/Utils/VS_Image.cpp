@@ -54,14 +54,19 @@ vsImage::vsImage(unsigned int width, unsigned int height):
 	memset(m_pixel,0,sizeof(uint32_t)*m_pixelCount);
 }
 
-vsImage::vsImage( const vsString &filename_in ):
+vsImage::vsImage( const vsString &filename ):
 	m_pbo(0),
 	m_sync(0)
 {
 #if !TARGET_OS_IPHONE
-	vsString filename = vsFile::GetFullFilename(filename_in);
-	// vsString filename(filename_in);// = vsFile::GetFullFilename(filename_in);
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
+	vsFile img(filename, vsFile::MODE_Read);
+	vsStore *s = new vsStore( img.GetLength() );
+	img.Store(s);
+
+	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	vsDelete(s);
 	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
 	LoadFromSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);
