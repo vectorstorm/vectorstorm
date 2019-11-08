@@ -179,7 +179,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_length(0),
 	m_moveOnDestruction(false)
 {
-	vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
+	// vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
 	if ( mode == MODE_Read || mode == MODE_ReadCompressed )
 	{
@@ -380,6 +380,9 @@ vsFile::Exists( const vsString &filename ) // static method
 bool
 vsFile::DirectoryExists( const vsString &filename ) // static method
 {
+	// Caution:  PHYSFS_stat is *super* slow on Windows!  Often multiple
+	// milliseconds, even off an SSD.
+	//
 	PHYSFS_Stat stat;
 	if ( PHYSFS_stat(filename.c_str(), &stat) )
 		return (stat.filetype == PHYSFS_FILETYPE_DIRECTORY);
