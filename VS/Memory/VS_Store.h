@@ -35,8 +35,10 @@ class vsStore
 
 
 public:
+			vsStore();
 			vsStore( size_t maxSize );
 			vsStore( char *buffer, int bufferLength );
+			vsStore( const vsStore& store ); // make a copy of the other store
 	virtual ~vsStore();
 
 	char *	GetReadHead()	{ return m_readHead; }

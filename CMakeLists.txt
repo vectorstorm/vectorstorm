@@ -209,6 +209,8 @@ set(CORE_SOURCES
 set(FILES_SOURCES
 	VS/Files/VS_File.cpp
 	VS/Files/VS_File.h
+	VS/Files/VS_FileCache.cpp
+	VS/Files/VS_FileCache.h
 	VS/Files/VS_Record.cpp
 	VS/Files/VS_Record.h
 	VS/Files/VS_Token.cpp
