@@ -275,7 +275,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	//
 	// 0 parameter means PREPEND;  each new mount takes priority over the line before
 	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
-	success |= PHYSFS_mount((m_dataDirectory+".zip").c_str(), NULL, 0);
+	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
