@@ -32,7 +32,47 @@
 #include <vector>
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
+
+// #define PROFILE_FILE_SYSTEM
+#ifdef PROFILE_FILE_SYSTEM
+
 #include "VS_TimerSystem.h"
+
+namespace {
+	class vsFileProfiler
+	{
+		vsString m_name;
+		unsigned long m_start;
+		bool m_cached;
+	public:
+		vsFileProfiler(const vsString& name, bool cached):
+			m_name(name),
+			m_start( vsTimerSystem::Instance()->GetMicroseconds() ),
+			m_cached(cached)
+		{
+		}
+
+		~vsFileProfiler()
+		{
+			unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
+			if ( m_cached )
+				vsLog("FileProfiler [CACHED] '%s':  %f milliseconds", m_name.c_str(), (now - m_start) / 1000.f);
+			else
+				vsLog("FileProfiler '%s':  %f milliseconds", m_name.c_str(), (now - m_start) / 1000.f);
+		}
+	};
+};
+
+#define PROFILE(x) vsFileProfiler fp(x,false)
+#define PROFILE_CACHED(x) vsFileProfiler fp(x,true)
+
+#else
+
+#define PROFILE(x)
+#define PROFILE_CACHED(x)
+
+#endif
+
 
 // PhysFS made a bunch of changes to its interface in version 2.1.0.  Let's
 // check what version of PhysFS we're compiling against and create the necessary
@@ -171,6 +211,7 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
+
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
@@ -186,19 +227,15 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	if ( (mode == MODE_Read || mode == MODE_ReadCompressed) &&
 			vsFileCache::IsFileInCache( filename ) )
 	{
-		// unsigned long start = vsTimerSystem::Instance()->GetMicroseconds();
+		PROFILE_CACHED(filename);
 		vsStore *c = vsFileCache::GetFileContents( filename );
 		m_store = new vsStore(*c);
 		m_mode = MODE_Read;
 		m_length = m_store->BufferLength();
-
-		// vsLog("File cache hit:  %s", filename);
-		// unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
-		// vsLog("CACHED '%s':  %f milliseconds", filename.c_str(), (now - start) / 1000.f);
 	}
 	else
 	{
-		unsigned long start = vsTimerSystem::Instance()->GetMicroseconds();
+		PROFILE(filename);
 		if ( mode == MODE_Read || mode == MODE_ReadCompressed )
 		{
 			m_file = PHYSFS_openRead( filename.c_str() );
@@ -358,8 +395,6 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			if ( shouldCache )
 				vsFileCache::SetFileContents( filename, *m_store );
 		}
-		unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
-		vsLog("Profiler '%s':  %f milliseconds", filename.c_str(), (now - start) / 1000.f);
 	}
 }
 
