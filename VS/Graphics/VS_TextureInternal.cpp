@@ -16,6 +16,7 @@
 #include "VS_RenderBuffer.h"
 
 #include "VS/Files/VS_File.h"
+#include "VS/Memory/VS_Store.h"
 
 #include "VS_OpenGL.h"
 
@@ -106,10 +107,16 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_premultipliedAlpha(false),
 	m_tbo(NULL)
 {
-	vsString filename = vsFile::GetFullFilename(filename_in);
+	vsFile img(filename_in, vsFile::MODE_Read);
+	vsStore *s = new vsStore( img.GetLength() );
+	img.Store(s);
 
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
+	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	vsDelete(s);
+
+	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename_in, IMG_GetError()));
 	ProcessSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);
 	m_nearestSampling = false;

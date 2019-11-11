@@ -8,6 +8,7 @@
  */
 
 #include "VS_File.h"
+#include "VS_FileCache.h"
 #include "VS_Record.h"
 #include "VS_Store.h"
 #include "Core.h"
@@ -31,6 +32,47 @@
 #include <vector>
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
+
+// #define PROFILE_FILE_SYSTEM
+#ifdef PROFILE_FILE_SYSTEM
+
+#include "VS_TimerSystem.h"
+
+namespace {
+	class vsFileProfiler
+	{
+		vsString m_name;
+		unsigned long m_start;
+		bool m_cached;
+	public:
+		vsFileProfiler(const vsString& name, bool cached):
+			m_name(name),
+			m_start( vsTimerSystem::Instance()->GetMicroseconds() ),
+			m_cached(cached)
+		{
+		}
+
+		~vsFileProfiler()
+		{
+			unsigned long now = vsTimerSystem::Instance()->GetMicroseconds();
+			if ( m_cached )
+				vsLog("FileProfiler [CACHED] '%s':  %f milliseconds", m_name.c_str(), (now - m_start) / 1000.f);
+			else
+				vsLog("FileProfiler '%s':  %f milliseconds", m_name.c_str(), (now - m_start) / 1000.f);
+		}
+	};
+};
+
+#define PROFILE(x) vsFileProfiler fp(x,false)
+#define PROFILE_CACHED(x) vsFileProfiler fp(x,true)
+
+#else
+
+#define PROFILE(x)
+#define PROFILE_CACHED(x)
+
+#endif
+
 
 // PhysFS made a bunch of changes to its interface in version 2.1.0.  Let's
 // check what version of PhysFS we're compiling against and create the necessary
@@ -169,6 +211,7 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
+
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
@@ -181,155 +224,177 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 {
 	// vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
-	if ( mode == MODE_Read || mode == MODE_ReadCompressed )
+	if ( (mode == MODE_Read || mode == MODE_ReadCompressed) &&
+			vsFileCache::IsFileInCache( filename ) )
 	{
-		m_file = PHYSFS_openRead( filename.c_str() );
+		PROFILE_CACHED(filename);
+		vsStore *c = vsFileCache::GetFileContents( filename );
+		m_store = new vsStore(*c);
+		m_mode = MODE_Read;
+		m_length = m_store->BufferLength();
 	}
-	else if ( mode == MODE_Write || mode == MODE_WriteCompressed )
+	else
 	{
-		// in normal 'Write' mode, we actually write into a temporary file, and
-		// then move it into position when the file is closed.  We do this so
-		// that crashes in the middle of file writing don't obliterate the
-		// original file (if any), or leave a half-written file.
-		m_tempFilename = vsFormatString("tmp/%s", m_filename.c_str());
-		vsString directoryOnly = m_tempFilename;
-		size_t separator = directoryOnly.rfind("/");
-		directoryOnly.erase(separator);
-		EnsureWriteDirectoryExists(directoryOnly);
-		m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
-		m_moveOnDestruction = true;
-
-		m_store = new vsStore( 1024 * 1024 );
-
-		if ( mode == MODE_WriteCompressed )
+		PROFILE(filename);
+		if ( mode == MODE_Read || mode == MODE_ReadCompressed )
 		{
-			// we're going to write compressed data!
+			m_file = PHYSFS_openRead( filename.c_str() );
+		}
+		else if ( mode == MODE_Write || mode == MODE_WriteCompressed )
+		{
+			// in normal 'Write' mode, we actually write into a temporary file, and
+			// then move it into position when the file is closed.  We do this so
+			// that crashes in the middle of file writing don't obliterate the
+			// original file (if any), or leave a half-written file.
+			m_tempFilename = vsFormatString("tmp/%s", m_filename.c_str());
+			vsString directoryOnly = m_tempFilename;
+			size_t separator = directoryOnly.rfind("/");
+			directoryOnly.erase(separator);
+			EnsureWriteDirectoryExists(directoryOnly);
+			m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
+			m_moveOnDestruction = true;
+
+			m_store = new vsStore( 1024 * 1024 );
+
+			if ( mode == MODE_WriteCompressed )
+			{
+				// we're going to write compressed data!
+				m_zipData = new zipdata;
+				m_zipData->m_zipStream.zalloc = Z_NULL;
+				m_zipData->m_zipStream.zfree = Z_NULL;
+				m_zipData->m_zipStream.opaque = Z_NULL;
+				int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
+				if ( ret != Z_OK )
+				{
+					vsLog("deflateInit error: %d", ret);
+					mode = MODE_Write;
+				}
+
+				// What's more, compressed writing doesn't give us nice uniform
+				// blobs of data to write.  Well-behaved clients might ask us to
+				// write a megabyte at a time, and zlib turns around and tells us
+				// that we have 2 bytes of data to write because it's found some
+				// amazing compression scheme, or it simply isn't sure yet how it
+				// wants to compress that data we've given it so far.
+				//
+				// As a result, we want to buffer our writes!
+			}
+		}
+		else if ( mode == MODE_WriteDirectly )
+		{
+			m_file = PHYSFS_openWrite( filename.c_str() );
+			mode = MODE_Write;
+			m_mode = MODE_Write;
+		}
+
+		if ( m_file )
+		{
+			m_length = (size_t)PHYSFS_fileLength(m_file);
+		}
+
+		vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+
+		bool shouldCache = (filename.find(".win") != vsString::npos) ||
+			(filename.find(".glsl") != vsString::npos);
+
+		if ( mode == MODE_Read )
+		{
+			// in read mode, let's just read out all the data right now in a single
+			// big read, and close the file.  It's much (MUCH) faster to read if
+			// the data's already in memory.  Particularly on Windows, where the
+			// speed improvement can be several orders of magnitude, compared against
+			// making lots of calls to read small numbers of bytes from the file.
+			m_store = new vsStore( m_length );
+			Store(m_store);
+
+			PHYSFS_close(m_file);
+			m_file = NULL;
+
+			if ( shouldCache )
+				vsFileCache::SetFileContents( filename, *m_store );
+		}
+		else if ( mode == MODE_ReadCompressed )
+		{
+			// in COMPRESSED read mode, we can't do the clever thing we did above
+			// where we just made a single store and loaded the whole file into it
+			// all at once, because we don't know how big the file is going to wind
+			// up being.
+			//
+			// So here's what we're going to do;  we're going to load all the data
+			// into a store (as above), decompress it once just to figure out how
+			// big it's going to be, then decompress it AGAIN, into a store that's
+			// the right size to hold it.
+
+			vsStore *compressedData = new vsStore( m_length );
+			Store(compressedData);
+			PHYSFS_close(m_file);
+			m_file = NULL;
+
+			// we're going to read the compressed data TWICE.
+			// First, we're just going to count how many bytes we inflate into.
 			m_zipData = new zipdata;
 			m_zipData->m_zipStream.zalloc = Z_NULL;
 			m_zipData->m_zipStream.zfree = Z_NULL;
 			m_zipData->m_zipStream.opaque = Z_NULL;
-			int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
+			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
-				vsLog("deflateInit error: %d", ret);
-				mode = MODE_Write;
+				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				return;
 			}
 
-			// What's more, compressed writing doesn't give us nice uniform
-			// blobs of data to write.  Well-behaved clients might ask us to
-			// write a megabyte at a time, and zlib turns around and tells us
-			// that we have 2 bytes of data to write because it's found some
-			// amazing compression scheme, or it simply isn't sure yet how it
-			// wants to compress that data we've given it so far.
-			//
-			// As a result, we want to buffer our writes!
+			int decompressedSize = 0;
+			const int zipBufferSize = 1024 * 100;
+			char zipBuffer[zipBufferSize];
+			m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+			do
+			{
+				m_zipData->m_zipStream.avail_out = zipBufferSize;
+				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+				int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+				decompressedSize += decompressedBytes;
+
+			}while( m_zipData->m_zipStream.avail_out == 0 );
+			inflateEnd(&m_zipData->m_zipStream);
+
+			m_store = new vsStore( decompressedSize );
+
+			// Now let's decompress it FOR REAL.
+			ret = inflateInit(&m_zipData->m_zipStream);
+			if ( ret != Z_OK )
+			{
+				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				return;
+			}
+
+			m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
+			do
+			{
+				m_zipData->m_zipStream.avail_out = zipBufferSize;
+				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+				int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+				m_store->WriteBuffer( zipBuffer, decompressedBytes );
+
+			}while( m_zipData->m_zipStream.avail_out == 0 );
+			inflateEnd(&m_zipData->m_zipStream);
+
+			// and now that we've decompressed all the data, we can drop into
+			// regular 'Read' mode to serve the data to our clients.
+			m_mode = MODE_Read;
+			m_length = decompressedSize;
+			vsDelete( compressedData );
+
+			if ( shouldCache )
+				vsFileCache::SetFileContents( filename, *m_store );
 		}
-	}
-	else if ( mode == MODE_WriteDirectly )
-	{
-		m_file = PHYSFS_openWrite( filename.c_str() );
-		mode = MODE_Write;
-		m_mode = MODE_Write;
-	}
-
-	if ( m_file )
-	{
-		m_length = (size_t)PHYSFS_fileLength(m_file);
-	}
-
-	vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
-
-	if ( mode == MODE_Read )
-	{
-		// in read mode, let's just read out all the data right now in a single
-		// big read, and close the file.  It's much (MUCH) faster to read if
-		// the data's already in memory.  Particularly on Windows, where the
-		// speed improvement can be several orders of magnitude, compared against
-		// making lots of calls to read small numbers of bytes from the file.
-		m_store = new vsStore( m_length );
-		Store(m_store);
-
-		PHYSFS_close(m_file);
-		m_file = NULL;
-	}
-	else if ( mode == MODE_ReadCompressed )
-	{
-		// in COMPRESSED read mode, we can't do the clever thing we did above
-		// where we just made a single store and loaded the whole file into it
-		// all at once, because we don't know how big the file is going to wind
-		// up being.
-		//
-		// So here's what we're going to do;  we're going to load all the data
-		// into a store (as above), decompress it once just to figure out how
-		// big it's going to be, then decompress it AGAIN, into a store that's
-		// the right size to hold it.
-
-		vsStore *compressedData = new vsStore( m_length );
-		Store(compressedData);
-		PHYSFS_close(m_file);
-		m_file = NULL;
-
-		// we're going to read the compressed data TWICE.
-		// First, we're just going to count how many bytes we inflate into.
-		m_zipData = new zipdata;
-		m_zipData->m_zipStream.zalloc = Z_NULL;
-		m_zipData->m_zipStream.zfree = Z_NULL;
-		m_zipData->m_zipStream.opaque = Z_NULL;
-		int ret = inflateInit(&m_zipData->m_zipStream);
-		if ( ret != Z_OK )
-		{
-			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
-			return;
-		}
-
-		int decompressedSize = 0;
-		const int zipBufferSize = 1024 * 100;
-		char zipBuffer[zipBufferSize];
-		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
-		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
-		do
-		{
-			m_zipData->m_zipStream.avail_out = zipBufferSize;
-			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-
-			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
-			decompressedSize += decompressedBytes;
-
-		}while( m_zipData->m_zipStream.avail_out == 0 );
-		inflateEnd(&m_zipData->m_zipStream);
-
-		m_store = new vsStore( decompressedSize );
-
-		// Now let's decompress it FOR REAL.
-		ret = inflateInit(&m_zipData->m_zipStream);
-		if ( ret != Z_OK )
-		{
-			vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
-			return;
-		}
-
-		m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
-		m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
-		do
-		{
-			m_zipData->m_zipStream.avail_out = zipBufferSize;
-			m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
-			int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-			vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-
-			int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
-			m_store->WriteBuffer( zipBuffer, decompressedBytes );
-
-		}while( m_zipData->m_zipStream.avail_out == 0 );
-		inflateEnd(&m_zipData->m_zipStream);
-
-		// and now that we've decompressed all the data, we can drop into
-		// regular 'Read' mode to serve the data to our clients.
-		m_mode = MODE_Read;
-		m_length = decompressedSize;
-		vsDelete( compressedData );
 	}
 }
 
@@ -374,6 +439,16 @@ vsFile::Exists( const vsString &filename ) // static method
 	{
 		return true; // exists!
 	}
+	// PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
+	// const char* str = PHYSFS_getErrorByCode(code);
+	// vsLog( "vsFile::Exists(%s) failed: (%d) %s", filename, code, str );
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 	return false;
 }
 
@@ -745,6 +820,17 @@ vsFile::WriteBytes( const void* data, size_t bytes )
 	{
 		_WriteBytes(data, bytes);
 	}
+}
+
+int
+vsFile::ReadBytes( void* data, size_t bytes )
+{
+	vsAssert( m_mode == MODE_Read, "Tried to read bytes when not in read mode?" );
+
+	int bytesToRead = vsMin(bytes, m_store->BytesLeftForReading());
+	memcpy( data, m_store->GetReadHead(), bytesToRead );
+	m_store->AdvanceReadHead(bytesToRead);
+	return bytesToRead;
 }
 
 void
