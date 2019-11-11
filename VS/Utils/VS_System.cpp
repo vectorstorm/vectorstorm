@@ -20,6 +20,7 @@
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
 #include "VS_FileCache.h"
+#include "VS_ShaderCache.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -93,6 +94,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	vsLog("VectorStorm engine version %s",VS_VERSION);
 
 	vsFileCache::Startup();
+	vsShaderCache::Startup();
 	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...");
@@ -136,6 +138,7 @@ vsSystem::~vsSystem()
 	delete vsSingletonManager::Instance();
 
 	DeinitPhysFS();
+	vsShaderCache::Shutdown();
 	vsFileCache::Shutdown();
 
 #if !TARGET_OS_IPHONE
