@@ -21,6 +21,8 @@
 
 #include "VS_Renderer_OpenGL3.h"
 
+#include <atomic>
+
 static const vsString s_modeString[DRAWMODE_MAX] =
 {
 	"absolute",	//DrawMode_Absolute,
@@ -39,9 +41,9 @@ static const vsString s_cullString[CULL_MAX] =
 	"none"		// Cull_None
 };
 
-static int	s_codeMaterialCount = 0;
+static std::atomic<int>	s_codeMaterialCount( 0 );
 vsMaterialInternal::vsMaterialInternal():
-	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount)),
+	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
 	m_textureCount(0),
 	m_shaderIsMine(false),
 	m_shader(NULL),
@@ -72,7 +74,6 @@ vsMaterialInternal::vsMaterialInternal():
 	m_blend(true),
 	m_flags(0)
 {
-	s_codeMaterialCount++;
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		m_texture[i] = NULL;
