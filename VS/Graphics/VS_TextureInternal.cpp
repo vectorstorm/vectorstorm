@@ -79,8 +79,7 @@ vsTextureInternal::~vsTextureInternal()
 
 
 
-#else
-#include <SDL2/SDL_image.h>
+#else // TARGET_OS_IPHONE
 
 /* Quick utility function for texture creation */
 void
@@ -132,6 +131,56 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 			image.RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsString> &mipmaps ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
+{
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+
+	for ( int i = 0; i < mipmaps.ItemCount(); i++ )
+	{
+		vsImage image(mipmaps[i]);
+
+		int w = image.GetWidth();
+		int h = image.GetHeight();
+
+		m_width = w;
+		m_height = w;
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D,
+				i,
+				GL_RGBA,
+				w, h,
+				0,
+				GL_RGBA,
+				GL_UNSIGNED_INT_8_8_8_8_REV,
+				image.RawData());
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	if ( GL_EXT_texture_filter_anisotropic )
+	{
+		vsLog("anisotropic texture filters: ENABLED");
+		float aniso = 0.0f;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+		aniso = vsMin(aniso,9);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+	}
+	else
+		vsLog("anisotropic texture filters: UNSUPPORTED");
+
+
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
@@ -264,135 +313,6 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 		SetSurface(surface, surfaceBuffer, depth);
 	}
 	m_nearestSampling = false;
-}
-
-void
-vsTextureInternal::ProcessSurface( SDL_Surface *source )
-{
-	//	SDL_Surface *screen = SDL_GetVideoSurface();
-	SDL_Rect	area;
-
-	//SDL_SetAlpha(source, 0, SDL_ALPHA_OPAQUE);
-
-	m_width = source->w;
-	m_height = source->h;
-
-	int w = source->w;//vsNextPowerOfTwo(source->w);
-	int h = source->h;//vsNextPowerOfTwo(source->h);
-
-	m_glTextureWidth = w;
-	m_glTextureHeight = h;
-
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			w, h,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(image, "Error??");
-
-	SDL_BlendMode bm;
-	SDL_GetSurfaceBlendMode(source, &bm);
-	if ( bm != SDL_BLENDMODE_NONE )
-	{
-		SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
-	}
-
-	/* Copy the surface into the GL texture image */
-	area.x = 0;
-	area.y = 0;
-	area.w = source->w;
-	area.h = source->h;
-	SDL_BlitSurface(source, &area, image, &area);
-
-	/* Restore the alpha blending attributes */
-	if ( bm != SDL_BLENDMODE_NONE )
-	{
-		SDL_SetSurfaceBlendMode(source, bm);
-	}
-
-	/* Create an OpenGL texture for the image */
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
-
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	// glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-	glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA,
-			w, h,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_INT_8_8_8_8_REV,
-			image->pixels);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-#if 0
-	/*	if ( 0 )
-		{
-		int wid = w;
-		int hei = h;
-		int mapMapId = 1;
-
-		while ( wid > 32 || hei > 32 )
-		{
-		wid = wid >> 1;
-		hei = hei >> 1;
-		glTexImage2D(GL_TEXTURE_2D, mapMapId++, GL_RGBA, wid, hei, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		}
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-		}*/
-
-
-	// now lets read it back.
-#endif // 0
-
-	bool doIt = false;
-
-	if ( doIt )
-	{
-		unsigned char *imageData = new unsigned char[w*h*4];
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, imageData);
-
-		for ( int i = 0; i < w*h; i++ )
-		{
-			int ri = i*4;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
-
-			unsigned char r = imageData[ri];
-			unsigned char g = imageData[gi];
-			unsigned char b = imageData[bi];
-			unsigned char a = imageData[ai];
-
-			unsigned char origr = ((unsigned char*)image->pixels)[ri];
-			unsigned char og = ((unsigned char*)image->pixels)[gi];
-			unsigned char ob = ((unsigned char*)image->pixels)[bi];
-			unsigned char oa = ((unsigned char*)image->pixels)[ai];
-
-			if ( r != origr || g != og || b != ob || a != oa )
-			{
-				vsLog("Pixel %d,%d,%d,%d != %d,%d,%d,%d", r,g,b,a,origr,og,ob,oa);
-			}
-		}
-		delete [] imageData;
-	}
-	//#endif //0
-	SDL_FreeSurface(image); /* No longer needed */
 }
 
 vsTextureInternal::~vsTextureInternal()
