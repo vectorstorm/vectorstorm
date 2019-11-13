@@ -8,8 +8,9 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include <atomic>
 
-static int s_renderTargetCount = 0;
+static std::atomic<int> s_renderTargetCount(0);
 
 vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred ):
 	m_settings(settings),
