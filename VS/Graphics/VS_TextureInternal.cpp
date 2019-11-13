@@ -107,18 +107,30 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_premultipliedAlpha(false),
 	m_tbo(NULL)
 {
-	vsFile img(filename_in, vsFile::MODE_Read);
-	vsStore *s = new vsStore( img.GetLength() );
-	img.Store(s);
+	vsImage image(filename_in);
 
-	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
-	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+	int w = image.GetWidth();
+	int h = image.GetHeight();
 
-	vsDelete(s);
+	m_width = w;
+	m_height = w;
 
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename_in, IMG_GetError()));
-	ProcessSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8_REV,
+			image.RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
 	m_nearestSampling = false;
 }
 
