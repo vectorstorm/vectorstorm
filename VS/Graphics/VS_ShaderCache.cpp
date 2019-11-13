@@ -41,26 +41,26 @@ vsShaderCache::LoadShader( const vsString& vFile, const vsString& fFile, bool li
 	if ( texture )
 		uniqueName += "T";
 
-	static int caches = 0;
-	static int loads = 0;
+	// static int caches = 0;
+	// static int loads = 0;
 
 	vsShader *shader = NULL;
 	if ( HasShader(uniqueName) )
 	{
-		caches++;
-		unsigned long before = vsTimerSystem::Instance()->GetMicroseconds();
+		// caches++;
+		// unsigned long before = vsTimerSystem::Instance()->GetMicroseconds();
 		shader = GetShader(uniqueName);
-		unsigned long after = vsTimerSystem::Instance()->GetMicroseconds();
-		vsLog("Retrieved cached shader [%d] '%s', '%s', %d, %d: %f milliseconds", caches, vFile, fFile, lit, texture, (after-before)/1000.f);
+		// unsigned long after = vsTimerSystem::Instance()->GetMicroseconds();
+		// vsLog("Retrieved cached shader [%d] '%s', '%s', %d, %d: %f milliseconds", caches, vFile, fFile, lit, texture, (after-before)/1000.f);
 		// vsLog("Serving shader from cache");
 	}
 	else
 	{
-		loads++;
-		unsigned long before = vsTimerSystem::Instance()->GetMicroseconds();
+		// loads++;
+		// unsigned long before = vsTimerSystem::Instance()->GetMicroseconds();
 		shader = vsShader::Load( vFile, fFile, lit, texture );
-		unsigned long after = vsTimerSystem::Instance()->GetMicroseconds();
-		vsLog("Loading shader [%d] '%s', '%s', %d, %d: %f milliseconds", loads, vFile, fFile, lit, texture, (after-before)/1000.f);
+		// unsigned long after = vsTimerSystem::Instance()->GetMicroseconds();
+		// vsLog("Loading shader [%d] '%s', '%s', %d, %d: %f milliseconds", loads, vFile, fFile, lit, texture, (after-before)/1000.f);
 		AddShader( uniqueName, shader );
 	}
 
