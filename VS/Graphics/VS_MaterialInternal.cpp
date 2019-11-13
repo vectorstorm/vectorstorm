@@ -288,7 +288,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "shader" )
 				{
-					vsDelete( m_shader );
+					if ( m_shaderIsMine )
+						vsDelete( m_shader );
+					m_shader = NULL;
+
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
