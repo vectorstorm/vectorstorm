@@ -14,7 +14,7 @@
 
 namespace
 {
-	vsHashTable<vsShader*> m_cache(32);
+	vsHashTable<vsShader*> *m_cache = NULL;
 };
 
 // [TODO]:  This implementation uses a hash table right now, which doesn't
@@ -25,11 +25,13 @@ namespace
 void
 vsShaderCache::Startup()
 {
+	m_cache = new vsHashTable<vsShader*>(32);
 }
 
 void
 vsShaderCache::Shutdown()
 {
+	vsDelete(m_cache);
 }
 
 vsShaderRef*
@@ -71,7 +73,7 @@ vsShaderCache::LoadShader( const vsString& vFile, const vsString& fFile, bool li
 bool
 vsShaderCache::HasShader( const vsString& name )
 {
-	if ( m_cache.FindItem(name) )
+	if ( m_cache->FindItem(name) )
 		return true;
 	return false;
 }
@@ -79,7 +81,7 @@ vsShaderCache::HasShader( const vsString& name )
 vsShader*
 vsShaderCache::GetShader( const vsString& name )
 {
-	vsShader** result = m_cache.FindItem(name);
+	vsShader** result = m_cache->FindItem(name);
 
 	if ( result )
 		return *result;
@@ -89,6 +91,6 @@ vsShaderCache::GetShader( const vsString& name )
 void
 vsShaderCache::AddShader( const vsString& name, vsShader *shader )
 {
-	m_cache.AddItemWithKey(shader, name);
+	m_cache->AddItemWithKey(shader, name);
 }
 

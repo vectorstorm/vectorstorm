@@ -35,6 +35,7 @@ vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 	{
 		vsDelete( GetResource()->m_shader );
 	}
+	vsDelete( GetResource()->m_shaderRef );
 	GetResource()->m_shaderRef = vsShaderCache::LoadShader(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, hasTextures);
 	GetResource()->m_shader = GetResource()->m_shaderRef->GetShader();
 	GetResource()->m_shaderIsMine = false;
