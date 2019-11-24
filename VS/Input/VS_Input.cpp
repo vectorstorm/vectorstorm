@@ -1537,6 +1537,13 @@ vsInput::WasPressed( int id )
 	return (m_axis[id].wasPressed);
 }
 
+void
+vsInput::ConsumePress( int id )
+{
+	m_axis[id].wasPressed = false;
+	m_axis[id].wasReleased = false;
+}
+
 bool
 vsInput::WasReleased( int id )
 {
@@ -1595,28 +1602,36 @@ void
 vsInput::WarpMouseTo( int scene, const vsVector2D& position_in )
 {
 	vsScene *s = vsScreen::Instance()->GetScene(scene);
+	vsVector2D screenPos;
 	if ( s->Is3D() )
 	{
 		// convert from normalised device coordinates to something useful
-		vsVector2D position = position_in;
-		position.y *= -1.0f; // SDL considers its y coordinates opposite from OpenGL
-		position += vsVector2D(1.f,1.f);
-		position.x *= (.5f * vsScreen::Instance()->GetTrueWidth());
-		position.y *= (.5f * vsScreen::Instance()->GetTrueHeight());
-		SDL_WarpMouseInWindow( g_sdlWindow, position.x, position.y );
-		return;
+		screenPos = position_in;
+		screenPos.y *= -1.0f; // SDL considers its y coordinates opposite from OpenGL
+		screenPos += vsVector2D(1.f,1.f);
+		screenPos.x *= (.5f * vsScreen::Instance()->GetTrueWidth());
+		screenPos.y *= (.5f * vsScreen::Instance()->GetTrueHeight());
 	}
+	else
+	{
+		vsCamera2D *c = s->GetCamera();
 
-	vsCamera2D *c = s->GetCamera();
-
-	vsTransform2D t = c->GetCameraTransform();
-	vsVector2D scale = t.GetScale();
-	scale.y *= 0.5f;
-	scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
-	t.SetScale(scale);
-	vsVector2D screenPos = t.ApplyInverseTo( m_mousePos );
-
+		vsTransform2D t = c->GetCameraTransform();
+		vsVector2D scale = t.GetScale();
+		scale.y *= 0.5f;
+		scale.x = scale.y * vsScreen::Instance()->GetAspectRatio();
+		t.SetScale(scale);
+		screenPos = t.ApplyInverseTo( m_mousePos );
+	}
 	SDL_WarpMouseInWindow( g_sdlWindow, screenPos.x, screenPos.y );
+
+	m_mousePos = screenPos;
+
+	m_mousePos.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+	m_mousePos.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
+	m_mousePos -= vsVector2D(1.f,1.f);
+
+	m_mousePos = Correct2DInputForOrientation( m_mousePos );
 
 }
 
@@ -2398,6 +2413,18 @@ vsInput::GetAxis(const vsString& name)
 	}
 	vsLog("vsLog: Unable to find requested axis '%s'", name);
 	return NULL;
+}
+
+int
+vsInput::GetAxisId(const vsString& name)
+{
+	for ( int i = 0; i < m_axis.ItemCount(); i++ )
+	{
+		if ( m_axis[i].name == name )
+			return i;
+	}
+	vsLog("vsLog: Unable to find requested axis '%s'", name);
+	return -1;
 }
 
 vsString

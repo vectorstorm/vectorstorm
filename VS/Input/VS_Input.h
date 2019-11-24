@@ -356,6 +356,8 @@ public:
 	bool			WasPressed( int id );
 	bool			WasReleased( int id );
 
+	void			ConsumePress( int id ); // resets our 'pressed' and 'released' states for the given control
+
 	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 
 	void			SetStringMode(bool mode, ValidationType = Validation_None);
@@ -400,6 +402,7 @@ public:
 	int GetAxisCount() const { return m_axis.ItemCount(); }
 	const struct vsInputAxis& GetAxis(int i) { return m_axis[i]; }
 	const struct vsInputAxis* GetAxis(const vsString& name);
+	int GetAxisId(const vsString& name); // returns -1 for failure
 
 	vsString GetBindDescription( const DeviceControl& dc );
 
