@@ -409,7 +409,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,(h-1)-v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			SetPixel(u,v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
 		}
 	}
 

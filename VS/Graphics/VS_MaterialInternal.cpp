@@ -12,12 +12,16 @@
 #include "VS_DisplayList.h"
 #include "VS_Material.h"
 #include "VS_Shader.h"
+#include "VS_ShaderRef.h"
+#include "VS_ShaderCache.h"
 
 #include "VS_File.h"
 #include "VS_Record.h"
 #include "VS_Token.h"
 
 #include "VS_Renderer_OpenGL3.h"
+
+#include <atomic>
 
 static const vsString s_modeString[DRAWMODE_MAX] =
 {
@@ -37,12 +41,13 @@ static const vsString s_cullString[CULL_MAX] =
 	"none"		// Cull_None
 };
 
-static int	s_codeMaterialCount = 0;
+static std::atomic<int>	s_codeMaterialCount( 0 );
 vsMaterialInternal::vsMaterialInternal():
-	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount)),
+	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
 	m_textureCount(0),
 	m_shaderIsMine(false),
 	m_shader(NULL),
+	m_shaderRef(NULL),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -69,7 +74,6 @@ vsMaterialInternal::vsMaterialInternal():
 	m_blend(true),
 	m_flags(0)
 {
-	s_codeMaterialCount++;
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		m_texture[i] = NULL;
@@ -84,6 +88,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_textureCount(0),
 	m_shaderIsMine(false),
 	m_shader(NULL),
+	m_shaderRef(NULL),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -135,6 +140,7 @@ vsMaterialInternal::~vsMaterialInternal()
 		vsDelete( m_texture[i] );
 	if ( m_shaderIsMine )
 		vsDelete( m_shader );
+	vsDelete( m_shaderRef );
 }
 
 void
@@ -282,12 +288,16 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				}
 				else if ( label == "shader" )
 				{
-					vsDelete( m_shader );
+					if ( m_shaderIsMine )
+						vsDelete( m_shader );
+					m_shader = NULL;
+
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
 					vsString fString = sr->GetToken(1).AsString();
-					m_shader = vsShader::Load( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
-					m_shaderIsMine = true;
+					m_shaderRef = vsShaderCache::LoadShader( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
+					m_shader = m_shaderRef->GetShader();
+					m_shaderIsMine = false;
 				}
 				else if ( label == "clampU" )
 				{
@@ -348,7 +358,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 void
 vsMaterialInternal::SetShader()
 {
-	if (!m_shader )
+	if (!m_shader && !m_shaderRef )
 	{
 		m_shader = vsRenderer_OpenGL3::Instance()->DefaultShaderFor(this);
 		m_shaderIsMine = false;

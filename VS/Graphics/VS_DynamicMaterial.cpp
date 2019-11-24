@@ -10,6 +10,8 @@
 #include "VS_DynamicMaterial.h"
 #include "VS_MaterialInternal.h"
 #include "VS_Shader.h"
+#include "VS_ShaderCache.h"
+#include "VS_ShaderRef.h"
 
 vsDynamicMaterial::vsDynamicMaterial():
 	vsMaterial()
@@ -33,8 +35,10 @@ vsDynamicMaterial::SetShader( const vsString &vShader, const vsString &fShader )
 	{
 		vsDelete( GetResource()->m_shader );
 	}
-	GetResource()->m_shader = vsShader::Load(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, hasTextures);
-	GetResource()->m_shaderIsMine = true;
+	vsDelete( GetResource()->m_shaderRef );
+	GetResource()->m_shaderRef = vsShaderCache::LoadShader(vShader, fShader, GetResource()->m_drawMode == DrawMode_Lit, hasTextures);
+	GetResource()->m_shader = GetResource()->m_shaderRef->GetShader();
+	GetResource()->m_shaderIsMine = false;
 	SetupParameters();
 }
 

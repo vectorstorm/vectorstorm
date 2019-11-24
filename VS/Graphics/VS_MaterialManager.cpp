@@ -8,6 +8,8 @@
  */
 
 #include "VS_MaterialManager.h"
+#include "VS_Shader.h"
+#include "VS_FileCache.h"
 
 vsMaterialManager::vsMaterialManager():
 vsCache<vsMaterialInternal>(512)
@@ -35,6 +37,14 @@ vsMaterialManager::ReloadAll()
 	// get rid of any materials we don't need any more, so we're not reloading
 	// anything we don't actually need right now.
 	CollectGarbage();
+
+	// Also, we need to clear the file cache, or else we'll just re-use data
+	// from memory
+	vsFileCache::Purge();
+
+	// Also, we need to reload all the shaders, since we're not loading them
+	// directly any more.
+	vsShader::ReloadAll();
 
 	for ( int b = 0; b < m_bucketCount; b++ )
 	{
