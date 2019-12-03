@@ -243,6 +243,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		vsLog("SetWriteDir failed!", success);
 		exit(1);
 	}
+	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
 
 	PHYSFS_Version compiled;
 	PHYSFS_Version linked;
