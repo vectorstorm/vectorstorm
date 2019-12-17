@@ -145,6 +145,20 @@ public:
 		return End();
 	}
 
+	// removes this item, but doesn't destroy it.
+	bool	ReleaseItem( const T *item )
+	{
+		int index = FindEntry(item);
+		if ( index != npos )
+		{
+			// move the last element into this position
+			m_array[index] = m_array[m_arrayLength-1];
+			m_arrayLength--;
+		}
+		return index != npos;
+	}
+
+
 	bool	Contains( T *item ) const
 	{
 		return (npos != FindEntry(item));
