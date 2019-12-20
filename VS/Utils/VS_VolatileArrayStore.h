@@ -191,8 +191,20 @@ public:
 
 	T	*GetItem(int id)
 	{
-		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArrayStore access");
 		return m_array[id];
+	}
+
+	const T	*GetItem(int id) const
+	{
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArrayStore access");
+		return m_array[id];
+	}
+
+
+	const T	*operator[](int id) const
+	{
+		return GetItem(id);
 	}
 
 	T	*operator[](int id)
