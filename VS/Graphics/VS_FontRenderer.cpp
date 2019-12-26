@@ -25,6 +25,7 @@ vsFontRenderer::vsFontRenderer( vsFont *font, float size, JustificationType type
 	m_font(font),
 	m_size(size),
 	m_texSize(size),
+	m_sizeBias(1.0f),
 	m_bounds(-1.f,-1.f),
 	m_justification(type),
 	m_color(c_white),
@@ -139,7 +140,8 @@ vsFontRenderer::WrapStringSizeTop(const vsString &string, float *size_out, float
 			}
 		}
 	}
-	m_texSize = size;
+	// m_texSize = size;
+	m_texSize = size * m_sizeBias;
 
 	float totalHeight = (lineHeight * m_wrappedLine.ItemCount()) + (lineMargin * (m_wrappedLine.ItemCount()-1));
 	float baseOffsetDown = 0.f;
@@ -587,7 +589,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		s_tempFontList.Clear();
 
-		float width = m_font->Size(m_size)->GetStringWidth(string, size.x);
+		float width = m_font->Size(m_texSize)->GetStringWidth(string, size.x);
 
 		if ( j == Justification_Right || j == Justification_TopRight || j == Justification_BottomRight )
 			offset.x = -width;
@@ -833,6 +835,12 @@ vsFontRenderer::GetGlyphCount( const vsString& string )
 {
 	int glyphs = utf8::distance( string.c_str(), string.c_str() + string.size() );
 	return glyphs;
+}
+
+void
+vsFontRenderer::SetSizeBias( float bias )
+{
+	m_sizeBias = bias;
 }
 
 vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string ):

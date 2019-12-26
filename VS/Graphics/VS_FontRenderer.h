@@ -42,6 +42,7 @@ class vsFontRenderer
 
 	float m_size;    // actual size
 	float m_texSize; // size of the texture we want to use.  For 2D, this should equal m_size.  For 3D, will determine quality of font bitmaps that are used.
+	float m_sizeBias;
 	vsVector2D m_bounds;
 	JustificationType m_justification;
 	vsTransform3D m_transform;
@@ -68,6 +69,8 @@ class vsFontRenderer
 	void		BuildDisplayListGeometryFromString( FontContext context, vsDisplayList * list, const char* string, float size, JustificationType type, const vsVector2D &offset);
 
 	bool		ShouldSnap( FontContext context );
+
+	void		UpdateSize();
 
 public:
 	vsFontRenderer( vsFont *font, float size, JustificationType type = Justification_Left );
@@ -100,6 +103,18 @@ public:
 	// If not set either way, the text will snap in a 2D context, and won't snap
 	// in a 3D context.
 	void SetSnap( bool snap ) { m_hasSnap = true; m_snap = snap; }
+
+	// Font size bias adjusts our selection of what font size to use.
+	//
+	// By default, we assume that 2D fonts are being drawn in a way that
+	// 1 unit equals 1 pixel on screen.
+	//
+	// If that's not the case, you can set the size bias.  With the size
+	// bias, you can do this:
+	//
+	// Size 12, Bias 1:  Draw using font size 12, 12 units tall.
+	// Size 12, Bias 2:  Draw using font size 24, 12 units tall.
+	void SetSizeBias( float bias );
 
 	// If true, we'll produce a set of boxes around glyphs, which can be used
 	// to figure out where individual glyphs are.  These will be stored on
