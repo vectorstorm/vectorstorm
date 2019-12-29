@@ -25,8 +25,8 @@ public:
 
 	T&				Get() { return m_parent->Get(*this); }
 
-	bool			Next() { m_current++; return (m_current < m_parent->ItemCount() ); }
-	bool			Prev() { m_current--; return (m_current >= 0); }
+	bool			Next() { m_current = vsMin( m_parent->ItemCount(), m_current+1 ); return (m_current < m_parent->ItemCount() ); }
+	bool			Prev() { m_current = vsMax( 0, m_current-1); return (m_current >= 0); }
 	bool						operator==( const vsArrayIterator &b ) { return (m_current == b.m_current && m_parent == b.m_parent ); }
 	bool						operator!=( const vsArrayIterator &b ) { return !((*this)==b); }
 	vsArrayIterator<T>&		operator++() { Next(); return *this; }
@@ -159,6 +159,26 @@ public:
 		if ( index < m_arrayLength )
 			return item;
 		return End();
+	}
+
+	void	RemoveDuplicates()
+	{
+		vsArrayIterator<T> it = Begin();
+		while ( End() != it )
+		{
+			// Now we need to look for duplicates.
+			vsArrayIterator<T> dit = it;
+			dit++;
+
+			while ( End() != dit )
+			{
+				if ( *it == *dit )
+					dit = RemoveItem(dit);
+				else
+					dit++;
+			}
+			it++;
+		}
 	}
 
 	bool	Contains( T item ) const
