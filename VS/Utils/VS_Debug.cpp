@@ -75,15 +75,11 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 		{
 #if defined(_DEBUG)
 			DEBUG_BREAK;
-			CRASH;
 #else
-			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d", msg, conditionStr, trimmedFile.c_str(), line);
+			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now crash so that we can report the problem; sorry!", msg, conditionStr, trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
-
-			vsBacktrace();
-			// CRASH; // actually, we do need to crash;  otherwise, we don't catch the exception handler.
-			exit(1); // exit with error condition, but without actually crashing.
 #endif
+			CRASH; // Crash;  to catch the exception handler.
 		}
 	}
 	else
@@ -96,5 +92,27 @@ void vsFailedAssertF(const char* conditionStr, const char* file, int line, fmt::
 {
 	vsString msgFormatted = fmt::sprintf(msg,args);
 	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
+}
+
+void vsFailedCheck( const char* conditionStr, const char* msg, const char *file, int line )
+{
+	// failed check..  trace out some information about the failed check.
+	bAsserted = true;
+	vsString trimmedFile(file);
+	size_t pos = trimmedFile.rfind('/');
+	if ( pos )
+	{
+		trimmedFile = trimmedFile.substr(pos+1);
+	}
+
+	vsLog("Failed check:  %s", msg);
+	vsLog("Failed condition: (%s)", conditionStr);
+	vsLog("at %s:%d", trimmedFile.c_str(), line);
+}
+
+void vsFailedCheckF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
+{
+	vsString msgFormatted = fmt::sprintf(msg,args);
+	vsFailedCheck( conditionStr, msgFormatted.c_str(), file, line );
 }
 
