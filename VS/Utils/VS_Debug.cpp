@@ -76,10 +76,12 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 #if defined(_DEBUG)
 			DEBUG_BREAK;
 #else
-			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now crash so that we can report the problem; sorry!", msg, conditionStr, trimmedFile.c_str(), line);
+			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now close;  when you restart the game we'll report the problem automatically!", msg, conditionStr, trimmedFile.c_str(), line);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
+			vsBacktrace();
+			exit(1); //
 #endif
-			CRASH; // Crash;  to catch the exception handler.
+			// CRASH; // Crash;  to catch the exception handler.
 		}
 	}
 	else
