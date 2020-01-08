@@ -399,6 +399,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Cache.h
 	VS/Utils/VS_Debug.cpp
 	VS/Utils/VS_Debug.h
+	VS/Utils/VS_Demangle.cpp
+	VS/Utils/VS_Demangle.h
 	VS/Utils/VS_Factory.cpp
 	VS/Utils/VS_Factory.h
 	#VS/Utils/VS_FontMaker.cpp

@@ -11,6 +11,9 @@
 #ifndef VS_ARRAY_STORE_H
 #define VS_ARRAY_STORE_H
 
+#include "VS/Utils/VS_Demangle.h"
+
+
 template<class T> class vsArrayStore;
 
 template<class T>
@@ -248,7 +251,7 @@ public:
 	T*& GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength,
-				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d (array of %s)", id, ItemCount(), Demangle( typeid(T).name() ) )
 				);
 		return m_array[id];
 	}
@@ -256,7 +259,7 @@ public:
 	const T* GetItemConst(int id) const
 	{
 		vsAssert(id >= 0 && id < m_arrayLength,
-				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d (array of %s)", id, ItemCount(), Demangle( typeid(T).name() ) )
 				);
 		return m_array[id];
 	}
