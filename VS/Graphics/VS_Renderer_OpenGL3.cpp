@@ -657,7 +657,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 
 				int nowWidth, nowHeight;
-				SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);
 				m_viewportWidth = m_width = m_widthPixels = nowWidth;
 				m_viewportHeight = m_height = m_heightPixels = nowHeight;
 				break;
@@ -718,18 +718,22 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 {
 	// if ( m_windowType == WindowType_Window )
 	{
-		int nowWidth, nowHeight;
-		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+		// int nowWidth, nowHeight;
+		// SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 
-		vsLog("SDL window resize event showing window size as %dx%d, SDL_GetWindowSize() shows size as %dx%d", width, height, nowWidth, nowHeight);
-		vsAssert( width == nowWidth && height == nowHeight, "Whaa?" );
+		vsLog("SDL window resize event showing window size as %dx%d, SDL_GetWindowSize() shows size as %dx%d", width, height, m_widthPixels, m_heightPixels);
+		m_viewportWidth = m_width = m_widthPixels;
+		m_viewportHeight = m_height = m_heightPixels;
+		// vsLog("SDL window resize event showing window size as %dx%d, SDL_GetWindowSize() shows size as %dx%d", width, height, nowWidth, nowHeight);
+		// vsAssert( width == nowWidth && height == nowHeight, "Whaa?" );
 
-		m_viewportWidth = m_width = m_widthPixels = nowWidth;
-		m_viewportHeight = m_height = m_heightPixels = nowHeight;
-#ifdef HIGHDPI_SUPPORTED
-		if ( m_flags & Flag_HighDPI )
-			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
-#endif
+// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+// #ifdef HIGHDPI_SUPPORTED
+// 		if ( m_flags & Flag_HighDPI )
+// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+// #endif
 		m_viewportWidthPixels = m_widthPixels;
 		m_viewportHeightPixels = m_heightPixels;
 		ResizeRenderTargetsToMatchWindow();
