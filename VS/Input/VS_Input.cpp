@@ -1891,7 +1891,7 @@ vsInput::ValidateString()
 			}
 			else if ( m_stringValidationType == Validation_Filename )
 			{
-				vsString invalidString = "!@#$%^&*()_{}][/\\.,';\":>?<";
+				vsString invalidString = "|!@#$%^&*()_{}][/\\.,';\":>?<";
 				utf8::iterator<std::string::iterator> vit( invalidString.begin(), invalidString.begin(), invalidString.end() );
 				for ( int l = 0; l < utf8::distance(invalidString.begin(), invalidString.end()); l++ )
 				{
