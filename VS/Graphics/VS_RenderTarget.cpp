@@ -8,6 +8,7 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include "VS_OpenGL.h"
 #include <atomic>
 
 static std::atomic<int> s_renderTargetCount(0);
@@ -289,6 +290,11 @@ static void CheckFBO()
 	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
 }
 
+#undef GL_CHECK_SCOPED
+#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
+#undef GL_CHECK
+#define GL_CHECK(s) CheckGLError(s);
+
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(settings.width),
@@ -330,6 +336,14 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		for ( int i = 0; i < m_textureCount; i++ )
 		{
+			const char* checkString[] = {
+				"vsSurface texture0",
+				"vsSurface texture1",
+				"vsSurface texture2",
+				"vsSurface texture3",
+				"vsSurface texture+",
+			};
+			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
 			GLenum internalFormat = GL_RGBA8;
@@ -360,6 +374,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 			if (multisample)
 			{
+				vsLog("MSAA in vsSurface enabled");
 				glGenRenderbuffers(1, &m_texture[i]);
 				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
@@ -368,6 +383,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			}
 			else
 			{
+				GL_CHECK_SCOPED( "gentexture" );
 				glGenTextures(1, &m_texture[i]);
 				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
 				m_isRenderbuffer = false;
@@ -392,6 +408,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		if ( multisample )
 		{
+			GL_CHECK_SCOPED( "multisample stencil/depth" );
 			glGenRenderbuffers(1, &m_depth);
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
 			if ( settings.stencil )
@@ -408,6 +425,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		}
 		else
 		{
+			GL_CHECK_SCOPED( "normal stencil/depth" );
 			glGenTextures(1, &m_depth);
 			glBindTexture(GL_TEXTURE_2D, m_depth);
 			/* if ( settings.mipMaps ) */

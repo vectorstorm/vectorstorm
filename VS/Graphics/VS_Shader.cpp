@@ -467,7 +467,7 @@ vsShader::SetInstanceColors( vsRenderBuffer *colors )
 
 		colors->BindAsAttribute( m_instanceColorAttributeLoc );
 	}
-	// CheckGLError("SetColors");
+	// GL_CHECK("SetColors");
 }
 
 void
@@ -477,7 +477,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 		glUniform1i( m_hasInstanceColorsLoc, ( matCount >= 2 ) );
 	if ( matCount <= 0 )
 		return;
-	// CheckGLError("SetInstanceColors");
+	// GL_CHECK("SetInstanceColors");
 	// if ( m_colorLoc >= 0 )
 	// {
 	// 	glUniform4f( m_colorLoc, color[0].r, color[0].g, color[0].b, color[0].a );
@@ -535,7 +535,7 @@ vsShader::SetInstanceColors( const vsColor* color, int matCount )
 #endif // VS_PRISTINE_BINDINGS
 		}
 	}
-	// CheckGLError("SetColors");
+	// GL_CHECK("SetColors");
 }
 
 
@@ -840,7 +840,7 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 				{
 					GLint valueNow = -1;
 					glGetUniformiv( m_shader, m_uniform[i].loc, &valueNow );
-					CheckGLError("Test");
+					GL_CHECK("Test");
 					vsAssert( valueNow != -1, "-1??" );
 					vsAssert( valueNow == m_uniform[i].b, "Caching system is broken?" );
 					break;
@@ -851,7 +851,7 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 					{
 						float valueNow = -1.f;
 						glGetUniformfv( m_shader, m_uniform[i].loc, &valueNow );
-						CheckGLError("Test");
+						GL_CHECK("Test");
 						vsAssert( valueNow != -1.f, "-1??" );
 						vsAssert( valueNow == m_uniform[i].f32, "Caching system is broken?" );
 					}

@@ -463,35 +463,35 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 #endif // !TARGET_OS_IPHONE
 
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 #if !TARGET_OS_IPHONE
 	glClearDepth( 1.0f );  // arbitrary large value
 #endif // !TARGET_OS_IPHONE
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);							// Set The Blending Function For Additive
 	glEnable(GL_BLEND);											// Enable Blending
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
 	glDepthFunc( GL_LEQUAL );
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	// TEMP VAO IMPLEMENTATION
 	glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	ResizeRenderTargetsToMatchWindow();
 
-	CheckGLError("Initialising OpenGL rendering");
+	GL_CHECK("Initialising OpenGL rendering");
 
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
@@ -821,14 +821,14 @@ void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
 	PROFILE_GL("RenderDisplayList");
-	CheckGLError("RenderDisplayList");
+	GL_CHECK("RenderDisplayList");
 	m_currentMaterial = NULL;
 	m_currentMaterialInternal = NULL;
 	m_currentShader = NULL;
 	m_currentShaderValues = NULL;
 	RawRenderDisplayList(list);
 
-	CheckGLError("RenderDisplayList");
+	GL_CHECK("RenderDisplayList");
 }
 
 void
@@ -869,12 +869,12 @@ vsRenderer_OpenGL3::FlushRenderState()
 		vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
 		m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 	}
-	// CheckGLError("EnsureSpaceForVertex");
-	// CheckGLError("PreFlush");
+	// GL_CHECK("EnsureSpaceForVertex");
+	// GL_CHECK("PreFlush");
 	static vsMaterial *s_previousMaterial = NULL;
 	static vsShaderValues *s_previousShaderValues = NULL;
 	m_state.Flush();
-	// CheckGLError("PostStateFlush");
+	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
 		if ( m_lastShaderId != m_currentShader->GetShaderId() )
@@ -890,7 +890,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
 		}
-		// CheckGLError("PostPrepare");
+		// GL_CHECK("PostPrepare");
 
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
@@ -1528,7 +1528,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
-		// CheckGLError("RenderOp");
+		// GL_CHECK("RenderOp");
 		{
 			PROFILE("PopOp");
 			op = list->PopOp();
@@ -2008,7 +2008,7 @@ vsRenderer_OpenGL3::Screenshot()
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	GL_CHECK("glPixelStorei");
 	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	CheckGLError("glReadPixels");
+	GL_CHECK("glReadPixels");
 
 
 	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );
@@ -2113,7 +2113,7 @@ vsRenderer_OpenGL3::ScreenshotAlpha()
 	// (otherwise glReadPixels would write out of bounds)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, m_widthPixels, m_heightPixels, GL_ALPHA, GL_FLOAT, pixels);
-	CheckGLError("glReadPixels");
+	GL_CHECK("glReadPixels");
 
 
 	vsImage *image = new vsImage( m_widthPixels, m_heightPixels );
@@ -2159,14 +2159,14 @@ vsRenderer_OpenGL3::SetLoadingContext()
 {
 	m_loadingGlContextMutex.Lock();
 	SDL_GL_MakeCurrent( g_sdlWindow, m_loadingGlContext);
-	CheckGLError("SetLoadingContext");
+	GL_CHECK("SetLoadingContext");
 }
 
 void
 vsRenderer_OpenGL3::ClearLoadingContext()
 {
 	FenceLoadingContext();
-	CheckGLError("ClearLoadingContext");
+	GL_CHECK("ClearLoadingContext");
 	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
 	m_loadingGlContextMutex.Unlock();
 }
@@ -2180,7 +2180,7 @@ vsRenderer_OpenGL3::IsLoadingContext()
 void
 vsRenderer_OpenGL3::FenceLoadingContext()
 {
-	CheckGLError("ClearLoadingContext");
+	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	GLenum result;
 	while(true)
