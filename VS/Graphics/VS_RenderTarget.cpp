@@ -374,7 +374,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 			if (multisample)
 			{
-				vsLog("MSAA in vsSurface enabled");
+				// vsLog("MSAA in vsSurface enabled");
 				glGenRenderbuffers(1, &m_texture[i]);
 				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
