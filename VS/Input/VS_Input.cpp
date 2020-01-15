@@ -643,6 +643,7 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 		{
 			SDL_StartTextInput();
 			m_stringMode = true;
+			m_stringModePaused = false;
 			m_stringModeString.clear();
 			m_stringModeMaxLength = maxLength;
 			m_stringValidationType = vt;
@@ -652,10 +653,17 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 		{
 			SDL_StopTextInput();
 			m_stringMode = false;
+			m_stringModePaused = false;
 			m_stringModeClearing = true;
 			m_stringModeUndoStack.Clear();
 		}
 	}
+}
+
+void
+vsInput::PauseStringMode(bool pause)
+{
+	m_stringModePaused = pause;
 }
 
 vsString
@@ -919,7 +927,8 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_TEXTINPUT:
 					{
-						HandleTextInput(event.text.text);
+						if ( !m_stringModePaused )
+							HandleTextInput(event.text.text);
 						break;
 					}
 					break;
@@ -985,7 +994,10 @@ vsInput::Update(float timeStep)
 						if ( !m_stringModeClearing )
 						{
 							if ( m_stringMode )
-								HandleStringModeKeyDown(event);
+							{
+								if ( !m_stringModePaused )
+									HandleStringModeKeyDown(event);
+							}
 							else
 								HandleKeyDown(event);
 						}

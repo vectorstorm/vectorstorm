@@ -265,6 +265,7 @@ private:
 
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
+	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
 
 	bool m_hasFocus;
@@ -362,6 +363,7 @@ public:
 
 	void			SetStringMode(bool mode, ValidationType = Validation_None);
 	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
+	void			PauseStringMode(bool pause); // used if a game wants to temporarily suspend handling of keypresses, for example while manipulating a selection by the mouse
 	bool			InStringMode() { return m_stringMode; }
 	bool			IsKeyboardSuppressed() { return m_stringMode || m_stringModeClearing; }
 	void			SetStringModeString( const vsString &s );
