@@ -28,7 +28,8 @@
 #endif // _WIN32
 #endif // TARGET_OS_IPHONE
 
-int vsImage::m_textureMakerCount = 0;
+int vsImage::s_textureMakerCount = 0;
+bool vsImage::s_allowLoadFailure = false;
 
 vsImage::vsImage():
 	m_pixel(NULL),
@@ -55,6 +56,7 @@ vsImage::vsImage(unsigned int width, unsigned int height):
 }
 
 vsImage::vsImage( const vsString &filename ):
+	m_pixel(NULL),
 	m_pbo(0),
 	m_sync(0)
 {
@@ -67,9 +69,20 @@ vsImage::vsImage( const vsString &filename ):
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
 	vsDelete(s);
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
-	LoadFromSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
+	if ( s_allowLoadFailure )
+	{
+		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+	}
+	else
+	{
+		vsAssertF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+	}
+
+	if ( loadedImage )
+	{
+		LoadFromSurface(loadedImage);
+		SDL_FreeSurface(loadedImage);
+	}
 #endif
 }
 
@@ -335,7 +348,7 @@ vsImage::Copy( vsImage *other )
 vsTexture *
 vsImage::Bake()
 {
-	vsString name = vsFormatString("MakerTexture%d", m_textureMakerCount++);
+	vsString name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);

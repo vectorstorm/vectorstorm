@@ -108,29 +108,32 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 {
 	vsImage image(filename_in);
 
-	int w = image.GetWidth();
-	int h = image.GetHeight();
+	if ( image.IsOK() )
+	{
+		int w = image.GetWidth();
+		int h = image.GetHeight();
 
-	m_width = w;
-	m_height = w;
+		m_width = w;
+		m_height = w;
 
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
+		GLuint t;
+		glGenTextures(1, &t);
+		m_texture = t;
 
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA,
-			w, h,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_INT_8_8_8_8_REV,
-			image.RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
-	m_nearestSampling = false;
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D,
+				0,
+				GL_RGBA,
+				w, h,
+				0,
+				GL_RGBA,
+				GL_UNSIGNED_INT_8_8_8_8_REV,
+				image.RawData());
+		glGenerateMipmap(GL_TEXTURE_2D);
+		m_nearestSampling = false;
+	}
 }
 
 vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsString> &mipmaps ):
