@@ -324,10 +324,12 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
 #endif
-	// success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
+
+	// we need the basedir for in case there's a crash report saved there.
+	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
 	//
 	// 0 parameter means PREPEND;  each new mount takes priority over the line before
-	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
 	if ( !success )
 	{
