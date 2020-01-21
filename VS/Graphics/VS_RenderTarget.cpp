@@ -89,7 +89,7 @@ vsRenderTarget::Create()
 	if ( m_depthTexture )
 		m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
 
-	// Clear();
+	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
