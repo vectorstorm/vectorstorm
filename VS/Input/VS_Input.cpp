@@ -2171,12 +2171,17 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 {
 	for ( int i = 0; i < m_axis.ItemCount(); i++ )
 	{
+		// consider setting the axis as 'pressed' if previous value was not
+		// pressed but we got a 'pressed' event.
 		vsInputAxis& axis = m_axis[i];
-		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+		if ( axis.currentValue == 0 )
 		{
-			if ( axis.positive[j].type == CT_Keyboard &&
-					axis.positive[j].id == event.key.keysym.scancode )
-				axis.wasPressed = true;
+			for ( int j = 0; j < axis.positive.ItemCount(); j++ )
+			{
+				if ( axis.positive[j].type == CT_Keyboard &&
+						axis.positive[j].id == event.key.keysym.scancode )
+					axis.wasPressed = true;
+			}
 		}
 	}
 
