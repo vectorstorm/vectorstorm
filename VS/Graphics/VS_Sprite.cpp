@@ -126,20 +126,20 @@ vsSprite::OnScreen( const vsTransform2D & cameraTrans )
 	if ( !m_visible )
 		return false;
 
-	vsVector2D deltaToCamera = cameraTrans.GetTranslation() - m_transform.GetTranslation();
-	float sqDistanceToCamera = deltaToCamera.SqLength();
-
-	float ebrsq = (m_boundingRadius);
-	ebrsq = ebrsq * ebrsq;
-	float fovsq = cameraTrans.GetScale().x;
-	vsTuneable float s_factor = (16.f/9.f);	// assume worst-case aspect ratio
-	fovsq *= s_factor;
-	fovsq = fovsq * fovsq;
-	float sqVisionRadius = ebrsq + fovsq;
-//	sqVisionRadius *= sqVisionRadius;
-
-	if ( sqDistanceToCamera > sqVisionRadius )
-		return false;
+// 	vsVector2D deltaToCamera = cameraTrans.GetTranslation() - m_transform.GetTranslation();
+// 	float sqDistanceToCamera = deltaToCamera.SqLength();
+//
+// 	float ebrsq = (m_boundingRadius);
+// 	ebrsq = ebrsq * ebrsq;
+// 	float fovsq = cameraTrans.GetScale().x;
+// 	vsTuneable float s_factor = (16.f/9.f);	// assume worst-case aspect ratio
+// 	fovsq *= s_factor;
+// 	fovsq = fovsq * fovsq;
+// 	float sqVisionRadius = ebrsq + fovsq;
+// //	sqVisionRadius *= sqVisionRadius;
+//
+// 	if ( sqDistanceToCamera > sqVisionRadius )
+// 		return false;
 
 	return true;
 }
