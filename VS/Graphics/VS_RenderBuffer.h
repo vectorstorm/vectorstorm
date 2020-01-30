@@ -242,6 +242,8 @@ public:
 
 	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
 
+	static void DestroyQueuedVBOs();
+
 	void	TriStripBuffer(int instanceCount);
 	void	TriListBuffer(int instanceCount);
 	void	TriFanBuffer(int instanceCount);

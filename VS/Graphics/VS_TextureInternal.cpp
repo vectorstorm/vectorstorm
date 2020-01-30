@@ -160,9 +160,6 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	m_imageToLoad(NULL),
 	m_floatImageToLoad(NULL)
 {
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
 	m_nearestSampling = false;
 }
 

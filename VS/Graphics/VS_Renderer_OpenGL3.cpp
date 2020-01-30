@@ -1883,6 +1883,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			m_currentColor = c_white;
 		}
 	}
+
+	vsRenderBuffer::DestroyQueuedVBOs();
 }
 
 GLuint

@@ -13,7 +13,11 @@
 
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
+#include "VS/Utils/VS_Array.h"
+#include "VS/Threads/VS_Mutex.h"
 
+vsMutex s_toDestroyMutex;
+vsArray<GLuint> s_toDestroy;
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
@@ -50,14 +54,31 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 
 vsRenderBuffer::~vsRenderBuffer()
 {
+
 	if ( m_vbo )
 	{
-		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+		s_toDestroyMutex.Lock();
+		s_toDestroy.AddItem( m_bufferID );
+		// glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+		s_toDestroyMutex.Unlock();
 	}
 
 	{
 		vsDeleteArray( m_array );
 	}
+}
+
+void
+vsRenderBuffer::DestroyQueuedVBOs()
+{
+	s_toDestroyMutex.Lock();
+	for ( int i = 0; i < s_toDestroy.ItemCount(); i++ )
+	{
+		glDeleteBuffers(1, &s_toDestroy[i]);
+	}
+	s_toDestroy.Clear();
+	// glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+	s_toDestroyMutex.Unlock();
 }
 
 void
