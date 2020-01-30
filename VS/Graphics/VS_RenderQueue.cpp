@@ -116,6 +116,7 @@ struct vsRenderQueueStage::BatchElement
 		ibo = NULL;
 		batch = NULL;
 	}
+
 };
 
 struct vsRenderQueueStage::Batch
@@ -280,7 +281,8 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 		// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
 		BatchElement *mergeCandidate = NULL;
-		if ( vsDynamicBatch::Supports( vbo->GetContentType() ) )
+		if ( vsDynamicBatch::Supports( vbo->GetContentType() ) &&
+				vbo->GetPositionCount() < 200 ) // don't even try to merge things that are too big.
 		{
 			mergeCandidate = batch->elementList;
 			while(mergeCandidate)
@@ -297,17 +299,17 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 						mergeCandidate->vbo->GetContentType() == vbo->GetContentType() &&
 						mergeCandidate->material->MatchesForBatching( material ) )
 				{
-					break;
-					// if ( mergeCandidate->batch == NULL )
-					// {
-					// 	if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 300 )
-					// 		break;
-					// }
-					// else
-					// {
-					// 	if ( mergeCandidate->batch->CanFitVertices( vbo->GetPositionCount() ) )
-					// 		break;
-					// }
+					// break;
+					if ( mergeCandidate->batch == NULL )
+					{
+						if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 300 )
+							break;
+					}
+					else
+					{
+						if ( mergeCandidate->batch->CanFitVertices( vbo->GetPositionCount() ) )
+							break;
+					}
 				}
 				mergeCandidate = mergeCandidate->next;
 			}

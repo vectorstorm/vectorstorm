@@ -25,6 +25,16 @@
 #include <netinet/in.h> // for access to ntohl, et al
 #endif
 
+vsStore::vsStore():
+	m_buffer( NULL ),
+	m_bufferLength( 0 ),
+	m_bufferEnd( NULL ),
+	m_readHead( NULL ),
+	m_writeHead ( NULL ),
+	m_bufferIsExternal( true )
+{
+}
+
 vsStore::vsStore( size_t maxSize ):
 	m_buffer( new char[maxSize] ),
 	m_bufferLength( maxSize ),
@@ -43,6 +53,17 @@ vsStore::vsStore( char *buffer, int bufferLength ):
 	m_writeHead( m_bufferEnd ),
 	m_bufferIsExternal( true )
 {
+}
+
+vsStore::vsStore( const vsStore& other ):
+	m_buffer( new char[ other.m_bufferLength ] ),
+	m_bufferLength( other.m_bufferLength ),
+	m_bufferEnd( &m_buffer[m_bufferLength] ),
+	m_readHead( m_buffer ),
+	m_writeHead( m_bufferEnd ),
+	m_bufferIsExternal( false )
+{
+	memcpy( m_buffer, other.m_buffer, m_bufferLength );
 }
 
 vsStore::~vsStore()

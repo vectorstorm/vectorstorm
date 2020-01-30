@@ -19,6 +19,8 @@
 #include "VS_DynamicBatchManager.h"
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
+#include "VS_FileCache.h"
+#include "VS_ShaderCache.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -35,12 +37,23 @@
 #endif
 
 #if defined(_WIN32)
+
 //#include <shellapi.h>
 #include <winsock2.h>
-#else
+
+#elif defined(__APPLE_CC__)
+
+// sys/sysctl is deprecated on Linux, but still needed on OSX to figure out
+// number of processors.
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
+
+#else
+
+#include <unistd.h>
+
 #endif
 
 #if !TARGET_OS_IPHONE
@@ -57,6 +70,51 @@ extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use t
 
 #define VS_VERSION ("0.0.1")
 
+#ifdef _WIN32
+// This SetProcessDPIAware handling comes from:
+// https://github.com/kumar8600/win32_SetProcessDpiAware
+#ifndef DPI_ENUMS_DECLARED
+typedef enum PROCESS_DPI_AWARENESS
+{
+    PROCESS_DPI_UNAWARE = 0,
+    PROCESS_SYSTEM_DPI_AWARE = 1,
+    PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+#endif
+
+typedef BOOL (WINAPI * SETPROCESSDPIAWARE_T)(void);
+typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
+
+bool win32_SetProcessDpiAware(void) {
+    HMODULE shcore = LoadLibraryA("Shcore.dll");
+    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
+    if (shcore) {
+        SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
+    }
+    HMODULE user32 = LoadLibraryA("User32.dll");
+    SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
+    if (user32) {
+        SetProcessDPIAware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
+    }
+
+    bool ret = false;
+    if (SetProcessDpiAwareness) {
+        ret = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK;
+    } else if (SetProcessDPIAware) {
+        ret = SetProcessDPIAware() != 0;
+    }
+
+    if (user32) {
+        FreeLibrary(user32);
+    }
+    if (shcore) {
+        FreeLibrary(shcore);
+    }
+    return ret;
+}
+
+#endif
+
 
 vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes, size_t minBuffers):
 	m_showCursor( true ),
@@ -70,6 +128,10 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_title( title ),
 	m_screen( NULL )
 {
+#if defined(_WIN32)
+	// extern bool SetProcessDPIAware();
+	win32_SetProcessDpiAware();
+#endif
 	g_globalHeap = new vsHeap("global",totalMemoryBytes);
 
 	s_instance = this;
@@ -80,6 +142,8 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	vsLog("VectorStorm engine version %s",VS_VERSION);
 
+	vsFileCache::Startup();
+	vsShaderCache::Startup();
 	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...");
@@ -123,6 +187,8 @@ vsSystem::~vsSystem()
 	delete vsSingletonManager::Instance();
 
 	DeinitPhysFS();
+	vsShaderCache::Shutdown();
+	vsFileCache::Shutdown();
 
 #if !TARGET_OS_IPHONE
 	SDL_Quit();
@@ -226,6 +292,15 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		vsLog("SetWriteDir failed!", success);
 		exit(1);
 	}
+	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
+
+	PHYSFS_Version compiled;
+	PHYSFS_Version linked;
+
+	PHYSFS_VERSION(&compiled);
+	PHYSFS_getLinkedVersion(&linked);
+	vsLog("PhysFS compiled version: %d.%d.%d", compiled.major, compiled.minor, compiled.patch);
+	vsLog("PhysFS linked version: %d.%d.%d", linked.major, linked.minor, linked.patch);
 
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
@@ -244,38 +319,49 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
-	m_dataDirectory = baseDirectory + "\\Data";
+	m_dataDirectory = baseDirectory + "Data";
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
 #endif
+
+	// we need the basedir for in case there's a crash report saved there.
 	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
-	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	//
+	// 0 parameter means PREPEND;  each new mount takes priority over the line before
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
 	if ( !success )
 	{
-		vsLog("Failed to mount %s", m_dataDirectory.c_str());
+		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
 		exit(1);
 	}
 	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
-	char** searchPath = PHYSFS_getSearchPath();
-	int pathId = 0;
-	while ( searchPath[pathId] )
-	{
-		vsLog("Search path: %s",searchPath[pathId]);
-		pathId++;
-	}
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
 
 void
 vsSystem::EnableGameDirectory( const vsString &directory )
 {
-#if defined(_WIN32)
-	std::string d = m_dataDirectory + "\\" + directory;
-#else
-	std::string d = m_dataDirectory + "/" + directory;
-#endif
+	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
+	std::string archiveName = d + ".zip";
+	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
+	PHYSFS_mount(archiveName.c_str(), NULL, 1);
 	PHYSFS_mount(d.c_str(), NULL, 1);
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
 
 #if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
@@ -292,6 +378,7 @@ vsSystem::DisableGameDirectory( const vsString &directory )
 {
 	std::string d = m_dataDirectory + "/" + directory;
 	PHYSFS_unmount(d.c_str());
+	PHYSFS_unmount((d+".zip").c_str());
 }
 
 void
@@ -510,35 +597,22 @@ vsSystem::Launch( const vsString &target )
 int
 vsSystem::GetNumberOfCores()
 {
-	int numCPU = 1;
-#if defined(_WIN32)
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo( &sysinfo );
-	numCPU = sysinfo.dwNumberOfProcessors;
-#elif defined(__APPLE_CC__)
-	int mib[4];
-	size_t len = sizeof(numCPU);
+	int numCPU = SDL_GetCPUCount();
 
-	/* set the mib for hw.ncpu */
-	mib[0] = CTL_HW;
-	mib[1] = HW_AVAILCPU;  // alternatively, try HW_NCPU;
-
-	/* get the number of CPUs from the system */
-	sysctl(mib, 2, &numCPU, &len, NULL, 0);
-
-	if( numCPU < 1 )
-	{
-		mib[1] = HW_NCPU;
-		sysctl( mib, 2, &numCPU, &len, NULL, 0 );
-
-		if( numCPU < 1 )
-		{
-			numCPU = 1;
-		}
-	}
-#else
-	 numCPU = sysconf( _SC_NPROCESSORS_ONLN );
-#endif
+	// note that SDL_GetCPUCount() returns the number of LOGICAL cores, not
+	// the number of ACTUAL cores.  These days, most people talk about this
+	// value as the number of "hardware threads".  So for example, my current
+	// development machine is an quad-core i7 machine with hyperthreading
+	// enabled, and this function returns the value 8;  I have four physical
+	// cores which can each run two threads, so two LOGICAL cores.
+	//
+	// I should really rename this function to make it more obvious, but for
+	// right now it's just easier to leave it this way.
+	//
+	// Future-Trevor:  If you ever want to go back to the old custom
+	// platform-specific implementations for some reason (or to just see
+	// their implementations for some other reason), those are in git
+	// commit 5903c79d10a43c and earlier.
 
 	return numCPU;
 }
@@ -765,7 +839,7 @@ void
 vsSystem::LogSystemDetails()
 {
 	vsLog("CPU:  %s", CPUDescription().c_str());
-	vsLog("Number of hardware threads:  %d", GetNumberOfCores());
+	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
 }
 
 Resolution *

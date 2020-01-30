@@ -11,6 +11,8 @@
 #ifndef VS_ARRAY_H
 #define VS_ARRAY_H
 
+#include "VS/Utils/VS_Demangle.h"
+
 template<class T> class vsArray;
 
 template<class T>
@@ -25,8 +27,8 @@ public:
 
 	T&				Get() { return m_parent->Get(*this); }
 
-	bool			Next() { m_current++; return (m_current < m_parent->ItemCount() ); }
-	bool			Prev() { m_current--; return (m_current >= 0); }
+	bool			Next() { m_current = vsMin( m_parent->ItemCount(), m_current+1 ); return (m_current < m_parent->ItemCount() ); }
+	bool			Prev() { m_current = vsMax( 0, m_current-1); return (m_current >= 0); }
 	bool						operator==( const vsArrayIterator &b ) { return (m_current == b.m_current && m_parent == b.m_parent ); }
 	bool						operator!=( const vsArrayIterator &b ) { return !((*this)==b); }
 	vsArrayIterator<T>&		operator++() { Next(); return *this; }
@@ -161,6 +163,26 @@ public:
 		return End();
 	}
 
+	void	RemoveDuplicates()
+	{
+		vsArrayIterator<T> it = Begin();
+		while ( End() != it )
+		{
+			// Now we need to look for duplicates.
+			vsArrayIterator<T> dit = it;
+			dit++;
+
+			while ( End() != dit )
+			{
+				if ( *it == *dit )
+					dit = RemoveItem(dit);
+				else
+					dit++;
+			}
+			it++;
+		}
+	}
+
 	bool	Contains( T item ) const
 	{
 		return (npos != FindEntry(item));
@@ -204,7 +226,7 @@ public:
 	T	&GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength,
-				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d (array of %s)", id, ItemCount(), Demangle( typeid(T).name() ) )
 				);
 		return m_array[id];
 	}
@@ -212,7 +234,7 @@ public:
 	const T	&GetItem(int id) const
 	{
 		vsAssert(id >= 0 && id < m_arrayLength,
-				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d", id, ItemCount())
+				vsFormatString("Out of bounds vsArray access: requested element %d, capacity of %d (array of %s)", id, ItemCount(), Demangle( typeid(T).name() ) )
 				);
 		return m_array[id];
 	}

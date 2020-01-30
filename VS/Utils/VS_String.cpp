@@ -122,33 +122,41 @@ vsString vsTrimWhitespace( const vsString& input )
 	int nonWhitespaceEnd = 0;
 	int nonWhitespaceStart = length;
 
-	// first, figure out where our content begins and ends
+	try
 	{
-		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
-
-		for ( int i = 0; i < length; i++ )
+		// first, figure out where our content begins and ends
 		{
-			if ( !vsIsWhitespace( it ) )
+			utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
+
+			for ( int i = 0; i < length; i++ )
 			{
-				nonWhitespaceStart = vsMin(nonWhitespaceStart, i);
-				nonWhitespaceEnd = vsMax(nonWhitespaceEnd, i+1);
+				if ( !vsIsWhitespace( it ) )
+				{
+					nonWhitespaceStart = vsMin(nonWhitespaceStart, i);
+					nonWhitespaceEnd = vsMax(nonWhitespaceEnd, i+1);
+				}
+				it++;
 			}
-			it++;
 		}
-	}
 
-	// construct a trimmed string, with only the content; not the
-	// leading/trailing whitespace.
-	vsString result;
-	{
-		utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
-		for ( int i = 0; i < nonWhitespaceEnd; i++ )
+		// construct a trimmed string, with only the content; not the
+		// leading/trailing whitespace.
+		vsString result;
 		{
-			if ( i >= nonWhitespaceStart )
-				utf8::append( *it, back_inserter(result) );
-			it++;
+			utf8::iterator<std::string::iterator> it( oldString.begin(), oldString.begin(), oldString.end() );
+			for ( int i = 0; i < nonWhitespaceEnd; i++ )
+			{
+				if ( i >= nonWhitespaceStart )
+					utf8::append( *it, back_inserter(result) );
+				it++;
+			}
 		}
+		return result;
 	}
-	return result;
+	catch(...)
+	{
+		vsLog("Failed to trim whitespace from string %s", input);
+	}
+	return input;
 }
 

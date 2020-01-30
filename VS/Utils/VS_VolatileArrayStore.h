@@ -145,6 +145,20 @@ public:
 		return End();
 	}
 
+	// removes this item, but doesn't destroy it.
+	bool	ReleaseItem( const T *item )
+	{
+		int index = FindEntry(item);
+		if ( index != npos )
+		{
+			// move the last element into this position
+			m_array[index] = m_array[m_arrayLength-1];
+			m_arrayLength--;
+		}
+		return index != npos;
+	}
+
+
 	bool	Contains( T *item ) const
 	{
 		return (npos != FindEntry(item));
@@ -177,8 +191,20 @@ public:
 
 	T	*GetItem(int id)
 	{
-		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsArray access");
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArrayStore access");
 		return m_array[id];
+	}
+
+	const T	*GetItem(int id) const
+	{
+		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArrayStore access");
+		return m_array[id];
+	}
+
+
+	const T	*operator[](int id) const
+	{
+		return GetItem(id);
 	}
 
 	T	*operator[](int id)

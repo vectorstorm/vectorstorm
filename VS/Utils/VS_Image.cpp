@@ -28,7 +28,8 @@
 #endif // _WIN32
 #endif // TARGET_OS_IPHONE
 
-int vsImage::m_textureMakerCount = 0;
+int vsImage::s_textureMakerCount = 0;
+bool vsImage::s_allowLoadFailure = false;
 
 vsImage::vsImage():
 	m_pixel(NULL),
@@ -54,17 +55,34 @@ vsImage::vsImage(unsigned int width, unsigned int height):
 	memset(m_pixel,0,sizeof(uint32_t)*m_pixelCount);
 }
 
-vsImage::vsImage( const vsString &filename_in ):
+vsImage::vsImage( const vsString &filename ):
+	m_pixel(NULL),
 	m_pbo(0),
 	m_sync(0)
 {
 #if !TARGET_OS_IPHONE
-	vsString filename = vsFile::GetFullFilename(filename_in);
-	// vsString filename(filename_in);// = vsFile::GetFullFilename(filename_in);
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
-	LoadFromSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
+	vsFile img(filename, vsFile::MODE_Read);
+	vsStore *s = new vsStore( img.GetLength() );
+	img.Store(s);
+
+	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	vsDelete(s);
+	if ( s_allowLoadFailure )
+	{
+		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+	}
+	else
+	{
+		vsAssertF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+	}
+
+	if ( loadedImage )
+	{
+		LoadFromSurface(loadedImage);
+		SDL_FreeSurface(loadedImage);
+	}
 #endif
 }
 
@@ -342,7 +360,7 @@ vsImage::Copy( vsImage *other )
 vsTexture *
 vsImage::Bake()
 {
-	vsString name = vsFormatString("MakerTexture%d", m_textureMakerCount++);
+	vsString name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);
@@ -416,7 +434,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,v/*(h-1)-v*/, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			SetPixel(u,v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
 		}
 	}
 

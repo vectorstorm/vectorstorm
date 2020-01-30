@@ -41,6 +41,7 @@
 
 class vsFile;
 class vsShader;
+class vsShaderRef;
 
 enum CullingType
 {
@@ -75,7 +76,8 @@ class vsMaterialInternal : public vsResource
 public:
 
 	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
-	vsShader *  m_shader;
+	vsShader *m_shader;
+	vsShaderRef *m_shaderRef; // we might have a ref instead of a full shader!
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
 	bool		m_textureFromFile[MAX_TEXTURE_SLOTS];	// was this texture set from a file?  Used for reloading!
 	vsColor		m_color;			// what basic colour?  (If a texture is applied, this will multiply with the texture color)

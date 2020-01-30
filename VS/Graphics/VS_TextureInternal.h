@@ -10,9 +10,8 @@
 #ifndef VS_TEXTUREINTERNAL_H
 #define VS_TEXTUREINTERNAL_H
 
-struct SDL_Surface;
-
 #include "VS/Math/VS_Box.h"
+#include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_Cache.h"
 
 class vsFloatImage;
@@ -40,8 +39,6 @@ class vsTextureInternal : public vsResource
 	vsFloatImage *m_floatImageToLoad;
 
 
-	void		ProcessSurface( SDL_Surface *surface );
-
 	bool		m_nearestSampling;
 
 	void		DoLoadFromImage();
@@ -50,6 +47,7 @@ class vsTextureInternal : public vsResource
 public:
 
 	vsTextureInternal( const vsString &string );
+	vsTextureInternal( const vsString &name, const vsArray<vsString> &mipmaps );
 	vsTextureInternal( const vsString &name, vsImage *image );
 	vsTextureInternal( const vsString &name, vsFloatImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );

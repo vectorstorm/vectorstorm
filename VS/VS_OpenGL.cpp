@@ -32,7 +32,6 @@ void ReportGLError( GLenum errcode, const char* string )
 	// vsAssert(false,errString);
 }
 
-#ifdef VS_GL_DEBUG
 void CheckGLError(const char* string)
 {
 	PROFILE("CheckGLError");
@@ -40,8 +39,6 @@ void CheckGLError(const char* string)
 	if ( errcode != GL_NO_ERROR )
 		ReportGLError(errcode, string);
 }
-
-void ReportGLError( GLenum errcode, const char* string );
 
 vsGLContext::vsGLContext( const char* string, const char* file, int line ):
 	m_string(string),
@@ -65,8 +62,4 @@ vsGLContext::~vsGLContext()
 		ReportGLError(errcode, s.c_str());
 	}
 }
-
-
-#endif // VS_GL_DEBUG
-
 

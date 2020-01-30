@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <typeinfo>
 #include "VS/Utils/VS_SingletonManager.h"
+#include "VS/Utils/VS_Demangle.h"
 
 /** Base mix-in class for singleton types.
 *
@@ -22,7 +23,7 @@
 *
 *\ingroup vs_types_mixins
 */
-template <typename T> 
+template <typename T>
 class vsSingleton
 {
 public:
@@ -31,7 +32,7 @@ public:
 {
 	vsAssert( !s_instance, "More than one instance?" );
 	s_instance = (T*)(this);
-	
+
 	if ( vsSingletonManager::Instance() )
 	{
 		vsSingletonManager::Instance()->RegisterSingleton(s_instance, typeid(s_instance).name());
@@ -40,14 +41,14 @@ public:
 
 /** Default destructor. Asserts if not destructing the expected only instance. */
 ~vsSingleton()
-{  
-	vsAssert( s_instance == (T*)(this), "More than one instance?" );  
-	
+{
+	vsAssert( s_instance == (T*)(this), "More than one instance?" );
+
 	if ( vsSingletonManager::Instance() )
 	{
 		vsSingletonManager::Instance()->UnregisterSingleton(s_instance, typeid(s_instance).name());
 	}
-	s_instance = 0;  
+	s_instance = 0;
 }
 
 /** Returns true if the instance exists. */
@@ -56,27 +57,27 @@ static bool Exists()
 	return (s_instance != NULL);
 }
 
-/** Returns a reference to the instance. 
-*  It is not legal to call this function if the instance does not exist. 
+/** Returns a reference to the instance.
+*  It is not legal to call this function if the instance does not exist.
 */
 static T& Singleton()
-{  
-	return *Instance();  
+{
+	return *Instance();
 }
 
-/** Returns a pointer to the instance.  
+/** Returns a pointer to the instance.
 *  Returns NULL if the instance does not exist.
 *  This is legal to do, as opposed to GetSingleton(), which is not legal to call
 *  when the instance does not exist.
-*/ 
+*/
 static T* Instance()
-{  
+{
 	if ( !s_instance && vsSingletonManager::Instance() )
 	{
 		s_instance = reinterpret_cast<T*>(vsSingletonManager::Instance()->GetSingleton(typeid(s_instance).name()));
 	}
-	vsAssert( s_instance, "No instance?" );  
-	return s_instance;  
+	vsAssertF( s_instance, "No instance of %s?", Demangle(typeid(T).name()).c_str() );
+	return s_instance;
 }
 
 private:

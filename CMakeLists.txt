@@ -209,6 +209,8 @@ set(CORE_SOURCES
 set(FILES_SOURCES
 	VS/Files/VS_File.cpp
 	VS/Files/VS_File.h
+	VS/Files/VS_FileCache.cpp
+	VS/Files/VS_FileCache.h
 	VS/Files/VS_Record.cpp
 	VS/Files/VS_Record.h
 	VS/Files/VS_Token.cpp
@@ -289,6 +291,10 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Screen.h
 	VS/Graphics/VS_Shader.cpp
 	VS/Graphics/VS_Shader.h
+	VS/Graphics/VS_ShaderCache.cpp
+	VS/Graphics/VS_ShaderCache.h
+	VS/Graphics/VS_ShaderRef.cpp
+	VS/Graphics/VS_ShaderRef.h
 	VS/Graphics/VS_ShaderSuite.cpp
 	VS/Graphics/VS_ShaderSuite.h
 	VS/Graphics/VS_ShaderValues.cpp
@@ -393,6 +399,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_Cache.h
 	VS/Utils/VS_Debug.cpp
 	VS/Utils/VS_Debug.h
+	VS/Utils/VS_Demangle.cpp
+	VS/Utils/VS_Demangle.h
 	VS/Utils/VS_Factory.cpp
 	VS/Utils/VS_Factory.h
 	#VS/Utils/VS_FontMaker.cpp

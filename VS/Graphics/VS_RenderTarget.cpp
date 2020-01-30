@@ -8,8 +8,10 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include "VS_OpenGL.h"
+#include <atomic>
 
-static int s_renderTargetCount = 0;
+static std::atomic<int> s_renderTargetCount(0);
 
 vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred ):
 	m_settings(settings),
@@ -87,7 +89,7 @@ vsRenderTarget::Create()
 	if ( m_depthTexture )
 		m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
 
-	// Clear();
+	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
@@ -303,6 +305,11 @@ static void CheckFBO()
 	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
 }
 
+#undef GL_CHECK_SCOPED
+#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
+#undef GL_CHECK
+#define GL_CHECK(s) CheckGLError(s);
+
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(settings.width),
@@ -344,6 +351,14 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		for ( int i = 0; i < m_textureCount; i++ )
 		{
+			const char* checkString[] = {
+				"vsSurface texture0",
+				"vsSurface texture1",
+				"vsSurface texture2",
+				"vsSurface texture3",
+				"vsSurface texture+",
+			};
+			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
 			GLenum internalFormat = GL_RGBA8;
@@ -374,6 +389,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 			if (multisample)
 			{
+				// vsLog("MSAA in vsSurface enabled");
 				glGenRenderbuffers(1, &m_texture[i]);
 				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
@@ -382,6 +398,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			}
 			else
 			{
+				GL_CHECK_SCOPED( "gentexture" );
 				glGenTextures(1, &m_texture[i]);
 				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
 				m_isRenderbuffer = false;
@@ -406,6 +423,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	{
 		if ( multisample )
 		{
+			GL_CHECK_SCOPED( "multisample stencil/depth" );
 			glGenRenderbuffers(1, &m_depth);
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
 			if ( settings.stencil )
@@ -422,6 +440,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		}
 		else
 		{
+			GL_CHECK_SCOPED( "normal stencil/depth" );
 			glGenTextures(1, &m_depth);
 			glBindTexture(GL_TEXTURE_2D, m_depth);
 			/* if ( settings.mipMaps ) */
@@ -445,20 +464,26 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 			if ( settings.stencil )
 			{
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+				GL_CHECK_SCOPED( "setup depthstencil texture data" );
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
 			}
 			else
 			{
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+				GL_CHECK_SCOPED( "setup depthonly texture data" );
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
 			}
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-			if ( settings.stencil )
+
 			{
-				// we're using a single depth/stencil texture, so bind it as
-				// our FBO's stencil attachment too.
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-				m_stencil = true;
+				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				if ( settings.stencil )
+				{
+					// we're using a single depth/stencil texture, so bind it as
+					// our FBO's stencil attachment too.
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+					m_stencil = true;
+				}
 			}
 		}
 	}

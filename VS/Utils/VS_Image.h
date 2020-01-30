@@ -18,13 +18,15 @@ class vsColor;
 
 class vsImage
 {
+private:
 	uint32_t*		m_pixel;
 	int				m_pixelCount;
 
 	unsigned int	m_width;
 	unsigned int	m_height;
 
-	static int		m_textureMakerCount;
+	static int		s_textureMakerCount;
+	static bool		s_allowLoadFailure;
 
 	uint32_t m_pbo;
 	GLsync m_sync;
@@ -49,6 +51,7 @@ public:
 	// to pre-allocate space, so that it happens at a desirable time, instead of
 	// stuttering the first time you read back data.
 	void			PrepForAsyncRead( vsTexture *texture );
+	bool			IsOK() { return m_pixel != NULL; }
 
 	void			Read( vsTexture *texture );
 	void			AsyncRead( vsTexture *texture );
@@ -78,6 +81,9 @@ public:
 	void			SaveJPG(int quality, const vsString& filename);
 	void			SavePNG_FullAlpha(int compression, const vsString& filename);
 	void *			RawData() { return m_pixel; }
+
+
+	static void SetAllowLoadFailure(bool allow) { s_allowLoadFailure = allow; }
 };
 
 #endif // VS_IMAGE_H

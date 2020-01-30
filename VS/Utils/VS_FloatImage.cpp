@@ -43,13 +43,19 @@ vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
 	m_pixel = new vsColor[m_pixelCount];
 }
 
-vsFloatImage::vsFloatImage( const vsString &filename_in ):
+vsFloatImage::vsFloatImage( const vsString &filename ):
 	m_pbo(0),
 	m_sync(0)
 {
 #if !TARGET_OS_IPHONE
-	vsString filename = vsFile::GetFullFilename(filename_in);
-	SDL_Surface *loadedImage = IMG_Load(filename.c_str());
+	vsFile img(filename, vsFile::MODE_Read);
+	vsStore *s = new vsStore( img.GetLength() );
+	img.Store(s);
+
+	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	vsDelete(s);
 	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
 	LoadFromSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);

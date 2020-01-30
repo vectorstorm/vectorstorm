@@ -71,9 +71,10 @@ public:
 	// Delete functions return TRUE on success.
 	static bool Delete( const vsString &filename ); // will delete a FILE.
 	static bool Copy( const vsString &from, const vsString &to ); // will delete a FILE.
-	static bool Move( const vsString &from, const vsString &to ); // will delete a FILE.
+	static bool Move( const vsString &from, const vsString &to ); // will move a FILE.
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
+	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
 
 	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
 	// directory.  It is your responsibility to check for each one whether it
@@ -102,6 +103,7 @@ public:
 	void		PeekBytes( vsStore *store, size_t bytes );	// ONLY IN READ OPERATIONS.  Peek the requested number of bytes.
 	void		ConsumeBytes( size_t bytes ); // ONLY IN READ OPERATIONS.  Count this many bytes as having been read.  (Usually used in combination with the above)
 
+	int			ReadBytes( void* data, size_t bytes ); // this is a more direct version  of aa Read operation.  Will assert if we're not in a Read mode.
 	void		WriteBytes( const void* data, size_t bytes ); // this is a more direct version of 'Store'.  Will assert if we're not in a Write mode.
 
 	void		FlushBufferedWrites();

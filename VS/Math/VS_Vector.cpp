@@ -46,9 +46,19 @@ vsVector2D::Normalise()
 {
 	float length = Length();
 
-	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	if ( length == 0.f )
+	{
+		vsCheck(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 	*this *= (1.0f/length);
-	vsAssert( !vsIsNaN(x) && !vsIsNaN(y), "Error, NaN!" );
+
+	if ( vsIsNaN(x) || vsIsNaN(y) )
+	{
+		vsCheck(!vsIsNaN(x) && !vsIsNaN(y), "Error, NaN in normalised vector!");
+		length = 1.f; // avoid creating NaNs.
+		x = y = 0.f;
+	}
 }
 
 void
@@ -63,7 +73,11 @@ vsVector2D::Normalised()
 {
 	float length = Length();
 
-	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	if ( length == 0.f )
+	{
+		vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 	return vsVector2D(x/length, y/length);
 }
 
@@ -87,9 +101,17 @@ vsVector3D::Normalise()
 {
 	float length = Length();
 
-	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	if ( length == 0.f )
+	{
+		vsCheck(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 	*this *= (1.0f/length);
-	vsAssert( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN!" );
+	if ( vsIsNaN(x) || vsIsNaN(y) || vsIsNaN(z) )
+	{
+		vsCheck( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN in normalised vector!");
+		x = y = z = 0.f;
+	}
 }
 
 void
@@ -106,7 +128,11 @@ vsVector3D::Normalised()
 {
 	float length = Length();
 
-	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	if ( length == 0.f )
+	{
+		vsCheck(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 	return vsVector3D(x/length, y/length, z/length);
 }
 
@@ -142,6 +168,12 @@ vsVector3D::operator[](int n) const
 
 void vsVector4D::Normalise()
 {
+	float length = Length();
+	if ( length == 0.f )
+	{
+		vsCheck(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 	*this *= (1.0f/Length());
 }
 
@@ -149,7 +181,11 @@ vsVector4D
 vsVector4D::Normalised()
 {
 	float length = Length();
-	vsAssert(length != 0.f, "Tried to normalise zero-length vector!");
+	if ( length == 0.f )
+	{
+		vsCheck(length != 0.f, "Tried to normalise zero-length vector!");
+		length = 1.f; // avoid creating NaNs.
+	}
 
 	return (*this * (1.0f/Length()));
 }

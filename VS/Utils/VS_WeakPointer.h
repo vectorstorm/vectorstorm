@@ -2,6 +2,7 @@
 #define QCL_TYPES_POINTERS_WEAKPOINTER_H
 
 #include "VS_WeakPointerTarget.h"
+#include "VS/Utils/VS_Demangle.h"
 
 
 
@@ -161,7 +162,10 @@ template< class T >
 const T *
 vsWeakPointer<T>::operator->() const
 {
-	vsAssert( m_target != NULL, "NULL" );
+	if ( m_target == NULL )
+	{
+		vsAssertF( m_target != NULL, "dereferenced weak pointer of type '%s' which is NULL", Demangle(typeid(T).name()) );
+	}
 	return Target();
 }
 
@@ -172,7 +176,10 @@ template< class T >
 T *
 vsWeakPointer<T>::operator->()
 {
-	vsAssert( m_target != NULL, "NULL" );
+	if ( m_target == NULL )
+	{
+		vsAssertF( m_target != NULL, "dereferenced weak pointer of type '%s' which is NULL", Demangle(typeid(T).name()) );
+	}
 	return Target();
 }
 

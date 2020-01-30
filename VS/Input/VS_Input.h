@@ -265,6 +265,7 @@ private:
 
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
+	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
 	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
 
 	bool m_hasFocus;
@@ -356,10 +357,13 @@ public:
 	bool			WasPressed( int id );
 	bool			WasReleased( int id );
 
+	void			ConsumePress( int id ); // resets our 'pressed' and 'released' states for the given control
+
 	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 
 	void			SetStringMode(bool mode, ValidationType = Validation_None);
 	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
+	void			PauseStringMode(bool pause); // used if a game wants to temporarily suspend handling of keypresses, for example while manipulating a selection by the mouse
 	bool			InStringMode() { return m_stringMode; }
 	bool			IsKeyboardSuppressed() { return m_stringMode || m_stringModeClearing; }
 	void			SetStringModeString( const vsString &s );
@@ -400,6 +404,7 @@ public:
 	int GetAxisCount() const { return m_axis.ItemCount(); }
 	const struct vsInputAxis& GetAxis(int i) { return m_axis[i]; }
 	const struct vsInputAxis* GetAxis(const vsString& name);
+	int GetAxisId(const vsString& name); // returns -1 for failure
 
 	vsString GetBindDescription( const DeviceControl& dc );
 
