@@ -981,10 +981,12 @@ vsInput::Update(float timeStep)
 						}
 						else
 						{
-							m_mouseMotion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+							vsVector2D motion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+							motion.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+							motion.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 
-							m_mouseMotion.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
-							m_mouseMotion.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
+							m_mouseMotion += motion;
+
 							// TODO:  CORRECT FOR ORIENTATION ON IOS DEVICES
 						}
 						break;
