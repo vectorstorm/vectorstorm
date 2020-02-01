@@ -259,28 +259,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
-#if defined(_DEBUG)
-	if ( displayCount > 1 )
-	{
-		// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
-		// object, maybe?  Or alternately, the host game could tell us where to
-		// put the window, maybe?
-		//
-		// flags |= Flag_Fullscreen;
-		// x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// SDL_DisplayMode mode;
-		// SDL_Rect bounds;
-		// SDL_GetDesktopDisplayMode(1, &mode);
-		// if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
-		// {
-		// 	x = bounds.x;
-		// 	y = bounds.y;
-		// 	width = bounds.w;
-		// 	height = bounds.h;
-		// }
-	}
-#endif
 
 	m_invalidateMaterial = false;
 
@@ -345,11 +323,43 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( flags & Flag_FullscreenWindow )
 	{
 		// with FullscreenWindow, we don't use the specified width/height values,
-		// but instead SET them based upon window we created!
+		// but instead SET them based upon window we created
 
 		SDL_GetWindowSize( g_sdlWindow, &width, &height );
-		SDL_SetWindowSize( g_sdlWindow, width, height );
+		// SDL_SetWindowSize( g_sdlWindow, width, height );
+
+		// int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
+		// SDL_SetWindowPosition( g_sdlWindow,
+		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index),
+		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index)
+		// 		);
+
+// lets check which display we're on.
+		// if ( displayCount > 1 )
+		// {
+		// 	// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
+		// 	// object, maybe?  Or alternately, the host game could tell us where to
+		// 	// put the window, maybe?
+        //
+		// 	flags |= Flag_Fullscreen;
+		// 	x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// 	y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// 	SDL_DisplayMode mode;
+		// 	SDL_Rect bounds;
+		// 	SDL_GetDesktopDisplayMode(1, &mode);
+		// 	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
+		// 	{
+		// 		x = bounds.x;
+		// 		y = bounds.y;
+		// 		width = bounds.w;
+		// 		height = bounds.h;
+		// 	}
+		// }
+// #endif
 	}
+
+
+
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
 	if ( m_windowType != WindowType_Window )
@@ -556,6 +566,26 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
+	// if ( m_windowType == WindowType_FullscreenWindow )
+	// {
+	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_FALSE); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
+	// 	SDL_Delay(1);
+    //
+	// 	int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
+	// 	SDL_SetWindowPosition( g_sdlWindow,
+	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index),
+	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index)
+	// 			);
+    //
+	// 	// SDL_Rect bounds;
+	// 	// if ( SDL_GetDisplayBounds(index, &bounds) == 0 )
+	// 	// {
+	// 	// 	float width = bounds.w;
+	// 	// 	float height = bounds.h;
+	// 	// 	SDL_SetWindowSize(g_sdlWindow, width, height);
+	// 	// }
+	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_WINDOW_FULLSCREEN_DESKTOP); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
+	// }
 // 	int nowWidth, nowHeight;
 // 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 //
@@ -614,6 +644,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					SDL_SetWindowResizable(g_sdlWindow,SDL_TRUE);
 				}
 #endif
+				vsLog("Setting window size %d, %d", width, height);
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				if ( changedWindowType )
 					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -643,6 +674,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 						}
 					}
 
+					vsLog("Setting fullscreen window size %d, %d", m_width, m_height);
 					m_viewportWidth = m_width = closest.w;
 					m_viewportHeight = m_height = closest.h;
 					SDL_SetWindowSize(g_sdlWindow, m_width, m_height);
@@ -658,6 +690,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 
 				int nowWidth, nowHeight;
 				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);
+				vsLog("Fetching window size: %d, %d", nowWidth, nowHeight);
 				m_viewportWidth = m_width = m_widthPixels = nowWidth;
 				m_viewportHeight = m_height = m_heightPixels = nowHeight;
 				break;

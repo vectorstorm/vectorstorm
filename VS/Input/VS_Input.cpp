@@ -1028,6 +1028,7 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 							{
+								vsLog("SizeChanged EVENT:  %d, %d", event.window.data1, event.window.data2);
 								vsSystem::Instance()->CheckVideoMode();
 								break;
 							}
@@ -1037,7 +1038,7 @@ vsInput::Update(float timeStep)
 									m_suppressResizeEvent = false;
 								else
 								{
-									// vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
+									vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
 									// vsSystem::Instance()->CheckVideoMode();
 									int windowWidth = event.window.data1;
 									int windowHeight = event.window.data2;

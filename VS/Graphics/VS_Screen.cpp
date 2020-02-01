@@ -115,8 +115,6 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 			vsync == m_vsync )
 		return;
 
-	m_width = width;
-	m_height = height;
 	m_bufferCount = bufferCount;
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
@@ -124,6 +122,10 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 	m_antialias = antialias;
 	m_vsync = vsync;
 	m_renderer->UpdateVideoMode(width, height, depth, m_windowType, bufferCount, antialias, vsync);
+
+	m_width = m_renderer->GetWidth();
+	m_height = m_renderer->GetHeight();
+
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->UpdateVideoMode();

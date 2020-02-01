@@ -452,8 +452,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	vsLog("Changing resolution to [%dx%d] (%s)...", width, height,
-			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
+	vsString type = m_preferences->GetFullscreenWindow() ? "fullscreen window" :
+		m_preferences->GetFullscreen() ? "fullscreen" : "windowed";
+
+	vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
 
 	if ( !m_preferences->GetFullscreen() )
 	{
