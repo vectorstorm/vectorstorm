@@ -57,18 +57,18 @@ if(UNIX)
 	# find_library(GLEW_LIBRARY GLEW REQUIRED)
 	find_package(GLEW REQUIRED)
 	find_library(PTHREAD_LIBRARY pthread)
-		if ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
-			# CMake seems to modify its build such that it tries to extract DWO data
-			# during a copy process in release builds, even if you only enable
-			# split-dwarf in release.  Woo, CMake!  This broke release builds in
-			# the Steam Runtime, which uses very very old compilers and binutils.
-			#
-			# So for the moment, just don't enable this build flag for debug builds
-			# except if we're ACTUALLY configured to do debug builds;  don't rely
-			# on cmake to not apply this flag by itself!
-			set(CMAKE_CXX_FLAGS_DEBUG "-gsplit-dwarf -Wl,--gdb-index ${CMAKE_CXX_FLAGS_DEBUG}")
-			set(CMAKE_C_FLAGS_DEBUG "-gsplit-dwarf -Wl,--gdb-index ${CMAKE_CXX_FLAGS_DEBUG}")
-		endif ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
+	if ( !APPLE AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
+		# CMake seems to modify its build such that it tries to extract DWO data
+		# during a copy process in release builds, even if you only enable
+		# split-dwarf in release.  Woo, CMake!  This broke release builds in
+		# the Steam Runtime, which uses very very old compilers and binutils.
+		#
+		# So for the moment, just don't enable this build flag for debug builds
+		# except if we're ACTUALLY configured to do debug builds;  don't rely
+		# on cmake to not apply this flag by itself!
+		set(CMAKE_CXX_FLAGS_DEBUG "-gsplit-dwarf -Wl,--gdb-index ${CMAKE_CXX_FLAGS_DEBUG}")
+		set(CMAKE_C_FLAGS_DEBUG "-gsplit-dwarf -Wl,--gdb-index ${CMAKE_CXX_FLAGS_DEBUG}")
+	endif ( !APPLE AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
 
 else()
 	find_library(PHYSFS_LIBRARY physfs REQUIRED
