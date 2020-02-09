@@ -1028,6 +1028,14 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 							{
+								// in ppractice, we seem to be receiving this event
+								// when alt-tabbing into a fullscreen window.  In
+								// theory, this happens after the window size changes
+								// for any reason.  If that reason was due to the OS,
+								// then we'll get a SDL_WINDOWEVENT_SIZE_CHANGED
+								// event right afterward.  In the alt-tabbing case,
+								// though, we don't seem to receive the
+								// SDL_WINDOWEVENT_RESIZED event.
 								vsLog("SizeChanged EVENT:  %d, %d", event.window.data1, event.window.data2);
 								vsSystem::Instance()->CheckVideoMode();
 								break;
@@ -1074,13 +1082,13 @@ vsInput::Update(float timeStep)
 							m_mouseIsInWindow = false;
 							break;
 						case SDL_WINDOWEVENT_MINIMIZED:
-							// vsLog("Minimized");
+							vsLog("Minimized");
 							break;
 						case SDL_WINDOWEVENT_MAXIMIZED:
-							// vsLog("Maximized");
+							vsLog("Maximized");
 							break;
 						case SDL_WINDOWEVENT_RESTORED:
-							// vsLog("Restored");
+							vsLog("Restored");
 							break;
 							/*
 						case SDL_WINDOWEVENT_TAKE_FOCUS:
