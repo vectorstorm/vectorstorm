@@ -139,6 +139,9 @@ void vsOpenGLDebugMessage( GLenum source,
 	// Intel debug message spam.
 	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
 
+	// Program/shader being recompiled spam.
+	if (id == 0x00020092) return;
+
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
 
 	if (id == 0x00020084 && g_crashOnTextureStateUsageWarning )
@@ -1727,7 +1730,9 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				}
 				else
 				{
-					glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
+					int tval = t->GetResource()->GetTexture();
+					vsAssert( tval != 0, "0 texture??" );
+					glBindTexture( GL_TEXTURE_2D, tval);
 					if ( material->m_clampU )
 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 					if ( material->m_clampV )

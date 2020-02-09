@@ -152,10 +152,9 @@ vsRenderTarget::Resolve(int id)
 		// 	glGenerateMipmap(GL_TEXTURE_2D);
 		// 	glBindTexture(GL_TEXTURE_2D, 0);
 		// }
-
-		return GetTexture(id);
 	}
 
+	return GetTexture(id);
 	// return NULL;
 }
 
@@ -224,14 +223,26 @@ void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
 	if ( m_renderBufferSurface )
+	{
+		vsAssert( m_renderBufferSurface->m_fbo != 0, "0 RenderBufferSurfaceFBO??" );
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+	}
 	else
+	{
+		vsAssert( m_textureSurface->m_fbo != 0, "0 TextureSurfaceFBO??" );
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
+	}
 
 	if ( other->m_renderBufferSurface )
+	{
+		vsAssert( other->m_renderBufferSurface->m_fbo != 0, "0 Draw RenderBufferSurfaceFBO??" );
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_renderBufferSurface->m_fbo);
+	}
 	else
+	{
+		vsAssert( other->m_textureSurface->m_fbo != 0, "0 Draw TextureSurfaceFBO??" );
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
+	}
 
 	// for the moment, assume that a 'BlitTo' is only copying the first color attachment.
 	for ( int i = 0; i < vsMin( m_bufferCount, other->m_bufferCount ); i++ )
