@@ -168,8 +168,7 @@ vsRenderTarget::CreateDeferred()
 void
 vsRenderTarget::Bind()
 {
-	if ( m_textureSurface == NULL )
-		Create();
+	CreateDeferred();
 
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
@@ -222,25 +221,30 @@ vsRenderTarget::Clear()
 void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
+	vsCheck( m_textureSurface->m_fbo != 0, "0 TextureSurfaceFBO??" );
+	vsCheck( other->m_textureSurface->m_fbo != 0, "0 Draw TextureSurfaceFBO??" );
+	CreateDeferred();
+	other->CreateDeferred();
+
 	if ( m_renderBufferSurface )
 	{
-		vsAssert( m_renderBufferSurface->m_fbo != 0, "0 RenderBufferSurfaceFBO??" );
+		vsAssert( m_renderBufferSurface->m_fbo != 0, "AFTER 0 RenderBufferSurfaceFBO??" );
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 	}
 	else
 	{
-		vsAssert( m_textureSurface->m_fbo != 0, "0 TextureSurfaceFBO??" );
+		vsAssert( m_textureSurface->m_fbo != 0, "AFTER 0 TextureSurfaceFBO??" );
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
 
 	if ( other->m_renderBufferSurface )
 	{
-		vsAssert( other->m_renderBufferSurface->m_fbo != 0, "0 Draw RenderBufferSurfaceFBO??" );
+		vsAssert( other->m_renderBufferSurface->m_fbo != 0, "AFTER 0 Draw RenderBufferSurfaceFBO??" );
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_renderBufferSurface->m_fbo);
 	}
 	else
 	{
-		vsAssert( other->m_textureSurface->m_fbo != 0, "0 Draw TextureSurfaceFBO??" );
+		vsAssert( other->m_textureSurface->m_fbo != 0, "AFTER 0 Draw TextureSurfaceFBO??" );
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
 	}
 
