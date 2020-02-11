@@ -1731,7 +1731,14 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				else
 				{
 					int tval = t->GetResource()->GetTexture();
-					vsAssert( tval != 0, "0 texture??" );
+					if ( tval == 0 )
+					{
+						vsLog("Binding invalid texture.");
+						vsLog("Material: %s", material->GetName() );
+						vsLog("Texture slot %d", i);
+						vsLog("Texture name %s", t->GetResource()->GetName());
+						vsAssert( tval != 0, "0 texture??" );
+					}
 					glBindTexture( GL_TEXTURE_2D, tval);
 					if ( material->m_clampU )
 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
