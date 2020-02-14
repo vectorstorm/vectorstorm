@@ -70,6 +70,8 @@ public:
 	GLuint	m_fbo;
 
 	bool	m_isRenderbuffer;
+	bool	m_multisample;
+	bool	m_depthCompare;
 	bool	m_isDepthOnly;
 
 	Settings m_settings;

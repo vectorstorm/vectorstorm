@@ -127,16 +127,16 @@ vsRenderPipeline::Prepare()
 			m_stage[i]->PreparePipeline(this);
 	}
 
-	// for ( int i = 0; i < m_target.ItemCount(); )
-	// {
-	// 	RenderTargetRegistration *reg = m_target[i];
-	// 	if ( !reg->IsUsedByAnyStage() )
-	// 	{
-	// 		// we should get rid of this render target!
-	// 		m_target.RemoveItem( reg );
-	// 	}
-	// 	else
-	// 		i++;
-	// }
+	for ( int i = 0; i < m_target.ItemCount(); )
+	{
+		RenderTargetRegistration *reg = m_target[i];
+		if ( !reg->IsUsedByAnyStage() )
+		{
+			// we should get rid of this render target!
+			m_target.RemoveItem( reg );
+		}
+		else
+			i++;
+	}
 }
 

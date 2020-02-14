@@ -131,7 +131,9 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		kernel_normalised = true;
 	}
 
-	m_hipassMaterial = new vsDynamicMaterial;
+	if ( !m_hipassMaterial )
+		m_hipassMaterial = new vsDynamicMaterial;
+
 	m_hipassMaterial->SetBlend(false);
 	m_hipassMaterial->SetDrawMode(DrawMode_Absolute);
 	m_hipassMaterial->SetColor(c_white);
@@ -148,7 +150,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	{
 		float offsetx = 1.2f / m_passes[i].m_pass->GetWidth();
 		float offsety = 1.2f / m_passes[i].m_pass->GetHeight();
-		m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_horizontalBlurMaterial )
+			m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
 		m_passes[i].m_horizontalBlurMaterial->SetClampU(true);
 		m_passes[i].m_horizontalBlurMaterial->SetClampV(true);
 		m_passes[i].m_horizontalBlurMaterial->SetBlend(false);
@@ -158,7 +161,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsetx", offsetx);
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsety", 0.f);
 
-		m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_verticalBlurMaterial )
+			m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
 		m_passes[i].m_verticalBlurMaterial->SetClampU(true);
 		m_passes[i].m_verticalBlurMaterial->SetClampV(true);
 		m_passes[i].m_verticalBlurMaterial->SetBlend(false);
@@ -168,7 +172,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsetx", 0.f);
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsety", offsety);
 
-		m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_combinePassMaterial )
+			m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;
 		m_passes[i].m_combinePassMaterial->SetBlend(true);
 		m_passes[i].m_combinePassMaterial->SetColor(c_white);
 		m_passes[i].m_combinePassMaterial->SetCullingType(Cull_None);
@@ -182,7 +187,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_combinePassMaterial->SetShader(new vsBloomCombineShader);
 	}
 
-	m_fromMaterial = new vsDynamicMaterial;
+	if ( !m_fromMaterial )
+		m_fromMaterial = new vsDynamicMaterial;
 	m_fromMaterial->SetBlend(false);
 	m_fromMaterial->SetColor(c_white);
 	m_fromMaterial->SetCullingType(Cull_None);
@@ -194,8 +200,10 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_fromMaterial->SetTexture(0, m_from->GetTexture());
 	m_fromMaterial->SetShader(new vsBloomPassShader);
 
-	m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
-	m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	if ( !m_vertices )
+		m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	if ( !m_indices )
+		m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 
 	float ar = vsScreen::Instance()->GetAspectRatio();
 	vsVector3D v[4] = {

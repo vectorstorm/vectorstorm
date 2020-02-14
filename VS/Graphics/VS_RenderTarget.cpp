@@ -270,7 +270,9 @@ vsSurface::vsSurface( int width, int height ):
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
-	m_isRenderbuffer(false)
+	m_isRenderbuffer(false),
+	m_multisample(false),
+	m_depthCompare(false)
 {
 	m_texture = new GLuint[1];
 	m_texture[0] = 0;
@@ -306,36 +308,138 @@ static void CheckFBO()
 
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
-	m_width(settings.width),
-	m_height(settings.height),
+	m_width(-1),
+	m_height(-1),
 	m_texture(0),
 	m_textureCount(settings.buffers),
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
 	m_isRenderbuffer(false),
+	m_multisample(multisample),
+	m_depthCompare(depthCompare),
 	m_isDepthOnly(false),
 	m_settings(settings)
 {
+	m_texture = new GLuint[m_textureCount];
+
+	Resize(settings.width, settings.height);
+}
+
+vsSurface::~vsSurface()
+{
+	GL_CHECK_SCOPED("vsSurface destructor");
+	for ( int i = 0; i < m_textureCount; i++ )
+	{
+		if ( m_isRenderbuffer )
+		{
+			glDeleteRenderbuffers(1, &m_texture[i]);
+		}
+		else
+		{
+			// don't delete our textures manually;  we have vsTexture objects
+			// which will do it automatically when they're destroyed, below.
+		}
+	}
+	if ( m_depth )
+	{
+		glDeleteRenderbuffers(1, &m_depth);
+	}
+	glDeleteFramebuffers(1, &m_fbo);
+	vsDeleteArray(m_texture);
+}
+
+
+
+
+
+void
+vsRenderTarget::Resize( int width, int height )
+{
+	GL_CHECK_SCOPED("vsRenderTarget::Resize");
+	if ( m_settings.width == width && m_settings.height == height )
+		return;
+	m_viewportWidth = width;
+	m_viewportHeight = height;
+	m_settings.width = width;
+	m_settings.height = height;
+
+	if ( m_type == Type_Window )
+	{
+		m_textureSurface->m_width = width;
+		m_textureSurface->m_height = height;
+	}
+	else
+	{
+		if ( m_renderBufferSurface )
+			m_renderBufferSurface->Resize(width, height);
+		if ( m_textureSurface )
+			m_textureSurface->Resize(width, height);
+
+		for ( int i = 0; i < m_bufferCount; i++ )
+		{
+			m_texture[i]->GetResource()->m_width = m_settings.width;
+			m_texture[i]->GetResource()->m_height = m_settings.height;
+		}
+		for ( int i = 0; i < m_bufferCount; i++ )
+		{
+			bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
+			m_texture[i]->GetResource()->SetSurface(m_textureSurface, i, isDepth);
+		}
+		if ( m_depthTexture )
+			m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
+	}
+}
+
+void
+vsSurface::Resize( int width, int height )
+{
 	GL_CHECK_SCOPED("vsSurface");
+	if ( m_width == width && m_height == height )
+		return;
+
+	if ( m_fbo != 0 )
+	{
+		for ( int i = 0; i < m_textureCount; i++ )
+		{
+			if ( m_isRenderbuffer )
+			{
+				glDeleteRenderbuffers(1, &m_texture[i]);
+			}
+			else
+			{
+				// don't delete our textures manually;  we have vsTexture objects
+				// which will do it automatically when they're destroyed, below.
+				glDeleteTextures(1, &m_texture[i]);
+			}
+		}
+		if ( m_depth )
+		{
+			glDeleteRenderbuffers(1, &m_depth);
+		}
+		glDeleteFramebuffers(1, &m_fbo);
+	}
+
+	m_width = width;
+	m_height = height;
+	m_settings.width = width;
+	m_settings.height = height;
 
 	GLint maxSamples = 0;
-	if ( multisample )
+	if ( m_multisample )
 	{
 		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
 		maxSamples = vsMin(maxSamples,4);
 	}
 
-	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
+	vsAssert( !( m_multisample && m_settings.mipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
 
 	// create FBO
 	glGenFramebuffers(1, &m_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-	m_texture = new GLuint[m_textureCount];
-
-	if ( depthOnly )
+	if ( m_isDepthOnly )
 	{
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
@@ -382,7 +486,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			}
 			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
 
-			if (multisample)
+			if (m_multisample)
 			{
 				// vsLog("MSAA in vsSurface enabled");
 				glGenRenderbuffers(1, &m_texture[i]);
@@ -414,14 +518,14 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 		}
 	}
 
-	if (settings.stencil || settings.depth || depthOnly)
+	if (m_settings.stencil || m_settings.depth || m_isDepthOnly)
 	{
-		if ( multisample )
+		if ( m_multisample )
 		{
 			GL_CHECK_SCOPED( "multisample stencil/depth" );
 			glGenRenderbuffers(1, &m_depth);
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-			if ( settings.stencil )
+			if ( m_settings.stencil )
 			{
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
@@ -451,13 +555,13 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-			if ( depthCompare )
+			if ( m_depthCompare )
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			}
 
-			if ( settings.stencil )
+			if ( m_settings.stencil )
 			{
 				GL_CHECK_SCOPED( "setup depthstencil texture data" );
 				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
@@ -472,252 +576,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				glBindTexture(GL_TEXTURE_2D, 0);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-				if ( settings.stencil )
-				{
-					// we're using a single depth/stencil texture, so bind it as
-					// our FBO's stencil attachment too.
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-					m_stencil = true;
-				}
-			}
-		}
-	}
-
-	CheckFBO();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-vsSurface::~vsSurface()
-{
-	GL_CHECK_SCOPED("vsSurface destructor");
-	for ( int i = 0; i < m_textureCount; i++ )
-	{
-		if ( m_isRenderbuffer )
-		{
-			glDeleteRenderbuffers(1, &m_texture[i]);
-		}
-		else
-		{
-			// don't delete our textures manually;  we have vsTexture objects
-			// which will do it automatically when they're destroyed, below.
-		}
-	}
-	if ( m_depth )
-	{
-		glDeleteRenderbuffers(1, &m_depth);
-	}
-	glDeleteFramebuffers(1, &m_fbo);
-	vsDeleteArray(m_texture);
-}
-
-
-
-
-
-void
-vsRenderTarget::Resize( int width, int height )
-{
-	GL_CHECK_SCOPED("vsRenderTarget::Resize");
-	if ( m_settings.width == width && m_settings.height == height )
-		return;
-
-	if ( m_type == Type_Window )
-	{
-		m_textureSurface->m_width = width;
-		m_textureSurface->m_height = height;
-	}
-	else
-	{
-		if ( m_renderBufferSurface )
-			m_renderBufferSurface->Resize(width, height);
-		if ( m_textureSurface )
-			m_textureSurface->Resize(width, height);
-	}
-	m_viewportWidth = width;
-	m_viewportHeight = height;
-	m_settings.width = width;
-	m_settings.height = height;
-}
-
-void
-vsSurface::Resize( int width, int height )
-{
-	GL_CHECK_SCOPED("vsSurface::Resize");
-	if ( m_width == width && m_height == height )
-		return;
-
-	m_width = width;
-	m_height = height;
-	m_settings.width = width;
-	m_settings.height = height;
-
-	// glActiveTexture(GL_TEXTURE0);
-    //
-	// vsAssert( !m_isRenderbuffer, "Resize not yet supported for renderbuffer surfaces" );
-	// for ( int i = 0; i < m_textureCount; i++ )
-	// {
-	// 	if ( m_texture[i] )
-	// 	{
-	// 		const Settings::Buffer& settings = m_settings.bufferSettings[i];
-    //
-	// 		GLenum internalFormat = GL_RGBA8;
-	// 		GLenum format = GL_RGBA;
-	// 		GLenum type = GL_UNSIGNED_BYTE;
-	// 		if ( settings.floating )
-	// 		{
-	// 			internalFormat = GL_RGBA32F;
-	// 			type = GL_FLOAT;
-	// 			if ( settings.singleChannel )
-	// 			{
-	// 				format = GL_RED;
-	// 				internalFormat = GL_R32F;
-	// 			}
-	// 		}
-	// 		if ( settings.halfFloating )
-	// 		{
-	// 			internalFormat = GL_RGBA16F;
-	// 			type = GL_FLOAT;
-	// 			if ( settings.singleChannel )
-	// 			{
-	// 				format = GL_RED;
-	// 				internalFormat = GL_R16F;
-	// 			}
-	// 		}
-    //
-	// 		glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-	// 		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
-	// 	}
-	// }
-    //
-	// if ( m_depth )
-	// {
-	// 	glBindTexture(GL_TEXTURE_2D, m_depth);
-	// 	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-	// }
-	// glBindTexture(GL_TEXTURE_2D, 0);
-
-	GLint maxSamples = 0;
-	if ( m_isRenderbuffer )
-	{
-		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
-		maxSamples = vsMin(maxSamples,4);
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-	if ( m_isDepthOnly )
-	{
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-	}
-	else
-	{
-		for ( int i = 0; i < m_textureCount; i++ )
-		{
-			const char* checkString[] = {
-				"vsSurface texture0",
-				"vsSurface texture1",
-				"vsSurface texture2",
-				"vsSurface texture3",
-				"vsSurface texture+",
-			};
-			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
-			const Settings::Buffer& settings = m_settings.bufferSettings[i];
-
-			GLenum internalFormat = GL_RGBA8;
-			GLenum format = GL_RGBA;
-			GLenum type = GL_UNSIGNED_BYTE;
-			if ( settings.floating )
-			{
-				internalFormat = GL_RGBA32F;
-				type = GL_FLOAT;
-
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R32F;
-				}
-			}
-			if ( settings.halfFloating )
-			{
-				internalFormat = GL_RGBA16F;
-				type = GL_FLOAT;
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R16F;
-				}
-			}
-			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
-
-			if (m_isRenderbuffer)
-			{
-				// vsLog("MSAA in vsSurface enabled");
-				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
-				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_RENDERBUFFER, m_texture[i]);
-				m_isRenderbuffer = true;
-			}
-			else
-			{
-				GL_CHECK_SCOPED( "gentexture" );
-				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-				m_isRenderbuffer = false;
-				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, format, type, 0);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, m_texture[i], 0);
-				/* if ( settings.mipMaps ) */
-				/* { */
-				/* 	glGenerateMipmap(GL_TEXTURE_2D); */
-				/* } */
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-				if ( settings.anisotropy )
-					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
-				glBindTexture(GL_TEXTURE_2D, 0);
-			}
-		}
-	}
-
-	if (m_stencil || m_depth || m_isDepthOnly)
-	{
-		if ( m_isRenderbuffer )
-		{
-			GL_CHECK_SCOPED( "multisample stencil/depth" );
-			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-			if ( m_stencil )
-			{
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
-				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
-				m_stencil = true;
-			}
-			else
-			{
-				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH_COMPONENT24, m_width, m_height );
-			}
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth);
-		}
-		else
-		{
-			GL_CHECK_SCOPED( "normal stencil/depth" );
-			glBindTexture(GL_TEXTURE_2D, m_depth);
-
-			if ( m_stencil )
-			{
-				GL_CHECK_SCOPED( "setup depthstencil texture data" );
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
-			}
-			else
-			{
-				GL_CHECK_SCOPED( "setup depthonly texture data" );
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
-			}
-
-			{
-				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
-				glBindTexture(GL_TEXTURE_2D, 0);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-				if ( m_stencil )
+				if ( m_settings.stencil )
 				{
 					// we're using a single depth/stencil texture, so bind it as
 					// our FBO's stencil attachment too.
