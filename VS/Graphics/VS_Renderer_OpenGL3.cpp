@@ -1733,17 +1733,22 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					int tval = t->GetResource()->GetTexture();
 					if ( tval == 0 )
 					{
-						vsLog("Binding invalid texture.");
+						// [TODO] Have a replacement blank or checkerboard texture here.
+						glBindTexture( GL_TEXTURE_2D, 0 );
+						vsLog("Tried to bind invalid texture.");
 						vsLog("Material: %s", material->GetName() );
 						vsLog("Texture slot %d", i);
 						vsLog("Texture name %s", t->GetResource()->GetName());
-						vsAssert( tval != 0, "0 texture??" );
+						// vsAssert( tval != 0, "0 texture??" );
 					}
-					glBindTexture( GL_TEXTURE_2D, tval);
-					if ( material->m_clampU )
-						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-					if ( material->m_clampV )
-						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					else
+					{
+						glBindTexture( GL_TEXTURE_2D, tval);
+						if ( material->m_clampU )
+							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						if ( material->m_clampV )
+							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					}
 				}
 			}
 			else
