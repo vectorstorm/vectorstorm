@@ -70,6 +70,7 @@ public:
 	GLuint	m_fbo;
 
 	bool	m_isRenderbuffer;
+	bool	m_isDepthOnly;
 
 	Settings m_settings;
 

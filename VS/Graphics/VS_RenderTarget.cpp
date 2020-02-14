@@ -314,6 +314,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_stencil(0),
 	m_fbo(0),
 	m_isRenderbuffer(false),
+	m_isDepthOnly(false),
 	m_settings(settings)
 {
 	GL_CHECK_SCOPED("vsSurface");
@@ -517,10 +518,21 @@ void
 vsRenderTarget::Resize( int width, int height )
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resize");
-	if ( m_renderBufferSurface )
-		m_renderBufferSurface->Resize(width, height);
-	if ( m_textureSurface )
-		m_textureSurface->Resize(width, height);
+	if ( m_settings.width == width && m_settings.height == height )
+		return;
+
+	if ( m_type == Type_Window )
+	{
+		m_textureSurface->m_width = width;
+		m_textureSurface->m_height = height;
+	}
+	else
+	{
+		if ( m_renderBufferSurface )
+			m_renderBufferSurface->Resize(width, height);
+		if ( m_textureSurface )
+			m_textureSurface->Resize(width, height);
+	}
 	m_viewportWidth = width;
 	m_viewportHeight = height;
 	m_settings.width = width;
@@ -534,13 +546,81 @@ vsSurface::Resize( int width, int height )
 	if ( m_width == width && m_height == height )
 		return;
 
-	glActiveTexture(GL_TEXTURE0);
+	m_width = width;
+	m_height = height;
+	m_settings.width = width;
+	m_settings.height = height;
 
-	vsAssert( !m_isRenderbuffer, "Resize not yet supported for renderbuffer surfaces" );
-	for ( int i = 0; i < m_textureCount; i++ )
+	// glActiveTexture(GL_TEXTURE0);
+    //
+	// vsAssert( !m_isRenderbuffer, "Resize not yet supported for renderbuffer surfaces" );
+	// for ( int i = 0; i < m_textureCount; i++ )
+	// {
+	// 	if ( m_texture[i] )
+	// 	{
+	// 		const Settings::Buffer& settings = m_settings.bufferSettings[i];
+    //
+	// 		GLenum internalFormat = GL_RGBA8;
+	// 		GLenum format = GL_RGBA;
+	// 		GLenum type = GL_UNSIGNED_BYTE;
+	// 		if ( settings.floating )
+	// 		{
+	// 			internalFormat = GL_RGBA32F;
+	// 			type = GL_FLOAT;
+	// 			if ( settings.singleChannel )
+	// 			{
+	// 				format = GL_RED;
+	// 				internalFormat = GL_R32F;
+	// 			}
+	// 		}
+	// 		if ( settings.halfFloating )
+	// 		{
+	// 			internalFormat = GL_RGBA16F;
+	// 			type = GL_FLOAT;
+	// 			if ( settings.singleChannel )
+	// 			{
+	// 				format = GL_RED;
+	// 				internalFormat = GL_R16F;
+	// 			}
+	// 		}
+    //
+	// 		glBindTexture(GL_TEXTURE_2D, m_texture[i]);
+	// 		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
+	// 	}
+	// }
+    //
+	// if ( m_depth )
+	// {
+	// 	glBindTexture(GL_TEXTURE_2D, m_depth);
+	// 	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+	// }
+	// glBindTexture(GL_TEXTURE_2D, 0);
+
+	GLint maxSamples = 0;
+	if ( m_isRenderbuffer )
 	{
-		if ( m_texture[i] )
+		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+		maxSamples = vsMin(maxSamples,4);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+	if ( m_isDepthOnly )
+	{
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+	}
+	else
+	{
+		for ( int i = 0; i < m_textureCount; i++ )
 		{
+			const char* checkString[] = {
+				"vsSurface texture0",
+				"vsSurface texture1",
+				"vsSurface texture2",
+				"vsSurface texture3",
+				"vsSurface texture+",
+			};
+			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
 			GLenum internalFormat = GL_RGBA8;
@@ -550,6 +630,7 @@ vsSurface::Resize( int width, int height )
 			{
 				internalFormat = GL_RGBA32F;
 				type = GL_FLOAT;
+
 				if ( settings.singleChannel )
 				{
 					format = GL_RED;
@@ -566,20 +647,88 @@ vsSurface::Resize( int width, int height )
 					internalFormat = GL_R16F;
 				}
 			}
+			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
 
-			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
+			if (m_isRenderbuffer)
+			{
+				// vsLog("MSAA in vsSurface enabled");
+				glBindRenderbuffer( GL_RENDERBUFFER, m_texture[i] );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, internalFormat, m_width, m_height );
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_RENDERBUFFER, m_texture[i]);
+				m_isRenderbuffer = true;
+			}
+			else
+			{
+				GL_CHECK_SCOPED( "gentexture" );
+				glBindTexture(GL_TEXTURE_2D, m_texture[i]);
+				m_isRenderbuffer = false;
+				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, format, type, 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, m_texture[i], 0);
+				/* if ( settings.mipMaps ) */
+				/* { */
+				/* 	glGenerateMipmap(GL_TEXTURE_2D); */
+				/* } */
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+				if ( settings.anisotropy )
+					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
 		}
 	}
 
-	if ( m_depth )
+	if (m_stencil || m_depth || m_isDepthOnly)
 	{
-		glBindTexture(GL_TEXTURE_2D, m_depth);
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
+		if ( m_isRenderbuffer )
+		{
+			GL_CHECK_SCOPED( "multisample stencil/depth" );
+			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
+			if ( m_stencil )
+			{
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
+				m_stencil = true;
+			}
+			else
+			{
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH_COMPONENT24, m_width, m_height );
+			}
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth);
+		}
+		else
+		{
+			GL_CHECK_SCOPED( "normal stencil/depth" );
+			glBindTexture(GL_TEXTURE_2D, m_depth);
 
-	m_width = width;
-	m_height = height;
+			if ( m_stencil )
+			{
+				GL_CHECK_SCOPED( "setup depthstencil texture data" );
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
+			}
+			else
+			{
+				GL_CHECK_SCOPED( "setup depthonly texture data" );
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
+			}
+
+			{
+				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				if ( m_stencil )
+				{
+					// we're using a single depth/stencil texture, so bind it as
+					// our FBO's stencil attachment too.
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+					m_stencil = true;
+				}
+			}
+		}
+	}
+
+	CheckFBO();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

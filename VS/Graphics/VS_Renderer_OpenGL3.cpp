@@ -528,34 +528,55 @@ void
 vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 {
 	GL_CHECK_SCOPED("vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow");
-	vsDelete( m_window );
-	vsDelete( m_scene );
 
-	// Create Window Surface
-	vsSurface::Settings settings;
-	settings.depth = 0;
-	settings.width = GetWidthPixels();
-	settings.height = GetHeightPixels();
-	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
+	int width = GetWidthPixels();
+	int height = GetHeightPixels();
 
-	// Create 3D Scene Surface
-	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
-
-	settings.bufferSettings[2].halfFloating = true;
-	settings.width = GetWidthPixels();
-	settings.height = GetHeightPixels();
-	settings.depth = true;
-	settings.mipMaps = false;
-	settings.stencil = true;
-	settings.buffers = m_bufferCount;
-
-	if ( m_antialias )
+	if ( m_window )
 	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
+		// We don't *actually* have to resize this.  It's not a *real* render target.
+		m_window->Resize(width, height);
 	}
 	else
 	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
+		vsDelete( m_window );
+
+		// Create Window Surface
+		vsSurface::Settings settings;
+		settings.depth = false;
+		settings.width = GetWidthPixels();
+		settings.height = GetHeightPixels();
+		m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
+	}
+
+	if ( m_scene )
+	{
+		m_scene->Resize(width, height);
+	}
+	else
+	{
+		vsDelete( m_scene );
+
+		// Create 3D Scene Surface
+		// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
+
+		vsSurface::Settings settings;
+		settings.bufferSettings[2].halfFloating = true;
+		settings.width = GetWidthPixels();
+		settings.height = GetHeightPixels();
+		settings.depth = true;
+		settings.mipMaps = false;
+		settings.stencil = true;
+		settings.buffers = m_bufferCount;
+
+		if ( m_antialias )
+		{
+			m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
+		}
+		else
+		{
+			m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
+		}
 	}
 	m_scene->Bind();
 	m_lastShaderId = 0;

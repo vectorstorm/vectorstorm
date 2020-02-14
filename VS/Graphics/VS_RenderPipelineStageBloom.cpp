@@ -114,6 +114,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	for ( int i = 0; i < m_passCount; i++ )
 	{
 		req.mipmapLevel = i;
+		pipeline->ReleaseRenderTarget( m_passes[i].m_pass, this );
+		pipeline->ReleaseRenderTarget( m_passes[i].m_pass2, this );
 		m_passes[i].m_pass = pipeline->RequestRenderTarget(req, this);
 		m_passes[i].m_pass2 = pipeline->RequestRenderTarget(req, this);
 	}

@@ -88,14 +88,19 @@ public:
 		vsDelete(target);
 	}
 
-	bool Matches( const RenderTargetRequest& req )
+	bool Matches( const RenderTargetRequest& req ) const
 	{
 		return request.share && (request == req);
 	}
 
-	bool IsUsedByStage( vsRenderPipelineStage *stage )
+	bool IsUsedByStage( vsRenderPipelineStage *stage ) const
 	{
 		return user.Contains(stage);
+	}
+
+	bool IsUsedByAnyStage() const
+	{
+		return !user.IsEmpty();
 	}
 
 	void SetUsedByStage( vsRenderPipelineStage *stage, bool used=true )
@@ -126,9 +131,12 @@ public:
 	~vsRenderPipeline();
 
 	vsRenderTarget *RequestRenderTarget( const RenderTargetRequest& request, vsRenderPipelineStage *stage );
+	void ReleaseRenderTarget( vsRenderTarget *target, vsRenderPipelineStage *stage );
 
 	void SetStage( int stageId, vsRenderPipelineStage *stage );
 	void Draw( vsDisplayList *list );
+
+	void Prepare(); // prepare all stages again
 };
 
 #endif // VS_RENDERPIPELINE_H
