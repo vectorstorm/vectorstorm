@@ -1594,7 +1594,7 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 							vsVector3D pos;
 							if ( currentVertexArray )
 								pos = currentVertexArray[index];
-							else
+							else if ( currentVertexBuffer )
 								pos = currentVertexBuffer->GetPosition(index);
 							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
 						}

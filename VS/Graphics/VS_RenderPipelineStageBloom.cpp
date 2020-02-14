@@ -144,7 +144,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_hipassMaterial->SetTexture(0, m_from->GetTexture(1));
 	m_hipassMaterial->SetShader(new vsShader(passv, normalf, false, false));
 
-	m_bloomBlurShader = new vsBloomBlurShader();
+	if ( !m_bloomBlurShader )
+		m_bloomBlurShader = new vsBloomBlurShader();
 
 	for ( int i = 0; i < m_passCount; i++ )
 	{
