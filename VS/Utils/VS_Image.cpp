@@ -65,6 +65,8 @@ vsImage::vsImage( const vsString &filename ):
 	vsStore *s = new vsStore( img.GetLength() );
 	img.Store(s);
 
+	vsCheck( img.GetLength() > 0, "Zero-length file??" );
+
 	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
@@ -72,6 +74,10 @@ vsImage::vsImage( const vsString &filename ):
 	if ( s_allowLoadFailure )
 	{
 		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+
+		m_pixel = new uint32_t[1];
+		m_width = m_height = 1;
+		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
 	}
 	else
 	{
