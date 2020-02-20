@@ -2014,8 +2014,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 		{
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
 			PrintAnnotatedSource(frag);
-			// vsLog("%s",frag);
-			vsLog(buf);
+			vsLog("%s",buf);
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
 		}
 	}
