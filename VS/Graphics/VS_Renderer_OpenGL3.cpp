@@ -365,7 +365,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
-	if ( m_windowType != WindowType_Window )
+	if ( m_windowType == WindowType_Fullscreen )
 	{
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
@@ -710,7 +710,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				}
 			case WindowType_FullscreenWindow:
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
-				SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
+				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
 
 				int nowWidth, nowHeight;
 				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);
