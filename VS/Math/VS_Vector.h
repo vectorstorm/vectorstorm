@@ -57,6 +57,7 @@ public:
 
 	float	Dot( const vsVector2D &b ) const { return ( x*b.x +
 										   y*b.y ); }
+	float	Cross( const vsVector2D &b ) const { return x*b.y - y*b.x; }
 
 	void	Set(float x_in, float y_in) {x=x_in; y=y_in;}
 };
