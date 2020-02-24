@@ -33,6 +33,7 @@ class vsStore
 
 	bool		m_bufferIsExternal;
 
+	void	AssertBytesLeftForWriting(size_t bytes);
 
 public:
 			vsStore();

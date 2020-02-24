@@ -123,9 +123,22 @@ vsStore::Clear()
 }
 
 void
+vsStore::AssertBytesLeftForWriting(size_t bytes)
+{
+	if ( BytesLeftForWriting() < bytes )
+	{
+		vsLog("Tried to write past the end of a vsStore");
+		vsLog("Buffer size:  %d bytes", BufferLength());
+		vsLog("Currently in use:  %d bytes", Length());
+		vsLog("Tried to write:  %d bytes", bytes);
+		vsAssert( BytesLeftForWriting() >= bytes, "Tried to write past the end of the vsStore!" );
+	}
+}
+
+void
 vsStore::Append( vsStore *o )
 {
-	vsAssert( BytesLeftForWriting() >= o->Length(), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( o->Length() );
 
 	memcpy( m_writeHead, o->m_buffer, o->Length() );
 	m_writeHead += o->Length();
@@ -134,7 +147,7 @@ vsStore::Append( vsStore *o )
 void
 vsStore::WriteInt8( int8_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -143,7 +156,7 @@ vsStore::WriteInt8( int8_t v )
 void
 vsStore::WriteUint8( uint8_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	//memcpy( m_writeHead, &v, sizeof(v) );
 	*(uint8_t*)m_writeHead = v;
@@ -153,7 +166,7 @@ vsStore::WriteUint8( uint8_t v )
 void
 vsStore::WriteInt16( int16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -163,7 +176,7 @@ vsStore::WriteInt16( int16_t v )
 void
 vsStore::WriteUint16( uint16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -173,7 +186,7 @@ vsStore::WriteUint16( uint16_t v )
 void
 vsStore::WriteUint16Native( uint16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -182,7 +195,7 @@ vsStore::WriteUint16Native( uint16_t v )
 void
 vsStore::WriteInt32( int32_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -192,7 +205,7 @@ vsStore::WriteInt32( int32_t v )
 void
 vsStore::WriteUint32( uint32_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -202,7 +215,7 @@ vsStore::WriteUint32( uint32_t v )
 void
 vsStore::WriteFloat( float v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -224,7 +237,7 @@ vsStore::WriteString( const vsString &string )
 void
 vsStore::WriteBuffer( const void *buffer, size_t bufferLength )
 {
-	vsAssert( BytesLeftForWriting() >= bufferLength, "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( bufferLength );
 
 	memcpy( m_writeHead, buffer, bufferLength );
 	m_writeHead += bufferLength;
@@ -294,7 +307,7 @@ vsStore::ReadBufferAsString( vsString *string )
 void
 vsStore::WriteVoidStar( void *v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -596,7 +609,7 @@ vsStore::ReadTransform2D(vsTransform2D *t)
 void
 vsStore::WriteMatrix4x4(const vsMatrix4x4 &m)
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(m), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(m) );
 	memcpy( m_writeHead, &m, sizeof(m) );
 	m_writeHead += sizeof(m);
 }
