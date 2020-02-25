@@ -275,10 +275,24 @@ vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &from, const vsQ
 vsVector3D
 vsQuaternion::ApplyTo( const vsVector3D &in ) const
 {
-	vsMatrix3x3 mat;
-	mat.Set(*this);
+	// This math is based on Laurent Couvidou's answer here:
+	//
+	// https://gamedev.stackexchange.com/a/50545
+	//
+	// Previously we converted the quaternion into a vsMatrix3x3 and used that
+	// to rotate the vector, but this approach is faster **for a single
+	// vector multiplication**.
+	//
+	// If, on the other hand, we're going to apply a rotation to a **lot** of
+	// vectors, then we're still better off converting the quaternion into a 3D
+	// matrix and multiplying by that, instead!
 
-	return mat.ApplyTo(in);
+	vsVector3D u(x,y,z);
+	float s(w);
+
+	return 2.f * u.Dot(in) * u +
+		(s*s - u.Dot(u)) * in +
+		2.f * s * u.Cross(in);
 }
 
 
