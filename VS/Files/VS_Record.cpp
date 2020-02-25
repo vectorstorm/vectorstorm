@@ -159,6 +159,13 @@ vsRecord::SerialiseBinaryV2( vsSerialiser *s )
 		for (int i = 0; i < m_childList.ItemCount(); i++ )
 		{
 			vsRecord *child = m_childList[i];
+			if ( child == NULL )
+			{
+				vsLog("Invalid child in record: %s", m_label.AsString());
+				vsLog("Child count: %d", m_childList.ItemCount());
+				vsLog("NULL child is number: %d", i);
+				vsAssert(child !=NULL, "actually NULL child in vsRecord??")
+			}
 			child->SerialiseBinaryV2(s);
 		}
 	}
@@ -349,6 +356,7 @@ vsRecord::GetChildCount(const vsString& label)
 void
 vsRecord::AddChild(vsRecord *record)
 {
+	vsAssert(record != NULL, "Tried to add a NULL subrecord??");
 	m_childList.AddItem(record);
 	m_lastChild = record;
 }

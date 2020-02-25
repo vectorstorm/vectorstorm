@@ -407,6 +407,7 @@ vsToken::PopulateStringTable( vsStringTable& table )
 void
 vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 {
+	vsAssert(s, "No serialiser in vsToken::SerialiseBinaryV2");
 	SetType(Type_Integer);
 
 	uint8_t type = m_type;
@@ -448,6 +449,7 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 void
 vsToken::SerialiseBinaryV2( vsSerialiser *s )
 {
+	vsAssert(s, "No serialiser in vsToken::SerialiseBinaryV2");
 	uint8_t type = m_type;
 	s->Uint8(type);
 	if ( s->GetType() == vsSerialiser::Type_Read )
