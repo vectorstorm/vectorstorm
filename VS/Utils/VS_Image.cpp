@@ -71,7 +71,7 @@ vsImage::vsImage( const vsString &filename ):
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
 	vsDelete(s);
-	if ( s_allowLoadFailure )
+	if ( !loadedImage && s_allowLoadFailure )
 	{
 		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
 
@@ -262,6 +262,7 @@ vsImage::AsyncReadIsReady()
 void
 vsImage::AsyncMap()
 {
+	vsAssert( m_pixel == NULL, "Non-null during pbo async mapping");
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	m_pixel = (uint32_t*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 	m_pixelCount = m_width * m_height;
@@ -409,6 +410,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 
 	// now lets copy our image data
 
+	vsAssert( m_pixel == NULL, "Non-null pixel storage during LoadFromSurface" );
 	m_pixelCount = w*h;
 	m_pixel = new uint32_t[m_pixelCount];
 
