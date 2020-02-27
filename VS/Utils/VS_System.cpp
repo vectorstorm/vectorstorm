@@ -30,7 +30,7 @@
 #include <WinSock2.h>
 #else
 #include <sys/param.h>
-#include <sys/sysctl.h>
+// #include <sys/sysctl.h>
 #include <unistd.h>
 #endif
 
@@ -168,15 +168,22 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 {
 	PHYSFS_init(argv[0]);
 	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
-	vsLog_Start();
 	vsLog("====== Initialising file system");
 	if ( !success )
 	{
 		vsLog("SetWriteDir failed!", success);
 		exit(1);
 	}
+	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
 
-	vsLog("UserDir: %s", PHYSFS_getUserDir());
+	PHYSFS_Version compiled;
+	PHYSFS_Version linked;
+
+	PHYSFS_VERSION(&compiled);
+	PHYSFS_getLinkedVersion(&linked);
+	vsLog("PhysFS compiled version: %d.%d.%d", compiled.major, compiled.minor, compiled.patch);
+	vsLog("PhysFS linked version: %d.%d.%d", linked.major, linked.minor, linked.patch);
+
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
 #if defined(__APPLE_CC__)
@@ -194,40 +201,66 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
-	m_dataDirectory = baseDirectory + "\\Data";
+	m_dataDirectory = baseDirectory + "Data";
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "/Data";
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
 #endif
-	success = PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
-	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
+
+	// we need the basedir for in case there's a crash report saved there.
+	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
+	//
+	// 0 parameter means PREPEND;  each new mount takes priority over the line before
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
 	if ( !success )
 	{
-		vsLog("Failed to mount %s", m_dataDirectory.c_str());
+		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
 		exit(1);
 	}
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
-	char** searchPath = PHYSFS_getSearchPath();
-	int pathId = 0;
-	while ( searchPath[pathId] )
-	{
-		vsLog("Search path: %s",searchPath[pathId]);
-		pathId++;
-	}
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
 
 void
 vsSystem::EnableGameDirectory( const vsString &directory )
 {
-	std::string d = m_dataDirectory + "/" + directory;
+	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
+	std::string archiveName = d + ".zip";
+	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
+	PHYSFS_mount(archiveName.c_str(), NULL, 1);
 	PHYSFS_mount(d.c_str(), NULL, 1);
+	// char** searchPath = PHYSFS_getSearchPath();
+	// int pathId = 0;
+	// while ( searchPath[pathId] )
+	// {
+	// 	vsLog("Search path: %s",searchPath[pathId]);
+	// 	pathId++;
+	// }
 }
+
+#if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
+
+	// We're in a PhysFS version before 2.1.0.  This means that
+	// PHYSFS_unmount() doesn't exist yet;  it's still PHYSFS_removeFromSearchPath().
+	// Let's make a PHYSFS_unmount() for us to use even under old PhysFS!
+#define PHYSFS_unmount(x) PHYSFS_removeFromSearchPath(x)
+
+#endif
 
 void
 vsSystem::DisableGameDirectory( const vsString &directory )
 {
 	std::string d = m_dataDirectory + "/" + directory;
-	PHYSFS_removeFromSearchPath(d.c_str());
+	PHYSFS_unmount(d.c_str());
+	PHYSFS_unmount((d+".zip").c_str());
 }
 
 void
@@ -395,18 +428,19 @@ vsSystem::GetNumberOfCores()
 	mib[1] = HW_AVAILCPU;  // alternatively, try HW_NCPU;
 
 	/* get the number of CPUs from the system */
-	sysctl(mib, 2, &numCPU, &len, NULL, 0);
+	// sysctl(mib, 2, &numCPU, &len, NULL, 0);
+	numCPU=8;
 
-	if( numCPU < 1 )
-	{
-		mib[1] = HW_NCPU;
-		sysctl( mib, 2, &numCPU, &len, NULL, 0 );
-
-		if( numCPU < 1 )
-		{
-			numCPU = 1;
-		}
-	}
+	// if( numCPU < 1 )
+	// {
+	// 	mib[1] = HW_NCPU;
+	// 	sysctl( mib, 2, &numCPU, &len, NULL, 0 );
+    //
+	// 	if( numCPU < 1 )
+	// 	{
+	// 		numCPU = 1;
+	// 	}
+	// }
 #else
 	 numCPU = sysconf( _SC_NPROCESSORS_ONLN );
 #endif

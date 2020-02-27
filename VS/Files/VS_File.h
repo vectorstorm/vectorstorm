@@ -18,23 +18,40 @@ class vsStore;
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_String.h"
 
+struct zipdata;
+
 class vsFile
 {
 public:
 	enum Mode
 	{
-		MODE_Read,
-		MODE_Write,
+		MODE_Read,          // open an existing file and read from it.
+		MODE_Write,         // overwrite an existing file.
+		MODE_WriteDirectly, // actually, 'Write' writes into a temporary file and overwrites the existing file when you destroy the vsFile object.  If you *actually* want to write directly into a file, use this mode instead.
+
+		MODE_ReadCompressed, // open an existing file and read from it, INFLATEd
+		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
 
 		MODE_MAX
 	};
 
 private:
+	vsString m_filename;
+	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
+	vsStore *m_store;
+	struct zipdata *m_zipData;
 
 	Mode		m_mode;
 
 	size_t		m_length;
+	bool m_moveOnDestruction;
+
+	void _WriteBytes( const void* bytes, size_t byteCount );
+	void _WriteFinalBytes_Buffered( const void* bytes, size_t byteCount );
+
+	// do some processing of file compression.
+	void _PumpCompression( const void* bytes, size_t byteCount, bool finish );
 
 public:
 
@@ -51,9 +68,24 @@ public:
 
 	static bool	Exists( const vsString &filename );	// returns true if the specified file exists.
 	static bool	DirectoryExists( const vsString &dirName );	// returns true if the specified directory exists.
-	static bool Delete( const vsString &filename );
+	// Delete functions return TRUE on success.
+	static bool Delete( const vsString &filename ); // will delete a FILE.
+	static bool Copy( const vsString &from, const vsString &to ); // will delete a FILE.
+	static bool Move( const vsString &from, const vsString &to ); // will move a FILE.
+	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
+	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
+	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
 
-	static vsArray<vsString> DirectoryContents( const vsString &dirName );
+	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
+	// directory.  It is your responsibility to check for each one whether it
+	// is the type of object you were looking for.
+	static int DirectoryContents( vsArray<vsString> *result, const vsString &dirName );
+
+	// DirectoryFiles returns a list of FILES inside this directory.
+	static int DirectoryFiles( vsArray<vsString> *result, const vsString &dirName );
+
+	// DirectoryFiles returns a list of DIRECTORIES inside this directory.
+	static int DirectoryDirectories( vsArray<vsString> *result, const vsString &dirName );
 
 	static void EnsureWriteDirectoryExists( const vsString &writeDirectoryName );
 
@@ -62,11 +94,19 @@ public:
 	bool		PeekLine( vsString *line );
 	bool		ReadLine( vsString *line );
 
+	bool		Record_Binary( vsRecord *record );		// returns true if we found or successfully wrote another record
+
 	void		Rewind();
 
-	void		Store( vsStore *store );		// read/write this raw data directly.
-	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store
+	void		Store( vsStore *store );		// read/write this raw data directly.  STORE IS REWOUND BEFORE READ/WRITE
+	void		StoreBytes( vsStore *store, size_t bytes );	// how many bytes to read/write into/out of this store.  STORE IS NOT REWOUND BEFORE READ/WRITE
+	void		PeekBytes( vsStore *store, size_t bytes );	// ONLY IN READ OPERATIONS.  Peek the requested number of bytes.
+	void		ConsumeBytes( size_t bytes ); // ONLY IN READ OPERATIONS.  Count this many bytes as having been read.  (Usually used in combination with the above)
 
+	int			ReadBytes( void* data, size_t bytes ); // this is a more direct version  of aa Read operation.  Will assert if we're not in a Read mode.
+	void		WriteBytes( const void* data, size_t bytes ); // this is a more direct version of 'Store'.  Will assert if we're not in a Write mode.
+
+	void		FlushBufferedWrites();
 	/*  These functions are probably deprecated;  use vsRecord objects instead!
 	 *
 	vsString	ReadLabel();
