@@ -36,7 +36,7 @@ vsLocalisationTable::Init(const vsString &language)
 {
 	s_localisationTable = new vsHashTable<vsString>( 128 );
 
-	vsString filename = vsFormatString("%s.xlat", language.c_str());
+	vsString filename = vsFormatString("i18n/%s.vrt", language.c_str());
 
 	if ( vsFile::Exists(filename) )
 	{
