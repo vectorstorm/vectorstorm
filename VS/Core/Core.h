@@ -23,6 +23,7 @@ class core
 	static vsPreferences * s_preferences;
 
 	static bool			s_exit;
+	static bool			s_allowExit;
 
 public:
 
@@ -41,6 +42,8 @@ public:
 
 	static void			SetExitToMenu();	// exit to the main menu
 	static void			SetExit();			// exit program entirely
+
+	static void SetAllowExit(bool allow); // if set to 'false', we'll defer exiting until it's set back to true
 };
 
 #endif //CORE_H
