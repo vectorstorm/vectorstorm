@@ -34,6 +34,7 @@ coreGame		*	core::s_game = NULL;
 coreGame		*	core::s_nextGame = NULL;
 vsHeap			*	core::s_gameHeap = NULL;
 bool				core::s_exit = false;
+bool				core::s_allowExit = true;
 
 // hack variable, to make the game run fullscreen on my particular laptop.
 // TODO:  This should really be built into an 'options' screen somewhere,
@@ -106,7 +107,7 @@ core::Go()
 	// 's_exit' is set when a game requests the whole VectorStorm application exit.
 	// Usually this is done by the coreGame watching for the 'esc' button, but
 	// any game can also set this value manually, by calling core::SetExit().
-	while ( !s_exit )
+	while ( !s_exit || !s_allowExit )
 	{
 		if ( s_nextGame )	// if we've marked a game to switch to
 		{
@@ -223,6 +224,12 @@ void
 core::SetExit()
 {
 	s_exit = true;
+}
+
+void
+core::SetAllowExit(bool allow)
+{
+	s_allowExit = allow;
 }
 
 const vsString &
