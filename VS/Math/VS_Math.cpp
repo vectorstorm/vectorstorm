@@ -56,10 +56,7 @@ uint32_t vsNextPowerOfTwo( uint32_t value )
 
 uint8_t vsHighBitPosition( uint32_t n )
 {
-	uint8_t r = 0;
-	while ( n >>= 1 )
-		r++;
-	return r;
+	return 31 - __builtin_clz(n);
 }
 
 uint32_t vsHighBit( uint32_t n )
