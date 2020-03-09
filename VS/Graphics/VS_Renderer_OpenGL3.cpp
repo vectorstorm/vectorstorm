@@ -2254,10 +2254,13 @@ vsRenderer_OpenGL3::FenceLoadingContext()
 	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	GLenum result;
+	int waitedSeconds = 0;
 	while(true)
 	{
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
 		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+		waitedSeconds += 5;
+		vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
 	}
 	glDeleteSync(fenceId);
 }
