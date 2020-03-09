@@ -20,22 +20,33 @@ class vsLocString
 public:
 	vsString m_key;
 	// vsArray<struct Arg*> m_args;
-	fmt::ArgList m_args;
 
-	vsLocString( const fmt::CStringRef& key );
+	vsLocString( const vsString& key);
 
-	vsLocString( const vsLocString& other ):
-		m_key(other.m_key),
-		m_args(other.m_args)
-	{
-	}
 	// operator vsString() const;
 };
 
-vsLocString vsLocFormat(fmt::CStringRef format_str, fmt::ArgList args);
-FMT_VARIADIC(vsLocString, vsLocFormat, fmt::CStringRef);
+// vsLocString vsLocFormat(fmt::CStringRef format_str, fmt::ArgList args);
+// FMT_VARIADIC(vsLocString, vsLocFormat, fmt::CStringRef);
 
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const vsLocString &s);
+// void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const vsLocString &s);
+
+template <>
+struct fmt::formatter<vsLocString> {
+	// constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+	// 	auto it = ctx.begin();
+	// 	return it;
+	// }
+
+	template <typename FormatContext>
+		auto format(const vsLocString& p, FormatContext& ctx) -> decltype(ctx.out()) {
+			return format_to(
+					ctx.out(),
+					"{}",
+					p.m_key
+					);
+		}
+};
 
 #endif // VS_LOCSTRING_H
 

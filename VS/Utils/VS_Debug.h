@@ -19,8 +19,14 @@
 #define vsCheck(x,y) if(!(x)){ vsFailedCheck(#x, y,__FILE__, __LINE__); }
 #define vsCheckF(x,y,...) if(!(x)){ vsFailedCheckF(#x, __FILE__, __LINE__, y, __VA_ARGS__); }
 void vsFailedCheck(const char* conditionStr, const char* msg, const char *file, int line);
-void vsFailedCheckF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args);
-FMT_VARIADIC(void, vsFailedCheckF, const char*, const char*, int, fmt::CStringRef )
+
+
+template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+void vsFailedCheckF(const char* conditionStr, const char* file, int line, S format, Args&&... args)
+{
+	vsString msgFormatted = fmt::sprintf(format,args...);
+	vsFailedCheck( conditionStr, msgFormatted.c_str(), file, line );
+}
 
 
 // An "Assert" will stop the program immediately, and output a message to the log
@@ -34,8 +40,12 @@ inline void vsFailedAssert( const char* conditionStr, const vsString &msg, const
 	return vsFailedAssert( conditionStr, msg.c_str(), file, line );
 }
 
-void vsFailedAssertF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args);
-FMT_VARIADIC(void, vsFailedAssertF, const char*, const char*, int, fmt::CStringRef )
+template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+void vsFailedAssertF(const char* conditionStr, const char* file, int line, S msg, Args&&... args)
+{
+	vsString msgFormatted = fmt::sprintf(msg,args...);
+	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
+}
 
 #else
 #define vsAssert(x,y) {}

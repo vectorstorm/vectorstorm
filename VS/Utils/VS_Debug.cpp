@@ -95,12 +95,6 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 	s_assertMutex.Unlock();
 }
 
-void vsFailedAssertF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
-{
-	vsString msgFormatted = fmt::sprintf(msg,args);
-	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
-}
-
 void vsFailedCheck( const char* conditionStr, const char* msg, const char *file, int line )
 {
 	// failed check..  trace out some information about the failed check.
@@ -116,9 +110,4 @@ void vsFailedCheck( const char* conditionStr, const char* msg, const char *file,
 	vsLog("at %s:%d", trimmedFile.c_str(), line);
 }
 
-void vsFailedCheckF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
-{
-	vsString msgFormatted = fmt::sprintf(msg,args);
-	vsFailedCheck( conditionStr, msgFormatted.c_str(), file, line );
-}
 

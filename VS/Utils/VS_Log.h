@@ -22,18 +22,25 @@ void vsLog_End();
 void vsLog_Show();
 
 #include "Utils/fmt/printf.h"
+#include "Utils/fmt/format.h"
 
-void vsLog(fmt::CStringRef format, fmt::ArgList args);
-FMT_VARIADIC(void, vsLog, fmt::CStringRef)
+void vsLog_(const vsString& str);
+void vsErrorLog_(const vsString &str);
 
-void vsErrorLog(fmt::CStringRef format, fmt::ArgList args);
-FMT_VARIADIC(void, vsErrorLog, fmt::CStringRef)
+template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+void vsLog(S format, Args&&... args)
+{
+	vsString str = fmt::sprintf(format,args...);
+	vsLog_(str);
+}
 
-// void vsLog(const char *format, ...);
-// void vsLog(const vsString &str);
+template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+void vsErrorLog(S format, Args&&... args)
+{
+	vsString str = fmt::sprintf(format,args...);
+	vsErrorLog_(str);
+}
 
-// void vsErrorLog(const char *format, ...);
-// void vsErrorLog(const vsString &str);
 
 
 // utility macro to trace out this message ONLY ONCE.
