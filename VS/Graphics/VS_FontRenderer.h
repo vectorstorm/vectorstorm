@@ -12,6 +12,7 @@
 
 #include "VS/Graphics/VS_Font.h"
 #include "VS/Graphics/VS_Fragment.h"
+#include "VS/Utils/VS_LocString.h"
 
 class vsFontRenderer
 {
@@ -130,6 +131,9 @@ public:
 	vsFontFragment* Fragment2D( const vsString& string );
 	vsFontFragment* Fragment3D( const vsString& string );
 
+	vsFontFragment* Fragment2D( const vsLocString& string ); //
+	vsFontFragment* Fragment3D( const vsLocString& string );
+
 	// the non-fragment approach avoids creating its own data on the GPU, and instead
 	// uses a single shared blob of data which is owned by the font itself.  The
 	// downside of this is that it requires a separate draw call for each glyph
@@ -155,6 +159,7 @@ class vsFontFragment: public vsFragment
 	vsFontRenderer m_renderer;
 	FontContext m_context;
 	vsString m_string;
+	vsLocString m_locString;
 
 	vsBox2D *m_lineBox; // contains a box around each wrapped line.
 	int *m_lineFirstGlyph; // the first glyph on each line.
@@ -181,6 +186,11 @@ public:
 	const vsBox2D& GetLineMapping(int line) const { return m_lineBox[line]; }
 	int GetLineFirstGlyph(int line) const { return m_lineFirstGlyph[line]; }
 	int GetLineLastGlyph(int line) const { return m_lineLastGlyph[line]; }
+
+	// SetLocString() informs us of the composed localisation string which
+	// resulted in our text.  If set, we'll re-localise our text if we rebuild
+	// (in case localisation language changed)
+	void SetLocString( const vsLocString& str ) { m_locString = str; }
 
 	// Detach() makes the fragment aware that its font no longer exists.  Should
 	// only be called by the Font.  Calling it means that this fragment will no

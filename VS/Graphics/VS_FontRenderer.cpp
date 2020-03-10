@@ -422,6 +422,22 @@ vsFontRenderer::Fragment3D( const vsString& string )
 	return fragment;
 }
 
+vsFontFragment*
+vsFontRenderer::Fragment2D( const vsLocString& string )
+{
+	vsFontFragment* ff = Fragment2D( vsString(string) );
+	ff->SetLocString(string);
+	return ff;
+}
+
+vsFontFragment*
+vsFontRenderer::Fragment3D( const vsLocString& string )
+{
+	vsFontFragment* ff = Fragment2D( vsString(string) );
+	ff->SetLocString(string);
+	return ff;
+}
+
 vsDisplayList*
 vsFontRenderer::DisplayList2D( const vsString& string )
 {

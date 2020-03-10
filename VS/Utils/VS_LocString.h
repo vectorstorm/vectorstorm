@@ -10,7 +10,6 @@
 #ifndef VS_LOCSTRING_H
 #define VS_LOCSTRING_H
 
-#include "VS_LocalisationTable.h"
 #include "VS/Utils/fmt/format.h"
 #include <vector>
 // #include "VS/Utils/VS_String.h"

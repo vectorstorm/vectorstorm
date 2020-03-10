@@ -8,6 +8,7 @@
  */
 
 #include "VS_LocString.h"
+#include "VS/Utils/VS_LocalisationTable.h"
 
 vsLocString::vsLocString( const vsString& key ):
 	m_key(key.c_str())
