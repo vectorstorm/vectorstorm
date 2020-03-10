@@ -12,31 +12,99 @@
 
 #include "VS_LocalisationTable.h"
 #include "VS/Utils/fmt/format.h"
+#include <vector>
 // #include "VS/Utils/VS_String.h"
 // #include "VS/Utils/VS_Array.h"
+
+class vsLocString;
+
+struct vsLocArg;
 
 class vsLocString
 {
 public:
 	vsString m_key;
+	std::vector<vsLocArg> m_args;
 	// vsArray<struct Arg*> m_args;
 
-	vsLocString( const vsString& key);
+	vsLocString( const vsString& key = vsEmptyString);
 
-	// operator vsString() const;
+
+	operator vsString() const;
 };
 
-// vsLocString vsLocFormat(fmt::CStringRef format_str, fmt::ArgList args);
-// FMT_VARIADIC(vsLocString, vsLocFormat, fmt::CStringRef);
+struct vsLocArg
+{
+	enum Type
+	{
+		Type_LocString,
+		Type_String,
+		Type_Int,
+		Type_Float,
+	};
 
-// void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const vsLocString &s);
+	vsString m_name;
+
+	vsLocString m_locString;
+	vsString m_stringLiteral;
+	int m_intLiteral;
+	float m_floatLiteral;
+	Type m_type;
+
+	vsLocArg(const vsLocArg& other):
+		m_name(other.m_name),
+		m_type(other.m_type)
+	{
+		switch( m_type )
+		{
+			case Type_LocString:
+				m_locString = other.m_locString;
+				break;
+			case Type_String:
+				m_stringLiteral = other.m_stringLiteral;
+				break;
+			case Type_Int:
+				m_intLiteral = other.m_intLiteral;
+				break;
+			case Type_Float:
+				m_floatLiteral = other.m_floatLiteral;
+				break;
+		}
+	}
+	vsLocArg(const vsString& name, float literal): m_name(name), m_floatLiteral(literal), m_type(Type_Float) {}
+	vsLocArg(const vsString& name, int literal): m_name(name), m_intLiteral(literal), m_type(Type_Int) {}
+	vsLocArg(const vsString& name, const vsString& literal): m_name(name), m_stringLiteral(literal), m_type(Type_String) {}
+	vsLocArg(const vsString& name, const vsLocString& loc): m_name(name), m_locString(loc), m_type(Type_LocString) {}
+
+	vsString AsString(const vsString& fmt = vsEmptyString) const;
+};
+
+template <typename S, typename... Args>
+vsLocString vsLocFormat(S key, Args&&... args)
+{
+	std::vector<vsLocArg> a = {args...};
+
+	vsLocString result(key);
+	result.m_args = a;
+	return result;
+}
+
+// =========  INTEGRATION WITH FMT
+//
+// FMTLIB needs an operator<< in order to work with printf-style
+// formatting, and needs an fmt::formatter template specialisation
+// to work with Python-style formatting (which is what we're using
+// for most localisation stuff, but maybe isn't going to be useful
+// any more in future, since I'm writing my own localisation formatting?)
+//
+std::ostream& operator <<(std::ostream &s, const vsLocString &ls);
 
 template <>
 struct fmt::formatter<vsLocString> {
-	// constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-	// 	auto it = ctx.begin();
-	// 	return it;
-	// }
+	auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		auto it = ctx.begin();
+		return it;
+	}
 
 	template <typename FormatContext>
 		auto format(const vsLocString& p, FormatContext& ctx) -> decltype(ctx.out()) {
