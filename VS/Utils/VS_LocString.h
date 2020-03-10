@@ -23,13 +23,20 @@ class vsLocString
 {
 public:
 	vsString m_key;
+	vsString m_literal;
+
 	std::vector<vsLocArg> m_args;
 	// vsArray<struct Arg*> m_args;
 
 	vsLocString( const vsString& key = vsEmptyString);
 
+	static vsLocString Literal( const vsString& literal );
 
-	operator vsString() const;
+	vsString AsString() const;
+	// operator vsString() const;
+
+	bool operator==(const vsLocString& other) const;
+	bool operator!=(const vsLocString& other) const;
 };
 
 struct vsLocArg
@@ -76,6 +83,8 @@ struct vsLocArg
 	vsLocArg(const vsString& name, const vsLocString& loc): m_name(name), m_locString(loc), m_type(Type_LocString) {}
 
 	vsString AsString(const vsString& fmt = vsEmptyString) const;
+	bool operator==(const vsLocArg& other) const;
+	bool operator!=(const vsLocArg& other) const;
 };
 
 template <typename S, typename... Args>

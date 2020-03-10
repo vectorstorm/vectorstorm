@@ -425,7 +425,7 @@ vsFontRenderer::Fragment3D( const vsString& string )
 vsFontFragment*
 vsFontRenderer::Fragment2D( const vsLocString& string )
 {
-	vsFontFragment* ff = Fragment2D( vsString(string) );
+	vsFontFragment* ff = Fragment2D( string.AsString() );
 	ff->SetLocString(string);
 	return ff;
 }
@@ -433,7 +433,7 @@ vsFontRenderer::Fragment2D( const vsLocString& string )
 vsFontFragment*
 vsFontRenderer::Fragment3D( const vsLocString& string )
 {
-	vsFontFragment* ff = Fragment2D( vsString(string) );
+	vsFontFragment* ff = Fragment2D( string.AsString() );
 	ff->SetLocString(string);
 	return ff;
 }
@@ -899,11 +899,11 @@ vsFontFragment::Rebuild()
 void
 vsFontFragment::Rebuild_IfLocalised()
 {
-	vsLog("Considering rebuild of '%s'", m_string);
+	// vsLog("Considering rebuild of '%s'", m_string);
 	if ( m_attached && m_locString.m_key != vsEmptyString )
 	{
-		vsLog("Rebuilding it!", m_string);
-		m_string = vsString(m_locString);
+		// vsLog("Rebuilding it!", m_string);
+		m_string = m_locString.AsString();
 		Rebuild();
 	}
 }
