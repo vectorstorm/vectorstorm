@@ -508,3 +508,14 @@ vsFont::RebuildFragments()
 	}
 }
 
+void
+vsFont::RebuildLocFragments()
+{
+	int fragmentCount = m_fragment.ItemCount();
+	for ( int i = 0; i < fragmentCount; i++ )
+	{
+		vsFontFragment *fragment = m_fragment[i];
+		fragment->Rebuild_IfLocalised();
+	}
+}
+

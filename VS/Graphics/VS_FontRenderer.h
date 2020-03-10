@@ -205,6 +205,10 @@ public:
 	// call it manually.
 	void Rebuild();
 
+	// If we have localisation data, rebuild (because the localisation language
+	// just changed, generally)
+	void Rebuild_IfLocalised();
+
 	friend class vsFontRenderer;
 };
 

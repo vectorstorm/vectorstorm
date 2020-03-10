@@ -897,6 +897,18 @@ vsFontFragment::Rebuild()
 }
 
 void
+vsFontFragment::Rebuild_IfLocalised()
+{
+	vsLog("Considering rebuild of '%s'", m_string);
+	if ( m_attached && m_locString.m_key != vsEmptyString )
+	{
+		vsLog("Rebuilding it!", m_string);
+		m_string = vsString(m_locString);
+		Rebuild();
+	}
+}
+
+void
 vsFontFragment::Detach()
 {
 	m_attached = false;
