@@ -32,6 +32,7 @@ public:
 	vsLocString( const vsString& key = vsEmptyString );
 	vsLocString( const vsLocString& other );
 
+	bool IsEmpty() const;
 	vsString AsString() const;
 	// operator vsString() const;
 

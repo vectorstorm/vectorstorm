@@ -96,6 +96,12 @@ vsLocString::SubVars( vsString& str ) const
 	}
 }
 
+bool
+vsLocString::IsEmpty() const
+{
+	return m_string.empty();
+}
+
 vsString
 vsLocString::AsString() const
 {
