@@ -10,30 +10,113 @@
 #include "VS_LocString.h"
 #include "VS/Utils/VS_LocalisationTable.h"
 
-vsLocString::vsLocString( const vsString& key ):
-	m_key(key.c_str()),
-	m_literal(vsEmptyString)
+vsLocString::vsLocString( const char* str ):
+	m_string(str)
 {
 }
 
-vsLocString
-vsLocString::Literal( const vsString& literal )
+vsLocString::vsLocString( const vsString& key ):
+	m_string(key)
 {
-	vsLocString result;
-	result.m_literal = literal;
-	return result;
+}
+
+vsLocString::vsLocString( const vsLocString& other ):
+	m_string(other.m_string),
+	m_args(other.m_args)
+{
+}
+
+// vsLocString
+// vsLocString::Literal( const vsString& literal )
+// {
+// 	vsLocString result;
+// 	result.m_literal = literal;
+// 	return result;
+// }
+//
+void
+vsLocString::SubVars( vsString& str ) const
+{
+	// Look for {} sets.
+
+	int startVar = -1;
+	int startFormat = -1;
+	int endVar = -1;
+	size_t scan = 0;
+	while ( scan < str.size() )
+	{
+		if ( str[scan] == '{' )
+		{
+			vsAssertF(startVar == -1, "Nested '{' in locstring??  %s", str);
+			startVar = scan;
+		}
+		if ( str[scan] == ':' )
+		{
+			if ( startVar != -1 )
+				startFormat = scan;
+		}
+		if ( str[scan] == '}' )
+		{
+			vsAssertF(startVar != -1, "'}' in locstring without matching '{': %s", str);
+			endVar = scan;
+		}
+
+		if ( endVar != -1 )
+		{
+			size_t nameStart = startVar+1;
+			size_t nameEnd = (startFormat >= 0) ? startFormat : endVar;
+			// process this variable!
+			vsString name = str.substr(nameStart, nameEnd-nameStart);
+			// check for an arg with the same name
+			const vsLocArg* arg = NULL;
+			for ( size_t i = 0; i < m_args.size(); i++ )
+				if ( m_args[i].m_name == name )
+					arg = &m_args[i];
+
+			vsString replacement;
+			if ( arg )
+			{
+				vsString format;
+				if ( startFormat != -1 )
+				{
+					format = str.substr(startFormat, endVar-startFormat);
+					// we have some formatting stuff!
+					replacement = arg->AsString(format);
+				}
+				else
+					replacement = arg->AsString();
+			}
+			else
+				replacement = vsLoc(name);
+
+			str = str.replace( startVar, (endVar+1)-startVar, replacement );
+			return SubVars(str);
+		}
+		scan++;
+	}
 }
 
 vsString
 vsLocString::AsString() const
 {
-	if ( m_key.empty() )
-		return m_literal;
+	vsString str(m_string);
+	SubVars( str );
+	return str;
 
-	vsString str = vsLoc(m_key);
-
+#if 0
 	if ( !m_args.empty() )
 	{
+		// Okay.  #if 0 version below worked the other way around; it
+		// checked each arg and looked for a variable to substitute itself
+		// in for.  Instead, we're going to walk through the string looking
+		// for variables, and substitute them if/when we find them.
+		//
+		// This means that we can also treat unmatched variables as
+		// localisation strings
+
+
+
+
 		// let's look for variables to substitute
 		for ( size_t i = 0; i < m_args.size(); i++ )
 		{
@@ -66,6 +149,7 @@ vsLocString::AsString() const
 		}
 	}
 	return str;
+#endif // 0
 }
 
 vsString
@@ -75,8 +159,6 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 	{
 		case Type_LocString:
 			return m_locString.AsString();
-		case Type_String:
-			return m_stringLiteral;
 		case Type_Int:
 			{
 				vsString fmt = vsFormatString("{%s}", fmt_in);
@@ -106,7 +188,7 @@ std::ostream& operator <<(std::ostream &s, const vsLocString &ls)
 bool
 vsLocString::operator==(const vsLocString& other) const
 {
-	return m_key == other.m_key && m_literal == other.m_literal && m_args == other.m_args;
+	return m_string == other.m_string && m_args == other.m_args;
 }
 
 bool
@@ -128,9 +210,6 @@ vsLocArg::operator==(const vsLocArg& other) const
 	{
 		case Type_LocString:
 			result = (m_locString == other.m_locString);
-			break;
-		case Type_String:
-			result = (m_stringLiteral == other.m_stringLiteral);
 			break;
 		case Type_Int:
 			result = (m_intLiteral == other.m_intLiteral);

@@ -21,16 +21,16 @@ struct vsLocArg;
 
 class vsLocString
 {
+	void SubVars( vsString& str ) const;
 public:
-	vsString m_key;
-	vsString m_literal;
+	vsString m_string;
 
 	std::vector<vsLocArg> m_args;
 	// vsArray<struct Arg*> m_args;
 
-	vsLocString( const vsString& key = vsEmptyString);
-
-	static vsLocString Literal( const vsString& literal );
+	vsLocString( const char* str ); // non-NULL!
+	vsLocString( const vsString& key = vsEmptyString );
+	vsLocString( const vsLocString& other );
 
 	vsString AsString() const;
 	// operator vsString() const;
@@ -44,7 +44,6 @@ struct vsLocArg
 	enum Type
 	{
 		Type_LocString,
-		Type_String,
 		Type_Int,
 		Type_Float,
 	};
@@ -52,7 +51,6 @@ struct vsLocArg
 	vsString m_name;
 
 	vsLocString m_locString;
-	vsString m_stringLiteral;
 	int m_intLiteral;
 	float m_floatLiteral;
 	Type m_type;
@@ -66,9 +64,6 @@ struct vsLocArg
 			case Type_LocString:
 				m_locString = other.m_locString;
 				break;
-			case Type_String:
-				m_stringLiteral = other.m_stringLiteral;
-				break;
 			case Type_Int:
 				m_intLiteral = other.m_intLiteral;
 				break;
@@ -79,7 +74,6 @@ struct vsLocArg
 	}
 	vsLocArg(const vsString& name, float literal): m_name(name), m_floatLiteral(literal), m_type(Type_Float) {}
 	vsLocArg(const vsString& name, int literal): m_name(name), m_intLiteral(literal), m_type(Type_Int) {}
-	vsLocArg(const vsString& name, const vsString& literal): m_name(name), m_stringLiteral(literal), m_type(Type_String) {}
 	vsLocArg(const vsString& name, const vsLocString& loc): m_name(name), m_locString(loc), m_type(Type_LocString) {}
 
 	vsString AsString(const vsString& fmt = vsEmptyString) const;
@@ -119,7 +113,7 @@ struct fmt::formatter<vsLocString> {
 			return format_to(
 					ctx.out(),
 					"{}",
-					p.m_key
+					p.AsString()
 					);
 		}
 };

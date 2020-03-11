@@ -128,8 +128,8 @@ public:
 	// the 'fragment' approach is ideal for long-lived strings, as it produces a
 	// single renderable chunk of geometry which can be drawn in a single draw call,
 	// but which requires its own blob of data on the GPU.
-	vsFontFragment* Fragment2D( const vsString& string );
-	vsFontFragment* Fragment3D( const vsString& string );
+	// vsFontFragment* Fragment2D( const vsString& string );
+	// vsFontFragment* Fragment3D( const vsString& string );
 
 	vsFontFragment* Fragment2D( const vsLocString& string ); //
 	vsFontFragment* Fragment3D( const vsLocString& string );
@@ -172,7 +172,7 @@ class vsFontFragment: public vsFragment
 	bool m_attached;
 
 public:
-	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string );
+	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsLocString& string );
 	virtual ~vsFontFragment();
 
 	// If our font renderer had mapping enabled, these functions provide access
@@ -186,11 +186,6 @@ public:
 	const vsBox2D& GetLineMapping(int line) const { return m_lineBox[line]; }
 	int GetLineFirstGlyph(int line) const { return m_lineFirstGlyph[line]; }
 	int GetLineLastGlyph(int line) const { return m_lineLastGlyph[line]; }
-
-	// SetLocString() informs us of the composed localisation string which
-	// resulted in our text.  If set, we'll re-localise our text if we rebuild
-	// (in case localisation language changed)
-	void SetLocString( const vsLocString& str ) { m_locString = str; }
 
 	// Detach() makes the fragment aware that its font no longer exists.  Should
 	// only be called by the Font.  Calling it means that this fragment will no
