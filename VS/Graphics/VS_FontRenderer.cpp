@@ -294,7 +294,17 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 			nextGlyph += (int)glyphsInThisLine;
 		}
 
-
+		if ( constructor.ptIndex == 0 || constructor.tlIndex == 0 )
+		{
+			vsLog("Aborting build of non-empty string: %s", string);
+			vsDeleteArray( constructor.glyphBox );
+			vsDeleteArray( constructor.lineBox );
+			vsDeleteArray( constructor.lineFirstGlyph );
+			vsDeleteArray( constructor.lineLastGlyph );
+			vsDeleteArray( ptArray );
+			vsDeleteArray( tlArray );
+			return;
+		}
 		ptBuffer->SetArray( constructor.ptArray, constructor.ptIndex );
 		tlBuffer->SetArray( constructor.tlArray, constructor.tlIndex );
 
