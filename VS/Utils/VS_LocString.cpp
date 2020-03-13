@@ -170,7 +170,7 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				vsString fmt = vsFormatString("{%s}", fmt_in);
 				if ( fmt != vsEmptyString )
 				{
-					return vsFormatLoc(fmt, m_intLiteral);
+					return fmt::format(fmt, m_intLiteral);
 				}
 			}
 		case Type_Float:
@@ -178,7 +178,7 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				vsString fmt = vsFormatString("{%s}", fmt_in);
 				if ( fmt != vsEmptyString )
 				{
-					return vsFormatLoc(fmt, m_floatLiteral);
+					return fmt::format(fmt, m_floatLiteral);
 				}
 			}
 	}

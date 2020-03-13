@@ -20,19 +20,6 @@ typedef std::string vsString;
 // platforms, yay!)
 #define vsFormatString fmt::sprintf
 
-// vsFormatLoc uses a new-style Python-like format.  This lets you do
-// this:
-//
-// vsString string = vsFormatLocString("{1} {0}!", "World", "Hello");
-//
-// or for maximum localiser-friendliness, even lets you do this:
-//
-// vsString string = vsFormatLocString("{hello} {world}!", fmt::arg("world","World"), fmt::arg("hello","Hello"));
-// or even this:
-// vsString string = vsFormatLocString("{hello} {world}!", "world"_a="World", "hello"_a="Hello");
-//
-#define vsFormatLoc fmt::format
-
 vsString vsNumberString(int number);
 
 vsString vsTrimWhitespace( const vsString& input );
