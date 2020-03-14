@@ -102,8 +102,10 @@ vsLocString vsLocFormat(S key, Args&&... args)
 //
 std::ostream& operator <<(std::ostream &s, const vsLocString &ls);
 
+namespace fmt
+{
 template <>
-struct fmt::formatter<vsLocString> {
+struct formatter<vsLocString> {
 	auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
 		auto it = ctx.begin();
 		return it;
@@ -117,6 +119,7 @@ struct fmt::formatter<vsLocString> {
 					p.AsString()
 					);
 		}
+};
 };
 
 #endif // VS_LOCSTRING_H
