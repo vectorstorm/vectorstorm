@@ -837,11 +837,26 @@ vsSystem::CPUDescription()
 #endif
 }
 
+unsigned long long GetTotalSystemMemory()
+{
+#if defined(_WIN32)
+	MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    GlobalMemoryStatusEx(&status);
+    return status.ullTotalPhys;
+#else
+	long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+#endif
+}
+
 void
 vsSystem::LogSystemDetails()
 {
 	vsLog("CPU:  %s", CPUDescription().c_str());
 	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
+	vsLog("System RAM:  %0.2f gb", GetTotalSystemMemory() / (1024.f*1024.f*1024.f));
 }
 
 Resolution *
