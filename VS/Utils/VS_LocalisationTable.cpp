@@ -15,7 +15,34 @@
 #include "VS_File.h"
 #include "VS_Record.h"
 
+namespace {
+	void LoadTranslationsIntoHash( vsHashTable<vsString> *ht, const vsString& language )
+	{
+		vsString filename = vsFormatString("i18n/%s.vrt", language.c_str());
+
+		if ( vsFile::Exists(filename) )
+		{
+			vsFile table(filename);
+
+			vsString str;
+			vsRecord r;
+
+			while( table.Record(&r) )
+			{
+				if ( r.GetTokenCount() > 0 )
+				{
+					vsString label = r.GetLabel().AsString();
+					vsString string = r.GetToken(0).AsString();
+
+					ht->AddItemWithKey(string, label);
+				}
+			}
+		}
+	}
+};
+
 static vsHashTable<vsString>	*s_localisationTable = NULL;
+static vsHashTable<vsString>	*s_fallbackLocalisationTable = NULL;
 
 vsLocalisationTable::vsLocalisationTable()
 {
@@ -23,6 +50,8 @@ vsLocalisationTable::vsLocalisationTable()
 
 vsLocalisationTable::~vsLocalisationTable()
 {
+	vsDelete( s_localisationTable );
+	vsDelete( s_fallbackLocalisationTable );
 }
 
 void
@@ -34,26 +63,15 @@ vsLocalisationTable::Init()
 void
 vsLocalisationTable::Init(const vsString &language)
 {
-	s_localisationTable = new vsHashTable<vsString>( 128 );
+	s_localisationTable = new vsHashTable<vsString>( 512 );
+	LoadTranslationsIntoHash( s_localisationTable, language );
 
-	vsString filename = vsFormatString("%s.xlat", language.c_str());
-
-	if ( vsFile::Exists(filename) )
+	if ( !s_fallbackLocalisationTable )
 	{
-		vsFile table(filename);
-
-		vsString str;
-		vsRecord r;
-
-		while( table.Record(&r) )
+		if ( vsFile::Exists("i18n/english.vrt") )
 		{
-			if ( r.GetTokenCount() > 0 )
-			{
-				vsString label = r.GetLabel().AsString();
-				vsString string = r.GetToken(0).AsString();
-
-				s_localisationTable->AddItemWithKey(string, label);
-			}
+			s_fallbackLocalisationTable = new vsHashTable<vsString>( 512 );
+			LoadTranslationsIntoHash( s_fallbackLocalisationTable, "english" );
 		}
 	}
 }
@@ -73,9 +91,12 @@ vsLocalisationTable::GetTranslation( const vsString &key )
 	{
 		return *str;
 	}
-	else
+	else if ( s_fallbackLocalisationTable )
 	{
-		return vsFormatString("<<%s>>", key.c_str());
+		str = s_fallbackLocalisationTable->FindItem(key);
+		if ( str )
+			return vsFormatString("$%s$", *str);
 	}
+	return vsFormatString("<<%s>>", key.c_str());
 }
 

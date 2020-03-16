@@ -418,6 +418,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_LinkedListStore.h
 	VS/Utils/VS_LocalisationTable.cpp
 	VS/Utils/VS_LocalisationTable.h
+	VS/Utils/VS_LocString.cpp
+	VS/Utils/VS_LocString.h
 	VS/Utils/VS_Log.cpp
 	VS/Utils/VS_Log.h
 	#VS/Utils/VS_Menu.cpp

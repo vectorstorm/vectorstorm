@@ -25,6 +25,8 @@
 #include "VS_File.h"
 #include "VS_Record.h"
 
+#include "Utils/utfcpp/utf8.h"
+
 vsFontSize::vsFontSize( const vsString &filename ):
 	m_glyph(NULL),
 	m_glyphCount(0),
@@ -368,17 +370,24 @@ vsFontSize::FindGlyphForCharacter(uint32_t letter)
 }
 
 float
-vsFontSize::GetStringWidth( const vsString &string, float size )
+vsFontSize::GetStringWidth( const vsString &string_in, float size )
 {
 	float width = 0.f;
-	size_t length = string.size();
-	for ( size_t i = 0; i < length; i++ )
+
+	const char* string = string_in.c_str();
+	const char* stringEnd = string + strlen(string);
+	size_t len = utf8::distance(string, stringEnd);
+	const char* w = string;
+
+	for ( size_t i = 0; i < len; i++ )
 	{
-		if ( i == length-1 )
-			width += GetCharacterWidth( string[i], size ); // last character, use the full character width
+		uint32_t cp = utf8::next(w, stringEnd);
+
+		if ( i == len-1 )
+			width += GetCharacterWidth( cp, size ); // last character, use the full character width
 		else
 		{
-			width += GetCharacterAdvance( string[i], size ); // other characters, just use the distance we advance
+			width += GetCharacterAdvance( cp, size ); // other characters, just use the distance we advance
 			// width += GetCharacterKerning( string[i], string[i+1], size ); // also, adjust for kerning
 		}
 	}
@@ -505,6 +514,17 @@ vsFont::RebuildFragments()
 	{
 		vsFontFragment *fragment = m_fragment[i];
 		fragment->Rebuild();
+	}
+}
+
+void
+vsFont::RebuildLocFragments()
+{
+	int fragmentCount = m_fragment.ItemCount();
+	for ( int i = 0; i < fragmentCount; i++ )
+	{
+		vsFontFragment *fragment = m_fragment[i];
+		fragment->Rebuild_IfLocalised();
 	}
 }
 

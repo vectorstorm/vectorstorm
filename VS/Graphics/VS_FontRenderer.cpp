@@ -400,12 +400,44 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 	}
 }
 
+// vsFontFragment*
+// vsFontRenderer::Fragment2D( const vsString& string )
+// {
+// 	m_texSize = m_size;
+// 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
+// 	CreateString_InFragment(FontContext_2D, fragment, string);
+// 	m_font->RegisterFragment(fragment);
+// 	if ( fragment->GetDisplayList() == NULL &&
+// 			!fragment->IsSimple() )
+// 	{
+// 		vsDelete(fragment);
+// 		return NULL;
+// 	}
+// 	return fragment;
+// }
+//
+// vsFontFragment*
+// vsFontRenderer::Fragment3D( const vsString& string )
+// {
+// 	m_texSize = m_font->MaxSize();
+// 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
+// 	CreateString_InFragment(FontContext_3D, fragment, string);
+// 	m_font->RegisterFragment(fragment);
+// 	if ( fragment->GetDisplayList() == NULL &&
+// 			!fragment->IsSimple() )
+// 	{
+// 		vsDelete(fragment);
+// 		return NULL;
+// 	}
+// 	return fragment;
+// }
+
 vsFontFragment*
-vsFontRenderer::Fragment2D( const vsString& string )
+vsFontRenderer::Fragment2D( const vsLocString& string )
 {
 	m_texSize = m_size;
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
-	CreateString_InFragment(FontContext_2D, fragment, string);
+	CreateString_InFragment(FontContext_2D, fragment, string.AsString());
 	m_font->RegisterFragment(fragment);
 	if ( fragment->GetDisplayList() == NULL &&
 			!fragment->IsSimple() )
@@ -417,11 +449,11 @@ vsFontRenderer::Fragment2D( const vsString& string )
 }
 
 vsFontFragment*
-vsFontRenderer::Fragment3D( const vsString& string )
+vsFontRenderer::Fragment3D( const vsLocString& string )
 {
 	m_texSize = m_font->MaxSize();
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
-	CreateString_InFragment(FontContext_3D, fragment, string);
+	CreateString_InFragment(FontContext_3D, fragment, string.AsString());
 	m_font->RegisterFragment(fragment);
 	if ( fragment->GetDisplayList() == NULL &&
 			!fragment->IsSimple() )
@@ -853,10 +885,11 @@ vsFontRenderer::SetSizeBias( float bias )
 	m_sizeBias = bias;
 }
 
-vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string ):
+vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsLocString& string ):
 	m_renderer(renderer),
 	m_context(fc),
-	m_string(string),
+	m_string(string.AsString()),
+	m_locString(string),
 	m_lineBox(NULL),
 	m_lineFirstGlyph(NULL),
 	m_lineLastGlyph(NULL),
@@ -887,6 +920,22 @@ vsFontFragment::Rebuild()
 		vsDeleteArray(m_lineFirstGlyph);
 		vsDeleteArray(m_lineLastGlyph);
 		m_renderer.CreateString_InFragment( m_context, this, m_string );
+	}
+}
+
+void
+vsFontFragment::Rebuild_IfLocalised()
+{
+	// vsLog("Considering rebuild of '%s'", m_string);
+	if ( m_attached )
+	{
+		vsString newString = m_locString.AsString();
+		if ( newString != m_string )
+		{
+			// vsLog("Rebuilding it!", m_string);
+			m_string = newString;
+			Rebuild();
+		}
 	}
 }
 
