@@ -844,6 +844,11 @@ unsigned long long GetTotalSystemMemory()
     status.dwLength = sizeof(status);
     GlobalMemoryStatusEx(&status);
     return status.ullTotalPhys;
+#elif defined(__APPLE_CC__)
+	uint64_t mem;
+	size_t len = sizeof(mem);
+	sysctlbyname("hw.memsize", &mem, &len, NULL, 0);
+	return mem;
 #else
 	long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
