@@ -24,6 +24,8 @@ public:
 	void Init(const vsString &language);
 	void Deinit();
 
+	void AddKey( const vsString& key, const vsString& translation );
+
 	vsString	GetTranslation( const vsString &key );
 };
 
