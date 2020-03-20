@@ -670,16 +670,16 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	{
 		uint32_t cp = utf8::next(w, string + strlen(string));
 		vsGlyph *g;
-
-		if ( cp == 160 ) // nonbreaking space
+		if ( cp == '\r' )
+			continue;
+		else if ( cp == '\t' )
+			continue;
+		else if ( cp == 0x200b ) // zero-width space;  just ignore
+			continue;
+		else if ( cp == 0x00a0 ) // non-breaking space
 			g = fontSize->FindGlyphForCharacter( ' ' );
 		else
 			g = fontSize->FindGlyphForCharacter( cp );
-
-		if ( cp == '\r' )
-			continue;
-		if ( cp == '\t' )
-			continue;
 
 		if ( !g )
 		{
@@ -688,15 +688,10 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			vsLog("Missing character in font: %d (%s)", cp, glyph);
 
 			const char* missingGlyphString = u8"□";
-			if ( cp == 160 ) // nonbreaking space
-				g = fontSize->FindGlyphForCharacter( ' ' );
-			else
-			{
-				g = fontSize->FindGlyphForCharacter(utf8::next(missingGlyphString, missingGlyphString + strlen(missingGlyphString)));
+			g = fontSize->FindGlyphForCharacter(utf8::next(missingGlyphString, missingGlyphString + strlen(missingGlyphString)));
 
-				if ( !g )
-					g = fontSize->FindGlyphForCharacter( '?' );
-			}
+			if ( !g )
+				g = fontSize->FindGlyphForCharacter( '?' );
 		}
 		if ( g )
 		{
@@ -835,7 +830,9 @@ vsFontRenderer::BuildDisplayListGeometryFromString( FontContext context, vsDispl
 	{
 		uint32_t cp = utf8::next(w, stringEnd);
 		vsGlyph *g;
-		if ( cp == 160 ) // nonbreaking space
+		if ( cp == 0x200b ) // zero-width space;  just ignore
+			continue;
+		else if ( cp == 0x00a0 ) // non-breaking space
 			g = fontSize->FindGlyphForCharacter( ' ' );
 		else
 			g = fontSize->FindGlyphForCharacter( cp );
