@@ -34,9 +34,9 @@ public:
 	};
 private:
 	Type		m_type;
+	vsString	m_string;
 	union
 	{
-		char*	m_string;
 		float		m_float;
 		int32_t		m_int;
 	};
