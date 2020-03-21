@@ -140,6 +140,8 @@ public:
 
 	void LogSystemDetails();
 
+	vsString GetWriteDirectory() const; // returns filesystem path to the write directory
+
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
 	vsSystemPreferences *	GetPreferences() { return m_preferences; }
 

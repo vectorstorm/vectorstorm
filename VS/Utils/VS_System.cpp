@@ -590,7 +590,7 @@ vsSystem::Launch( const vsString &target )
 	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
 #else
 	// Linux, probably?
-	int err = system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	int err = system( vsFormatString("xdg-open %s &", target.c_str()).c_str() );
 	if ( err )
 		vsLog("system: error %d", err);
 #endif
@@ -1051,5 +1051,11 @@ void
 vsSystemPreferences::SetDynamicBatching(bool enabled)
 {
 	m_dynamicBatching->m_value = enabled;
+}
+
+vsString
+vsSystem::GetWriteDirectory() const
+{
+	return PHYSFS_getWriteDir();
 }
 
