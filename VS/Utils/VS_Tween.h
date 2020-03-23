@@ -36,17 +36,17 @@ public:
 		m_tweening = false;
 	}
 
-	bool		IsTweening()
+	bool		IsTweening() const
 	{
 		return m_tweening;
 	}
 
-	const T &	GetValue()
+	const T &	GetValue() const
 	{
 		return m_current;
 	}
 
-	const T &	GetTarget()
+	const T &	GetTarget() const
 	{
 		return m_end;
 	}
@@ -118,17 +118,17 @@ public:
 		m_tweening = false;
 	}
 
-	bool		IsTweening()
+	bool		IsTweening() const
 	{
 		return m_tweening;
 	}
 
-	const vsVector3D&	GetValue()
+	const vsVector3D&	GetValue() const
 	{
 		return m_current;
 	}
 
-	vsVector3D GetTarget()
+	vsVector3D GetTarget() const
 	{
 		return m_spline.PositionAtTime( 1.f );
 	}
