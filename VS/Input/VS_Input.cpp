@@ -1823,7 +1823,19 @@ vsInput::HandleTextInput( const vsString& _input )
 		utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
 		int inputLength = utf8::distance(inputString.begin(), inputString.end());
 		for ( int i = 0; i < inputLength; i++ )
-			utf8::append( *(input++), back_inserter(m_stringModeString) );
+		{
+			// do not add '{' or '}' characters, as those are used exclusively
+			// by our localisation system.  (TODO:  Should I use a different
+			// set of characters?)
+			if ((*input) == '{' || (*input) == '}')
+			{
+				input++;
+			}
+			else
+			{
+				utf8::append( *(input++), back_inserter(m_stringModeString) );
+			}
+		}
 
 		// now add the end of our original input string;  anything which was past
 		// the end of the cursor selection
