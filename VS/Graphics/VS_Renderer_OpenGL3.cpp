@@ -216,11 +216,11 @@ static void printAttributes ()
 	};
 	int nAttr = sizeof(a) / sizeof(struct attr);
 	//
-	// GLint value;
+	GLint value;
 	for (int i = 0; i < nAttr; i++)
 	{
-	// 	glGetIntegerv( a[i].name, &value );
-	// 	vsLog("%s: %d", a[i].label, value );
+		glGetIntegerv( a[i].name, &value );
+		vsLog("%s: %d", a[i].label, value );
 	}
 
 	// now clear the GL error state;  one of the texture memory stats will
@@ -272,7 +272,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	videoFlags = SDL_WINDOW_OPENGL;
 #ifdef HIGHDPI_SUPPORTED
 	if ( flags & Flag_HighDPI )
+	{
 		videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+		vsLog("videoFlag added: AllowHighDPI");
+	}
 #endif
 
 	if ( flags & Flag_Fullscreen )
@@ -281,17 +284,20 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 			m_windowType = WindowType_FullscreenWindow;
+			vsLog("videoFlag added: Fullscreen Desktop");
 		}
 		else
 		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN;
 			m_windowType = WindowType_Fullscreen;
+			vsLog("videoFlag added: Fullscreen");
 		}
 	}
 	else
 	{
 		m_windowType = WindowType_Window;
 		videoFlags |= SDL_WINDOW_RESIZABLE;
+		vsLog("videoFlag added: Resizable");
 	}
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
@@ -319,9 +325,20 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	if ( !g_sdlWindow ){
-		vsLog("Couldn't set %dx%dx%d video mode: %s\n",
-				width, height, depth, SDL_GetError() );
-		exit(1);
+		vsString errorMsg( SDL_GetError() );
+		vsLog("Couldn't set %dx%dx%d video mode: %s;  trying to fallback to 1024x768 window.",
+				width, height, depth, errorMsg );
+
+		// Let's try plain simple window mode.
+		videoFlags = SDL_WINDOW_OPENGL;
+		flags = 0;
+		g_sdlWindow = SDL_CreateWindow("", x, y, 1024, 768, videoFlags);
+		if ( !g_sdlWindow )
+		{
+			vsAssertF(0, "Couldn't set %dx%dx%d video mode: %s\n",
+					width, height, depth, errorMsg );
+			exit(1);
+		}
 	}
 	if ( flags & Flag_FullscreenWindow )
 	{
@@ -425,7 +442,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	if ( major < 3 || (major == 3 && minor < 3) )
 	{
-		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run", major, minor);
+		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run.  Try updating your display drivers?", major, minor);
 		bool supportsOpenGL33 = false;
 		vsAssert( supportsOpenGL33, errorString );
 	}
