@@ -587,6 +587,13 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 {
     result->Clear();
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
+	if ( !files ) // error!
+	{
+		PHYSFS_ErrorCode error = PHYSFS_getLastErrorCode();
+		const char* errorMsg = PHYSFS_getErrorByCode( error );
+		vsAssertF( files != NULL ,"PhysFS reports an error reading contents of directory '%s':  %s", dirName, errorMsg);
+		return 0;
+	}
 	char **i;
 	std::vector<char*> s;
 	for (i = files; *i != NULL; i++)
