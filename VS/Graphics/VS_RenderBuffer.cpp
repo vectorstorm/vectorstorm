@@ -737,7 +737,13 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		default:
 		{
-			vsAssert(0, "Unknown content type!");
+			vsLog("Unknown content type: %d", m_contentType);
+			vsLog("VBO Name: %d", m_bufferID);
+			vsLog("BindType: %d", m_bindType);
+			vsLog("ArrayBytes:  %d", m_arrayBytes);
+			vsLog("GLArrayBytes:  %d", m_glArrayBytes);
+			vsLog("ActiveBytes:  %d", m_activeBytes);
+			vsAssertF(0, "Unknown content type: %d", m_contentType);
 		}
 	}
 }
