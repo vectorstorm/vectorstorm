@@ -55,7 +55,12 @@ if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
 	# find_library(GLEW_LIBRARY GLEW REQUIRED)
-	find_package(GLEW REQUIRED)
+	if(APPLE)
+		find_library(GLEW_LIBRARIES glew REQUIRED)
+	else(APPLE)
+		find_package(GLEW REQUIRED)
+	endif(APPLE)
+
 	find_library(PTHREAD_LIBRARY pthread)
 
 else()
