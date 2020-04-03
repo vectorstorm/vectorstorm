@@ -67,6 +67,8 @@ uint8_t		vsHighBitPosition( uint32_t value );
 // 64 -> 64
 uint32_t		vsHighBit( uint32_t value );
 
+uint32_t		vsCountSetBits( uint32_t value );
+
 class vsVector2D;
 class vsVector3D;
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v);
