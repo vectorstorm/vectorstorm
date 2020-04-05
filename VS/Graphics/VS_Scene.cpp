@@ -175,9 +175,17 @@ vsScene::Update( float timeStep )
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
 	{
+		const char* type = typeid(*entity ).name();
+
 		entity->Update( timeStep );
-		vsAssert( entity->GetNext()!= entity,
-				"Entity deleted itself during its ::Update()!  That's not okay!" );
+		if (entity->GetNext() == entity)
+		{
+			if ( type )
+				vsLog("Deleted entity was of type '%s'", type);
+
+			vsAssert( entity->GetNext()!= entity,
+					"Entity deleted itself during its ::Update()!  That's not okay!" );
+		}
 
 		entity = entity->GetNext();
 	}
