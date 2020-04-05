@@ -297,7 +297,7 @@ vsToken::ExtractFrom( vsString &string )
 			{
 				float val = 0.f;
 				bool success = (sscanf( token.c_str(), "%f", &val )!=0);
-				vsAssert(success, "Couldn't find a floating value where we expected one?");
+				vsAssertF(success, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s'", string, token);
 				SetFloat(val);
 				return true;
 			}
