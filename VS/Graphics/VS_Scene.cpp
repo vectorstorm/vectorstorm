@@ -176,10 +176,25 @@ vsScene::Update( float timeStep )
 	while ( entity != m_entityList )
 	{
 		const char* type = typeid(*entity ).name();
+		if (entity->GetNext() == entity)
+		{
+			vsLog("Scene info:");
+			vsLog("3D: %d", m_is3d);
+			vsLog("CamIsReference: %d", m_cameraIsReference);
+			vsLog("HasViewport: %d", m_hasViewport);
+			if ( type )
+				vsLog("Self-nexted entity was of type '%s'", type);
+			vsAssert( entity->GetNext()!= entity,
+					"Entity is already referring to itself before its ::Update()!  Scene is corrupt" );
+		}
 
 		entity->Update( timeStep );
 		if (entity->GetNext() == entity)
 		{
+			vsLog("Scene info:");
+			vsLog("3D: %d", m_is3d);
+			vsLog("CamIsReference: %d", m_cameraIsReference);
+			vsLog("HasViewport: %d", m_hasViewport);
 			if ( type )
 				vsLog("Deleted entity was of type '%s'", type);
 
