@@ -51,7 +51,8 @@ vsScene::SetDebugCamera()
 #endif // DEBUG_SCENE
 
 
-vsScene::vsScene():
+vsScene::vsScene( const vsString& name ):
+	m_name(name),
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
@@ -179,6 +180,7 @@ vsScene::Update( float timeStep )
 		if (entity->GetNext() == entity)
 		{
 			vsLog("Scene info:");
+			vsLog("Name: %s", m_name);
 			vsLog("3D: %d", m_is3d);
 			vsLog("CamIsReference: %d", m_cameraIsReference);
 			vsLog("HasViewport: %d", m_hasViewport);
@@ -192,6 +194,7 @@ vsScene::Update( float timeStep )
 		if (entity->GetNext() == entity)
 		{
 			vsLog("Scene info:");
+			vsLog("Name: %s", m_name);
 			vsLog("3D: %d", m_is3d);
 			vsLog("CamIsReference: %d", m_cameraIsReference);
 			vsLog("HasViewport: %d", m_hasViewport);

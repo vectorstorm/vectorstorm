@@ -168,7 +168,7 @@ vsScreen::CreateScenes(int count)
 
 	m_scene = new vsScene *[count];
 	for ( int i = 0; i < count; i++ )
-		m_scene[i] = new vsScene;
+		m_scene[i] = new vsScene( vsFormatString("Default Scene %d", i) );
 	m_sceneCount = count;
 
 	BuildDefaultPipeline();
