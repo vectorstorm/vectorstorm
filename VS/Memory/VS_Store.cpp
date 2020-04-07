@@ -702,6 +702,11 @@ vsStore::Expand()
 	// We're going to need to inflate this date twice;  once to see how big it
 	// turns out to be, and once to actually read it.
 	z_stream zipstream;
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
 
 	int ret = inflateInit(&zipstream);
 	if ( ret != Z_OK )
@@ -713,8 +718,6 @@ vsStore::Expand()
 	int decompressedSize = 0;
 	const int zipBufferSize = 1024 * 100;
 	char zipBuffer[zipBufferSize];
-	zipstream.avail_in = BytesLeftForReading();
-	zipstream.next_in = (Bytef*)GetReadHead();
 	do
 	{
 		zipstream.avail_out = zipBufferSize;
@@ -731,6 +734,12 @@ vsStore::Expand()
 	vsStore *inflateStore = new vsStore( decompressedSize );
 
 	// Now let's decompress it FOR REAL.
+	Rewind();
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
 	ret = inflateInit(&zipstream);
 	if ( ret != Z_OK )
 	{
@@ -738,14 +747,37 @@ vsStore::Expand()
 		return false;
 	}
 
-	zipstream.avail_in = BytesLeftForReading();
-	zipstream.next_in = (Bytef*)GetReadHead();
 	do
 	{
 		zipstream.avail_out = zipBufferSize;
 		zipstream.next_out = (Bytef*)zipBuffer;
 		int ret = inflate(&zipstream, Z_NO_FLUSH);
-		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+		if ( ret == Z_STREAM_END )
+			break;
+		else if ( ret != Z_OK )
+		{
+			switch ( ret )
+			{
+				case Z_NEED_DICT:
+					vsLog("Failed to open zip data; dictionary requested");
+					break;
+				case Z_DATA_ERROR:
+					vsLog("Failed to open zip data;  data error:  %s", zipstream.msg);
+					break;
+				case Z_MEM_ERROR:
+					vsLog("Failed to open zip data;  memory error");
+					break;
+				case Z_BUF_ERROR:
+					vsLog("Failed to open zip data;  insufficient buffer space");
+					break;
+				case Z_OK:
+				default:
+					break;
+			}
+			return false;
+		}
+
+		// vsAssert(ret != Z_OK, "Zip State ");
 
 		int decompressedBytes = zipBufferSize - zipstream.avail_out;
 		inflateStore->WriteBuffer( zipBuffer, decompressedBytes );
@@ -754,10 +786,22 @@ vsStore::Expand()
 	inflateEnd(&zipstream);
 
 
-	Clear();
+	ReplaceBuffer( inflateStore->Length() );
 	Append(inflateStore);
 	vsDelete(inflateStore);
 
-	return false;
+	return true;
 }
 
+void
+vsStore::ReplaceBuffer( size_t newLength )
+{
+	vsAssert( !m_bufferIsExternal, "Replacing an external vsStore buffer isn't supported" );
+
+	vsDeleteArray(m_buffer);
+	m_bufferLength = newLength;
+	m_buffer = new char[newLength];
+	m_bufferLength = newLength;
+	m_bufferEnd = &m_buffer[m_bufferLength];
+	m_readHead = m_writeHead = m_buffer;
+}

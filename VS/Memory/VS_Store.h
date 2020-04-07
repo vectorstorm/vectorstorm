@@ -35,6 +35,10 @@ class vsStore
 
 	void	AssertBytesLeftForWriting(size_t bytes);
 
+	// ordinarily we shouldn't need to do this, but.. for decompressing
+	// it becomes important.
+	void	ReplaceBuffer( size_t newLength );
+
 public:
 			vsStore();
 			vsStore( size_t maxSize );

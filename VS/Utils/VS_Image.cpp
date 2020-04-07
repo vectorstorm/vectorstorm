@@ -164,16 +164,32 @@ vsImage::Read( vsTexture *texture )
 				int rInd = rowStart + (x);
 				float rVal = pixels[rInd];
 
-				SetPixel(x,y, vsColor(rVal, rVal, rVal, 1.0f) );
+				SetPixel(x, (m_height-1)-y, vsColor(rVal, rVal, rVal, 1.0f) );
 			}
 		}
 		vsDeleteArray( pixels );
 	}
 	else
 	{
+		size_t imageSize = size_t(m_width) * size_t(m_height);
+		uint32_t* pixels = new uint32_t[imageSize];
 		// TODO:  THis would be faster if it was BGRA.
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_pixel);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		glBindTexture( GL_TEXTURE_2D, 0 );
+
+		for ( unsigned int y = 0; y < m_height; y++ )
+		{
+			int rowStart = y * m_width;
+
+			for ( unsigned int x = 0; x < m_width; x++ )
+			{
+				int rInd = rowStart + (x);
+				uint32_t pixel = pixels[rInd];
+
+				SetRawPixel(x, (m_height-1)-y, pixel);
+			}
+		}
+		vsDeleteArray( pixels );
 	}
 }
 
@@ -429,8 +445,14 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 			unsigned char b = ((unsigned char*)image->pixels)[bi];
 			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			uint32_t pixel;
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
+			cp[0] = r;
+			cp[1] = g;
+			cp[2] = b;
+			cp[3] = a;
+
+			SetRawPixel( u, v, pixel );
 		}
 	}
 
@@ -472,13 +494,13 @@ vsImage::BakePNG(int compression)
 			int bi = ri+2;
 			int ai = ri+3;
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = GetPixel(u,(m_height-1)-v);
+			uint32_t pixel = GetRawPixel(u,v);
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+			((unsigned char*)image->pixels)[ri] = cp[0];
+			((unsigned char*)image->pixels)[gi] = cp[1];
+			((unsigned char*)image->pixels)[bi] = cp[2];
+			((unsigned char*)image->pixels)[ai] = cp[3];
 		}
 	}
 	//
@@ -541,12 +563,13 @@ vsImage::BakeJPG(int quality)
 			int ai = ri+3;
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = GetPixel(u,(m_height-1)-v);
+			uint32_t pixel = GetRawPixel(u,(m_height-1)-v);
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+			((unsigned char*)image->pixels)[ri] = cp[0];
+			((unsigned char*)image->pixels)[gi] = cp[1];
+			((unsigned char*)image->pixels)[bi] = cp[2];
+			((unsigned char*)image->pixels)[ai] = cp[3];
 		}
 	}
 	//
