@@ -25,6 +25,8 @@
 #include <netinet/in.h> // for access to ntohl, et al
 #endif
 
+#include <zlib.h>
+
 vsStore::vsStore():
 	m_buffer( NULL ),
 	m_bufferLength( 0 ),
@@ -653,5 +655,109 @@ vsStore::ReadBox2D(vsBox2D *box)
 	ReadVector2D(&min);
 	ReadVector2D(&max);
 	box->Set(min,max);
+}
+
+bool
+vsStore::Compress()
+{
+	Rewind();
+
+	vsStore zipStore(m_bufferLength + 1024); // a *little* extra space buffer for in case we don't get much compression
+
+	z_stream zipstream;
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+
+	int ret = deflateInit(&zipstream, Z_DEFAULT_COMPRESSION);
+	if ( ret != Z_OK )
+	{
+		vsLog("vsStore::Compress: deflateInit error: %d", ret);
+		return false;
+	}
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+	zipstream.avail_out = m_bufferLength;
+	zipstream.next_out = (Bytef*)zipStore.GetWriteHead();
+
+	ret = deflate(&zipstream, Z_FINISH);
+	vsAssert(ret == Z_STREAM_END, "vsStore::Compress: Failed to fit compressed stream into available space");
+
+	int compressedBytes = m_bufferLength - zipstream.avail_out;
+	zipStore.AdvanceWriteHead(compressedBytes);
+	// if ( compressedBytes > 0 )
+	// 	_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
+
+	deflateEnd(&zipstream);
+
+	Clear();
+	Append(&zipStore);
+
+	return true;
+}
+
+bool
+vsStore::Expand()
+{
+	// We're going to need to inflate this date twice;  once to see how big it
+	// turns out to be, and once to actually read it.
+	z_stream zipstream;
+
+	int ret = inflateInit(&zipstream);
+	if ( ret != Z_OK )
+	{
+		vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+		return false;
+	}
+
+	int decompressedSize = 0;
+	const int zipBufferSize = 1024 * 100;
+	char zipBuffer[zipBufferSize];
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+	do
+	{
+		zipstream.avail_out = zipBufferSize;
+		zipstream.next_out = (Bytef*)zipBuffer;
+		int ret = inflate(&zipstream, Z_NO_FLUSH);
+		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+		int decompressedBytes = zipBufferSize - zipstream.avail_out;
+		decompressedSize += decompressedBytes;
+
+	}while( zipstream.avail_out == 0 );
+	inflateEnd(&zipstream);
+
+	vsStore *inflateStore = new vsStore( decompressedSize );
+
+	// Now let's decompress it FOR REAL.
+	ret = inflateInit(&zipstream);
+	if ( ret != Z_OK )
+	{
+		vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+		return false;
+	}
+
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+	do
+	{
+		zipstream.avail_out = zipBufferSize;
+		zipstream.next_out = (Bytef*)zipBuffer;
+		int ret = inflate(&zipstream, Z_NO_FLUSH);
+		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+		int decompressedBytes = zipBufferSize - zipstream.avail_out;
+		inflateStore->WriteBuffer( zipBuffer, decompressedBytes );
+
+	}while( zipstream.avail_out == 0 );
+	inflateEnd(&zipstream);
+
+
+	Clear();
+	Append(inflateStore);
+	vsDelete(inflateStore);
+
+	return false;
 }
 

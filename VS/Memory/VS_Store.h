@@ -129,6 +129,9 @@ public:
 
 	void		WriteBox2D(const vsBox2D &box);
 	void		ReadBox2D(vsBox2D *box);
+
+	bool		Compress(); // gzip the store, reset read head to start.  Returns true on success.
+	bool		Expand(); // ungzip the store, reset read head to start and write head to end.  Returns true on success.
 };
 
 #endif // MEM_FIFO_H
