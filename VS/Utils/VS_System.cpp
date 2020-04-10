@@ -587,7 +587,7 @@ vsSystem::Launch( const vsString &target )
 #if defined(_WIN32)
 	ShellExecute(NULL, "open", target.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE_CC__)
-	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
+	system( vsFormatString("open %s", target.c_str()).c_str() );
 #else
 	// Linux, probably?
 	int err = system( vsFormatString("xdg-open %s &", target.c_str()).c_str() );
