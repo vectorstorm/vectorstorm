@@ -26,6 +26,12 @@ vsLocString::vsLocString( const vsLocString& other ):
 {
 }
 
+vsLocString::vsLocString( int value ):
+	m_string("{value}")
+{
+	m_args.push_back( vsLocArg("value", value) );
+}
+
 // vsLocString
 // vsLocString::Literal( const vsString& literal )
 // {
@@ -158,6 +164,25 @@ vsLocString::AsString() const
 #endif // 0
 }
 
+static vsString s_thousandsSeparator(",");
+
+static vsString DoFormatNumber( int value )
+{
+	vsString result = vsFormatString("%d",value);
+	int insertPosition = result.length() - 3;
+	while (insertPosition > 0) {
+		result.insert(insertPosition, s_thousandsSeparator);
+		insertPosition-=3;
+	}
+	return result;
+}
+
+void
+vsLocString::SetNumberThousandsSeparator(const vsString& separator)
+{
+	s_thousandsSeparator = separator;
+}
+
 vsString
 vsLocArg::AsString( const vsString& fmt_in ) const
 {
@@ -167,11 +192,12 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 			return m_locString.AsString();
 		case Type_Int:
 			{
-				vsString fmt = vsFormatString("{%s}", fmt_in);
-				if ( fmt != vsEmptyString )
-				{
-					return fmt::format(fmt, m_intLiteral);
-				}
+				return DoFormatNumber( m_intLiteral );
+				// vsString fmt = vsFormatString("{%s}", fmt_in);
+				// if ( fmt != vsEmptyString )
+				// {
+				// 	return fmt::format(fmt, m_intLiteral);
+				// }
 			}
 		case Type_Float:
 			{

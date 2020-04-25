@@ -24,17 +24,17 @@ class vsLocString
 	void SubVars( vsString& str ) const;
 public:
 	vsString m_string;
-
 	std::vector<vsLocArg> m_args;
-	// vsArray<struct Arg*> m_args;
 
 	vsLocString( const char* str ); // non-NULL!
 	vsLocString( const vsString& key = vsEmptyString );
 	vsLocString( const vsLocString& other );
+	vsLocString( int value );
 
 	bool IsEmpty() const;
 	vsString AsString() const;
-	// operator vsString() const;
+
+	static void SetNumberThousandsSeparator(const vsString& separator);
 
 	bool operator==(const vsLocString& other) const;
 	bool operator!=(const vsLocString& other) const;
