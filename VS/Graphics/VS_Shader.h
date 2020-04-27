@@ -84,6 +84,7 @@ private:
 	void SetUniformValueF( int i, float value );
 	void SetUniformValueB( int i, bool value );
 	void SetUniformValueI( int i, int value );
+	void SetUniformValueVec2( int i, const vsVector2D& value );
 	void SetUniformValueVec3( int i, const vsVector3D& value );
 	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
 	void SetUniformValueVec4( int i, const vsVector4D& value );

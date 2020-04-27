@@ -62,6 +62,7 @@ public:
 	void SetUniformB( int32_t id, bool value );
 	void SetUniformI( int32_t id, int value );
 	void SetUniformColor( int32_t id, const vsColor& value );
+	void SetUniformVec2( int32_t id, const vsVector2D& value );
 	void SetUniformVec3( int32_t id, const vsVector3D& value );
 	void SetUniformVec4( int32_t id, const vsVector4D& value );
 	bool BindUniformF( int32_t id, const float* value );
@@ -75,6 +76,7 @@ public:
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
 	void SetUniformColor( const vsString& name, const vsColor& value );
+	void SetUniformVec2( const vsString& name, const vsVector2D& value );
 	void SetUniformVec3( const vsString& name, const vsVector3D& value );
 	void SetUniformVec4( const vsString& name, const vsVector4D& value );
 	bool BindUniformF( const vsString& name, const float* value );

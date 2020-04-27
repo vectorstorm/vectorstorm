@@ -417,6 +417,10 @@ set(UTILS_SOURCES
 	VS/Utils/VS_HashTableStore.h
 	VS/Utils/VS_FloatImage.cpp
 	VS/Utils/VS_FloatImage.h
+	VS/Utils/VS_HalfFloatImage.cpp
+	VS/Utils/VS_HalfFloatImage.h
+	VS/Utils/VS_HalfIntImage.cpp
+	VS/Utils/VS_HalfIntImage.h
 	VS/Utils/VS_Image.cpp
 	VS/Utils/VS_Image.h
 	VS/Utils/VS_LinkedList.h

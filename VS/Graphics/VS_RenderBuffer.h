@@ -63,6 +63,7 @@ public:
 		ContentType_PCT,
 		ContentType_PNT,
 		ContentType_PCNT,
+		ContentType_Slug,
 		ContentType_Matrix,
 		ContentType_Color,
 		ContentType_Float,
@@ -145,6 +146,15 @@ public:
 		vsVector2D		texel;			// 36
 	};
 
+	struct Slug
+	{
+		vsVector4D		position;		// 16
+		vsVector4D		texel;			// 32
+		vsVector4D		jacobian;		// 64
+		vsVector4D		banding;		// 96
+		vsColorPacked	color;			// 100
+	};
+
 
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();
@@ -157,6 +167,7 @@ public:
 	void	SetArray( const PCN *array, int size );
 	void	SetArray( const PCT *array, int size );
 	void	SetArray( const PCNT *array, int size );
+	void	SetArray( const Slug *array, int size );
 	void	SetArray( const vsMatrix4x4 *array, int size );
 	void	SetArray( const vsVector3D *array, int size );
 	void	SetArray( const vsVector2D *array, int size );
@@ -197,6 +208,7 @@ public:
 	PCN *			GetPCNArray() { return (PCN*)m_array; }
 	PNT *			GetPNTArray() { return (PNT*)m_array; }
 	PCNT *			GetPCNTArray() { return (PCNT*)m_array; }
+	Slug *			GetSlugArray() { return (Slug*)m_array; }
 
 	void	BakeArray();	// bake any modified array values into our GPU-based storage, if any.
 	void	BakeIndexArray();	// bake any modified array values into our GPU-based storage, if any.

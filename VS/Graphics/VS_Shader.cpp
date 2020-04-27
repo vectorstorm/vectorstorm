@@ -276,6 +276,7 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
 					break;
 				case GL_SAMPLER_2D:
+				case GL_UNSIGNED_INT_SAMPLER_2D:
 					m_uniform[ui].b = defaultSamplerBinding;
 					defaultSamplerBinding += m_uniform[ui].arraySize;
 					break;
@@ -761,6 +762,14 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 					}
 					break;
 				}
+			case GL_FLOAT_VEC2:
+				{
+					vsVector4D v;
+					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
+						v = material->UniformVec4(i);
+					SetUniformValueVec2( i, vsVector2D(v.x,v.y) );
+					break;
+				}
 			case GL_FLOAT_VEC3:
 				{
 					vsVector4D v;
@@ -787,6 +796,7 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 				}
 			case GL_INT:
 			case GL_SAMPLER_2D:
+			case GL_UNSIGNED_INT_SAMPLER_2D:
 			case GL_SAMPLER_2D_SHADOW:
 			case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 			case GL_INT_SAMPLER_BUFFER:
@@ -892,11 +902,20 @@ vsShader::SetUniformValueI( int i, int value )
 }
 
 void
+vsShader::SetUniformValueVec2( int i, const vsVector2D& value )
+{
+	glUniform2f( m_uniform[i].loc, value.x, value.y );
+	m_uniform[i].vec4.x = value.x;
+	m_uniform[i].vec4.y = value.y;
+}
+
+void
 vsShader::SetUniformValueVec3( int i, const vsVector3D& value )
 {
 	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
 	m_uniform[i].vec4 = value;
 }
+
 
 void
 vsShader::SetUniformValueVec3( int i, const vsColor& value )

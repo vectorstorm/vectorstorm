@@ -127,6 +127,19 @@ vsMaterial::SetUniformColor( int32_t id, const vsColor& value )
 }
 
 void
+vsMaterial::SetUniformVec2( int32_t id, const vsVector2D& value )
+{
+	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC2 )
+	{
+		m_uniformValue[id].vec4[0] = value.x;
+		m_uniformValue[id].vec4[1] = value.y;
+		m_uniformValue[id].vec4[2] = 0.0;
+		m_uniformValue[id].vec4[3] = 0.0;
+		m_uniformValue[id].bound = false;
+	}
+}
+
+void
 vsMaterial::SetUniformVec3( int32_t id, const vsVector3D& value )
 {
 	if ( id >= 0 && id < m_uniformCount && GetResource()->m_shader->GetUniform(id)->type == GL_FLOAT_VEC3 )
@@ -171,6 +184,13 @@ vsMaterial::SetUniformColor( const vsString& name, const vsColor& value )
 {
 	int32_t id = UniformId(name);
 	return SetUniformColor(id,value);
+}
+
+void
+vsMaterial::SetUniformVec2( const vsString& name, const vsVector2D& value )
+{
+	int32_t id = UniformId(name);
+	return SetUniformVec2(id,value);
 }
 
 void

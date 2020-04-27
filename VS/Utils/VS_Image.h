@@ -60,8 +60,8 @@ public:
 	void			AsyncMap(); // map our async-read data into ourselves so we can be accessed to get pixels directly
 	void			AsyncUnmap(); // unmap
 
-	int				GetWidth() { return m_width; }
-	int				GetHeight() { return m_height; }
+	int				GetWidth() const { return m_width; }
+	int				GetHeight() const { return m_height; }
 
 	vsColor			GetPixel(unsigned int u, unsigned int v) const;
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);

@@ -226,6 +226,13 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCNT *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const Slug *array, int size )
+{
+	m_contentType = ContentType_Slug;
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::Slug), BindType_Array);
+}
+
+void
 vsRenderBuffer::SetArray( const vsMatrix4x4 *array, int size )
 {
 	m_contentType = ContentType_Matrix;
@@ -735,6 +742,45 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			}
 			break;
 		}
+		case ContentType_Slug:
+		{
+			const int stride = sizeof(Slug);
+
+			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+			state->SetBool( vsRendererState::ClientBool_OtherArray, true );
+
+			if ( m_vbo )
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+
+				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, (char*)16 );
+				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, (char*)32 );
+				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, (char*)48 );
+				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (char*)64 );
+
+#ifdef VS_PRISTINE_BINDINGS
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
+			}
+			else
+			{
+				Slug *array = reinterpret_cast<Slug*>(m_array);
+				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, array );
+				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, &array[0].texel );
+				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, &array[0].jacobian );
+				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, &array[0].banding );
+				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &array[0].color );
+
+				// glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				// glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
+				// glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
+			}
+			break;
+		}
 		default:
 		{
 			vsLog("Unknown content type: %d", m_contentType);
@@ -789,6 +835,13 @@ vsRenderBuffer::Unbind( vsRendererState *state )
 			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
 			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
             break;
+		case ContentType_Slug:
+			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsRendererState::ClientBool_OtherArray, false );
+			break;
         default:
             vsAssert(0, "Unknown content type!");
 	}

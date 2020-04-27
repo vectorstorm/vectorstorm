@@ -136,6 +136,7 @@ vsRendererState::vsRendererState()
 	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( 1, false );
 	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( 2, false );
 	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( 3, false );
+	m_boolState[ClientBool_OtherArray] =				new glClientStateSetter( 4, false );
 
 	// m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
 	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
