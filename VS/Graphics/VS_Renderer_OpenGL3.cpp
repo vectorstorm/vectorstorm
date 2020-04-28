@@ -1349,6 +1349,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
