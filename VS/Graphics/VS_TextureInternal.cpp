@@ -321,7 +321,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
@@ -331,7 +331,6 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 			GL_RGBA,
 			GL_HALF_FLOAT,
 			image->RawData());
-	// glGenerateMipmap(GL_TEXTURE_2D);
 	m_nearestSampling = false;
 }
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
