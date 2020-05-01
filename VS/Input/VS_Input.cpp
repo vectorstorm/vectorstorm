@@ -77,6 +77,7 @@ vsInput::Init()
 
 	m_fingersDown = 0;
 	m_fingersDownTimer = 0.f;
+	m_timeSinceAnyInput = std::numeric_limits<float>::max();
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
@@ -829,6 +830,8 @@ vsInput::Update(float timeStep)
 {
 	UNUSED(timeStep);
 
+	m_timeSinceAnyInput += timeStep;
+
 	// clear 'was pressed' and 'was released' flags
 	//
 	for ( int i = 0; i < m_axis.ItemCount(); i++ )
@@ -927,12 +930,14 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_TEXTINPUT:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModePaused )
 							HandleTextInput(event.text.text);
 						break;
 					}
 					break;
 				case SDL_TEXTEDITING:
+					m_timeSinceAnyInput = 0.f;
 					// This event is for partial, in-progress code points
 					// which haven't yet settled on a final glyph.  For now,
 					// let's just ignore them.
@@ -951,6 +956,7 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_MOUSEWHEEL:
 					{
+						m_timeSinceAnyInput = 0.f;
 						// TODO:  FIX!
 						float wheelAmt = (float)event.wheel.y;
 						if ( m_fingersDownTimer > 0.f )
@@ -967,6 +973,7 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_MOUSEMOTION:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( event.motion.which == SDL_TOUCH_MOUSEID ) // touch event;  ignore!
 							break;
 						m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
@@ -993,6 +1000,7 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYDOWN:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModeClearing )
 						{
 							if ( m_stringMode )
@@ -1007,12 +1015,14 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYUP:
 					{
+						m_timeSinceAnyInput = 0.f;
 						HandleKeyUp(event);
 						break;
 					}
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 					{
+						m_timeSinceAnyInput = 0.f;
 						HandleMouseButtonEvent(event);
 						break;
 					}

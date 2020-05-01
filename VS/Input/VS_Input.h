@@ -242,6 +242,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	int				m_fingersDown;
 	float			m_fingersDownTimer;
 
+	float			m_timeSinceAnyInput;
+
 	bool			m_preparingToPoll;
 	bool			m_pollingForDeviceControl;			// are we waiting for an arbitrary control input?  (typically for the purposes of mapping device controls to our virtual controller)
 
@@ -337,6 +339,9 @@ public:
 	bool			HasTouch(int touchID);
 	int				GetMaxTouchCount();
 	vsVector2D		GetTouchPosition(int touchID, int scene = 0);
+
+	float			TimeSinceAnyInput() const { return m_timeSinceAnyInput; }
+
 
 	float			ReadHat(int hatID, ControlDirection dir);
 	float			ReadAxis( int axisID );
