@@ -762,6 +762,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, (char*)48 );
 				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (char*)64 );
 
+				glVertexAttribDivisor(4, 0);
+
 #ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -876,6 +878,9 @@ vsRenderBuffer::GetPositionCount() const
 		case ContentType_PCNT:
 			return m_activeBytes / sizeof(PCNT);
 			break;
+		case ContentType_Slug:
+			return m_activeBytes / sizeof(Slug);
+			break;
         default:
             vsAssert(0, "Unknown content type!");
 	}
@@ -928,6 +933,12 @@ vsRenderBuffer::GetPosition(int i)
 		{
 			PCNT* pnct = (PCNT*)m_array;
 			return pnct[i].position;
+		}
+		case ContentType_Slug:
+		{
+			Slug* slug = (Slug*)m_array;
+			return slug[i].position;
+			break;
 		}
 		default:
 		{
