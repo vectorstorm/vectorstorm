@@ -2515,7 +2515,30 @@ vsInput::GetBindDescription( const DeviceControl& dc )
 				return "Wheel Down";
 			break;
 		case CT_Keyboard:
-			return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+			// Okay, here's the thing.  Our bindings are done with "SCANCODES",
+			// which means that if you change your keyboard layout, the bindings
+			// remain in the same POSITION on the newly mapped keys.  That's
+			// great.  It means that we can just say "use WASD" in our code, and
+			// it'll use the keys in those position, no matter what keyboard is
+			// in use.
+			//
+			// HOWEVER, when we're asking for a description for the binding, we
+			// probably don't want to actually use the scancode name.  Instead,
+			// we want to convert through the keyboard layout and output the actual
+			// key name!  (Right now, as I type this, the only thing anywhere in
+			// all my games that uses this function are the control binding
+			// interface and tooltips in MMORPG Tycoon 2, which definitely do both
+			// want the key name, not the scancode name.  So let's return
+			// that, instead.)
+			//
+			// PREVIOUSLY:
+			// return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+
+			{
+				SDL_Keycode keycode = SDL_GetKeyFromScancode( (SDL_Scancode)dc.id );
+				return SDL_GetKeyName( keycode );
+			}
+
 			break;
 		default:
 			break;

@@ -664,7 +664,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 	size_t startGlyphId = nextGlyphId;
 	size_t endGlyphId = nextGlyphId + len;
 	vsFontSize *fontSize = m_font->Size(m_texSize);
-	float sizeScale = m_texSize / fontSize->GetNativeSize();
+	// float sizeScale = m_texSize / fontSize->GetNativeSize();
 
 	for ( size_t glyphId = startGlyphId; glyphId < endGlyphId; glyphId++ )
 	{
@@ -767,7 +767,7 @@ vsFontRenderer::AppendStringToArrays( vsFontRenderer::FragmentConstructor *const
 			{
 				const char* stringEnd = string + strlen(string);
 				uint32_t ncp = utf8::peek_next(w, stringEnd);
-				offset.x += fontSize->GetCharacterKerning( cp, ncp, sizeScale );
+				offset.x += fontSize->GetCharacterKerning( cp, ncp, 1.f );
 			}
 
 			nextGlyphId++;
