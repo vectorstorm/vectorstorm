@@ -369,9 +369,11 @@ vsImage::Copy( vsImage *other )
 }
 
 vsTexture *
-vsImage::Bake()
+vsImage::Bake( const vsString& name_in )
 {
-	vsString name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
+	vsString name(name_in);
+	if ( name.empty() )
+		name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);

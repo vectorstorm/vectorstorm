@@ -72,7 +72,7 @@ public:
 	void			Clear( const vsColor &clearColor );
 	void			Copy( vsImage *other );
 
-	vsTexture *		Bake();
+	vsTexture *		Bake( const vsString& name = vsEmptyString );
 
 	vsStore *		BakePNG(int compression); // lossless format;  compression is in [0..9] with higher values giving higher compression (but taking longer to calculate).
 	vsStore *		BakeJPG(int quality); // quality in [0..100] with higher values == higher quality.

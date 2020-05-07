@@ -45,7 +45,7 @@ public:
 	vsColor			GetRawPixel(unsigned int u, unsigned int v) const;
 	void			SetRawPixel(unsigned int u, unsigned int v, const vsColor& c);
 
-	vsTexture *		Bake();
+	vsTexture *		Bake( const vsString& name = vsEmptyString );
 	void *			RawData() { return m_pixel; }
 };
 

@@ -73,9 +73,11 @@ vsHalfFloatImage::SetPixel(unsigned int u, unsigned int v, const vsColor &c)
 }
 
 vsTexture *
-vsHalfFloatImage::Bake()
+vsHalfFloatImage::Bake( const vsString& name_in )
 {
-	vsString name = vsFormatString("HalfFloatMakerTexture%d", s_textureMakerCount++);
+	vsString name(name_in);
+	if ( name_in.empty() )
+		name = vsFormatString("HalfFloatMakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);
