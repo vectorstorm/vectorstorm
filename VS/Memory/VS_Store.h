@@ -57,6 +57,7 @@ public:
 	void	SetLength(size_t l);
 
 	void	Rewind();	// rewind to the start
+	void	EraseReadBytes();
 	void	AdvanceReadHead(size_t bytes);
 	void	AdvanceWriteHead(size_t bytes);
 	void	SeekReadHeadTo(size_t pos);

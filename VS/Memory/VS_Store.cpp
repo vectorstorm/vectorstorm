@@ -89,6 +89,19 @@ vsStore::Rewind()
 }
 
 void
+vsStore::EraseReadBytes()
+{
+	if ( m_readHead != m_buffer )
+	{
+		int bytesRead = m_readHead - m_buffer;
+		memcpy( m_buffer, m_readHead, BytesLeftForReading() );
+		m_readHead -= bytesRead;
+		m_writeHead -= bytesRead;
+		vsAssert( m_readHead == m_buffer, "Maths error in vsStore" );
+	}
+}
+
+void
 vsStore::AdvanceReadHead( size_t bytes )
 {
 	m_readHead += bytes;
