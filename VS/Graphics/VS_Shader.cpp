@@ -12,6 +12,7 @@
 #include "VS_File.h"
 #include "VS_Input.h"
 #include "VS_RenderBuffer.h"
+#include "VS_RenderTarget.h"
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_Screen.h"
 #include "VS_ShaderValues.h"
@@ -205,6 +206,9 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 	m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
 	m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
 	m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
+
+	m_depthOnlyLoc = glGetUniformLocation(m_shader, "depthOnly");
+
 	int activeUniformCount = 0;
 	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &activeUniformCount );
 	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
@@ -734,7 +738,7 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 }
 
 void
-vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
+vsShader::Prepare( vsMaterial *material, vsShaderValues *values, vsRenderTarget *target )
 {
 	// GLint current;
 	// glGetIntegerv(GL_CURRENT_PROGRAM, &current);
@@ -834,6 +838,10 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values )
 		// the coordinate system in the GLSL shader is inverted from the
 		// coordinate system we like to use.  So let's invert it!
 		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
+	}
+	if ( m_depthOnlyLoc >= 0 )
+	{
+		glUniform1i( m_depthOnlyLoc, target->IsDepthOnly() );
 	}
 }
 

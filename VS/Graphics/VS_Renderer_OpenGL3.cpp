@@ -955,13 +955,13 @@ vsRenderer_OpenGL3::FlushRenderState()
 		if ( m_lastShaderId != m_currentShader->GetShaderId() )
 		{
 			glUseProgram( m_currentShader->GetShaderId() );
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			m_lastShaderId = m_currentShader->GetShaderId();
 			s_previousMaterial = m_currentMaterial;
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
 		}

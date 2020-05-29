@@ -68,6 +68,8 @@ private:
 	int32_t m_lightPositionLoc;
 	int32_t m_lightHalfVectorLoc;
 
+	int32_t m_depthOnlyLoc;
+
 	Uniform *m_uniform;
 	Attribute *m_attribute;
 
@@ -129,7 +131,7 @@ public:
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL, vsRenderTarget *renderTarget = NULL ); // called before we start rendering something with this shader
 	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
 };
 
