@@ -143,6 +143,7 @@ public:
 	vsTexture *	Resolve(int id=0);
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }
+	bool		IsDepthOnly();
 
 	void		Clear();
 	void		BlitTo( vsRenderTarget *other );

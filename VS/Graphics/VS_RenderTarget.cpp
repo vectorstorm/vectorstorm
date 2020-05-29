@@ -318,7 +318,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_isRenderbuffer(false),
 	m_multisample(multisample),
 	m_depthCompare(depthCompare),
-	m_isDepthOnly(false),
+	m_isDepthOnly(depthOnly),
 	m_settings(settings)
 {
 	m_texture = new GLuint[m_textureCount];
@@ -589,5 +589,11 @@ vsSurface::Resize( int width, int height )
 
 	CheckFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+bool
+vsRenderTarget::IsDepthOnly()
+{
+	return m_type == Type_Depth || m_type == Type_DepthCompare;
 }
 
