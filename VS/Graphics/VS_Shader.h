@@ -77,6 +77,8 @@ private:
 	int32_t m_attributeCount;
 
 	int32_t m_globalTimeUniformId;
+	int32_t m_globalSecondsUniformId;
+	int32_t m_globalMicrosecondsUniformId;
 
 	vsString m_vertexShaderFile;
 	vsString m_fragmentShaderFile;

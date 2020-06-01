@@ -332,6 +332,8 @@ vsShader::Compile( const vsString &vertexShader, const vsString &fragmentShader,
 
 	GL_CHECK("Shader::Other");
 	m_globalTimeUniformId = GetUniformId("globalTime");
+	m_globalSecondsUniformId = GetUniformId("globalSeconds");
+	m_globalMicrosecondsUniformId = GetUniformId("globalMicroseconds");
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
 
@@ -825,11 +827,29 @@ vsShader::Prepare( vsMaterial *material, vsShaderValues *values, vsRenderTarget 
 		int yRes = vsScreen::Instance()->GetHeight();
 		glUniform2f( m_resolutionLoc, (float)xRes, (float)yRes );
 	}
-	if ( m_globalTimeUniformId >= 0 )
+	if ( m_globalTimeUniformId >= 0 ||
+			m_globalSecondsUniformId >= 0 ||
+			m_globalMicrosecondsUniformId >= 0 )
 	{
-		int milliseconds = vsTimerSystem::Instance()->GetMicrosecondsSinceInit() / 1000;
-		float seconds = milliseconds / 1000.f;
-		SetUniformValueF( m_globalTimeUniformId, seconds );
+		uint64_t microseconds = vsTimerSystem::Instance()->GetMicrosecondsSinceInit();
+
+		if ( m_globalTimeUniformId >= 0 )
+		{
+			uint64_t milliseconds = microseconds / 1000;
+			float seconds = milliseconds / 1000.f;
+			SetUniformValueF( m_globalTimeUniformId, seconds );
+		}
+		if ( m_globalSecondsUniformId >= 0 )
+		{
+			uint64_t seconds = microseconds / 1000000;
+			glUniform1ui( m_globalSecondsUniformId, seconds );
+		}
+		if ( m_globalMicrosecondsUniformId >= 0 )
+		{
+			uint64_t seconds = microseconds / 1000000;
+			uint64_t fractional = microseconds - (seconds * 1000000);
+			glUniform1ui( m_globalMicrosecondsUniformId, fractional );
+		}
 	}
 	if ( m_mouseLoc >= 0 )
 	{
