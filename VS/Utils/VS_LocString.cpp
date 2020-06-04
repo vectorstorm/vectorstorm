@@ -44,6 +44,8 @@ void
 vsLocString::SubVars( vsString& str ) const
 {
 	// Look for {} sets.
+	if ( str.empty() )
+		return;
 
 	int startVar = -1;
 	int startFormat = -1;
