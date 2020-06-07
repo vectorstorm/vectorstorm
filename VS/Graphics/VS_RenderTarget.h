@@ -10,6 +10,7 @@
 #define VS_RENDERTARGET_H
 
 #include "VS_Texture.h"
+class vsColor;
 
 #include "VS_OpenGL.h"
 
@@ -146,6 +147,7 @@ public:
 	bool		IsDepthOnly();
 
 	void		Clear();
+	void		ClearColor( const vsColor& c );
 	void		BlitTo( vsRenderTarget *other );
 
 	GLsizei GetWidth() { return m_textureSurface->m_width; }

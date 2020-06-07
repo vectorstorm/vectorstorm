@@ -89,6 +89,7 @@ public:
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
 		OpCode_ClearRenderTarget,
+		OpCode_ClearRenderTargetColor,
 		OpCode_ResolveRenderTarget,
 		OpCode_BlitRenderTarget,
 
@@ -271,6 +272,7 @@ public:
 	void	SetMaterial( vsMaterial *material );
 	void	SetRenderTarget( vsRenderTarget *target );
 	void	ClearRenderTarget(); // clears the currently set render target.
+	void	ClearRenderTargetColor(const vsColor& c); // clears the currently set render target to a specific color.
 	void	ResolveRenderTarget( vsRenderTarget *target );
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
 

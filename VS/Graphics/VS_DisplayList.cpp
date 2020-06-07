@@ -1010,6 +1010,13 @@ vsDisplayList::ClearRenderTarget()
 }
 
 void
+vsDisplayList::ClearRenderTargetColor( const vsColor& c )
+{
+	m_fifo->WriteUint8( OpCode_ClearRenderTargetColor );
+	m_fifo->WriteColor( c );
+}
+
+void
 vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 {
 	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
@@ -1140,6 +1147,7 @@ vsDisplayList::PopOp()
 		switch( m_currentOp.type )
 		{
 			case OpCode_SetColor:
+			case OpCode_ClearRenderTargetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
 			case OpCode_SetColors:
@@ -1329,6 +1337,7 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 	switch( type )
 	{
 		case OpCode_SetColor:
+		case OpCode_ClearRenderTargetColor:
 			SetColor( o->data.GetColor() );
 			break;
 		case OpCode_SetColors:

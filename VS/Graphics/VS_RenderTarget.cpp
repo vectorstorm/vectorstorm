@@ -8,6 +8,7 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include "VS_Color.h"
 #include "VS_OpenGL.h"
 #include <atomic>
 
@@ -216,6 +217,30 @@ vsRenderTarget::Clear()
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
 	glClear(bits);
+}
+
+void
+vsRenderTarget::ClearColor( const vsColor&c )
+{
+	Bind();
+	GL_CHECK_SCOPED("vsRenderTarget::ClearColor");
+
+	GLbitfield bits = GL_COLOR_BUFFER_BIT;
+	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
+	if ( surface->m_depth )
+	{
+		bits |= GL_DEPTH_BUFFER_BIT;
+	}
+	if ( surface->m_stencil )
+	{
+		bits |= GL_STENCIL_BUFFER_BIT;
+	}
+	glStencilMask(0xff);
+	glClearDepth(1.0);
+	glClearStencil(0);
+	glClearColor(c.r,c.g,c.b,c.a);
+	glClear(bits);
+	glClearColor(0,0,0,0);
 }
 
 void

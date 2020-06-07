@@ -1109,6 +1109,17 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentRenderTarget->Clear();
 					break;
 				};
+			case vsDisplayList::OpCode_ClearRenderTargetColor:
+				{
+					PROFILE_GL("ClearRenderTargetColor");
+					m_lastShaderId = 0;
+					glUseProgram(0);
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
+					m_state.SetBool( vsRendererState::Bool_StencilTest, true ); // when we're clearing a render target, make sure we're not testing stencil bits!
+					m_state.Flush();
+					m_currentRenderTarget->ClearColor( op->data.color );
+					break;
+				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
 					PROFILE_GL("ResolveRenderTarget");
