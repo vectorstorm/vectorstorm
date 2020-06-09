@@ -332,8 +332,12 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop, const vsColor *color_in, float texScale )
 {
 	const vsColor *color = (color_in) ? color_in : &c_white;
-	size_t vertexCount = count * 2;
-	size_t indexCount = count * 6;
+	size_t lineCount = count;
+	// if (!loop)
+	// 	lineCount--;
+	size_t vertexCount = lineCount * 4;
+	size_t triCount = lineCount * 6;    // number of triangles required to draw those vertices
+	size_t indexCount = triCount * 3;  // number of indices required to draw those triangles
 
 	float halfWidth = width * 0.5f;
 
@@ -413,13 +417,10 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		{
 			vertexPosition = point[midI] - offsetPre * halfWidth;
 		}
+		vsVector3D insideOffset = vertexPosition - point[midI];
 
 		dirOfTravel = (dirOfTravelPre + dirOfTravelPost);
 		dirOfTravel.Normalise();
-
-		va[vertexCursor].position = vertexPosition;
-		va[vertexCursor].texel.Set( 0.0, distance / texScale );
-		va[vertexCursor].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( offsetPre != offsetPost )
 		{
@@ -439,37 +440,90 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		{
 			vertexPosition = point[midI] + offsetPre * halfWidth;
 		}
+		vsVector3D outsideOffset = vertexPosition - point[midI];
 
-		va[vertexCursor+1].position = vertexPosition;
+		va[vertexCursor+0].position = point[midI] + insideOffset;
+		va[vertexCursor+0].texel.Set( 0.0, distance / texScale );
+		va[vertexCursor+0].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
+
+		va[vertexCursor+1].position = point[midI] + outsideOffset;
 		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
 		va[vertexCursor+1].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
-		distance += (point[postI] - point[midI]).Length();
+		va[vertexCursor+2].position = point[midI] + 2.0f * insideOffset;
+		va[vertexCursor+2].texel.Set( width / texScale, distance / texScale);
+		va[vertexCursor+2].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
+
+		va[vertexCursor+3].position = point[midI] + 2.0f * outsideOffset;
+		va[vertexCursor+3].texel.Set( width / texScale, distance / texScale);
+		va[vertexCursor+3].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( color )
 		{
-			va[vertexCursor].color = *color;
+			va[vertexCursor+0].color = *color;
 			va[vertexCursor+1].color = *color;
+			va[vertexCursor+2].color = *color;
+			va[vertexCursor+3].color = *color;
 		}
 		else
 		{
-			va[vertexCursor].color = c_white;
+			va[vertexCursor+0].color = c_white;
 			va[vertexCursor+1].color = c_white;
+			va[vertexCursor+2].color = c_white;
+			va[vertexCursor+3].color = c_white;
 		}
-		if ( loop || i != count - 1 ) // not at the end of the strip
+		va[vertexCursor+2].color.a = 0.f;
+		va[vertexCursor+3].color.a = 0.f;
+
+		if ( loop || i != count-1 )
 		{
-			int otherSide = vertexCursor+2;
+			int otherSide = vertexCursor+4;
 			if ( i == count-1 )
 				otherSide = 0;
-			ia[indexCursor] = vertexCursor;
-			ia[indexCursor+1] = vertexCursor+1;
-			ia[indexCursor+2] = otherSide;
-			ia[indexCursor+3] = otherSide;
-			ia[indexCursor+4] = vertexCursor+1;
-			ia[indexCursor+5] = otherSide+1;
-			indexCursor += 6;
+
+			ia[indexCursor+0] = otherSide+0;
+			ia[indexCursor+1] = otherSide+1;
+			ia[indexCursor+2] = vertexCursor+0;
+
+			ia[indexCursor+3] = vertexCursor+0;
+			ia[indexCursor+4] = otherSide+1;
+			ia[indexCursor+5] = vertexCursor+1;
+
+			ia[indexCursor+6] = otherSide+2;
+			ia[indexCursor+7] = otherSide+0;
+			ia[indexCursor+8] = vertexCursor+2;
+
+			ia[indexCursor+9] = vertexCursor+2;
+			ia[indexCursor+10] = otherSide+0;
+			ia[indexCursor+11] = vertexCursor+0;
+
+			ia[indexCursor+12] = otherSide+1;
+			ia[indexCursor+13] = otherSide+3;
+			ia[indexCursor+14] = vertexCursor+1;
+
+			ia[indexCursor+15] = vertexCursor+1;
+			ia[indexCursor+16] = otherSide+3;
+			ia[indexCursor+17] = vertexCursor+3;
 		}
-		vertexCursor += 2;
+
+		indexCursor += 18;
+		vertexCursor += 4;
+		distance += (point[postI] - point[midI]).Length();
+
+		// if ( loop || i != count - 1 ) // not at the end of the strip
+		// {
+		// 	int otherSide = vertexCursor+2;
+		// 	if ( i == count-1 )
+		// 		otherSide = 0;
+		// 	ia[indexCursor] = vertexCursor;
+		// 	ia[indexCursor+1] = vertexCursor+1;
+		// 	ia[indexCursor+2] = otherSide;
+		// 	ia[indexCursor+3] = otherSide;
+		// 	ia[indexCursor+4] = vertexCursor+1;
+		// 	ia[indexCursor+5] = otherSide+1;
+		// 	indexCursor += 6;
+		// }
+		// vertexCursor += 2;
 	}
 
 	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
