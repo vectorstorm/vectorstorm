@@ -184,12 +184,12 @@ vsRenderTarget::Bind()
 	{
 		GLenum buffers[6] =
 		{
-			GL_COLOR_ATTACHMENT0_EXT,
-			GL_COLOR_ATTACHMENT1_EXT,
-			GL_COLOR_ATTACHMENT2_EXT,
-			GL_COLOR_ATTACHMENT3_EXT,
-			GL_COLOR_ATTACHMENT4_EXT,
-			GL_COLOR_ATTACHMENT5_EXT
+			GL_COLOR_ATTACHMENT0,
+			GL_COLOR_ATTACHMENT1,
+			GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,
+			GL_COLOR_ATTACHMENT4,
+			GL_COLOR_ATTACHMENT5
 		};
 		glDrawBuffers(m_bufferCount,buffers);
 	}
@@ -537,7 +537,7 @@ vsSurface::Resize( int width, int height )
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 				if ( settings.anisotropy )
-					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
+					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16.0f );
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
@@ -598,15 +598,19 @@ vsSurface::Resize( int width, int height )
 			}
 
 			{
-				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+
+				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				if ( m_settings.stencil )
 				{
 					// we're using a single depth/stencil texture, so bind it as
-					// our FBO's stencil attachment too.
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+					// our FBO's depth_stencil attachment.
 					m_stencil = true;
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				}
+				else
+				{
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
 				}
 			}
 		}

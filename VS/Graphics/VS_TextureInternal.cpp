@@ -192,16 +192,11 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	if ( GL_EXT_texture_filter_anisotropic )
-	{
-		vsLog("anisotropic texture filters: ENABLED");
-		float aniso = 0.0f;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
-		aniso = vsMin(aniso,9);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-	}
-	else
-		vsLog("anisotropic texture filters: UNSUPPORTED");
+	// vsLog("anisotropic texture filters: ENABLED");
+	float aniso = 0.0f;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &aniso);
+	aniso = vsMin(aniso,9);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
 
 
 }
