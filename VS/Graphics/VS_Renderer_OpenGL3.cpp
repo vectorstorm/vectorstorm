@@ -229,6 +229,11 @@ static void printAttributes ()
 	glGetError();
 
 	vsLog("== End OpenGL limits ==");
+
+	if ( GL_EXT_texture_filter_anisotropic )
+		vsLog("anisotropic texture filters: SUPPORTED");
+	else
+		vsLog("anisotropic texture filters: UNSUPPORTED");
 #endif // TARGET_OS_IPHONE
 }
 

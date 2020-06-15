@@ -536,8 +536,20 @@ vsSurface::Resize( int width, int height )
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-				if ( settings.anisotropy )
-					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16.0f );
+
+				// Anisotropic filtering didn't become part of OpenGL core contextx until
+				// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
+				// support.  Blah!!
+				if ( GL_EXT_texture_filter_anisotropic )
+				{
+					if ( settings.anisotropy )
+					{
+						float aniso = 0.0f;
+						glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+						aniso = vsMin(aniso,16.f);
+						glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso );
+					}
+				}
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
