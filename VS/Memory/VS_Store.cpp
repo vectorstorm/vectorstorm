@@ -818,3 +818,4 @@ vsStore::ReplaceBuffer( size_t newLength )
 	m_bufferEnd = &m_buffer[m_bufferLength];
 	m_readHead = m_writeHead = m_buffer;
 }
+
