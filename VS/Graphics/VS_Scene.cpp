@@ -33,6 +33,11 @@ public:
 
 	void				Init()
 	{
+		Update(0.f);
+	}
+
+	virtual void Update( float timeStep )
+	{
 		SetFOV( (float)vsScreen::Instance()->GetHeight() );
 		SetPosition( vsVector2D( vsScreen::Instance()->GetWidth() * 0.5f,
 					vsScreen::Instance()->GetHeight() * 0.5f ) );
