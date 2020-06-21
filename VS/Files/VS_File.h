@@ -116,6 +116,9 @@ public:
 	 */
 
 	bool		AtEnd();
+
+	typedef void (*openFailureHandler)(const vsString& filename);
+	static void SetFileOpenFailureHandler( openFailureHandler handler );
 };
 
 #endif // FS_FILE_H

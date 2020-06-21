@@ -38,7 +38,9 @@
 
 #include "VS_TimerSystem.h"
 
+
 namespace {
+
 	class vsFileProfiler
 	{
 		vsString m_name;
@@ -211,6 +213,7 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
+static vsFile::openFailureHandler s_openFailureHandler = NULL;
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
@@ -291,8 +294,12 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		{
 			m_length = (size_t)PHYSFS_fileLength(m_file);
 		}
-
-		vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+		else
+		{
+			if ( s_openFailureHandler )
+				(*s_openFailureHandler)( filename );
+			vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+		}
 
 		bool shouldCache = (filename.find(".win") != vsString::npos) ||
 			(filename.find(".glsl") != vsString::npos);
@@ -1002,5 +1009,11 @@ bool
 vsFile::AtEnd()
 {
 	return m_store->BytesLeftForReading() == 0; // !m_file || PHYSFS_eof( m_file );
+}
+
+void
+vsFile::SetFileOpenFailureHandler( openFailureHandler handler )
+{
+	s_openFailureHandler = handler;
 }
 
