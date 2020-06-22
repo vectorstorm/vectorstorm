@@ -184,15 +184,7 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		ibo->SetArray(indices, indexCount);
 		vsDeleteArray(indices);
 
-		result->AddBuffer(vbo);
-		result->AddBuffer(ibo);
-
-		vsDisplayList *list = new vsDisplayList(128);
-		list->BindBuffer(vbo);
-		list->TriangleListBuffer(ibo);
-		list->ClearArrays();
-
-		result->SetDisplayList(list);
+		result->SetSimple( vbo, ibo, vsFragment::SimpleType_TriangleList );
 	}
 
 	return result;
