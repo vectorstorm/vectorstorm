@@ -629,7 +629,7 @@ vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, c
 		m_displayList->GetTriangles(triangles);
 	for ( int i = 0; i < GetFragmentCount(); i++ )
 	{
-		m_lod[0]->fragment[i]->GetDisplayList()->GetTriangles(triangles);
+		m_lod[0]->fragment[i]->GetTriangles(triangles);
 	}
 
 	for ( int i = 0; i < triangles.ItemCount(); i++ )
