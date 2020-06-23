@@ -22,6 +22,12 @@ class vsShaderVariant;
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 #include "VS/Utils/VS_Array.h"
 
+struct vsShaderVariantDefinition
+{
+	vsString name;
+	int bitId;
+};
+
 
 class vsShader: public vsAutomaticInstanceList<vsShader>
 {
@@ -50,10 +56,14 @@ private:
 	vsString m_vertexShaderFile;
 	vsString m_fragmentShaderFile;
 
+	uint32_t m_variantBitsSupported;
+
 	vsShaderVariant *m_current;
 	vsArray< vsShaderVariant* > m_variant;
 
 	bool m_system; // system shader;  should not be reloaded!
+
+	void FigureOutAvailableVariants( const vsString& shaderSource );
 
 protected:
 	bool m_litBool;
@@ -92,6 +102,10 @@ public:
 
 	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL, vsRenderTarget *renderTarget = NULL ); // called before we start rendering something with this shader
 	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
+
+
+	// should be set just once at game start.
+	static void SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions );
 };
 
 

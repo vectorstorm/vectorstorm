@@ -46,10 +46,12 @@ vsShaderVariant::vsShaderVariant( const vsString &vertexShader,
 	Compile( vertexShader, fragmentShader, lit, texture, m_variantBits );
 }
 
-void DoPreprocessor( vsString &s )
+void
+vsShaderVariant::DoPreprocessor( vsString &s )
 {
 	bool done = false;
 	size_t includePos;
+	// size_t variantPos;
 	// size_t commentPos;
 	while (!done)
 	{

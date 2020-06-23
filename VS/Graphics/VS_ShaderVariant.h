@@ -69,9 +69,12 @@ private:
 
 	void Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, uint32_t variantBits );
 
+	void DoPreprocessor( vsString &s );
+
 protected:
 	uint32_t m_shader;
-	uint32_t m_variantBits; // we might have some variants available.
+	uint32_t m_variantBits; // What variant bits are set on me.
+	uint32_t m_availableVariantBits; // What variant bits are set on me.
 	bool m_litBool;
 	bool m_textureBool;
 
@@ -83,6 +86,7 @@ public:
 
 	uint32_t GetShaderId() const { return m_shader; }
 	uint32_t GetVariantBits() const { return m_variantBits; }
+	uint32_t GetAvailableVariantBits() const { return m_availableVariantBits; }
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );

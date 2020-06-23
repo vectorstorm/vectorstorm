@@ -26,7 +26,16 @@
 
 // static bool m_localToWorldAttribIsActive = false;
 // static bool m_colorAttribIsActive = false;
+namespace
+{
+	vsArray<vsShaderVariantDefinition> s_variantDefinitions;
+}
 
+void
+vsShader::SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions )
+{
+	s_variantDefinitions = definitions;
+}
 
 vsShader::vsShader( const vsString &vertexShader,
 		const vsString &fragmentShader,
@@ -37,10 +46,14 @@ vsShader::vsShader( const vsString &vertexShader,
 		const vsString& fFilename ):
 	m_vertexShaderFile(vFilename),
 	m_fragmentShaderFile(fFilename),
+	m_variantBitsSupported(0L),
 	m_system(false),
 	m_litBool(lit),
 	m_textureBool(texture)
 {
+	FigureOutAvailableVariants( vertexShader );
+	FigureOutAvailableVariants( fragmentShader );
+
 	GL_CHECK_SCOPED("Shader");
 	m_current = new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits );
 	// Compile( vertexShader, fragmentShader, lit, texture, m_variantBits );
@@ -54,6 +67,39 @@ vsShader::~vsShader()
 	// vsRenderer_OpenGL3::DestroyShader(m_shader);
 	// vsDeleteArray( m_uniform );
 	// vsDeleteArray( m_attribute );
+}
+
+void
+vsShader::FigureOutAvailableVariants( const vsString& s_in )
+{
+	vsString s(s_in);
+	size_t variantPos;
+	bool done = false;
+	vsString pattern("\n// variant ");
+	while (!done)
+	{
+		done = true;
+		if ( (variantPos = s.find(pattern)) != vsString::npos )
+		{
+			done = false;
+			size_t nextNewLine = s.find('\n', variantPos+1);
+			vsString variant = s.substr(variantPos+pattern.size(), nextNewLine-(variantPos+pattern.size()));
+			s.erase(variantPos, nextNewLine-variantPos);
+			// vsLog("Variant: %s", variant);
+
+			// [TODO] Figure out the id number of this variant.
+
+			for ( int i = 0; i < s_variantDefinitions.ItemCount(); i++ )
+			{
+				if ( s_variantDefinitions[i].name == variant )
+				{
+					vsLog("Has Variant: %s", variant);
+					m_variantBitsSupported |= BIT(s_variantDefinitions[i].bitId);
+				}
+			}
+		}
+	}
+
 }
 
 vsShader *
