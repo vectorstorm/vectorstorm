@@ -299,6 +299,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Shader.h
 	VS/Graphics/VS_ShaderCache.cpp
 	VS/Graphics/VS_ShaderCache.h
+	VS/Graphics/VS_ShaderOptions.cpp
+	VS/Graphics/VS_ShaderOptions.h
 	VS/Graphics/VS_ShaderRef.cpp
 	VS/Graphics/VS_ShaderRef.h
 	VS/Graphics/VS_ShaderSuite.cpp

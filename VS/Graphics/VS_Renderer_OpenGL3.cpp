@@ -957,8 +957,29 @@ vsRenderer_OpenGL3::FlushRenderState()
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
-		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+		bool needsReset = false;
+
+		uint32_t shaderOptionsValue = 0;
+		uint32_t shaderOptionsSet = 0;
+		for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
 		{
+			const vsShaderOptions &s = m_optionsStack[i];
+
+			shaderOptionsValue |= s.value & s.mask & ~shaderOptionsSet;
+			shaderOptionsSet |= s.mask;
+		}
+
+		// only ask for bits that are actually supported by this shader
+		shaderOptionsValue &= m_currentShader->GetVariantBitsSupported();
+
+		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+			needsReset = true;
+		else if ( shaderOptionsValue != m_currentShader->GetCurrentVariantBits() )
+			needsReset = true;
+
+		if ( needsReset )
+		{
+			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			m_lastShaderId = m_currentShader->GetShaderId();
@@ -1053,6 +1074,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_currentTransformStackLevel = 0;
 	m_currentVertexArrayCount = 0;
 	m_currentFogDensity = 0.001f;
+
+	m_optionsStack.Clear();
 
 	m_inOverlay = false;
 
@@ -1212,6 +1235,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsShaderValues *sv = (vsShaderValues*)op->data.p;
 					m_currentShaderValues = sv;
+					break;
+				}
+			case vsDisplayList::OpCode_PushShaderOptions:
+				{
+					m_optionsStack.AddItem( op->data.shaderOptions );
+					break;
+				}
+			case vsDisplayList::OpCode_PopShaderOptions:
+				{
+					m_optionsStack.SetArraySize( m_optionsStack.ItemCount() - 1 );
 					break;
 				}
 			case vsDisplayList::OpCode_SnapMatrix:

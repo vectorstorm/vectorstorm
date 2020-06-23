@@ -26,15 +26,15 @@
 
 // static bool m_localToWorldAttribIsActive = false;
 // static bool m_colorAttribIsActive = false;
-namespace
-{
-	vsArray<vsShaderVariantDefinition> s_variantDefinitions;
-}
+// namespace
+// {
+	vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
+// }
 
 void
 vsShader::SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions )
 {
-	s_variantDefinitions = definitions;
+	g_shaderVariantDefinitions = definitions;
 }
 
 vsShader::vsShader( const vsString &vertexShader,
@@ -57,12 +57,18 @@ vsShader::vsShader( const vsString &vertexShader,
 	GL_CHECK_SCOPED("Shader");
 	m_current = new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits );
 	// Compile( vertexShader, fragmentShader, lit, texture, m_variantBits );
-	m_current->Compile( vertexShader, fragmentShader, lit, texture, variantBits );
+	// m_current->Compile( vertexShader, fragmentShader, lit, texture, variantBits );
+
+	m_variant.AddItem(m_current);
 }
 
 vsShader::~vsShader()
 {
-	vsDelete( m_current );
+	for ( int i = 0; i < m_variant.ItemCount(); i++ )
+		vsDelete( m_variant[i] );
+	m_variant.Clear();
+	m_current = NULL;
+	// vsDelete( m_current );
 	// vsLog("Destroyed shader %d", m_shader);
 	// vsRenderer_OpenGL3::DestroyShader(m_shader);
 	// vsDeleteArray( m_uniform );
@@ -89,12 +95,12 @@ vsShader::FigureOutAvailableVariants( const vsString& s_in )
 
 			// [TODO] Figure out the id number of this variant.
 
-			for ( int i = 0; i < s_variantDefinitions.ItemCount(); i++ )
+			for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )
 			{
-				if ( s_variantDefinitions[i].name == variant )
+				if ( g_shaderVariantDefinitions[i].name == variant )
 				{
 					vsLog("Has Variant: %s", variant);
-					m_variantBitsSupported |= BIT(s_variantDefinitions[i].bitId);
+					m_variantBitsSupported |= BIT(g_shaderVariantDefinitions[i].bitId);
 				}
 			}
 		}
@@ -191,6 +197,63 @@ uint32_t
 vsShader::GetShaderId() const
 {
 	return m_current->GetShaderId();
+}
+
+uint32_t
+vsShader::GetCurrentVariantBits()
+{
+	return m_current->GetVariantBits();
+}
+
+void
+vsShader::SetForVariantBits( uint32_t bits )
+{
+	vsAssert( (bits & m_variantBitsSupported) == bits, "Client asked for bits we don't support??" );
+
+	if ( m_current->GetVariantBits() == bits )
+		return; // nothing to do!
+	else
+	{
+		// we need to iterate over our variants looking for one which will do
+		// what we want.  If we can't find one, we'll need to create a new one.
+
+		for ( int i = 0; i < m_variant.ItemCount(); i++ )
+		{
+			if ( m_variant[i]->GetVariantBits() == bits )
+			{
+				m_current = m_variant[i];
+				return;
+			}
+		}
+
+		// Okay, couldn't find one;  we need to make one!
+		{
+			vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
+			vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
+
+			uint32_t vSize = vShader.GetLength();
+			uint32_t fSize = fShader.GetLength();
+
+			vsStore *vStore = new vsStore(vSize);
+			vsStore *fStore = new vsStore(fSize);
+
+			vShader.Store( vStore );
+			fShader.Store( fStore );
+			vsString vString( vStore->GetReadHead(), vSize );
+			vsString fString( fStore->GetReadHead(), fSize );
+
+			uint32_t variantBits = bits;
+			vsShaderVariant *result =
+				new vsShaderVariant(vString, fString, m_litBool, m_textureBool,
+						variantBits, m_vertexShaderFile, m_fragmentShaderFile);
+
+			m_current = result;
+			m_variant.AddItem(m_current);
+
+			delete vStore;
+			delete fStore;
+		}
+	}
 }
 
 void

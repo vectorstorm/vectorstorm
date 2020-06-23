@@ -104,6 +104,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SnapMatrix",
 
 	"SetShaderValues",
+	"PushShaderOptions",
+	"PopShaderOptions",
 
 	"Debug"
 };
@@ -697,6 +699,20 @@ vsDisplayList::SetShaderValues( vsShaderValues *values )
 }
 
 void
+vsDisplayList::PushShaderOptions( const vsShaderOptions &options )
+{
+	m_fifo->WriteUint8( OpCode_PushShaderOptions );
+	m_fifo->WriteUint32( options.mask );
+	m_fifo->WriteUint32( options.value );
+}
+
+void
+vsDisplayList::PopShaderOptions()
+{
+	m_fifo->WriteUint8( OpCode_PopShaderOptions );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -1196,6 +1212,12 @@ vsDisplayList::PopOp()
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
 			}
+			case OpCode_PushShaderOptions:
+			{
+				m_currentOp.data.shaderOptions.mask = m_fifo->ReadInt32();
+				m_currentOp.data.shaderOptions.value = m_fifo->ReadInt32();
+				break;
+			}
 			case OpCode_TexelArray:
 			{
 				int count = m_fifo->ReadUint32();
@@ -1319,6 +1341,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
+			case OpCode_PopShaderOptions:
 			default:
 				break;
 		}

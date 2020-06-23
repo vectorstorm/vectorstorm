@@ -22,6 +22,7 @@
 static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
 
+	extern vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
 
 vsShaderVariant::vsShaderVariant( const vsString &vertexShader,
 		const vsString &fragmentShader,
@@ -170,6 +171,12 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 
 	vsArray<vsString> defines;
 	// [TODO] Fill out defines based upon variant bits somehow.
+	for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )
+	{
+		if ( m_variantBits & BIT(g_shaderVariantDefinitions[i].bitId) )
+			defines.AddItem( g_shaderVariantDefinitions[i].name );
+	}
+
 	for ( int i = 0; i < defines.ItemCount(); i++ )
 	{
 		vString = vsFormatString("#define %s 1\n%s", defines[i], vString);

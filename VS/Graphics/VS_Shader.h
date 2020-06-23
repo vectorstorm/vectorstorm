@@ -80,6 +80,9 @@ public:
 	void Reload();
 
 	uint32_t GetShaderId() const;
+	uint32_t GetVariantBitsSupported() const { return m_variantBitsSupported; }
+	uint32_t GetCurrentVariantBits();
+	void SetForVariantBits( uint32_t bits );
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
