@@ -14,6 +14,7 @@
 
 #include "VS_Color.h"
 #include "VS_Texture.h"
+#include "VS_ShaderValues.h"
 
 	// [TODO] These draw modes are outdated historical oddities;  I should really
 	// be exposing blend modes directly, instead of these!
@@ -35,19 +36,20 @@ class vsMaterialInternal;
 
 class vsMaterial : public vsCacheReference<vsMaterialInternal>
 {
-	struct Value
-	{
-		union
-		{
-			float f32;
-			int b;
-			float vec4[4];
-			const void* bind;
-		};
-		bool bound;
-	};
-	Value		*m_uniformValue;
-	int m_uniformCount;
+	vsShaderValues m_values;
+	// struct Value
+	// {
+	// 	union
+	// 	{
+	// 		float f32;
+	// 		int b;
+	// 		float vec4[4];
+	// 		const void* bind;
+	// 	};
+	// 	bool bound;
+	// };
+	// Value		*m_uniformValue;
+	// int m_uniformCount;
 
 protected:
 	vsMaterial();
@@ -58,21 +60,21 @@ public:
 	vsMaterial( vsMaterial *other );
 	virtual ~vsMaterial();
 
-	int32_t UniformId( const vsString& name );
-	void SetUniformF( int32_t id, float value );
-	void SetUniformB( int32_t id, bool value );
-	void SetUniformI( int32_t id, int value );
-	void SetUniformColor( int32_t id, const vsColor& value );
-	void SetUniformVec2( int32_t id, const vsVector2D& value );
-	void SetUniformVec3( int32_t id, const vsVector3D& value );
-	void SetUniformVec4( int32_t id, const vsVector4D& value );
-	bool BindUniformF( int32_t id, const float* value );
-	bool BindUniformB( int32_t id, const bool* value );
-	bool BindUniformI( int32_t id, const int* value );
-	bool BindUniformColor( int32_t id, const vsColor* value );
-	bool BindUniformVec3( int32_t id, const vsVector3D* value );
-	bool BindUniformVec4( int32_t id, const vsVector4D* value );
-	bool BindUniformMat4( int32_t id, const vsMatrix4x4* value );
+	// int32_t UniformId( const vsString& name );
+	// void SetUniformF( int32_t id, float value );
+	// void SetUniformB( int32_t id, bool value );
+	// void SetUniformI( int32_t id, int value );
+	// void SetUniformColor( int32_t id, const vsColor& value );
+	// void SetUniformVec2( int32_t id, const vsVector2D& value );
+	// void SetUniformVec3( int32_t id, const vsVector3D& value );
+	// void SetUniformVec4( int32_t id, const vsVector4D& value );
+	// bool BindUniformF( int32_t id, const float* value );
+	// bool BindUniformB( int32_t id, const bool* value );
+	// bool BindUniformI( int32_t id, const int* value );
+	// bool BindUniformColor( int32_t id, const vsColor* value );
+	// bool BindUniformVec3( int32_t id, const vsVector3D* value );
+	// bool BindUniformVec4( int32_t id, const vsVector4D* value );
+	// bool BindUniformMat4( int32_t id, const vsMatrix4x4* value );
 	void SetUniformI( const vsString& name, int value );
 	void SetUniformF( const vsString& name, float value );
 	void SetUniformB( const vsString& name, bool value );
@@ -87,16 +89,18 @@ public:
 	bool BindUniformVec3( const vsString& name, const vsVector3D* value );
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
-	float UniformF( int32_t id );
-	bool UniformB( int32_t id );
-	int UniformI( int32_t id );
-	vsVector4D UniformVec4( int32_t id );
-	vsMatrix4x4 UniformMat4( int32_t id );
+	// float UniformF( int32_t id );
+	// bool UniformB( int32_t id );
+	// int UniformI( int32_t id );
+	// vsVector4D UniformVec4( int32_t id );
+	// vsMatrix4x4 UniformMat4( int32_t id );
 
 	bool operator==(const vsMaterial &b) const { return (m_resource == b.m_resource); }
 	bool operator!=(const vsMaterial &b) const { return !((*this)==b); }
 
 	bool MatchesForBatching( vsMaterial *other ) const;
+
+	vsShaderValues* GetShaderValues() { return &m_values; }
 
 	static vsMaterial *	White;
 };

@@ -722,28 +722,25 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 		{
 			case GL_BOOL:
 				{
-					bool b;
+					bool b = false;
 					if ( !values || !values->UniformB( m_uniform[i].name, b ) )
-						 b = material->UniformB(i);
+						 material->GetShaderValues()->UniformB( m_uniform[i].name, b );
 					SetUniformValueB( i, b );
 					break;
 				}
 			case GL_FLOAT:
 				{
-					// if ( m_uniform[i].arraySize == 1 )
-					{
-						float f;
-						if ( !values || !values->UniformF( m_uniform[i].name, f ) )
-							f = material->UniformF(i);
-						SetUniformValueF( i, f );
-					}
+					float f = 0.f;
+					if ( !values || !values->UniformF( m_uniform[i].name, f ) )
+						material->GetShaderValues()->UniformF( m_uniform[i].name, f );
+					SetUniformValueF( i, f );
 					break;
 				}
 			case GL_FLOAT_VEC2:
 				{
 					vsVector4D v;
 					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						v = material->UniformVec4(i);
+						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
 					SetUniformValueVec2( i, vsVector2D(v.x,v.y) );
 					break;
 				}
@@ -751,7 +748,7 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					vsVector4D v;
 					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						v = material->UniformVec4(i);
+						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
 					SetUniformValueVec3( i, v );
 					break;
 				}
@@ -759,7 +756,7 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					vsVector4D v;
 					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						v = material->UniformVec4(i);
+						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
 					SetUniformValueVec4( i, v );
 					break;
 				}
@@ -767,7 +764,7 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					vsMatrix4x4 v;
 					if ( !values || !values->UniformMat4( m_uniform[i].name, v ) )
-						v = material->UniformMat4(i);
+						material->GetShaderValues()->UniformMat4( m_uniform[i].name, v );
 					SetUniformValueMat4( i, v );
 					break;
 				}
@@ -779,9 +776,10 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				{
-					int b;
+					int b = 0;
 					// TODO:  Expose samplers through shadervalue objects, maybe?
-					b = material->UniformI(i);
+					// if ( material->GetShaderValues()->UniformI( m_uniform[i].name, b) )
+					material->GetShaderValues()->UniformI( m_uniform[i].name, b);
 					SetUniformValueI( i, b );
 					break;
 				}

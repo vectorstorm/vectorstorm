@@ -41,7 +41,7 @@ class vsHashTable
 	// four buckets, we need to shift right by 30 bits.  And so on.
 	int					m_shift;
 
-	uint32_t HashToBucket(uint32_t hash)
+	uint32_t HashToBucket(uint32_t hash) const
 	{
 		// Fibonocci hash.  We're going to multiply by
 		// (uint32_t::max / golden_ratio) (adjusted to be odd),
@@ -49,6 +49,23 @@ class vsHashTable
 		//
 		const uint32_t factor = 2654435839U;
 		return (hash * factor) >> m_shift;
+	}
+
+	const vsHashEntry<T>*		FindHashEntry( const vsString &key ) const
+	{
+		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		int bucket = HashToBucket(hash);
+
+		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
+		while( ent )
+		{
+			if ( ent->m_keyHash == hash && ent->m_key == key )
+			{
+				return ent;
+			}
+			ent = ent->m_next;
+		}
+		return NULL;
 	}
 
 	vsHashEntry<T>*		FindHashEntry( const vsString &key )
@@ -127,6 +144,16 @@ public:
 		vsAssert(found, "Error: couldn't find key??");
 	}
 
+	const T *		FindItem( const vsString &key ) const
+	{
+		const vsHashEntry<T> *ent = FindHashEntry(key);
+		if ( ent )
+		{
+			return &ent->m_item;
+		}
+		return NULL;
+	}
+
 	T *		FindItem( const vsString &key )
 	{
 		vsHashEntry<T> *ent = FindHashEntry(key);
@@ -146,6 +173,42 @@ public:
 		AddItemWithKey( newItem, key );
 		return *FindItem(key);
 	}
+
+	int GetHashEntryCount() const
+	{
+		int count = 0;
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
+			while ( shuttle )
+			{
+				count++;
+				shuttle = shuttle->m_next;
+			}
+		}
+		return count;
+	}
+
+	// This 'i' value is NOT CONSTANT.  As things are added and removed
+	// to this hash table, these hash entries can move around.  Only useful
+	// for internal inspection of the hash table
+	const vsHashEntry<T>* GetHashEntry(int i) const
+	{
+		int count = i;
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
+			while ( shuttle )
+			{
+				if ( count == 0 )
+					return shuttle;
+				count--;
+				shuttle = shuttle->m_next;
+			}
+		}
+		return NULL;
+	}
+
 };
 
 #endif // VS_HASHTABLE_H
