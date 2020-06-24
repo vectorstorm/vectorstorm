@@ -511,22 +511,22 @@ vsModel::CalculateStats()
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, int lodLevel )
+vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
 {
 	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
-		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
+		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues, options );
 	}
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, int lodLevel )
+vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
 {
 	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
-		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
+		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues, options );
 	}
 }
 

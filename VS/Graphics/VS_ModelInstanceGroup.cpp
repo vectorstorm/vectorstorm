@@ -15,7 +15,8 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 	m_group(group),
 	m_model(model),
 	m_lodLevel(lodLevel),
-	m_values(NULL)
+	m_values(NULL),
+	m_options(NULL)
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	,
 	m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
@@ -194,9 +195,9 @@ vsModelInstanceLodGroup::Draw( vsRenderQueue *queue )
 		m_colorBuffer.SetArray(&m_color[0], m_color.ItemCount() );
 		m_bufferIsDirty = false;
 	}
-	m_model->DrawInstanced( queue, &m_matrixBuffer, &m_colorBuffer, m_values, m_lodLevel );
+	m_model->DrawInstanced( queue, &m_matrixBuffer, &m_colorBuffer, m_values, m_options, m_lodLevel );
 #else
-	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values, m_lodLevel );
+	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values, m_options, m_lodLevel );
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 
 	// m_model->SetLodLevel( preLodLevel );
@@ -257,6 +258,15 @@ vsModelInstanceGroup::SetShaderValues( vsShaderValues *values )
 	for ( int i = 0; i < m_lod.ItemCount(); i++ )
 	{
 		m_lod[i]->SetShaderValues(values);
+	}
+}
+
+void
+vsModelInstanceGroup::SetShaderOptions( vsShaderOptions *options )
+{
+	for ( int i = 0; i < m_lod.ItemCount(); i++ )
+	{
+		m_lod[i]->SetShaderOptions(options);
 	}
 }
 
