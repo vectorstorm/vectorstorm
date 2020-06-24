@@ -91,15 +91,12 @@ vsShader::FigureOutAvailableVariants( const vsString& s_in )
 			size_t nextNewLine = s.find('\n', variantPos+1);
 			vsString variant = s.substr(variantPos+pattern.size(), nextNewLine-(variantPos+pattern.size()));
 			s.erase(variantPos, nextNewLine-variantPos);
-			// vsLog("Variant: %s", variant);
-
-			// [TODO] Figure out the id number of this variant.
 
 			for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )
 			{
 				if ( g_shaderVariantDefinitions[i].name == variant )
 				{
-					vsLog("Has Variant: %s", variant);
+					// vsLog("Has Variant: %s", variant);
 					m_variantBitsSupported |= BIT(g_shaderVariantDefinitions[i].bitId);
 				}
 			}
