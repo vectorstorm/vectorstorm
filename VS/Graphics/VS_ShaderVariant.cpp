@@ -183,8 +183,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 		fString = vsFormatString("#define %s 1\n%s", defines[i], fString);
 	}
 
-	vsString vFilename = vsFormatString("// filename: %s\n", m_vertexShaderFile.c_str());
-	vsString fFilename = vsFormatString("// filename: %s\n", m_fragmentShaderFile.c_str());
+	vsString vFilename = vsFormatString("// filename: %s\n", m_vertexShaderFile);
+	vsString fFilename = vsFormatString("// filename: %s\n", m_fragmentShaderFile);
 
 	vString = version + vFilename + vString;
 	fString = version + fFilename + fString;

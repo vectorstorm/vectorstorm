@@ -55,7 +55,7 @@ vsShader::vsShader( const vsString &vertexShader,
 	FigureOutAvailableVariants( fragmentShader );
 
 	GL_CHECK_SCOPED("Shader");
-	m_current = new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits );
+	m_current = new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits, vFilename, fFilename );
 	// Compile( vertexShader, fragmentShader, lit, texture, m_variantBits );
 	// m_current->Compile( vertexShader, fragmentShader, lit, texture, variantBits );
 
