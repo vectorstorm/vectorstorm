@@ -30,7 +30,8 @@ vsMaterial::vsMaterial( const vsString &name ):
 
 vsMaterial::vsMaterial( vsMaterial *other ):
 	vsCacheReference<vsMaterialInternal>(other->GetResource()->GetName()),
-	m_values( other->m_values )
+	m_values( other->m_values ),
+	m_options( other->m_options )
 {
 	SetupParameters();
 }
@@ -337,3 +338,16 @@ vsMaterial::MatchesForBatching( vsMaterial *other ) const
 	// }
 	return true;
 }
+
+void
+vsMaterial::SetShaderBit(uint8_t bitId, bool bitValue)
+{
+	m_options.SetBit(bitId, bitValue);
+}
+
+void
+vsMaterial::ClearShaderBit(uint8_t bitId)
+{
+	m_options.ClearBit(bitId);
+}
+

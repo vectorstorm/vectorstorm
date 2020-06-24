@@ -1,4 +1,5 @@
 /*
+ *
  *  VS_Renderer_OpenGL3.cpp
  *  VectorStorm
  *
@@ -959,7 +960,8 @@ vsRenderer_OpenGL3::FlushRenderState()
 	{
 		bool needsReset = false;
 
-		uint32_t shaderOptionsValue = 0;
+		uint32_t shaderOptionsValue = m_currentMaterial->GetShaderOptions()->value &
+			m_currentMaterial->GetShaderOptions()->mask;
 		uint32_t shaderOptionsSet = 0;
 		for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
 		{

@@ -15,6 +15,7 @@
 #include "VS_Color.h"
 #include "VS_Texture.h"
 #include "VS_ShaderValues.h"
+#include "VS_ShaderOptions.h"
 
 	// [TODO] These draw modes are outdated historical oddities;  I should really
 	// be exposing blend modes directly, instead of these!
@@ -37,6 +38,8 @@ class vsMaterialInternal;
 class vsMaterial : public vsCacheReference<vsMaterialInternal>
 {
 	vsShaderValues m_values;
+	vsShaderOptions m_options;
+
 	// struct Value
 	// {
 	// 	union
@@ -101,6 +104,15 @@ public:
 	bool MatchesForBatching( vsMaterial *other ) const;
 
 	vsShaderValues* GetShaderValues() { return &m_values; }
+	vsShaderOptions* GetShaderOptions() { return &m_options; }
+
+	// shader 'bits' control shader features.  They may be set to 'true' or 'false',
+	// or may be unset.  (Clearing a shader bit returns it to 'unset').  These bits
+	// may also be set via the 'PushShaderOptions' and 'PopShaderOptions' commands
+	// in a display list.  Note that bits set via 'PushShaderOptions' will ALWAYS
+	// override any shader bits set on the material.
+	void SetShaderBit(uint8_t bitId, bool bitValue);
+	void ClearShaderBit(uint8_t bitId);
 
 	static vsMaterial *	White;
 };
