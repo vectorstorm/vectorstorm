@@ -60,6 +60,11 @@ vsShader::vsShader( const vsString &vertexShader,
 	// m_current->Compile( vertexShader, fragmentShader, lit, texture, variantBits );
 
 	m_variant.AddItem(m_current);
+
+
+	SetForVariantBits( 0x1 & m_variantBitsSupported );
+	SetForVariantBits( 0x2 & m_variantBitsSupported );
+	SetForVariantBits( 0x3 & m_variantBitsSupported );
 }
 
 vsShader::~vsShader()
