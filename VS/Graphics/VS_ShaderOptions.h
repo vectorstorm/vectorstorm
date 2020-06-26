@@ -10,8 +10,9 @@
 #ifndef VS_SHADEROPTIONS_H
 #define VS_SHADEROPTIONS_H
 
-struct vsShaderOptions
+class vsShaderOptions
 {
+public:
 	uint32_t mask;
 	uint32_t value;
 
