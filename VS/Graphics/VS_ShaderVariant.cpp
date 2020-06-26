@@ -279,6 +279,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			m_uniform[ui].type = type;
 			m_uniform[ui].arraySize = arraySize;
 			m_uniform[ui].b = false;
+			m_uniform[ui].u32 = 0;
 			m_uniform[ui].f32 = 0.f;
 
 			// initialise to random values, so we definitely set them at least once.
@@ -287,6 +288,9 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 				case GL_BOOL:
 				case GL_INT:
 					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].b );
+					break;
+				case GL_UNSIGNED_INT:
+					glGetUniformuiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].u32 );
 					break;
 				case GL_FLOAT:
 					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].f32 );
@@ -783,6 +787,15 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 					SetUniformValueI( i, b );
 					break;
 				}
+			case GL_UNSIGNED_INT:
+				{
+					GL_CHECK_SCOPED("UnsignedInt");
+					int b = 0;
+					material->GetShaderValues()->UniformI( m_uniform[i].name, b);
+					uint32_t ui = (uint32_t)b; // TODO: make less horrible
+					SetUniformValueUI( i, ui );
+					break;
+				}
 
 			default:
 				// TODO:  Handle more uniform types
@@ -811,13 +824,13 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 		if ( m_globalSecondsUniformId >= 0 )
 		{
 			uint64_t seconds = microseconds / 1000000;
-			glUniform1ui( m_globalSecondsUniformId, seconds );
+			SetUniformValueUI( m_globalSecondsUniformId, (GLuint)seconds );
 		}
 		if ( m_globalMicrosecondsUniformId >= 0 )
 		{
 			uint64_t seconds = microseconds / 1000000;
 			uint64_t fractional = microseconds - (seconds * 1000000);
-			glUniform1ui( m_globalMicrosecondsUniformId, fractional );
+			SetUniformValueUI( m_globalMicrosecondsUniformId, (GLuint)fractional );
 		}
 	}
 	if ( m_mouseLoc >= 0 )
@@ -852,6 +865,16 @@ vsShaderVariant::SetUniformValueB( int i, bool value )
 		glUniform1i( m_uniform[i].loc, value );
 		m_uniform[i].b = value;
 	}
+}
+
+void
+vsShaderVariant::SetUniformValueUI( int i, unsigned int value )
+{
+	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
+	// {
+		glUniform1ui( m_uniform[i].loc, value );
+		m_uniform[i].u32 = value;
+	// }
 }
 
 void

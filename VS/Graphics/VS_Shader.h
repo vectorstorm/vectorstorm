@@ -38,6 +38,7 @@ public:
 		// struct
 		// {
 			int b;
+			uint32_t u32;
 			float f32;
 			vsVector4D vec4; // for vectors of up to 4 floats
 		// };
