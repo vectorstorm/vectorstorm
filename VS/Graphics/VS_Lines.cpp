@@ -450,11 +450,11 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
 		va[vertexCursor+1].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
-		va[vertexCursor+2].position = point[midI] + 2.0f * insideOffset;
+		va[vertexCursor+2].position = point[midI] + 1.3f * insideOffset;
 		va[vertexCursor+2].texel.Set( 0.0, distance / texScale);
 		va[vertexCursor+2].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
-		va[vertexCursor+3].position = point[midI] + 2.0f * outsideOffset;
+		va[vertexCursor+3].position = point[midI] + 1.3f * outsideOffset;
 		va[vertexCursor+3].texel.Set( width / texScale, distance / texScale);
 		va[vertexCursor+3].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
