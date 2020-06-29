@@ -211,7 +211,7 @@ vsShaderValues::BindUniformMat4( const vsString& id, const vsMatrix4x4* value )
 }
 
 bool
-vsShaderValues::Has( const vsString& name )
+vsShaderValues::Has( const vsString& name ) const
 {
 	return (m_value.FindItem(name) != NULL) ||
 		( m_parent && m_parent->Has(name) );
@@ -267,9 +267,9 @@ vsShaderValues::Has( const vsString& name )
 // }
 //
 bool
-vsShaderValues::UniformF( const vsString& id, float& out )
+vsShaderValues::UniformF( const vsString& id, float& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -284,9 +284,9 @@ vsShaderValues::UniformF( const vsString& id, float& out )
 }
 
 bool
-vsShaderValues::UniformB( const vsString& id, bool& out )
+vsShaderValues::UniformB( const vsString& id, bool& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -301,9 +301,9 @@ vsShaderValues::UniformB( const vsString& id, bool& out )
 }
 
 bool
-vsShaderValues::UniformI( const vsString& id, int& out )
+vsShaderValues::UniformI( const vsString& id, int& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -318,9 +318,9 @@ vsShaderValues::UniformI( const vsString& id, int& out )
 }
 
 bool
-vsShaderValues::UniformVec2( const vsString& id, vsVector2D& out )
+vsShaderValues::UniformVec2( const vsString& id, vsVector2D& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -335,9 +335,9 @@ vsShaderValues::UniformVec2( const vsString& id, vsVector2D& out )
 }
 
 bool
-vsShaderValues::UniformVec3( const vsString& id, vsVector3D& out )
+vsShaderValues::UniformVec3( const vsString& id, vsVector3D& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -352,9 +352,9 @@ vsShaderValues::UniformVec3( const vsString& id, vsVector3D& out )
 }
 
 bool
-vsShaderValues::UniformVec4( const vsString& id, vsVector4D& out )
+vsShaderValues::UniformVec4( const vsString& id, vsVector4D& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )
@@ -369,9 +369,9 @@ vsShaderValues::UniformVec4( const vsString& id, vsVector4D& out )
 }
 
 bool
-vsShaderValues::UniformMat4( const vsString& id, vsMatrix4x4& out )
+vsShaderValues::UniformMat4( const vsString& id, vsMatrix4x4& out ) const
 {
-	Value* v = m_value.FindItem(id);
+	const Value* v = m_value.FindItem(id);
 	if ( !v )
 	{
 		if ( m_parent )

@@ -28,6 +28,12 @@ struct vsShaderVariantDefinition
 	int bitId;
 };
 
+struct vsShaderAutoBitDefinition
+{
+	int bitId;
+	vsString uniformName;
+};
+
 
 class vsShader: public vsAutomaticInstanceList<vsShader>
 {
@@ -84,6 +90,7 @@ public:
 	uint32_t GetVariantBitsSupported() const { return m_variantBitsSupported; }
 	uint32_t GetCurrentVariantBits();
 	void SetForVariantBits( uint32_t bits );
+	static uint32_t GetVariantBitsFor( const vsShaderValues *values );
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
@@ -110,6 +117,7 @@ public:
 
 	// should be set just once at game start.
 	static void SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions );
+	static void SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions );
 };
 
 

@@ -71,14 +71,14 @@ public:
 	bool BindUniformVec3( const vsString& name, const vsVector3D* value );
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
-	bool Has( const vsString& name );
-	bool UniformF( const vsString& name, float& out );
-	bool UniformB( const vsString& name, bool& out );
-	bool UniformI( const vsString& name, int& out );
-	bool UniformVec2( const vsString& name, vsVector2D& out );
-	bool UniformVec3( const vsString& name, vsVector3D& out );
-	bool UniformVec4( const vsString& name, vsVector4D& out );
-	bool UniformMat4( const vsString& name, vsMatrix4x4& out );
+	bool Has( const vsString& name ) const;
+	bool UniformF( const vsString& name, float& out ) const;
+	bool UniformB( const vsString& name, bool& out ) const;
+	bool UniformI( const vsString& name, int& out ) const;
+	bool UniformVec2( const vsString& name, vsVector2D& out ) const;
+	bool UniformVec3( const vsString& name, vsVector3D& out ) const;
+	bool UniformVec4( const vsString& name, vsVector4D& out ) const;
+	bool UniformMat4( const vsString& name, vsMatrix4x4& out ) const;
 
 	bool operator==( const vsShaderValues& other ) const;
 	bool operator!=( const vsShaderValues& other ) const { return ! (*this == other); }

@@ -29,6 +29,7 @@
 // namespace
 // {
 	vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
+	vsArray<vsShaderAutoBitDefinition> g_shaderAutoBitDefinitions;
 // }
 
 void
@@ -36,6 +37,13 @@ vsShader::SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>&
 {
 	g_shaderVariantDefinitions = definitions;
 }
+
+void
+vsShader::SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions )
+{
+	g_shaderAutoBitDefinitions = definitions;
+}
+
 
 vsShader::vsShader( const vsString &vertexShader,
 		const vsString &fragmentShader,
@@ -205,6 +213,28 @@ uint32_t
 vsShader::GetCurrentVariantBits()
 {
 	return m_current->GetVariantBits();
+}
+
+uint32_t
+vsShader::GetVariantBitsFor( const vsShaderValues *values )
+{
+	uint32_t result = 0;
+	if ( values )
+	{
+		for ( int i = 0; i < g_shaderAutoBitDefinitions.ItemCount(); i++ )
+		{
+			const vsShaderAutoBitDefinition& def = g_shaderAutoBitDefinitions[i];
+			bool b = false;
+			if ( values->UniformB( def.uniformName, b ) )
+			{
+				if ( b )
+					result |= BIT( def.bitId );
+				else
+					result &= ~BIT( def.bitId );
+			}
+		}
+	}
+	return result;
 }
 
 void
