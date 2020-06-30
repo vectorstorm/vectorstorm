@@ -30,6 +30,7 @@
 // {
 	vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
 	vsArray<vsShaderAutoBitDefinition> g_shaderAutoBitDefinitions;
+	vsArray<uint32_t> g_shaderPreCompileBitPatterns;
 // }
 
 void
@@ -42,6 +43,12 @@ void
 vsShader::SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions )
 {
 	g_shaderAutoBitDefinitions = definitions;
+}
+
+void
+vsShader::SetPreCompileBitPatterns( const vsArray<uint32_t>& patterns )
+{
+	g_shaderPreCompileBitPatterns = patterns;
 }
 
 
@@ -69,10 +76,9 @@ vsShader::vsShader( const vsString &vertexShader,
 
 	m_variant.AddItem(m_current);
 
-
-	SetForVariantBits( 0x1 & m_variantBitsSupported );
-	SetForVariantBits( 0x2 & m_variantBitsSupported );
-	SetForVariantBits( 0x3 & m_variantBitsSupported );
+	// make us compile up all requested bit patterns.
+	for ( int i = 0; i < g_shaderPreCompileBitPatterns.ItemCount(); i++ )
+		SetForVariantBits( g_shaderPreCompileBitPatterns[i] & m_variantBitsSupported );
 }
 
 vsShader::~vsShader()

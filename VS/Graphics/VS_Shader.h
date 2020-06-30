@@ -118,6 +118,9 @@ public:
 	// should be set just once at game start.
 	static void SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions );
 	static void SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions );
+
+	// what combinations of shader bit patterns should we precompile?
+	static void SetPreCompileBitPatterns( const vsArray<uint32_t>& patterns );
 };
 
 
