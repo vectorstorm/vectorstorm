@@ -235,8 +235,8 @@ vsShader::GetVariantBitsFor( const vsShaderValues *values )
 			{
 				if ( b )
 					result |= BIT( def.bitId );
-				else
-					result &= ~BIT( def.bitId );
+				// else
+				// 	result &= ~BIT( def.bitId );
 			}
 		}
 	}
