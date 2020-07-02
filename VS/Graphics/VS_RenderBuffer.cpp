@@ -260,6 +260,13 @@ vsRenderBuffer::SetArray( const vsColor *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const vsColorPacked *array, int size )
+{
+	m_contentType = ContentType_ColorPacked;
+	SetArray_Internal((char *)array, size*sizeof(vsColorPacked), BindType_Array);
+}
+
+void
 vsRenderBuffer::SetArray( const uint16_t *array, int size )
 {
 	m_contentType = ContentType_UInt16;
@@ -352,6 +359,14 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 #endif
 	}
+	else if ( m_contentType == ContentType_ColorPacked && m_vbo )
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glVertexAttribPointer(attributeId, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+#ifdef VS_PRISTINE_BINDINGS
+		glBindBuffer(GL_ARRAY_BUFFER, 0 );
+#endif
+	}
 	else
 	{
 		vsAssert(0, "Not yet implemented");
@@ -373,6 +388,10 @@ vsRenderBuffer::BindAsTexture()
 	else if ( m_contentType == ContentType_Color )
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, m_bufferID);
+	}
+	else if ( m_contentType == ContentType_ColorPacked )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, m_bufferID);
 	}
 	else if ( m_contentType == ContentType_UInt16 )
 	{

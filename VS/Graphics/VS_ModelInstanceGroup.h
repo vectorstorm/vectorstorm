@@ -34,7 +34,7 @@ class vsModelInstanceLodGroup : public vsEntity
 	vsShaderValues *m_values; // NOT OWNED BY US.  Custom shader values for while drawing this group
 	vsShaderOptions *m_options; // NOT OWNED BY US.  Custom shader options for while drawing this group
 	vsArray<vsMatrix4x4> m_matrix;
-	vsArray<vsColor> m_color;
+	vsArray<vsColorPacked> m_color;
 	vsArray<int> m_matrixInstanceId;
 	vsArray<vsModelInstance*> m_instance;
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER

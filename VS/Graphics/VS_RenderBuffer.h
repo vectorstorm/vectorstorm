@@ -66,6 +66,7 @@ public:
 		ContentType_Slug,
 		ContentType_Matrix,
 		ContentType_Color,
+		ContentType_ColorPacked,
 		ContentType_Float,
 		ContentType_UInt16,
 		ContentType_UInt32,
@@ -172,6 +173,7 @@ public:
 	void	SetArray( const vsVector3D *array, int size );
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
+	void	SetArray( const vsColorPacked *array, int size );
 	void	SetArray( const uint16_t *array, int size );
 	void	SetArray( const uint32_t *array, int size );
 	void	SetArray( const float *array, int size );
