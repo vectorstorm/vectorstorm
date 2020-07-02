@@ -160,6 +160,9 @@ public:
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();
 
+	// used by renderer to handle binding
+	uint32_t GetBufferID() { return m_bufferID; }
+
 	void	SetArray( const P *array, int size );
 	void	SetArray( const PC *array, int size );
 	void	SetArray( const PT *array, int size );

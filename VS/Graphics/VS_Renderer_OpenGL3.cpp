@@ -1672,6 +1672,11 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 	m_currentMaterial = material;
 }
 
+namespace
+{
+	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
+};
+
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
@@ -1809,48 +1814,60 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		  {
 		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		  }*/
-		for ( int i = 0; i < 16; i++ )
+		for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		{
 			vsTexture *t = material->GetTexture(i);
 			if ( t )
 			{
-				glActiveTexture(GL_TEXTURE0 + i);
 				// glEnable(GL_TEXTURE_2D);
 				if ( t->GetResource()->IsTextureBuffer() )
 				{
-					GL_CHECK_SCOPED("BufferTexture");
-					glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
 					vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-					buffer->BindAsTexture();
+					if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
+					{
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = buffer->GetBufferID();
+						GL_CHECK_SCOPED("BufferTexture");
+						glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
+						buffer->BindAsTexture();
+					}
 				}
 				else
 				{
-					int tval = t->GetResource()->GetTexture();
-					if ( tval == 0 )
+					uint32_t tval = t->GetResource()->GetTexture();
+					if ( currentlyBoundTexture[i] != tval )
 					{
-						// [TODO] Have a replacement blank or checkerboard texture here.
-						glBindTexture( GL_TEXTURE_2D, 0 );
-						vsLog("Tried to bind invalid texture.");
-						vsLog("Material: %s", material->GetName() );
-						vsLog("Texture slot %d", i);
-						vsLog("Texture name %s", t->GetResource()->GetName());
-						// vsAssert( tval != 0, "0 texture??" );
-					}
-					else
-					{
-						glBindTexture( GL_TEXTURE_2D, tval);
-						if ( material->m_clampU )
-							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-						if ( material->m_clampV )
-							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = tval;
+						if ( tval == 0 )
+						{
+							// [TODO] Have a replacement blank or checkerboard texture here.
+							glBindTexture( GL_TEXTURE_2D, 0 );
+							vsLog("Tried to bind invalid texture.");
+							vsLog("Material: %s", material->GetName() );
+							vsLog("Texture slot %d", i);
+							vsLog("Texture name %s", t->GetResource()->GetName());
+							// vsAssert( tval != 0, "0 texture??" );
+						}
+						else
+						{
+							glBindTexture( GL_TEXTURE_2D, tval);
+							if ( material->m_clampU )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+							if ( material->m_clampV )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						}
 					}
 				}
 			}
 			else
 			{
-				// glDisable(GL_TEXTURE_2D);
-				// glActiveTexture(GL_TEXTURE0 + i);
-				// glBindTexture( GL_TEXTURE_2D, 0);
+				if ( currentlyBoundTexture[i] != 0 )
+				{
+					currentlyBoundTexture[i] = 0;
+					glActiveTexture(GL_TEXTURE0 + i);
+					glBindTexture( GL_TEXTURE_2D, 0);
+				}
 			}
 		}
 		// vsTexture *st = material->GetShadowTexture();
