@@ -235,7 +235,7 @@ vsScreen::Draw()
 }
 
 void
-vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
+vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
@@ -247,7 +247,11 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_fifo->Clear();
 	{
 		PROFILE("GatherRenderables");
+		if ( customOptions )
+			m_fifo->PushShaderOptions(*customOptions);
 		pipeline->Draw(m_fifo);
+		if ( customOptions )
+			m_fifo->PopShaderOptions();
 	}
 	vsTimerSystem::Instance()->EndGatherTime();
 	m_fifoUsageLastFrame = m_fifo->GetSize();
