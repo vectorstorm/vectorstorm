@@ -565,13 +565,12 @@ vsModel::Draw( vsRenderQueue *queue )
 				DynamicDraw( queue );
 			}
 
-			if ( !m_lod[m_lodLevel]->fragment.IsEmpty() )
+			vsLod *lod = m_lod[m_lodLevel];
+			for( int i = 0; i < lod->fragment.ItemCount(); i++ )
 			{
-				for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
-				{
-					if ( iter->IsVisible() )
-						queue->AddFragmentBatch( *iter );
-				}
+				vsFragment *f = lod->fragment[i];
+				if ( f->IsVisible() )
+					queue->AddFragmentBatch( f );
 			}
 
 			DrawChildren(queue);
