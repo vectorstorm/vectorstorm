@@ -391,49 +391,87 @@ vsShaderValues::operator==( const vsShaderValues& other ) const
 	if ( m_parent != other.m_parent )
 		return false;
 
+	return m_value == other.m_value;
 	// now check the values.
 
-	int valueCount = m_value.GetHashEntryCount();
+	// int valueCount = m_value.GetHashEntryCount();
+	// if ( other.m_value.GetHashEntryCount() != valueCount )
+	// 	return false;
+    //
+	// for ( int i = 0; i < valueCount; i++ )
+	// {
+	// 	const vsHashEntry<Value> *v = m_value.GetHashEntry(i);
+	// 	const vsHashEntry<Value> *ov = other.m_value.GetHashEntry(i);
+	// 	// keys aren't of matching types?  Fail.
+	// 	if ( v->m_item.type != ov->m_item.type )
+	// 		return false;
+	// 	// keys aren't of matching name?  Fail.
+	// 	if ( v->m_key != ov->m_key )
+	// 		return false;
+    //
+	// 	switch ( v->m_item.type )
+	// 	{
+	// 		case Value::Type_Float:
+	// 			if ( v->m_item.f32 != ov->m_item.f32 )
+	// 				return false;
+	// 			break;
+	// 		case Value::Type_Bool:
+	// 			if ( v->m_item.b != ov->m_item.b )
+	// 				return false;
+	// 			break;
+	// 		case Value::Type_Int:
+	// 			if ( v->m_item.i != ov->m_item.i )
+	// 				return false;
+	// 			break;
+	// 		case Value::Type_Vec4:
+	// 			if ( v->m_item.vec4 != ov->m_item.vec4 )
+	// 				return false;
+	// 			break;
+	// 		case Value::Type_Bind:
+	// 			// uhhhh.. should I be trying to check the value?
+	// 			if ( v->m_item.bind != ov->m_item.bind )
+	// 				return false;
+	// 			break;
+	// 		case Value::Type_MAX:
+	// 			break;
+	// 	}
+	// }
+    //
+	// return true;
+}
 
-	for ( int i = 0; i < valueCount; i++ )
+bool
+vsShaderValues::Value::operator==( const struct Value& other ) const
+{
+	if ( type != other.type )
+		return false;
+
+	switch ( type )
 	{
-		const vsHashEntry<Value> *v = m_value.GetHashEntry(i);
-		const Value *ov = other.m_value.FindItem(v->m_key);
-		// no matching key?  Fail.
-		if ( !ov )
-			return false;
-		// keys aren't of matching types?  Fail.
-		if ( v->m_item.type != ov->type )
-			return false;
-
-		switch ( v->m_item.type )
-		{
-			case Value::Type_Float:
-				if ( v->m_item.f32 != ov->f32 )
-					return false;
-				break;
-			case Value::Type_Bool:
-				if ( v->m_item.b != ov->b )
-					return false;
-				break;
-			case Value::Type_Int:
-				if ( v->m_item.i != ov->i )
-					return false;
-				break;
-			case Value::Type_Vec4:
-				if ( v->m_item.vec4 != ov->vec4 )
-					return false;
-				break;
-			case Value::Type_Bind:
-				// uhhhh.. should I be trying to check the value?
-				if ( v->m_item.bind != ov->bind )
-					return false;
-				break;
-			case Value::Type_MAX:
-				break;
-		}
+		case Value::Type_Float:
+			if ( f32 != other.f32 )
+				return false;
+			break;
+		case Value::Type_Bool:
+			if ( b != other.b )
+				return false;
+			break;
+		case Value::Type_Int:
+			if ( i != other.i )
+				return false;
+			break;
+		case Value::Type_Vec4:
+			if ( vec4 != other.vec4 )
+				return false;
+			break;
+		case Value::Type_Bind:
+			// uhhhh.. should I be trying to check the value?
+			if ( bind != other.bind )
+				return false;
+			break;
+		case Value::Type_MAX:
+			break;
 	}
-
 	return true;
 }
 

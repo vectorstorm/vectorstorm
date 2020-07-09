@@ -44,6 +44,9 @@ class vsShaderValues
 		bool bound;
 
 		Value(): type(Type_MAX), bound (false) {}
+		bool operator==( const struct Value& other ) const;
+		bool operator!=( const struct Value& other ) const { return !(*this == other); }
+
 	};
 
 	vsShaderValues *m_parent;

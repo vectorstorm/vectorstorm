@@ -209,6 +209,30 @@ public:
 		return NULL;
 	}
 
+	bool operator==( const vsHashTable<T>& other ) const
+	{
+		if ( m_bucketCount != other.m_bucketCount )
+			return false;
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
+			vsHashEntry<T>* oshuttle = other.m_bucket[i].m_next;
+			while( shuttle && oshuttle )
+			{
+				if ( shuttle->m_item != oshuttle->m_item ||
+						shuttle->m_key != oshuttle->m_key )
+					return false;
+				shuttle = shuttle->m_next;
+				oshuttle = oshuttle->m_next;
+			}
+			// now if we didn't reach the end of the bucket at the same time on
+			// both, that's also a failure
+			if ( shuttle || oshuttle )
+				return false;
+		}
+		return true;
+	}
+
 };
 
 #endif // VS_HASHTABLE_H
