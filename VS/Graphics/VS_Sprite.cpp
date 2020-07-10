@@ -100,7 +100,7 @@ vsSprite::~vsSprite()
 }
 
 vsVector2D
-vsSprite::GetWorldPosition()
+vsSprite::GetWorldPosition() const
 {
 	vsVector2D position = GetPosition();
 
@@ -121,7 +121,7 @@ vsSprite::GetWorldPosition()
 }
 
 bool
-vsSprite::OnScreen( const vsTransform2D & cameraTrans )
+vsSprite::OnScreen( const vsTransform2D & cameraTrans ) const
 {
 	if ( !m_visible )
 		return false;
@@ -306,13 +306,13 @@ vsSprite::CalculateBoundingRadius()
 }
 
 bool
-vsSprite::ContainsLocalPoint(const vsVector2D &pos)
+vsSprite::ContainsLocalPoint(const vsVector2D &pos) const
 {
 	return m_boundingBox.ContainsPoint(pos);
 }
 
 vsEntity *
-vsSprite::FindEntityAtPosition(const vsVector2D &pos)
+vsSprite::FindEntityAtPosition(const vsVector2D &pos) const
 {
 	if ( !m_clickable || !m_visible )
 		return NULL;
@@ -324,7 +324,7 @@ vsSprite::FindEntityAtPosition(const vsVector2D &pos)
 
 	if ( isInside )
 	{
-		result = this;
+		result = const_cast<vsSprite*>(this);
 
 		vsEntity *inChild = Parent::FindEntityAtPosition(localPos);
 

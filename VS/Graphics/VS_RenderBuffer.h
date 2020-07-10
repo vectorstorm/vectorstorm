@@ -191,8 +191,9 @@ public:
 	vsVector3D *	GetVector3DArray() { return (vsVector3D*)m_array; }
 
 	void			SetIntArraySize( int size );
-	int				GetIntArraySize() { return m_activeBytes/sizeof(uint16_t); }
+	int				GetIntArraySize() const { return m_activeBytes/sizeof(uint16_t); }
 	uint16_t *		GetIntArray() { return (uint16_t*)m_array; }
+	const uint16_t *GetIntArray() const { return (const uint16_t*)m_array; }
 
 	void			SetColorArraySize( int size );
 	vsColor *		GetColorArray() { return (vsColor*)m_array; }
@@ -200,10 +201,10 @@ public:
 	vsVector2D *	GetVector2DArray() { return (vsVector2D*)m_array; }
 
 	void*			GetGenericArray() { return m_array; }
-	int				GetGenericArraySize() { return m_activeBytes; }
+	int				GetGenericArraySize() const { return m_activeBytes; }
 
-	int				GetMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
-	int				GetActiveMatrix4x4ArraySize() { return m_activeBytes/sizeof(vsMatrix4x4); }
+	int				GetMatrix4x4ArraySize() const { return m_activeBytes/sizeof(vsMatrix4x4); }
+	int				GetActiveMatrix4x4ArraySize() const { return m_activeBytes/sizeof(vsMatrix4x4); }
 
 	P *				GetPArray() { return (P*)m_array; }
 	PN *			GetPNArray() { return (PN*)m_array; }
@@ -219,10 +220,10 @@ public:
 	void	BakeIndexArray();	// bake any modified array values into our GPU-based storage, if any.
 
 	int		GetPositionCount() const;		// for new-style buffers, which don't offer direct array access.
-	vsVector3D	GetPosition(int i);
-	vsVector3D	GetNormal(int i);
-	vsVector2D	GetTexel(int i);
-	vsColor		GetColor(int i);
+	vsVector3D	GetPosition(int i) const;
+	vsVector3D	GetNormal(int i) const;
+	vsVector2D	GetTexel(int i) const;
+	vsColor		GetColor(int i) const;
 
 	// Probably only useful for santity checking that the correct drawing
 	// functions are being called, for our known buffer types.

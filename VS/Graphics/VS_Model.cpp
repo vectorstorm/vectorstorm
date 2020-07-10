@@ -617,7 +617,7 @@ vsModel::GetLodFragmentCount( int lodId ) const
 }
 
 bool
-vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir)
+vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
 {
 	vsVector3D localPos = m_transform.ApplyInverseTo(pos);
 	vsVector3D localDir = m_transform.GetRotation().Inverse().ApplyTo(dir);

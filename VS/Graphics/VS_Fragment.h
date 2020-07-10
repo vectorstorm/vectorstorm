@@ -62,11 +62,11 @@ public:
 	vsRenderBuffer * GetSimpleVBO() { return m_vbo; }
 	vsRenderBuffer * GetSimpleIBO() { return m_ibo; }
 
-	bool			IsVisible() { return m_visible; }
+	bool			IsVisible() const { return m_visible; }
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }
 	const vsDisplayList *	GetDisplayList() const { return m_displayList; }
-	int	GetTriangles(vsArray<struct vsDisplayList::Triangle>& result);
+	int	GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const;
 
 	void	Draw( vsDisplayList *list );
 };

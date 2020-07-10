@@ -30,6 +30,8 @@ protected:
 	vsEntity *		m_parent;
 	vsEntity *		m_child;
 
+	vsScene *		m_scene; // pointer to our scene IFF we're placed directly on the scene
+
 	bool			m_visible;
 	bool			m_clickable;
 
@@ -48,7 +50,7 @@ public:
 	virtual void	Draw( vsRenderQueue *queue );
 	virtual void	DynamicDraw( vsRenderQueue *queue ) {UNUSED(queue);}
 
-	virtual bool	OnScreen(const vsTransform2D & /*cameraTrans*/) { return true; }
+	virtual bool	OnScreen(const vsTransform2D & /*cameraTrans*/) const { return true; }
 
 	void			RegisterOnScene(int scene);
 	void			RegisterOnScene(vsScene *scene);
@@ -58,14 +60,16 @@ public:
 	void			Unregister() { Extract(); }
 
 	void			SetVisible(bool visible) { m_visible = visible; }
-	bool			GetVisible() { return m_visible; }
-	bool			IsVisible() { return GetVisible(); }
+	bool			GetVisible() const { return m_visible; }
+	bool			IsVisible() const { return GetVisible(); }
 
 	void			SetClickable(bool clickable) { m_clickable = clickable; }
 
-	vsEntity *		GetNext() { return m_next; }
-	vsEntity *		GetPrev() { return m_prev; }
-	vsEntity *		GetParent() { return m_parent; }
+	vsEntity *		GetNext() const { return m_next; }
+	vsEntity *		GetPrev() const { return m_prev; }
+	vsEntity *		GetParent() const { return m_parent; }
+	vsScene *		GetScene() const { return m_scene; }
+
 	void			Append( vsEntity *sprite );
 	void			Prepend( vsEntity *sprite );
 	void			AddChild( vsEntity *sprite );
@@ -75,9 +79,9 @@ public:
 	vsEntity *		Sibling() { return m_next; }
 
 	void			SetName( const vsString &name ) { m_name = name; }
-	const vsString&	GetName() { return m_name; }
-	vsEntity *		Find( const vsString &name );
-	virtual vsEntity *	FindEntityAtPosition(const vsVector2D &pos);	// 'pos' is in parent coordinates!  Returns true if we swallowed the 'click' action.
+	const vsString&	GetName() const { return m_name; }
+	vsEntity *		Find( const vsString &name ) const;
+	virtual vsEntity *	FindEntityAtPosition(const vsVector2D &pos) const;	// 'pos' is in parent coordinates!  Returns true if we swallowed the 'click' action.
 
 	void			MoveToTop();
 	void			MoveToBottom();

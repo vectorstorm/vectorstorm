@@ -907,7 +907,7 @@ vsRenderBuffer::GetPositionCount() const
 }
 
 vsVector3D
-vsRenderBuffer::GetPosition(int i)
+vsRenderBuffer::GetPosition(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer position request!" );
 
@@ -968,7 +968,7 @@ vsRenderBuffer::GetPosition(int i)
 }
 
 vsVector3D
-vsRenderBuffer::GetNormal(int i)
+vsRenderBuffer::GetNormal(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer normal request!" );
 
@@ -1009,7 +1009,7 @@ vsRenderBuffer::GetNormal(int i)
 }
 
 vsVector2D
-vsRenderBuffer::GetTexel(int i)
+vsRenderBuffer::GetTexel(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer texel request!" );
 
@@ -1045,9 +1045,8 @@ vsRenderBuffer::GetTexel(int i)
 	return vsVector2D::Zero;
 }
 
-
 vsColor
-vsRenderBuffer::GetColor(int i)
+vsRenderBuffer::GetColor(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer color request!" );
 

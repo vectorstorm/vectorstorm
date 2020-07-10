@@ -387,7 +387,7 @@ vsFragment::Draw( vsDisplayList *list )
 }
 
 int
-vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result)
+vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 {
 	result.Clear();
 
@@ -439,9 +439,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result)
 			}
 		}
 	}
-	else if ( GetDisplayList() )
+	else if ( m_displayList )
 	{
-		return GetDisplayList()->GetTriangles(result);
+		return m_displayList->GetTriangles(result);
 	}
 
 	return result.ItemCount();

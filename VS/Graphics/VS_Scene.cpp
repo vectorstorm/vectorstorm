@@ -181,6 +181,7 @@ vsScene::Update( float timeStep )
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
 	{
+#ifdef DEBUG_UPDATE
 		const char* type = typeid(*entity ).name();
 		if (entity->GetNext() == entity)
 		{
@@ -194,6 +195,7 @@ vsScene::Update( float timeStep )
 			vsAssert( entity->GetNext()!= entity,
 					"Entity is already referring to itself before its ::Update()!  Scene is corrupt" );
 		}
+#endif //DEBUG_UPDATE
 
 		entity->Update( timeStep );
 		if (entity->GetNext() == entity)
@@ -203,8 +205,10 @@ vsScene::Update( float timeStep )
 			vsLog("3D: %d", m_is3d);
 			vsLog("CamIsReference: %d", m_cameraIsReference);
 			vsLog("HasViewport: %d", m_hasViewport);
+#ifdef DEBUG_UPDATE
 			if ( type )
 				vsLog("Deleted entity was of type '%s'", type);
+#endif //DEBUG_UPDATE
 
 			vsAssert( entity->GetNext()!= entity,
 					"Entity deleted itself during its ::Update()!  That's not okay!" );
