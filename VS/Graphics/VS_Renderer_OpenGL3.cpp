@@ -521,6 +521,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	GL_CHECK("Initialising OpenGL rendering");
 
+
 	// TEMP VAO IMPLEMENTATION
 	glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);
@@ -533,6 +534,21 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
+	bool minimizeOnFocusLoss = ( displayCount == 1 );
+
+	{
+		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+		if ( !retval )
+			vsLog("Trying to set minimize on focus loss hint failed");
+		else
+		{
+			if ( doit )
+				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+			else
+				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+		}
+	}
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
