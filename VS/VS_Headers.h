@@ -122,6 +122,7 @@
 #include <VS/Utils/VS_HalfFloatImage.h>
 #include <VS/Utils/VS_HalfIntImage.h>
 #include <VS/Utils/VS_Image.h>
+#include <VS/Utils/VS_IntHashTable.h>
 #include <VS/Utils/VS_LocalisationTable.h>
 #include <VS/Utils/VS_MeshMaker.h>
 #include <VS/Utils/VS_LinkedList.h>

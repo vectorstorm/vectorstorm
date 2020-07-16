@@ -11,6 +11,7 @@
 #define VS_SHADERVALUES_H
 
 #include "VS/Utils/VS_HashTable.h"
+#include "VS/Utils/VS_IntHashTable.h"
 #include "VS/Utils/VS_String.h"
 
 class vsColor;
@@ -40,6 +41,7 @@ class vsShaderValues
 			float vec4[4];
 			const void* bind;
 		};
+		vsString name;
 		Type type;
 		bool bound;
 
@@ -50,7 +52,7 @@ class vsShaderValues
 	};
 
 	vsShaderValues *m_parent;
-	vsHashTable<Value> m_value;
+	vsIntHashTable<Value> m_value;
 public:
 
 	vsShaderValues();
@@ -75,13 +77,13 @@ public:
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
 	bool Has( const vsString& name ) const;
-	bool UniformF( const vsString& name, float& out ) const;
-	bool UniformB( const vsString& name, bool& out ) const;
-	bool UniformI( const vsString& name, int& out ) const;
-	bool UniformVec2( const vsString& name, vsVector2D& out ) const;
-	bool UniformVec3( const vsString& name, vsVector3D& out ) const;
-	bool UniformVec4( const vsString& name, vsVector4D& out ) const;
-	bool UniformMat4( const vsString& name, vsMatrix4x4& out ) const;
+	bool UniformF( uint32_t uid, float& out ) const;
+	bool UniformB( uint32_t uid, bool& out ) const;
+	bool UniformI( uint32_t uid, int& out ) const;
+	bool UniformVec2( uint32_t uid, vsVector2D& out ) const;
+	bool UniformVec3( uint32_t uid, vsVector3D& out ) const;
+	bool UniformVec4( uint32_t uid, vsVector4D& out ) const;
+	bool UniformMat4( uint32_t uid, vsMatrix4x4& out ) const;
 
 	bool operator==( const vsShaderValues& other ) const;
 	bool operator!=( const vsShaderValues& other ) const { return ! (*this == other); }

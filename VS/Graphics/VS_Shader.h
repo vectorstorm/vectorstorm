@@ -32,6 +32,7 @@ struct vsShaderAutoBitDefinition
 {
 	int bitId;
 	vsString uniformName;
+	uint32_t uniformUID;
 };
 
 
@@ -41,6 +42,7 @@ public:
 	struct Uniform
 	{
 		vsString name;
+		uint32_t uid;
 		// struct
 		// {
 			int b;

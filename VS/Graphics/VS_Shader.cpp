@@ -17,6 +17,7 @@
 #include "VS_Screen.h"
 #include "VS_ShaderValues.h"
 #include "VS_ShaderVariant.h"
+#include "VS_ShaderUniformRegistry.h"
 #include "VS_Store.h"
 #include "VS_System.h"
 #include "VS_TimerSystem.h"
@@ -43,6 +44,12 @@ void
 vsShader::SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions )
 {
 	g_shaderAutoBitDefinitions = definitions;
+
+	for ( int i = 0; i < g_shaderAutoBitDefinitions.ItemCount(); i++ )
+	{
+		g_shaderAutoBitDefinitions[i].uniformUID = vsShaderUniformRegistry::UID(
+				g_shaderAutoBitDefinitions[i].uniformName );
+	}
 }
 
 void
@@ -231,7 +238,7 @@ vsShader::GetVariantBitsFor( const vsShaderValues *values )
 		{
 			const vsShaderAutoBitDefinition& def = g_shaderAutoBitDefinitions[i];
 			bool b = false;
-			if ( values->UniformB( def.uniformName, b ) )
+			if ( values->UniformB( def.uniformUID, b ) )
 			{
 				if ( b )
 					result |= BIT( def.bitId );

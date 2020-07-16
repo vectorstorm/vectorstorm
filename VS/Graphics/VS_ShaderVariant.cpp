@@ -15,6 +15,7 @@
 #include "VS_Screen.h"
 #include "VS_Store.h"
 #include "VS_ShaderValues.h"
+#include "VS_ShaderUniformRegistry.h"
 #include "VS_TimerSystem.h"
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderBuffer.h"
@@ -275,6 +276,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			}
 
 			m_uniform[ui].name = name;
+			m_uniform[ui].uid = vsShaderUniformRegistry::UID(name);
 			m_uniform[ui].loc = glGetUniformLocation(m_shader, name.c_str());
 			m_uniform[ui].type = type;
 			m_uniform[ui].arraySize = arraySize;
@@ -727,48 +729,48 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			case GL_BOOL:
 				{
 					bool b = false;
-					if ( !values || !values->UniformB( m_uniform[i].name, b ) )
-						 material->GetShaderValues()->UniformB( m_uniform[i].name, b );
+					if ( !values || !values->UniformB( m_uniform[i].uid, b ) )
+						 material->GetShaderValues()->UniformB( m_uniform[i].uid, b );
 					SetUniformValueB( i, b );
 					break;
 				}
 			case GL_FLOAT:
 				{
 					float f = 0.f;
-					if ( !values || !values->UniformF( m_uniform[i].name, f ) )
-						material->GetShaderValues()->UniformF( m_uniform[i].name, f );
+					if ( !values || !values->UniformF( m_uniform[i].uid, f ) )
+						material->GetShaderValues()->UniformF( m_uniform[i].uid, f );
 					SetUniformValueF( i, f );
 					break;
 				}
 			case GL_FLOAT_VEC2:
 				{
 					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
+					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
+						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
 					SetUniformValueVec2( i, vsVector2D(v.x,v.y) );
 					break;
 				}
 			case GL_FLOAT_VEC3:
 				{
 					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
+					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
+						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
 					SetUniformValueVec3( i, v );
 					break;
 				}
 			case GL_FLOAT_VEC4:
 				{
 					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].name, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].name, v );
+					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
+						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
 					SetUniformValueVec4( i, v );
 					break;
 				}
 			case GL_FLOAT_MAT4:
 				{
 					vsMatrix4x4 v;
-					if ( !values || !values->UniformMat4( m_uniform[i].name, v ) )
-						material->GetShaderValues()->UniformMat4( m_uniform[i].name, v );
+					if ( !values || !values->UniformMat4( m_uniform[i].uid, v ) )
+						material->GetShaderValues()->UniformMat4( m_uniform[i].uid, v );
 					SetUniformValueMat4( i, v );
 					break;
 				}
@@ -782,8 +784,8 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					int b = 0;
 					// TODO:  Expose samplers through shadervalue objects, maybe?
-					// if ( material->GetShaderValues()->UniformI( m_uniform[i].name, b) )
-					material->GetShaderValues()->UniformI( m_uniform[i].name, b);
+					// if ( material->GetShaderValues()->UniformI( m_uniform[i].uid, b) )
+					material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
 					SetUniformValueI( i, b );
 					break;
 				}
@@ -791,7 +793,7 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					GL_CHECK_SCOPED("UnsignedInt");
 					int b = 0;
-					material->GetShaderValues()->UniformI( m_uniform[i].name, b);
+					material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
 					uint32_t ui = (uint32_t)b; // TODO: make less horrible
 					SetUniformValueUI( i, ui );
 					break;
