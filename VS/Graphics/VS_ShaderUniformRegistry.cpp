@@ -32,10 +32,9 @@ vsShaderUniformRegistry::UID( const vsString& uniformName )
 {
 	const int *result = m_uniform->FindItem(uniformName);
 	if ( result )
-	{
 		return *result;
-	}
-	(*m_uniform)[uniformName] = m_uniformCount;
+
+	m_uniform->AddItemWithKey(m_uniformCount, uniformName);
 	return m_uniformCount++;
 }
 
