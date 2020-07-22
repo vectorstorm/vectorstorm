@@ -441,21 +441,23 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 			vertexPosition = point[midI] + offsetPre * halfWidth;
 		}
 		vsVector3D outsideOffset = vertexPosition - point[midI];
+		float insideLength = insideOffset.Length();
+		float outsideLength = outsideOffset.Length();
 
 		va[vertexCursor+0].position = point[midI] + insideOffset;
 		va[vertexCursor+0].texel.Set( 0.0, distance / texScale );
 		va[vertexCursor+0].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		va[vertexCursor+1].position = point[midI] + outsideOffset;
-		va[vertexCursor+1].texel.Set( width / texScale, distance / texScale);
+		va[vertexCursor+1].texel.Set( (insideLength+outsideLength) / texScale, distance / texScale);
 		va[vertexCursor+1].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		va[vertexCursor+2].position = point[midI] + 1.3f * insideOffset;
-		va[vertexCursor+2].texel.Set( 0.0, distance / texScale);
+		va[vertexCursor+2].texel.Set( (-0.3f * insideLength) / texScale, distance / texScale);
 		va[vertexCursor+2].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		va[vertexCursor+3].position = point[midI] + 1.3f * outsideOffset;
-		va[vertexCursor+3].texel.Set( width / texScale, distance / texScale);
+		va[vertexCursor+3].texel.Set( (insideLength + 1.3f*outsideLength) / texScale, distance / texScale);
 		va[vertexCursor+3].normal = dirOfTravel.Cross(up).Cross(dirOfTravel);
 
 		if ( color )
