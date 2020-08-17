@@ -12,6 +12,7 @@
 
 class vsBox2D;
 class vsColor;
+class vsColorPacked;
 class vsFog;
 class vsLight;
 class vsMaterial;
@@ -116,6 +117,9 @@ public:
 
 	void		WriteColor(const vsColor &c);
 	void		ReadColor(vsColor *c);
+
+	void		WriteColorPacked(const vsColorPacked &c);
+	void		ReadColorPacked(vsColorPacked *c);
 
 	void		WriteLight(const vsLight &l);
 	void		ReadLight(vsLight *l);

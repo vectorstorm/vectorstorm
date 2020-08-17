@@ -16,6 +16,7 @@ class vsVector2D;
 class vsVector3D;
 class vsVector4D;
 class vsColor;
+class vsColorPacked;
 
 class vsSerialiser
 {
@@ -55,6 +56,7 @@ public:
 	virtual void	Vector3D( vsVector3D &value ) = 0;
 	virtual void	Vector4D( vsVector4D &value ) = 0;
 	virtual void	Color( vsColor &value ) = 0;
+	virtual void	ColorPacked( vsColorPacked &value ) = 0;
 };
 
 class vsSerialiserRead : public vsSerialiser
@@ -82,6 +84,7 @@ public:
 	virtual void	Vector3D( vsVector3D &value );
 	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
+	virtual void	ColorPacked( vsColorPacked &value );
 };
 
 class vsSerialiserWrite : public vsSerialiser
@@ -109,6 +112,7 @@ public:
 	virtual void	Vector3D( vsVector3D &value );
 	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
+	virtual void	ColorPacked( vsColorPacked &value );
 };
 
 class vsSerialiserReadStream : public vsSerialiser
@@ -141,6 +145,7 @@ public:
 	virtual void	Vector3D( vsVector3D &value );
 	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
+	virtual void	ColorPacked( vsColorPacked &value );
 };
 
 class vsSerialiserWriteStream : public vsSerialiser
@@ -173,6 +178,7 @@ public:
 	virtual void	Vector3D( vsVector3D &value );
 	virtual void	Vector4D( vsVector4D &value );
 	virtual void	Color( vsColor &value );
+	virtual void	ColorPacked( vsColorPacked &value );
 };
 
 #endif // FS_SERIALISER_H

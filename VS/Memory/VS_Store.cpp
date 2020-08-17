@@ -530,6 +530,26 @@ vsStore::ReadColor(vsColor *c)
 }
 
 void
+vsStore::WriteColorPacked(const vsColorPacked &c)
+{
+	WriteUint8( c.r );
+	WriteUint8( c.g );
+	WriteUint8( c.b );
+	WriteUint8( c.a );
+}
+
+void
+vsStore::ReadColorPacked(vsColorPacked *c)
+{
+	uint8_t r = ReadUint8();
+	uint8_t g = ReadUint8();
+	uint8_t b = ReadUint8();
+	uint8_t a = ReadUint8();
+
+	c->Set(r,g,b,a);
+}
+
+void
 vsStore::WriteLight(const vsLight &l)
 {
 	WriteUint8( l.GetType() );
