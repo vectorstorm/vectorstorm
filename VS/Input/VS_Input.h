@@ -12,6 +12,7 @@
 
 #include "Core/CORE_GameSystem.h"
 #include "VS/Math/VS_Vector.h"
+#include "VS/Math/VS_Box.h"
 #include "Utils/VS_Singleton.h"
 #include "Utils/VS_Array.h"
 #include "Utils/VS_ArrayStore.h"
@@ -366,8 +367,8 @@ public:
 
 	void			SuppressResizeEvent() { m_suppressResizeEvent = true; }
 
-	void			SetStringMode(bool mode, ValidationType = Validation_None);
-	void			SetStringMode(bool mode, int maxLength, ValidationType vt = Validation_None);
+	void			SetStringMode(bool mode, const vsBox2D& where, ValidationType = Validation_None);
+	void			SetStringMode(bool mode, int maxLength, const vsBox2D& where, ValidationType vt = Validation_None);
 	void			PauseStringMode(bool pause); // used if a game wants to temporarily suspend handling of keypresses, for example while manipulating a selection by the mouse
 	bool			InStringMode() { return m_stringMode; }
 	bool			IsKeyboardSuppressed() { return m_stringMode || m_stringModeClearing; }

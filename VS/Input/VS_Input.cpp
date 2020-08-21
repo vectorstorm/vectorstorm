@@ -630,13 +630,13 @@ vsInput::Save()
 }
 
 void
-vsInput::SetStringMode(bool mode, ValidationType vt)
+vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt)
 {
-	SetStringMode(mode, -1, vt);
+	SetStringMode(mode, -1, box, vt);
 }
 
 void
-vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
+vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationType vt)
 {
 	if ( mode != m_stringMode )
 	{
@@ -649,6 +649,17 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 			m_stringModeMaxLength = maxLength;
 			m_stringValidationType = vt;
 			SetStringModeSelectAll(false);
+
+			SDL_Rect rect;
+			rect.x = box.GetMin().x;
+			rect.y = box.GetMin().y;
+			rect.w = box.Width();
+			rect.h = box.Height();
+
+			SDL_SetTextInputRect(&rect);
+
+			// bool hasScreenInput = SDL_HasScreenKeyboardSupport();
+			// vsLog("Has screen input: %s", hasScreenInput ? "true" : "false");
 		}
 		else
 		{
@@ -938,6 +949,12 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_TEXTEDITING:
 					m_timeSinceAnyInput = 0.f;
+
+					// vsLog("TextEditing: '%s', pos %d len %d",
+					// 		event.edit.text,
+					// 		event.edit.start,
+					// 		event.edit.length );
+
 					// This event is for partial, in-progress code points
 					// which haven't yet settled on a final glyph.  For now,
 					// let's just ignore them.
@@ -2004,7 +2021,7 @@ vsInput::StringModeCancel()
 
 		m_stringModeUndoStack.Clear();
 	}
-	SetStringMode(false);
+	SetStringMode(false, vsBox2D());
 }
 
 bool
@@ -2231,7 +2248,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			if ( m_stringMode )
 			{
 				StringModeSaveUndoState();
-				SetStringMode(false);
+				SetStringMode(false, vsBox2D());
 			}
 			break;
 		case SDLK_ESCAPE:
