@@ -114,6 +114,7 @@ public:
 		ClientBool_NormalArray,
 		ClientBool_ColorArray,
 		ClientBool_TextureCoordinateArray,
+		ClientBool_OtherArray,
 		BOOL_COUNT
 	};
 	enum Float

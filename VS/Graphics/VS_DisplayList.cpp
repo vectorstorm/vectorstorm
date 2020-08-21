@@ -104,6 +104,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SnapMatrix",
 
 	"SetShaderValues",
+	"PushShaderOptions",
+	"PopShaderOptions",
 
 	"Debug"
 };
@@ -697,6 +699,20 @@ vsDisplayList::SetShaderValues( vsShaderValues *values )
 }
 
 void
+vsDisplayList::PushShaderOptions( const vsShaderOptions &options )
+{
+	m_fifo->WriteUint8( OpCode_PushShaderOptions );
+	m_fifo->WriteUint32( options.mask );
+	m_fifo->WriteUint32( options.value );
+}
+
+void
+vsDisplayList::PopShaderOptions()
+{
+	m_fifo->WriteUint8( OpCode_PopShaderOptions );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -1010,6 +1026,13 @@ vsDisplayList::ClearRenderTarget()
 }
 
 void
+vsDisplayList::ClearRenderTargetColor( const vsColor& c )
+{
+	m_fifo->WriteUint8( OpCode_ClearRenderTargetColor );
+	m_fifo->WriteColor( c );
+}
+
+void
 vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 {
 	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
@@ -1140,6 +1163,7 @@ vsDisplayList::PopOp()
 		switch( m_currentOp.type )
 		{
 			case OpCode_SetColor:
+			case OpCode_ClearRenderTargetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
 			case OpCode_SetColors:
@@ -1186,6 +1210,12 @@ vsDisplayList::PopOp()
 			case OpCode_UnbindBuffer:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			}
+			case OpCode_PushShaderOptions:
+			{
+				m_currentOp.data.shaderOptions.mask = m_fifo->ReadInt32();
+				m_currentOp.data.shaderOptions.value = m_fifo->ReadInt32();
 				break;
 			}
 			case OpCode_TexelArray:
@@ -1311,6 +1341,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
+			case OpCode_PopShaderOptions:
 			default:
 				break;
 		}
@@ -1329,6 +1360,7 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 	switch( type )
 	{
 		case OpCode_SetColor:
+		case OpCode_ClearRenderTargetColor:
 			SetColor( o->data.GetColor() );
 			break;
 		case OpCode_SetColors:

@@ -44,6 +44,8 @@ void
 vsLocString::SubVars( vsString& str ) const
 {
 	// Look for {} sets.
+	if ( str.empty() )
+		return;
 
 	int startVar = -1;
 	int startFormat = -1;
@@ -192,12 +194,14 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 			return m_locString.AsString();
 		case Type_Int:
 			{
-				return DoFormatNumber( m_intLiteral );
-				// vsString fmt = vsFormatString("{%s}", fmt_in);
-				// if ( fmt != vsEmptyString )
-				// {
-				// 	return fmt::format(fmt, m_intLiteral);
-				// }
+				if ( fmt_in.empty() )
+					return DoFormatNumber( m_intLiteral );
+
+				vsString fmt = vsFormatString("{%s}", fmt_in);
+				if ( fmt != vsEmptyString )
+				{
+					return fmt::format(fmt, m_intLiteral);
+				}
 			}
 		case Type_Float:
 			{

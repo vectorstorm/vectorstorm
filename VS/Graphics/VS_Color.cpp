@@ -38,6 +38,13 @@ vsColor::FromUInt32(uint32_t c)
 	return FromBytes(cp[0], cp[1], cp[2], cp[3]);
 }
 
+vsColor
+vsColor::FromUInt64(uint64_t c)
+{
+	uint16_t *cp = reinterpret_cast<uint16_t*>(&c);
+	return vsColor(cp[0]/65535.f, cp[1]/65535.f, cp[2]/65535.f, cp[3]/65535.f);
+}
+
 vsColor::vsColor(const vsColorPacked& packed):
 	r(packed.r/255.f),
 	g(packed.g/255.f),
@@ -177,6 +184,18 @@ vsColor::AsUInt32() const
 		static_cast<uint8_t>(g * 255.f) << 8 |
 		static_cast<uint8_t>(b * 255.f) << 16 |
 		static_cast<uint8_t>(a * 255.f) << 24;
+
+	return rgba;
+}
+
+uint64_t
+vsColor::AsUInt64() const
+{
+	uint64_t rgba =
+		static_cast<uint64_t>(r * 65535.f) |
+		static_cast<uint64_t>(g * 65535.f) << 16 |
+		static_cast<uint64_t>(b * 65535.f) << 32 |
+		static_cast<uint64_t>(a * 65535.f) << 48;
 
 	return rgba;
 }

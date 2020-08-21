@@ -202,6 +202,26 @@ float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3
 	return distance;
 }
 
+float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA, vsVector3D *closestB )
+{
+	if ( closestA || closestB )
+	{
+		vsVector2D closestA2D, closestB2D;
+		float result = vsSqDistanceBetweenLineSegments( startA.XZ(), endA.XZ(),
+				startB.XZ(), endB.XZ(),
+				&closestA2D, &closestB2D );
+
+		if ( closestA )
+			closestA->Set( closestA2D.x, 0.f, closestA2D.y );
+		if ( closestB )
+			closestB->Set( closestB2D.x, 0.f, closestB2D.y );
+		return result;
+	}
+	return vsSqDistanceBetweenLineSegments( startA.XZ(), endA.XZ(),
+			startB.XZ(), endB.XZ(),
+			NULL, NULL );
+}
+
 bool vsLineSegmentsIntersect( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *where )
 {
 	vsVector2D deltaA = endA - startA;

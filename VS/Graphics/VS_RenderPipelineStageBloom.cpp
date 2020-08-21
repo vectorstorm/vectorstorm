@@ -29,14 +29,14 @@ public:
 	vsBloomBlurShader():
 		vsShader(row3v, row3f, false, false)
 	{
-		m_locCoefficients = glGetUniformLocation(m_shader, "coefficients");
+		m_locCoefficients = glGetUniformLocation(GetShaderId(), "coefficients");
 		// m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
 		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
-	virtual void Prepare( vsMaterial *mat, vsShaderValues *values )
+	virtual void Prepare( vsMaterial *mat, vsShaderValues *values, vsRenderTarget *target )
 	{
-		vsShader::Prepare( mat, values );
+		vsShader::Prepare( mat, values, target );
 		// glUniform1f(m_locOffsetX, m_offset.x);
 		// glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);

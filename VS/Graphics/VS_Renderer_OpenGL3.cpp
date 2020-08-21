@@ -1,4 +1,5 @@
 /*
+ *
  *  VS_Renderer_OpenGL3.cpp
  *  VectorStorm
  *
@@ -229,6 +230,11 @@ static void printAttributes ()
 	glGetError();
 
 	vsLog("== End OpenGL limits ==");
+
+	if ( GL_EXT_texture_filter_anisotropic )
+		vsLog("anisotropic texture filters: SUPPORTED");
+	else
+		vsLog("anisotropic texture filters: UNSUPPORTED");
 #endif // TARGET_OS_IPHONE
 }
 
@@ -515,6 +521,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	GL_CHECK("Initialising OpenGL rendering");
 
+
 	// TEMP VAO IMPLEMENTATION
 	glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);
@@ -527,6 +534,21 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
+	bool minimizeOnFocusLoss = ( displayCount == 1 );
+
+	{
+		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+		if ( !retval )
+			vsLog("Trying to set minimize on focus loss hint failed");
+		else
+		{
+			if ( doit )
+				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+			else
+				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+		}
+	}
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -952,16 +974,41 @@ vsRenderer_OpenGL3::FlushRenderState()
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
-		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+		bool needsReset = false;
+
+		uint32_t shaderOptionsValue = m_currentMaterial->GetShaderOptions()->value &
+			m_currentMaterial->GetShaderOptions()->mask;
+		uint32_t shaderOptionsSet = 0;
+		for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
 		{
+			const vsShaderOptions &s = m_optionsStack[i];
+
+			shaderOptionsValue |= s.value & s.mask & ~shaderOptionsSet;
+			shaderOptionsSet |= s.mask;
+		}
+
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
+
+		// only ask for bits that are actually supported by this shader
+		shaderOptionsValue &= m_currentShader->GetVariantBitsSupported();
+
+		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+			needsReset = true;
+		else if ( shaderOptionsValue != m_currentShader->GetCurrentVariantBits() )
+			needsReset = true;
+
+		if ( needsReset )
+		{
+			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			m_lastShaderId = m_currentShader->GetShaderId();
 			s_previousMaterial = m_currentMaterial;
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
 		}
@@ -1049,6 +1096,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	m_currentVertexArrayCount = 0;
 	m_currentFogDensity = 0.001f;
 
+	m_optionsStack.Clear();
+
 	m_inOverlay = false;
 
 	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
@@ -1107,6 +1156,17 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_state.SetBool( vsRendererState::Bool_StencilTest, true ); // when we're clearing a render target, make sure we're not testing stencil bits!
 					m_state.Flush();
 					m_currentRenderTarget->Clear();
+					break;
+				};
+			case vsDisplayList::OpCode_ClearRenderTargetColor:
+				{
+					PROFILE_GL("ClearRenderTargetColor");
+					m_lastShaderId = 0;
+					glUseProgram(0);
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
+					m_state.SetBool( vsRendererState::Bool_StencilTest, true ); // when we're clearing a render target, make sure we're not testing stencil bits!
+					m_state.Flush();
+					m_currentRenderTarget->ClearColor( op->data.color );
 					break;
 				};
 			case vsDisplayList::OpCode_ResolveRenderTarget:
@@ -1196,6 +1256,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsShaderValues *sv = (vsShaderValues*)op->data.p;
 					m_currentShaderValues = sv;
+					break;
+				}
+			case vsDisplayList::OpCode_PushShaderOptions:
+				{
+					m_optionsStack.AddItem( op->data.shaderOptions );
+					break;
+				}
+			case vsDisplayList::OpCode_PopShaderOptions:
+				{
+					m_optionsStack.SetArraySize( m_optionsStack.ItemCount() - 1 );
 					break;
 				}
 			case vsDisplayList::OpCode_SnapMatrix:
@@ -1349,6 +1419,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
@@ -1617,6 +1688,11 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 	m_currentMaterial = material;
 }
 
+namespace
+{
+	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
+};
+
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
@@ -1707,6 +1783,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				case DrawMode_Add:
 				case DrawMode_Subtract:
 				case DrawMode_Normal:
+				case DrawMode_PremultipliedAlpha:
 				case DrawMode_Absolute:
 					if ( material->m_texture[0] )
 					{
@@ -1753,48 +1830,60 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		  {
 		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		  }*/
-		for ( int i = 0; i < 16; i++ )
+		for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		{
 			vsTexture *t = material->GetTexture(i);
 			if ( t )
 			{
-				glActiveTexture(GL_TEXTURE0 + i);
 				// glEnable(GL_TEXTURE_2D);
 				if ( t->GetResource()->IsTextureBuffer() )
 				{
-					GL_CHECK_SCOPED("BufferTexture");
-					glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
 					vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-					buffer->BindAsTexture();
+					if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
+					{
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = buffer->GetBufferID();
+						GL_CHECK_SCOPED("BufferTexture");
+						glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
+						buffer->BindAsTexture();
+					}
 				}
 				else
 				{
-					int tval = t->GetResource()->GetTexture();
-					if ( tval == 0 )
+					uint32_t tval = t->GetResource()->GetTexture();
+					if ( currentlyBoundTexture[i] != tval )
 					{
-						// [TODO] Have a replacement blank or checkerboard texture here.
-						glBindTexture( GL_TEXTURE_2D, 0 );
-						vsLog("Tried to bind invalid texture.");
-						vsLog("Material: %s", material->GetName() );
-						vsLog("Texture slot %d", i);
-						vsLog("Texture name %s", t->GetResource()->GetName());
-						// vsAssert( tval != 0, "0 texture??" );
-					}
-					else
-					{
-						glBindTexture( GL_TEXTURE_2D, tval);
-						if ( material->m_clampU )
-							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-						if ( material->m_clampV )
-							glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = tval;
+						if ( tval == 0 )
+						{
+							// [TODO] Have a replacement blank or checkerboard texture here.
+							glBindTexture( GL_TEXTURE_2D, 0 );
+							vsLog("Tried to bind invalid texture.");
+							vsLog("Material: %s", material->GetName() );
+							vsLog("Texture slot %d", i);
+							vsLog("Texture name %s", t->GetResource()->GetName());
+							// vsAssert( tval != 0, "0 texture??" );
+						}
+						else
+						{
+							glBindTexture( GL_TEXTURE_2D, tval);
+							if ( material->m_clampU )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+							if ( material->m_clampV )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						}
 					}
 				}
 			}
 			else
 			{
-				// glDisable(GL_TEXTURE_2D);
-				// glActiveTexture(GL_TEXTURE0 + i);
-				// glBindTexture( GL_TEXTURE_2D, 0);
+				if ( currentlyBoundTexture[i] != 0 )
+				{
+					currentlyBoundTexture[i] = 0;
+					glActiveTexture(GL_TEXTURE0 + i);
+					glBindTexture( GL_TEXTURE_2D, 0);
+				}
 			}
 		}
 		// vsTexture *st = material->GetShadowTexture();
@@ -1923,11 +2012,19 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					glBlendEquation(GL_FUNC_ADD);
 					// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
 					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_PremultipliedAlpha:
+				{
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					// glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					break;
 				}
 			case DrawMode_Lit:
@@ -2293,6 +2390,7 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 		case DrawMode_Multiply:
 		case DrawMode_MultiplyAbsolute:
 		case DrawMode_Normal:
+		case DrawMode_PremultipliedAlpha:
 		case DrawMode_Absolute:
 			if ( mat->m_texture[0] )
 				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);

@@ -385,3 +385,65 @@ vsFragment::Draw( vsDisplayList *list )
 		list->Append( *m_displayList );
 	}
 }
+
+int
+vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
+{
+	result.Clear();
+
+	if ( IsSimple() )
+	{
+		uint16_t *index = m_ibo->GetIntArray();
+		int ic = m_ibo->GetIntArraySize();
+
+		if ( m_simpleType == SimpleType_TriangleList )
+		{
+			for ( int i = 2; i < ic; i+=3 )
+			{
+				uint16_t index0 = index[i-2];
+				uint16_t index1 = index[i-1];
+				uint16_t index2 = index[i];
+				vsDisplayList::Triangle t;
+				t.vert[0] = m_vbo->GetPosition(index0);
+				t.vert[1] = m_vbo->GetPosition(index1);
+				t.vert[2] = m_vbo->GetPosition(index2);
+				result.AddItem(t);
+			}
+		}
+		else if ( m_simpleType == SimpleType_TriangleStrip )
+		{
+			for ( int i = 2; i < ic; i++ )
+			{
+				uint16_t index0 = index[i-2];
+				uint16_t index1 = index[i-1];
+				uint16_t index2 = index[i];
+				vsDisplayList::Triangle t;
+				t.vert[0] = m_vbo->GetPosition(index0);
+				t.vert[1] = m_vbo->GetPosition(index1);
+				t.vert[2] = m_vbo->GetPosition(index2);
+				result.AddItem(t);
+			}
+		}
+		else if ( m_simpleType == SimpleType_TriangleFan )
+		{
+			for ( int i = 1; i < ic; i++ )
+			{
+				uint16_t index0 = index[0];
+				uint16_t index1 = index[i-1];
+				uint16_t index2 = index[i];
+				vsDisplayList::Triangle t;
+				t.vert[0] = m_vbo->GetPosition(index0);
+				t.vert[1] = m_vbo->GetPosition(index1);
+				t.vert[2] = m_vbo->GetPosition(index2);
+				result.AddItem(t);
+			}
+		}
+	}
+	else if ( m_displayList )
+	{
+		return m_displayList->GetTriangles(result);
+	}
+
+	return result.ItemCount();
+}
+

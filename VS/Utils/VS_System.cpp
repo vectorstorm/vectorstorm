@@ -21,6 +21,7 @@
 #include "VS_TextureManager.h"
 #include "VS_FileCache.h"
 #include "VS_ShaderCache.h"
+#include "VS_ShaderUniformRegistry.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -144,6 +145,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	vsFileCache::Startup();
 	vsShaderCache::Startup();
+	vsShaderUniformRegistry::Startup();
 	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...");
@@ -187,6 +189,7 @@ vsSystem::~vsSystem()
 	delete vsSingletonManager::Instance();
 
 	DeinitPhysFS();
+	vsShaderUniformRegistry::Shutdown();
 	vsShaderCache::Shutdown();
 	vsFileCache::Shutdown();
 

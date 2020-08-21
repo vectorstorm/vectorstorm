@@ -28,5 +28,21 @@ public:
     void Unlock();
 };
 
+class vsScopedLock
+{
+	vsMutex& m_mutex;
+public:
+	vsScopedLock( vsMutex& m ):
+		m_mutex(m)
+	{
+		m_mutex.Lock();
+	}
+
+	~vsScopedLock()
+	{
+		m_mutex.Unlock();
+	}
+};
+
 #endif // VS_MUTEX_H
 

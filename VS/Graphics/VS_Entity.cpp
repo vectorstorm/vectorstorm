@@ -17,6 +17,7 @@ vsEntity::vsEntity():
 	m_name( vsEmptyString ),
 	m_parent(NULL),
 	m_child(NULL),
+	m_scene(NULL),
 	m_visible(true),
 	m_processing(false),
 	m_extractQueued(false)
@@ -117,6 +118,7 @@ vsEntity::DoExtract()
 		m_prev = m_next = this;
 	}
 	m_extractQueued = false;
+	m_scene = NULL;
 }
 
 void
@@ -185,22 +187,24 @@ vsEntity::Update( float timeStep )
 }
 
 void
-vsEntity::RegisterOnScene(int scene)
+vsEntity::RegisterOnScene(int sceneId)
 {
-	vsScreen::Instance()->GetScene(scene)->RegisterEntityOnTop(this);
+	vsScene *scene = vsScreen::Instance()->GetScene(sceneId);
+	RegisterOnScene(scene);
 }
 
 void
 vsEntity::RegisterOnScene(vsScene *scene)
 {
+	m_scene = scene;
 	scene->RegisterEntityOnTop(this);
 }
 
 vsEntity *
-vsEntity::Find( const vsString &name )
+vsEntity::Find( const vsString &name ) const
 {
 	if ( m_name == name )
-		return this;
+		return const_cast<vsEntity*>(this);
 
 	vsEntity *result = NULL;
 
@@ -218,7 +222,7 @@ vsEntity::Find( const vsString &name )
 }
 
 vsEntity *
-vsEntity::FindEntityAtPosition(const vsVector2D &pos)
+vsEntity::FindEntityAtPosition(const vsVector2D &pos) const
 {
 	if ( !m_clickable || !m_visible )
 		return NULL;

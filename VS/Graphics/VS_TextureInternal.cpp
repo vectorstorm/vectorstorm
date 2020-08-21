@@ -12,6 +12,8 @@
 #include "VS_Color.h"
 #include "VS_FloatImage.h"
 #include "VS_Image.h"
+#include "VS_HalfIntImage.h"
+#include "VS_HalfFloatImage.h"
 #include "VS_RenderTarget.h"	// for vsSurface.  Should move into its own file.
 #include "VS_RenderBuffer.h"
 
@@ -37,6 +39,24 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
+{
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL)
+{
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
@@ -172,18 +192,16 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
+	// Anisotropic filtering didn't become part of OpenGL core contextx until
+	// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
+	// support.  Blah!!
 	if ( GL_EXT_texture_filter_anisotropic )
 	{
-		vsLog("anisotropic texture filters: ENABLED");
 		float aniso = 0.0f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
 		aniso = vsMin(aniso,9);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 	}
-	else
-		vsLog("anisotropic texture filters: UNSUPPORTED");
-
-
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
@@ -250,6 +268,69 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_nearestSampling = false;
 }
 
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
+{
+	int w = image->GetWidth();
+	int h = image->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA16UI,
+			w, h,
+			0,
+			GL_RGBA_INTEGER,
+			GL_UNSIGNED_SHORT,
+			image->RawData());
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_tbo(NULL)
+{
+	int w = image->GetWidth();
+	int h = image->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA16F,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_HALF_FLOAT,
+			image->RawData());
+	m_nearestSampling = false;
+}
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
 	vsResource(name),
 	m_texture(0),

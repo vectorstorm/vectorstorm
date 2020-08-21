@@ -16,6 +16,8 @@
 
 class vsFloatImage;
 class vsImage;
+class vsHalfIntImage;
+class vsHalfFloatImage;
 class vsRenderBuffer;
 class vsRenderTarget;
 class vsSurface;
@@ -43,6 +45,8 @@ public:
 	vsTextureInternal( const vsString &name, const vsArray<vsString> &mipmaps );
 	vsTextureInternal( const vsString &name, vsImage *image );
 	vsTextureInternal( const vsString &name, vsFloatImage *image );
+	vsTextureInternal( const vsString &name, vsHalfFloatImage *image );
+	vsTextureInternal( const vsString &name, vsHalfIntImage *image );
 	vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
 

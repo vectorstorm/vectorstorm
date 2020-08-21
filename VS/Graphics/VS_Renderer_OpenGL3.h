@@ -18,6 +18,7 @@
 #include "VS_Material.h"
 #include "VS_RendererState.h"
 #include "VS_ShaderSuite.h"
+#include "VS_ShaderOptions.h"
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
@@ -76,6 +77,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsRenderBuffer *     m_currentNormalBuffer;
 	vsRenderBuffer *     m_currentTexelBuffer;
 	vsRenderBuffer *     m_currentColorBuffer;
+
+	vsArray<vsShaderOptions> m_optionsStack;
 
 	size_t m_lastShaderId;
 

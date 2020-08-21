@@ -61,7 +61,7 @@ public:
 	void			AsyncMap(); // map our async-read data into ourselves so we can be accessed to get pixels directly
 	void			AsyncUnmap(); // unmap
 
-	vsTexture *		Bake();
+	vsTexture *		Bake( const vsString& name = vsEmptyString );
 
 	vsStore *		BakePNG(int compression);
 	void			SavePNG(int compression, const vsString& filename);

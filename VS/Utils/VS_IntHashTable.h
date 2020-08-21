@@ -1,38 +1,37 @@
 /*
- *  VS_HashTable.h
+ *  VS_IntHashTable.h
  *  VectorStorm
  *
- *  Created by Trevor Powell on 22/03/09.
- *  Copyright 2009 Trevor Powell. All rights reserved.
+ *  Created by Trevor Powell on 16/07/2020
+ *  Copyright 2020 Trevor Powell.  All rights reserved.
  *
  */
 
-#ifndef VS_HASHTABLE_H
-#define VS_HASHTABLE_H
+#ifndef VS_INTHASHTABLE_H
+#define VS_INTHASHTABLE_H
 
 #include "VS/Utils/VS_Debug.h"
 #include "VS/Math/VS_Math.h"
 
-uint32_t vsCalculateHash(const char * data, uint32_t len);
+uint32_t vsCalculateIntHash(uint32_t key);
 
 template <typename T>
-class vsHashEntry
+class vsIntHashEntry
 {
 public:
 	T					m_item;
-	vsString			m_key;
-	uint32_t				m_keyHash;
+	uint32_t			m_key;
 
-	vsHashEntry<T> *	m_next;
+	vsIntHashEntry<T> *	m_next;
 
-	vsHashEntry(): m_key() { m_keyHash = 0, m_next = NULL; }
-	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = NULL; }
+	vsIntHashEntry(): m_key(0), m_next(NULL) {}
+	vsIntHashEntry( const T &t, uint32_t key ) : m_item(t), m_key(key), m_next(NULL) {}
 };
 
 template <typename T>
-class vsHashTable
+class vsIntHashTable
 {
-	vsHashEntry<T>		*m_bucket;
+	vsIntHashEntry<T>		*m_bucket;
 	int					m_bucketCount;
 
 	// we're going to need to shift our results to the right to give ourselves
@@ -51,15 +50,15 @@ class vsHashTable
 		return (hash * factor) >> m_shift;
 	}
 
-	const vsHashEntry<T>*		FindHashEntry( const vsString &key ) const
+	const vsIntHashEntry<T>*		FindHashEntry(uint32_t key) const
 	{
-		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		uint32_t  hash = vsCalculateIntHash(key);
 		int bucket = HashToBucket(hash);
 
-		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
+		vsIntHashEntry<T> *ent = m_bucket[bucket].m_next;
 		while( ent )
 		{
-			if ( ent->m_keyHash == hash && ent->m_key == key )
+			if ( ent->m_key == hash && ent->m_key == key )
 			{
 				return ent;
 			}
@@ -68,15 +67,15 @@ class vsHashTable
 		return NULL;
 	}
 
-	vsHashEntry<T>*		FindHashEntry( const vsString &key )
+	vsIntHashEntry<T>*		FindHashEntry(uint32_t key)
 	{
-		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		uint32_t  hash = vsCalculateIntHash(key);
 		int bucket = HashToBucket(hash);
 
-		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
+		vsIntHashEntry<T> *ent = m_bucket[bucket].m_next;
 		while( ent )
 		{
-			if ( ent->m_keyHash == hash && ent->m_key == key )
+			if ( ent->m_key == hash && ent->m_key == key )
 			{
 				return ent;
 			}
@@ -87,21 +86,21 @@ class vsHashTable
 
 public:
 
-	vsHashTable(int bucketCount)
+	vsIntHashTable(int bucketCount)
 	{
 		m_bucketCount = vsNextPowerOfTwo(bucketCount);
 		m_shift = 32 - vsHighBitPosition(m_bucketCount);
 
-		m_bucket = new vsHashEntry<T>[m_bucketCount];
+		m_bucket = new vsIntHashEntry<T>[m_bucketCount];
 	}
 
-	~vsHashTable()
+	~vsIntHashTable()
 	{
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
 			while ( m_bucket[i].m_next )
 			{
-				vsHashEntry<T> *toDelete = m_bucket[i].m_next;
+				vsIntHashEntry<T> *toDelete = m_bucket[i].m_next;
 				m_bucket[i].m_next = toDelete->m_next;
 
 				vsDelete( toDelete );
@@ -110,29 +109,28 @@ public:
 		vsDeleteArray( m_bucket );
 	}
 
-	void	AddItemWithKey( const T &item, const vsString &key )
+	void	AddItemWithKey( const T &item, uint32_t key)
 	{
-		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		vsHashEntry<T> *ent = new vsHashEntry<T>( item, key, hash );
+		vsIntHashEntry<T> *ent = new vsIntHashEntry<T>( item, key );
 
-		int bucket = HashToBucket(hash);
+		int bucket = HashToBucket(key);
 
 		ent->m_next = m_bucket[bucket].m_next;
 		m_bucket[bucket].m_next = ent;
 	}
 
-	void	RemoveItemWithKey( const T &item, const vsString &key )
+	void	RemoveItemWithKey( const T &item, uint32_t key)
 	{
-		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		uint32_t  hash = vsCalculateIntHash(key);
 		int bucket = HashToBucket(hash);
 		bool found = false;
 
-		vsHashEntry<T> *ent = &m_bucket[bucket];
+		vsIntHashEntry<T> *ent = &m_bucket[bucket];
 		while( ent->m_next )
 		{
-			if ( ent->m_next->m_keyHash == hash && ent->m_next->m_key == key )
+			if ( ent->m_next->m_key == hash && ent->m_next->m_key == key )
 			{
-				vsHashEntry<T> *toDelete = ent->m_next;
+				vsIntHashEntry<T> *toDelete = ent->m_next;
 				ent->m_next = toDelete->m_next;
 				found = true;
 
@@ -144,9 +142,9 @@ public:
 		vsAssert(found, "Error: couldn't find key??");
 	}
 
-	const T *		FindItem( const vsString &key ) const
+	const T *		FindItem( const uint32_t key ) const
 	{
-		const vsHashEntry<T> *ent = FindHashEntry(key);
+		const vsIntHashEntry<T> *ent = FindHashEntry(key);
 		if ( ent )
 		{
 			return &ent->m_item;
@@ -154,9 +152,9 @@ public:
 		return NULL;
 	}
 
-	T *		FindItem( const vsString &key )
+	T *		FindItem( uint32_t key )
 	{
-		vsHashEntry<T> *ent = FindHashEntry(key);
+		vsIntHashEntry<T> *ent = FindHashEntry(key);
 		if ( ent )
 		{
 			return &ent->m_item;
@@ -164,7 +162,7 @@ public:
 		return NULL;
 	}
 
-	T& operator[]( const vsString& key )
+	T& operator[]( uint32_t key )
 	{
 		T* result = FindItem(key);
 		if ( result )
@@ -179,7 +177,7 @@ public:
 		int count = 0;
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
+			vsIntHashEntry<T>* shuttle = m_bucket[i].m_next;
 			while ( shuttle )
 			{
 				count++;
@@ -192,12 +190,12 @@ public:
 	// This 'i' value is NOT CONSTANT.  As things are added and removed
 	// to this hash table, these hash entries can move around.  Only useful
 	// for internal inspection of the hash table
-	const vsHashEntry<T>* GetHashEntry(int i) const
+	const vsIntHashEntry<T>* GetHashEntry(int i) const
 	{
 		int count = i;
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
+			vsIntHashEntry<T>* shuttle = m_bucket[i].m_next;
 			while ( shuttle )
 			{
 				if ( count == 0 )
@@ -209,14 +207,14 @@ public:
 		return NULL;
 	}
 
-	bool operator==( const vsHashTable<T>& other ) const
+	bool operator==( const vsIntHashTable<T>& other ) const
 	{
 		if ( m_bucketCount != other.m_bucketCount )
 			return false;
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
-			vsHashEntry<T>* oshuttle = other.m_bucket[i].m_next;
+			vsIntHashEntry<T>* shuttle = m_bucket[i].m_next;
+			vsIntHashEntry<T>* oshuttle = other.m_bucket[i].m_next;
 			while( shuttle && oshuttle )
 			{
 				if ( shuttle->m_item != oshuttle->m_item ||
@@ -235,5 +233,5 @@ public:
 
 };
 
-#endif // VS_HASHTABLE_H
+#endif // VS_INTHASHTABLE_H
 

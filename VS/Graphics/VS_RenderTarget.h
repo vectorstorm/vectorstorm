@@ -10,6 +10,7 @@
 #define VS_RENDERTARGET_H
 
 #include "VS_Texture.h"
+class vsColor;
 
 #include "VS_OpenGL.h"
 
@@ -143,8 +144,10 @@ public:
 	vsTexture *	Resolve(int id=0);
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }
+	bool		IsDepthOnly();
 
 	void		Clear();
+	void		ClearColor( const vsColor& c );
 	void		BlitTo( vsRenderTarget *other );
 
 	GLsizei GetWidth() { return m_textureSurface->m_width; }

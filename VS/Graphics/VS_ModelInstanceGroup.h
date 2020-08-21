@@ -22,6 +22,7 @@ class vsModel;
 struct vsModelInstance;
 class vsModelInstanceGroup;
 class vsShaderValues;
+class vsShaderOptions;
 
 #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
@@ -30,9 +31,10 @@ class vsModelInstanceLodGroup : public vsEntity
 	vsModelInstanceGroup *m_group; // what group am a part of
 	vsModel *m_model;
 	size_t m_lodLevel;
-	vsShaderValues *m_values; // TEMP:  For testing
+	vsShaderValues *m_values; // NOT OWNED BY US.  Custom shader values for while drawing this group
+	vsShaderOptions *m_options; // NOT OWNED BY US.  Custom shader options for while drawing this group
 	vsArray<vsMatrix4x4> m_matrix;
-	vsArray<vsColor> m_color;
+	vsArray<vsColorPacked> m_color;
 	vsArray<int> m_matrixInstanceId;
 	vsArray<vsModelInstance*> m_instance;
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
@@ -48,6 +50,7 @@ public:
 	void TakeInstancesFromGroup( vsModelInstanceLodGroup *otherGroup );
 
 	void SetShaderValues( vsShaderValues *values ) { m_values = values; }
+	void SetShaderOptions( vsShaderOptions *options ) { m_options = options; }
 	vsModelInstance * MakeInstance();		// create an instance of me.
 	void AddInstance( vsModelInstance *instance );
 	void RemoveInstance( vsModelInstance *instance );
@@ -73,6 +76,7 @@ public:
 
 	void TakeInstancesFromGroup( vsModelInstanceGroup *otherGroup );
 	void SetShaderValues( vsShaderValues *values );
+	void SetShaderOptions( vsShaderOptions *options );
 
 	vsModelInstance * MakeInstance( int lod = 0 );		// create an instance of me.
 	void AddInstance( vsModelInstance *instance );

@@ -109,14 +109,14 @@ public:
 	const vsFragment *	GetLodFragment(int lodId, int fragmentId) const { return m_lod[lodId]->fragment[fragmentId]; }
 	void			SetLodCount(int count);
 	void			SetLodLevel(int level) { m_lodLevel = level; }
-	int				GetLodLevel() { return m_lodLevel; }
+	int				GetLodLevel() const { return m_lodLevel; }
 	void			AddLodFragment( int lodId, vsFragment *fragment );
 
 	virtual void	Draw( vsRenderQueue *list );
-	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, int lodLevel );
-	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, int lodLevel );
+	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
+	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 
-	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir);
+	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 };
 
 #endif // VS_MODEL_H

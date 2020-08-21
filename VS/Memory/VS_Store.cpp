@@ -89,6 +89,19 @@ vsStore::Rewind()
 }
 
 void
+vsStore::EraseReadBytes()
+{
+	if ( m_readHead != m_buffer )
+	{
+		int bytesRead = m_readHead - m_buffer;
+		memmove( m_buffer, m_readHead, BytesLeftForReading() );
+		m_readHead -= bytesRead;
+		m_writeHead -= bytesRead;
+		vsAssert( m_readHead == m_buffer, "Maths error in vsStore" );
+	}
+}
+
+void
 vsStore::AdvanceReadHead( size_t bytes )
 {
 	m_readHead += bytes;
@@ -517,6 +530,26 @@ vsStore::ReadColor(vsColor *c)
 }
 
 void
+vsStore::WriteColorPacked(const vsColorPacked &c)
+{
+	WriteUint8( c.r );
+	WriteUint8( c.g );
+	WriteUint8( c.b );
+	WriteUint8( c.a );
+}
+
+void
+vsStore::ReadColorPacked(vsColorPacked *c)
+{
+	uint8_t r = ReadUint8();
+	uint8_t g = ReadUint8();
+	uint8_t b = ReadUint8();
+	uint8_t a = ReadUint8();
+
+	c->Set(r,g,b,a);
+}
+
+void
 vsStore::WriteLight(const vsLight &l)
 {
 	WriteUint8( l.GetType() );
@@ -805,3 +838,4 @@ vsStore::ReplaceBuffer( size_t newLength )
 	m_bufferEnd = &m_buffer[m_bufferLength];
 	m_readHead = m_writeHead = m_buffer;
 }
+

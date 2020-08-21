@@ -55,9 +55,18 @@ struct RenderTargetRequest
 	{
 	}
 
-	bool operator==(const RenderTargetRequest& other) const
+	bool operator==(const RenderTargetRequest& o) const
 	{
-		return (0 == memcmp(this, &other, sizeof(RenderTargetRequest)));
+		return (type == o.type &&
+			width == o.width &&
+			height == o.height &&
+			mipmapLevel == o.mipmapLevel &&
+			depth == o.depth &&
+			stencil == o.stencil &&
+			linear == o.linear &&
+			mipmaps == o.mipmaps &&
+			antialias == o.antialias &&
+			share == o.share);
 	}
 };
 

@@ -8,6 +8,7 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include "VS_Color.h"
 #include "VS_OpenGL.h"
 #include <atomic>
 
@@ -183,12 +184,12 @@ vsRenderTarget::Bind()
 	{
 		GLenum buffers[6] =
 		{
-			GL_COLOR_ATTACHMENT0_EXT,
-			GL_COLOR_ATTACHMENT1_EXT,
-			GL_COLOR_ATTACHMENT2_EXT,
-			GL_COLOR_ATTACHMENT3_EXT,
-			GL_COLOR_ATTACHMENT4_EXT,
-			GL_COLOR_ATTACHMENT5_EXT
+			GL_COLOR_ATTACHMENT0,
+			GL_COLOR_ATTACHMENT1,
+			GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,
+			GL_COLOR_ATTACHMENT4,
+			GL_COLOR_ATTACHMENT5
 		};
 		glDrawBuffers(m_bufferCount,buffers);
 	}
@@ -216,6 +217,30 @@ vsRenderTarget::Clear()
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
 	glClear(bits);
+}
+
+void
+vsRenderTarget::ClearColor( const vsColor&c )
+{
+	Bind();
+	GL_CHECK_SCOPED("vsRenderTarget::ClearColor");
+
+	GLbitfield bits = GL_COLOR_BUFFER_BIT;
+	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
+	if ( surface->m_depth )
+	{
+		bits |= GL_DEPTH_BUFFER_BIT;
+	}
+	if ( surface->m_stencil )
+	{
+		bits |= GL_STENCIL_BUFFER_BIT;
+	}
+	glStencilMask(0xff);
+	glClearDepth(1.0);
+	glClearStencil(0);
+	glClearColor(c.r,c.g,c.b,c.a);
+	glClear(bits);
+	glClearColor(0,0,0,0);
 }
 
 void
@@ -318,7 +343,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_isRenderbuffer(false),
 	m_multisample(multisample),
 	m_depthCompare(depthCompare),
-	m_isDepthOnly(false),
+	m_isDepthOnly(depthOnly),
 	m_settings(settings)
 {
 	m_texture = new GLuint[m_textureCount];
@@ -511,8 +536,20 @@ vsSurface::Resize( int width, int height )
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-				if ( settings.anisotropy )
-					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
+
+				// Anisotropic filtering didn't become part of OpenGL core contextx until
+				// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
+				// support.  Blah!!
+				if ( GL_EXT_texture_filter_anisotropic )
+				{
+					if ( settings.anisotropy )
+					{
+						float aniso = 0.0f;
+						glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+						aniso = vsMin(aniso,16.f);
+						glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso );
+					}
+				}
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
@@ -573,15 +610,19 @@ vsSurface::Resize( int width, int height )
 			}
 
 			{
-				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+
+				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				if ( m_settings.stencil )
 				{
 					// we're using a single depth/stencil texture, so bind it as
-					// our FBO's stencil attachment too.
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+					// our FBO's depth_stencil attachment.
 					m_stencil = true;
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				}
+				else
+				{
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
 				}
 			}
 		}
@@ -589,5 +630,11 @@ vsSurface::Resize( int width, int height )
 
 	CheckFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+bool
+vsRenderTarget::IsDepthOnly()
+{
+	return m_type == Type_Depth || m_type == Type_DepthCompare;
 }
 

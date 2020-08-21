@@ -211,6 +211,12 @@ public:
 		}
 	}
 
+	// returns true if we have this item in the cache, false otherwise.
+	bool Exists( const vsString &name )
+	{
+		return (NULL != Find( name ));
+	}
+
 	void	Release( T* object )
 	{
 		vsCacheEntry<T> *ce = Find( object->GetName() );

@@ -115,6 +115,10 @@ public:
 	void	Set(float x_in, float y_in, float z_in) {x=x_in; y=y_in;z=z_in;}
 
     void    Floor();
+
+	// Some swizzle operators.
+	vsVector2D XY() const { return vsVector2D(x,y); }
+	vsVector2D XZ() const { return vsVector2D(x,z); }
 };
 
 class vsPosition3D

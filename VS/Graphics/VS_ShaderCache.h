@@ -22,7 +22,7 @@ namespace vsShaderCache
 	vsShader* GetShader( const vsString& name );
 	void AddShader( const vsString& name, vsShader *shader );
 
-	vsShaderRef* LoadShader( const vsString& vFile, const vsString& fFile, bool lit, bool texture );
+	vsShaderRef* LoadShader( const vsString& vFile, const vsString& fFile, bool lit, bool texture, uint32_t optionFlags = 0 );
 };
 
 #endif // VS_SHADERCACHE_H

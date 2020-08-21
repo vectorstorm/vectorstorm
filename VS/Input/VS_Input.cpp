@@ -2042,7 +2042,13 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_BACKSPACE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				{
+					// delete the stuff that's selected.  Which is equivalent
+					// to inserting nothing "".
+					HandleTextInput("");
+				}
+				else
 				{
 					if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
 						return;
@@ -2074,10 +2080,50 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						vsLog("Failed to handle backspace!");
 					}
 				}
+			}
+			break;
+		case SDLK_DELETE:
+			if ( m_stringMode && m_stringModeString.length() != 0 )
+			{
+				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				{
+					// delete the stuff that's selected.  Which is equivalent
+					// to inserting nothing "".
+					HandleTextInput("");
+				}
 				else
 				{
-					// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
-					HandleTextInput("");
+					int glyphCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+					// Check if we're deleting forward from last glyph
+					if ( m_stringModeCursorFirstGlyph == glyphCount )
+						return;
+					if ( !m_backspaceMode )
+						StringModeSaveUndoState();
+
+					try
+					{
+						// delete one character
+						vsString oldString = m_stringModeString;
+						m_stringModeString = vsEmptyString;
+						// Okay.  copy all the glyphs up to the cursor.
+						// then skip one and copy the rest.
+						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+						int inLength = utf8::distance(oldString.begin(), oldString.end());
+						for ( int i = 0; i < inLength; i++ )
+						{
+							if ( i != m_stringModeCursorFirstGlyph )
+								utf8::append( *in, std::back_inserter(m_stringModeString) );
+							in++;
+						}
+
+						m_backspaceMode = true;
+						m_undoMode = false;
+						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+					}
+					catch(...)
+					{
+						vsLog("Failed to handle backspace!");
+					}
 				}
 			}
 			break;

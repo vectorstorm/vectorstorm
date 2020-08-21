@@ -20,6 +20,7 @@
 #include "VS/Graphics/VS_Fog.h"
 #include "VS/Graphics/VS_Light.h"
 #include "VS/Graphics/VS_Material.h"
+#include "VS/Graphics/VS_ShaderOptions.h"
 
 #include "VS/Utils/VS_Array.h"
 
@@ -89,6 +90,7 @@ public:
 		OpCode_SetMaterial,
 		OpCode_SetRenderTarget,
 		OpCode_ClearRenderTarget,
+		OpCode_ClearRenderTargetColor,
 		OpCode_ResolveRenderTarget,
 		OpCode_BlitRenderTarget,
 
@@ -114,6 +116,8 @@ public:
 		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix push.
 
 		OpCode_SetShaderValues, // set supplementary shader values which may be used by any current shader
+		OpCode_PushShaderOptions, // push supplementary shader options onto the stack
+		OpCode_PopShaderOptions,  // pop shader options off the stack
 
 		OpCode_Debug,
 
@@ -123,6 +127,7 @@ public:
 	struct Data
 	{
 		uint32_t i;
+		vsShaderOptions shaderOptions;
 		vsVector3D vector;
 		vsBox2D box2D;
 		vsColor color;
@@ -227,6 +232,8 @@ public:
 	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
 	void	SetShaderValues( vsShaderValues *values );
+	void	PushShaderOptions( const vsShaderOptions &options );
+	void	PopShaderOptions();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!
@@ -271,6 +278,7 @@ public:
 	void	SetMaterial( vsMaterial *material );
 	void	SetRenderTarget( vsRenderTarget *target );
 	void	ClearRenderTarget(); // clears the currently set render target.
+	void	ClearRenderTargetColor(const vsColor& c); // clears the currently set render target to a specific color.
 	void	ResolveRenderTarget( vsRenderTarget *target );
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
 

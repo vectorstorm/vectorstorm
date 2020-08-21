@@ -92,6 +92,34 @@ vsImage::vsImage( const vsString &filename ):
 #endif
 }
 
+vsImage::vsImage( const vsStore &filedata ):
+	m_pixel(NULL),
+	m_pbo(0),
+	m_sync(0)
+{
+#if !TARGET_OS_IPHONE
+	vsCheck( filedata.Length() > 0, "Zero-length file??" );
+
+	SDL_RWops* rwops = SDL_RWFromMem( filedata.GetReadHead(), filedata.BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	if ( !loadedImage )
+	{
+		vsCheckF(loadedImage != NULL, "Unable to load texture from filedata: %s", IMG_GetError());
+
+		m_pixel = new uint32_t[1];
+		m_width = m_height = 1;
+		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
+	}
+
+	if ( loadedImage )
+	{
+		LoadFromSurface(loadedImage);
+		SDL_FreeSurface(loadedImage);
+	}
+#endif
+}
+
 vsImage::vsImage( vsTexture * texture ):
 	m_pixel(NULL),
 	m_width(0),
@@ -369,9 +397,11 @@ vsImage::Copy( vsImage *other )
 }
 
 vsTexture *
-vsImage::Bake()
+vsImage::Bake( const vsString& name_in )
 {
-	vsString name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
+	vsString name(name_in);
+	if ( name.empty() )
+		name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);

@@ -111,7 +111,7 @@ public:
 
 	void			Update( float timeStep );
 	void			Draw();
-	void			DrawPipeline( vsRenderPipeline *pipeline );
+	void			DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions = NULL );
 
 	vsImage *       Screenshot();
 	vsImage *       Screenshot_Async();

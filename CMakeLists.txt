@@ -299,12 +299,18 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Shader.h
 	VS/Graphics/VS_ShaderCache.cpp
 	VS/Graphics/VS_ShaderCache.h
+	VS/Graphics/VS_ShaderOptions.cpp
+	VS/Graphics/VS_ShaderOptions.h
 	VS/Graphics/VS_ShaderRef.cpp
 	VS/Graphics/VS_ShaderRef.h
 	VS/Graphics/VS_ShaderSuite.cpp
 	VS/Graphics/VS_ShaderSuite.h
+	VS/Graphics/VS_ShaderUniformRegistry.cpp
+	VS/Graphics/VS_ShaderUniformRegistry.h
 	VS/Graphics/VS_ShaderValues.cpp
 	VS/Graphics/VS_ShaderValues.h
+	VS/Graphics/VS_ShaderVariant.cpp
+	VS/Graphics/VS_ShaderVariant.h
 	VS/Graphics/VS_Sprite.cpp
 	VS/Graphics/VS_Sprite.h
 	VS/Graphics/VS_Texture.cpp
@@ -415,8 +421,14 @@ set(UTILS_SOURCES
 	VS/Utils/VS_HashTable.h
 	#VS/Utils/VS_HashTableStore.cpp
 	VS/Utils/VS_HashTableStore.h
+	VS/Utils/VS_IntHashTable.cpp
+	VS/Utils/VS_IntHashTable.h
 	VS/Utils/VS_FloatImage.cpp
 	VS/Utils/VS_FloatImage.h
+	VS/Utils/VS_HalfFloatImage.cpp
+	VS/Utils/VS_HalfFloatImage.h
+	VS/Utils/VS_HalfIntImage.cpp
+	VS/Utils/VS_HalfIntImage.h
 	VS/Utils/VS_Image.cpp
 	VS/Utils/VS_Image.h
 	VS/Utils/VS_LinkedList.h
