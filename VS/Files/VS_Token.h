@@ -49,7 +49,7 @@ public:
 	~vsToken();
 
 	bool		ExtractFrom( vsString &string );
-	vsString	BackToString();			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
+	vsString	BackToString() const;			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
 
 	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
 	void		SerialiseBinaryV2( vsSerialiser *s );
@@ -66,15 +66,15 @@ public:
 	void		SetInteger(int value);
 	void		SetFloat(float value);
 
-	bool		IsType( Type type );
-	bool		IsNumeric() { return IsType( Type_Float ) || IsType( Type_Integer ); }
+	bool		IsType( Type type ) const;
+	bool		IsNumeric() const { return IsType( Type_Float ) || IsType( Type_Integer ); }
 
 	vsToken& operator=( const vsToken& other );
-	bool operator==( const vsToken& other );
-	bool operator!=( const vsToken& other ) { return ! ((*this) == other); }
+	bool operator==( const vsToken& other ) const;
+	bool operator!=( const vsToken& other ) const { return ! ((*this) == other); }
 
-	bool operator==( const vsString& str );
-	bool operator!=( const vsString& str ) { return ! ((*this) == str); }
+	bool operator==( const vsString& str ) const;
+	bool operator!=( const vsString& str ) const { return ! ((*this) == str); }
 };
 
 #endif // FS_TOKEN_H

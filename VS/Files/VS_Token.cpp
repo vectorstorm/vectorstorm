@@ -334,7 +334,7 @@ vsToken::ExtractFrom( vsString &string )
 }
 
 vsString
-vsToken::BackToString()
+vsToken::BackToString() const
 {
 	if ( m_type == Type_String )
 	{
@@ -558,19 +558,19 @@ vsToken::SetType(Type t)
 }
 
 bool
-vsToken::IsType( vsToken::Type t )
+vsToken::IsType( vsToken::Type t ) const
 {
 	return m_type == t;
 }
 
 bool
-vsToken::operator==( const vsToken& other )
+vsToken::operator==( const vsToken& other ) const
 {
 	return AsString() == other.AsString();
 }
 
 bool
-vsToken::operator==( const vsString& str )
+vsToken::operator==( const vsString& str ) const
 {
 	return AsString() == str;
 }

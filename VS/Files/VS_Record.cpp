@@ -303,8 +303,8 @@ vsRecord::ToString( int childLevel )
 }
 
 
-vsToken &
-vsRecord::GetToken(int id)
+const vsToken &
+vsRecord::GetToken(int id) const
 {
 	vsAssert( id >= 0 && id < m_token.ItemCount(),  "Requested token with too high a token ID number!" );
 
@@ -337,7 +337,7 @@ vsRecord::GetChild(int i)
 }
 
 int
-vsRecord::GetChildCount(const vsString& label)
+vsRecord::GetChildCount(const vsString& label) const
 {
 	return m_childList.ItemCount();
 	// int count = 0;
@@ -543,7 +543,7 @@ vsRecord::SetLabel(const vsString &label)
 }
 
 bool
-vsRecord::Bool()
+vsRecord::Bool() const
 {
 	if ( GetToken(0).GetType() == vsToken::Type_Integer )
 	{
@@ -559,13 +559,13 @@ vsRecord::Bool()
 }
 
 int
-vsRecord::Int()
+vsRecord::Int() const
 {
 	return GetToken(0).AsInteger();
 }
 
 vsColor
-vsRecord::Color()
+vsRecord::Color() const
 {
 	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a color!");
 
@@ -576,13 +576,13 @@ vsRecord::Color()
 }
 
 vsString
-vsRecord::String()
+vsRecord::String() const
 {
 	return GetToken(0).AsString();
 }
 
 vsVector2D
-vsRecord::Vector2D()
+vsRecord::Vector2D() const
 {
 	vsAssert(GetTokenCount() == 2, "Wrong number of tokens to read a Vector2D!");
 
@@ -591,7 +591,7 @@ vsRecord::Vector2D()
 }
 
 vsVector3D
-vsRecord::Vector3D()
+vsRecord::Vector3D() const
 {
 	vsAssert(GetTokenCount() == 3, "Wrong number of tokens to read a Vector3D!");
 
@@ -601,7 +601,7 @@ vsRecord::Vector3D()
 }
 
 vsVector4D
-vsRecord::Vector4D()
+vsRecord::Vector4D() const
 {
 	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a Vector3D!");
 
@@ -612,7 +612,7 @@ vsRecord::Vector4D()
 }
 
 vsQuaternion
-vsRecord::Quaternion()
+vsRecord::Quaternion() const
 {
 	vsAssert(GetTokenCount() == 4, "Wrong number of tokens to read a Quaternion!");
 
@@ -623,7 +623,7 @@ vsRecord::Quaternion()
 }
 
 bool
-vsRecord::operator==(const vsString& string)
+vsRecord::operator==(const vsString& string) const
 {
 	vsRecord other;
 	other.ParseString(string);
