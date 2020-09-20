@@ -389,8 +389,6 @@ vsFragment::Draw( vsDisplayList *list )
 int
 vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 {
-	result.Clear();
-
 	if ( IsSimple() )
 	{
 		uint16_t *index = m_ibo->GetIntArray();
