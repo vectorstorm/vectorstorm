@@ -20,6 +20,7 @@
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
 #include "VS_FileCache.h"
+#include "VS_File.h"
 #include "VS_ShaderCache.h"
 #include "VS_ShaderUniformRegistry.h"
 
@@ -312,6 +313,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
 #elif defined(_WIN32)
 
+#if defined(_DEBUG) // only in debug builds do we mess with the directory name!
+
 	// Under Win32, Visual Studio likes to put debug and release builds into a directory
 	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
 	// but it means that the executable location isn't in the same place as our Data
@@ -323,6 +326,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
 	m_dataDirectory = baseDirectory + "Data";
+#endif
+
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
@@ -339,6 +344,16 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
 		exit(1);
 	}
+
+	vsString modsDirectory = "mod";
+	vsArray<vsString> mods;
+	vsFile::DirectoryDirectories( &mods, modsDirectory );
+	for ( int i = 0; i < mods.ItemCount(); i++ )
+	{
+		success |= PHYSFS_mount( (vsString(PHYSFS_getBaseDir()) + "/mod/" + mods[i]).c_str(), NULL, 0);
+	}
+
+
 	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
 	// char** searchPath = PHYSFS_getSearchPath();
