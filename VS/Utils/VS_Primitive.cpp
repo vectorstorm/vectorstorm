@@ -729,7 +729,7 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &mater
 	return fragment;
 }
 
-vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
