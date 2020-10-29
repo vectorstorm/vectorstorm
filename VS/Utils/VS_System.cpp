@@ -313,6 +313,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
 #elif defined(_WIN32)
 
+	vsString baseDirectory = PHYSFS_getBaseDir();
 #if defined(_DEBUG) // only in debug builds do we mess with the directory name!
 
 	// Under Win32, Visual Studio likes to put debug and release builds into a directory
@@ -320,13 +321,12 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	// but it means that the executable location isn't in the same place as our Data
 	// directory.  So we need to detect that situation, and if it happens, move our
 	// data directory up by one.
-	vsString baseDirectory = PHYSFS_getBaseDir();
 	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
-	m_dataDirectory = baseDirectory + "Data";
 #endif
+	m_dataDirectory = baseDirectory + "Data";
 
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
@@ -337,8 +337,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
 	//
 	// 0 parameter means PREPEND;  each new mount takes priority over the line before
-	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
