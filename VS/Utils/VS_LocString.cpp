@@ -32,6 +32,12 @@ vsLocString::vsLocString( int value ):
 	m_args.push_back( vsLocArg("value", value) );
 }
 
+vsLocString::vsLocString( float value, int places ):
+	m_string("{value}")
+{
+	m_args.push_back( vsLocArg("value", value, places) );
+}
+
 // vsLocString
 // vsLocString::Literal( const vsString& literal )
 // {
@@ -167,6 +173,7 @@ vsLocString::AsString() const
 }
 
 static vsString s_thousandsSeparator(",");
+static vsString s_decimalSeparator(".");
 
 static vsString DoFormatNumber( int value )
 {
@@ -179,10 +186,30 @@ static vsString DoFormatNumber( int value )
 	return result;
 }
 
+static vsString DoFormatFloat( float value, int places )
+{
+	int intPart = vsFloor(value);
+	if ( value < 0.f )
+		intPart = vsCeil(value);
+
+	value -= intPart;
+	int decimalPart = value * pow(10,places);
+
+	vsString result = DoFormatNumber(intPart);
+	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);
+	return result;
+}
+
 void
 vsLocString::SetNumberThousandsSeparator(const vsString& separator)
 {
 	s_thousandsSeparator = separator;
+}
+
+void
+vsLocString::SetNumberDecimalSeparator(const vsString& separator)
+{
+	s_decimalSeparator = separator;
 }
 
 vsString
@@ -205,6 +232,9 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 			}
 		case Type_Float:
 			{
+				if ( m_intLiteral != -1 )
+					return DoFormatFloat( m_floatLiteral, m_intLiteral );
+
 				vsString fmt = vsFormatString("{%s}", fmt_in);
 				if ( fmt != vsEmptyString )
 				{
@@ -251,7 +281,8 @@ vsLocArg::operator==(const vsLocArg& other) const
 			result = (m_intLiteral == other.m_intLiteral);
 			break;
 		case Type_Float:
-			result = (m_floatLiteral == other.m_floatLiteral);
+			result = (m_floatLiteral == other.m_floatLiteral &&
+					m_intLiteral == other.m_intLiteral);
 			break;
 	}
 	return result;

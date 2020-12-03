@@ -30,11 +30,13 @@ public:
 	vsLocString( const vsString& key = vsEmptyString );
 	vsLocString( const vsLocString& other );
 	vsLocString( int value );
+	vsLocString( float value,int places );
 
 	bool IsEmpty() const;
 	vsString AsString() const;
 
 	static void SetNumberThousandsSeparator(const vsString& separator);
+	static void SetNumberDecimalSeparator(const vsString& separator);
 
 	bool operator==(const vsLocString& other) const;
 	bool operator!=(const vsLocString& other) const;
@@ -69,13 +71,18 @@ struct vsLocArg
 				m_intLiteral = other.m_intLiteral;
 				break;
 			case Type_Float:
+				// floats use both the float and the int part.
 				m_floatLiteral = other.m_floatLiteral;
+				m_intLiteral = other.m_intLiteral;
 				break;
 		}
 	}
-	vsLocArg(const vsString& name, float literal): m_name(name), m_floatLiteral(literal), m_type(Type_Float) {}
+	vsLocArg(const vsString& name, float literal): m_name(name), m_intLiteral(-1), m_floatLiteral(literal), m_type(Type_Float) {}
 	vsLocArg(const vsString& name, int literal): m_name(name), m_intLiteral(literal), m_type(Type_Int) {}
 	vsLocArg(const vsString& name, const vsLocString& loc): m_name(name), m_locString(loc), m_type(Type_LocString) {}
+
+	// int literal is telling us how many places to fill in
+	vsLocArg(const vsString& name, float literal, int places): m_name(name), m_intLiteral(places), m_floatLiteral(literal), m_type(Type_Float) {}
 
 	vsString AsString(const vsString& fmt = vsEmptyString) const;
 	bool operator==(const vsLocArg& other) const;
