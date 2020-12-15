@@ -10,6 +10,11 @@
 #include "VS_LocString.h"
 #include "VS/Utils/VS_LocalisationTable.h"
 
+vsLocString::vsLocString():
+	m_string()
+{
+}
+
 vsLocString::vsLocString( const char* str ):
 	m_string(str)
 {

@@ -26,8 +26,9 @@ public:
 	vsString m_string;
 	std::vector<vsLocArg> m_args;
 
+	vsLocString();
 	vsLocString( const char* str ); // non-NULL!
-	vsLocString( const vsString& key = vsEmptyString );
+	vsLocString( const vsString& key );
 	vsLocString( const vsLocString& other );
 	vsLocString( int value );
 	vsLocString( float value,int places );
