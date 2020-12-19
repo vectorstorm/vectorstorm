@@ -25,19 +25,15 @@ option( VS_PRISTINE_BINDINGS "If enabled, we clear bindings after using them" NO
 #
 set( OpenGL_GL_PREFERENCE "GLVND" )
 find_package(OpenGL REQUIRED)
-find_library(SDL_LIBRARY SDL2 REQUIRED
-	PATH c:/src/buildzone/lib/x86/)
-find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
-	PATH c:/src/buildzone/lib/x86/)
+find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED )
 find_package(ZLIB)
 # find_library(ZLIB_LIBRARY zlib REQUIRED)
 
 if ( USE_SDL_SOUND )
-	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
-		PATH c:/src/buildzone/lib/x86/)
+	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED )
 endif()
-find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED
-	PATH c:/src/buildzone/include)
+find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED )
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 	add_definitions("-D IS_64BIT")
@@ -64,53 +60,33 @@ if(UNIX)
 	find_library(PTHREAD_LIBRARY pthread)
 
 else()
-	find_library(PHYSFS_LIBRARY physfs REQUIRED
-		PATH c:/src/buildzone/physfs-2.0.3/build/Release)
-	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED
-		PATH c:/src/buildzone/physfs-2.0.3/)
-	# find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
-	# 	PATH c:/src/buildzone/lib/x86/)
+	find_library(PHYSFS_LIBRARY physfs REQUIRED)
+	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED)
 	if ( MSVC )
 		add_definitions("-D _CRT_SECURE_NO_WARNINGS")
 		add_definitions("-D MSVC")
 		# MSVC links glew32 in.  MinGW compiles it in.
 		find_library(GLEW_LIBRARIES glew32 REQUIRED
-				PATH c:/src/buildzone/lib/Release/Win32)
+			PATH ${ANNEX}/lib )
 	endif()
 endif()
-find_path(GLEW_INCLUDE_DIR GL/glew.h
-	PATH /usr/include /usr/local/include
-	c:/src/buildzone/include)
+find_path(GLEW_INCLUDE_DIR GL/glew.h)
 
 if (USE_BOX2D_PHYSICS)
-	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
-		PATH /usr/lib /usr/local/lib ../
-		c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
-	find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
-		PATH /usr/lib /usr/local/lib ../
-		c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
-	find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
-		PATH /usr/include /usr/local/include
-		/usr/include/Box2D /usr/local/include/Box2D
-		c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
+	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED)
+	find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED)
+	find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h)
 endif()
 
-find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
-	PATH c:/src/buildzone/lib/x86 )
+find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED)
 if(WIN32)
-	find_file(ZLIB_DLL zlib1.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(PNG_DLL libpng16-16.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(JPEG_DLL libjpeg-9.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(SDL2_DLL SDL2.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
+	find_file(ZLIB_DLL zlib1.dll REQUIRED)
+	find_file(PNG_DLL libpng16-16.dll REQUIRED)
+	find_file(JPEG_DLL libjpeg-9.dll REQUIRED)
+	find_file(SDL2_DLL SDL2.dll REQUIRED)
+	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED)
 	if ( USE_SDL_SOUND )
-		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
-			PATH c:/src/buildzone/lib/x86 )
+		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED)
 	endif()
 
 	if ( MINGW )
