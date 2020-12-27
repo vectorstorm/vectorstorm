@@ -38,6 +38,17 @@
 
 extern SDL_Window *g_sdlWindow;
 
+namespace
+{
+	// the modifier keys we should check for key combos.
+	// Use L/R GUI on Mac ("command" key), or Control on everything else.
+	const int c_shortcutModifierKeys =
+#if defined( __APPLE_CC__ )
+		KMOD_LGUI | KMOD_RGUI;
+#else
+		KMOD_LCTRL | KMOD_RCTRL;
+#endif // defined( __APPLE_CC__ )
+}
 
 vsInput::vsInput():
 	m_stringMode(false),
@@ -2144,100 +2155,134 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 			}
 			break;
+		case SDLK_UP:
+			{
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, 0, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( 0, true );
+				}
+			}
+			break;
+		case SDLK_DOWN:
+			{
+				int len = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, len+1, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( len+1, true );
+				}
+			}
+			break;
 		case SDLK_LEFT:
 			{
-				if ( event.key.keysym.mod & KMOD_LSHIFT ||
-						event.key.keysym.mod & KMOD_RSHIFT )
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating glyph, but not the anchor glyph!
 					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+					// shift isn't down
+					// if it's a single insertion point
+					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					{
+						//move the anchor glyph and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+					}
+					else
+					{
+						//collapse selection to the leftmost glyph in the selection
+						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+					}
 				}
 			}
 			break;
 		case SDLK_RIGHT:
 			{
-				if ( event.key.keysym.mod & KMOD_LSHIFT ||
-						event.key.keysym.mod & KMOD_RSHIFT )
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating glyph, but not the anchor glyph!
 					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					{
+						// shift isn't down;  move the anchor glyph and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+					}
+					else
+					{
+						//collapse selection to the last glyph in the selection
+						SetStringModeCursor( m_stringModeCursorLastGlyph, true );
+					}
 				}
 			}
 			break;
+		case SDLK_a:
+			{
+				// select all
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					SetStringModeSelectAll(true);
+				}
+				break;
+			}
 		case SDLK_v:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
+				// paste
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					vsString clipboardText = SDL_GetClipboardText();
+					if ( !clipboardText.empty() )
 					{
-						vsString clipboardText = SDL_GetClipboardText();
-						if ( !clipboardText.empty() )
-						{
-							StringModeSaveUndoState();
-							HandleTextInput( clipboardText );
-						}
+						StringModeSaveUndoState();
+						HandleTextInput( clipboardText );
 					}
+				}
 				break;
 			}
 		case SDLK_c:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
-					{
-						// extract the currently selected text
-						vsString sel = GetStringModeSelection();
-						if ( !sel.empty() )
-							SDL_SetClipboardText( sel.c_str() );
-					}
+				// copy
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					// extract the currently selected text
+					vsString sel = GetStringModeSelection();
+					if ( !sel.empty() )
+						SDL_SetClipboardText( sel.c_str() );
+				}
 				break;
 			}
 		case SDLK_x:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
-					{
-						// extract the currently selected text
-						StringModeSaveUndoState();
-						vsString sel = GetStringModeSelection();
-						if ( !sel.empty() )
-							SDL_SetClipboardText( sel.c_str() );
-						HandleTextInput("");
-					}
+				// cut
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					// extract the currently selected text
+					StringModeSaveUndoState();
+					vsString sel = GetStringModeSelection();
+					if ( !sel.empty() )
+						SDL_SetClipboardText( sel.c_str() );
+					HandleTextInput("");
+				}
 				break;
 			}
 		case SDLK_z:
 			{
-#if defined( __APPLE_CC__ )
-				const int undoModifierKeys = KMOD_LGUI | KMOD_RGUI;
-#else
-				const int undoModifierKeys = KMOD_LCTRL | KMOD_RCTRL;
-#endif // defined( __APPLE_CC__ )
-
-				if ( event.key.keysym.mod & undoModifierKeys )
+				// undo
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
 					StringModeUndo();
 				break;
 			}
