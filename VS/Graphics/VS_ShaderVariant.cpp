@@ -374,7 +374,7 @@ vsShaderVariant::~vsShaderVariant()
 }
 
 void
-vsShaderVariant::Reload()
+vsShaderVariant::Reload( const vsString& vertexShader, const vsString &fragmentShader )
 {
 	// system-owned shader;  don't reload it!
 	if ( m_system )
@@ -387,24 +387,7 @@ vsShaderVariant::Reload()
 
 	if ( !m_vertexShaderFile.empty() && !m_fragmentShaderFile.empty() )
 	{
-		vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
-		vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
-
-		uint32_t vSize = vShader.GetLength();
-		uint32_t fSize = fShader.GetLength();
-
-		vsStore *vStore = new vsStore(vSize);
-		vsStore *fStore = new vsStore(fSize);
-
-		vShader.Store( vStore );
-		fShader.Store( fStore );
-		vsString vString( vStore->GetReadHead(), vSize );
-		vsString fString( fStore->GetReadHead(), fSize );
-
-		Compile( vString, fString, m_litBool, m_textureBool, m_variantBits );
-
-		delete vStore;
-		delete fStore;
+		Compile( vertexShader, fragmentShader, m_litBool, m_textureBool, m_variantBits );
 	}
 }
 

@@ -82,7 +82,7 @@ public:
 
 	vsShaderVariant( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, uint32_t variantBits = 0, const vsString& vfilename = vsEmptyString, const vsString& ffilename = vsEmptyString );
 	virtual ~vsShaderVariant();
-	void Reload();
+	void Reload( const vsString& vertexShader, const vsString &fragmentShader );
 
 	uint32_t GetShaderId() const { return m_shader; }
 	uint32_t GetVariantBits() const { return m_variantBits; }

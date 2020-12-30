@@ -64,6 +64,8 @@ public:
 private:
 	vsString m_vertexShaderFile;
 	vsString m_fragmentShaderFile;
+	vsString m_vertexShaderText;
+	vsString m_fragmentShaderText;
 
 	uint32_t m_variantBitsSupported;
 

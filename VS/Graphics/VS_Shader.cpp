@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
+
 // static bool m_localToWorldAttribIsActive = false;
 // static bool m_colorAttribIsActive = false;
 // namespace
@@ -68,6 +69,8 @@ vsShader::vsShader( const vsString &vertexShader,
 		const vsString& fFilename ):
 	m_vertexShaderFile(vFilename),
 	m_fragmentShaderFile(fFilename),
+	m_vertexShaderText(vertexShader),
+	m_fragmentShaderText(fragmentShader),
 	m_variantBitsSupported(0L),
 	m_system(false),
 	m_litBool(lit),
@@ -171,37 +174,51 @@ vsShader::Load_System( const vsString &vFile, const vsString &fFile, bool lit, b
 void
 vsShader::Reload()
 {
-	// system-owned shader;  don't reload it!
+#ifdef VS_OVERLOAD_ALLOCATORS
+	// If we're using overloaded allocators and multiple heaps and stuff, our
+	// 'system' shaders exist in system memory, not in game memory.  And so we
+	// can't reload them while a game is running;  it'd put them in the wrong
+	// heap.  So for now, just don't reload system shaders IF we're in a build
+	// where we're using VS's custom allocators for detecting memory leaks.
 	if ( m_system )
 		return;
 
-	// Note:  If I ever really need to be able to reload system-owned shaders
-	// at runtime (right now, this is only default_v/default_f), this can probably
-	// be made to work by calling	`vsHeap::Push(g_globalHeap);` here at the start
-	// of the function, and popping it back off at the bottom.
+	// [Note]  If I ever really need to be able to reload system-owned shaders
+	// at runtime in one of these builds (right now, this is only
+	// default_v/default_f), this can probably be made to work by calling
+	// `vsHeap::Push(g_globalHeap);` here at the start of the function, and
+	// popping it back off at the bottom.  Requires leak checking afterward!  And
+	// probably an interface on vsSystem or something to do that, since we don't
+	// know about the global heap from over here right now.
+
+#endif
 
 	if ( !m_vertexShaderFile.empty() && !m_fragmentShaderFile.empty() )
 	{
+		// update our cached shader text, then tell our variants to rebuild
+		// themselves using it.
+		vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
+		vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
+
+		uint32_t vSize = vShader.GetLength();
+		uint32_t fSize = fShader.GetLength();
+
+		vsStore *vStore = new vsStore(vSize);
+		vsStore *fStore = new vsStore(fSize);
+
+		vShader.Store( vStore );
+		fShader.Store( fStore );
+
+		vsString vString( vStore->GetReadHead(), vSize );
+		vsString fString( fStore->GetReadHead(), fSize );
+		m_vertexShaderText = vString;
+		m_fragmentShaderText = fString;
+
+		delete vStore;
+		delete fStore;
+
 		for ( int i = 0; i < m_variant.ItemCount(); i++ )
-			m_variant[i]->Reload();
-		// vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
-		// vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
-        //
-		// uint32_t vSize = vShader.GetLength();
-		// uint32_t fSize = fShader.GetLength();
-        //
-		// vsStore *vStore = new vsStore(vSize);
-		// vsStore *fStore = new vsStore(fSize);
-        //
-		// vShader.Store( vStore );
-		// fShader.Store( fStore );
-		// vsString vString( vStore->GetReadHead(), vSize );
-		// vsString fString( fStore->GetReadHead(), fSize );
-        //
-		// Compile( vString, fString, m_litBool, m_textureBool, m_variantBits );
-        //
-		// delete vStore;
-		// delete fStore;
+			m_variant[i]->Reload( m_vertexShaderText, m_fragmentShaderText );
 	}
 }
 
@@ -273,19 +290,8 @@ vsShader::SetForVariantBits( uint32_t bits )
 
 		// Okay, couldn't find one;  we need to make one!
 		{
-			vsFile vShader( vsString("shaders/") + m_vertexShaderFile, vsFile::MODE_Read );
-			vsFile fShader( vsString("shaders/") + m_fragmentShaderFile, vsFile::MODE_Read );
-
-			uint32_t vSize = vShader.GetLength();
-			uint32_t fSize = fShader.GetLength();
-
-			vsStore *vStore = new vsStore(vSize);
-			vsStore *fStore = new vsStore(fSize);
-
-			vShader.Store( vStore );
-			fShader.Store( fStore );
-			vsString vString( vStore->GetReadHead(), vSize );
-			vsString fString( fStore->GetReadHead(), fSize );
+			vsString vString( m_vertexShaderText );
+			vsString fString( m_fragmentShaderText );
 
 			uint32_t variantBits = bits;
 			vsShaderVariant *result =
@@ -294,9 +300,9 @@ vsShader::SetForVariantBits( uint32_t bits )
 
 			m_current = result;
 			m_variant.AddItem(m_current);
-
-			delete vStore;
-			delete fStore;
+            //
+			// delete vStore;
+			// delete fStore;
 		}
 	}
 }
