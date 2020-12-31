@@ -33,6 +33,7 @@ private:
 	int32_t m_cameraPositionLoc;
 	int32_t m_cameraDirectionLoc;
 	int32_t m_viewToProjectionLoc;
+	int32_t m_viewportLoc;
 
 	int32_t m_lightAmbientLoc;
 	int32_t m_lightDiffuseLoc;
@@ -97,6 +98,7 @@ public:
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
+	void SetViewport( const vsVector2D& viewportDims );
 
 	const vsShader::Uniform *GetUniform(int i) const { return &m_uniform[i]; }
 	int32_t GetUniformId(const vsString& name) const;

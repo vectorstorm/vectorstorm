@@ -105,6 +105,7 @@ public:
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
+	void SetViewport( const vsVector2D& dims );
 
 	const Uniform *GetUniform(int i) const;
 	int32_t GetUniformId(const vsString& name) const;

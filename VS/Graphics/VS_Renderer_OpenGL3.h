@@ -80,6 +80,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	vsArray<vsShaderOptions> m_optionsStack;
 
+	vsBox2D m_currentViewportPixels;
+
 	size_t m_lastShaderId;
 
 #define MAX_LIGHTS (4)

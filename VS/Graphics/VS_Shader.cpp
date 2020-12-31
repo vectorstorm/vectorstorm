@@ -300,9 +300,6 @@ vsShader::SetForVariantBits( uint32_t bits )
 
 			m_current = result;
 			m_variant.AddItem(m_current);
-            //
-			// delete vStore;
-			// delete fStore;
 		}
 	}
 }
@@ -311,277 +308,60 @@ void
 vsShader::SetFog( bool fog, const vsColor& color, float density )
 {
 	m_current->SetFog(fog, color, density);
-	// if ( m_fogColorId >= 0 )
-	// {
-	// 	// glUniform3f( m_fogColorLoc, color.r, color.g, color.b );
-	// 	SetUniformValueVec3(m_fogColorId, color);
-	// }
-	// if ( m_fogDensityId >= 0 )
-	// {
-	// 	if ( density >= 1.f )
-	// 		vsLogOnce( "Setting surprisingly high fog density: %f", density );
-	// 	SetUniformValueF(m_fogDensityId, density);
-	// }
 }
 
 void
 vsShader::SetColor( const vsColor& color )
 {
 	m_current->SetColor(color);
-	// if ( m_colorLoc >= 0 )
-	// {
-	// 	glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
-	// }
-	// // this is vertex color;  don't set that!
-	// glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
 }
 
 void
 vsShader::SetInstanceColors( vsRenderBuffer *colors )
 {
 	m_current->SetInstanceColors(colors);
-	// if ( m_hasInstanceColorsLoc >= 0 )
-	// 	glUniform1i( m_hasInstanceColorsLoc, true );
-	// if ( m_instanceColorAttributeLoc >= 0 )
-	// {
-	// 	if ( !m_colorAttribIsActive )
-	// 	{
-	// 		glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-	// 		glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-	// 		m_colorAttribIsActive = true;
-	// 	}
-    //
-	// 	colors->BindAsAttribute( m_instanceColorAttributeLoc );
-	// }
-	// GL_CHECK("SetColors");
 }
 
 void
 vsShader::SetInstanceColors( const vsColor* color, int matCount )
 {
 	m_current->SetInstanceColors(color, matCount);
-// 	if ( m_hasInstanceColorsLoc >= 0 )
-// 		glUniform1i( m_hasInstanceColorsLoc, ( matCount >= 2 ) );
-// 	if ( matCount <= 0 )
-// 		return;
-// 	// GL_CHECK("SetInstanceColors");
-// 	// if ( m_colorLoc >= 0 )
-// 	// {
-// 	// 	glUniform4f( m_colorLoc, color[0].r, color[0].g, color[0].b, color[0].a );
-// 	// }
-// 	// glVertexAttrib4f( 3, color[0].r, color[0].g, color[0].b, color[0].a );
-//
-// 	if ( m_instanceColorAttributeLoc >= 0 )
-// 	{
-// 		if ( matCount == 1 )
-// 		{
-// 			if ( m_colorAttribIsActive )
-// 			{
-// 				glDisableVertexAttribArray(m_instanceColorAttributeLoc);
-// 				m_colorAttribIsActive = false;
-// 			}
-//
-// 			glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
-// 		}
-// 		else
-// 		{
-// 			if ( !m_colorAttribIsActive )
-// 			{
-// 				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-// 				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-// 				m_colorAttribIsActive = true;
-// 			}
-//
-// 			GLuint size = sizeof(vsColor)*matCount;
-// 			static GLuint g_vbo = 0xffffffff;
-// 			static GLuint g_vboSize = 0;
-// 			// this could be a lot smarter.
-// 			if ( g_vbo == 0xffffffff )
-// 			{
-// 				glGenBuffers(1, &g_vbo);
-// 			}
-//
-// 			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-// 			if ( size > g_vboSize )
-// 			{
-// 				glBufferData(GL_ARRAY_BUFFER, size, color, GL_STREAM_DRAW);
-// 				g_vboSize = size;
-// 			}
-// 			else
-// 			{
-// 				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-// 				if ( ptr )
-// 				{
-// 					memcpy(ptr, color, size);
-// 					glUnmapBuffer(GL_ARRAY_BUFFER);
-// 				}
-// 			}
-// 			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
-// #ifdef VS_PRISTINE_BINDINGS
-// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-// #endif // VS_PRISTINE_BINDINGS
-// 		}
-// 	}
-	// GL_CHECK("SetColors");
 }
-
 
 void
 vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
 	m_current->SetTextures(texture);
-	// // NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
-	// //
-	// if ( m_textureLoc >= 0 )
-	// {
-	// 	const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-	// 	glUniform1iv( m_textureLoc, 8, value );
-	// }
-	// // if ( m_shadowTextureLoc >= 0 )
-	// // {
-	// // 	glUniform1i( m_shadowTextureLoc, 8 );
-	// // }
-	// // if ( m_bufferTextureLoc >= 0 )
-	// // {
-	// // 	glUniform1i( m_bufferTextureLoc, 9 );
-	// // }
 }
 
 void
 vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
 {
 	m_current->SetLocalToWorld(buffer);
-	// if ( m_localToWorldAttributeLoc >= 0 )
-	// {
-	// 	if ( !m_localToWorldAttribIsActive )
-	// 	{
-	// 		glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-	// 		glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-	// 		glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-	// 		glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-	// 		glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-	// 		glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-	// 		glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-	// 		glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-	// 		m_localToWorldAttribIsActive = true;
-	// 	}
-    //
-	// 	buffer->BindAsAttribute( m_localToWorldAttributeLoc );
-	// }
 }
 
 void
 vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
 {
 	m_current->SetLocalToWorld(localToWorld,matCount);
-// 	if ( m_localToWorldLoc >= 0 )
-// 	{
-//  		if ( matCount == 1 )
-// 			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
-// 		else
-// 		{
-// 			vsMatrix4x4 inv;
-// 			inv.x.x = -2.f;
-// 			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&inv );
-// 		}
-// 	}
-// 	if ( m_localToWorldAttributeLoc >= 0 )
-// 	{
-// 		if ( matCount == 1 )
-// 		{
-// 			if ( m_localToWorldAttribIsActive )
-// 			{
-// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
-// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
-// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
-// 				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
-// 				m_localToWorldAttribIsActive = false;
-// 			}
-//
-// 			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
-// 			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
-// 			glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
-// 			glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
-// 		}
-// 		else
-// 		{
-// 			if ( !m_localToWorldAttribIsActive )
-// 			{
-// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-// 				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-// 				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-// 				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-// 				m_localToWorldAttribIsActive = true;
-// 			}
-//
-// 			static GLuint g_vbo = 0xffffffff;
-// 			static GLuint g_vboSize = 0;
-// 			GLuint size = sizeof(vsMatrix4x4) * matCount;
-// 			// this could be a lot smarter.
-// 			if ( g_vbo == 0xffffffff )
-// 			{
-// 				glGenBuffers(1, &g_vbo);
-// 			}
-// 			glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
-// 			if ( size > g_vboSize )
-// 			{
-// 				glBufferData(GL_ARRAY_BUFFER, size, localToWorld, GL_STREAM_DRAW);
-// 				g_vboSize = size;
-// 			}
-// 			else
-// 			{
-// 				void *ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-// 				if ( ptr )
-// 				{
-// 					memcpy(ptr, localToWorld, size);
-// 					glUnmapBuffer(GL_ARRAY_BUFFER);
-// 				}
-// 			}
-// 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-// 			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
-// 			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
-// 			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
-// 			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
-// #ifdef VS_PRISTINE_BINDINGS
-// 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-// #endif // VS_PRISTINE_BINDINGS
-// 		}
-// 	}
 }
 
 void
 vsShader::SetWorldToView( const vsMatrix4x4& worldToView )
 {
 	m_current->SetWorldToView(worldToView);
-	// if ( m_worldToViewLoc >= 0 )
-	// {
-	// 	glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
-	// }
-	// // assume no scaling.
-	// if ( m_cameraPositionLoc >= 0 )
-	// {
-	// 	vsVector3D t = worldToView.Inverse().w;
-	// 	glUniform3fv(m_cameraPositionLoc, 1, (GLfloat*)&t);
-	// }
-	// if ( m_cameraDirectionLoc >= 0 )
-	// {
-	// 	vsVector3D dir = worldToView.Inverse().z;
-	// 	glUniform3fv(m_cameraDirectionLoc, 1, (GLfloat*)&dir);
-	// }
 }
 
 void
 vsShader::SetViewToProjection( const vsMatrix4x4& projection )
 {
 	m_current->SetViewToProjection(projection);
-	// if ( m_viewToProjectionLoc >= 0 )
-	// {
-	// 	glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
-	// }
+}
+
+void
+vsShader::SetViewport( const vsVector2D& dims )
+{
+	m_current->SetViewport(dims);
 }
 
 int32_t

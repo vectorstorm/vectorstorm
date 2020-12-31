@@ -412,6 +412,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	m_widthPixels = width;
 	m_heightPixels = height;
+	m_currentViewportPixels.Set(
+			vsVector2D::Zero,
+			vsVector2D( m_widthPixels, m_heightPixels )
+			);
 #ifdef HIGHDPI_SUPPORTED
 	if ( flags & Flag_HighDPI )
 		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
@@ -625,6 +629,28 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
+
+	// [TODO] We're in an awkward spot here where we're using the term 'viewport'
+	// (and 'scene') to mean too many things.
+	//
+	// Above this comment, 'm_scene' is the render target that represents our
+	// window.  It's the framebuffer device where we display what we render.
+	// And its dimensions in pixels are its "ViewportWidth" and
+	// "ViewportHeight".  (Where this is distinct from 'Width' and 'Height' because
+	// of the bad old days where textures had to be powers of 2 in size, and so
+	// the actual backing storage might have one width while we were only
+	// drawing into a differently sized chunk of it)
+	//
+	// Below this comment, a 'viewport' is a portion of a render target that we
+	// want to render into.  And a 'scene' is a collection of vsEntities that
+	// should be drawn, along with a camera, a viewport, and some other values.
+	// I need to clean up this verbiage (probably by renaming the first set of
+	// things;  perhaps the 'm_scene' should become 'm_display', and its
+	// 'ViewportWidth' should just be 'Width'?  Or something like that?
+	m_currentViewportPixels.Set(
+			vsVector2D::Zero,
+			vsVector2D( m_widthPixels, m_heightPixels )
+			);
 }
 
 bool
@@ -846,8 +872,9 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_currentShaderValues = NULL;
 	m_currentColor = c_white;
 
-	m_scene->Bind();
-	m_currentRenderTarget = m_scene;
+	SetRenderTarget(m_scene);
+	// m_scene->Bind();
+	// m_currentRenderTarget = m_scene;
 
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 	glClearColor(0.0f,0.f,0.f,0.f);
@@ -882,8 +909,9 @@ vsRenderer_OpenGL3::PostRender()
 
 	{
 		PROFILE_GL("FinishPostRender");
-	m_scene->Bind();
-	m_currentRenderTarget = m_scene;
+	SetRenderTarget(m_scene);
+	// m_scene->Bind();
+	// m_currentRenderTarget = m_scene;
 	glClearColor(0.0f,0.f,0.f,0.f);
 	glClearDepth(1.f);
 	glClearStencil(0);
@@ -1041,6 +1069,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetInstanceColors( &c_white, 1 );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+		m_currentShader->SetViewport( m_currentViewportPixels.Extents() );
 		int i = 0;
 		// for ( int i = 0; i < MAX_LIGHTS; i++ )
 		{
@@ -1641,14 +1670,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetViewport:
 				{
-					const vsBox2D& box = op->data.box2D;
 					{
 						int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
 						int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
-						glViewport( (GLsizei)(box.GetMin().x * currentTargetWidth),
-								(GLsizei)(box.GetMin().y * currentTargetHeight),
-								(GLsizei)(box.Width() * currentTargetWidth),
-								(GLsizei)(box.Height() * currentTargetHeight) );
+
+						const vsBox2D& box = op->data.box2D;
+						m_currentViewportPixels.Set(
+									vsVector2D( box.GetMin().x * currentTargetWidth, box.GetMin().y * currentTargetHeight ),
+									vsVector2D( box.GetMax().x * currentTargetWidth, box.GetMax().y * currentTargetHeight )
+								);
+
+						glViewport( (GLsizei)( m_currentViewportPixels.GetMin().x ),
+								(GLsizei)( m_currentViewportPixels.GetMin().y ),
+								(GLsizei)( m_currentViewportPixels.Width() ),
+								(GLsizei)( m_currentViewportPixels.Height() ) );
 					}
 					break;
 				}
@@ -1657,6 +1692,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
 					int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
 					glViewport( 0, 0, (GLsizei)currentTargetWidth, (GLsizei)currentTargetHeight );
+					m_currentViewportPixels.Set(
+							vsVector2D::Zero,
+							vsVector2D( currentTargetWidth, currentTargetHeight )
+							);
 					break;
 				}
 			case vsDisplayList::OpCode_Debug:
@@ -2325,17 +2364,21 @@ vsRenderer_OpenGL3::ScreenshotAlpha()
 void
 vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 {
-	// TODO:  The OpenGL code should be in HERE, not in the vsRenderTarget!
-	if ( target )
+	// [TODO]  The OpenGL code should be in HERE, not in the vsRenderTarget!
+
+	if ( !target )
+		target = m_scene;
+
+	if ( target != m_currentRenderTarget )
 	{
 		target->Bind();
 		m_currentRenderTarget = target;
-	}
-	else
-	{
-		m_scene->Bind();
-		m_currentRenderTarget = m_scene;
-		// m_scene->Clear();
+
+		// and reset the viewport
+		m_currentViewportPixels.Set(
+				vsVector2D::Zero,
+				vsVector2D( m_currentRenderTarget->GetViewportWidth(), m_currentRenderTarget->GetViewportHeight() )
+				);
 	}
 }
 
