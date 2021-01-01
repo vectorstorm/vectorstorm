@@ -60,6 +60,12 @@ extern "C" {
 }
 #endif
 
+namespace
+{
+	static vsMaterial *s_previousMaterial = NULL;
+	static vsShaderValues *s_previousShaderValues = NULL;
+}
+
 
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
@@ -871,6 +877,23 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 	m_currentShader = NULL;
 	m_currentShaderValues = NULL;
 	m_currentColor = c_white;
+	m_invalidateMaterial = true;
+	m_currentColorArray = NULL;
+	m_currentNormalArray = NULL;
+	m_currentTexelArray = NULL;
+	m_currentVertexArray = NULL;
+	m_currentColors = NULL;
+	m_currentColorsBuffer = NULL;
+	s_previousMaterial = NULL;
+	s_previousShaderValues = NULL;
+	m_lastShaderId = -1;
+	m_optionsStack.Clear();
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D,0);
+	}
+	glUseProgram(0);
 
 	SetRenderTarget(m_scene);
 	// m_scene->Bind();
@@ -909,6 +932,7 @@ vsRenderer_OpenGL3::PostRender()
 
 	{
 		PROFILE_GL("FinishPostRender");
+	glUseProgram(0);
 	SetRenderTarget(m_scene);
 	// m_scene->Bind();
 	// m_currentRenderTarget = m_scene;
@@ -940,6 +964,27 @@ vsRenderer_OpenGL3::PostRender()
 	// }
 
 	vsDynamicBatchManager::Instance()->FrameRendered();
+
+	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
+	m_currentShader = NULL;
+	m_currentShaderValues = NULL;
+	m_currentColor = c_white;
+	m_invalidateMaterial = true;
+	m_currentColorArray = NULL;
+	m_currentNormalArray = NULL;
+	m_currentTexelArray = NULL;
+	m_currentVertexArray = NULL;
+	m_currentColors = NULL;
+	m_currentColorsBuffer = NULL;
+	s_previousMaterial = NULL;
+	s_previousShaderValues = NULL;
+	m_lastShaderId = -1;
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D,0);
+	}
 }
 
 void
@@ -996,8 +1041,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 	}
 	// GL_CHECK("EnsureSpaceForVertex");
 	// GL_CHECK("PreFlush");
-	static vsMaterial *s_previousMaterial = NULL;
-	static vsShaderValues *s_previousShaderValues = NULL;
 	m_state.Flush();
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
