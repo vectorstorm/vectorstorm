@@ -119,6 +119,8 @@ public:
 		OpCode_PushShaderOptions, // push supplementary shader options onto the stack
 		OpCode_PopShaderOptions,  // pop shader options off the stack
 
+		OpCode_SetLinear,  // set that draw calls will be outputting linear colors which need to be handled by OpenGL
+
 		OpCode_Debug,
 
 		OpCode_MAX
@@ -253,6 +255,8 @@ public:
 
 	void	BindBuffer( vsRenderBuffer *buffer );		// new-style.  Buffer knows what it contains, binds itself
 	void	UnbindBuffer( vsRenderBuffer *buffer );
+
+	void	SetLinear( bool linear );
 
 	void	ClearVertexArray();
 	void	ClearNormalArray();

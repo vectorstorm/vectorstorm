@@ -107,6 +107,8 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushShaderOptions",
 	"PopShaderOptions",
 
+	"SetLinear",
+
 	"Debug"
 };
 
@@ -840,6 +842,13 @@ vsDisplayList::UnbindBuffer( vsRenderBuffer *buffer )
 }
 
 void
+vsDisplayList::SetLinear( bool linear )
+{
+	m_fifo->WriteUint8( OpCode_SetLinear );
+	m_fifo->WriteUint8( linear );
+}
+
+void
 vsDisplayList::ClearVertexArray(  )
 {
 	m_fifo->WriteUint8( OpCode_ClearVertexArray );
@@ -1165,6 +1174,11 @@ vsDisplayList::PopOp()
 			case OpCode_SetColor:
 			case OpCode_ClearRenderTargetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
+				break;
+			case OpCode_SetLinear:
+				{
+					m_currentOp.data.i = m_fifo->ReadUint8();
+				}
 				break;
 			case OpCode_SetColors:
 				{
@@ -1954,7 +1968,6 @@ vsDisplayList::CalculateStats()
 	}
 	return s;
 }
-
 
 void
 vsDisplayList::ApplyOffset(const vsVector2D &offset)

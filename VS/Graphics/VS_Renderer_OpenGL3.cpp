@@ -1182,6 +1182,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 #endif // LOG_OPS
 		switch( op->type )
 		{
+			case vsDisplayList::OpCode_SetLinear:
+				{
+					if ( op->data.i )
+						glEnable( GL_FRAMEBUFFER_SRGB );
+					else
+						glDisable( GL_FRAMEBUFFER_SRGB );
+					break;
+				}
 			case vsDisplayList::OpCode_SetColor:
 				{
 					m_currentColor = op->data.GetColor();
