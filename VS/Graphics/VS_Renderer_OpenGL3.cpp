@@ -628,7 +628,7 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 			m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
 		}
 	}
-	m_scene->Bind();
+	SetRenderTarget(m_scene);
 	m_lastShaderId = 0;
 	glUseProgram(0);
 	glClearDepth( 1.0 );
@@ -872,52 +872,7 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
-	m_currentMaterial = NULL;
-	m_currentMaterialInternal = NULL;
-	m_currentShader = NULL;
-	m_currentShaderValues = NULL;
-	m_currentColor = c_white;
-	m_invalidateMaterial = true;
-	m_currentColorArray = NULL;
-	m_currentNormalArray = NULL;
-	m_currentTexelArray = NULL;
-	m_currentVertexArray = NULL;
-	m_currentColors = NULL;
-	m_currentColorsBuffer = NULL;
-	s_previousMaterial = NULL;
-	s_previousShaderValues = NULL;
-	m_lastShaderId = -1;
-	m_optionsStack.Clear();
-	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D,0);
-	}
-	glUseProgram(0);
-
-	SetRenderTarget(m_scene);
-	// m_scene->Bind();
-	// m_currentRenderTarget = m_scene;
-
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	glClearColor(0.0f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glClearStencil(0);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	m_state.SetBool( vsRendererState::Bool_Blend, true );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.SetBool( vsRendererState::Bool_CullFace, true );
-	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
+	ClearState();
 }
 
 void
@@ -932,29 +887,10 @@ vsRenderer_OpenGL3::PostRender()
 
 	{
 		PROFILE_GL("FinishPostRender");
-	glUseProgram(0);
-	SetRenderTarget(m_scene);
-	// m_scene->Bind();
-	// m_currentRenderTarget = m_scene;
-	glClearColor(0.0f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glClearStencil(0);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_Blend, true );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.SetBool( vsRendererState::Bool_CullFace, true );
-	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
 
-	vsTimerSystem::Instance()->EndGPUTime();
+		ClearState();
+
+		vsTimerSystem::Instance()->EndGPUTime();
 	}
 	// {
 	// 	int nowWidth, nowHeight;
@@ -965,26 +901,6 @@ vsRenderer_OpenGL3::PostRender()
 
 	vsDynamicBatchManager::Instance()->FrameRendered();
 
-	m_currentMaterial = NULL;
-	m_currentMaterialInternal = NULL;
-	m_currentShader = NULL;
-	m_currentShaderValues = NULL;
-	m_currentColor = c_white;
-	m_invalidateMaterial = true;
-	m_currentColorArray = NULL;
-	m_currentNormalArray = NULL;
-	m_currentTexelArray = NULL;
-	m_currentVertexArray = NULL;
-	m_currentColors = NULL;
-	m_currentColorsBuffer = NULL;
-	s_previousMaterial = NULL;
-	s_previousShaderValues = NULL;
-	m_lastShaderId = -1;
-	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D,0);
-	}
 }
 
 void
@@ -1149,30 +1065,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	//bool		recalculateColor = false;	// if true, recalc color even if we don't think it's changed
 
 	//bool		usingVertexArray = false;
-	m_usingNormalArray = false;
-	m_usingTexelArray = false;
-	m_lightCount = 0;
-
-	m_currentLocalToWorld = NULL;
-	m_currentLocalToWorldCount = 0;
-	m_currentColors = NULL;
-	m_currentColorsBuffer = NULL;
-	m_currentLocalToWorldBuffer = NULL;
-	m_currentVertexArray = NULL;
-	m_currentVertexBuffer = NULL;
-	m_currentTexelArray = NULL;
-	m_currentTexelBuffer = NULL;
-	m_currentColorArray = NULL;
-	m_currentColorBuffer = NULL;
-	m_currentTransformStackLevel = 0;
-	m_currentVertexArrayCount = 0;
-	m_currentFogDensity = 0.001f;
-
-	m_optionsStack.Clear();
-
-	m_inOverlay = false;
-
-	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
+	ClearState();
 
 	while(op)
 	{
@@ -2270,7 +2163,7 @@ vsRenderer_OpenGL3::Screenshot()
 	// bind our main window, which isn't multisampled (since glReadPixels()
 	// doesn't support reading pixels from a framebuffer with MSAA enabled).
 	//
-	m_window->Bind();
+	SetRenderTarget(m_window);
 
 	const size_t bytesPerPixel = 3;	// RGB
 	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_widthPixels) * size_t(m_heightPixels);
@@ -2308,7 +2201,7 @@ vsRenderer_OpenGL3::Screenshot()
 
 	vsDeleteArray( pixels );
 
-	m_scene->Bind();
+	SetRenderTarget(m_scene);
 
 	return image;
 }
@@ -2503,3 +2396,73 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 	return result;
 }
 
+void
+vsRenderer_OpenGL3::ClearState()
+{
+	glUseProgram(0);
+	SetRenderTarget(m_scene);
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	m_state.SetBool( vsRendererState::Bool_Blend, true );
+	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_state.SetBool( vsRendererState::Bool_CullFace, true );
+	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
+	m_state.SetBool( vsRendererState::Bool_Multisample, true );
+	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
+	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	m_state.Flush();
+
+	m_currentColor = c_white;
+	m_currentColorArray = NULL;
+	m_currentColorBuffer = NULL;
+	m_currentColors = NULL;
+	m_currentColorsBuffer = NULL;
+	m_currentFogDensity = 0.001f;
+	m_currentLocalToWorld = NULL;
+	m_currentLocalToWorldBuffer = NULL;
+	m_currentLocalToWorldCount = 0;
+	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
+	m_currentNormalArray = NULL;
+	m_currentShader = NULL;
+	m_currentShaderValues = NULL;
+	m_currentTexelArray = NULL;
+	m_currentTexelBuffer = NULL;
+	m_currentTransformStackLevel = 0;
+	m_currentVertexArray = NULL;
+	m_currentVertexArrayCount = 0;
+	m_currentVertexBuffer = NULL;
+	m_invalidateMaterial = true;
+	m_lightCount = 0;
+	m_usingNormalArray = false;
+	m_usingTexelArray = false;
+
+	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
+
+	s_previousMaterial = NULL;
+	s_previousShaderValues = NULL;
+	m_lastShaderId = -1;
+	m_optionsStack.Clear();
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D,0);
+	}
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+
+
+	m_optionsStack.Clear();
+
+}

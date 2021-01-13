@@ -103,7 +103,6 @@ class vsRenderer_OpenGL3: public vsRenderer
 	int                  m_lightCount;
 	int                  m_bufferCount;
 	lightStatus          m_lightStatus[MAX_LIGHTS];
-	bool                 m_inOverlay;
 	bool                 m_usingNormalArray;
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
@@ -122,7 +121,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	void ResizeRenderTargetsToMatchWindow();
 
-	void	SetRenderTarget( vsRenderTarget *target );
+	void SetRenderTarget( vsRenderTarget *target );
+	void ClearState();
 
 public:
 
