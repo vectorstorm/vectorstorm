@@ -1145,20 +1145,22 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ResolveRenderTarget:
 				{
 					PROFILE_GL("ResolveRenderTarget");
-					m_state.Flush(); // Since resolving a render target can involve a blit, flush render state first.
-					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-					if ( target )
-						target->Resolve();
-					else // NULL target means main render target.
-						m_scene->Resolve();
+					// Since resolving a render target can involve a blit,
+					// flush render state first.
+					m_state.Flush();
+					// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+					// if ( target )
+					// 	target->Resolve();
+					// else // NULL target means main render target.
+					// 	m_scene->Resolve();
 					//
 					// [WARNING] resolving can invalidate current render target
 					// cache.  Re-bind the correct render target!
 					//
 					// [TODO]: Figure out a nicer way to do this!
 					//
-					if ( m_currentRenderTarget )
-						m_currentRenderTarget->Bind();
+					// if ( m_currentRenderTarget )
+					// 	m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
@@ -1175,8 +1177,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					//
 					// [TODO]: Figure out a nicer way to do this!
 					//
-					if ( m_currentRenderTarget )
-						m_currentRenderTarget->Bind();
+					// if ( m_currentRenderTarget )
+					// 	m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_PushTransform:
@@ -1844,6 +1846,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						glActiveTexture(GL_TEXTURE0 + i);
 						currentlyBoundTexture[i] = buffer->GetBufferID();
 						GL_CHECK_SCOPED("BufferTexture");
+						t->GetResource()->PrepareToBind();
 						glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
 						buffer->BindAsTexture();
 					}
@@ -1867,6 +1870,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						}
 						else
 						{
+							t->GetResource()->PrepareToBind();
 							glBindTexture( GL_TEXTURE_2D, tval);
 							if ( material->m_clampU )
 								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );

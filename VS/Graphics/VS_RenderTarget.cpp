@@ -56,7 +56,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 		vsTextureInternal *ti = new vsTextureInternal(name,
-				m_textureSurface,
+				this,
 				i,
 				isDepth);
 		vsTextureManager::Instance()->Add(ti);
@@ -71,7 +71,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 		vsTextureInternal *ti = new vsTextureInternal(name,
-				m_textureSurface,
+				this,
 				0,
 				true);
 		vsTextureManager::Instance()->Add(ti);
@@ -109,10 +109,10 @@ vsRenderTarget::Create()
 	}
 	for ( int i = 0; i < m_bufferCount; i++ )
 	{
-		m_texture[i]->GetResource()->SetSurface(m_textureSurface, i, isDepth);
+		m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
 	}
 	if ( m_depthTexture )
-		m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
+		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
 
 	Clear();
 }
@@ -448,10 +448,10 @@ vsRenderTarget::Resize( int width, int height )
 		for ( int i = 0; i < m_bufferCount; i++ )
 		{
 			bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
-			m_texture[i]->GetResource()->SetSurface(m_textureSurface, i, isDepth);
+			m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
 		}
 		if ( m_depthTexture )
-			m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
+			m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
 	}
 }
 

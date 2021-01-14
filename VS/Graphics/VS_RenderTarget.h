@@ -145,6 +145,11 @@ public:
 	vsTexture *	Resolve(int id=0);
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }
+
+	// this should probably only be used by the TextureInternal, handling
+	// deferred creation
+	vsSurface * GetTextureSurface() { return m_textureSurface; };
+
 	bool		IsDepthOnly();
 
 	void		Clear();
