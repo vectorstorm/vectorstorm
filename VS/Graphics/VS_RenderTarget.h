@@ -115,6 +115,7 @@ private:
 	float		m_texWidth;
 	float		m_texHeight;
 	Type		m_type;
+	bool		m_needsResolve;
 
 	void		Create(); // If we were deferred, this creates us.
 

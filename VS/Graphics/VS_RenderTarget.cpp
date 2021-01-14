@@ -12,6 +12,29 @@
 #include "VS_OpenGL.h"
 #include <atomic>
 
+namespace
+{
+	// [INFO]
+	//
+	// We sometimes want to temporarily modify the currently bound framebuffer
+	// object so that we can do temporary actions;  for example, resolving an
+	// MSAA rendertarget or doing a blit.  In order to transparently do those,
+	// we need to be able to swap the FBO back to the prevoiusly set one, and to
+	// do THAT, we need to keep track of what the previous FBO was.  So that's
+	// what the following values are for.
+	//
+	// This implementation relies on vsRenderTarget being the only class to ever
+	// call glBindFramebuffer().  If anybody else every calls that, then these
+	// values will go stale and bad behaviour could occur!  So if you're reading
+	// this in the future, Trevor, it might be worth searching the whole codebase
+	// for glBindFramebuffer to make sure that it isn't being called from anywhere
+	// that isn't keeping these values updated or restoring to these values
+	// immediately afterward!
+	//
+	int s_currentReadFBO = 0;
+	int s_currentDrawFBO = 0;
+};
+
 static std::atomic<int> s_renderTargetCount(0);
 
 vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred ):
@@ -20,7 +43,8 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	m_depthTexture(NULL),
 	m_renderBufferSurface(NULL),
 	m_textureSurface(NULL),
-	m_type(t)
+	m_type(t),
+	m_needsResolve(true)
 {
 	bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
 	m_viewportWidth = settings.width;
@@ -112,47 +136,54 @@ vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
 
-	if ( m_renderBufferSurface )
+	if ( m_needsResolve )
 	{
-		// need to copy from the render buffer surface to the regular texture.
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
-		for ( int i = 0; i < m_bufferCount; i++ )
+		if ( m_renderBufferSurface )
 		{
-			GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
-
-			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
-			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
-			glBlitFramebuffer(0, 0,
-					m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
-					0, 0,
-					m_textureSurface->m_width, m_textureSurface->m_height,
-					bufferBits,
-					GL_LINEAR);
-			if ( m_renderBufferSurface->m_depth )
+			// need to copy from the render buffer surface to the regular texture.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+			for ( int i = 0; i < m_bufferCount; i++ )
 			{
-				bufferBits = GL_DEPTH_BUFFER_BIT;
+				GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
+
+				glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
 				glBlitFramebuffer(0, 0,
 						m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
 						0, 0,
 						m_textureSurface->m_width, m_textureSurface->m_height,
 						bufferBits,
-						GL_NEAREST);
+						GL_LINEAR);
+				if ( m_renderBufferSurface->m_depth )
+				{
+					bufferBits = GL_DEPTH_BUFFER_BIT;
+					glBlitFramebuffer(0, 0,
+							m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
+							0, 0,
+							m_textureSurface->m_width, m_textureSurface->m_height,
+							bufferBits,
+							GL_NEAREST);
+				}
 			}
+			// and bind us back to the previously set read/draw framebuffers.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 		}
-	}
-	// if ( m_textureSurface )
-	{
-		// TODO:  Consider whether to re-generate mipmaps on the textures,
-		// since somebody's asked for them, such as with the following
-		// (commented-out) code.
-		//
-		// for ( int i = 0; i < m_bufferCount; i++ )
-		// {
-		// 	glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
-		// 	glGenerateMipmap(GL_TEXTURE_2D);
-		// 	glBindTexture(GL_TEXTURE_2D, 0);
-		// }
+		// if ( m_textureSurface )
+		{
+			// [TODO]  Consider whether to re-generate mipmaps on the textures,
+			// since somebody's asked for them, such as with the following
+			// (commented-out) code.
+			//
+			// for ( int i = 0; i < m_bufferCount; i++ )
+			// {
+			// 	glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
+			// 	glGenerateMipmap(GL_TEXTURE_2D);
+			// 	glBindTexture(GL_TEXTURE_2D, 0);
+			// }
+		}
+		m_needsResolve = false;
 	}
 
 	return GetTexture(id);
@@ -169,15 +200,19 @@ vsRenderTarget::CreateDeferred()
 void
 vsRenderTarget::Bind()
 {
+	// somebody's going to draw into us, mark us as needing to be resolved.
+	m_needsResolve = true;
 	CreateDeferred();
 
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
 	{
+		s_currentReadFBO = s_currentDrawFBO = m_renderBufferSurface->m_fbo;
 		glBindFramebuffer(GL_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 	}
 	else
 	{
+		s_currentReadFBO = s_currentDrawFBO = m_textureSurface->m_fbo;
 		glBindFramebuffer(GL_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
 	if ( m_type == Type_Texture || m_type == Type_Multisample )
@@ -285,6 +320,10 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 				GL_COLOR_BUFFER_BIT,
 				GL_LINEAR);
 	}
+	// mark 'other' as needing a resolve.
+	other->m_needsResolve = true;
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
 
 vsSurface::vsSurface( int width, int height ):

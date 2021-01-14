@@ -1151,6 +1151,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 						target->Resolve();
 					else // NULL target means main render target.
 						m_scene->Resolve();
+					//
+					// [WARNING] resolving can invalidate current render target
+					// cache.  Re-bind the correct render target!
+					//
+					// [TODO]: Figure out a nicer way to do this!
+					//
+					if ( m_currentRenderTarget )
+						m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_BlitRenderTarget:
@@ -1160,6 +1168,15 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
 					from->BlitTo(to);
+
+					// [WARNING] blitting can cause the vsRenderTarget to
+					// resolve, which can invalidate current render target
+					// cache.  Re-bind the correct render target!
+					//
+					// [TODO]: Figure out a nicer way to do this!
+					//
+					if ( m_currentRenderTarget )
+						m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_PushTransform:
