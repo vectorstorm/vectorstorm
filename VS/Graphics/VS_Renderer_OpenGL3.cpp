@@ -721,8 +721,14 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
-	m_bufferCount = bufferCount;
-	m_antialias = antialias;
+	if ( m_antialias != antialias || m_bufferCount != bufferCount )
+	{
+		m_bufferCount = bufferCount;
+		m_antialias = antialias;
+
+		// 'm_scene' no longer matches the requested format;  rebuild it!
+		vsDelete( m_scene );
+	}
 	m_vsync = vsync;
 	bool changedWindowType = (m_windowType != windowType);
 
