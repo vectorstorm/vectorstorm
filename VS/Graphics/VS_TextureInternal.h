@@ -37,6 +37,7 @@ class vsTextureInternal : public vsResource
 
 	vsRenderBuffer *m_tbo;
 	vsRenderTarget *m_renderTarget; // this is NOT owned by us!
+	int				m_surfaceBuffer; // which buffer within the renderTarget was this?
 
 	bool		m_nearestSampling;
 

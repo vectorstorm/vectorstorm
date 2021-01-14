@@ -115,7 +115,10 @@ private:
 	float		m_texWidth;
 	float		m_texHeight;
 	Type		m_type;
-	bool		m_needsResolve;
+
+	// bitfield of buffers that need resolving.
+	int			m_needsResolve;
+	bool		m_needsDepthResolve;
 
 	void		Create(); // If we were deferred, this creates us.
 
@@ -143,6 +146,7 @@ public:
 	 * We always need to call this function before using the render target as a texture.
 	 */
 	vsTexture *	Resolve(int id=0);
+	vsTexture *	ResolveDepth();
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }
 

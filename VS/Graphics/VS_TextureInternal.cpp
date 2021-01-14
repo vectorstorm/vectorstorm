@@ -31,7 +31,8 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	vsString filename = vsFile::GetFullFilename(filename_in);
 
@@ -44,7 +45,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	m_nearestSampling = false;
 }
@@ -54,7 +56,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	m_nearestSampling = false;
 }
@@ -64,7 +67,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	m_nearestSampling = false;
 }
@@ -74,7 +78,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	if ( surface )
 		m_texture = (depth) ? surface->m_depth : surface->m_texture;
@@ -86,7 +91,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	m_texture(0),
 	m_premultipliedAlpha(false),
 	m_tbo(buffer),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	GLuint t;
 	glGenTextures(1, &t);
@@ -113,7 +119,10 @@ vsTextureInternal::PrepareToBind()
 {
 	if ( m_renderTarget )
 	{
-		m_renderTarget->Resolve();
+		if ( IsDepth() )
+			m_renderTarget->ResolveDepth();
+		else
+			m_renderTarget->Resolve(m_surfaceBuffer);
 	}
 }
 
@@ -125,6 +134,7 @@ vsTextureInternal::SetRenderTarget( vsRenderTarget* renderTarget, int surfaceBuf
 	// constructor with a NULL argument;  now we're providing the surface)
 
 	m_renderTarget = renderTarget;
+	m_surfaceBuffer = surfaceBuffer;
 	vsSurface *surface = renderTarget->GetTextureSurface();
 	if ( surface )
 	{
@@ -146,7 +156,8 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	vsImage image(filename_in);
 
@@ -184,7 +195,8 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	GLuint t;
 	glGenTextures(1, &t);
@@ -233,7 +245,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -266,7 +279,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -299,7 +313,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *imag
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -332,7 +347,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	int w = image->GetWidth();
 	int h = image->GetHeight();
@@ -362,7 +378,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(false),
-	m_tbo(buffer)
+	m_tbo(buffer),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	GLuint t;
 	glGenTextures(1, &t);
@@ -375,7 +393,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 	m_texture(glTextureId),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	m_nearestSampling = false;
 }
@@ -419,7 +438,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *rend
 	m_depth(depth),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
-	m_renderTarget(NULL)
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0)
 {
 	if ( renderTarget && renderTarget->GetTextureSurface() )
 	{
@@ -436,6 +456,7 @@ vsTextureInternal::~vsTextureInternal()
 
 
 	vsDelete( m_tbo );
+	m_renderTarget = NULL; // this doesn't belong to us;  don't destroy it!
 }
 
 void
