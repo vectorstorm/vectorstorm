@@ -91,7 +91,12 @@ public:
 		OpCode_SetRenderTarget,
 		OpCode_ClearRenderTarget,
 		OpCode_ClearRenderTargetColor,
-		OpCode_ResolveRenderTarget,
+		//
+		// ResolveRenderTarget is being deprecated;  RenderTargets now
+		// automatically get resolved by the engine when you bind one of their
+		// textures into a draw.
+		//
+		// OpCode_ResolveRenderTarget,
 		OpCode_BlitRenderTarget,
 
 		OpCode_Light,

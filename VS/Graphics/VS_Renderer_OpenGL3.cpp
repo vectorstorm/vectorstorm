@@ -1051,6 +1051,10 @@ vsRenderer_OpenGL3::FlushRenderState()
 		glUseProgram( 0 );
 	}
 
+	if ( m_currentRenderTarget )
+	{
+		m_currentRenderTarget->InvalidateResolve();
+	}
 }
 
 void
@@ -1148,27 +1152,27 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentRenderTarget->ClearColor( op->data.color );
 					break;
 				};
-			case vsDisplayList::OpCode_ResolveRenderTarget:
-				{
-					PROFILE_GL("ResolveRenderTarget");
-					// Since resolving a render target can involve a blit,
-					// flush render state first.
-					m_state.Flush();
-					// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-					// if ( target )
-					// 	target->Resolve();
-					// else // NULL target means main render target.
-					// 	m_scene->Resolve();
-					//
-					// [WARNING] resolving can invalidate current render target
-					// cache.  Re-bind the correct render target!
-					//
-					// [TODO]: Figure out a nicer way to do this!
-					//
-					// if ( m_currentRenderTarget )
-					// 	m_currentRenderTarget->Bind();
-					break;
-				}
+			// case vsDisplayList::OpCode_ResolveRenderTarget:
+			// 	{
+			// 		PROFILE_GL("ResolveRenderTarget");
+			// 		// Since resolving a render target can involve a blit,
+			// 		// flush render state first.
+			// 		m_state.Flush();
+			// 		// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+			// 		// if ( target )
+			// 		// 	target->Resolve();
+			// 		// else // NULL target means main render target.
+			// 		// 	m_scene->Resolve();
+			// 		//
+			// 		// [WARNING] resolving can invalidate current render target
+			// 		// cache.  Re-bind the correct render target!
+			// 		//
+			// 		// [TODO]: Figure out a nicer way to do this!
+			// 		//
+			// 		// if ( m_currentRenderTarget )
+			// 		// 	m_currentRenderTarget->Bind();
+			// 		break;
+			// 	}
 			case vsDisplayList::OpCode_BlitRenderTarget:
 				{
 					PROFILE_GL("Blit");

@@ -236,8 +236,6 @@ void
 vsRenderTarget::Bind()
 {
 	// somebody's going to draw into us, mark us as needing to be resolved.
-	m_needsResolve = 0xffff; // set all bits
-	m_needsDepthResolve = true;
 	CreateDeferred();
 
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");

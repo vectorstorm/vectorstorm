@@ -141,6 +141,8 @@ public:
 
 	void		Bind();
 
+	void		InvalidateResolve() { m_needsResolve = 0xffff; m_needsDepthResolve = true; }
+
 	/* if we're a multisample target, Resolve() copies the multisample data into
 	 * our renderable texture.  If not, it does nothing.
 	 * We always need to call this function before using the render target as a texture.

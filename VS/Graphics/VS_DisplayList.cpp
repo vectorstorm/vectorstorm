@@ -79,7 +79,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SetMaterial",
 	"SetRenderTarget",
 	"ClearRenderTarget",
-	"ResolveRenderTarget",
+	// "ResolveRenderTarget",
 	"BlitRenderTarget",
 
 	"Light",
@@ -1044,8 +1044,10 @@ vsDisplayList::ClearRenderTargetColor( const vsColor& c )
 void
 vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 {
-	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
-	m_fifo->WriteVoidStar( target );
+	// Woo, this operation is going away!
+
+	// m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
+	// m_fifo->WriteVoidStar( target );
 }
 
 void
@@ -1318,9 +1320,9 @@ vsDisplayList::PopOp()
 			case OpCode_SetRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
-			case OpCode_ResolveRenderTarget:
-				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
-				break;
+			// case OpCode_ResolveRenderTarget:
+			// 	m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+			// 	break;
 			case OpCode_BlitRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
