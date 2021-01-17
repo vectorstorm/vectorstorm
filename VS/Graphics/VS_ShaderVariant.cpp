@@ -831,10 +831,7 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 	if ( m_mouseLoc >= 0 )
 	{
 		vsVector2D mousePos = vsInput::Instance()->GetWindowMousePosition();
-		int yRes = vsScreen::Instance()->GetHeight();
-		// the coordinate system in the GLSL shader is inverted from the
-		// coordinate system we like to use.  So let's invert it!
-		glUniform2f( m_mouseLoc, mousePos.x, yRes - mousePos.y );
+		glUniform2f( m_mouseLoc, mousePos.x, mousePos.y );
 	}
 	if ( m_depthOnlyLoc >= 0 )
 	{
