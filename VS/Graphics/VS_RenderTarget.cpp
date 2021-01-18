@@ -10,6 +10,7 @@
 #include "VS_TextureManager.h"
 #include "VS_Color.h"
 #include "VS_OpenGL.h"
+#include "VS_RendererState.h"
 #include <atomic>
 
 namespace
@@ -141,6 +142,12 @@ vsRenderTarget::ResolveDepth()
 	{
 		if ( m_renderBufferSurface )
 		{
+			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
+
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
+			vsRendererState::Instance()->Flush();
+
 			// need to copy from the render buffer surface to the regular texture.
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
@@ -159,6 +166,9 @@ vsRenderTarget::ResolveDepth()
 			// and bind us back to the previously set read/draw framebuffers.
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
+
+			vsRendererState::Instance()->Apply( backup );
+			vsRendererState::Instance()->Flush();
 		}
 		m_needsDepthResolve = false;
 	}
@@ -176,6 +186,12 @@ vsRenderTarget::Resolve(int id)
 	{
 		if ( m_renderBufferSurface )
 		{
+			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
+
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
+			vsRendererState::Instance()->Flush();
+
 			// need to copy from the render buffer surface to the regular texture.
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
@@ -202,6 +218,9 @@ vsRenderTarget::Resolve(int id)
 			// and bind us back to the previously set read/draw framebuffers.
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
+
+			vsRendererState::Instance()->Apply( backup );
+			vsRendererState::Instance()->Flush();
 		}
 
 		// [TODO]  Consider whether to re-generate mipmaps on the textures,
@@ -356,7 +375,7 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	}
 	// mark 'other' as needing a resolve.
 	other->m_needsResolve = 0xffff;
-	m_needsDepthResolve = true;
+	other->m_needsDepthResolve = true;
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
