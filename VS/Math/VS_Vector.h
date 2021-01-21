@@ -60,6 +60,11 @@ public:
 	float	Cross( const vsVector2D &b ) const { return x*b.y - y*b.x; }
 
 	void	Set(float x_in, float y_in) {x=x_in; y=y_in;}
+
+	vsVector2D XY() const { return *this; }
+	vsVector2D YX() const { return vsVector2D(y,x); }
+	vsVector2D XX() const { return vsVector2D(x,x); }
+	vsVector2D YY() const { return vsVector2D(y,y); }
 };
 
 
