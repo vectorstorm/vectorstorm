@@ -120,10 +120,13 @@ public:
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			vsDelete( m_array[index] );
+			T* toBeDeleted = m_array[index];
 			// move the last element into this position
 			m_array[index] = m_array[m_arrayLength-1];
 			m_arrayLength--;
+
+			// only actually delete it once it's no longer in our array!
+			vsDelete( toBeDeleted );
 		}
 		return index != npos;
 	}
@@ -134,9 +137,10 @@ public:
 
 		if ( index != npos )
 		{
-			vsDelete( m_array[index] );
+			T* toBeDeleted = m_array[index];
 			m_array[index] = m_array[m_arrayLength-1];
 			m_arrayLength--;
+			vsDelete( toBeDeleted );
 		}
 
 		if ( index < m_arrayLength )
