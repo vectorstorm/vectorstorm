@@ -495,6 +495,37 @@ vsModel::BuildBoundingBox()
 	SetBoundingBox( boundingBox );
 }
 
+void
+vsModel::BuildLowBoundingBox( float threshhold )
+{
+	vsBox3D boundingBox;
+	if ( m_displayList )
+	{
+		m_displayList->GetBoundingBox(boundingBox);
+	}
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				if ( v.y < threshhold )
+					boundingBox.ExpandToInclude(v);
+			}
+		}
+		// else
+		// {
+		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
+		// 	boundingBox.ExpandToInclude( fragmentBox );
+		// }
+	}
+	SetLowBoundingBox( boundingBox );
+}
+
 vsDisplayList::Stats
 vsModel::CalculateStats()
 {

@@ -36,6 +36,7 @@ class vsModel : public vsEntity
 	vsMaterial *	m_material;
 
 	vsBox3D				m_boundingBox;
+	vsBox3D				m_lowBoundingBox;
 	float				m_boundingRadius;
 
 	static vsModel* LoadModel_Internal( vsSerialiserRead& r );
@@ -87,6 +88,10 @@ public:
 	const vsBox3D &			GetBoundingBox() const { return m_boundingBox; }
 	void					SetBoundingBox(const vsBox3D &box) { m_boundingBox = box; }
 	void					BuildBoundingBox();
+
+	const vsBox3D &			GetLowBoundingBox() const { return m_lowBoundingBox; }
+	void					SetLowBoundingBox(const vsBox3D &box) { m_lowBoundingBox = box; }
+	void					BuildLowBoundingBox( float threshhold = 1.f );
 
 	vsDisplayList::Stats	CalculateStats();
 
