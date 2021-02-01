@@ -29,14 +29,14 @@ public:
 	vsBloomBlurShader():
 		vsShader(row3v, row3f, false, false)
 	{
-		m_locCoefficients = glGetUniformLocation(m_shader, "coefficients");
+		m_locCoefficients = glGetUniformLocation(GetShaderId(), "coefficients");
 		// m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
 		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
-	virtual void Prepare( vsMaterial *mat, vsShaderValues *values )
+	virtual void Prepare( vsMaterial *mat, vsShaderValues *values, vsRenderTarget *target )
 	{
-		vsShader::Prepare( mat, values );
+		vsShader::Prepare( mat, values, target );
 		// glUniform1f(m_locOffsetX, m_offset.x);
 		// glUniform1f(m_locOffsetY, m_offset.y);
 		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
@@ -114,6 +114,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	for ( int i = 0; i < m_passCount; i++ )
 	{
 		req.mipmapLevel = i;
+		pipeline->ReleaseRenderTarget( m_passes[i].m_pass, this );
+		pipeline->ReleaseRenderTarget( m_passes[i].m_pass2, this );
 		m_passes[i].m_pass = pipeline->RequestRenderTarget(req, this);
 		m_passes[i].m_pass2 = pipeline->RequestRenderTarget(req, this);
 	}
@@ -129,7 +131,9 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		kernel_normalised = true;
 	}
 
-	m_hipassMaterial = new vsDynamicMaterial;
+	if ( !m_hipassMaterial )
+		m_hipassMaterial = new vsDynamicMaterial;
+
 	m_hipassMaterial->SetBlend(false);
 	m_hipassMaterial->SetDrawMode(DrawMode_Absolute);
 	m_hipassMaterial->SetColor(c_white);
@@ -140,13 +144,15 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_hipassMaterial->SetTexture(0, m_from->GetTexture(1));
 	m_hipassMaterial->SetShader(new vsShader(passv, normalf, false, false));
 
-	m_bloomBlurShader = new vsBloomBlurShader();
+	if ( !m_bloomBlurShader )
+		m_bloomBlurShader = new vsBloomBlurShader();
 
 	for ( int i = 0; i < m_passCount; i++ )
 	{
 		float offsetx = 1.2f / m_passes[i].m_pass->GetWidth();
 		float offsety = 1.2f / m_passes[i].m_pass->GetHeight();
-		m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_horizontalBlurMaterial )
+			m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
 		m_passes[i].m_horizontalBlurMaterial->SetClampU(true);
 		m_passes[i].m_horizontalBlurMaterial->SetClampV(true);
 		m_passes[i].m_horizontalBlurMaterial->SetBlend(false);
@@ -156,7 +162,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsetx", offsetx);
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsety", 0.f);
 
-		m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_verticalBlurMaterial )
+			m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
 		m_passes[i].m_verticalBlurMaterial->SetClampU(true);
 		m_passes[i].m_verticalBlurMaterial->SetClampV(true);
 		m_passes[i].m_verticalBlurMaterial->SetBlend(false);
@@ -166,7 +173,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsetx", 0.f);
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsety", offsety);
 
-		m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;
+		if ( !m_passes[i].m_combinePassMaterial )
+			m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;
 		m_passes[i].m_combinePassMaterial->SetBlend(true);
 		m_passes[i].m_combinePassMaterial->SetColor(c_white);
 		m_passes[i].m_combinePassMaterial->SetCullingType(Cull_None);
@@ -180,7 +188,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_combinePassMaterial->SetShader(new vsBloomCombineShader);
 	}
 
-	m_fromMaterial = new vsDynamicMaterial;
+	if ( !m_fromMaterial )
+		m_fromMaterial = new vsDynamicMaterial;
 	m_fromMaterial->SetBlend(false);
 	m_fromMaterial->SetColor(c_white);
 	m_fromMaterial->SetCullingType(Cull_None);
@@ -192,8 +201,10 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_fromMaterial->SetTexture(0, m_from->GetTexture());
 	m_fromMaterial->SetShader(new vsBloomPassShader);
 
-	m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
-	m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	if ( !m_vertices )
+		m_vertices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	if ( !m_indices )
+		m_indices = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 
 	float ar = vsScreen::Instance()->GetAspectRatio();
 	vsVector3D v[4] = {

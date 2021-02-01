@@ -25,6 +25,8 @@
 #include <netinet/in.h> // for access to ntohl, et al
 #endif
 
+#include <zlib.h>
+
 vsStore::vsStore():
 	m_buffer( NULL ),
 	m_bufferLength( 0 ),
@@ -87,6 +89,19 @@ vsStore::Rewind()
 }
 
 void
+vsStore::EraseReadBytes()
+{
+	if ( m_readHead != m_buffer )
+	{
+		int bytesRead = m_readHead - m_buffer;
+		memmove( m_buffer, m_readHead, BytesLeftForReading() );
+		m_readHead -= bytesRead;
+		m_writeHead -= bytesRead;
+		vsAssert( m_readHead == m_buffer, "Maths error in vsStore" );
+	}
+}
+
+void
 vsStore::AdvanceReadHead( size_t bytes )
 {
 	m_readHead += bytes;
@@ -123,9 +138,22 @@ vsStore::Clear()
 }
 
 void
+vsStore::AssertBytesLeftForWriting(size_t bytes)
+{
+	if ( BytesLeftForWriting() < bytes )
+	{
+		vsLog("Tried to write past the end of a vsStore");
+		vsLog("Buffer size:  %d bytes", BufferLength());
+		vsLog("Currently in use:  %d bytes", Length());
+		vsLog("Tried to write:  %d bytes", bytes);
+		vsAssert( BytesLeftForWriting() >= bytes, "Tried to write past the end of the vsStore!" );
+	}
+}
+
+void
 vsStore::Append( vsStore *o )
 {
-	vsAssert( BytesLeftForWriting() >= o->Length(), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( o->Length() );
 
 	memcpy( m_writeHead, o->m_buffer, o->Length() );
 	m_writeHead += o->Length();
@@ -134,7 +162,7 @@ vsStore::Append( vsStore *o )
 void
 vsStore::WriteInt8( int8_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -143,7 +171,7 @@ vsStore::WriteInt8( int8_t v )
 void
 vsStore::WriteUint8( uint8_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	//memcpy( m_writeHead, &v, sizeof(v) );
 	*(uint8_t*)m_writeHead = v;
@@ -153,7 +181,7 @@ vsStore::WriteUint8( uint8_t v )
 void
 vsStore::WriteInt16( int16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -163,7 +191,7 @@ vsStore::WriteInt16( int16_t v )
 void
 vsStore::WriteUint16( uint16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -173,7 +201,7 @@ vsStore::WriteUint16( uint16_t v )
 void
 vsStore::WriteUint16Native( uint16_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -182,7 +210,7 @@ vsStore::WriteUint16Native( uint16_t v )
 void
 vsStore::WriteInt32( int32_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -192,7 +220,7 @@ vsStore::WriteInt32( int32_t v )
 void
 vsStore::WriteUint32( uint32_t v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -202,7 +230,7 @@ vsStore::WriteUint32( uint32_t v )
 void
 vsStore::WriteFloat( float v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -224,7 +252,7 @@ vsStore::WriteString( const vsString &string )
 void
 vsStore::WriteBuffer( const void *buffer, size_t bufferLength )
 {
-	vsAssert( BytesLeftForWriting() >= bufferLength, "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( bufferLength );
 
 	memcpy( m_writeHead, buffer, bufferLength );
 	m_writeHead += bufferLength;
@@ -294,7 +322,7 @@ vsStore::ReadBufferAsString( vsString *string )
 void
 vsStore::WriteVoidStar( void *v )
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(v), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -502,6 +530,26 @@ vsStore::ReadColor(vsColor *c)
 }
 
 void
+vsStore::WriteColorPacked(const vsColorPacked &c)
+{
+	WriteUint8( c.r );
+	WriteUint8( c.g );
+	WriteUint8( c.b );
+	WriteUint8( c.a );
+}
+
+void
+vsStore::ReadColorPacked(vsColorPacked *c)
+{
+	uint8_t r = ReadUint8();
+	uint8_t g = ReadUint8();
+	uint8_t b = ReadUint8();
+	uint8_t a = ReadUint8();
+
+	c->Set(r,g,b,a);
+}
+
+void
 vsStore::WriteLight(const vsLight &l)
 {
 	WriteUint8( l.GetType() );
@@ -596,7 +644,7 @@ vsStore::ReadTransform2D(vsTransform2D *t)
 void
 vsStore::WriteMatrix4x4(const vsMatrix4x4 &m)
 {
-	vsAssert( BytesLeftForWriting() >= sizeof(m), "Tried to write past the end of the vsStore!" );
+	AssertBytesLeftForWriting( sizeof(m) );
 	memcpy( m_writeHead, &m, sizeof(m) );
 	m_writeHead += sizeof(m);
 }
@@ -640,5 +688,154 @@ vsStore::ReadBox2D(vsBox2D *box)
 	ReadVector2D(&min);
 	ReadVector2D(&max);
 	box->Set(min,max);
+}
+
+bool
+vsStore::Compress()
+{
+	Rewind();
+
+	vsStore zipStore(m_bufferLength + 1024); // a *little* extra space buffer for in case we don't get much compression
+
+	z_stream zipstream;
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+
+	int ret = deflateInit(&zipstream, Z_DEFAULT_COMPRESSION);
+	if ( ret != Z_OK )
+	{
+		vsLog("vsStore::Compress: deflateInit error: %d", ret);
+		return false;
+	}
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+	zipstream.avail_out = m_bufferLength;
+	zipstream.next_out = (Bytef*)zipStore.GetWriteHead();
+
+	ret = deflate(&zipstream, Z_FINISH);
+	vsAssert(ret == Z_STREAM_END, "vsStore::Compress: Failed to fit compressed stream into available space");
+
+	int compressedBytes = m_bufferLength - zipstream.avail_out;
+	zipStore.AdvanceWriteHead(compressedBytes);
+	// if ( compressedBytes > 0 )
+	// 	_WriteFinalBytes_Buffered(zipBuffer, compressedBytes);
+
+	deflateEnd(&zipstream);
+
+	Clear();
+	Append(&zipStore);
+
+	return true;
+}
+
+bool
+vsStore::Expand()
+{
+	// We're going to need to inflate this date twice;  once to see how big it
+	// turns out to be, and once to actually read it.
+	z_stream zipstream;
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+
+	int ret = inflateInit(&zipstream);
+	if ( ret != Z_OK )
+	{
+		vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+		return false;
+	}
+
+	int decompressedSize = 0;
+	const int zipBufferSize = 1024 * 100;
+	char zipBuffer[zipBufferSize];
+	do
+	{
+		zipstream.avail_out = zipBufferSize;
+		zipstream.next_out = (Bytef*)zipBuffer;
+		int ret = inflate(&zipstream, Z_NO_FLUSH);
+		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+
+		int decompressedBytes = zipBufferSize - zipstream.avail_out;
+		decompressedSize += decompressedBytes;
+
+	}while( zipstream.avail_out == 0 );
+	inflateEnd(&zipstream);
+
+	vsStore *inflateStore = new vsStore( decompressedSize );
+
+	// Now let's decompress it FOR REAL.
+	Rewind();
+	zipstream.zalloc = Z_NULL;
+	zipstream.zfree = Z_NULL;
+	zipstream.opaque = Z_NULL;
+	zipstream.avail_in = BytesLeftForReading();
+	zipstream.next_in = (Bytef*)GetReadHead();
+	ret = inflateInit(&zipstream);
+	if ( ret != Z_OK )
+	{
+		vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+		return false;
+	}
+
+	do
+	{
+		zipstream.avail_out = zipBufferSize;
+		zipstream.next_out = (Bytef*)zipBuffer;
+		int ret = inflate(&zipstream, Z_NO_FLUSH);
+		if ( ret == Z_STREAM_END )
+			break;
+		else if ( ret != Z_OK )
+		{
+			switch ( ret )
+			{
+				case Z_NEED_DICT:
+					vsLog("Failed to open zip data; dictionary requested");
+					break;
+				case Z_DATA_ERROR:
+					vsLog("Failed to open zip data;  data error:  %s", zipstream.msg);
+					break;
+				case Z_MEM_ERROR:
+					vsLog("Failed to open zip data;  memory error");
+					break;
+				case Z_BUF_ERROR:
+					vsLog("Failed to open zip data;  insufficient buffer space");
+					break;
+				case Z_OK:
+				default:
+					break;
+			}
+			return false;
+		}
+
+		// vsAssert(ret != Z_OK, "Zip State ");
+
+		int decompressedBytes = zipBufferSize - zipstream.avail_out;
+		inflateStore->WriteBuffer( zipBuffer, decompressedBytes );
+
+	}while( zipstream.avail_out == 0 );
+	inflateEnd(&zipstream);
+
+
+	ReplaceBuffer( inflateStore->Length() );
+	Append(inflateStore);
+	vsDelete(inflateStore);
+
+	return true;
+}
+
+void
+vsStore::ReplaceBuffer( size_t newLength )
+{
+	vsAssert( !m_bufferIsExternal, "Replacing an external vsStore buffer isn't supported" );
+
+	vsDeleteArray(m_buffer);
+	m_bufferLength = newLength;
+	m_buffer = new char[newLength];
+	m_bufferLength = newLength;
+	m_bufferEnd = &m_buffer[m_bufferLength];
+	m_readHead = m_writeHead = m_buffer;
 }
 

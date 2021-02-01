@@ -79,6 +79,22 @@ vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRen
 }
 
 void
+vsRenderPipeline::ReleaseRenderTarget( vsRenderTarget *target, vsRenderPipelineStage *stage )
+{
+	for ( vsArrayStore<RenderTargetRegistration>::Iterator it = m_target.Begin();
+			it != m_target.End();
+			it++ )
+	{
+		RenderTargetRegistration *reg = *it;
+
+		if ( reg->GetRenderTarget() == target && reg->IsUsedByStage(stage) )
+		{
+			reg->SetUsedByStage(stage,false);
+		}
+	}
+}
+
+void
 vsRenderPipeline::SetStage( int stageId, vsRenderPipelineStage *stage )
 {
 	// TODO:  Support changing stages.  The only bit not handled right now is
@@ -101,3 +117,26 @@ vsRenderPipeline::Draw( vsDisplayList *list )
 			m_stage[i]->Draw(list);
 	}
 }
+
+void
+vsRenderPipeline::Prepare()
+{
+	for ( int i = 0; i < m_stageCount; i++ )
+	{
+		if ( m_stage[i] )
+			m_stage[i]->PreparePipeline(this);
+	}
+
+	for ( int i = 0; i < m_target.ItemCount(); )
+	{
+		RenderTargetRegistration *reg = m_target[i];
+		if ( !reg->IsUsedByAnyStage() )
+		{
+			// we should get rid of this render target!
+			m_target.RemoveItem( reg );
+		}
+		else
+			i++;
+	}
+}
+

@@ -61,14 +61,14 @@ public:
 	void				SetMaterial( vsMaterial *mat ) { vsDelete( m_material ); m_material = mat; }
 
 	virtual void		SetPosition( const vsVector2D &pos ) { m_transform.SetTranslation( pos ); }
-	const vsVector2D &	GetPosition() { return m_transform.GetTranslation(); }
+	const vsVector2D &	GetPosition() const { return m_transform.GetTranslation(); }
 	virtual void		SetAngle( const vsAngle &angle ) { m_transform.SetAngle( angle ); }
-	const vsAngle &		GetAngle() { return m_transform.GetAngle(); }
+	const vsAngle &		GetAngle() const { return m_transform.GetAngle(); }
 	void				SetScale( float scale ) { m_transform.SetScale( vsVector2D(scale,scale) ); }
 	void				SetScale( const vsVector2D &scale ) { m_transform.SetScale( scale ); }
-	const vsVector2D &	GetScale() { return m_transform.GetScale(); }
+	const vsVector2D &	GetScale() const { return m_transform.GetScale(); }
 
-	vsVector2D			GetWorldPosition();	// try to get our world position.  Note that this will only work if all of our parents only adjust the draw transformation using vsSprite built-in transforms!
+	vsVector2D			GetWorldPosition() const;	// try to get our world position.  Note that this will only work if all of our parents only adjust the draw transformation using vsSprite built-in transforms!
 
 	void				SetDisplayList( vsDisplayList *list );
 	void				AddFragment( vsFragment *fragment );
@@ -78,17 +78,17 @@ public:
 	size_t				GetFragmentCount() { return m_fragment.ItemCount(); }
 
 	void				SetBoundingBox( const vsBox2D &box ) { m_boundingBox = box; }
-	const vsBox2D &		GetBoundingBox() { return m_boundingBox; }
+	const vsBox2D &		GetBoundingBox() const { return m_boundingBox; }
 	void				BuildBoundingBox();
 	void				CalculateBoundingRadius();
-	float				GetBoundingRadius() { return m_boundingRadius; }
+	float				GetBoundingRadius() const { return m_boundingRadius; }
 
-	virtual vsEntity *	FindEntityAtPosition(const vsVector2D &pos);	// 'pos' is in parent coordinates!  Returns true if we swallowed the 'click' action.
-	virtual bool		ContainsLocalPoint(const vsVector2D &pos);
+	virtual vsEntity *	FindEntityAtPosition(const vsVector2D &pos) const;	// 'pos' is in parent coordinates!  Returns true if we swallowed the 'click' action.
+	virtual bool		ContainsLocalPoint(const vsVector2D &pos) const;
 
 	void				Rotate( float angle );
 
-	virtual bool		OnScreen(const vsTransform2D & cameraTrans);
+	virtual bool		OnScreen(const vsTransform2D & cameraTrans) const;
 
 	virtual void		Draw( vsRenderQueue *queue );
 };

@@ -35,13 +35,15 @@ vsShaderCache::Shutdown()
 }
 
 vsShaderRef*
-vsShaderCache::LoadShader( const vsString& vFile, const vsString& fFile, bool lit, bool texture )
+vsShaderCache::LoadShader( const vsString& vFile, const vsString& fFile, bool lit, bool texture, uint32_t optionFlags )
 {
 	vsString uniqueName = vFile + "_" + fFile;
 	if ( lit )
 		uniqueName += "L";
 	if ( texture )
 		uniqueName += "T";
+	if ( optionFlags )
+		uniqueName += vsFormatString("_%d", optionFlags);
 
 	// static int caches = 0;
 	// static int loads = 0;

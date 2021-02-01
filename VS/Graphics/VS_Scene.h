@@ -31,6 +31,7 @@ extern vsTransform2D	g_drawingCameraTransform;	// this transform is active durin
 
 class vsScene
 {
+	vsString		m_name;
 	vsRenderQueue *	m_queue;
 	vsEntity *		m_entityList;
 	vsCamera2D *	m_defaultCamera;
@@ -51,7 +52,7 @@ class vsScene
 
 public:
 
-	vsScene();
+	vsScene( const vsString& name );
 	virtual			~vsScene();
 
 	void			Set3D(bool i) { m_is3d = i; }

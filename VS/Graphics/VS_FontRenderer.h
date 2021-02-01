@@ -12,6 +12,7 @@
 
 #include "VS/Graphics/VS_Font.h"
 #include "VS/Graphics/VS_Fragment.h"
+#include "VS/Utils/VS_LocString.h"
 
 class vsFontRenderer
 {
@@ -127,8 +128,11 @@ public:
 	// the 'fragment' approach is ideal for long-lived strings, as it produces a
 	// single renderable chunk of geometry which can be drawn in a single draw call,
 	// but which requires its own blob of data on the GPU.
-	vsFontFragment* Fragment2D( const vsString& string );
-	vsFontFragment* Fragment3D( const vsString& string );
+	// vsFontFragment* Fragment2D( const vsString& string );
+	// vsFontFragment* Fragment3D( const vsString& string );
+
+	vsFontFragment* Fragment2D( const vsLocString& string ); //
+	vsFontFragment* Fragment3D( const vsLocString& string );
 
 	// the non-fragment approach avoids creating its own data on the GPU, and instead
 	// uses a single shared blob of data which is owned by the font itself.  The
@@ -155,6 +159,7 @@ class vsFontFragment: public vsFragment
 	vsFontRenderer m_renderer;
 	FontContext m_context;
 	vsString m_string;
+	vsLocString m_locString;
 
 	vsBox2D *m_lineBox; // contains a box around each wrapped line.
 	int *m_lineFirstGlyph; // the first glyph on each line.
@@ -167,7 +172,7 @@ class vsFontFragment: public vsFragment
 	bool m_attached;
 
 public:
-	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsString& string );
+	vsFontFragment( vsFontRenderer& renderer, FontContext fc, const vsLocString& string );
 	virtual ~vsFontFragment();
 
 	// If our font renderer had mapping enabled, these functions provide access
@@ -194,6 +199,10 @@ public:
 	// automatically by the font when this happens;  end-users should never
 	// call it manually.
 	void Rebuild();
+
+	// If we have localisation data, rebuild (because the localisation language
+	// just changed, generally)
+	void Rebuild_IfLocalised();
 
 	friend class vsFontRenderer;
 };

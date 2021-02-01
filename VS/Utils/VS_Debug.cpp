@@ -15,6 +15,7 @@
 #include "VS_Sprite.h"
 #include "VS_System.h"
 #include "VS_Backtrace.h"
+#include "VS_Mutex.h"
 
 #include <assert.h>
 
@@ -54,8 +55,11 @@
 
 static bool bAsserted = false;
 
+vsMutex s_assertMutex;
+
 void vsFailedAssert( const char* conditionStr, const char* msg, const char *file, int line )
 {
+	s_assertMutex.Lock();
 	if ( !bAsserted )
 	{
 		// failed assertion..  trace out some information and then crash.
@@ -88,18 +92,12 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 	{
 		vsLog("Error:  Asserted while handling assertion!");
 	}
-}
-
-void vsFailedAssertF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
-{
-	vsString msgFormatted = fmt::sprintf(msg,args);
-	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
+	s_assertMutex.Unlock();
 }
 
 void vsFailedCheck( const char* conditionStr, const char* msg, const char *file, int line )
 {
 	// failed check..  trace out some information about the failed check.
-	bAsserted = true;
 	vsString trimmedFile(file);
 	size_t pos = trimmedFile.rfind('/');
 	if ( pos )
@@ -112,9 +110,4 @@ void vsFailedCheck( const char* conditionStr, const char* msg, const char *file,
 	vsLog("at %s:%d", trimmedFile.c_str(), line);
 }
 
-void vsFailedCheckF(const char* conditionStr, const char* file, int line, fmt::CStringRef msg, fmt::ArgList args)
-{
-	vsString msgFormatted = fmt::sprintf(msg,args);
-	vsFailedCheck( conditionStr, msgFormatted.c_str(), file, line );
-}
 

@@ -42,6 +42,7 @@ public:
     vsImage();
 	vsImage( unsigned int width, unsigned int height );
     vsImage( const vsString &filename_in );
+    vsImage( const vsStore &filedata_in );
     vsImage( vsTexture *texture );
     vsImage( vsImage& other );
 	~vsImage();
@@ -61,8 +62,8 @@ public:
 	void			AsyncMap(); // map our async-read data into ourselves so we can be accessed to get pixels directly
 	void			AsyncUnmap(); // unmap
 
-	int				GetWidth() { return m_width; }
-	int				GetHeight() { return m_height; }
+	int				GetWidth() const { return m_width; }
+	int				GetHeight() const { return m_height; }
 
 	vsColor			GetPixel(unsigned int u, unsigned int v) const;
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
@@ -73,7 +74,7 @@ public:
 	void			Clear( const vsColor &clearColor );
 	void			Copy( vsImage *other );
 
-	vsTexture *		Bake();
+	vsTexture *		Bake( const vsString& name = vsEmptyString );
 
 	vsStore *		BakePNG(int compression); // lossless format;  compression is in [0..9] with higher values giving higher compression (but taking longer to calculate).
 	vsStore *		BakeJPG(int quality); // quality in [0..100] with higher values == higher quality.

@@ -33,6 +33,11 @@ public:
 
 	void				Init()
 	{
+		Update(0.f);
+	}
+
+	virtual void Update( float timeStep )
+	{
 		SetFOV( (float)vsScreen::Instance()->GetHeight() );
 		SetPosition( vsVector2D( vsScreen::Instance()->GetWidth() * 0.5f,
 					vsScreen::Instance()->GetHeight() * 0.5f ) );
@@ -51,7 +56,8 @@ vsScene::SetDebugCamera()
 #endif // DEBUG_SCENE
 
 
-vsScene::vsScene():
+vsScene::vsScene( const vsString& name ):
+	m_name(name),
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
@@ -175,9 +181,38 @@ vsScene::Update( float timeStep )
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
 	{
+#ifdef DEBUG_UPDATE
+		const char* type = typeid(*entity ).name();
+		if (entity->GetNext() == entity)
+		{
+			vsLog("Scene info:");
+			vsLog("Name: %s", m_name);
+			vsLog("3D: %d", m_is3d);
+			vsLog("CamIsReference: %d", m_cameraIsReference);
+			vsLog("HasViewport: %d", m_hasViewport);
+			if ( type )
+				vsLog("Self-nexted entity was of type '%s'", type);
+			vsAssert( entity->GetNext()!= entity,
+					"Entity is already referring to itself before its ::Update()!  Scene is corrupt" );
+		}
+#endif //DEBUG_UPDATE
+
 		entity->Update( timeStep );
-		vsAssert( entity->GetNext()!= entity,
-				"Entity deleted itself during its ::Update()!  That's not okay!" );
+		if (entity->GetNext() == entity)
+		{
+			vsLog("Scene info:");
+			vsLog("Name: %s", m_name);
+			vsLog("3D: %d", m_is3d);
+			vsLog("CamIsReference: %d", m_cameraIsReference);
+			vsLog("HasViewport: %d", m_hasViewport);
+#ifdef DEBUG_UPDATE
+			if ( type )
+				vsLog("Deleted entity was of type '%s'", type);
+#endif //DEBUG_UPDATE
+
+			vsAssert( entity->GetNext()!= entity,
+					"Entity deleted itself during its ::Update()!  That's not okay!" );
+		}
 
 		entity = entity->GetNext();
 	}

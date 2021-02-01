@@ -24,8 +24,14 @@ public:
 	void Init(const vsString &language);
 	void Deinit();
 
+	void AddKey( const vsString& key, const vsString& translation );
+
 	vsString	GetTranslation( const vsString &key );
 };
+
+// Ease-of-use macro to fetch a localisation value
+#define vsLoc(x) ( vsLocalisationTable::Instance()->GetTranslation(x) )
+#define vsLocP(x,postfix) ( vsLocalisationTable::Instance()->GetTranslation( vsFormatString("%s_%s",x,postfix) ) )
 
 
 #endif // VS_LOCALISATION_TABLE_H

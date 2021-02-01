@@ -114,8 +114,22 @@ public:
 	}
 };
 
+namespace
+{
+	vsRendererState *s_instance = NULL;
+}
+vsRendererState *
+vsRendererState::Instance()
+{
+	return s_instance;
+}
+
+
 vsRendererState::vsRendererState()
 {
+	vsAssert( s_instance == NULL, "More than one renderer state created??" );
+	s_instance = this;
+
 	// m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );
 	m_boolState[Bool_Blend] =			new glEnableSetter( GL_BLEND, false );
 	// m_boolState[Bool_ColorMaterial] =	new glEnableSetter( GL_COLOR_MATERIAL, false );
@@ -136,6 +150,7 @@ vsRendererState::vsRendererState()
 	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( 1, false );
 	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( 2, false );
 	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( 3, false );
+	m_boolState[ClientBool_OtherArray] =				new glClientStateSetter( 4, false );
 
 	// m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
 	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
@@ -165,6 +180,12 @@ vsRendererState::SetBool( vsRendererState::Bool key, bool value )
 	m_boolState[key]->Set(value);
 
 	//Flush();
+}
+
+bool
+vsRendererState::GetBool( vsRendererState::Bool key ) const
+{
+	return m_boolState[key]->Get();
 }
 
 /*void
@@ -222,10 +243,49 @@ vsRendererState::Force()
     {
         m_intState[i]->Force();
     }
+	for ( int i = 0; i < FLOAT2_COUNT; i++ )
+	{
+		m_float2State[i]->Force();
+	}
 	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
 		m_floatState[i]->Force();
 	}*/
 }
 
+vsRendererStateBlock
+vsRendererState::StateBlock() const
+{
+	vsRendererStateBlock result;
+	for ( int i = 0; i < BOOL_COUNT; i++ )
+	{
+		result.m_boolState[i] = m_boolState[i]->Get();
+	}
+    for ( int i = 0; i < INT_COUNT; i++ )
+    {
+		result.m_intState[i] = m_intState[i]->Get();
+    }
+    for ( int i = 0; i < FLOAT2_COUNT; i++ )
+    {
+		result.m_float2State[i].Set( m_float2State[i]->GetFirst(), m_float2State[i]->GetSecond() );
+    }
+	return result;
+}
+
+void
+vsRendererState::Apply( const vsRendererStateBlock& block )
+{
+	for ( int i = 0; i < BOOL_COUNT; i++ )
+	{
+		m_boolState[i]->Set( block.m_boolState[i] );
+	}
+    for ( int i = 0; i < INT_COUNT; i++ )
+    {
+		m_intState[i]->Set( block.m_intState[i] );
+    }
+    for ( int i = 0; i < FLOAT2_COUNT; i++ )
+    {
+		m_float2State[i]->Set( block.m_float2State[i].x, block.m_float2State[i].y );
+    }
+}
 

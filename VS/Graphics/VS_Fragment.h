@@ -15,6 +15,7 @@ class vsDisplayList;
 
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Material.h"
+#include "VS/Graphics/VS_DisplayList.h"
 #include "VS/Utils/VS_ArrayStore.h"
 
 class vsFragment
@@ -61,10 +62,11 @@ public:
 	vsRenderBuffer * GetSimpleVBO() { return m_vbo; }
 	vsRenderBuffer * GetSimpleIBO() { return m_ibo; }
 
-	bool			IsVisible() { return m_visible; }
+	bool			IsVisible() const { return m_visible; }
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }
 	const vsDisplayList *	GetDisplayList() const { return m_displayList; }
+	int	GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const;
 
 	void	Draw( vsDisplayList *list );
 };

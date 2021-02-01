@@ -600,3 +600,33 @@ vsMatrix4x4::ApplyTo( const vsMatrix4x4 &o ) const
 
 	return result;
 }
+
+vsMatrix4x4
+vsMatrix4x4::Transpose() const
+{
+    // just a transpose
+    vsMatrix4x4 result;
+
+    result.x.x = x.x;
+    result.x.y = y.x;
+    result.x.z = z.x;
+    result.x.w = w.x;
+
+    result.y.x = x.y;
+    result.y.y = y.y;
+    result.y.z = z.y;
+    result.y.w = w.y;
+
+    result.z.x = x.z;
+    result.z.y = y.z;
+    result.z.z = z.z;
+    result.z.w = w.z;
+
+    result.w.x = x.w;
+    result.w.y = y.w;
+    result.w.z = z.w;
+    result.w.w = w.w;
+
+    return result;
+}
+

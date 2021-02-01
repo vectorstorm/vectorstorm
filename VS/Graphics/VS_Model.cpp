@@ -184,15 +184,7 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 		ibo->SetArray(indices, indexCount);
 		vsDeleteArray(indices);
 
-		result->AddBuffer(vbo);
-		result->AddBuffer(ibo);
-
-		vsDisplayList *list = new vsDisplayList(128);
-		list->BindBuffer(vbo);
-		list->TriangleListBuffer(ibo);
-		list->ClearArrays();
-
-		result->SetDisplayList(list);
+		result->SetSimple( vbo, ibo, vsFragment::SimpleType_TriangleList );
 	}
 
 	return result;
@@ -519,22 +511,22 @@ vsModel::CalculateStats()
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, int lodLevel )
+vsModel::DrawInstanced( vsRenderQueue *queue, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
 {
 	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
-		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues );
+		queue->AddFragmentInstanceBatch( *iter, matrices, colors, instanceCount, shaderValues, options );
 	}
 }
 
 void
-vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, int lodLevel )
+vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
 {
 	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
-		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues );
+		queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues, options );
 	}
 }
 
@@ -573,13 +565,12 @@ vsModel::Draw( vsRenderQueue *queue )
 				DynamicDraw( queue );
 			}
 
-			if ( !m_lod[m_lodLevel]->fragment.IsEmpty() )
+			vsLod *lod = m_lod[m_lodLevel];
+			for( int i = 0; i < lod->fragment.ItemCount(); i++ )
 			{
-				for( vsArrayStoreIterator<vsFragment> iter = m_lod[m_lodLevel]->fragment.Begin(); iter != m_lod[m_lodLevel]->fragment.End(); iter++ )
-				{
-					if ( iter->IsVisible() )
-						queue->AddFragmentBatch( *iter );
-				}
+				vsFragment *f = lod->fragment[i];
+				if ( f->IsVisible() )
+					queue->AddFragmentBatch( f );
 			}
 
 			DrawChildren(queue);
@@ -626,7 +617,7 @@ vsModel::GetLodFragmentCount( int lodId ) const
 }
 
 bool
-vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir)
+vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
 {
 	vsVector3D localPos = m_transform.ApplyInverseTo(pos);
 	vsVector3D localDir = m_transform.GetRotation().Inverse().ApplyTo(dir);
@@ -637,7 +628,7 @@ vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, c
 		m_displayList->GetTriangles(triangles);
 	for ( int i = 0; i < GetFragmentCount(); i++ )
 	{
-		m_lod[0]->fragment[i]->GetDisplayList()->GetTriangles(triangles);
+		m_lod[0]->fragment[i]->GetTriangles(triangles);
 	}
 
 	for ( int i = 0; i < triangles.ItemCount(); i++ )

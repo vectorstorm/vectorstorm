@@ -12,7 +12,9 @@
 #include "VS_Color.h"
 #include "VS_FloatImage.h"
 #include "VS_Image.h"
-#include "VS_RenderTarget.h"	// for vsSurface.  Should move into its own file.
+#include "VS_HalfIntImage.h"
+#include "VS_HalfFloatImage.h"
+#include "VS_RenderTarget.h"
 #include "VS_RenderBuffer.h"
 
 #include "VS/Files/VS_File.h"
@@ -29,8 +31,12 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
 	m_floatImageToLoad(NULL)
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	// vsString filename = vsFile::GetFullFilename(filename_in);
 
@@ -44,10 +50,62 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_imageToLoad = new vsImage(*maker);
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
+{
+	m_floatImageToLoad = new vsFloatImage(*image);
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
+{
+	m_halfFloatImageToLoad = new vsHalfFloatImage(*image);
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL)
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
+{
+	m_halfIntImageToLoad = new vsHalfIntImage(*image);
 	m_nearestSampling = false;
 }
 
@@ -56,8 +114,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	m_texture(0),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
 	m_floatImageToLoad(NULL)
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	if ( surface )
 		m_texture = (depth) ? surface->m_depth : surface->m_texture;
@@ -69,8 +131,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	m_texture(0),
 	m_premultipliedAlpha(false),
 	m_tbo(buffer),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
 	m_floatImageToLoad(NULL)
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	// GLuint t;
 	// glGenTextures(1, &t);
@@ -85,28 +151,47 @@ vsTextureInternal::~vsTextureInternal()
 	m_texture = 0;
 
 	vsDelete( m_tbo );
+	m_renderTarget = NULL;
 }
 
 
 
 #else // TARGET_OS_IPHONE
 
+void
+vsTextureInternal::PrepareToBind()
+{
+	if ( m_renderTarget )
+	{
+		if ( IsDepth() )
+			m_renderTarget->ResolveDepth();
+		else
+			m_renderTarget->Resolve(m_surfaceBuffer);
+	}
+}
+
 /* Quick utility function for texture creation */
 void
-vsTextureInternal::SetSurface( vsSurface* surface, int surfaceBuffer, bool depth )
+vsTextureInternal::SetRenderTarget( vsRenderTarget* renderTarget, int surfaceBuffer, bool depth )
 {
 	// to be used for deferred texture creation  (We went through the vsSurface
 	// constructor with a NULL argument;  now we're providing the surface)
 
-	m_texture = (depth) ? surface->m_depth : surface->m_texture[surfaceBuffer];
+	m_renderTarget = renderTarget;
+	m_surfaceBuffer = surfaceBuffer;
+	vsSurface *surface = renderTarget->GetTextureSurface();
+	if ( surface )
+	{
+		m_texture = (depth) ? surface->m_depth : surface->m_texture[surfaceBuffer];
 
-	m_glTextureWidth = surface->m_width;
-	m_glTextureHeight = surface->m_height;
-	m_width = surface->m_width;
-	m_height = surface->m_height;
+		m_glTextureWidth = surface->m_width;
+		m_glTextureHeight = surface->m_height;
+		m_width = surface->m_width;
+		m_height = surface->m_height;
 
-	if ( m_nearestSampling )
-		SetNearestSampling();
+		if ( m_nearestSampling )
+			SetNearestSampling();
+	}
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
@@ -115,8 +200,12 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_imageToLoad = new vsImage(filename_in);
 	// vsString filename = vsFile::GetFullFilename(filename_in);
@@ -134,8 +223,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_imageToLoad = new vsImage(*image);
 }
@@ -146,8 +239,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_depth(false),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_floatImageToLoad = new vsFloatImage(*image);
 }
@@ -157,8 +254,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	m_texture(0),
 	m_premultipliedAlpha(false),
 	m_tbo(buffer),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_nearestSampling = false;
 }
@@ -168,8 +269,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 	m_texture(glTextureId),
 	m_premultipliedAlpha(false),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
 	m_nearestSampling = false;
 }
@@ -230,6 +335,75 @@ vsTextureInternal::DoLoadFromFloatImage()
 }
 
 void
+vsTextureInternal::DoLoadFromHalfFloatImage()
+{
+	int w = m_halfFloatImageToLoad->GetWidth();
+	int h = m_halfFloatImageToLoad->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA16F,
+			w, h,
+			0,
+			GL_RGBA,
+			GL_HALF_FLOAT,
+			m_halfFloatImageToLoad->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+	m_nearestSampling = false;
+
+	vsDelete( m_halfFloatImageToLoad );
+}
+
+void
+vsTextureInternal::DoLoadFromHalfIntImage()
+{
+	int w = m_halfIntImageToLoad->GetWidth();
+	int h = m_halfIntImageToLoad->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA16UI,
+			w, h,
+			0,
+			GL_RGBA_INTEGER,
+			GL_UNSIGNED_SHORT,
+			m_halfIntImageToLoad->RawData());
+	m_nearestSampling = false;
+
+	vsDelete( m_halfIntImageToLoad );
+}
+
+// 	// Anisotropic filtering didn't become part of OpenGL core contextx until
+// 	// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
+// 	// support.  Blah!!
+// 	if ( GL_EXT_texture_filter_anisotropic )
+// 	{
+// 		float aniso = 0.0f;
+// 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+// 		aniso = vsMin(aniso,9);
+// 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+// 	}
+// }
+
+void
 vsTextureInternal::EnsureLoaded()
 {
 	if ( m_texture == 0 )
@@ -246,7 +420,58 @@ vsTextureInternal::EnsureLoaded()
 	{
 		DoLoadFromFloatImage();
 	}
+	if ( m_halfFloatImageToLoad )
+	{
+		DoLoadFromHalfFloatImage();
+	}
+	if ( m_halfIntImageToLoad )
+	{
+		DoLoadFromHalfIntImage();
+	}
 }
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
+{
+	m_halfFloatImageToLoad = new vsHalfFloatImage(*image);
+	m_nearestSampling = false;
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_premultipliedAlpha(true),
+	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
+	m_imageToLoad(NULL),
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
+{
+	m_halfIntImageToLoad = new vsHalfIntImage(*image);
+	m_nearestSampling = false;
+}
+
+
+//
+// vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId ):
+// 	vsResource(name),
+// 	m_texture(glTextureId),
+// 	m_premultipliedAlpha(false),
+// 	m_tbo(NULL),
+// 	m_renderTarget(NULL),
+// 	m_surfaceBuffer(0)
 
 
 void
@@ -289,7 +514,7 @@ vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 	// glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, int surfaceBuffer, bool depth ):
+vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer, bool depth ):
 	vsResource(name),
 	m_texture(0),
 	m_glTextureWidth(0),
@@ -299,12 +524,16 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	m_depth(depth),
 	m_premultipliedAlpha(true),
 	m_tbo(NULL),
+	m_renderTarget(NULL),
+	m_surfaceBuffer(0),
 	m_imageToLoad(NULL),
-	m_floatImageToLoad(NULL)
+	m_floatImageToLoad(NULL),
+	m_halfFloatImageToLoad(NULL),
+	m_halfIntImageToLoad(NULL)
 {
-	if ( surface )
+	if ( renderTarget && renderTarget->GetTextureSurface() )
 	{
-		SetSurface(surface, surfaceBuffer, depth);
+		SetRenderTarget(renderTarget, surfaceBuffer, depth);
 	}
 	m_nearestSampling = false;
 }
@@ -317,6 +546,7 @@ vsTextureInternal::~vsTextureInternal()
 
 
 	vsDelete( m_tbo );
+	m_renderTarget = NULL; // this doesn't belong to us;  don't destroy it!
 }
 
 void

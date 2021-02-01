@@ -253,6 +253,13 @@ vsRenderBuffer::SetArray( const vsRenderBuffer::PCNT *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const Slug *array, int size )
+{
+	m_contentType = ContentType_Slug;
+	SetArray_Internal((char *)array, size*sizeof(vsRenderBuffer::Slug), BindType_Array);
+}
+
+void
 vsRenderBuffer::SetArray( const vsMatrix4x4 *array, int size )
 {
 	m_contentType = ContentType_Matrix;
@@ -277,6 +284,13 @@ vsRenderBuffer::SetArray( const vsColor *array, int size )
 {
 	m_contentType = ContentType_Color;
 	SetArray_Internal((char *)array, size*sizeof(vsColor), BindType_Array);
+}
+
+void
+vsRenderBuffer::SetArray( const vsColorPacked *array, int size )
+{
+	m_contentType = ContentType_ColorPacked;
+	SetArray_Internal((char *)array, size*sizeof(vsColorPacked), BindType_Array);
 }
 
 void
@@ -375,6 +389,14 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 		glBindBuffer(GL_ARRAY_BUFFER, 0 );
 #endif
 	}
+	else if ( m_contentType == ContentType_ColorPacked && m_vbo )
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+		glVertexAttribPointer(attributeId, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+#ifdef VS_PRISTINE_BINDINGS
+		glBindBuffer(GL_ARRAY_BUFFER, 0 );
+#endif
+	}
 	else
 	{
 		vsAssert(0, "Not yet implemented");
@@ -399,6 +421,10 @@ vsRenderBuffer::BindAsTexture()
 	else if ( m_contentType == ContentType_Color )
 	{
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, m_bufferID);
+	}
+	else if ( m_contentType == ContentType_ColorPacked )
+	{
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, m_bufferID);
 	}
 	else if ( m_contentType == ContentType_UInt16 )
 	{
@@ -783,9 +809,56 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			}
 			break;
 		}
+		case ContentType_Slug:
+		{
+			const int stride = sizeof(Slug);
+
+			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
+			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
+			state->SetBool( vsRendererState::ClientBool_OtherArray, true );
+
+			if ( m_vbo )
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+
+				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, 0 );
+				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, (char*)16 );
+				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, (char*)32 );
+				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, (char*)48 );
+				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (char*)64 );
+
+				glVertexAttribDivisor(4, 0);
+
+#ifdef VS_PRISTINE_BINDINGS
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
+			}
+			else
+			{
+				Slug *array = reinterpret_cast<Slug*>(m_array);
+				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, array );
+				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, &array[0].texel );
+				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, &array[0].jacobian );
+				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, &array[0].banding );
+				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &array[0].color );
+
+				// glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, m_array );
+				// glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
+				// glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
+			}
+			break;
+		}
 		default:
 		{
-			vsAssert(0, "Unknown content type!");
+			vsLog("Unknown content type: %d", m_contentType);
+			vsLog("VBO Name: %d", m_bufferID);
+			vsLog("BindType: %d", m_bindType);
+			vsLog("ArrayBytes:  %d", m_arrayBytes);
+			vsLog("GLArrayBytes:  %d", m_glArrayBytes);
+			vsLog("ActiveBytes:  %d", m_activeBytes);
+			vsAssertF(0, "Unknown content type: %d", m_contentType);
 		}
 	}
 }
@@ -831,6 +904,13 @@ vsRenderBuffer::Unbind( vsRendererState *state )
 			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
 			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
             break;
+		case ContentType_Slug:
+			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
+			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+			state->SetBool( vsRendererState::ClientBool_OtherArray, false );
+			break;
         default:
             vsAssert(0, "Unknown content type!");
 	}
@@ -865,6 +945,9 @@ vsRenderBuffer::GetPositionCount() const
 		case ContentType_PCNT:
 			return m_activeBytes / sizeof(PCNT);
 			break;
+		case ContentType_Slug:
+			return m_activeBytes / sizeof(Slug);
+			break;
         default:
             vsAssert(0, "Unknown content type!");
 	}
@@ -872,7 +955,7 @@ vsRenderBuffer::GetPositionCount() const
 }
 
 vsVector3D
-vsRenderBuffer::GetPosition(int i)
+vsRenderBuffer::GetPosition(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer position request!" );
 
@@ -918,6 +1001,12 @@ vsRenderBuffer::GetPosition(int i)
 			PCNT* pnct = (PCNT*)m_array;
 			return pnct[i].position;
 		}
+		case ContentType_Slug:
+		{
+			Slug* slug = (Slug*)m_array;
+			return slug[i].position;
+			break;
+		}
 		default:
 		{
 			vsAssert(0, "Unhandled vsRenderBuffer content type!");
@@ -927,7 +1016,7 @@ vsRenderBuffer::GetPosition(int i)
 }
 
 vsVector3D
-vsRenderBuffer::GetNormal(int i)
+vsRenderBuffer::GetNormal(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer normal request!" );
 
@@ -968,7 +1057,7 @@ vsRenderBuffer::GetNormal(int i)
 }
 
 vsVector2D
-vsRenderBuffer::GetTexel(int i)
+vsRenderBuffer::GetTexel(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer texel request!" );
 
@@ -1004,9 +1093,8 @@ vsRenderBuffer::GetTexel(int i)
 	return vsVector2D::Zero;
 }
 
-
 vsColor
-vsRenderBuffer::GetColor(int i)
+vsRenderBuffer::GetColor(int i) const
 {
 	vsAssert( i < GetPositionCount(), "Illegal buffer color request!" );
 

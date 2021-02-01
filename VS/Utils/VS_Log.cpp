@@ -58,12 +58,6 @@ void vsLog_(const vsString &str)
 }
 
 
-void vsLog(fmt::CStringRef format, fmt::ArgList args)
-{
-	vsString str = fmt::sprintf(format,args);
-	vsLog_(str);
-}
-
 void vsErrorLog_(const vsString &str)
 {
 	fprintf(stderr, "%s\n", str.c_str() );
@@ -76,11 +70,5 @@ void vsErrorLog_(const vsString &str)
 #endif
 		s_log->WriteBytes( (const void*)fullLine.c_str(), fullLine.size() );
 	}
-}
-
-void vsErrorLog(fmt::CStringRef format, fmt::ArgList args)
-{
-	vsString str = fmt::sprintf(format,args);
-	vsErrorLog_(str);
 }
 

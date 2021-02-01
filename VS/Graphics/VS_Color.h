@@ -30,11 +30,13 @@ public:
 	static vsColor FromHSL(float hue, float saturation, float lightness);
 	static vsColor FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	static vsColor FromUInt32(uint32_t rgba);
+	static vsColor FromUInt64(uint64_t rgba);
 	float GetHue() const;
 	float GetSaturation() const;
 	float GetValue() const;
 	vsColorHSV GetHSV() const;
 	uint32_t AsUInt32() const;
+	uint64_t AsUInt64() const;
 
 	vsColor  operator+( const vsColor &o ) const {return vsColor(r+o.r,g+o.g,b+o.b,a+o.a);}
 	vsColor  operator-( const vsColor &o ) const {return vsColor(r-o.r,g-o.g,b-o.b,a-o.a);}

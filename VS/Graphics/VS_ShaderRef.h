@@ -11,24 +11,28 @@
 #define VS_SHADERREF_H
 
 #include "VS_Shader.h"
-#include "VS/Utils/VS_Cache.h"
+// #include "VS/Utils/VS_Cache.h"
 
-// [NOTE] TO SELF:  NO!
+// [NOTE] TO SELF:
 //
-// This approach isn't going to work;  the "vsCache" system is built around
-// the idea that a name maps to an object, and that doesn't work with shaders,
-// where I need to map *multiple* strings and other settings to an object.
+// I wanted to hook shaders into the vsCache system, but it turns out that the
+// vsCache setup doesn't work with shaders, where I need to map *multiple*
+// strings and other settings to an object;  vsCache is pretty strongly
+// opinionated about mapping just a single string to a single object.
 //
-// So in retrospect, no, I'm not going to be able to just wrap this whole thing
+// So in retrospect, no, I'm not going to be able to just wrap vsShader
 // in the vsCache system and call it a day;  I'm going to need to architect
-// something similar but custom for this particular system.
+// something similar but custom for this particular system.  And that's what
+// the vsShaderRef is for;  it's an object that can hold a vsShader pointer
+// and lets the owner destroy it, without destroying the shared shader object.
+//
+// [TODO]:  Needs reference counting on the vsShader object.
 
-class vsShaderRef/*: public vsCacheReference<vsShader>*/
+class vsShaderRef
 {
 	vsShader *m_shader;
 public:
 
-	// vsShaderRef( const vsString& name );
 	vsShaderRef( vsShader *shader );
 
 	vsShader* GetShader() { return m_shader; }

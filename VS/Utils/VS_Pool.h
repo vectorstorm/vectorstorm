@@ -75,6 +75,7 @@ public:
 
 	void Return( T* item )
 	{
+		vsAssert(item != NULL, "Trying to return a NULL item to the pool???");
 		m_unusedCount++;
 
 		//m_usedList.RemoveItem(item);

@@ -14,6 +14,10 @@
 typedef std::string vsString;
 
 // vsString vsFormatString( const char* format, ... );
+//
+// For historical reasons, vsFormatString() uses a printf-style format,
+// fully supporting POSIX argument position extensions (even on non-POSIX
+// platforms, yay!)
 #define vsFormatString fmt::sprintf
 
 vsString vsNumberString(int number);

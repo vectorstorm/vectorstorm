@@ -69,34 +69,37 @@ public:
 	bool		SerialiseBinary( vsSerialiser *s );
 
 	vsToken &			GetLabel() { return m_label; }
+	const vsToken &		GetLabel() const { return m_label; }
+	const vsToken &		Label() const { return GetLabel(); }
 	void				SetLabel(const vsString &label);
 
-	vsToken &			GetToken(int i);
+	vsToken &			GetToken(int i) { return const_cast<vsToken&>( const_cast<const vsRecord*>(this)->GetToken(i)); }
+	const vsToken &		GetToken(int i) const;
 	int					GetTokenCount() const { return m_token.ItemCount(); }
 	void				SetTokenCount( int count );
 
 	vsRecord *			GetChild(int i);
-	int					GetChildCount() { return m_childList.ItemCount(); }
-	int					GetChildCount(const vsString& label);	// returns number of children with this label
+	int					GetChildCount() const { return m_childList.ItemCount(); }
+	int					GetChildCount(const vsString& label) const;	// returns number of children with this label
 	void				AddChild(vsRecord *record);
 	void				SetExpectedChildCount( int count );
 	//void				SetChildCount( int count );
 
-	bool				Bool();
-	int					Int();
-	vsString			String();
-	vsColor				Color();
-	vsVector2D			Vector2D();
-	vsVector3D			Vector3D();
-	vsVector4D			Vector4D();
-	vsQuaternion		Quaternion();
+	bool				Bool() const;
+	int					Int() const;
+	vsString			String() const;
+	vsColor				Color() const;
+	vsVector2D			Vector2D() const;
+	vsVector3D			Vector3D() const;
+	vsVector4D			Vector4D() const;
+	vsQuaternion		Quaternion() const;
 
 	void				SetRect(float x, float y, float width, float height);
 	void				SetInt(int value);
 	void				SetFloat(float value);
 
-	bool operator==(const char* string) { return operator==( vsString(string) ); }
-	bool operator==(const vsString& string);
+	bool operator==(const char* string) const { return operator==( vsString(string) ); }
+	bool operator==(const vsString& string) const;
 };
 
 #endif // FS_RECORD_H

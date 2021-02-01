@@ -79,7 +79,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SetMaterial",
 	"SetRenderTarget",
 	"ClearRenderTarget",
-	"ResolveRenderTarget",
+	// "ResolveRenderTarget",
 	"BlitRenderTarget",
 
 	"Light",
@@ -104,6 +104,10 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SnapMatrix",
 
 	"SetShaderValues",
+	"PushShaderOptions",
+	"PopShaderOptions",
+
+	"SetLinear",
 
 	"Debug"
 };
@@ -697,6 +701,20 @@ vsDisplayList::SetShaderValues( vsShaderValues *values )
 }
 
 void
+vsDisplayList::PushShaderOptions( const vsShaderOptions &options )
+{
+	m_fifo->WriteUint8( OpCode_PushShaderOptions );
+	m_fifo->WriteUint32( options.mask );
+	m_fifo->WriteUint32( options.value );
+}
+
+void
+vsDisplayList::PopShaderOptions()
+{
+	m_fifo->WriteUint8( OpCode_PopShaderOptions );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -821,6 +839,13 @@ vsDisplayList::UnbindBuffer( vsRenderBuffer *buffer )
 {
 	m_fifo->WriteUint8( OpCode_UnbindBuffer );
 	m_fifo->WriteVoidStar( buffer );
+}
+
+void
+vsDisplayList::SetLinear( bool linear )
+{
+	m_fifo->WriteUint8( OpCode_SetLinear );
+	m_fifo->WriteUint8( linear );
 }
 
 void
@@ -1010,10 +1035,19 @@ vsDisplayList::ClearRenderTarget()
 }
 
 void
+vsDisplayList::ClearRenderTargetColor( const vsColor& c )
+{
+	m_fifo->WriteUint8( OpCode_ClearRenderTargetColor );
+	m_fifo->WriteColor( c );
+}
+
+void
 vsDisplayList::ResolveRenderTarget( vsRenderTarget *target )
 {
-	m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
-	m_fifo->WriteVoidStar( target );
+	// Woo, this operation is going away!
+
+	// m_fifo->WriteUint8( OpCode_ResolveRenderTarget );
+	// m_fifo->WriteVoidStar( target );
 }
 
 void
@@ -1140,7 +1174,13 @@ vsDisplayList::PopOp()
 		switch( m_currentOp.type )
 		{
 			case OpCode_SetColor:
+			case OpCode_ClearRenderTargetColor:
 				m_fifo->ReadColor(&m_currentOp.data.color);
+				break;
+			case OpCode_SetLinear:
+				{
+					m_currentOp.data.i = m_fifo->ReadUint8();
+				}
 				break;
 			case OpCode_SetColors:
 				{
@@ -1186,6 +1226,12 @@ vsDisplayList::PopOp()
 			case OpCode_UnbindBuffer:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				break;
+			}
+			case OpCode_PushShaderOptions:
+			{
+				m_currentOp.data.shaderOptions.mask = m_fifo->ReadInt32();
+				m_currentOp.data.shaderOptions.value = m_fifo->ReadInt32();
 				break;
 			}
 			case OpCode_TexelArray:
@@ -1274,9 +1320,9 @@ vsDisplayList::PopOp()
 			case OpCode_SetRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
-			case OpCode_ResolveRenderTarget:
-				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
-				break;
+			// case OpCode_ResolveRenderTarget:
+			// 	m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+			// 	break;
 			case OpCode_BlitRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
@@ -1311,6 +1357,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
 			case OpCode_ClearViewport:
+			case OpCode_PopShaderOptions:
 			default:
 				break;
 		}
@@ -1329,6 +1376,7 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 	switch( type )
 	{
 		case OpCode_SetColor:
+		case OpCode_ClearRenderTargetColor:
 			SetColor( o->data.GetColor() );
 			break;
 		case OpCode_SetColors:
@@ -1594,7 +1642,7 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 							vsVector3D pos;
 							if ( currentVertexArray )
 								pos = currentVertexArray[index];
-							else
+							else if ( currentVertexBuffer )
 								pos = currentVertexBuffer->GetPosition(index);
 							box.ExpandToInclude( transformStack[transformStackLevel].ApplyTo(pos) );
 						}
@@ -1922,7 +1970,6 @@ vsDisplayList::CalculateStats()
 	}
 	return s;
 }
-
 
 void
 vsDisplayList::ApplyOffset(const vsVector2D &offset)

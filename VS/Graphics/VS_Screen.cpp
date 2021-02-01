@@ -115,8 +115,6 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 			vsync == m_vsync )
 		return;
 
-	m_width = width;
-	m_height = height;
 	m_bufferCount = bufferCount;
 	m_aspectRatio = ((float)m_width)/((float)m_height);
 	m_depth = depth;
@@ -124,6 +122,10 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 	m_antialias = antialias;
 	m_vsync = vsync;
 	m_renderer->UpdateVideoMode(width, height, depth, m_windowType, bufferCount, antialias, vsync);
+
+	m_width = m_renderer->GetWidth();
+	m_height = m_renderer->GetHeight();
+
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		m_scene[i]->UpdateVideoMode();
@@ -166,7 +168,7 @@ vsScreen::CreateScenes(int count)
 
 	m_scene = new vsScene *[count];
 	for ( int i = 0; i < count; i++ )
-		m_scene[i] = new vsScene;
+		m_scene[i] = new vsScene( vsFormatString("Default Scene %d", i) );
 	m_sceneCount = count;
 
 	BuildDefaultPipeline();
@@ -233,7 +235,7 @@ vsScreen::Draw()
 }
 
 void
-vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
+vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
@@ -245,7 +247,11 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline )
 	m_fifo->Clear();
 	{
 		PROFILE("GatherRenderables");
+		if ( customOptions )
+			m_fifo->PushShaderOptions(*customOptions);
 		pipeline->Draw(m_fifo);
+		if ( customOptions )
+			m_fifo->PopShaderOptions();
 	}
 	vsTimerSystem::Instance()->EndGatherTime();
 	m_fifoUsageLastFrame = m_fifo->GetSize();

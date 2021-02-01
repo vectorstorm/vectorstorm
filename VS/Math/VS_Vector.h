@@ -57,8 +57,14 @@ public:
 
 	float	Dot( const vsVector2D &b ) const { return ( x*b.x +
 										   y*b.y ); }
+	float	Cross( const vsVector2D &b ) const { return x*b.y - y*b.x; }
 
 	void	Set(float x_in, float y_in) {x=x_in; y=y_in;}
+
+	vsVector2D XY() const { return *this; }
+	vsVector2D YX() const { return vsVector2D(y,x); }
+	vsVector2D XX() const { return vsVector2D(x,x); }
+	vsVector2D YY() const { return vsVector2D(y,y); }
 };
 
 
@@ -114,6 +120,10 @@ public:
 	void	Set(float x_in, float y_in, float z_in) {x=x_in; y=y_in;z=z_in;}
 
     void    Floor();
+
+	// Some swizzle operators.
+	vsVector2D XY() const { return vsVector2D(x,y); }
+	vsVector2D XZ() const { return vsVector2D(x,z); }
 };
 
 class vsPosition3D

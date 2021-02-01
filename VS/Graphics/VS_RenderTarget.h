@@ -10,6 +10,7 @@
 #define VS_RENDERTARGET_H
 
 #include "VS_Texture.h"
+class vsColor;
 
 #include "VS_OpenGL.h"
 
@@ -70,6 +71,9 @@ public:
 	GLuint	m_fbo;
 
 	bool	m_isRenderbuffer;
+	bool	m_multisample;
+	bool	m_depthCompare;
+	bool	m_isDepthOnly;
 
 	Settings m_settings;
 
@@ -112,6 +116,10 @@ private:
 	float		m_texHeight;
 	Type		m_type;
 
+	// bitfield of buffers that need resolving.
+	int			m_needsResolve;
+	bool		m_needsDepthResolve;
+
 	void		Create(); // If we were deferred, this creates us.
 	void		EnsureLoaded();
 
@@ -134,15 +142,25 @@ public:
 
 	void		Bind();
 
+	void		InvalidateResolve() { m_needsResolve = 0xffff; m_needsDepthResolve = true; }
+
 	/* if we're a multisample target, Resolve() copies the multisample data into
 	 * our renderable texture.  If not, it does nothing.
 	 * We always need to call this function before using the render target as a texture.
 	 */
 	vsTexture *	Resolve(int id=0);
+	vsTexture *	ResolveDepth();
 	vsTexture *	GetTexture(int id=0) { return m_texture[id]; }
 	vsTexture *	GetDepthTexture() { return m_depthTexture; }
 
+	// this should probably only be used by the TextureInternal, handling
+	// deferred creation
+	vsSurface * GetTextureSurface() { return m_textureSurface; };
+
+	bool		IsDepthOnly();
+
 	void		Clear();
+	void		ClearColor( const vsColor& c );
 	void		BlitTo( vsRenderTarget *other );
 
 	GLsizei GetWidth() { return m_textureSurface->m_width; }

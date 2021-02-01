@@ -112,6 +112,12 @@ vsSerialiserRead::Color( vsColor &value )
 	m_store->ReadColor(&value);
 }
 
+void
+vsSerialiserRead::ColorPacked( vsColorPacked &value )
+{
+	m_store->ReadColorPacked(&value);
+}
+
 vsSerialiserWrite::vsSerialiserWrite(vsStore *store):
 vsSerialiser(store, Type_Write)
 {
@@ -193,6 +199,12 @@ void
 vsSerialiserWrite::Color( vsColor &value )
 {
 	m_store->WriteColor(value);
+}
+
+void
+vsSerialiserWrite::ColorPacked( vsColorPacked &value )
+{
+	m_store->WriteColorPacked(value);
 }
 
 vsSerialiserReadStream::vsSerialiserReadStream(vsFile *file):
@@ -332,6 +344,13 @@ vsSerialiserReadStream::Color( vsColor &value )
 	m_store->ReadColor(&value);
 }
 
+void
+vsSerialiserReadStream::ColorPacked( vsColorPacked &value )
+{
+	Ensure(sizeof(vsColorPacked));
+	m_store->ReadColorPacked(&value);
+}
+
 vsSerialiserWriteStream::vsSerialiserWriteStream(vsFile *file):
 	vsSerialiser(NULL, Type_Write),
 	m_file(file)
@@ -438,6 +457,13 @@ vsSerialiserWriteStream::Vector4D( vsVector4D &value )
 {
 	Ensure( sizeof(vsVector4D) );
 	m_store->WriteVector4D(value);
+}
+
+void
+vsSerialiserWriteStream::ColorPacked( vsColorPacked &value )
+{
+	Ensure( sizeof(vsColorPacked) );
+	m_store->WriteColorPacked(value);
 }
 
 void

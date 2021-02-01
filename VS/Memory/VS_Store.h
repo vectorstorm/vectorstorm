@@ -12,6 +12,7 @@
 
 class vsBox2D;
 class vsColor;
+class vsColorPacked;
 class vsFog;
 class vsLight;
 class vsMaterial;
@@ -33,6 +34,11 @@ class vsStore
 
 	bool		m_bufferIsExternal;
 
+	void	AssertBytesLeftForWriting(size_t bytes);
+
+	// ordinarily we shouldn't need to do this, but.. for decompressing
+	// it becomes important.
+	void	ReplaceBuffer( size_t newLength );
 
 public:
 			vsStore();
@@ -41,17 +47,18 @@ public:
 			vsStore( const vsStore& store ); // make a copy of the other store
 	virtual ~vsStore();
 
-	char *	GetReadHead()	{ return m_readHead; }
-	char *	GetWriteHead()	{ return m_writeHead; }
+	char *	GetReadHead() const	{ return m_readHead; }
+	char *	GetWriteHead() const{ return m_writeHead; }
 	inline size_t		BytesLeftForWriting() const { return (size_t)(m_bufferEnd - m_writeHead); }
 	inline size_t		BytesLeftForReading() const { return (size_t)(m_writeHead - m_readHead); }
 
-	bool	AtEnd()			{ return (m_readHead == m_writeHead); }
-	size_t	Length()		{ return (size_t)(m_writeHead - m_buffer); }
-	size_t	BufferLength()	{ return m_bufferLength; }
+	bool	AtEnd() const	{ return (m_readHead == m_writeHead); }
+	size_t	Length() const	{ return (size_t)(m_writeHead - m_buffer); }
+	size_t	BufferLength()	const { return m_bufferLength; }
 	void	SetLength(size_t l);
 
 	void	Rewind();	// rewind to the start
+	void	EraseReadBytes();
 	void	AdvanceReadHead(size_t bytes);
 	void	AdvanceWriteHead(size_t bytes);
 	void	SeekReadHeadTo(size_t pos);
@@ -111,6 +118,9 @@ public:
 	void		WriteColor(const vsColor &c);
 	void		ReadColor(vsColor *c);
 
+	void		WriteColorPacked(const vsColorPacked &c);
+	void		ReadColorPacked(vsColorPacked *c);
+
 	void		WriteLight(const vsLight &l);
 	void		ReadLight(vsLight *l);
 
@@ -128,6 +138,9 @@ public:
 
 	void		WriteBox2D(const vsBox2D &box);
 	void		ReadBox2D(vsBox2D *box);
+
+	bool		Compress(); // gzip the store, reset read head to start.  Returns true on success.
+	bool		Expand(); // ungzip the store, reset read head to start and write head to end.  Returns true on success.
 };
 
 #endif // MEM_FIFO_H

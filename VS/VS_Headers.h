@@ -119,7 +119,10 @@
 #include <VS/Utils/VS_FloatImage.h>
 #include <VS/Utils/VS_HashTable.h>
 #include <VS/Utils/VS_HashTableStore.h>
+#include <VS/Utils/VS_HalfFloatImage.h>
+#include <VS/Utils/VS_HalfIntImage.h>
 #include <VS/Utils/VS_Image.h>
+#include <VS/Utils/VS_IntHashTable.h>
 #include <VS/Utils/VS_LocalisationTable.h>
 #include <VS/Utils/VS_MeshMaker.h>
 #include <VS/Utils/VS_LinkedList.h>
@@ -132,6 +135,7 @@
 #include <VS/Utils/VS_Primitive.h>
 #include <VS/Utils/VS_SingletonManager.h>
 #include <VS/Utils/VS_SingleFloatImage.h>
+#include <VS/Utils/VS_Sleep.h>
 #include <VS/Utils/VS_String.h>
 #include <VS/Utils/VS_System.h>
 #include <VS/Utils/VS_VolatileArray.h>

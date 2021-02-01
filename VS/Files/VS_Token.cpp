@@ -203,24 +203,25 @@ vsToken::vsToken():
 }
 
 vsToken::vsToken( vsToken::Type t ):
-	m_type(t),
-	m_string(NULL)
+	m_type(t)
+	// m_string(NULL)
 {
 	vsAssert(m_type != vsToken::Type_String, "String type");
 	vsAssert(m_type != vsToken::Type_Label, "Label type");
 }
 
 vsToken::vsToken(const vsToken& other):
-	m_type(Type_None),
-	m_string(NULL)
+	m_type(Type_None)
+	// m_string(NULL)
 {
 	SetType(other.m_type);
 	switch ( other.m_type )
 	{
 		case Type_Label:
 		case Type_String:
-			m_string = (char*)malloc( strlen(other.m_string)+1 );
-			strcpy(m_string, other.m_string);
+			m_string = other.m_string;
+			// m_string = (char*)malloc( strlen(other.m_string)+1 );
+			// strcpy(m_string, other.m_string);
 			break;
 		case Type_Float:
 			m_float = other.m_float;
@@ -296,7 +297,7 @@ vsToken::ExtractFrom( vsString &string )
 			{
 				float val = 0.f;
 				bool success = (sscanf( token.c_str(), "%f", &val )!=0);
-				vsAssert(success, "Couldn't find a floating value where we expected one?");
+				vsAssertF(success, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s'", string, token);
 				SetFloat(val);
 				return true;
 			}
@@ -333,7 +334,7 @@ vsToken::ExtractFrom( vsString &string )
 }
 
 vsString
-vsToken::BackToString()
+vsToken::BackToString() const
 {
 	if ( m_type == Type_String )
 	{
@@ -407,6 +408,7 @@ vsToken::PopulateStringTable( vsStringTable& table )
 void
 vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 {
+	vsAssert(s, "No serialiser in vsToken::SerialiseBinaryV1");
 	SetType(Type_Integer);
 
 	uint8_t type = m_type;
@@ -448,6 +450,7 @@ vsToken::SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable )
 void
 vsToken::SerialiseBinaryV2( vsSerialiser *s )
 {
+	vsAssert(s, "No serialiser in vsToken::SerialiseBinaryV2");
 	uint8_t type = m_type;
 	s->Uint8(type);
 	if ( s->GetType() == vsSerialiser::Type_Read )
@@ -461,10 +464,11 @@ vsToken::SerialiseBinaryV2( vsSerialiser *s )
 				vsString string;
 				if ( s->GetType() == vsSerialiser::Type_Write )
 					string = m_string;
+				// s->String(string);
 				s->String(string);
 				if ( s->GetType() == vsSerialiser::Type_Read )
 				{
-					m_string = NULL; // set null to avoid bad deallocation,
+					// m_string.clear(); // set null to avoid bad deallocation,
 					// since we'd set our 'type', above.
 					if ( m_type == Type_Label )
 						SetLabel(string);
@@ -505,8 +509,9 @@ vsToken::AsFloat() const
 void
 vsToken::SetStringField( const vsString& s )
 {
-	m_string = (char*)malloc( s.size()+1 );
-	strcpy(m_string, s.c_str());
+	m_string = s;
+	// m_string = (char*)malloc( s.size()+1 );
+	// strcpy(m_string, s.c_str());
 }
 
 void
@@ -543,29 +548,29 @@ vsToken::SetType(Type t)
 	if ( m_type == Type_String || m_type == Type_Label )
 	{
 		// if we're currently a string time, clear our string.
-		if ( m_string != NULL )
-		{
-			free( m_string );
-			m_string = NULL;
-		}
+		// if ( m_string != NULL )
+		// {
+		// 	free( m_string );
+		// 	m_string = NULL;
+		// }
 	}
 	m_type = t;
 }
 
 bool
-vsToken::IsType( vsToken::Type t )
+vsToken::IsType( vsToken::Type t ) const
 {
 	return m_type == t;
 }
 
 bool
-vsToken::operator==( const vsToken& other )
+vsToken::operator==( const vsToken& other ) const
 {
 	return AsString() == other.AsString();
 }
 
 bool
-vsToken::operator==( const vsString& str )
+vsToken::operator==( const vsString& str ) const
 {
 	return AsString() == str;
 }
@@ -574,7 +579,8 @@ vsToken&
 vsToken::operator=( const vsToken& other )
 {
 	SetType( other.m_type );
-	m_string = NULL;
+	m_string.clear();
+	// m_string = NULL;
 	switch ( other.m_type )
 	{
 		case Type_Label:

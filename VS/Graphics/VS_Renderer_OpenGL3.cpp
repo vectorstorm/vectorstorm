@@ -1,4 +1,5 @@
 /*
+ *
  *  VS_Renderer_OpenGL3.cpp
  *  VectorStorm
  *
@@ -58,6 +59,12 @@ extern "C" {
 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 }
 #endif
+
+namespace
+{
+	static vsMaterial *s_previousMaterial = NULL;
+	static vsShaderValues *s_previousShaderValues = NULL;
+}
 
 
 SDL_Window *g_sdlWindow = NULL;
@@ -139,6 +146,9 @@ void vsOpenGLDebugMessage( GLenum source,
 	// Intel debug message spam.
 	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
 
+	// Program/shader being recompiled spam.
+	if (id == 0x00020092) return;
+
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
 
 	if (id == 0x00020084 && g_crashOnTextureStateUsageWarning )
@@ -213,11 +223,11 @@ static void printAttributes ()
 	};
 	int nAttr = sizeof(a) / sizeof(struct attr);
 	//
-	// GLint value;
+	GLint value;
 	for (int i = 0; i < nAttr; i++)
 	{
-	// 	glGetIntegerv( a[i].name, &value );
-	// 	vsLog("%s: %d", a[i].label, value );
+		glGetIntegerv( a[i].name, &value );
+		vsLog("%s: %d", a[i].label, value );
 	}
 
 	// now clear the GL error state;  one of the texture memory stats will
@@ -226,6 +236,11 @@ static void printAttributes ()
 	glGetError();
 
 	vsLog("== End OpenGL limits ==");
+
+	if ( GL_EXT_texture_filter_anisotropic )
+		vsLog("anisotropic texture filters: SUPPORTED");
+	else
+		vsLog("anisotropic texture filters: UNSUPPORTED");
 #endif // TARGET_OS_IPHONE
 }
 
@@ -259,28 +274,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
-#if defined(_DEBUG)
-	if ( displayCount > 1 )
-	{
-		// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
-		// object, maybe?  Or alternately, the host game could tell us where to
-		// put the window, maybe?
-		//
-		// flags |= Flag_Fullscreen;
-		// x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// SDL_DisplayMode mode;
-		// SDL_Rect bounds;
-		// SDL_GetDesktopDisplayMode(1, &mode);
-		// if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
-		// {
-		// 	x = bounds.x;
-		// 	y = bounds.y;
-		// 	width = bounds.w;
-		// 	height = bounds.h;
-		// }
-	}
-#endif
 
 	m_invalidateMaterial = false;
 
@@ -291,7 +284,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	videoFlags = SDL_WINDOW_OPENGL;
 #ifdef HIGHDPI_SUPPORTED
 	if ( flags & Flag_HighDPI )
+	{
 		videoFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+		vsLog("videoFlag added: AllowHighDPI");
+	}
 #endif
 
 	if ( flags & Flag_Fullscreen )
@@ -300,17 +296,20 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 			m_windowType = WindowType_FullscreenWindow;
+			vsLog("videoFlag added: Fullscreen Desktop");
 		}
 		else
 		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN;
 			m_windowType = WindowType_Fullscreen;
+			vsLog("videoFlag added: Fullscreen");
 		}
 	}
 	else
 	{
 		m_windowType = WindowType_Window;
 		videoFlags |= SDL_WINDOW_RESIZABLE;
+		vsLog("videoFlag added: Resizable");
 	}
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
@@ -338,21 +337,64 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
 	if ( !g_sdlWindow ){
-		vsLog("Couldn't set %dx%dx%d video mode: %s\n",
-				width, height, depth, SDL_GetError() );
-		exit(1);
+		vsString errorMsg( SDL_GetError() );
+		vsLog("Couldn't set %dx%dx%d video mode: %s;  trying to fallback to 1024x768 window.",
+				width, height, depth, errorMsg );
+
+		// Let's try plain simple window mode.
+		videoFlags = SDL_WINDOW_OPENGL;
+		flags = 0;
+		g_sdlWindow = SDL_CreateWindow("", x, y, 1024, 768, videoFlags);
+		if ( !g_sdlWindow )
+		{
+			vsAssertF(0, "Couldn't set %dx%dx%d video mode: %s\n",
+					width, height, depth, errorMsg );
+			exit(1);
+		}
 	}
 	if ( flags & Flag_FullscreenWindow )
 	{
 		// with FullscreenWindow, we don't use the specified width/height values,
-		// but instead SET them based upon window we created!
+		// but instead SET them based upon window we created
 
 		SDL_GetWindowSize( g_sdlWindow, &width, &height );
-		SDL_SetWindowSize( g_sdlWindow, width, height );
+		// SDL_SetWindowSize( g_sdlWindow, width, height );
+
+		// int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
+		// SDL_SetWindowPosition( g_sdlWindow,
+		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index),
+		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index)
+		// 		);
+
+// lets check which display we're on.
+		// if ( displayCount > 1 )
+		// {
+		// 	// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
+		// 	// object, maybe?  Or alternately, the host game could tell us where to
+		// 	// put the window, maybe?
+        //
+		// 	flags |= Flag_Fullscreen;
+		// 	x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// 	y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
+		// 	SDL_DisplayMode mode;
+		// 	SDL_Rect bounds;
+		// 	SDL_GetDesktopDisplayMode(1, &mode);
+		// 	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
+		// 	{
+		// 		x = bounds.x;
+		// 		y = bounds.y;
+		// 		width = bounds.w;
+		// 		height = bounds.h;
+		// 	}
+		// }
+// #endif
 	}
+
+
+
 	m_viewportWidth = m_width = width;
 	m_viewportHeight = m_height = height;
-	if ( m_windowType != WindowType_Window )
+	if ( m_windowType == WindowType_Fullscreen )
 	{
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
@@ -361,6 +403,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !m_loadingGlContext )
 	{
 		vsLog("Failed to create OpenGL context for loading??");
+		vsAssertF(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.  SDL2 error message: %s", SDL_GetError() );
 		exit(1);
 	}
 
@@ -368,13 +411,17 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( !m_sdlGlContext )
 	{
 		vsLog("Failed to create OpenGL context??");
-		vsAssert(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.");
+		vsAssertF(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.  SDL2 error message: %s", SDL_GetError() );
 		exit(1);
 	}
 	printAttributes();
 
 	m_widthPixels = width;
 	m_heightPixels = height;
+	m_currentViewportPixels.Set(
+			vsVector2D::Zero,
+			vsVector2D( m_widthPixels, m_heightPixels )
+			);
 #ifdef HIGHDPI_SUPPORTED
 	if ( flags & Flag_HighDPI )
 		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
@@ -411,7 +458,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	if ( major < 3 || (major == 3 && minor < 3) )
 	{
-		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run", major, minor);
+		vsString errorString = vsFormatString("No support for OpenGL 3.3 (maximum version supported: %d.%d).  Cannot run.  Try updating your display drivers?", major, minor);
 		bool supportsOpenGL33 = false;
 		vsAssert( supportsOpenGL33, errorString );
 	}
@@ -484,6 +531,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	GL_CHECK("Initialising OpenGL rendering");
 
+
 	// TEMP VAO IMPLEMENTATION
 	glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);
@@ -496,6 +544,21 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
+	bool minimizeOnFocusLoss = ( displayCount == 1 );
+
+	{
+		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+		if ( !retval )
+			vsLog("Trying to set minimize on focus loss hint failed");
+		else
+		{
+			if ( doit )
+				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+			else
+				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+		}
+	}
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -515,47 +578,110 @@ void
 vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 {
 	GL_CHECK_SCOPED("vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow");
-	vsDelete( m_window );
-	vsDelete( m_scene );
 
-	// Create Window Surface
-	vsSurface::Settings settings;
-	settings.depth = 0;
-	settings.width = GetWidthPixels();
-	settings.height = GetHeightPixels();
-	m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
+	int width = GetWidthPixels();
+	int height = GetHeightPixels();
 
-	// Create 3D Scene Surface
-	// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
-
-	settings.bufferSettings[2].halfFloating = true;
-	settings.width = GetWidthPixels();
-	settings.height = GetHeightPixels();
-	settings.depth = true;
-	settings.mipMaps = false;
-	settings.stencil = true;
-	settings.buffers = m_bufferCount;
-
-	if ( m_antialias )
+	if ( m_window )
 	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
+		// We don't *actually* have to resize this.  It's not a *real* render target.
+		m_window->Resize(width, height);
 	}
 	else
 	{
-		m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
+		vsDelete( m_window );
+
+		// Create Window Surface
+		vsSurface::Settings settings;
+		settings.depth = false;
+		settings.width = GetWidthPixels();
+		settings.height = GetHeightPixels();
+		m_window = new vsRenderTarget( vsRenderTarget::Type_Window, settings );
 	}
-	m_scene->Bind();
+
+	if ( m_scene )
+	{
+		m_scene->Resize(width, height);
+	}
+	else
+	{
+		vsDelete( m_scene );
+
+		// Create 3D Scene Surface
+		// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
+
+		vsSurface::Settings settings;
+		settings.bufferSettings[2].halfFloating = true;
+		settings.width = GetWidthPixels();
+		settings.height = GetHeightPixels();
+		settings.depth = true;
+		settings.mipMaps = false;
+		settings.stencil = true;
+		settings.buffers = m_bufferCount;
+
+		if ( m_antialias )
+		{
+			m_scene = new vsRenderTarget( vsRenderTarget::Type_Multisample, settings );
+		}
+		else
+		{
+			m_scene = new vsRenderTarget( vsRenderTarget::Type_Texture, settings );
+		}
+	}
+	SetRenderTarget(m_scene);
 	m_lastShaderId = 0;
 	glUseProgram(0);
 	glClearDepth( 1.0 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	SetViewportWidthPixels( m_scene->GetViewportWidth() );
 	SetViewportHeightPixels( m_scene->GetViewportHeight() );
+
+	// [TODO] We're in an awkward spot here where we're using the term 'viewport'
+	// (and 'scene') to mean too many things.
+	//
+	// Above this comment, 'm_scene' is the render target that represents our
+	// window.  It's the framebuffer device where we display what we render.
+	// And its dimensions in pixels are its "ViewportWidth" and
+	// "ViewportHeight".  (Where this is distinct from 'Width' and 'Height' because
+	// of the bad old days where textures had to be powers of 2 in size, and so
+	// the actual backing storage might have one width while we were only
+	// drawing into a differently sized chunk of it)
+	//
+	// Below this comment, a 'viewport' is a portion of a render target that we
+	// want to render into.  And a 'scene' is a collection of vsEntities that
+	// should be drawn, along with a camera, a viewport, and some other values.
+	// I need to clean up this verbiage (probably by renaming the first set of
+	// things;  perhaps the 'm_scene' should become 'm_display', and its
+	// 'ViewportWidth' should just be 'Width'?  Or something like that?
+	m_currentViewportPixels.Set(
+			vsVector2D::Zero,
+			vsVector2D( m_widthPixels, m_heightPixels )
+			);
 }
 
 bool
 vsRenderer_OpenGL3::CheckVideoMode()
 {
+	// if ( m_windowType == WindowType_FullscreenWindow )
+	// {
+	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_FALSE); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
+	// 	SDL_Delay(1);
+    //
+	// 	int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
+	// 	SDL_SetWindowPosition( g_sdlWindow,
+	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index),
+	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index)
+	// 			);
+    //
+	// 	// SDL_Rect bounds;
+	// 	// if ( SDL_GetDisplayBounds(index, &bounds) == 0 )
+	// 	// {
+	// 	// 	float width = bounds.w;
+	// 	// 	float height = bounds.h;
+	// 	// 	SDL_SetWindowSize(g_sdlWindow, width, height);
+	// 	// }
+	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_WINDOW_FULLSCREEN_DESKTOP); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
+	// }
 // 	int nowWidth, nowHeight;
 // 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
 //
@@ -595,8 +721,14 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	//vsAssert(0, "Not yet implemented");
 	m_width = m_viewportWidth = width;
 	m_height = m_viewportHeight = height;
-	m_bufferCount = bufferCount;
-	m_antialias = antialias;
+	if ( m_antialias != antialias || m_bufferCount != bufferCount )
+	{
+		m_bufferCount = bufferCount;
+		m_antialias = antialias;
+
+		// 'm_scene' no longer matches the requested format;  rebuild it!
+		vsDelete( m_scene );
+	}
 	m_vsync = vsync;
 	bool changedWindowType = (m_windowType != windowType);
 
@@ -614,6 +746,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					SDL_SetWindowResizable(g_sdlWindow,SDL_TRUE);
 				}
 #endif
+				vsLog("Setting window size %d, %d", width, height);
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				if ( changedWindowType )
 					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -643,6 +776,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 						}
 					}
 
+					vsLog("Setting fullscreen window size %d, %d", m_width, m_height);
 					m_viewportWidth = m_width = closest.w;
 					m_viewportHeight = m_height = closest.h;
 					SDL_SetWindowSize(g_sdlWindow, m_width, m_height);
@@ -654,10 +788,11 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				}
 			case WindowType_FullscreenWindow:
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
-				SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
+				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
 
 				int nowWidth, nowHeight;
 				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);
+				vsLog("Fetching window size: %d, %d", nowWidth, nowHeight);
 				m_viewportWidth = m_width = m_widthPixels = nowWidth;
 				m_viewportHeight = m_height = m_heightPixels = nowHeight;
 				break;
@@ -743,34 +878,7 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 void
 vsRenderer_OpenGL3::PreRender(const Settings &s)
 {
-	m_currentMaterial = NULL;
-	m_currentMaterialInternal = NULL;
-	m_currentShader = NULL;
-	m_currentShaderValues = NULL;
-	m_currentColor = c_white;
-
-	m_scene->Bind();
-	m_currentRenderTarget = m_scene;
-
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	glClearColor(0.0f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glClearStencil(0);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	m_state.SetBool( vsRendererState::Bool_Blend, true );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.SetBool( vsRendererState::Bool_CullFace, true );
-	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
+	ClearState();
 }
 
 void
@@ -785,27 +893,10 @@ vsRenderer_OpenGL3::PostRender()
 
 	{
 		PROFILE_GL("FinishPostRender");
-	m_scene->Bind();
-	m_currentRenderTarget = m_scene;
-	glClearColor(0.0f,0.f,0.f,0.f);
-	glClearDepth(1.f);
-	glClearStencil(0);
-	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	m_state.SetBool( vsRendererState::Bool_Blend, true );
-	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
-	m_state.SetBool( vsRendererState::Bool_CullFace, true );
-	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
-	m_state.SetBool( vsRendererState::Bool_Multisample, true );
-	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
-	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
-	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-	m_state.Flush();
 
-	vsTimerSystem::Instance()->EndGPUTime();
+		ClearState();
+
+		vsTimerSystem::Instance()->EndGPUTime();
 	}
 	// {
 	// 	int nowWidth, nowHeight;
@@ -815,6 +906,7 @@ vsRenderer_OpenGL3::PostRender()
 	// }
 
 	vsDynamicBatchManager::Instance()->FrameRendered();
+
 }
 
 void
@@ -871,22 +963,45 @@ vsRenderer_OpenGL3::FlushRenderState()
 	}
 	// GL_CHECK("EnsureSpaceForVertex");
 	// GL_CHECK("PreFlush");
-	static vsMaterial *s_previousMaterial = NULL;
-	static vsShaderValues *s_previousShaderValues = NULL;
 	m_state.Flush();
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
-		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+		bool needsReset = false;
+
+		uint32_t shaderOptionsValue = m_currentMaterial->GetShaderOptions()->value &
+			m_currentMaterial->GetShaderOptions()->mask;
+		uint32_t shaderOptionsSet = 0;
+		for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
 		{
+			const vsShaderOptions &s = m_optionsStack[i];
+
+			shaderOptionsValue |= s.value & s.mask & ~shaderOptionsSet;
+			shaderOptionsSet |= s.mask;
+		}
+
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
+
+		// only ask for bits that are actually supported by this shader
+		shaderOptionsValue &= m_currentShader->GetVariantBitsSupported();
+
+		if ( m_lastShaderId != m_currentShader->GetShaderId() )
+			needsReset = true;
+		else if ( shaderOptionsValue != m_currentShader->GetCurrentVariantBits() )
+			needsReset = true;
+
+		if ( needsReset )
+		{
+			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			m_lastShaderId = m_currentShader->GetShaderId();
 			s_previousMaterial = m_currentMaterial;
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
-			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues );
+			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
 		}
@@ -919,6 +1034,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetInstanceColors( &c_white, 1 );
 		m_currentShader->SetWorldToView( m_currentWorldToView );
 		m_currentShader->SetViewToProjection( m_currentViewToProjection );
+		m_currentShader->SetViewport( m_currentViewportPixels.Extents() );
 		int i = 0;
 		// for ( int i = 0; i < MAX_LIGHTS; i++ )
 		{
@@ -935,6 +1051,10 @@ vsRenderer_OpenGL3::FlushRenderState()
 		glUseProgram( 0 );
 	}
 
+	if ( m_currentRenderTarget )
+	{
+		m_currentRenderTarget->InvalidateResolve();
+	}
 }
 
 void
@@ -955,28 +1075,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	//bool		recalculateColor = false;	// if true, recalc color even if we don't think it's changed
 
 	//bool		usingVertexArray = false;
-	m_usingNormalArray = false;
-	m_usingTexelArray = false;
-	m_lightCount = 0;
-
-	m_currentLocalToWorld = NULL;
-	m_currentLocalToWorldCount = 0;
-	m_currentColors = NULL;
-	m_currentColorsBuffer = NULL;
-	m_currentLocalToWorldBuffer = NULL;
-	m_currentVertexArray = NULL;
-	m_currentVertexBuffer = NULL;
-	m_currentTexelArray = NULL;
-	m_currentTexelBuffer = NULL;
-	m_currentColorArray = NULL;
-	m_currentColorBuffer = NULL;
-	m_currentTransformStackLevel = 0;
-	m_currentVertexArrayCount = 0;
-	m_currentFogDensity = 0.001f;
-
-	m_inOverlay = false;
-
-	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
+	ClearState();
 
 	while(op)
 	{
@@ -986,6 +1085,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 #endif // LOG_OPS
 		switch( op->type )
 		{
+			case vsDisplayList::OpCode_SetLinear:
+				{
+					if ( op->data.i )
+						glEnable( GL_FRAMEBUFFER_SRGB );
+					else
+						glDisable( GL_FRAMEBUFFER_SRGB );
+					break;
+				}
 			case vsDisplayList::OpCode_SetColor:
 				{
 					m_currentColor = op->data.GetColor();
@@ -1034,17 +1141,38 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentRenderTarget->Clear();
 					break;
 				};
-			case vsDisplayList::OpCode_ResolveRenderTarget:
+			case vsDisplayList::OpCode_ClearRenderTargetColor:
 				{
-					PROFILE_GL("ResolveRenderTarget");
-					m_state.Flush(); // Since resolving a render target can involve a blit, flush render state first.
-					vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-					if ( target )
-						target->Resolve();
-					else // NULL target means main render target.
-						m_scene->Resolve();
+					PROFILE_GL("ClearRenderTargetColor");
+					m_lastShaderId = 0;
+					glUseProgram(0);
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true ); // when we're clearing a render target, make sure we're writing to depth!
+					m_state.SetBool( vsRendererState::Bool_StencilTest, true ); // when we're clearing a render target, make sure we're not testing stencil bits!
+					m_state.Flush();
+					m_currentRenderTarget->ClearColor( op->data.color );
 					break;
-				}
+				};
+			// case vsDisplayList::OpCode_ResolveRenderTarget:
+			// 	{
+			// 		PROFILE_GL("ResolveRenderTarget");
+			// 		// Since resolving a render target can involve a blit,
+			// 		// flush render state first.
+			// 		m_state.Flush();
+			// 		// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+			// 		// if ( target )
+			// 		// 	target->Resolve();
+			// 		// else // NULL target means main render target.
+			// 		// 	m_scene->Resolve();
+			// 		//
+			// 		// [WARNING] resolving can invalidate current render target
+			// 		// cache.  Re-bind the correct render target!
+			// 		//
+			// 		// [TODO]: Figure out a nicer way to do this!
+			// 		//
+			// 		// if ( m_currentRenderTarget )
+			// 		// 	m_currentRenderTarget->Bind();
+			// 		break;
+			// 	}
 			case vsDisplayList::OpCode_BlitRenderTarget:
 				{
 					PROFILE_GL("Blit");
@@ -1052,6 +1180,15 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
 					from->BlitTo(to);
+
+					// [WARNING] blitting can cause the vsRenderTarget to
+					// resolve, which can invalidate current render target
+					// cache.  Re-bind the correct render target!
+					//
+					// [TODO]: Figure out a nicer way to do this!
+					//
+					// if ( m_currentRenderTarget )
+					// 	m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_PushTransform:
@@ -1121,6 +1258,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					vsShaderValues *sv = (vsShaderValues*)op->data.p;
 					m_currentShaderValues = sv;
+					break;
+				}
+			case vsDisplayList::OpCode_PushShaderOptions:
+				{
+					m_optionsStack.AddItem( op->data.shaderOptions );
+					break;
+				}
+			case vsDisplayList::OpCode_PopShaderOptions:
+				{
+					m_optionsStack.SetArraySize( m_optionsStack.ItemCount() - 1 );
 					break;
 				}
 			case vsDisplayList::OpCode_SnapMatrix:
@@ -1274,6 +1421,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentVertexArray = NULL;
 					m_currentVertexArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
@@ -1495,14 +1643,20 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_SetViewport:
 				{
-					const vsBox2D& box = op->data.box2D;
 					{
 						int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
 						int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
-						glViewport( (GLsizei)(box.GetMin().x * currentTargetWidth),
-								(GLsizei)(box.GetMin().y * currentTargetHeight),
-								(GLsizei)(box.Width() * currentTargetWidth),
-								(GLsizei)(box.Height() * currentTargetHeight) );
+
+						const vsBox2D& box = op->data.box2D;
+						m_currentViewportPixels.Set(
+									vsVector2D( box.GetMin().x * currentTargetWidth, box.GetMin().y * currentTargetHeight ),
+									vsVector2D( box.GetMax().x * currentTargetWidth, box.GetMax().y * currentTargetHeight )
+								);
+
+						glViewport( (GLsizei)( m_currentViewportPixels.GetMin().x ),
+								(GLsizei)( m_currentViewportPixels.GetMin().y ),
+								(GLsizei)( m_currentViewportPixels.Width() ),
+								(GLsizei)( m_currentViewportPixels.Height() ) );
 					}
 					break;
 				}
@@ -1511,6 +1665,10 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					int currentTargetWidth = m_currentRenderTarget->GetViewportWidth();
 					int currentTargetHeight = m_currentRenderTarget->GetViewportHeight();
 					glViewport( 0, 0, (GLsizei)currentTargetWidth, (GLsizei)currentTargetHeight );
+					m_currentViewportPixels.Set(
+							vsVector2D::Zero,
+							vsVector2D( currentTargetWidth, currentTargetHeight )
+							);
 					break;
 				}
 			case vsDisplayList::OpCode_Debug:
@@ -1541,6 +1699,11 @@ vsRenderer_OpenGL3::SetMaterial(vsMaterial *material)
 {
 	m_currentMaterial = material;
 }
+
+namespace
+{
+	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
+};
 
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
@@ -1632,6 +1795,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 				case DrawMode_Add:
 				case DrawMode_Subtract:
 				case DrawMode_Normal:
+				case DrawMode_PremultipliedAlpha:
 				case DrawMode_Absolute:
 					if ( material->m_texture[0] )
 					{
@@ -1678,36 +1842,63 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		  {
 		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		  }*/
-		for ( int i = 0; i < 16; i++ )
+		for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 		{
 			vsTexture *t = material->GetTexture(i);
 			if ( t )
 			{
 				t->GetResource()->EnsureLoaded();
-
-				glActiveTexture(GL_TEXTURE0 + i);
 				// glEnable(GL_TEXTURE_2D);
 				if ( t->GetResource()->IsTextureBuffer() )
 				{
-					GL_CHECK_SCOPED("BufferTexture");
-					glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
 					vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-					buffer->BindAsTexture();
+					if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
+					{
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = buffer->GetBufferID();
+						GL_CHECK_SCOPED("BufferTexture");
+						t->GetResource()->PrepareToBind();
+						glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
+						buffer->BindAsTexture();
+					}
 				}
 				else
 				{
-					glBindTexture( GL_TEXTURE_2D, t->GetResource()->GetTexture() );
-					if ( material->m_clampU )
-						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-					if ( material->m_clampV )
-						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+					uint32_t tval = t->GetResource()->GetTexture();
+					if ( currentlyBoundTexture[i] != tval )
+					{
+						glActiveTexture(GL_TEXTURE0 + i);
+						currentlyBoundTexture[i] = tval;
+						if ( tval == 0 )
+						{
+							// [TODO] Have a replacement blank or checkerboard texture here.
+							glBindTexture( GL_TEXTURE_2D, 0 );
+							vsLog("Tried to bind invalid texture.");
+							vsLog("Material: %s", material->GetName() );
+							vsLog("Texture slot %d", i);
+							vsLog("Texture name %s", t->GetResource()->GetName());
+							// vsAssert( tval != 0, "0 texture??" );
+						}
+						else
+						{
+							t->GetResource()->PrepareToBind();
+							glBindTexture( GL_TEXTURE_2D, tval);
+							if ( material->m_clampU )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+							if ( material->m_clampV )
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+						}
+					}
 				}
 			}
 			else
 			{
-				// glDisable(GL_TEXTURE_2D);
-				// glActiveTexture(GL_TEXTURE0 + i);
-				// glBindTexture( GL_TEXTURE_2D, 0);
+				if ( currentlyBoundTexture[i] != 0 )
+				{
+					currentlyBoundTexture[i] = 0;
+					glActiveTexture(GL_TEXTURE0 + i);
+					glBindTexture( GL_TEXTURE_2D, 0);
+				}
 			}
 		}
 		// vsTexture *st = material->GetShadowTexture();
@@ -1836,11 +2027,19 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					glBlendEquation(GL_FUNC_ADD);
 					// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
 					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
 					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+					break;
+				}
+			case DrawMode_PremultipliedAlpha:
+				{
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					// glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					break;
 				}
 			case DrawMode_Lit:
@@ -1947,8 +2146,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 		{
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
 			PrintAnnotatedSource(frag);
-			// vsLog("%s",frag);
-			vsLog(buf);
+			vsLog("%s",buf);
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
 		}
 	}
@@ -1999,7 +2197,7 @@ vsRenderer_OpenGL3::Screenshot()
 	// bind our main window, which isn't multisampled (since glReadPixels()
 	// doesn't support reading pixels from a framebuffer with MSAA enabled).
 	//
-	m_window->Bind();
+	SetRenderTarget(m_window);
 
 	const size_t bytesPerPixel = 3;	// RGB
 	const size_t imageSizeInBytes = bytesPerPixel * size_t(m_widthPixels) * size_t(m_heightPixels);
@@ -2037,7 +2235,7 @@ vsRenderer_OpenGL3::Screenshot()
 
 	vsDeleteArray( pixels );
 
-	m_scene->Bind();
+	SetRenderTarget(m_scene);
 
 	return image;
 }
@@ -2144,17 +2342,21 @@ vsRenderer_OpenGL3::ScreenshotAlpha()
 void
 vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 {
-	// TODO:  The OpenGL code should be in HERE, not in the vsRenderTarget!
-	if ( target )
+	// [TODO]  The OpenGL code should be in HERE, not in the vsRenderTarget!
+
+	if ( !target )
+		target = m_scene;
+
+	if ( target != m_currentRenderTarget )
 	{
 		target->Bind();
 		m_currentRenderTarget = target;
-	}
-	else
-	{
-		m_scene->Bind();
-		m_currentRenderTarget = m_scene;
-		// m_scene->Clear();
+
+		// and reset the viewport
+		m_currentViewportPixels.Set(
+				vsVector2D::Zero,
+				vsVector2D( m_currentRenderTarget->GetViewportWidth(), m_currentRenderTarget->GetViewportHeight() )
+				);
 	}
 }
 
@@ -2187,10 +2389,13 @@ vsRenderer_OpenGL3::FenceLoadingContext()
 	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	GLenum result;
+	int waitedSeconds = 0;
 	while(true)
 	{
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
 		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+		waitedSeconds += 5;
+		vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
 	}
 	glDeleteSync(fenceId);
 }
@@ -2206,6 +2411,7 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 		case DrawMode_Multiply:
 		case DrawMode_MultiplyAbsolute:
 		case DrawMode_Normal:
+		case DrawMode_PremultipliedAlpha:
 		case DrawMode_Absolute:
 			if ( mat->m_texture[0] )
 				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
@@ -2224,3 +2430,73 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 	return result;
 }
 
+void
+vsRenderer_OpenGL3::ClearState()
+{
+	glUseProgram(0);
+	SetRenderTarget(m_scene);
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	m_state.SetBool( vsRendererState::Bool_Blend, true );
+	m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+	m_state.SetBool( vsRendererState::Bool_CullFace, true );
+	m_state.SetBool( vsRendererState::Bool_DepthTest, true );
+	m_state.SetBool( vsRendererState::Bool_Multisample, true );
+	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
+	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
+	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
+	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
+	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	m_state.Flush();
+
+	m_currentColor = c_white;
+	m_currentColorArray = NULL;
+	m_currentColorBuffer = NULL;
+	m_currentColors = NULL;
+	m_currentColorsBuffer = NULL;
+	m_currentFogDensity = 0.001f;
+	m_currentLocalToWorld = NULL;
+	m_currentLocalToWorldBuffer = NULL;
+	m_currentLocalToWorldCount = 0;
+	m_currentMaterial = NULL;
+	m_currentMaterialInternal = NULL;
+	m_currentNormalArray = NULL;
+	m_currentShader = NULL;
+	m_currentShaderValues = NULL;
+	m_currentTexelArray = NULL;
+	m_currentTexelBuffer = NULL;
+	m_currentTransformStackLevel = 0;
+	m_currentVertexArray = NULL;
+	m_currentVertexArrayCount = 0;
+	m_currentVertexBuffer = NULL;
+	m_invalidateMaterial = true;
+	m_lightCount = 0;
+	m_usingNormalArray = false;
+	m_usingTexelArray = false;
+
+	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
+
+	s_previousMaterial = NULL;
+	s_previousShaderValues = NULL;
+	m_lastShaderId = -1;
+	m_optionsStack.Clear();
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D,0);
+	}
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
+	glClearColor(0.0f,0.f,0.f,0.f);
+	glClearDepth(1.f);
+	glClearStencil(0);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	// glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+
+
+	m_optionsStack.Clear();
+
+}

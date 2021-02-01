@@ -14,11 +14,27 @@ class vsDisplayList;
 class vsRenderBuffer;
 class vsMatrix4x4;
 class vsShaderValues;
+class vsShaderVariant;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS_MaterialInternal.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
+#include "VS/Utils/VS_Array.h"
+
+struct vsShaderVariantDefinition
+{
+	vsString name;
+	int bitId;
+};
+
+struct vsShaderAutoBitDefinition
+{
+	int bitId;
+	vsString uniformName;
+	uint32_t uniformUID;
+};
+
 
 class vsShader: public vsAutomaticInstanceList<vsShader>
 {
@@ -26,9 +42,11 @@ public:
 	struct Uniform
 	{
 		vsString name;
+		uint32_t uid;
 		// struct
 		// {
 			int b;
+			uint32_t u32;
 			float f32;
 			vsVector4D vec4; // for vectors of up to 4 floats
 		// };
@@ -43,63 +61,28 @@ public:
 		int32_t type;
 		int32_t arraySize;
 	};
-
 private:
-	int32_t m_colorLoc;
-	int32_t m_instanceColorAttributeLoc;
-	int32_t m_hasInstanceColorsLoc;
-	int32_t m_resolutionLoc;
-	int32_t m_mouseLoc;
-	int32_t m_fogColorId;
-	int32_t m_fogDensityId;
-	int32_t m_textureLoc;
-	int32_t m_shadowTextureLoc;
-	int32_t m_bufferTextureLoc;
-	int32_t m_localToWorldLoc;
-	int32_t m_localToWorldAttributeLoc;
-	int32_t m_worldToViewLoc;
-	int32_t m_cameraPositionLoc;
-	int32_t m_cameraDirectionLoc;
-	int32_t m_viewToProjectionLoc;
-
-	int32_t m_lightAmbientLoc;
-	int32_t m_lightDiffuseLoc;
-	int32_t m_lightSpecularLoc;
-	int32_t m_lightPositionLoc;
-	int32_t m_lightHalfVectorLoc;
-
-	Uniform *m_uniform;
-	Attribute *m_attribute;
-
-	int32_t m_uniformCount;
-	int32_t m_attributeCount;
-
-	int32_t m_globalTimeUniformId;
-
 	vsString m_vertexShaderFile;
 	vsString m_fragmentShaderFile;
+	vsString m_vertexShaderText;
+	vsString m_fragmentShaderText;
+
+	uint32_t m_variantBitsSupported;
+
+	vsShaderVariant *m_current;
+	vsArray< vsShaderVariant* > m_variant;
 
 	bool m_system; // system shader;  should not be reloaded!
 
-	void SetUniformValueF( int i, float value );
-	void SetUniformValueB( int i, bool value );
-	void SetUniformValueI( int i, int value );
-	void SetUniformValueVec3( int i, const vsVector3D& value );
-	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
-	void SetUniformValueVec4( int i, const vsVector4D& value );
-	void SetUniformValueVec4( int i, const vsColor& value );
-	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
-
-	void Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
+	void FigureOutAvailableVariants( const vsString& shaderSource );
 
 protected:
-	uint32_t m_shader;
 	bool m_litBool;
 	bool m_textureBool;
 
 public:
 
-	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, const vsString& vfilename = vsEmptyString, const vsString& ffilename = vsEmptyString );
+	vsShader( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, uint32_t variantBits = 0, const vsString& vfilename = vsEmptyString, const vsString& ffilename = vsEmptyString );
 	virtual ~vsShader();
 
 	static vsShader *Load( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture );
@@ -107,7 +90,11 @@ public:
 	static void ReloadAll();
 	void Reload();
 
-	uint32_t GetShaderId() { return m_shader; }
+	uint32_t GetShaderId() const;
+	uint32_t GetVariantBitsSupported() const { return m_variantBitsSupported; }
+	uint32_t GetCurrentVariantBits();
+	void SetForVariantBits( uint32_t bits );
+	static uint32_t GetVariantBitsFor( const vsShaderValues *values );
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
 	void SetColor( const vsColor& color );
@@ -118,18 +105,27 @@ public:
 	void SetLocalToWorld( vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
+	void SetViewport( const vsVector2D& dims );
 
-	const Uniform *GetUniform(int i) const { return &m_uniform[i]; }
+	const Uniform *GetUniform(int i) const;
 	int32_t GetUniformId(const vsString& name) const;
-	int32_t GetUniformCount() const { return m_uniformCount; }
-	int32_t GetAttributeCount() const { return m_attributeCount; }
+	int32_t GetUniformCount() const;
+	int32_t GetAttributeCount() const;
 
 	void SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL, vsRenderTarget *renderTarget = NULL ); // called before we start rendering something with this shader
 	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
+
+
+	// should be set just once at game start.
+	static void SetShaderVariantDefinitions( const vsArray<vsShaderVariantDefinition>& definitions );
+	static void SetAutoBits( const vsArray<vsShaderAutoBitDefinition>& definitions );
+
+	// what combinations of shader bit patterns should we precompile?
+	static void SetPreCompileBitPatterns( const vsArray<uint32_t>& patterns );
 };
 
 

@@ -8,8 +8,33 @@
 
 #include "VS_RenderTarget.h"
 #include "VS_TextureManager.h"
+#include "VS_Color.h"
 #include "VS_OpenGL.h"
+#include "VS_RendererState.h"
 #include <atomic>
+
+namespace
+{
+	// [INFO]
+	//
+	// We sometimes want to temporarily modify the currently bound framebuffer
+	// object so that we can do temporary actions;  for example, resolving an
+	// MSAA rendertarget or doing a blit.  In order to transparently do those,
+	// we need to be able to swap the FBO back to the prevoiusly set one, and to
+	// do THAT, we need to keep track of what the previous FBO was.  So that's
+	// what the following values are for.
+	//
+	// This implementation relies on vsRenderTarget being the only class to ever
+	// call glBindFramebuffer().  If anybody else every calls that, then these
+	// values will go stale and bad behaviour could occur!  So if you're reading
+	// this in the future, Trevor, it might be worth searching the whole codebase
+	// for glBindFramebuffer to make sure that it isn't being called from anywhere
+	// that isn't keeping these values updated or restoring to these values
+	// immediately afterward!
+	//
+	int s_currentReadFBO = 0;
+	int s_currentDrawFBO = 0;
+};
 
 static std::atomic<int> s_renderTargetCount(0);
 
@@ -19,7 +44,9 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	m_depthTexture(NULL),
 	m_renderBufferSurface(NULL),
 	m_textureSurface(NULL),
-	m_type(t)
+	m_type(t),
+	m_needsResolve(0xffff),
+	m_needsDepthResolve(true)
 {
 	bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
 	m_viewportWidth = settings.width;
@@ -31,7 +58,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 		vsTextureInternal *ti = new vsTextureInternal(name,
-				m_textureSurface,
+				this,
 				i,
 				isDepth);
 		vsTextureManager::Instance()->Add(ti);
@@ -46,7 +73,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 	{
 		vsString name = vsFormatString("RenderTarget%d", s_renderTargetCount++);
 		vsTextureInternal *ti = new vsTextureInternal(name,
-				m_textureSurface,
+				this,
 				0,
 				true);
 		vsTextureManager::Instance()->Add(ti);
@@ -84,10 +111,10 @@ vsRenderTarget::Create()
 	}
 	for ( int i = 0; i < m_bufferCount; i++ )
 	{
-		m_texture[i]->GetResource()->SetSurface(m_textureSurface, i, isDepth);
+		m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
 	}
 	if ( m_depthTexture )
-		m_depthTexture->GetResource()->SetSurface( m_textureSurface, 0, true );
+		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
 
 	Clear();
 }
@@ -107,31 +134,81 @@ vsRenderTarget::~vsRenderTarget()
 }
 
 vsTexture *
-vsRenderTarget::Resolve(int id)
+vsRenderTarget::ResolveDepth()
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
 	EnsureLoaded();
 
-	if ( m_renderBufferSurface )
+	if ( m_needsDepthResolve )
 	{
-		// need to copy from the render buffer surface to the regular texture.
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
-		for ( int i = 0; i < m_bufferCount; i++ )
+		if ( m_renderBufferSurface )
 		{
-			GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
+			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
-			glReadBuffer(GL_COLOR_ATTACHMENT0+i);
-			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
+			vsRendererState::Instance()->Flush();
+
+			// need to copy from the render buffer surface to the regular texture.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+
+			GLbitfield bufferBits = GL_DEPTH_BUFFER_BIT;
+
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0);
 			glBlitFramebuffer(0, 0,
 					m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
 					0, 0,
 					m_textureSurface->m_width, m_textureSurface->m_height,
 					bufferBits,
-					GL_LINEAR);
-			if ( m_renderBufferSurface->m_depth )
+					GL_NEAREST);
+
+			// and bind us back to the previously set read/draw framebuffers.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
+
+			vsRendererState::Instance()->Apply( backup );
+			vsRendererState::Instance()->Flush();
+		}
+		m_needsDepthResolve = false;
+	}
+
+	return m_depthTexture;
+	// return NULL;
+}
+
+vsTexture *
+vsRenderTarget::Resolve(int id)
+{
+	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
+
+	if ( m_needsResolve & BIT(id) )
+	{
+		if ( m_renderBufferSurface )
+		{
+			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
+
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
+			vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
+			vsRendererState::Instance()->Flush();
+
+			// need to copy from the render buffer surface to the regular texture.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_textureSurface->m_fbo);
+			// only blit the specific buffer we're using.
+			int i = id;
+			// for ( int i = 0; i < m_bufferCount; i++ )
 			{
-				bufferBits = GL_DEPTH_BUFFER_BIT;
+				GLbitfield bufferBits = GL_COLOR_BUFFER_BIT;
+				if ( id == 0 && m_renderBufferSurface->m_depth )
+				{
+					bufferBits |= GL_DEPTH_BUFFER_BIT; // transfer depth while we're here.
+					m_needsDepthResolve = false;
+				}
+
+				glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
 				glBlitFramebuffer(0, 0,
 						m_renderBufferSurface->m_width, m_renderBufferSurface->m_height,
 						0, 0,
@@ -139,25 +216,33 @@ vsRenderTarget::Resolve(int id)
 						bufferBits,
 						GL_NEAREST);
 			}
+			// and bind us back to the previously set read/draw framebuffers.
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
+
+			vsRendererState::Instance()->Apply( backup );
+			vsRendererState::Instance()->Flush();
 		}
-	}
-	// if ( m_textureSurface )
-	{
-		// TODO:  Consider whether to re-generate mipmaps on the textures,
+
+		// [TODO]  Consider whether to re-generate mipmaps on the textures,
 		// since somebody's asked for them, such as with the following
-		// (commented-out) code.
+		// (currently disabled) code.
 		//
-		// for ( int i = 0; i < m_bufferCount; i++ )
-		// {
-		// 	glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
-		// 	glGenerateMipmap(GL_TEXTURE_2D);
-		// 	glBindTexture(GL_TEXTURE_2D, 0);
-		// }
-
-		return GetTexture(id);
+#if 0
+		if ( m_textureSurface )
+		{
+			for ( int i = 0; i < m_bufferCount; i++ )
+			{
+				glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
+				glGenerateMipmap(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+		}
+#endif // 0
+		m_needsResolve &= ~BIT(id);
 	}
 
-	// return NULL;
+	return GetTexture(id);
 }
 
 void
@@ -179,30 +264,32 @@ vsRenderTarget::EnsureLoaded()
 void
 vsRenderTarget::Bind()
 {
-	if ( m_textureSurface == NULL )
-		Create();
+	// somebody's going to draw into us, mark us as needing to be resolved.
+	CreateDeferred();
 
 	EnsureLoaded();
 
 	GL_CHECK_SCOPED("vsRenderTarget::Bind");
 	if ( m_renderBufferSurface )
 	{
+		s_currentReadFBO = s_currentDrawFBO = m_renderBufferSurface->m_fbo;
 		glBindFramebuffer(GL_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
 	}
 	else
 	{
+		s_currentReadFBO = s_currentDrawFBO = m_textureSurface->m_fbo;
 		glBindFramebuffer(GL_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
 	if ( m_type == Type_Texture || m_type == Type_Multisample )
 	{
 		GLenum buffers[6] =
 		{
-			GL_COLOR_ATTACHMENT0_EXT,
-			GL_COLOR_ATTACHMENT1_EXT,
-			GL_COLOR_ATTACHMENT2_EXT,
-			GL_COLOR_ATTACHMENT3_EXT,
-			GL_COLOR_ATTACHMENT4_EXT,
-			GL_COLOR_ATTACHMENT5_EXT
+			GL_COLOR_ATTACHMENT0,
+			GL_COLOR_ATTACHMENT1,
+			GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,
+			GL_COLOR_ATTACHMENT4,
+			GL_COLOR_ATTACHMENT5
 		};
 		glDrawBuffers(m_bufferCount,buffers);
 	}
@@ -233,20 +320,52 @@ vsRenderTarget::Clear()
 }
 
 void
+vsRenderTarget::ClearColor( const vsColor&c )
+{
+	Bind();
+	GL_CHECK_SCOPED("vsRenderTarget::ClearColor");
+
+	GLbitfield bits = GL_COLOR_BUFFER_BIT;
+	vsSurface *surface = m_renderBufferSurface ? m_renderBufferSurface : m_textureSurface;
+	if ( surface->m_depth )
+	{
+		bits |= GL_DEPTH_BUFFER_BIT;
+	}
+	if ( surface->m_stencil )
+	{
+		bits |= GL_STENCIL_BUFFER_BIT;
+	}
+	glStencilMask(0xff);
+	glClearDepth(1.0);
+	glClearStencil(0);
+	glClearColor(c.r,c.g,c.b,c.a);
+	glClear(bits);
+	glClearColor(0,0,0,0);
+}
+
+void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
-	EnsureLoaded();
-	other->EnsureLoaded();
+	CreateDeferred();
+	other->CreateDeferred();
 
 	if ( m_renderBufferSurface )
+	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+	}
 	else
+	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
+	}
 
 	if ( other->m_renderBufferSurface )
+	{
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_renderBufferSurface->m_fbo);
+	}
 	else
+	{
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, other->m_textureSurface->m_fbo);
+	}
 
 	// for the moment, assume that a 'BlitTo' is only copying the first color attachment.
 	for ( int i = 0; i < vsMin( m_bufferCount, other->m_bufferCount ); i++ )
@@ -266,6 +385,11 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 				GL_COLOR_BUFFER_BIT,
 				GL_LINEAR);
 	}
+	// mark 'other' as needing a resolve.
+	other->m_needsResolve = 0xffff;
+	other->m_needsDepthResolve = true;
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
 
 vsSurface::vsSurface( int width, int height ):
@@ -276,7 +400,9 @@ vsSurface::vsSurface( int width, int height ):
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
-	m_isRenderbuffer(false)
+	m_isRenderbuffer(false),
+	m_multisample(false),
+	m_depthCompare(false)
 {
 	m_texture = new GLuint[1];
 	m_texture[0] = 0;
@@ -312,35 +438,138 @@ static void CheckFBO()
 
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
-	m_width(settings.width),
-	m_height(settings.height),
+	m_width(-1),
+	m_height(-1),
 	m_texture(0),
 	m_textureCount(settings.buffers),
 	m_depth(0),
 	m_stencil(0),
 	m_fbo(0),
 	m_isRenderbuffer(false),
+	m_multisample(multisample),
+	m_depthCompare(depthCompare),
+	m_isDepthOnly(depthOnly),
 	m_settings(settings)
 {
+	m_texture = new GLuint[m_textureCount];
+
+	Resize(settings.width, settings.height);
+}
+
+vsSurface::~vsSurface()
+{
+	GL_CHECK_SCOPED("vsSurface destructor");
+	for ( int i = 0; i < m_textureCount; i++ )
+	{
+		if ( m_isRenderbuffer )
+		{
+			glDeleteRenderbuffers(1, &m_texture[i]);
+		}
+		else
+		{
+			// don't delete our textures manually;  we have vsTexture objects
+			// which will do it automatically when they're destroyed, below.
+		}
+	}
+	if ( m_depth )
+	{
+		glDeleteRenderbuffers(1, &m_depth);
+	}
+	glDeleteFramebuffers(1, &m_fbo);
+	vsDeleteArray(m_texture);
+}
+
+
+
+
+
+void
+vsRenderTarget::Resize( int width, int height )
+{
+	GL_CHECK_SCOPED("vsRenderTarget::Resize");
+	if ( m_settings.width == width && m_settings.height == height )
+		return;
+	m_viewportWidth = width;
+	m_viewportHeight = height;
+	m_settings.width = width;
+	m_settings.height = height;
+
+	if ( m_type == Type_Window )
+	{
+		m_textureSurface->m_width = width;
+		m_textureSurface->m_height = height;
+	}
+	else
+	{
+		if ( m_renderBufferSurface )
+			m_renderBufferSurface->Resize(width, height);
+		if ( m_textureSurface )
+			m_textureSurface->Resize(width, height);
+
+		for ( int i = 0; i < m_bufferCount; i++ )
+		{
+			m_texture[i]->GetResource()->m_width = m_settings.width;
+			m_texture[i]->GetResource()->m_height = m_settings.height;
+		}
+		for ( int i = 0; i < m_bufferCount; i++ )
+		{
+			bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
+			m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
+		}
+		if ( m_depthTexture )
+			m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
+	}
+}
+
+void
+vsSurface::Resize( int width, int height )
+{
 	GL_CHECK_SCOPED("vsSurface");
+	if ( m_width == width && m_height == height )
+		return;
+
+	if ( m_fbo != 0 )
+	{
+		for ( int i = 0; i < m_textureCount; i++ )
+		{
+			if ( m_isRenderbuffer )
+			{
+				glDeleteRenderbuffers(1, &m_texture[i]);
+			}
+			else
+			{
+				// don't delete our textures manually;  we have vsTexture objects
+				// which will do it automatically when they're destroyed, below.
+				glDeleteTextures(1, &m_texture[i]);
+			}
+		}
+		if ( m_depth )
+		{
+			glDeleteRenderbuffers(1, &m_depth);
+		}
+		glDeleteFramebuffers(1, &m_fbo);
+	}
+
+	m_width = width;
+	m_height = height;
+	m_settings.width = width;
+	m_settings.height = height;
 
 	GLint maxSamples = 0;
-	if ( multisample )
+	if ( m_multisample )
 	{
 		glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
 		maxSamples = vsMin(maxSamples,4);
 	}
 
-	vsAssert( !( multisample && settings.mipMaps ), "Can't do both multisample and mipmaps!" );
+	vsAssert( !( m_multisample && m_settings.mipMaps ), "Can't do both multisample and mipmaps!" );
 	glActiveTexture(GL_TEXTURE0);
 
 	// create FBO
 	glGenFramebuffers(1, &m_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-	m_texture = new GLuint[m_textureCount];
-
-	if ( depthOnly )
+	if ( m_isDepthOnly )
 	{
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
@@ -387,7 +616,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			}
 			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
 
-			if (multisample)
+			if (m_multisample)
 			{
 				// vsLog("MSAA in vsSurface enabled");
 				glGenRenderbuffers(1, &m_texture[i]);
@@ -412,21 +641,33 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-				if ( settings.anisotropy )
-					glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f );
+
+				// Anisotropic filtering didn't become part of OpenGL core contextx until
+				// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
+				// support.  Blah!!
+				if ( GL_EXT_texture_filter_anisotropic )
+				{
+					if ( settings.anisotropy )
+					{
+						float aniso = 0.0f;
+						glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+						aniso = vsMin(aniso,16.f);
+						glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso );
+					}
+				}
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
 	}
 
-	if (settings.stencil || settings.depth || depthOnly)
+	if (m_settings.stencil || m_settings.depth || m_isDepthOnly)
 	{
-		if ( multisample )
+		if ( m_multisample )
 		{
 			GL_CHECK_SCOPED( "multisample stencil/depth" );
 			glGenRenderbuffers(1, &m_depth);
 			glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-			if ( settings.stencil )
+			if ( m_settings.stencil )
 			{
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, maxSamples, GL_DEPTH24_STENCIL8, m_width, m_height );
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
@@ -456,13 +697,13 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-			if ( depthCompare )
+			if ( m_depthCompare )
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			}
 
-			if ( settings.stencil )
+			if ( m_settings.stencil )
 			{
 				GL_CHECK_SCOPED( "setup depthstencil texture data" );
 				glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
@@ -474,15 +715,19 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 			}
 
 			{
-				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
-				if ( settings.stencil )
+
+				GL_CHECK_SCOPED( "Bind depth/stencil to framebuffer" );
+				if ( m_settings.stencil )
 				{
 					// we're using a single depth/stencil texture, so bind it as
-					// our FBO's stencil attachment too.
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+					// our FBO's depth_stencil attachment.
 					m_stencil = true;
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
+				}
+				else
+				{
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth, 0);
 				}
 			}
 		}
@@ -492,100 +737,9 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-vsSurface::~vsSurface()
+bool
+vsRenderTarget::IsDepthOnly()
 {
-	GL_CHECK_SCOPED("vsSurface destructor");
-	for ( int i = 0; i < m_textureCount; i++ )
-	{
-		if ( m_isRenderbuffer )
-		{
-			glDeleteRenderbuffers(1, &m_texture[i]);
-		}
-		else
-		{
-			// don't delete our textures manually;  we have vsTexture objects
-			// which will do it automatically when they're destroyed, below.
-		}
-	}
-	if ( m_depth )
-	{
-		glDeleteRenderbuffers(1, &m_depth);
-	}
-	glDeleteFramebuffers(1, &m_fbo);
-	vsDeleteArray(m_texture);
-}
-
-
-
-
-
-void
-vsRenderTarget::Resize( int width, int height )
-{
-	GL_CHECK_SCOPED("vsRenderTarget::Resize");
-	if ( m_renderBufferSurface )
-		m_renderBufferSurface->Resize(width, height);
-	if ( m_textureSurface )
-		m_textureSurface->Resize(width, height);
-	m_viewportWidth = width;
-	m_viewportHeight = height;
-	m_settings.width = width;
-	m_settings.height = height;
-}
-
-void
-vsSurface::Resize( int width, int height )
-{
-	GL_CHECK_SCOPED("vsSurface::Resize");
-	if ( m_width == width && m_height == height )
-		return;
-
-	glActiveTexture(GL_TEXTURE0);
-
-	vsAssert( !m_isRenderbuffer, "Resize not yet supported for renderbuffer surfaces" );
-	for ( int i = 0; i < m_textureCount; i++ )
-	{
-		if ( m_texture[i] )
-		{
-			const Settings::Buffer& settings = m_settings.bufferSettings[i];
-
-			GLenum internalFormat = GL_RGBA8;
-			GLenum format = GL_RGBA;
-			GLenum type = GL_UNSIGNED_BYTE;
-			if ( settings.floating )
-			{
-				internalFormat = GL_RGBA32F;
-				type = GL_FLOAT;
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R32F;
-				}
-			}
-			if ( settings.halfFloating )
-			{
-				internalFormat = GL_RGBA16F;
-				type = GL_FLOAT;
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R16F;
-				}
-			}
-
-			glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0);
-		}
-	}
-
-	if ( m_depth )
-	{
-		glBindTexture(GL_TEXTURE_2D, m_depth);
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	m_width = width;
-	m_height = height;
+	return m_type == Type_Depth || m_type == Type_DepthCompare;
 }
 

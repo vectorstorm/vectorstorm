@@ -20,7 +20,9 @@
 #include "VS_SingletonManager.h"
 #include "VS_TextureManager.h"
 #include "VS_FileCache.h"
+#include "VS_File.h"
 #include "VS_ShaderCache.h"
+#include "VS_ShaderUniformRegistry.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -144,6 +146,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	vsFileCache::Startup();
 	vsShaderCache::Startup();
+	vsShaderUniformRegistry::Startup();
 	InitPhysFS( argc, argv, companyName, title );
 
 	vsLog("Loading preferences...");
@@ -187,6 +190,7 @@ vsSystem::~vsSystem()
 	delete vsSingletonManager::Instance();
 
 	DeinitPhysFS();
+	vsShaderUniformRegistry::Shutdown();
 	vsShaderCache::Shutdown();
 	vsFileCache::Shutdown();
 
@@ -309,17 +313,21 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
 #elif defined(_WIN32)
 
+	vsString baseDirectory = PHYSFS_getBaseDir();
+#if defined(_DEBUG) // only in debug builds do we mess with the directory name!
+
 	// Under Win32, Visual Studio likes to put debug and release builds into a directory
 	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
 	// but it means that the executable location isn't in the same place as our Data
 	// directory.  So we need to detect that situation, and if it happens, move our
 	// data directory up by one.
-	vsString baseDirectory = PHYSFS_getBaseDir();
 	if ( baseDirectory.rfind("\\Debug\\") == baseDirectory.size()-7 )
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
+#endif
 	m_dataDirectory = baseDirectory + "Data";
+
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
@@ -329,13 +337,23 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
 	//
 	// 0 parameter means PREPEND;  each new mount takes priority over the line before
-	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
 		exit(1);
 	}
+
+	vsString modsDirectory = "mod";
+	vsArray<vsString> mods;
+	vsFile::DirectoryDirectories( &mods, modsDirectory );
+	for ( int i = 0; i < mods.ItemCount(); i++ )
+	{
+		success |= PHYSFS_mount( (vsString(PHYSFS_getBaseDir()) + "/mod/" + mods[i]).c_str(), NULL, 0);
+	}
+
+
 	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
 
 	// char** searchPath = PHYSFS_getSearchPath();
@@ -452,8 +470,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 	// as a memory leak)
 	vsHeap::Push(g_globalHeap);
 
-	vsLog("Changing resolution to [%dx%d] (%s)...", width, height,
-			m_preferences->GetFullscreen() ? "fullscreen" : "windowed");
+	vsString type = m_preferences->GetFullscreenWindow() ? "fullscreen window" :
+		m_preferences->GetFullscreen() ? "fullscreen" : "windowed";
+
+	vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
 
 	if ( !m_preferences->GetFullscreen() )
 	{
@@ -585,10 +605,10 @@ vsSystem::Launch( const vsString &target )
 #if defined(_WIN32)
 	ShellExecute(NULL, "open", target.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE_CC__)
-	system( vsFormatString("open \"%s\"", target.c_str()).c_str() );
+	system( vsFormatString("open %s", target.c_str()).c_str() );
 #else
 	// Linux, probably?
-	int err = system( vsFormatString("xdg-open %s", target.c_str()).c_str() );
+	int err = system( vsFormatString("xdg-open %s &", target.c_str()).c_str() );
 	if ( err )
 		vsLog("system: error %d", err);
 #endif
@@ -835,11 +855,31 @@ vsSystem::CPUDescription()
 #endif
 }
 
+unsigned long long GetTotalSystemMemory()
+{
+#if defined(_WIN32)
+	MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    GlobalMemoryStatusEx(&status);
+    return status.ullTotalPhys;
+#elif defined(__APPLE_CC__)
+	uint64_t mem;
+	size_t len = sizeof(mem);
+	sysctlbyname("hw.memsize", &mem, &len, NULL, 0);
+	return mem;
+#else
+	long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+#endif
+}
+
 void
 vsSystem::LogSystemDetails()
 {
 	vsLog("CPU:  %s", CPUDescription().c_str());
 	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
+	vsLog("System RAM:  %0.2f gb", GetTotalSystemMemory() / (1024.f*1024.f*1024.f));
 }
 
 Resolution *
@@ -1029,5 +1069,11 @@ void
 vsSystemPreferences::SetDynamicBatching(bool enabled)
 {
 	m_dynamicBatching->m_value = enabled;
+}
+
+vsString
+vsSystem::GetWriteDirectory() const
+{
+	return PHYSFS_getWriteDir();
 }
 

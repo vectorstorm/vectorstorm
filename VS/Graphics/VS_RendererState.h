@@ -9,6 +9,10 @@
 #ifndef VS_RENDERER_STATE_H
 #define VS_RENDERER_STATE_H
 
+#include "VS/Math/VS_Vector.h"
+
+struct vsRendererStateBlock;
+
 template<typename T>
 class StateSetter
 {
@@ -28,6 +32,11 @@ public:
 	void Set( const T &newValue )
 	{
 		m_nextValue = newValue;
+	}
+
+	T Get() const
+	{
+		return m_nextValue;
 	}
 
 	virtual void DoFlush() = 0;
@@ -72,6 +81,9 @@ public:
 		m_nextValueB = newValueB;
 	}
 
+	const T& GetFirst() const { return m_nextValueA; }
+	const U& GetSecond() const { return m_nextValueB; }
+
 	virtual void DoFlush() = 0;
 
 	void Flush()
@@ -114,6 +126,7 @@ public:
 		ClientBool_NormalArray,
 		ClientBool_ColorArray,
 		ClientBool_TextureCoordinateArray,
+		ClientBool_OtherArray,
 		BOOL_COUNT
 	};
 	enum Float
@@ -137,13 +150,15 @@ private:
     StateSetter2<float,float>	*m_float2State[FLOAT2_COUNT];
 	StateSetter<int>	*m_intState[INT_COUNT];
 
-
 public:
 
     vsRendererState();
     ~vsRendererState();
 
+	static vsRendererState *Instance();
+
 	void	SetBool( Bool key, bool value );
+	bool	GetBool( Bool key ) const;
 	//void	SetFloat( Float key, float value );
 	void	SetFloat2( Float2 key, float valueA, float valueB);
 	void	SetInt( Int key, int value );
@@ -151,6 +166,16 @@ public:
 	void	Flush();
 	void	Force();
 
+	vsRendererStateBlock StateBlock() const;
+	void Apply( const vsRendererStateBlock& block );
+};
+
+// grabs a copy of a vsRendererState.
+struct vsRendererStateBlock
+{
+    bool m_boolState[vsRendererState::BOOL_COUNT];
+    vsVector2D m_float2State[vsRendererState::FLOAT2_COUNT];
+	int m_intState[vsRendererState::INT_COUNT];
 };
 
 #endif // VS_RENDERER_STATE_H

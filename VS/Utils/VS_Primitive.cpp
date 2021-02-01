@@ -223,30 +223,49 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material,
 
 vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
 {
-	vsVector3D va[4] =
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	const vsVector3D va[4] =
 	{
 		box.GetMin(),
 		vsVector2D(box.GetMax().x,box.GetMin().y),
 		vsVector2D(box.GetMin().x,box.GetMax().y),
 		box.GetMax()
 	};
-	int ls[5] =
+	const uint16_t ls[5] =
 	{
 		0,1,3,2,0
 	};
+	ibo->SetArray(ls,5);
 
-	vsDisplayList *list = new vsDisplayList(128);
-
-	if ( colorOverride )
+	if ( !colorOverride )
 	{
-		list->SetColor( *colorOverride );
+		vsRenderBuffer::P pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+		}
+		vbo->SetArray(pt, 4);
 	}
-	list->VertexArray(va,4);
-	list->LineStripArray(ls,5);
+	else
+	{
+		vsRenderBuffer::PC pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+			pt[i].color = *colorOverride;
+		}
+		vbo->SetArray(pt, 4);
+	}
+	vsDisplayList *list = new vsDisplayList(128);
+	list->BindBuffer(vbo);
+	list->LineStripBuffer(ibo);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
 	fragment->SetDisplayList(list);
+	fragment->AddBuffer(vbo);
+	fragment->AddBuffer(ibo);
 	fragment->SetMaterial( material );
 
 	return fragment;
@@ -614,8 +633,7 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset, vsColor *colorOverride )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
-	vsRenderBuffer::PT pt[4];
-
+	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	vsVector3D va[4] =
 	{
 		box.GetMin(),
@@ -630,32 +648,38 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 		vsVector2D( 0.f * texScale.x, 1.f * texScale.y) + texOffset,
 		vsVector2D( 1.f * texScale.x, 1.f * texScale.y) + texOffset
 	};
-	int ts[4] =
+	uint16_t ts[4] =
 	{
 		0,2,1,3
 	};
 
-	for ( int i = 0; i < 4; i++ )
+	if ( !colorOverride )
 	{
-		pt[i].position = va[i];
-		pt[i].texel = tex[i];
+		vsRenderBuffer::PT pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+			pt[i].texel = tex[i];
+		}
+		vbo->SetArray(pt, 4);
+	}
+	else
+	{
+		vsRenderBuffer::PCT pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+			pt[i].texel = tex[i];
+			pt[i].color = *colorOverride;
+		}
+		vbo->SetArray(pt, 4);
 	}
 
-	vsDisplayList *list = new vsDisplayList(128);
-
-	if ( colorOverride )
-	{
-		list->SetColor( *colorOverride );
-	}
-	vbo->SetArray(pt, 4);
-	list->BindBuffer(vbo);
-	list->TriangleStripArray(ts,4);
-	list->ClearArrays();
+	ibo->SetArray(ts,4);
 
 	vsFragment *fragment = new vsFragment;
-	fragment->SetDisplayList(list);
+	fragment->SetSimple(vbo,ibo,vsFragment::SimpleType_TriangleStrip);
 	fragment->SetMaterial( material );
-	fragment->AddBuffer(vbo);
 
 	return fragment;
 }
@@ -705,32 +729,51 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &mater
 	return fragment;
 }
 
-vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
-	vsVector3D va[4] =
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	const vsVector3D va[4] =
 	{
 		box.GetMin(),
 		vsVector2D(box.GetMax().x,box.GetMin().y),
 		vsVector2D(box.GetMin().x,box.GetMax().y),
 		box.GetMax()
 	};
-	int ls[5] =
+	const uint16_t ls[5] =
 	{
 		0,1,3,2,0
 	};
+	ibo->SetArray(ls,5);
 
-	vsDisplayList *list = new vsDisplayList(128);
-
-	if ( colorOverride )
+	if ( !colorOverride )
 	{
-		list->SetColor( *colorOverride );
+		vsRenderBuffer::P pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+		}
+		vbo->SetArray(pt, 4);
 	}
-	list->VertexArray(va,4);
-	list->LineStripArray(ls,5);
+	else
+	{
+		vsRenderBuffer::PC pt[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			pt[i].position = va[i];
+			pt[i].color = *colorOverride;
+		}
+		vbo->SetArray(pt, 4);
+	}
+	vsDisplayList *list = new vsDisplayList(128);
+	list->BindBuffer(vbo);
+	list->LineStripBuffer(ibo);
 	list->ClearVertexArray();
 
 	vsFragment *fragment = new vsFragment;
 	fragment->SetDisplayList(list);
+	fragment->AddBuffer(vbo);
+	fragment->AddBuffer(ibo);
 	fragment->SetMaterial( material );
 
 	return fragment;

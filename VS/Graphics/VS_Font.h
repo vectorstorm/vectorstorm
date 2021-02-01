@@ -130,6 +130,7 @@ public:
 	void RemoveFragment( vsFontFragment *fragment );
 
 	void RebuildFragments();
+	void RebuildLocFragments(); // rebuild fontfragments which have localisation data
 };
 
 

@@ -148,12 +148,13 @@ public:
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			vsDelete( m_array[index] );
+			T* toBeDeleted = m_array[index];
 			for ( int i = index; i < m_arrayLength-1; i++ )
 			{
 				m_array[i] = m_array[i+1];
 			}
 			m_arrayLength--;
+			vsDelete( toBeDeleted );
 		}
 		return index != npos;
 	}
@@ -179,13 +180,13 @@ public:
 
 		if ( index != npos )
 		{
-			vsDelete( m_array[index] );
-
+			T* toBeDeleted = m_array[index];
 			for ( int i = index; i < m_arrayLength-1; i++ )
 			{
 				m_array[i] = m_array[i+1];
 			}
 			m_arrayLength--;
+			vsDelete( toBeDeleted );
 		}
 
 		if ( index < m_arrayLength )

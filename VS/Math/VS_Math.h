@@ -67,6 +67,8 @@ uint8_t		vsHighBitPosition( uint32_t value );
 // 64 -> 64
 uint32_t		vsHighBit( uint32_t value );
 
+uint32_t		vsCountSetBits( uint32_t value );
+
 class vsVector2D;
 class vsVector3D;
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v);
@@ -107,6 +109,10 @@ inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVe
 }
 float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB );
 float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB );
+
+// this finds the closest point between these two line segments, IGNORING Y.  Output
+// variables will have 'y' component set to zero.
+float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
 
 #endif // VS_MATH_H
 

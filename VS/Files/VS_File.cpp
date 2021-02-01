@@ -38,7 +38,9 @@
 
 #include "VS_TimerSystem.h"
 
+
 namespace {
+
 	class vsFileProfiler
 	{
 		vsString m_name;
@@ -211,6 +213,7 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
+static vsFile::openFailureHandler s_openFailureHandler = NULL;
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
@@ -291,8 +294,12 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		{
 			m_length = (size_t)PHYSFS_fileLength(m_file);
 		}
-
-		vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+		else
+		{
+			if ( s_openFailureHandler )
+				(*s_openFailureHandler)( filename );
+			vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+		}
 
 		bool shouldCache = (filename.find(".win") != vsString::npos) ||
 			(filename.find(".glsl") != vsString::npos);
@@ -354,6 +361,11 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+				vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
+				vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
+				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
 
 				int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 				decompressedSize += decompressedBytes;
@@ -587,6 +599,13 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 {
     result->Clear();
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
+	if ( !files ) // error!
+	{
+		PHYSFS_ErrorCode error = PHYSFS_getLastErrorCode();
+		const char* errorMsg = PHYSFS_getErrorByCode( error );
+		vsAssertF( files != NULL ,"PhysFS reports an error reading contents of directory '%s':  %s", dirName, errorMsg);
+		return 0;
+	}
 	char **i;
 	std::vector<char*> s;
 	for (i = files; *i != NULL; i++)
@@ -801,6 +820,17 @@ vsFile::Store( vsStore *s )
 		{
 			PHYSFS_sint64 n;
 			n = PHYSFS_readBytes( m_file, s->GetWriteHead(), s->BufferLength() );
+
+			if ( s->BufferLength() < (size_t)n )
+			{
+				// fatal error:  Let's trace out deets!
+				vsLog("Ut-oh, major file loading error has happened;  somehow we've read more bytes than expected and we have nowhere to store them?");
+				vsLog("We're about to die, probably, so here's some deets!");
+
+				vsLog("File:  %s", m_filename);
+				vsLog("Bytes read: %d", n);
+				vsLog("Space to store them: %d", s->BufferLength());
+			}
 			s->SetLength((size_t)n);
 		}
 		else
@@ -984,5 +1014,11 @@ bool
 vsFile::AtEnd()
 {
 	return m_store->BytesLeftForReading() == 0; // !m_file || PHYSFS_eof( m_file );
+}
+
+void
+vsFile::SetFileOpenFailureHandler( openFailureHandler handler )
+{
+	s_openFailureHandler = handler;
 }
 

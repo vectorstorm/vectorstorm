@@ -202,6 +202,26 @@ float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3
 	return distance;
 }
 
+float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA, vsVector3D *closestB )
+{
+	if ( closestA || closestB )
+	{
+		vsVector2D closestA2D, closestB2D;
+		float result = vsSqDistanceBetweenLineSegments( startA.XZ(), endA.XZ(),
+				startB.XZ(), endB.XZ(),
+				&closestA2D, &closestB2D );
+
+		if ( closestA )
+			closestA->Set( closestA2D.x, 0.f, closestA2D.y );
+		if ( closestB )
+			closestB->Set( closestB2D.x, 0.f, closestB2D.y );
+		return result;
+	}
+	return vsSqDistanceBetweenLineSegments( startA.XZ(), endA.XZ(),
+			startB.XZ(), endB.XZ(),
+			NULL, NULL );
+}
+
 bool vsLineSegmentsIntersect( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *where )
 {
 	vsVector2D deltaA = endA - startA;
@@ -296,5 +316,15 @@ float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2
 		*closestB = closestPointOnB;
 
 	return (closestPointOnB - closestPointOnA).SqLength();
+}
+
+// This code for counting bits is based on a StackOverflow answer, here:
+// https://stackoverflow.com/questions/109023/how-to-count-the-number-of-set-bits-in-a-32-bit-integer
+//
+uint32_t vsCountSetBits( uint32_t i )
+{
+	i = i - ((i >> 1) & 0x55555555);
+	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
 

@@ -18,6 +18,7 @@
 #include "VS_Material.h"
 #include "VS_RendererState.h"
 #include "VS_ShaderSuite.h"
+#include "VS_ShaderOptions.h"
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
@@ -77,6 +78,10 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsRenderBuffer *     m_currentTexelBuffer;
 	vsRenderBuffer *     m_currentColorBuffer;
 
+	vsArray<vsShaderOptions> m_optionsStack;
+
+	vsBox2D m_currentViewportPixels;
+
 	size_t m_lastShaderId;
 
 #define MAX_LIGHTS (4)
@@ -98,7 +103,6 @@ class vsRenderer_OpenGL3: public vsRenderer
 	int                  m_lightCount;
 	int                  m_bufferCount;
 	lightStatus          m_lightStatus[MAX_LIGHTS];
-	bool                 m_inOverlay;
 	bool                 m_usingNormalArray;
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
@@ -117,7 +121,8 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	void ResizeRenderTargetsToMatchWindow();
 
-	void	SetRenderTarget( vsRenderTarget *target );
+	void SetRenderTarget( vsRenderTarget *target );
+	void ClearState();
 
 public:
 

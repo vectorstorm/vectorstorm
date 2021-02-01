@@ -152,7 +152,7 @@ public:
 		return End();
 	}
 
-	bool	Contains( T item ) const
+	bool	Contains( const T item ) const
 	{
 		return (npos != FindEntry(item));
 	}

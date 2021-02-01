@@ -311,9 +311,11 @@ vsFloatImage::Copy( vsFloatImage *other )
 
 
 vsTexture *
-vsFloatImage::Bake()
+vsFloatImage::Bake( const vsString& name_in )
 {
-	vsString name = vsFormatString("FloatMakerTexture%d", m_textureMakerCount++);
+	vsString name(name_in);
+	if ( name.empty() )
+		name = vsFormatString("FloatMakerTexture%d", m_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);

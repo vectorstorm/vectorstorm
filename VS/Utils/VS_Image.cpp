@@ -65,17 +65,51 @@ vsImage::vsImage( const vsString &filename ):
 	vsStore *s = new vsStore( img.GetLength() );
 	img.Store(s);
 
+	vsCheck( img.GetLength() > 0, "Zero-length file??" );
+
 	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
 	vsDelete(s);
-	if ( s_allowLoadFailure )
+	if ( !loadedImage && s_allowLoadFailure )
 	{
 		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+
+		m_pixel = new uint32_t[1];
+		m_width = m_height = 1;
+		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
 	}
 	else
 	{
 		vsAssertF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+	}
+
+	if ( loadedImage )
+	{
+		LoadFromSurface(loadedImage);
+		SDL_FreeSurface(loadedImage);
+	}
+#endif
+}
+
+vsImage::vsImage( const vsStore &filedata ):
+	m_pixel(NULL),
+	m_pbo(0),
+	m_sync(0)
+{
+#if !TARGET_OS_IPHONE
+	vsCheck( filedata.Length() > 0, "Zero-length file??" );
+
+	SDL_RWops* rwops = SDL_RWFromMem( filedata.GetReadHead(), filedata.BytesLeftForReading() );
+	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+
+	if ( !loadedImage )
+	{
+		vsCheckF(loadedImage != NULL, "Unable to load texture from filedata: %s", IMG_GetError());
+
+		m_pixel = new uint32_t[1];
+		m_width = m_height = 1;
+		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
 	}
 
 	if ( loadedImage )
@@ -170,16 +204,32 @@ vsImage::Read( vsTexture *texture )
 				int rInd = rowStart + (x);
 				float rVal = pixels[rInd];
 
-				SetPixel(x,y, vsColor(rVal, rVal, rVal, 1.0f) );
+				SetPixel(x, (m_height-1)-y, vsColor(rVal, rVal, rVal, 1.0f) );
 			}
 		}
 		vsDeleteArray( pixels );
 	}
 	else
 	{
+		size_t imageSize = size_t(m_width) * size_t(m_height);
+		uint32_t* pixels = new uint32_t[imageSize];
 		// TODO:  THis would be faster if it was BGRA.
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_pixel);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		glBindTexture( GL_TEXTURE_2D, 0 );
+
+		for ( unsigned int y = 0; y < m_height; y++ )
+		{
+			int rowStart = y * m_width;
+
+			for ( unsigned int x = 0; x < m_width; x++ )
+			{
+				int rInd = rowStart + (x);
+				uint32_t pixel = pixels[rInd];
+
+				SetRawPixel(x, (m_height-1)-y, pixel);
+			}
+		}
+		vsDeleteArray( pixels );
 	}
 }
 
@@ -268,6 +318,7 @@ vsImage::AsyncReadIsReady()
 void
 vsImage::AsyncMap()
 {
+	vsAssert( m_pixel == NULL, "Non-null during pbo async mapping");
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	m_pixel = (uint32_t*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 	m_pixelCount = m_width * m_height;
@@ -358,9 +409,11 @@ vsImage::Copy( vsImage *other )
 }
 
 vsTexture *
-vsImage::Bake()
+vsImage::Bake( const vsString& name_in )
 {
-	vsString name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
+	vsString name(name_in);
+	if ( name.empty() )
+		name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);
@@ -415,6 +468,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 
 	// now lets copy our image data
 
+	vsAssert( m_pixel == NULL, "Non-null pixel storage during LoadFromSurface" );
 	m_pixelCount = w*h;
 	m_pixel = new uint32_t[m_pixelCount];
 
@@ -433,8 +487,14 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 			unsigned char b = ((unsigned char*)image->pixels)[bi];
 			unsigned char a = ((unsigned char*)image->pixels)[ai];
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			SetPixel(u,v, vsColor( r / 255.f, g / 255.f, b / 255.f, a / 255.f ) );
+			uint32_t pixel;
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
+			cp[0] = r;
+			cp[1] = g;
+			cp[2] = b;
+			cp[3] = a;
+
+			SetRawPixel( u, v, pixel );
 		}
 	}
 
@@ -476,13 +536,13 @@ vsImage::BakePNG(int compression)
 			int bi = ri+2;
 			int ai = ri+3;
 
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = GetPixel(u,(m_height-1)-v);
+			uint32_t pixel = GetRawPixel(u,v);
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+			((unsigned char*)image->pixels)[ri] = cp[0];
+			((unsigned char*)image->pixels)[gi] = cp[1];
+			((unsigned char*)image->pixels)[bi] = cp[2];
+			((unsigned char*)image->pixels)[ai] = cp[3];
 		}
 	}
 	//
@@ -545,12 +605,13 @@ vsImage::BakeJPG(int quality)
 			int ai = ri+3;
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			vsColor pixel = GetPixel(u,(m_height-1)-v);
+			uint32_t pixel = GetRawPixel(u,(m_height-1)-v);
+			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel.r);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel.g);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel.b);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255.f * pixel.a);
+			((unsigned char*)image->pixels)[ri] = cp[0];
+			((unsigned char*)image->pixels)[gi] = cp[1];
+			((unsigned char*)image->pixels)[bi] = cp[2];
+			((unsigned char*)image->pixels)[ai] = cp[3];
 		}
 	}
 	//

@@ -311,7 +311,7 @@ vsSocketTCP::DoPoll(float maxSleepDuration)
 
 					if ( connection->m_receiveBuffer->BytesLeftForReading() )
 					{
-						vsLog("vsSocketTCP Socket %d:  bytes left for reading.", socket);
+						// vsLog("vsSocketTCP Socket %d:  bytes left for reading.", socket);
 					}
 				}
 				if ( m_pollfds[p].revents & POLLOUT )

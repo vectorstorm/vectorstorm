@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 3.1 FATAL_ERROR )
 if (DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel")
 else()
@@ -25,19 +25,15 @@ option( VS_PRISTINE_BINDINGS "If enabled, we clear bindings after using them" NO
 #
 set( OpenGL_GL_PREFERENCE "GLVND" )
 find_package(OpenGL REQUIRED)
-find_library(SDL_LIBRARY SDL2 REQUIRED
-	PATH c:/src/buildzone/lib/x86/)
-find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED
-	PATH c:/src/buildzone/lib/x86/)
+find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED )
 find_package(ZLIB)
 # find_library(ZLIB_LIBRARY zlib REQUIRED)
 
 if ( USE_SDL_SOUND )
-	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED
-		PATH c:/src/buildzone/lib/x86/)
+	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED )
 endif()
-find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED
-	PATH c:/src/buildzone/include)
+find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED )
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 	add_definitions("-D IS_64BIT")
@@ -55,56 +51,42 @@ if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
 	# find_library(GLEW_LIBRARY GLEW REQUIRED)
-	find_package(GLEW REQUIRED)
+	if(APPLE)
+		find_library(GLEW_LIBRARIES glew REQUIRED)
+	else(APPLE)
+		find_package(GLEW REQUIRED)
+	endif(APPLE)
+
 	find_library(PTHREAD_LIBRARY pthread)
+
 else()
-	find_library(PHYSFS_LIBRARY physfs REQUIRED
-		PATH c:/src/buildzone/physfs-2.0.3/build/Release)
-	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED
-		PATH c:/src/buildzone/physfs-2.0.3/)
-	# find_library(SDLMAIN_LIBRARY SDL2main REQUIRED
-	# 	PATH c:/src/buildzone/lib/x86/)
+	find_library(PHYSFS_LIBRARY physfs REQUIRED)
+	find_path(PHYSFS_INCLUDE_DIR physfs.h REQUIRED)
 	if ( MSVC )
 		add_definitions("-D _CRT_SECURE_NO_WARNINGS")
 		add_definitions("-D MSVC")
 		# MSVC links glew32 in.  MinGW compiles it in.
 		find_library(GLEW_LIBRARIES glew32 REQUIRED
-				PATH c:/src/buildzone/lib/Release/Win32)
+			PATH ${ANNEX}/lib )
 	endif()
 endif()
-find_path(GLEW_INCLUDE_DIR GL/glew.h
-	PATH /usr/include /usr/local/include
-	c:/src/buildzone/include)
+find_path(GLEW_INCLUDE_DIR GL/glew.h)
 
 if (USE_BOX2D_PHYSICS)
-	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED
-		PATH /usr/lib /usr/local/lib ../
-		c:/src/buildzone/Box2D/Build/vs2010/bin/Release)
-	find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED
-		PATH /usr/lib /usr/local/lib ../
-		c:/src/buildzone/Box2D/Build/vs2010/bin/Debug)
-	find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h
-		PATH /usr/include /usr/local/include
-		/usr/include/Box2D /usr/local/include/Box2D
-		c:/src/buildzone/Box2D_v2.3.0/Box2D/ )
+	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED)
+	find_library(BOX2D_LIBRARY_DEBUG Box2D REQUIRED)
+	find_path(BOX2D_INCLUDE_DIR Box2D/Box2D.h)
 endif()
 
-find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED
-	PATH c:/src/buildzone/lib/x86 )
+find_path(ZLIB_INCLUDE_DIRS zlib.h REQUIRED)
 if(WIN32)
-	find_file(ZLIB_DLL zlib1.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(PNG_DLL libpng16-16.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(JPEG_DLL libjpeg-9.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(SDL2_DLL SDL2.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
-	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED
-		PATH c:/src/buildzone/lib/x86 )
+	find_file(ZLIB_DLL zlib1.dll REQUIRED)
+	find_file(PNG_DLL libpng16-16.dll REQUIRED)
+	find_file(JPEG_DLL libjpeg-9.dll REQUIRED)
+	find_file(SDL2_DLL SDL2.dll REQUIRED)
+	find_file(SDL2_IMAGE_DLL SDL2_image.dll REQUIRED)
 	if ( USE_SDL_SOUND )
-		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED
-			PATH c:/src/buildzone/lib/x86 )
+		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED)
 	endif()
 
 	if ( MINGW )
@@ -293,12 +275,18 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_Shader.h
 	VS/Graphics/VS_ShaderCache.cpp
 	VS/Graphics/VS_ShaderCache.h
+	VS/Graphics/VS_ShaderOptions.cpp
+	VS/Graphics/VS_ShaderOptions.h
 	VS/Graphics/VS_ShaderRef.cpp
 	VS/Graphics/VS_ShaderRef.h
 	VS/Graphics/VS_ShaderSuite.cpp
 	VS/Graphics/VS_ShaderSuite.h
+	VS/Graphics/VS_ShaderUniformRegistry.cpp
+	VS/Graphics/VS_ShaderUniformRegistry.h
 	VS/Graphics/VS_ShaderValues.cpp
 	VS/Graphics/VS_ShaderValues.h
+	VS/Graphics/VS_ShaderVariant.cpp
+	VS/Graphics/VS_ShaderVariant.h
 	VS/Graphics/VS_Sprite.cpp
 	VS/Graphics/VS_Sprite.h
 	VS/Graphics/VS_Texture.cpp
@@ -409,14 +397,22 @@ set(UTILS_SOURCES
 	VS/Utils/VS_HashTable.h
 	#VS/Utils/VS_HashTableStore.cpp
 	VS/Utils/VS_HashTableStore.h
+	VS/Utils/VS_IntHashTable.cpp
+	VS/Utils/VS_IntHashTable.h
 	VS/Utils/VS_FloatImage.cpp
 	VS/Utils/VS_FloatImage.h
+	VS/Utils/VS_HalfFloatImage.cpp
+	VS/Utils/VS_HalfFloatImage.h
+	VS/Utils/VS_HalfIntImage.cpp
+	VS/Utils/VS_HalfIntImage.h
 	VS/Utils/VS_Image.cpp
 	VS/Utils/VS_Image.h
 	VS/Utils/VS_LinkedList.h
 	VS/Utils/VS_LinkedListStore.h
 	VS/Utils/VS_LocalisationTable.cpp
 	VS/Utils/VS_LocalisationTable.h
+	VS/Utils/VS_LocString.cpp
+	VS/Utils/VS_LocString.h
 	VS/Utils/VS_Log.cpp
 	VS/Utils/VS_Log.h
 	#VS/Utils/VS_Menu.cpp
@@ -438,6 +434,9 @@ set(UTILS_SOURCES
 	VS/Utils/VS_SingletonManager.cpp
 	VS/Utils/VS_SingletonManager.h
 	VS/Utils/VS_SingleFloatImage.cpp
+	VS/Utils/VS_SingleFloatImage.h
+	VS/Utils/VS_Sleep.cpp
+	VS/Utils/VS_Sleep.h
 	VS/Utils/VS_Spring.cpp
 	VS/Utils/VS_Spring.h
 	VS/Utils/VS_String.cpp

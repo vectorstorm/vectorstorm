@@ -38,6 +38,17 @@
 
 extern SDL_Window *g_sdlWindow;
 
+namespace
+{
+	// the modifier keys we should check for key combos.
+	// Use L/R GUI on Mac ("command" key), or Control on everything else.
+	const int c_shortcutModifierKeys =
+#if defined( __APPLE_CC__ )
+		KMOD_LGUI | KMOD_RGUI;
+#else
+		KMOD_LCTRL | KMOD_RCTRL;
+#endif // defined( __APPLE_CC__ )
+}
 
 vsInput::vsInput():
 	m_stringMode(false),
@@ -77,6 +88,7 @@ vsInput::Init()
 
 	m_fingersDown = 0;
 	m_fingersDownTimer = 0.f;
+	m_timeSinceAnyInput = std::numeric_limits<float>::max();
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
@@ -629,13 +641,13 @@ vsInput::Save()
 }
 
 void
-vsInput::SetStringMode(bool mode, ValidationType vt)
+vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt)
 {
-	SetStringMode(mode, -1, vt);
+	SetStringMode(mode, -1, box, vt);
 }
 
 void
-vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
+vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationType vt)
 {
 	if ( mode != m_stringMode )
 	{
@@ -648,6 +660,17 @@ vsInput::SetStringMode(bool mode, int maxLength, ValidationType vt)
 			m_stringModeMaxLength = maxLength;
 			m_stringValidationType = vt;
 			SetStringModeSelectAll(false);
+
+			SDL_Rect rect;
+			rect.x = box.GetMin().x;
+			rect.y = box.GetMin().y;
+			rect.w = box.Width();
+			rect.h = box.Height();
+
+			SDL_SetTextInputRect(&rect);
+
+			// bool hasScreenInput = SDL_HasScreenKeyboardSupport();
+			// vsLog("Has screen input: %s", hasScreenInput ? "true" : "false");
 		}
 		else
 		{
@@ -829,6 +852,8 @@ vsInput::Update(float timeStep)
 {
 	UNUSED(timeStep);
 
+	m_timeSinceAnyInput += timeStep;
+
 	// clear 'was pressed' and 'was released' flags
 	//
 	for ( int i = 0; i < m_axis.ItemCount(); i++ )
@@ -927,12 +952,20 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_TEXTINPUT:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModePaused )
 							HandleTextInput(event.text.text);
 						break;
 					}
 					break;
 				case SDL_TEXTEDITING:
+					m_timeSinceAnyInput = 0.f;
+
+					// vsLog("TextEditing: '%s', pos %d len %d",
+					// 		event.edit.text,
+					// 		event.edit.start,
+					// 		event.edit.length );
+
 					// This event is for partial, in-progress code points
 					// which haven't yet settled on a final glyph.  For now,
 					// let's just ignore them.
@@ -951,6 +984,7 @@ vsInput::Update(float timeStep)
 					break;
 				case SDL_MOUSEWHEEL:
 					{
+						m_timeSinceAnyInput = 0.f;
 						// TODO:  FIX!
 						float wheelAmt = (float)event.wheel.y;
 						if ( m_fingersDownTimer > 0.f )
@@ -967,6 +1001,7 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_MOUSEMOTION:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( event.motion.which == SDL_TOUCH_MOUSEID ) // touch event;  ignore!
 							break;
 						m_mousePos = vsVector2D((float)event.motion.x,(float)event.motion.y);
@@ -981,16 +1016,19 @@ vsInput::Update(float timeStep)
 						}
 						else
 						{
-							m_mouseMotion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+							vsVector2D motion = vsVector2D((float)event.motion.xrel,(float)event.motion.yrel);
+							motion.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
+							motion.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
 
-							m_mouseMotion.x /= (.5f * vsScreen::Instance()->GetTrueWidth());
-							m_mouseMotion.y /= (.5f * vsScreen::Instance()->GetTrueHeight());
+							m_mouseMotion += motion;
+
 							// TODO:  CORRECT FOR ORIENTATION ON IOS DEVICES
 						}
 						break;
 					}
 				case SDL_KEYDOWN:
 					{
+						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModeClearing )
 						{
 							if ( m_stringMode )
@@ -1005,12 +1043,14 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_KEYUP:
 					{
+						m_timeSinceAnyInput = 0.f;
 						HandleKeyUp(event);
 						break;
 					}
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 					{
+						m_timeSinceAnyInput = 0.f;
 						HandleMouseButtonEvent(event);
 						break;
 					}
@@ -1026,6 +1066,15 @@ vsInput::Update(float timeStep)
 							break;
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 							{
+								// in ppractice, we seem to be receiving this event
+								// when alt-tabbing into a fullscreen window.  In
+								// theory, this happens after the window size changes
+								// for any reason.  If that reason was due to the OS,
+								// then we'll get a SDL_WINDOWEVENT_SIZE_CHANGED
+								// event right afterward.  In the alt-tabbing case,
+								// though, we don't seem to receive the
+								// SDL_WINDOWEVENT_RESIZED event.
+								vsLog("SizeChanged EVENT:  %d, %d", event.window.data1, event.window.data2);
 								vsSystem::Instance()->CheckVideoMode();
 								break;
 							}
@@ -1035,7 +1084,7 @@ vsInput::Update(float timeStep)
 									m_suppressResizeEvent = false;
 								else
 								{
-									// vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
+									vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
 									// vsSystem::Instance()->CheckVideoMode();
 									int windowWidth = event.window.data1;
 									int windowHeight = event.window.data2;
@@ -1071,13 +1120,13 @@ vsInput::Update(float timeStep)
 							m_mouseIsInWindow = false;
 							break;
 						case SDL_WINDOWEVENT_MINIMIZED:
-							// vsLog("Minimized");
+							vsLog("Minimized");
 							break;
 						case SDL_WINDOWEVENT_MAXIMIZED:
-							// vsLog("Maximized");
+							vsLog("Maximized");
 							break;
 						case SDL_WINDOWEVENT_RESTORED:
-							// vsLog("Restored");
+							vsLog("Restored");
 							break;
 							/*
 						case SDL_WINDOWEVENT_TAKE_FOCUS:
@@ -1812,7 +1861,19 @@ vsInput::HandleTextInput( const vsString& _input )
 		utf8::iterator<std::string::iterator> input( inputString.begin(), inputString.begin(), inputString.end() );
 		int inputLength = utf8::distance(inputString.begin(), inputString.end());
 		for ( int i = 0; i < inputLength; i++ )
-			utf8::append( *(input++), back_inserter(m_stringModeString) );
+		{
+			// do not add '{' or '}' characters, as those are used exclusively
+			// by our localisation system.  (TODO:  Should I use a different
+			// set of characters?)
+			if ((*input) == '{' || (*input) == '}')
+			{
+				input++;
+			}
+			else
+			{
+				utf8::append( *(input++), back_inserter(m_stringModeString) );
+			}
+		}
 
 		// now add the end of our original input string;  anything which was past
 		// the end of the cursor selection
@@ -1971,7 +2032,7 @@ vsInput::StringModeCancel()
 
 		m_stringModeUndoStack.Clear();
 	}
-	SetStringMode(false);
+	SetStringMode(false, vsBox2D());
 }
 
 bool
@@ -2009,7 +2070,13 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_BACKSPACE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				{
+					// delete the stuff that's selected.  Which is equivalent
+					// to inserting nothing "".
+					HandleTextInput("");
+				}
+				else
 				{
 					if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
 						return;
@@ -2041,107 +2108,181 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						vsLog("Failed to handle backspace!");
 					}
 				}
+			}
+			break;
+		case SDLK_DELETE:
+			if ( m_stringMode && m_stringModeString.length() != 0 )
+			{
+				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				{
+					// delete the stuff that's selected.  Which is equivalent
+					// to inserting nothing "".
+					HandleTextInput("");
+				}
 				else
 				{
-					// delete the stuff that's selected.  WHich is equivalent to inserting nothing "".
-					HandleTextInput("");
+					int glyphCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+					// Check if we're deleting forward from last glyph
+					if ( m_stringModeCursorFirstGlyph == glyphCount )
+						return;
+					if ( !m_backspaceMode )
+						StringModeSaveUndoState();
+
+					try
+					{
+						// delete one character
+						vsString oldString = m_stringModeString;
+						m_stringModeString = vsEmptyString;
+						// Okay.  copy all the glyphs up to the cursor.
+						// then skip one and copy the rest.
+						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+						int inLength = utf8::distance(oldString.begin(), oldString.end());
+						for ( int i = 0; i < inLength; i++ )
+						{
+							if ( i != m_stringModeCursorFirstGlyph )
+								utf8::append( *in, std::back_inserter(m_stringModeString) );
+							in++;
+						}
+
+						m_backspaceMode = true;
+						m_undoMode = false;
+						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+					}
+					catch(...)
+					{
+						vsLog("Failed to handle backspace!");
+					}
+				}
+			}
+			break;
+		case SDLK_UP:
+			{
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, 0, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( 0, true );
+				}
+			}
+			break;
+		case SDLK_DOWN:
+			{
+				int len = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				{
+					// shift is held down;  move the floating glyph, but not the anchor glyph!
+					SetStringModeCursor( m_stringModeCursorAnchorGlyph, len+1, true );
+				}
+				else
+				{
+					// shift isn't down;  move the anchor glyph and collapse any selection
+					SetStringModeCursor( len+1, true );
 				}
 			}
 			break;
 		case SDLK_LEFT:
 			{
-				if ( event.key.keysym.mod & KMOD_LSHIFT ||
-						event.key.keysym.mod & KMOD_RSHIFT )
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating glyph, but not the anchor glyph!
 					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+					// shift isn't down
+					// if it's a single insertion point
+					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					{
+						//move the anchor glyph and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+					}
+					else
+					{
+						//collapse selection to the leftmost glyph in the selection
+						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+					}
 				}
 			}
 			break;
 		case SDLK_RIGHT:
 			{
-				if ( event.key.keysym.mod & KMOD_LSHIFT ||
-						event.key.keysym.mod & KMOD_RSHIFT )
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating glyph, but not the anchor glyph!
 					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					{
+						// shift isn't down;  move the anchor glyph and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+					}
+					else
+					{
+						//collapse selection to the last glyph in the selection
+						SetStringModeCursor( m_stringModeCursorLastGlyph, true );
+					}
 				}
 			}
 			break;
+		case SDLK_a:
+			{
+				// select all
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					SetStringModeSelectAll(true);
+				}
+				break;
+			}
 		case SDLK_v:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
+				// paste
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					vsString clipboardText = SDL_GetClipboardText();
+					if ( !clipboardText.empty() )
 					{
-						vsString clipboardText = SDL_GetClipboardText();
-						if ( !clipboardText.empty() )
-						{
-							StringModeSaveUndoState();
-							HandleTextInput( clipboardText );
-						}
+						StringModeSaveUndoState();
+						HandleTextInput( clipboardText );
 					}
+				}
 				break;
 			}
 		case SDLK_c:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
-					{
-						// extract the currently selected text
-						vsString sel = GetStringModeSelection();
-						if ( !sel.empty() )
-							SDL_SetClipboardText( sel.c_str() );
-					}
+				// copy
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					// extract the currently selected text
+					vsString sel = GetStringModeSelection();
+					if ( !sel.empty() )
+						SDL_SetClipboardText( sel.c_str() );
+				}
 				break;
 			}
 		case SDLK_x:
 			{
-#if defined( __APPLE_CC__ )
-				if ( event.key.keysym.mod & KMOD_LGUI ||
-						event.key.keysym.mod & KMOD_RGUI )
-#else
-					if ( event.key.keysym.mod & KMOD_LCTRL ||
-							event.key.keysym.mod & KMOD_RCTRL )
-#endif
-					{
-						// extract the currently selected text
-						StringModeSaveUndoState();
-						vsString sel = GetStringModeSelection();
-						if ( !sel.empty() )
-							SDL_SetClipboardText( sel.c_str() );
-						HandleTextInput("");
-					}
+				// cut
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				{
+					// extract the currently selected text
+					StringModeSaveUndoState();
+					vsString sel = GetStringModeSelection();
+					if ( !sel.empty() )
+						SDL_SetClipboardText( sel.c_str() );
+					HandleTextInput("");
+				}
 				break;
 			}
 		case SDLK_z:
 			{
-#if defined( __APPLE_CC__ )
-				const int undoModifierKeys = KMOD_LGUI | KMOD_RGUI;
-#else
-				const int undoModifierKeys = KMOD_LCTRL | KMOD_RCTRL;
-#endif // defined( __APPLE_CC__ )
-
-				if ( event.key.keysym.mod & undoModifierKeys )
+				// undo
+				if ( event.key.keysym.mod & c_shortcutModifierKeys )
 					StringModeUndo();
 				break;
 			}
@@ -2152,7 +2293,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			if ( m_stringMode )
 			{
 				StringModeSaveUndoState();
-				SetStringMode(false);
+				SetStringMode(false, vsBox2D());
 			}
 			break;
 		case SDLK_ESCAPE:
@@ -2482,7 +2623,30 @@ vsInput::GetBindDescription( const DeviceControl& dc )
 				return "Wheel Down";
 			break;
 		case CT_Keyboard:
-			return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+			// Okay, here's the thing.  Our bindings are done with "SCANCODES",
+			// which means that if you change your keyboard layout, the bindings
+			// remain in the same POSITION on the newly mapped keys.  That's
+			// great.  It means that we can just say "use WASD" in our code, and
+			// it'll use the keys in those position, no matter what keyboard is
+			// in use.
+			//
+			// HOWEVER, when we're asking for a description for the binding, we
+			// probably don't want to actually use the scancode name.  Instead,
+			// we want to convert through the keyboard layout and output the actual
+			// key name!  (Right now, as I type this, the only thing anywhere in
+			// all my games that uses this function are the control binding
+			// interface and tooltips in MMORPG Tycoon 2, which definitely do both
+			// want the key name, not the scancode name.  So let's return
+			// that, instead.)
+			//
+			// PREVIOUSLY:
+			// return SDL_GetScancodeName( (SDL_Scancode)dc.id );
+
+			{
+				SDL_Keycode keycode = SDL_GetKeyFromScancode( (SDL_Scancode)dc.id );
+				return SDL_GetKeyName( keycode );
+			}
+
 			break;
 		default:
 			break;
