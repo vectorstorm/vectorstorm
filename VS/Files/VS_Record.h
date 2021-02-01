@@ -32,13 +32,11 @@ class vsRecord
 	vsArray<vsRecord*>	m_childList;
 	vsRecord *	m_lastChild;
 
-	vsPool<vsRecord> *m_pool;
+	// vsPool<vsRecord> *m_pool;
 
 	bool		m_inBlock;
 	bool		m_hasLabel;
 	bool		m_lineIsOpen;
-
-	bool		m_writeType;
 
 	float		GetArg(int i);
 
@@ -54,7 +52,7 @@ public:
 	vsRecord( const vsString& fromString );
 	~vsRecord();
 
-	void		SetPool( vsPool<vsRecord> *pool ) { m_pool = pool; }
+	// void		SetPool( vsPool<vsRecord> *pool ) { m_pool = pool; }
 	void		Init();
 
 	bool		Parse( vsFile *file );				// attempt to fill out this vsRecord from a vsString
