@@ -57,6 +57,7 @@ vsModelInstanceLodGroup::TakeInstancesFromGroup( vsModelInstanceLodGroup *otherG
 void
 vsModelInstanceLodGroup::UpdateInstance( vsModelInstance *inst, bool show )
 {
+	vsScopedLock lock( m_mutex );
 	vsAssert(inst->lodGroup == this, "Wrong group??");
 
 	if ( show )
