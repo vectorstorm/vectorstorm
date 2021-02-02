@@ -72,6 +72,7 @@ vsShader::vsShader( const vsString &vertexShader,
 	m_vertexShaderText(vertexShader),
 	m_fragmentShaderText(fragmentShader),
 	m_variantBitsSupported(0L),
+	m_current(NULL),
 	m_system(false),
 	m_litBool(lit),
 	m_textureBool(texture)
@@ -79,16 +80,15 @@ vsShader::vsShader( const vsString &vertexShader,
 	FigureOutAvailableVariants( vertexShader );
 	FigureOutAvailableVariants( fragmentShader );
 
-	GL_CHECK_SCOPED("Shader");
-	m_current = new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits, vFilename, fFilename );
+	// GL_CHECK_SCOPED("Shader");
+	m_current = NULL;//new vsShaderVariant( vertexShader, fragmentShader, lit, texture, variantBits, vFilename, fFilename );
 	// Compile( vertexShader, fragmentShader, lit, texture, m_variantBits );
 	// m_current->Compile( vertexShader, fragmentShader, lit, texture, variantBits );
-
-	m_variant.AddItem(m_current);
+	// m_variant.AddItem(m_current);
 
 	// make us compile up all requested bit patterns.
-	for ( int i = 0; i < g_shaderPreCompileBitPatterns.ItemCount(); i++ )
-		SetForVariantBits( g_shaderPreCompileBitPatterns[i] & m_variantBitsSupported );
+	// for ( int i = 0; i < g_shaderPreCompileBitPatterns.ItemCount(); i++ )
+	// 	SetForVariantBits( g_shaderPreCompileBitPatterns[i] & m_variantBitsSupported );
 }
 
 vsShader::~vsShader()
@@ -272,7 +272,7 @@ vsShader::SetForVariantBits( uint32_t bits )
 {
 	vsAssert( (bits & m_variantBitsSupported) == bits, "Client asked for bits we don't support??" );
 
-	if ( m_current->GetVariantBits() == bits )
+	if ( m_current && m_current->GetVariantBits() == bits )
 		return; // nothing to do!
 	else
 	{

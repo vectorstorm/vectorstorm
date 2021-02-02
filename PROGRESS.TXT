@@ -50,11 +50,15 @@ vsRenderTarget already mostly works in the 'master' branch;  it already has a
 "defer" concept which builds the render target later.  We'd just make that
 behaviour the default and remove the option, I imagine.
 
-Finally, vsShader (and vsShaderVariant) is the last big issue remaining.  These
-probably just become stubs, with the current code going over into
-vsShader_OpenGL3 and vsShaderVariant_OpenGL3, where they can't be touched by
-the client.
+vsShader (and vsShaderVariant) are mostly converted over to compile
+shaders on demand instead of immediately on creation, which gets around these
+problems.
 
+Remaining known issue is the "AsyncRead" functionality on vs*Image classes,
+used for pulling OpenGL texture data back to the CPU side, which right now just
+issue those commands instantly, but should really be handled via the OpenGL3
+renderer maybe, on the main thread.  We'd need to figure out a nice way to defer
+that to the main thread somehow.
 
 
 

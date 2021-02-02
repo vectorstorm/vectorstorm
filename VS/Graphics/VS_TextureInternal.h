@@ -35,6 +35,10 @@ class vsTextureInternal : public vsResource
 
 	bool		m_premultipliedAlpha;
 
+	bool		m_clampU;
+	bool		m_clampV;
+	bool		m_applyClamp;
+
 	vsRenderBuffer *m_tbo;
 	vsRenderTarget *m_renderTarget; // this is NOT owned by us!
 	int				m_surfaceBuffer; // which buffer within the renderTarget was this?

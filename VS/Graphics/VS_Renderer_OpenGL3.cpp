@@ -985,6 +985,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		// only ask for bits that are actually supported by this shader
 		shaderOptionsValue &= m_currentShader->GetVariantBitsSupported();
+		m_currentShader->SetForVariantBits( shaderOptionsValue );
 
 		if ( m_lastShaderId != m_currentShader->GetShaderId() )
 			needsReset = true;
@@ -993,7 +994,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		if ( needsReset )
 		{
-			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			m_lastShaderId = m_currentShader->GetShaderId();

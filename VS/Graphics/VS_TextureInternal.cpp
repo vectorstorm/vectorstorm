@@ -30,6 +30,9 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	vsResource(filename_in),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -49,6 +52,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -65,6 +71,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -81,6 +90,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -97,6 +109,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *imag
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -113,6 +128,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, 
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(true),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(NULL),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -130,6 +148,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	vsResource(name),
 	m_texture(0),
 	m_premultipliedAlpha(false),
+	m_clampU(false),
+	m_clampV(false),
+	m_applyClamp(false),
 	m_tbo(buffer),
 	m_renderTarget(NULL),
 	m_surfaceBuffer(0),
@@ -167,6 +188,13 @@ vsTextureInternal::PrepareToBind()
 			m_renderTarget->ResolveDepth();
 		else
 			m_renderTarget->Resolve(m_surfaceBuffer);
+	}
+	if ( m_applyClamp )
+	{
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+		m_applyClamp = false;
 	}
 }
 
@@ -624,8 +652,11 @@ vsTextureInternal::SafeAddColour(uint32_t acolour, uint32_t bcolour)
 void
 vsTextureInternal::ClampUV( bool u, bool v )
 {
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, u ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, v ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	m_clampU = u;
+	m_clampV = v;
+	m_applyClamp = true;
+	// glBindTexture(GL_TEXTURE_2D, m_texture);
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, u ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, v ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 }
 

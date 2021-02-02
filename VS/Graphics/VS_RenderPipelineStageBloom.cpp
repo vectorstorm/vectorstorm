@@ -29,6 +29,7 @@ public:
 	vsBloomBlurShader():
 		vsShader(row3v, row3f, false, false)
 	{
+		SetForVariantBits(0);
 		m_locCoefficients = glGetUniformLocation(GetShaderId(), "coefficients");
 		// m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
 		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
