@@ -1,0 +1,60 @@
+Progress file for 'deferred_vbo' branch.  If you see this file in any other branch,
+please yell at Trevor;  it shouldn't be there!
+
+This is documenting the current ideas and state of this branch.
+
+OVERALL GOAL:
+
+Idea is that I want to decouple most of our rendering-related classes from
+OpenGL, so that background threads can create objects and have them all be
+loaded into OpenGL at some point later on from the main thread.
+
+This would permit us to get rid of the 'loading thread' shared OpenGL context.
+And also someday maybe port the engine to another rendering api?  (Vulkan,
+Metal, etc)
+
+It would make it safe to do any sort of rendering state creation/destruction
+from any thread at any time;  it would then all just get resolved into OpenGL
+calls from the main thread, at render time, instead of having immediately and
+requiring an actual OpenGL context attached to the thread which then would need
+to be thinking about sync between contexts.
+
+CURRENT STATE:
+
+vsRenderBuffer (wrapper around VBOs) is converted to work deferred for
+creation/update.  It loads data into OpenGL at bind time during rendering,
+watching for a 'dirty' flag to tell it when that needs to be done.  The only
+thing *not* working is shutdown, which destroys GL stuff instantly.
+
+My theory is that I need to make a vsRenderBuffer_OpenGL3 class, which is
+managed by the vsRenderer_OpenGL3 instance, to hold the GL data.  So when the
+vsRenderBuffer gets destroyed, the Renderer_OpenGL3 knows to destroy the
+associated vsRenderBuffer_OpenGL3.  Or something like that.  And then all the
+OpenGL code can be migrated over there as well, leaving the vsRenderBuffer with
+only the client-side data.
+
+vsTextureInternal (and similar) classes are all converted to work deferred for
+creation/update.  When called by a client, they store the image to load into
+OpenGL in a vsImage class to hold the image data, and the main thread moves the
+data over to OpenGL when the texture gets bound for drawing.  There's a bunch
+more repetition in the code for different image formats than I really like(I
+often feel like the various vs*Image classes should be just one class), but it
+all works.  These technically have the same problem as the vsRenderBuffer re:
+destroying them causing the OpenGL objects to be destroyed instantly, instead
+of happening later from the main thread.  But since client code can't normally
+destroy these directly, maybe that's not a critical problem?  It should be
+solved the same way as the vsRenderBuffer, though;  need a
+vsTextureInternal_OpenGL3 class for holding the GL data.
+
+vsRenderTarget already mostly works in the 'master' branch;  it already has a
+"defer" concept which builds the render target later.  We'd just make that
+behaviour the default and remove the option, I imagine.
+
+Finally, vsShader (and vsShaderVariant) is the last big issue remaining.  These
+probably just become stubs, with the current code going over into
+vsShader_OpenGL3 and vsShaderVariant_OpenGL3, where they can't be touched by
+the client.
+
+
+
+
