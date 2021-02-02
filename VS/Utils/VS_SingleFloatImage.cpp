@@ -409,11 +409,16 @@ vsSingleFloatImage::BakePNG(int compression)
 
 			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
 			float pixel = GetPixel(u,(m_height-1)-v);
+			uint8_t *pp = reinterpret_cast<uint8_t*>(&pixel);
+			((unsigned char*)image->pixels)[ri] = pp[0];
+			((unsigned char*)image->pixels)[gi] = pp[1];
+			((unsigned char*)image->pixels)[bi] = pp[2];
+			((unsigned char*)image->pixels)[ai] = pp[3];
 
-			((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel);
-			((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel);
-			((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel);
-			((unsigned char*)image->pixels)[ai] = (unsigned char)(255);
+			// ((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel);
+			// ((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel);
+			// ((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel);
+			// ((unsigned char*)image->pixels)[ai] = (unsigned char)(255);
 		}
 	}
 	//
