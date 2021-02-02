@@ -189,13 +189,13 @@ vsTextureInternal::PrepareToBind()
 		else
 			m_renderTarget->Resolve(m_surfaceBuffer);
 	}
-	if ( m_applyClamp )
-	{
-		glBindTexture(GL_TEXTURE_2D, m_texture);
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		m_applyClamp = false;
-	}
+	// if ( m_applyClamp )
+	// {
+	// 	glBindTexture(GL_TEXTURE_2D, m_texture);
+	// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+	// 	m_applyClamp = false;
+	// }
 }
 
 /* Quick utility function for texture creation */
