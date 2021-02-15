@@ -63,6 +63,8 @@ public:
 		m_resource->ReleaseReference();
 		m_resource = b.m_resource;
 	}
+
+	const vsString &	GetName() const { return m_resource->GetName(); }
 };
 
 
