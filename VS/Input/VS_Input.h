@@ -261,6 +261,7 @@ public:
 		Validation_None,
 		Validation_Filename,
 		Validation_Numeric,
+		Validation_PositiveNumeric,
 		Validation_Integer,
 		Validation_PositiveInteger
 	};

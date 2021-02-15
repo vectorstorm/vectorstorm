@@ -1962,6 +1962,31 @@ vsInput::ValidateString()
 					}
 				}
 			}
+			else if ( m_stringValidationType == Validation_PositiveNumeric )
+			{
+				vsString validString = "0123456789";
+				// we support only [0-9].
+				//
+				// We also support up to one '.', and we may have a '-' on the front.
+
+				if ( *it == '.' )
+				{
+					if ( hasDot )
+						valid = false;
+					else
+						hasDot = true;
+				}
+				else
+				{
+					valid = false;
+					utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+					for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+					{
+						if ( *it == *(vit++) )
+							valid = true;
+					}
+				}
+			}
 			else if ( m_stringValidationType == Validation_Filename )
 			{
 				vsString invalidString = "|!@#$%^&*()_{}][/\\.,';\":>?<";
