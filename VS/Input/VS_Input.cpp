@@ -1904,8 +1904,10 @@ vsInput::ValidateString()
 
 		int length = utf8::distance(oldString.begin(), oldString.end());
 
-		bool hasDot = false;
+		bool hasDecimalSeparator = false;
 		int glyphsSoFar = 0;
+
+		extern vsString s_decimalSeparator;
 
 		for ( int i = 0; i < length; i++ )
 		{
@@ -1944,12 +1946,12 @@ vsInput::ValidateString()
 
 				if ( *it == '-' && i == 0 )
 					valid = true;
-				else if ( *it == '.' )
+				else if ( *it == (uint8_t)(s_decimalSeparator[0]) )
 				{
-					if ( hasDot )
+					if ( hasDecimalSeparator )
 						valid = false;
 					else
-						hasDot = true;
+						hasDecimalSeparator = true;
 				}
 				else
 				{
@@ -1969,12 +1971,12 @@ vsInput::ValidateString()
 				//
 				// We also support up to one '.', and we may have a '-' on the front.
 
-				if ( *it == '.' )
+				if ( *it == (uint8_t)(s_decimalSeparator[0]) )
 				{
-					if ( hasDot )
+					if ( hasDecimalSeparator )
 						valid = false;
 					else
-						hasDot = true;
+						hasDecimalSeparator = true;
 				}
 				else
 				{

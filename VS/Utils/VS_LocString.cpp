@@ -178,7 +178,7 @@ vsLocString::AsString() const
 }
 
 static vsString s_thousandsSeparator(",");
-static vsString s_decimalSeparator(".");
+vsString s_decimalSeparator(".");
 
 static vsString DoFormatNumber( int value )
 {
