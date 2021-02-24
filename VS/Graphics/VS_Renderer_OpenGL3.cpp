@@ -1133,6 +1133,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetMaterial:
 				{
 					vsMaterial *material = (vsMaterial *)op->data.p;
+					vsAssert(material, "SetMaterial called with no material?");
 					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
 					m_currentColors = NULL;
@@ -1724,6 +1725,7 @@ namespace
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
+	vsAssert( material, "SetMaterialInternal called with NULL material?" );
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
