@@ -17,6 +17,8 @@
 
 class vsLineBuilder2D
 {
+	float m_epsilonSq;
+
 	enum End
 	{
 		End_Start,
@@ -38,9 +40,10 @@ class vsLineBuilder2D
 	};
 	touches touchesStripId( const vsVector2D& v );
 	void AddVertToStrip( const vsVector2D& v, int stripId, End whichEnd );
+	bool isSameAs( const vsVector2D& a, const vsVector2D& b );
 
 public:
-	vsLineBuilder2D();
+	vsLineBuilder2D( float epsilon = 0.01f );
 
 	void AddLineSegment( const vsVector2D& from, const vsVector2D& to );
 	void CloseLoops();
