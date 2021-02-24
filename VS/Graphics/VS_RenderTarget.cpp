@@ -186,6 +186,8 @@ vsRenderTarget::Resolve(int id)
 	{
 		if ( m_renderBufferSurface )
 		{
+			vsAssert(m_textureSurface, "renderbuffer RenderTarget has no texture surface??");
+
 			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
 			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
