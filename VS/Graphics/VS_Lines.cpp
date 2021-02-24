@@ -1425,6 +1425,16 @@ vsLineBuilder2D::AddVertToStrip( const vsVector2D& v, int stripId, End whichEnd 
 	}
 }
 
+void
+vsLineBuilder2D::CloseLoops()
+{
+	for ( int i = 0; i < m_strip.ItemCount(); i++ )
+	{
+		if ( !m_strip[i].loop )
+			m_strip[i].loop = true;
+	}
+}
+
 vsFragment *
 vsLineBuilder2D::Bake( const vsString& material, float width )
 {

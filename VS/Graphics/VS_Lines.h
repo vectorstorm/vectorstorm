@@ -43,6 +43,7 @@ public:
 	vsLineBuilder2D();
 
 	void AddLineSegment( const vsVector2D& from, const vsVector2D& to );
+	void CloseLoops();
 
 	vsFragment *Bake( const vsString& material, float width );
 };
