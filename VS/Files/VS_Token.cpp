@@ -56,10 +56,10 @@ static bool IsNumeric( char c )
 			(c >= '0' && c <= '9') );
 }
 
-/*static bool IsAlphaNumeric( char c )
+static bool IsAlphaNumeric( char c )
 {
 	return IsAlpha(c) || IsNumeric(c);
-}*/
+}
 
 
 static void RemoveLeadingWhitespace( vsString &string )
@@ -134,7 +134,7 @@ static vsString ExtractWhitespaceStringToken( vsString &string )	// pull out a s
 
 	for ( index = 0; index < len; index++ )
 	{
-		if ( IsWhitespace(string[index]) )	// this character isn't alphabetic, so isn't part of the label
+		if ( IsWhitespace(string[index]) )	// this character is whitespace, so isn't part of the label
 		{
 			index--;					// back up one character
 			break;						// exit the loop
@@ -158,7 +158,7 @@ static vsString ExtractLabelToken( vsString &string )
 
 	for ( index = 0; index < len; index++ )
 	{
-		if ( !IsAlpha(string[index]) )	// this character isn't alphabetic, so isn't part of the label
+		if ( !IsAlphaNumeric(string[index]) )	// this character isn't alphanumeric, so isn't part of the label
 		{
 			index--;					// back up one character
 			break;						// exit the loop
@@ -296,16 +296,31 @@ vsToken::ExtractFrom( vsString &string )
 			if ( isAFloat )
 			{
 				float val = 0.f;
-				bool success = (sscanf( token.c_str(), "%f", &val )!=0);
-				vsAssertF(success, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s'", string, token);
+				// bool success = (sscanf( token.c_str(), "%f", &val )!=0);
+				try
+				{
+					val = std::stof( token.c_str() );
+				}
+				catch(std::exception& e)
+				{
+					vsAssertF(false, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s', error: '%s'", string, token, e.what());
+				}
+				// bool success = (sscanf( token.c_str(), "%f", &val )!=0);
+				// vsAssertF(success, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s'", string, token);
 				SetFloat(val);
 				return true;
 			}
 			else
 			{
 				int val = 0;
-				bool success = sscanf( token.c_str(), "%d", &val) != 0;
-				vsAssert(success, "Couldn't find an integer value?" );
+				try
+				{
+					val = std::stoi( token.c_str() );
+				}
+				catch(std::exception& e)
+				{
+					vsAssertF(false, "Couldn't find an integer value where we expected one?  Remaining string: '%s', extracted token: '%s', error: '%s'", string, token, e.what());
+				}
 				SetInteger(val);
 				return true;
 			}
