@@ -181,6 +181,7 @@ vsTexture *
 vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
+	vsAssert(this != NULL, "vsRenderTarget::Resolve called with NULL this");
 
 	if ( m_needsResolve & BIT(id) )
 	{
