@@ -131,6 +131,7 @@ vsRenderTarget::~vsRenderTarget()
 	vsDelete( m_depthTexture );
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
+	m_bufferCount = 0;
 }
 
 vsTexture *
@@ -182,6 +183,8 @@ vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
 	vsAssert(this != NULL, "vsRenderTarget::Resolve called with NULL this");
+	vsAssert(m_bufferCount > 0, "vsRenderTarget::Resolve called with <= 0 bufferCount?" );
+	vsAssert(m_texture, "No texture array??");
 
 	if ( m_needsResolve & BIT(id) )
 	{
