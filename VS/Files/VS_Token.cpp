@@ -10,12 +10,13 @@
 #include "VS_Token.h"
 
 #include "VS/Memory/VS_Serialiser.h"
+#include <stdexcept>
 
-#ifdef MSVC
+// #ifdef MSVC
 // visual studio defines its own "secure" sscanf.  So use that to keep
 // Microsoft happy.
-#define sscanf sscanf_s
-#endif
+// #define sscanf sscanf_s
+// #endif
 
 // tokens may be any of the following:
 //
@@ -301,6 +302,11 @@ vsToken::ExtractFrom( vsString &string )
 				{
 					val = std::stof( token.c_str() );
 				}
+				catch(std::out_of_range& oor)
+				{
+					vsLog("Token '%s' out of float range", token);
+					val = 0;
+				}
 				catch(std::exception& e)
 				{
 					vsAssertF(false, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s', error: '%s'", string, token, e.what());
@@ -316,6 +322,15 @@ vsToken::ExtractFrom( vsString &string )
 				try
 				{
 					val = std::stoi( token.c_str() );
+				}
+				catch(std::out_of_range& oor)
+				{
+					vsLog("Token '%s' out of integer range", token);
+					if ( token[0] == '-' )
+						val = std::numeric_limits<int>::lowest();
+					else
+						val = std::numeric_limits<int>::max();
+					// val = 0;
 				}
 				catch(std::exception& e)
 				{
