@@ -445,6 +445,14 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
 	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
 
+	int isDoubleBuffered = 0;
+	SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &isDoubleBuffered );
+	if (!isDoubleBuffered)
+	{
+		vsLog("FAILED TO SET UP DOUBLE BUFFERING??");
+	}
+	else
+		vsLog("DOUBLE-BUFFERED");
 	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
 	// if ( shareVal )
 	// {
@@ -903,6 +911,12 @@ vsRenderer_OpenGL3::PostRender()
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
+#ifdef __apple_cc__
+	// on OSX we must explicitly set the draw framebuffer to 0 before swap.
+	// Ref:
+	// http://renderingpipeline.com/2012/05/nsopenglcontext-flushbuffer-might-not-do-what-you-think/
+	m_window->Bind();
+#endif
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
 	}
