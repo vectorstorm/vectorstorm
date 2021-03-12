@@ -198,7 +198,12 @@ static vsString DoFormatFloat( float value, int places )
 		intPart = vsCeil(value);
 
 	value -= intPart;
-	int decimalPart = value * pow(10,places);
+
+	int decimalPart = vsAbs( value * pow(10,places+1) );
+	// handle rounding
+	if ( decimalPart % 10 >= 5 )
+		decimalPart += 10;
+	decimalPart /= 10;
 
 	vsString result = DoFormatNumber(intPart);
 	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);
