@@ -292,7 +292,7 @@ public:
 					T* swap = m_array[i];
 					m_array[i] = m_array[i+1];
 					m_array[i+1] = swap;
-					sorted = true;
+					sorted = false;
 				}
 			}
 		}
