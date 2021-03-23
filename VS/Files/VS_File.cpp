@@ -1022,3 +1022,53 @@ vsFile::SetFileOpenFailureHandler( openFailureHandler handler )
 	s_openFailureHandler = handler;
 }
 
+vsString
+vsFile::GetExtension( const vsString &filename )
+{
+	size_t i = filename.rfind('.');
+	if ( i != vsString::npos )
+		return filename.substr(i+1);
+	return vsEmptyString;
+}
+
+vsString
+vsFile::GetBaseName( const vsString &filename )
+{
+	vsString result = filename;
+	size_t ext = result.rfind('.');
+	if ( ext != vsString::npos )
+		result.erase(ext);
+	size_t dir = result.rfind('/');
+	if ( dir != vsString::npos )
+		result.erase(0,dir+1);
+	return result;
+}
+
+vsString
+vsFile::GetFileName( const vsString &filename )
+{
+	// [TODO] figure out what I want to do about directory separators on Windows.
+	// I *think* we're using Linux-style directories everywhere, even on
+	// Windows.  But.. as written, this code won't work with Windows-style
+	// backslash-delimited directory paths.
+	//
+	size_t i = filename.rfind('/');
+	if ( i != vsString::npos )
+		return filename.substr(i+1);
+	return filename;
+}
+
+vsString
+vsFile::GetDirectory( const vsString &filename )
+{
+	// [TODO] figure out what I want to do about directory separators on Windows.
+	// I *think* we're using Linux-style directories everywhere, even on
+	// Windows.  But.. as written, this code won't work with Windows-style
+	// backslash-delimited directory paths.
+	//
+	size_t i = filename.rfind('/');
+	if ( i != vsString::npos )
+		return filename.substr(0,i);
+	return vsString("./");
+}
+

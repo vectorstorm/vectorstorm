@@ -76,6 +76,11 @@ public:
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
 
+	static vsString GetExtension( const vsString &filename ); // returns the 'extension' of the listed file or vsEmptyString if there is none.
+	static vsString GetFileName( const vsString &filename );  // returns the full 'file name' of the listed file, including extension but excluding directories.
+	static vsString GetBaseName( const vsString &filename );  // returns the 'base name' of the listed file (no directory, no extension).
+	static vsString GetDirectory( const vsString &filename ); // returns the 'directory' component of the listed file, or "./" if none.
+
 	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
 	// directory.  It is your responsibility to check for each one whether it
 	// is the type of object you were looking for.
