@@ -263,7 +263,8 @@ public:
 		Validation_Numeric,
 		Validation_PositiveNumeric,
 		Validation_Integer,
-		Validation_PositiveInteger
+		Validation_PositiveInteger,
+		Validation_PositiveIntegerPercent
 	};
 private:
 
