@@ -2501,6 +2501,9 @@ vsRenderer_OpenGL3::ClearState()
 	m_currentTransformStackLevel = 0;
 	m_currentVertexArray = NULL;
 	m_currentVertexArrayCount = 0;
+	m_currentColorArrayCount = 0;
+	m_currentTexelArrayCount = 0;
+	m_currentNormalArrayCount = 0;
 	m_currentVertexBuffer = NULL;
 	m_invalidateMaterial = true;
 	m_lightCount = 0;
