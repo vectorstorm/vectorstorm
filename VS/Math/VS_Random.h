@@ -40,6 +40,7 @@ public:
 	vsVector3D GetVector3D(float maxLength);
 	vsVector2D GetVector2D(float minLength, float maxLength);
 	vsVector3D GetVector3D(float minLength, float maxLength);
+	vsVector3D GetVector3DInCone(const vsVector3D& forward, float angleRadians);
 	vsColor GetColor(float minBrightness, float maxBrightness);
 
 	vsVector2D GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight);
@@ -71,6 +72,7 @@ public:
 	static vsVector3D	GetVector3D(float maxLength) { return s_source.GetVector3D(maxLength); }
 	static vsVector2D	GetVector2D(float minLength, float maxLength) { return s_source.GetVector2D(minLength, maxLength); }
 	static vsVector3D	GetVector3D(float minLength, float maxLength) { return s_source.GetVector3D(minLength, maxLength); }
+	static vsVector3D	GetVector3DInCone(const vsVector3D& forward, float angleRadians) { return s_source.GetVector3DInCone(forward, angleRadians); }
 	static vsColor		GetColor(float minBrightness, float maxBrightness) { return s_source.GetColor( minBrightness, maxBrightness ); }
 
 	static vsVector2D	GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight) { return s_source.GetVector2D( topLeft, bottomRight ); }
