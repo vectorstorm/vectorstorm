@@ -44,7 +44,7 @@ template <typename T>
 class vsCacheReference
 {
 protected:
-	vsResource *	m_resource;
+	T *	m_resource;
 
 	vsCacheReference() {}
 
@@ -55,7 +55,7 @@ public:
 	vsCacheReference( vsCacheReference<T> *other ) { m_resource = other->m_resource; m_resource->AddReference(); }
 	virtual ~vsCacheReference() { m_resource->ReleaseReference(); }
 
-	T*		GetResource() const { return reinterpret_cast<T*>(m_resource); }
+	T*		GetResource() const { return m_resource; }
 	virtual void operator=(const vsCacheReference<T> &b)
 	{
 		// add before release, just because that's always safer.
@@ -73,7 +73,7 @@ template <typename T>
 class vsCacheEntry
 {
 public:
-	vsResource *		m_item;
+	T *		m_item;
 
 	vsString			m_key;
 	uint32_t				m_keyHash;
@@ -88,7 +88,7 @@ public:
 		vsDelete( m_item );
 	}
 
-	T *		GetItem()		{ return reinterpret_cast<T*>(m_item); }
+	T *		GetItem()		{ return m_item; }
 };
 
 template <typename T>
