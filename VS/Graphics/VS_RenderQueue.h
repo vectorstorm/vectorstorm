@@ -124,6 +124,8 @@ public:
 	// BAD, BAD CODE.  :)  Ought to get rid of this.
 	vsDisplayList * GetGenericList() { return m_genericList; }
 
+	bool WouldMaterialBeHidden( vsMaterial *material ) const;
+
 	vsRenderQueueStage * GetStage( int i = 0 );
 };
 

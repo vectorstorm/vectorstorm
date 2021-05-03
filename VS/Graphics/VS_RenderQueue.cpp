@@ -1064,5 +1064,11 @@ vsRenderQueue::PickStageForMaterial( vsMaterial *material )
 	return 0;
 }
 
-
+bool
+vsRenderQueue::WouldMaterialBeHidden( vsMaterial *material ) const
+{
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return true;
+	return false;
+}
 
