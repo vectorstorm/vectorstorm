@@ -785,7 +785,7 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsC
 	vsRenderBuffer *buffer = new vsRenderBuffer;
 
 	int arraySize = 24;
-	vsRenderBuffer::PN *array = new vsRenderBuffer::PN[arraySize];
+	vsRenderBuffer::PCN *array = new vsRenderBuffer::PCN[arraySize];
 
 	vsVector3D normalVector[3] =
 	{
@@ -829,6 +829,9 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsC
 			array[vId+6].position = box.Middle() - main + u + v;
 			array[vId+7].position = box.Middle() - main - u + v;
 
+			for ( int i = 0; i < 8; i++ )
+				array[vId+i].color = colorOverride ? *colorOverride : c_white;
+
 			for ( int i = 0; i < 4; i++ )
 			{
 				array[vId+i].normal = normalVector[dim];
@@ -855,10 +858,6 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsC
 	vsDeleteArray( array );
 
 	vsDisplayList *list = new vsDisplayList(512);
-	if ( colorOverride )
-	{
-		list->SetColor( *colorOverride );
-	}
 	list->BindBuffer(buffer);
 	list->TriangleListArray(triList,36);
 	list->ClearArrays();
