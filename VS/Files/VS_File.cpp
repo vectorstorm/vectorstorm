@@ -571,28 +571,46 @@ vsFile::MoveDirectory( const vsString& from_in, const vsString& to_in )
 	return false;
 }
 
-class sortFilesByModificationDate
+namespace
 {
-	vsString m_dirName;
+	class sortFilesByModificationDate
+	{
+		vsString m_dirName;
 	public:
-	sortFilesByModificationDate( const vsString& dirName ):
-		m_dirName(dirName + PHYSFS_getDirSeparator())
-	{
-	}
-
-	bool operator()(char* a,char* b)
-	{
-		PHYSFS_Stat astat, bstat;
-		if ( PHYSFS_stat((m_dirName + a).c_str(), &astat) &&
-				PHYSFS_stat((m_dirName + b).c_str(), &bstat) )
+		sortFilesByModificationDate( const vsString& dirName ):
+			m_dirName(dirName + PHYSFS_getDirSeparator())
 		{
-			PHYSFS_sint64 atime = astat.modtime;
-			PHYSFS_sint64 btime = bstat.modtime;
-			return ( atime > btime );
 		}
-		return 0;
-	}
-};
+
+		bool operator()(char* a,char* b)
+		{
+			PHYSFS_Stat astat, bstat;
+			if ( PHYSFS_stat((m_dirName + a).c_str(), &astat) &&
+					PHYSFS_stat((m_dirName + b).c_str(), &bstat) )
+			{
+				PHYSFS_sint64 atime = astat.modtime;
+				PHYSFS_sint64 btime = bstat.modtime;
+				return ( atime > btime );
+			}
+			return 0;
+		}
+	};
+
+	class sortFilesByName
+	{
+	public:
+		sortFilesByName()
+		{
+		}
+
+		bool operator()(char* a,char* b)
+		{
+			vsString as(a);
+			vsString bs(b);
+			return as < bs;
+		}
+	};
+}
 
 int
 vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) // static method
@@ -611,7 +629,8 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 	for (i = files; *i != NULL; i++)
 		s.push_back(*i);
 
-	std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
+	std::sort(s.begin(), s.end(), sortFilesByName());
+	// std::sort(s.begin(), s.end(), sortFilesByModificationDate(dirName));
 
 	for (size_t i = 0; i < s.size(); i++)
 		result->AddItem( s[i] );
