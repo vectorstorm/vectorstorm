@@ -121,6 +121,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	void ResizeRenderTargetsToMatchWindow();
 
+	void DetermineRefreshRate();
 	void SetRenderTarget( vsRenderTarget *target );
 	void ClearState();
 

@@ -583,6 +583,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
 		}
 	}
+
+	DetermineRefreshRate();
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -596,6 +598,22 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = NULL;
+}
+
+void
+vsRenderer_OpenGL3::DetermineRefreshRate()
+{
+	SDL_DisplayMode mode;
+	int err = SDL_GetWindowDisplayMode(g_sdlWindow, &mode);
+	if ( err == 0 )
+	{
+		vsLog("Display refresh rate: %d", mode.refresh_rate);
+		m_refreshRate = mode.refresh_rate;
+	}
+	else
+	{
+		vsLog("Error getting display mode: %s", SDL_GetError());
+	}
 }
 
 void
@@ -897,6 +915,7 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 		m_viewportHeightPixels = m_heightPixels;
 		ResizeRenderTargetsToMatchWindow();
 	}
+	DetermineRefreshRate();
 }
 
 void

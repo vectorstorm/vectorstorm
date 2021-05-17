@@ -71,6 +71,10 @@ public:
 	virtual void Init();
 	virtual void Deinit();
 
+	// this maximum FPS rate is automatically set by the renderer, and tells us
+	// how many FPS we're allowed to render at.
+	void SetMaxFPS( int fps );
+
 	uint64_t GetMicroseconds();
 	uint64_t GetMicrosecondsSinceInit();
 
