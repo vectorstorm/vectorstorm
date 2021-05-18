@@ -45,6 +45,10 @@ public:
 template<class T>
 class vsArray
 {
+	// SortFunction should return TRUE if a < b. (and therefore should be
+	// earlier in the array).
+	typedef bool(SortFunction)(const T& a, const T& b);
+
 	T *					m_array;
 	int					m_arrayLength;		// how many things actually in our array?
 	int					m_arrayStorage;		// how big is our storage?  (We can fit this many things into our array without resizing it)
@@ -284,6 +288,26 @@ public:
 				return false;
 		}
 		return true;
+	}
+
+	void Sort( SortFunction lessThanFn )
+	{
+		// simple bubble sort as a first experiment with this approach.
+		bool sorted = false;
+		while ( !sorted )
+		{
+			sorted = true;
+			for ( int i = 0; i < ItemCount()-1; i++ )
+			{
+				if ( lessThanFn(GetItem(i+1), GetItem(i) ) )
+				{
+					T swap = m_array[i];
+					m_array[i] = m_array[i+1];
+					m_array[i+1] = swap;
+					sorted = false;
+				}
+			}
+		}
 	}
 
 	static const int npos = -1;
