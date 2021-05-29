@@ -677,3 +677,31 @@ vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, c
 	return false;
 }
 
+void
+vsModel::GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, float maxY )
+{
+	// [TODO] Also implement for display lists.
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				if ( v.y >= minY && v.y <= maxY )
+					result.AddItem(v);
+			}
+		}
+		// [TODO] Also implement for non-simple fragments, maybe?
+		//
+		// else
+		// {
+		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
+		// 	boundingBox.ExpandToInclude( fragmentBox );
+		// }
+	}
+}
+

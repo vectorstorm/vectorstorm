@@ -93,6 +93,8 @@ public:
 	void					SetLowBoundingBox(const vsBox3D &box) { m_lowBoundingBox = box; }
 	void					BuildLowBoundingBox( float threshhold = 1.f );
 
+	void					GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, float maxY );
+
 	vsDisplayList::Stats	CalculateStats();
 
 	float					GetBoundingRadius() { return m_boundingRadius; }
