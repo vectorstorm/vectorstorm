@@ -194,6 +194,22 @@ public:
 		return m_array[id];
 	}
 
+	void Reserve( int newSize )
+	{
+		if ( newSize <= m_arrayStorage )
+			return;
+
+		T *newArray = new T[newSize];
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			newArray[i] = m_array[i];
+		}
+		vsDeleteArray( m_array );
+		m_array = newArray;
+
+		m_arrayStorage = newSize;
+	}
+
 	void SetArraySize( int size )
 	{
 		// add or remove elements to make us this size.

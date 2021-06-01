@@ -123,7 +123,7 @@ public:
 
 	void Reserve( int newSize )
 	{
-		if ( newSize <= m_arrayLength )
+		if ( newSize <= m_arrayStorage )
 			return;
 
 		T *newArray = new T[newSize];
