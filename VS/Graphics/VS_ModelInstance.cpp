@@ -48,6 +48,12 @@ vsModelInstance::SetMatrix( const vsMatrix4x4& mat )
 }
 
 void
+vsModelInstance::SetColor( const vsColor &color )
+{
+	SetMatrix( matrix, color );
+}
+
+void
 vsModelInstance::SetMatrix( const vsMatrix4x4& mat, const vsColor &c )
 {
 	if ( matrix != mat || color != c)
