@@ -124,6 +124,8 @@ public:
 	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 
 	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+
+	void SaveOBJ( const vsString& filename );
 };
 
 #endif // VS_MODEL_H

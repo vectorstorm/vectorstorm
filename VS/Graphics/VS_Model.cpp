@@ -705,3 +705,45 @@ vsModel::GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, flo
 	}
 }
 
+void
+vsModel::SaveOBJ( const vsString& filename )
+{
+	vsFile f(filename, vsFile::MODE_Write);
+
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsString line;
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				const vsColor c = b->GetColor(i);
+
+				line = vsFormatString( "v %f %f %f %f %f %f\n", v.x, v.y, v.z, c.r, c.g, c.b );
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D n = b->GetNormal(i);
+				line = vsFormatString( "vn %f %f %f\n", n.x, n.y, n.z );
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+			b = fragment->GetSimpleIBO();
+			for (int i = 0; i < b->GetIntArraySize(); i+=3 )
+			{
+				int aa = b->GetIntArray()[i]+1;
+				int bb = b->GetIntArray()[i+1]+1;
+				int cc = b->GetIntArray()[i+2]+1;
+
+				line = vsFormatString("f %d//%d %d//%d %d//%d\n", aa, aa, bb, bb, cc, cc);
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+		}
+	}
+
+}
+
