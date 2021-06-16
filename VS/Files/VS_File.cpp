@@ -350,8 +350,8 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 				return;
 			}
 
-			int decompressedSize = 0;
-			const int zipBufferSize = 1024 * 100;
+			uint32_t decompressedSize = 0;
+			const uint32_t zipBufferSize = 1024 * 100;
 			char zipBuffer[zipBufferSize];
 			m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
 			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
@@ -367,7 +367,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
 				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
 
-				int decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 				decompressedSize += decompressedBytes;
 
 			}while( m_zipData->m_zipStream.avail_out == 0 );
