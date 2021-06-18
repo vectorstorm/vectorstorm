@@ -32,6 +32,8 @@ public:
 		MODE_ReadCompressed, // open an existing file and read from it, INFLATEd
 		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
 
+		MODE_ReadCompressed_Progressive, // open an existing file and read from it, decompressing into temporary buffers as we go.  We only support a limited set of read operations, since we won't have the whole thing in memory at once!
+
 		MODE_MAX
 	};
 
@@ -39,6 +41,8 @@ private:
 	vsString m_filename;
 	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
+
+	vsStore *m_compressedStore;
 	vsStore *m_store;
 	struct zipdata *m_zipData;
 
@@ -52,6 +56,8 @@ private:
 
 	// do some processing of file compression.
 	void _PumpCompression( const void* bytes, size_t byteCount, bool finish );
+
+	void _PumpDecompression(); // grab another 1kb chunk of decompressed data.
 
 public:
 

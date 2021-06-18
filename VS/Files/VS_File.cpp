@@ -219,6 +219,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
 	m_file(NULL),
+	m_compressedStore(NULL),
 	m_store(NULL),
 	m_zipData(NULL),
 	m_mode(mode),
@@ -239,7 +240,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	else
 	{
 		PROFILE(filename);
-		if ( mode == MODE_Read || mode == MODE_ReadCompressed )
+		if ( mode == MODE_Read || mode == MODE_ReadCompressed || mode == MODE_ReadCompressed_Progressive )
 		{
 			m_file = PHYSFS_openRead( filename.c_str() );
 		}
@@ -406,6 +407,68 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 
 			if ( shouldCache )
 				vsFileCache::SetFileContents( filename, *m_store );
+		}
+		else if ( mode == MODE_ReadCompressed_Progressive )
+		{
+			// Okay.  We're going to load our compressed data into our 'm_store'
+			// variable, and are then going to set up a decompression buffer to load
+			// data into.
+			//
+			m_compressedStore = new vsStore( m_length );
+			Store(m_compressedStore);
+			PHYSFS_close(m_file);
+			m_file = NULL;
+
+			m_zipData = new zipdata;
+			m_zipData->m_zipStream.zalloc = Z_NULL;
+			m_zipData->m_zipStream.zfree = Z_NULL;
+			m_zipData->m_zipStream.opaque = Z_NULL;
+			int ret = inflateInit(&m_zipData->m_zipStream);
+			if ( ret != Z_OK )
+			{
+				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				return;
+			}
+
+			// Now, we need to set up our zip stream
+			uint32_t decompressedSize = 0;
+			const uint32_t zipBufferSize = 1024 * 100;
+			char zipBuffer[zipBufferSize];
+			m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
+			m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
+			do
+			{
+				m_zipData->m_zipStream.avail_out = zipBufferSize;
+				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
+				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+				vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
+				vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
+				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+
+				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
+				decompressedSize += decompressedBytes;
+
+			}while( m_zipData->m_zipStream.avail_out == 0 );
+			inflateEnd(&m_zipData->m_zipStream);
+
+			m_store = new vsStore( zipBufferSize );
+			m_zipData->m_zipStream.avail_out = m_store->BytesLeftForWriting();
+			m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
+
+			// Now let's get set to decompress it FOR REAL.
+			ret = inflateInit(&m_zipData->m_zipStream);
+			if ( ret != Z_OK )
+			{
+				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				return;
+			}
+
+			m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
+			m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
+			_PumpDecompression(); // grab some decompressed data
 		}
 	}
 }
@@ -751,8 +814,11 @@ vsFile::Record_Binary( vsRecord *r )
 	}
 	else
 	{
-		if ( AtEnd() )
-			return false;
+		if ( m_mode == MODE_Read )
+		{
+			if ( AtEnd() )
+				return false;
+		}
 		return r->LoadBinary(this);
 	}
 }
@@ -765,9 +831,8 @@ vsFile::ReadLine( vsString *line )
 
 	size_t filePos = m_store->GetReadHeadPosition();
 	char peekChar = 'a';
-	bool done = false;
 
-	while ( !done && !AtEnd() && peekChar != '\n' && peekChar != 0 )
+	while ( !AtEnd() && peekChar != '\n' && peekChar != 0 )
 	{
 		peekChar = m_store->ReadInt8();
 	}
@@ -874,12 +939,34 @@ vsFile::WriteBytes( const void* data, size_t bytes )
 int
 vsFile::ReadBytes( void* data, size_t bytes )
 {
-	vsAssert( m_mode == MODE_Read, "Tried to read bytes when not in read mode?" );
+	if ( m_mode == MODE_Read )
+	{
+		int bytesToRead = vsMin(bytes, m_store->BytesLeftForReading());
+		memcpy( data, m_store->GetReadHead(), bytesToRead );
+		m_store->AdvanceReadHead(bytesToRead);
+		return bytesToRead;
+	}
+	else if ( m_mode == MODE_ReadCompressed_Progressive )
+	{
+		m_zipData->m_zipStream.avail_out = bytes;
+		m_zipData->m_zipStream.next_out = (Bytef*)data;
+		int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+		vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
+		vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
+		// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+		// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+		vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
 
-	int bytesToRead = vsMin(bytes, m_store->BytesLeftForReading());
-	memcpy( data, m_store->GetReadHead(), bytesToRead );
-	m_store->AdvanceReadHead(bytesToRead);
-	return bytesToRead;
+		uint32_t decompressedBytes = bytes - m_zipData->m_zipStream.avail_out;
+
+		return decompressedBytes;
+	}
+	else
+	{
+		vsAssertF( 0, "Tried to read bytes when file '%s' is not in read mode?", m_filename );
+	}
+	return 0;
 }
 
 void
@@ -930,6 +1017,27 @@ vsFile::_WriteBytes( const void* bytes, size_t byteCount )
 	{
 		vsAssert(0, "Tried to write bytes when we're not in a 'write' mode??");
 	}
+}
+
+void
+vsFile::_PumpDecompression()
+{
+	// vsAssert( m_mode == MODE_ReadCompressed_Progressive, "Trying to pump decompression when we're not in ReadCompressed_Progressive mode??" );
+    //
+	// 	int spaceLeftBeforeDecompressing = m_store->BytesLeftForWriting();
+	// 	m_zipData->m_zipStream.avail_out = spaceLeftBeforeDecompressing;
+	// 	m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
+	// 	int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+	// 	vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered by deflate()");
+    //
+	// 	int spaceLeftAfterDecompressing = m_zipData->m_zipStream.avail_out;
+	// 	int decompressedBytes = spaceLeftBeforeDecompressing - spaceLeftAfterDecompressing;
+	// 	m_store->AdvanceWriteHead( decompressedBytes );
+    //
+	// 	if ( spaceLeftAfterDecompressing > 0 ) // we didn't fill our buffer somehow??
+	// 	{
+	// 		vsLog( "I think I'm done!" );
+	// 	}
 }
 
 void
