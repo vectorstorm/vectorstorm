@@ -68,6 +68,17 @@ public:
 
 	typedef vsVolatileArrayIterator<T> Iterator;
 
+	vsVolatileArray( const vsVolatileArray& other )
+	{
+		m_array = new T[ other.ItemCount() ];
+		m_arrayLength = other.ItemCount();
+		m_arrayStorage = m_arrayLength;
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			m_array[i] = other.m_array[i];
+		}
+	}
+
 	explicit vsVolatileArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
