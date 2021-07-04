@@ -115,6 +115,8 @@ float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA,
 // variables will have 'y' component set to zero.
 float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
 
+float vsSqDistanceFromPointToLineSegment( const vsVector2D& point, const vsVector2D& startLine, const vsVector2D& endLine, vsVector2D* closest = NULL );
+
 #endif // VS_MATH_H
 
 
