@@ -297,9 +297,15 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 		}
 		else
 		{
+			vsString errorFilename = filename;
+			if ( vsFile::Exists(errorFilename) )
+				errorFilename = GetFullFilename(filename);
+
+			vsString errorMsg = PHYSFS_getLastErrorString();
+
 			if ( s_openFailureHandler )
-				(*s_openFailureHandler)( filename );
-			vsAssert( m_file != NULL, STR("Error opening file '%s':  %s", filename.c_str(), PHYSFS_getLastErrorString()) );
+				(*s_openFailureHandler)( errorFilename, errorMsg );
+			vsAssert( m_file != NULL, STR("Error opening file '%s' (trying '%s'):  %s", filename, errorFilename, errorMsg) );
 		}
 
 		bool shouldCache = (filename.find(".win") != vsString::npos) ||

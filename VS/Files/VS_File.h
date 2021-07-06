@@ -128,7 +128,7 @@ public:
 
 	bool		AtEnd();
 
-	typedef void (*openFailureHandler)(const vsString& filename);
+	typedef void (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
 	static void SetFileOpenFailureHandler( openFailureHandler handler );
 };
 
