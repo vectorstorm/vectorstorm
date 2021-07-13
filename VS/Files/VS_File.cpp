@@ -488,6 +488,7 @@ vsFile::~vsFile()
 	}
 	FlushBufferedWrites();
 
+	vsDelete( m_compressedStore );
 	vsDelete( m_zipData );
 	vsDelete( m_store );
 	if ( m_file )
