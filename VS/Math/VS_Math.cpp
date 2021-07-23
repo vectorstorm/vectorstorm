@@ -392,6 +392,45 @@ float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2
 	return (closestPointOnB - closestPointOnA).SqLength();
 }
 
+float vsSqDistanceBetweenLines( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA, vsVector3D *closestB )
+{
+	vsVector3D deltaA = endA - startA;
+	vsVector3D deltaB = endB - startB;
+
+	// perpendicular
+	vsVector3D perp = deltaA.Cross(deltaB);
+
+	// if perpendicular == 0, it means that our line segments are parallel.
+
+	float timeA, timeB;
+
+	vsVector3D StartAToStartB = startB-startA;
+
+	if ( perp == vsVector3D::Zero )
+	{
+		// since our line segments are parallel, let's just
+		timeA = timeB = 0.0f;
+	}
+	else
+	{
+		float perpDotPerp = perp.Dot(perp);
+		timeA = StartAToStartB.Cross(deltaB).Dot(perp) / perpDotPerp;
+		timeB = StartAToStartB.Cross(deltaA).Dot(perp) / perpDotPerp;
+	}
+
+	vsVector3D closestPointA = startA + timeA * deltaA;
+	vsVector3D closestPointB = startB + timeB * deltaB;
+
+	if ( closestA )
+		*closestA = closestPointA;
+	if ( closestB )
+		*closestB = closestPointB;
+
+	float distance = (closestPointB-closestPointA).SqLength();
+
+	return distance;
+}
+
 // This code for counting bits is based on a StackOverflow answer, here:
 // https://stackoverflow.com/questions/109023/how-to-count-the-number-of-set-bits-in-a-32-bit-integer
 //
