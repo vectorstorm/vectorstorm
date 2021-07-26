@@ -111,6 +111,7 @@ public:
 		OpCode_EnableStencil,
 		OpCode_DisableStencil,
 		OpCode_ClearStencil,
+		OpCode_ClearDepth,
 
 		OpCode_EnableScissor,
 		OpCode_DisableScissor,
@@ -334,6 +335,7 @@ public:
 	void	EnableStencil();   // turns on stencil testing, cull future rendering to INSIDE stencil
 	void	DisableStencil();  // turns off stencil testing;  no stencils considered.
 	void	ClearStencil();    // clears our stencil so that everything fails.
+	void	ClearDepth();    // clears the depth buffer.
 
 	void	EnableScissor(const vsBox2D &box);   // turns on scissoring, inside this box.
 	void	DisableScissor();                    // turns off scissoring.

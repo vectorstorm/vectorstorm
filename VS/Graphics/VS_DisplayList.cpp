@@ -94,6 +94,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"EnableStencil",
 	"DisableStencil",
 	"ClearStencil",
+	"ClearDepth",
 
 	"EnableScissor",
 	"DisableScissor",
@@ -1128,6 +1129,12 @@ vsDisplayList::ClearStencil()
 }
 
 void
+vsDisplayList::ClearDepth()
+{
+	m_fifo->WriteUint8( OpCode_ClearDepth );
+}
+
+void
 vsDisplayList::SetViewport( const vsBox2D &box )
 {
 	m_fifo->WriteUint8( OpCode_SetViewport );
@@ -1356,6 +1363,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableStencil:
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
+			case OpCode_ClearDepth:
 			case OpCode_ClearViewport:
 			case OpCode_PopShaderOptions:
 			default:
@@ -1498,6 +1506,9 @@ vsDisplayList::AppendOp(vsDisplayList::op * o)
 			break;
 		case OpCode_ClearStencil:
 			ClearStencil();
+			break;
+		case OpCode_ClearDepth:
+			ClearDepth();
 			break;
 		case OpCode_SetViewport:
 			SetViewport( o->data.GetBox2D() );

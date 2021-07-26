@@ -1674,6 +1674,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					glClear(GL_STENCIL_BUFFER_BIT);
 					break;
 				}
+			case vsDisplayList::OpCode_ClearDepth:
+				{
+					m_lastShaderId = 0;
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+					m_state.Flush();
+					glUseProgram(0);
+					glClearDepth(1.f);
+					glClear(GL_DEPTH_BUFFER_BIT);
+					break;
+				}
 			case vsDisplayList::OpCode_EnableScissor:
 				{
 					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
