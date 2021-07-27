@@ -123,7 +123,7 @@ public:
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 
-	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+	bool		CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 
 	void SaveOBJ( const vsString& filename );
 };

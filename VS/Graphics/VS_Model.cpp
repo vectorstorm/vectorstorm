@@ -648,7 +648,7 @@ vsModel::GetLodFragmentCount( int lodId ) const
 }
 
 bool
-vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
+vsModel::CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
 {
 	vsVector3D localPos = m_transform.ApplyInverseTo(pos);
 	vsVector3D localDir = m_transform.GetRotation().Inverse().ApplyTo(dir);
@@ -662,19 +662,31 @@ vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, c
 		m_lod[0]->fragment[i]->GetTriangles(triangles);
 	}
 
+	bool hit = false;
 	for ( int i = 0; i < triangles.ItemCount(); i++ )
 	{
 		float u, v;
 		vsDisplayList::Triangle &t = triangles[i];
+		float localT;
 		if ( vsCollideRayVsTriangle( localPos, localDir,
 					t.vert[0], t.vert[1], t.vert[2],
-					resultT, &u, &v ) )
+					&localT, &u, &v ) )
 		{
-			*result = pos + dir * (*resultT);
-			return true;
+			if ( localT < *resultT )
+			{
+				hit = true;
+				*result = pos + dir * (*resultT);
+				*resultT = localT;
+
+				vsVector3D triangleNormal = (t.vert[2]-t.vert[0]).Cross( t.vert[1]-t.vert[0] );
+				triangleNormal.NormaliseSafe();
+				if ( triangleNormal.Dot( localDir ) > 0.f ) // reversed!  (is this the right thing to do if we're hitting the back of a triangle?
+					triangleNormal *= -1.f;
+				*resultNormal = m_transform.GetRotation().ApplyTo( triangleNormal );
+			}
 		}
 	}
-	return false;
+	return hit;
 }
 
 void
