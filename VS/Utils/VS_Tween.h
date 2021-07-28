@@ -58,14 +58,26 @@ public:
 			m_start = m_end = m_current = value;
 			m_tweening = false;
 		}
-		else if ( !m_tweening || value != m_end )
+		else if (  value != m_end )
 		{
-			// don't re-start tweening to a value we were already tweening to.
-			m_start = m_current;
-			m_end = value;
-			m_tweenDuration = time;
-			m_tweenTimer = 0.f;
-			m_tweening = true;
+			if ( m_tweening )
+			{
+				// can we adjust nicely?  We should really check to
+				// see whether it's valid to just make this change, somehow.
+				m_start = m_current;
+				m_end = value;
+				m_tweenDuration = vsMin(time, m_tweenDuration-m_tweenTimer);
+				m_tweenTimer = 0.f;
+			}
+			else
+			{
+				// don't re-start tweening to a value we were already tweening to.
+				m_start = m_current;
+				m_end = value;
+				m_tweenDuration = time;
+				m_tweenTimer = 0.f;
+				m_tweening = true;
+			}
 		}
 	}
 
