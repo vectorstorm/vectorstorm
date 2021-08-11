@@ -32,6 +32,8 @@ public:
 		MODE_ReadCompressed, // open an existing file and read from it, INFLATEd
 		MODE_WriteCompressed, // overwrite an existing file, DEFLATEd
 
+		MODE_ReadCompressed_Progressive, // open an existing file and read from it, decompressing into temporary buffers as we go.  We only support a limited set of read operations, since we won't have the whole thing in memory at once!
+
 		MODE_MAX
 	};
 
@@ -39,6 +41,8 @@ private:
 	vsString m_filename;
 	vsString m_tempFilename;
 	PHYSFS_File *	m_file;
+
+	vsStore *m_compressedStore;
 	vsStore *m_store;
 	struct zipdata *m_zipData;
 
@@ -52,6 +56,8 @@ private:
 
 	// do some processing of file compression.
 	void _PumpCompression( const void* bytes, size_t byteCount, bool finish );
+
+	void _PumpDecompression(); // grab another 1kb chunk of decompressed data.
 
 public:
 
@@ -75,6 +81,11 @@ public:
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
+
+	static vsString GetExtension( const vsString &filename ); // returns the 'extension' of the listed file or vsEmptyString if there is none.
+	static vsString GetFileName( const vsString &filename );  // returns the full 'file name' of the listed file, including extension but excluding directories.
+	static vsString GetBaseName( const vsString &filename );  // returns the 'base name' of the listed file (no directory, no extension).
+	static vsString GetDirectory( const vsString &filename ); // returns the 'directory' component of the listed file, or "./" if none.
 
 	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
 	// directory.  It is your responsibility to check for each one whether it
@@ -117,7 +128,7 @@ public:
 
 	bool		AtEnd();
 
-	typedef void (*openFailureHandler)(const vsString& filename);
+	typedef void (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
 	static void SetFileOpenFailureHandler( openFailureHandler handler );
 };
 

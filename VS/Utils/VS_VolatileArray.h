@@ -68,6 +68,17 @@ public:
 
 	typedef vsVolatileArrayIterator<T> Iterator;
 
+	vsVolatileArray( const vsVolatileArray& other )
+	{
+		m_array = new T[ other.ItemCount() ];
+		m_arrayLength = other.ItemCount();
+		m_arrayStorage = m_arrayLength;
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			m_array[i] = other.m_array[i];
+		}
+	}
+
 	explicit vsVolatileArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
@@ -192,6 +203,22 @@ public:
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArray access");
 		return m_array[id];
+	}
+
+	void Reserve( int newSize )
+	{
+		if ( newSize <= m_arrayStorage )
+			return;
+
+		T *newArray = new T[newSize];
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			newArray[i] = m_array[i];
+		}
+		vsDeleteArray( m_array );
+		m_array = newArray;
+
+		m_arrayStorage = newSize;
 	}
 
 	void SetArraySize( int size )

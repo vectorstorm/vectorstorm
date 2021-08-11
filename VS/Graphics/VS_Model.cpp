@@ -495,6 +495,37 @@ vsModel::BuildBoundingBox()
 	SetBoundingBox( boundingBox );
 }
 
+void
+vsModel::BuildLowBoundingBox( float threshhold )
+{
+	vsBox3D boundingBox;
+	if ( m_displayList )
+	{
+		m_displayList->GetBoundingBox(boundingBox);
+	}
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				if ( v.y < threshhold )
+					boundingBox.ExpandToInclude(v);
+			}
+		}
+		// else
+		// {
+		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
+		// 	boundingBox.ExpandToInclude( fragmentBox );
+		// }
+	}
+	SetLowBoundingBox( boundingBox );
+}
+
 vsDisplayList::Stats
 vsModel::CalculateStats()
 {
@@ -617,7 +648,7 @@ vsModel::GetLodFragmentCount( int lodId ) const
 }
 
 bool
-vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
+vsModel::CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const
 {
 	vsVector3D localPos = m_transform.ApplyInverseTo(pos);
 	vsVector3D localDir = m_transform.GetRotation().Inverse().ApplyTo(dir);
@@ -631,18 +662,100 @@ vsModel::CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, c
 		m_lod[0]->fragment[i]->GetTriangles(triangles);
 	}
 
+	bool hit = false;
 	for ( int i = 0; i < triangles.ItemCount(); i++ )
 	{
 		float u, v;
 		vsDisplayList::Triangle &t = triangles[i];
+		float localT;
 		if ( vsCollideRayVsTriangle( localPos, localDir,
 					t.vert[0], t.vert[1], t.vert[2],
-					resultT, &u, &v ) )
+					&localT, &u, &v ) )
 		{
-			*result = pos + dir * (*resultT);
-			return true;
+			if ( localT < *resultT )
+			{
+				hit = true;
+				*result = pos + dir * (*resultT);
+				*resultT = localT;
+
+				vsVector3D triangleNormal = (t.vert[2]-t.vert[0]).Cross( t.vert[1]-t.vert[0] );
+				triangleNormal.NormaliseSafe();
+				if ( triangleNormal.Dot( localDir ) > 0.f ) // reversed!  (is this the right thing to do if we're hitting the back of a triangle?
+					triangleNormal *= -1.f;
+				*resultNormal = m_transform.GetRotation().ApplyTo( triangleNormal );
+			}
 		}
 	}
-	return false;
+	return hit;
+}
+
+void
+vsModel::GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, float maxY )
+{
+	// [TODO] Also implement for display lists.
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				if ( v.y >= minY && v.y <= maxY )
+					result.AddItem(v);
+			}
+		}
+		// [TODO] Also implement for non-simple fragments, maybe?
+		//
+		// else
+		// {
+		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
+		// 	boundingBox.ExpandToInclude( fragmentBox );
+		// }
+	}
+}
+
+void
+vsModel::SaveOBJ( const vsString& filename )
+{
+	vsFile f(filename, vsFile::MODE_Write);
+
+	for ( vsArrayStore<vsFragment>::Iterator iter = m_lod[0]->fragment.Begin(); iter != m_lod[0]->fragment.End(); iter++ )
+	{
+		vsFragment *fragment = *iter;
+		vsBox3D fragmentBox;
+		if ( fragment->IsSimple() )
+		{
+			vsString line;
+			vsRenderBuffer *b = fragment->GetSimpleVBO();
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D v = b->GetPosition(i);
+				const vsColor c = b->GetColor(i);
+
+				line = vsFormatString( "v %f %f %f %f %f %f\n", v.x, v.y, v.z, c.r, c.g, c.b );
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+			for (int i = 0; i < b->GetPositionCount(); i++ )
+			{
+				const vsVector3D n = b->GetNormal(i);
+				line = vsFormatString( "vn %f %f %f\n", n.x, n.y, n.z );
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+			b = fragment->GetSimpleIBO();
+			for (int i = 0; i < b->GetIntArraySize(); i+=3 )
+			{
+				int aa = b->GetIntArray()[i]+1;
+				int bb = b->GetIntArray()[i+1]+1;
+				int cc = b->GetIntArray()[i+2]+1;
+
+				line = vsFormatString("f %d//%d %d//%d %d//%d\n", aa, aa, bb, bb, cc, cc);
+				f.WriteBytes( line.c_str(), line.size() );
+			}
+		}
+	}
+
 }
 

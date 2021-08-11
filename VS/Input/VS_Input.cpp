@@ -1904,14 +1904,27 @@ vsInput::ValidateString()
 
 		int length = utf8::distance(oldString.begin(), oldString.end());
 
-		bool hasDot = false;
+		bool hasDecimalSeparator = false;
 		int glyphsSoFar = 0;
+
+		extern vsString s_decimalSeparator;
 
 		for ( int i = 0; i < length; i++ )
 		{
 			bool valid = true;
 
 			if ( m_stringValidationType == Validation_PositiveInteger )
+			{
+				vsString validString = "0123456789";
+				valid = false;
+				utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+				for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+				{
+					if ( *it == *(vit++) )
+						valid = true;
+				}
+			}
+			else if ( m_stringValidationType == Validation_PositiveIntegerPercent )
 			{
 				vsString validString = "0123456789";
 				valid = false;
@@ -1944,12 +1957,37 @@ vsInput::ValidateString()
 
 				if ( *it == '-' && i == 0 )
 					valid = true;
-				else if ( *it == '.' )
+				else if ( *it == (uint8_t)(s_decimalSeparator[0]) )
 				{
-					if ( hasDot )
+					if ( hasDecimalSeparator )
 						valid = false;
 					else
-						hasDot = true;
+						hasDecimalSeparator = true;
+				}
+				else
+				{
+					valid = false;
+					utf8::iterator<std::string::iterator> vit( validString.begin(), validString.begin(), validString.end() );
+					for ( int l = 0; l < utf8::distance(validString.begin(), validString.end()); l++ )
+					{
+						if ( *it == *(vit++) )
+							valid = true;
+					}
+				}
+			}
+			else if ( m_stringValidationType == Validation_PositiveNumeric )
+			{
+				vsString validString = "0123456789";
+				// we support only [0-9].
+				//
+				// We also support up to one '.', and we may have a '-' on the front.
+
+				if ( *it == (uint8_t)(s_decimalSeparator[0]) )
+				{
+					if ( hasDecimalSeparator )
+						valid = false;
+					else
+						hasDecimalSeparator = true;
 				}
 				else
 				{

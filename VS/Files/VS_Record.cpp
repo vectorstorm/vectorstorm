@@ -21,7 +21,7 @@ vsRecord::vsRecord():
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
-	m_pool = NULL;
+	// m_pool = NULL;
 
 	Init();
 }
@@ -33,7 +33,7 @@ vsRecord::vsRecord( const char* fromString ):
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
-	m_pool = NULL;
+	// m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -46,7 +46,7 @@ vsRecord::vsRecord( const vsString& fromString ):
 	m_childList.Clear();
 	m_hasLabel = false;
 	m_lastChild = NULL;
-	m_pool = NULL;
+	// m_pool = NULL;
 
 	Init();
 	ParseString( fromString );
@@ -62,12 +62,12 @@ vsRecord::Init()
 {
 	for ( int i = 0; i < m_childList.ItemCount(); i++ )
 	{
-		if ( m_childList[i]->m_pool )
-		{
-			m_childList[i]->Init();
-			m_childList[i]->m_pool->Return(m_childList[i]);
-		}
-		else
+		// if ( m_childList[i]->m_pool )
+		// {
+		// 	m_childList[i]->Init();
+		// 	m_childList[i]->m_pool->Return(m_childList[i]);
+		// }
+		// else
 		{
 			vsDelete(m_childList[i]);
 		}

@@ -49,6 +49,7 @@ class vsScene
 	bool			m_stencilTest;
 	bool			m_hasViewport;
 	bool			m_enabled;	// if false, we won't automatically draw this scene
+	bool			m_clearDepth;
 
 public:
 
@@ -57,6 +58,8 @@ public:
 
 	void			Set3D(bool i) { m_is3d = i; }
 	bool			Is3D() { return m_is3d; }
+
+	void			SetClearDepth(bool cd) { m_clearDepth = cd; }
 
 	void			SetEnabled(bool enable) { m_enabled = enable; }
 	bool			IsEnabled() { return m_enabled; }

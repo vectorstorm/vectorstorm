@@ -251,9 +251,25 @@ static void printAttributes ()
 vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
 	m_flags(flags),
+	m_currentLocalToWorld(NULL),
+	m_currentLocalToWorldBuffer(NULL),
+	m_currentColors(NULL),
+	m_currentColorsBuffer(NULL),
 	m_window(NULL),
 	m_scene(NULL),
+	m_currentRenderTarget(NULL),
+	m_currentMaterial(NULL),
+	m_currentMaterialInternal(NULL),
+	m_currentShader(NULL),
 	m_currentShaderValues(NULL),
+	m_currentVertexArray(NULL),
+	m_currentNormalArray(NULL),
+	m_currentTexelArray(NULL),
+	m_currentColorArray(NULL),
+	m_currentVertexBuffer(NULL),
+	m_currentNormalBuffer(NULL),
+	m_currentTexelBuffer(NULL),
+	m_currentColorBuffer(NULL),
 	m_lastShaderId(0),
 	m_bufferCount(bufferCount)
 {
@@ -429,6 +445,14 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
 	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
 
+	int isDoubleBuffered = 0;
+	SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &isDoubleBuffered );
+	if (!isDoubleBuffered)
+	{
+		vsLog("FAILED TO SET UP DOUBLE BUFFERING??");
+	}
+	else
+		vsLog("DOUBLE-BUFFERED");
 	// shareVal = SDL_GL_GetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &shareVal );
 	// if ( shareVal )
 	// {
@@ -559,6 +583,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
 		}
 	}
+
+	DetermineRefreshRate();
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -572,6 +598,22 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = NULL;
+}
+
+void
+vsRenderer_OpenGL3::DetermineRefreshRate()
+{
+	SDL_DisplayMode mode;
+	int err = SDL_GetWindowDisplayMode(g_sdlWindow, &mode);
+	if ( err == 0 )
+	{
+		vsLog("Display refresh rate: %d", mode.refresh_rate);
+		m_refreshRate = mode.refresh_rate;
+	}
+	else
+	{
+		vsLog("Error getting display mode: %s", SDL_GetError());
+	}
 }
 
 void
@@ -873,6 +915,7 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 		m_viewportHeightPixels = m_heightPixels;
 		ResizeRenderTargetsToMatchWindow();
 	}
+	DetermineRefreshRate();
 }
 
 void
@@ -887,6 +930,12 @@ vsRenderer_OpenGL3::PostRender()
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
+#ifdef __apple_cc__
+	// on OSX we must explicitly set the draw framebuffer to 0 before swap.
+	// Ref:
+	// http://renderingpipeline.com/2012/05/nsopenglcontext-flushbuffer-might-not-do-what-you-think/
+	m_window->Bind();
+#endif
 	SDL_GL_SwapWindow(g_sdlWindow);
 #endif
 	}
@@ -1117,6 +1166,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetMaterial:
 				{
 					vsMaterial *material = (vsMaterial *)op->data.p;
+					vsAssert(material, "SetMaterial called with no material?");
 					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
 					m_currentColors = NULL;
@@ -1624,6 +1674,16 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					glClear(GL_STENCIL_BUFFER_BIT);
 					break;
 				}
+			case vsDisplayList::OpCode_ClearDepth:
+				{
+					m_lastShaderId = 0;
+					m_state.SetBool( vsRendererState::Bool_DepthMask, true );
+					m_state.Flush();
+					glUseProgram(0);
+					glClearDepth(1.f);
+					glClear(GL_DEPTH_BUFFER_BIT);
+					break;
+				}
 			case vsDisplayList::OpCode_EnableScissor:
 				{
 					m_state.SetBool( vsRendererState::Bool_ScissorTest, true );
@@ -1708,6 +1768,7 @@ namespace
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
+	vsAssert( material, "SetMaterialInternal called with NULL material?" );
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
@@ -2472,6 +2533,9 @@ vsRenderer_OpenGL3::ClearState()
 	m_currentTransformStackLevel = 0;
 	m_currentVertexArray = NULL;
 	m_currentVertexArrayCount = 0;
+	m_currentColorArrayCount = 0;
+	m_currentTexelArrayCount = 0;
+	m_currentNormalArrayCount = 0;
 	m_currentVertexBuffer = NULL;
 	m_invalidateMaterial = true;
 	m_lightCount = 0;

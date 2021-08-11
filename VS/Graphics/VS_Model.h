@@ -36,6 +36,7 @@ class vsModel : public vsEntity
 	vsMaterial *	m_material;
 
 	vsBox3D				m_boundingBox;
+	vsBox3D				m_lowBoundingBox;
 	float				m_boundingRadius;
 
 	static vsModel* LoadModel_Internal( vsSerialiserRead& r );
@@ -88,6 +89,12 @@ public:
 	void					SetBoundingBox(const vsBox3D &box) { m_boundingBox = box; }
 	void					BuildBoundingBox();
 
+	const vsBox3D &			GetLowBoundingBox() const { return m_lowBoundingBox; }
+	void					SetLowBoundingBox(const vsBox3D &box) { m_lowBoundingBox = box; }
+	void					BuildLowBoundingBox( float threshhold = 1.f );
+
+	void					GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, float maxY );
+
 	vsDisplayList::Stats	CalculateStats();
 
 	float					GetBoundingRadius() { return m_boundingRadius; }
@@ -116,7 +123,9 @@ public:
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 
-	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+	bool		CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
+
+	void SaveOBJ( const vsString& filename );
 };
 
 #endif // VS_MODEL_H

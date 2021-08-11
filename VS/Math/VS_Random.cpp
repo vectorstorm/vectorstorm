@@ -231,4 +231,29 @@ vsRandomSource::GetColor(float min, float max)
 	return vsColor( result.x, result.y, result.z, 1.0f );
 }
 
+vsVector3D
+vsRandomSource::GetVector3DInCone(const vsVector3D& forward, float angleRadians)
+{
+	// Based upon an answer here:
+	// https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone
+
+	float z = GetFloat( vsCos(angleRadians), 1.f );
+	float theta = GetFloat( 0.f, TWOPI );
+
+	vsVector3D result(
+			vsSqrt(1.f - z*z) * vsCos(theta),
+			vsSqrt(1.f - z*z) * vsSin(theta),
+			z
+			);
+	// 'result' is the direction along a (0,0,1) forward.  We need to make it go
+	// in the requested direction!
+
+	vsVector3D up = vsVector3D::YAxis;
+	if ( forward == up )
+		up = vsVector3D::ZAxis;
+
+	vsQuaternion q(forward, vsVector3D::YAxis);
+	result = q.ApplyTo( result );
+	return result;
+}
 

@@ -1286,8 +1286,15 @@ void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *poin
 	}
 }
 
-vsLineBuilder2D::vsLineBuilder2D()
+vsLineBuilder2D::vsLineBuilder2D( float epsilon ):
+	m_epsilonSq(epsilon * epsilon)
 {
+}
+
+bool
+vsLineBuilder2D::isSameAs( const vsVector2D& a, const vsVector2D& b )
+{
+	return ( (a-b).SqLength() < m_epsilonSq );
 }
 
 vsLineBuilder2D::touches
@@ -1302,13 +1309,13 @@ vsLineBuilder2D::touchesStripId( const vsVector2D& v )
 		if ( m_strip[i].loop ) // if we're a closed loop, don't match against it.
 			continue;
 
-		if ( *m_strip[i].vert.Front() == v )
+		if ( isSameAs( *m_strip[i].vert.Front(), v ) )
 		{
 			result.stripId = i;
 			result.end = End_Start;
 			break;
 		}
-		if ( *m_strip[i].vert.Back() == v )
+		if ( isSameAs( *m_strip[i].vert.Back(), v ) )
 		{
 			result.stripId = i;
 			result.end = End_End;
@@ -1422,6 +1429,16 @@ vsLineBuilder2D::AddVertToStrip( const vsVector2D& v, int stripId, End whichEnd 
 	else
 	{
 		m_strip[stripId].vert.AddItem(v);
+	}
+}
+
+void
+vsLineBuilder2D::CloseLoops()
+{
+	for ( int i = 0; i < m_strip.ItemCount(); i++ )
+	{
+		if ( !m_strip[i].loop )
+			m_strip[i].loop = true;
 	}
 }
 

@@ -71,7 +71,8 @@ vsScene::vsScene( const vsString& name ):
 	m_flatShading( false ),
 	m_stencilTest( false ),
 	m_hasViewport( false ),
-	m_enabled( true )
+	m_enabled( true ),
+	m_clearDepth( false )
 {
 	m_camera = m_defaultCamera;
 	m_camera3D = m_defaultCamera3D;
@@ -248,6 +249,9 @@ vsScene::Draw( vsDisplayList *list, int flags )
 	}
 
 	m_queue->StartRender(this, flags);
+
+	if ( m_clearDepth )
+		list->ClearDepth();
 
 	if ( m_is3d )
 	{

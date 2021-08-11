@@ -26,7 +26,8 @@ vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 	m_width(width),
 	m_height(height),
 	m_viewportWidth(width),
-	m_viewportHeight(height)
+	m_viewportHeight(height),
+	m_refreshRate(60)
 {
 	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
 	s_instance = this;

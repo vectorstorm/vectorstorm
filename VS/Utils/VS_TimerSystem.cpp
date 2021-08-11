@@ -14,6 +14,7 @@
 #include "VS_DisplayList.h"
 #include "VS_RenderBuffer.h"
 #include "VS_RenderQueue.h"
+#include "VS_Renderer.h"
 #include "VS_Scene.h"
 #include "VS_Screen.h"
 #include "VS_System.h"
@@ -21,7 +22,7 @@
 // set to 1 to explicitly insert delays between frames,
 // if the user has disabled vsync, in order to try to
 // render just at 60fps.
-#define ENFORCE_SIXTY_FPS_MAXIMUM (0)
+#define ENFORCE_FPS_MAXIMUM (1)
 
 #if !TARGET_OS_IPHONE
 #include <SDL2/SDL.h>
@@ -219,8 +220,10 @@ vsTimerSystem::Update( float timeStep )
 	//	uint64_t now = SDL_GetTicks();
 	uint64_t now = GetMicroseconds();
 
-	uint64_t minTicksPerRound = 15000;
-	uint64_t desiredTicksPerRound = 16000;
+	int maxFPS = vsRenderer::Instance()->GetRefreshRate();
+
+	uint64_t desiredTicksPerRound = 1000000 / maxFPS;
+	uint64_t minTicksPerRound = desiredTicksPerRound - 1000; // close enough
 
 	uint64_t roundTime = now - m_startCpu;
 
@@ -236,7 +239,7 @@ vsTimerSystem::Update( float timeStep )
 
 	if ( roundTime < minTicksPerRound )
 	{
-#if ENFORCE_SIXTY_FPS_MAXIMUM
+#if ENFORCE_FPS_MAXIMUM
 		int delayTicks = (desiredTicksPerRound-roundTime)/1000;
 		// vsLog("Delaying %d ticks.\n", delayTicks);
 		SDL_Delay(delayTicks);

@@ -275,6 +275,26 @@ float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA,
 	return (closestPointOnB - closestPointOnA).SqLength();
 }
 
+float vsSqDistanceFromPointToLineSegment(
+		const vsVector2D& point,
+		const vsVector2D& startLine,
+		const vsVector2D& endLine,
+		vsVector2D* closest )
+{
+	vsVector2D direction = endLine-startLine;
+	float len = direction.Length();
+	direction.NormaliseSafe();
+
+	float projection = direction.Dot( point - startLine );
+	projection = vsClamp(0, projection, len);
+	vsVector2D closestPoint = startLine + direction * projection;
+	if ( closest )
+	{
+		*closest = closestPoint;
+	}
+	return (closestPoint-point).SqLength();
+}
+
 float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *closestA, vsVector2D *closestB )
 {
 	vsVector2D deltaA = endA - startA;
@@ -300,9 +320,63 @@ float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2
 
 	vsVector2D delta = startB - startA;
 	float det = dirB.x * dirA.y - dirB.y * dirA.x;
-	if ( det == 0.0f ) // no intersection!
+	if ( det == 0.0f ) // no intersection;  parallel!
 	{
-		return 0.0;
+		// our two lines are parallel, so there's no intersection point for us
+		// to find (which would have made it easy!).  Instead, we need to find
+		// the distances from startA and endA to a point on B, and then
+		// the distances from startB and endB to a point on A.  We'll take
+		// the shortest distance out of those!
+
+		vsVector2D closestOnA = startA;
+		vsVector2D closestOnB = startB;
+		float closestSq = std::numeric_limits<float>::max();
+
+		vsVector2D thisPoint;
+		{
+			float thisDistanceSq = vsSqDistanceFromPointToLineSegment( startA, startB, endB, &thisPoint );
+			if ( thisDistanceSq < closestSq )
+			{
+				closestSq = thisDistanceSq;
+				closestOnA = startA;
+				closestOnB = thisPoint;
+			}
+		}
+		{
+			float thisDistanceSq = vsSqDistanceFromPointToLineSegment( endA, startB, endB, &thisPoint );
+			if ( thisDistanceSq < closestSq )
+			{
+				closestSq = thisDistanceSq;
+				closestOnA = endA;
+				closestOnB = thisPoint;
+			}
+		}
+		{
+			float thisDistanceSq = vsSqDistanceFromPointToLineSegment( startB, startA, endA, &thisPoint );
+			if ( thisDistanceSq < closestSq )
+			{
+				closestSq = thisDistanceSq;
+				closestOnA = thisPoint;
+				closestOnB = startB;
+			}
+		}
+		{
+			float thisDistanceSq = vsSqDistanceFromPointToLineSegment( startA, startB, endB, &thisPoint );
+			if ( thisDistanceSq < closestSq )
+			{
+				closestSq = thisDistanceSq;
+				closestOnA = thisPoint;
+				closestOnB = endB;
+			}
+		}
+
+		if ( closestA )
+			*closestA = closestOnA;
+		if ( closestB )
+			*closestB = closestOnB;
+
+		return closestSq;
+
 	}
 	float u = vsClamp(0.f, (delta.y * dirB.x - delta.x * dirB.y) / det, lenA);
 	float v = vsClamp(0.f, (delta.y * dirA.x - delta.x * dirA.y) / det, lenB);
@@ -316,6 +390,45 @@ float vsSqDistanceBetweenLineSegments( const vsVector2D& startA, const vsVector2
 		*closestB = closestPointOnB;
 
 	return (closestPointOnB - closestPointOnA).SqLength();
+}
+
+float vsSqDistanceBetweenLines( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA, vsVector3D *closestB )
+{
+	vsVector3D deltaA = endA - startA;
+	vsVector3D deltaB = endB - startB;
+
+	// perpendicular
+	vsVector3D perp = deltaA.Cross(deltaB);
+
+	// if perpendicular == 0, it means that our line segments are parallel.
+
+	float timeA, timeB;
+
+	vsVector3D StartAToStartB = startB-startA;
+
+	if ( perp == vsVector3D::Zero )
+	{
+		// since our line segments are parallel, let's just
+		timeA = timeB = 0.0f;
+	}
+	else
+	{
+		float perpDotPerp = perp.Dot(perp);
+		timeA = StartAToStartB.Cross(deltaB).Dot(perp) / perpDotPerp;
+		timeB = StartAToStartB.Cross(deltaA).Dot(perp) / perpDotPerp;
+	}
+
+	vsVector3D closestPointA = startA + timeA * deltaA;
+	vsVector3D closestPointB = startB + timeB * deltaB;
+
+	if ( closestA )
+		*closestA = closestPointA;
+	if ( closestB )
+		*closestB = closestPointB;
+
+	float distance = (closestPointB-closestPointA).SqLength();
+
+	return distance;
 }
 
 // This code for counting bits is based on a StackOverflow answer, here:

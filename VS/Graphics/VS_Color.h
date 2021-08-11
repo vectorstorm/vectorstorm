@@ -132,6 +132,7 @@ extern const vsColor c_orange;
 extern const vsColor c_lightBlue;
 extern const vsColor c_darkBlue;
 extern const vsColor c_red;
+extern const vsColor c_pink;
 extern const vsColor c_purple;
 extern const vsColor c_black;
 extern const vsColor c_clear;

@@ -65,6 +65,10 @@ public:
 	int					m_viewportWidthPixels;
 	int					m_viewportHeightPixels;
 
+	// How fast can our display update its image?  Expressed as a refresh rate,
+	// minimum of 1fps.
+	int					m_refreshRate;
+
 public:
 
 	static vsRenderer* Instance() { return s_instance; }
@@ -105,6 +109,8 @@ public:
 	int		GetHeightPixels() const { return m_heightPixels; }
 	void	SetViewportWidthPixels( int width ) { m_widthPixels = width; }
 	void	SetViewportHeightPixels( int height ) { m_heightPixels = height; }
+
+	int		GetRefreshRate() const { return m_refreshRate; }
 
 	virtual vsRenderTarget *GetMainRenderTarget() = 0;
 	virtual vsRenderTarget *GetPresentTarget() = 0;

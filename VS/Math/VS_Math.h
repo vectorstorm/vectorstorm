@@ -15,6 +15,7 @@
 #define vsMin(a,b) (((a)<(b))?(a):(b))
 #define vsMax(a,b) (((a)>(b))?(a):(b))
 #define vsClamp(a,min,max) ( vsMin( (max), vsMax( (min), (a) ) ) )
+#define vsSquared(a) (a*a)
 
 inline bool	vsIsNaN(float x) { volatile float o_x = x; return (x != o_x); }	// NaN != NaN.  Any number which doesn't equal itself must be NaN!
 inline int vsAbs( int in ) { return (in >= 0.f)?in:-in; }
@@ -113,6 +114,10 @@ float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA,
 // this finds the closest point between these two line segments, IGNORING Y.  Output
 // variables will have 'y' component set to zero.
 float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
+
+float vsSqDistanceFromPointToLineSegment( const vsVector2D& point, const vsVector2D& startLine, const vsVector2D& endLine, vsVector2D* closest = NULL );
+
+float vsSqDistanceBetweenLines( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
 
 #endif // VS_MATH_H
 

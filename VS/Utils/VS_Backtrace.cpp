@@ -108,9 +108,14 @@ void vsInstallBacktraceHandler()
 #include <signal.h>
 #include <unistd.h>
 
+static int g_signal = 0;
+
 void handler(int sig) {
+
+	g_signal = sig;
 	switch(sig)
 	{
+
 		case SIGABRT:
 			fputs("Caught SIGABRT: usually caused by abort() or assert()\n", stderr);
 			break;
@@ -140,11 +145,16 @@ void handler(int sig) {
 
 void vsInstallBacktraceHandler()
 {
+	vsLog("Hooking SIGABRT (%d)", SIGABRT);
 	signal(SIGABRT, handler);
+	vsLog("Hooking SIGFPE (%d)", SIGFPE);
 	signal(SIGFPE, handler);
+	vsLog("Hooking SIGILL (%d)", SIGILL);
 	signal(SIGILL, handler);
 	// signal(SIGINT, handler); // SIGINT is a user interruption, like hitting ctrl-c in a terminal process.  Not a crash.
+	vsLog("Hooking SIGSEGV (%d)", SIGSEGV);
 	signal(SIGSEGV, handler);
+	vsLog("Hooking SIGTERM (%d)", SIGTERM);
 	signal(SIGTERM, handler);
 }
 
@@ -159,6 +169,7 @@ void vsBacktrace()
 	size = backtrace(array, 20);
 
 	FILE* f = fopen("crash.rpt", "w");
+	fprintf(f, "Caught signal: %d\n", g_signal);
 	backtrace_symbols_fd(array, size, fileno(f));
 	backtrace_symbols_fd(array, size, STDERR_FILENO);
 	fclose(f);

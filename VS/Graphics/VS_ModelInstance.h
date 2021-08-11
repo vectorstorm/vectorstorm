@@ -37,8 +37,9 @@ public:
 
 	void SetVisible( bool visible );
 	bool IsVisible() const { return visible; }
-	void SetMatrix( const vsMatrix4x4& mat );
 	void SetMatrix( const vsMatrix4x4& mat, const vsColor &color );
+	void SetMatrix( const vsMatrix4x4& mat ); // in general, always use the 'Set Matrix' function above if you can!  It's much more optimal to set both matrix and color at the same time!
+	void SetColor( const vsColor &color );
 	void SetLodLevel( size_t lodLevel );
 	int GetLodCount();
 	void UpdateGroup();

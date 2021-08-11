@@ -16,6 +16,7 @@ const vsColor c_blue(0.2f,0.2f,1.0f,1.0f);
 const vsColor c_lightBlue(0.5f,0.5f,1.0f,1.0f);
 const vsColor c_darkBlue(0.0f,0.0f,0.25f,1.0f);
 const vsColor c_red(1.0f,0.2f,0.2f,1.0f);
+const vsColor c_pink(1.0f,0.5f,0.5f,1.0f);
 const vsColor c_green(0.2f,1.0f,0.2f,1.0f);
 const vsColor c_lightGreen(0.5f,1.0f,0.5f,1.0f);
 const vsColor c_yellow(1.0f,1.0f,0.2f,1.0f);

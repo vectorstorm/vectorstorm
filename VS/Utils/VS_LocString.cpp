@@ -178,7 +178,7 @@ vsLocString::AsString() const
 }
 
 static vsString s_thousandsSeparator(",");
-static vsString s_decimalSeparator(".");
+vsString s_decimalSeparator(".");
 
 static vsString DoFormatNumber( int value )
 {
@@ -198,7 +198,20 @@ static vsString DoFormatFloat( float value, int places )
 		intPart = vsCeil(value);
 
 	value -= intPart;
-	int decimalPart = value * pow(10,places);
+
+	int decimalPart = vsAbs( value * pow(10,places+1) );
+	// handle rounding
+
+	int factor = (int)pow(10,places);
+
+	if ( decimalPart % factor >= 5 )
+		decimalPart += factor;
+	decimalPart /= factor;
+	if ( decimalPart >= factor ) // rollover!  Increment the integer!
+	{
+		decimalPart -= factor;
+		intPart++;
+	}
 
 	vsString result = DoFormatNumber(intPart);
 	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);

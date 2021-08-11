@@ -20,7 +20,7 @@ namespace
 	// We sometimes want to temporarily modify the currently bound framebuffer
 	// object so that we can do temporary actions;  for example, resolving an
 	// MSAA rendertarget or doing a blit.  In order to transparently do those,
-	// we need to be able to swap the FBO back to the prevoiusly set one, and to
+	// we need to be able to swap the FBO back to the previously set one, and to
 	// do THAT, we need to keep track of what the previous FBO was.  So that's
 	// what the following values are for.
 	//
@@ -131,6 +131,7 @@ vsRenderTarget::~vsRenderTarget()
 	vsDelete( m_depthTexture );
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
+	m_bufferCount = 0;
 }
 
 vsTexture *
@@ -182,11 +183,16 @@ vsTexture *
 vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
+	vsAssert(this != NULL, "vsRenderTarget::Resolve called with NULL this");
+	vsAssert(m_bufferCount > 0, "vsRenderTarget::Resolve called with <= 0 bufferCount?" );
+	vsAssert(m_texture, "No texture array??");
 
 	if ( m_needsResolve & BIT(id) )
 	{
 		if ( m_renderBufferSurface )
 		{
+			vsAssert(m_textureSurface, "renderbuffer RenderTarget has no texture surface??");
+
 			vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
 			vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
@@ -349,6 +355,13 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	CreateDeferred();
 	other->CreateDeferred();
 
+	vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
+
+	vsRendererState::Instance()->SetBool(vsRendererState::Bool_Blend,false);
+	vsRendererState::Instance()->SetBool(vsRendererState::Bool_ScissorTest,false);
+	vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
+	vsRendererState::Instance()->Flush();
+
 	if ( m_renderBufferSurface )
 	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
@@ -385,6 +398,8 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 				GL_COLOR_BUFFER_BIT,
 				GL_LINEAR);
 	}
+	vsRendererState::Instance()->Apply( backup );
+	vsRendererState::Instance()->Flush();
 	// mark 'other' as needing a resolve.
 	other->m_needsResolve = 0xffff;
 	other->m_needsDepthResolve = true;
