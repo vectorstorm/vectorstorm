@@ -331,6 +331,8 @@ vsTextureInternal::DoLoadFromImage()
 				m_imageToLoad->RawData());
 		glGenerateMipmap(GL_TEXTURE_2D);
 		m_nearestSampling = false;
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 
 		vsDelete( m_imageToLoad );
 	}
