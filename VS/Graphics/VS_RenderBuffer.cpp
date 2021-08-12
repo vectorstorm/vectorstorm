@@ -15,6 +15,7 @@
 #include "VS_Profile.h"
 #include "VS/Utils/VS_Array.h"
 #include "VS/Threads/VS_Mutex.h"
+#include "VS/Graphics/VS_Renderer_OpenGL3.h"
 
 vsMutex s_toDestroyMutex;
 vsArray<GLuint> s_toDestroy;
@@ -23,6 +24,11 @@ vsArray<GLuint> s_toDestroy;
 #define TEXCOORD_ATTRIBUTE (1)
 #define NORMAL_ATTRIBUTE (2)
 #define COLOR_ATTRIBUTE (3)
+
+bool IsMainThread()
+{
+	return vsRenderer_OpenGL3::Instance()->IsMainContext();
+}
 
 static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 {
@@ -137,6 +143,10 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		SetArraySize_Internal( size );
 		memcpy(m_array,data,size);
 	}
+
+	if ( IsMainThread() )
+		DoUpdateVBO();
+
 }
 
 void

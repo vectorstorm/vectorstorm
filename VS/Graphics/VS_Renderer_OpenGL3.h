@@ -149,6 +149,7 @@ public:
 	void	SetLoadingContext();
 	void	ClearLoadingContext();
 
+	bool	IsMainContext(); // returns true if we're on the main context.
 	bool	IsLoadingContext(); // returns true if we're on the loading context.
 
 	// If we have the loading context on the current thread, we can

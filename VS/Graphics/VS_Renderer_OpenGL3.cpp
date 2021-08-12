@@ -69,8 +69,8 @@ namespace
 
 SDL_Window *g_sdlWindow = NULL;
 static SDL_GLContext m_sdlGlContext;
-static SDL_GLContext m_loadingGlContext;
-static vsMutex m_loadingGlContextMutex;
+// static SDL_GLContext m_loadingGlContext;
+// static vsMutex m_loadingGlContextMutex;
 
 bool g_crashOnTextureStateUsageWarning = false;
 
@@ -415,13 +415,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
 
-	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
-	if ( !m_loadingGlContext )
-	{
-		vsLog("Failed to create OpenGL context for loading??");
-		vsAssertF(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.  SDL2 error message: %s", SDL_GetError() );
-		exit(1);
-	}
+	// m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
+	// if ( !m_loadingGlContext )
+	// {
+	// 	vsLog("Failed to create OpenGL context for loading??");
+	// 	vsAssertF(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.  SDL2 error message: %s", SDL_GetError() );
+	// 	exit(1);
+	// }
 
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
@@ -595,7 +595,7 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 		vsDelete(m_scene);
 	}
 	SDL_GL_DeleteContext( m_sdlGlContext );
-	SDL_GL_DeleteContext( m_loadingGlContext );
+	// SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = NULL;
 }
@@ -2424,24 +2424,33 @@ vsRenderer_OpenGL3::SetRenderTarget( vsRenderTarget *target )
 void
 vsRenderer_OpenGL3::SetLoadingContext()
 {
-	m_loadingGlContextMutex.Lock();
-	SDL_GL_MakeCurrent( g_sdlWindow, m_loadingGlContext);
-	GL_CHECK("SetLoadingContext");
+	vsAssert(0, "No loading context");
+	// m_loadingGlContextMutex.Lock();
+	// SDL_GL_MakeCurrent( g_sdlWindow, m_loadingGlContext);
+	// GL_CHECK("SetLoadingContext");
 }
 
 void
 vsRenderer_OpenGL3::ClearLoadingContext()
 {
-	FenceLoadingContext();
-	GL_CHECK("ClearLoadingContext");
-	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
-	m_loadingGlContextMutex.Unlock();
+	vsAssert(0, "No loading context");
+	// FenceLoadingContext();
+	// GL_CHECK("ClearLoadingContext");
+	// SDL_GL_MakeCurrent( g_sdlWindow, NULL);
+	// m_loadingGlContextMutex.Unlock();
+}
+
+bool
+vsRenderer_OpenGL3::IsMainContext()
+{
+	return (m_sdlGlContext == SDL_GL_GetCurrentContext());
 }
 
 bool
 vsRenderer_OpenGL3::IsLoadingContext()
 {
-	return (m_loadingGlContext == SDL_GL_GetCurrentContext());
+	return false;
+	// return (m_loadingGlContext == SDL_GL_GetCurrentContext());
 }
 
 void
