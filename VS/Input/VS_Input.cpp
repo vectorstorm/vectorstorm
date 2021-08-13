@@ -950,6 +950,22 @@ vsInput::Update(float timeStep)
 						vsLog("Controller remap event received, ignored: %d", event.cdevice.which);
 						break;
 					}
+				case SDL_CONTROLLERAXISMOTION:
+					{
+						// vsLog("Controller joystickId %d, axis %d: %d",
+						// 		event.caxis.which,
+						// 		event.caxis.axis,
+						// 		event.caxis.value);
+						break;
+					}
+				case SDL_CONTROLLERBUTTONDOWN:
+					{
+						// vsLog("Controller joystickId %d, button %d: %d",
+						// 		event.cbutton.which,
+						// 		event.cbutton.button,
+						// 		event.cbutton.state);
+						break;
+					}
 				case SDL_TEXTINPUT:
 					{
 						m_timeSinceAnyInput = 0.f;
