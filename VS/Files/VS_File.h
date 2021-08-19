@@ -51,6 +51,8 @@ private:
 	size_t		m_length;
 	bool m_moveOnDestruction;
 
+	void _DoWriteLiteralBytes( const void* bytes, size_t byteCount );
+
 	void _WriteBytes( const void* bytes, size_t byteCount );
 	void _WriteFinalBytes_Buffered( const void* bytes, size_t byteCount );
 
