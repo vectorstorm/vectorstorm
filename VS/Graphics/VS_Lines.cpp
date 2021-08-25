@@ -399,7 +399,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		offsetPost.NormaliseSafe();
 
 		vsVector3D vertexPosition;
-		if ( offsetPre != offsetPost )
+		if ( offsetPre.Dot(offsetPost) < 0.8f )
 		{
 			vsVector3D closestPre, closestPost;
 			vsVector3D insidePre = point[preI] - (offsetPre * halfWidth);
@@ -422,7 +422,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 		dirOfTravel = (dirOfTravelPre + dirOfTravelPost);
 		dirOfTravel.Normalise();
 
-		if ( offsetPre != offsetPost )
+		if ( offsetPre.Dot(offsetPost) < 0.8f )
 		{
 			vsVector3D closestPre, closestPost;
 			vsVector3D outsidePre = point[preI] + (offsetPre * halfWidth);
