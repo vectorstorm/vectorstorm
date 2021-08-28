@@ -22,6 +22,7 @@
 
 #include "VS_File.h"
 #include "VS_Record.h"
+#include "VS_Profile.h"
 
 #include "VS_Preferences.h"
 #include "Utils/utfcpp/utf8.h"
@@ -851,6 +852,7 @@ void
 vsInput::Update(float timeStep)
 {
 	UNUSED(timeStep);
+	PROFILE("vsInput::Update");
 
 	m_timeSinceAnyInput += timeStep;
 

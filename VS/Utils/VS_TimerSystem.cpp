@@ -18,6 +18,7 @@
 #include "VS_Scene.h"
 #include "VS_Screen.h"
 #include "VS_System.h"
+#include "VS_Profile.h"
 
 // set to 1 to explicitly insert delays between frames,
 // if the user has disabled vsync, in order to try to
@@ -210,13 +211,20 @@ vsTimerSystem::GetMicrosecondsSinceInit()
 void
 vsTimerSystem::Update( float timeStep )
 {
+	PROFILE("vsTimerSystem::Update");
 	UNUSED(timeStep);
 
+	if ( vsScreen::Instance()->Resized() )
+	{
 #if defined(DEBUG_TIMING_BAR)
-	vsVector2D bl = vsScreen::Instance()->GetDebugScene()->GetBottomLeftCorner();
-	m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
+		PROFILE("PositionTimingBar");
+		vsVector2D bl = vsScreen::Instance()->GetDebugScene()->GetBottomLeftCorner();
+		m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
 #endif // DEBUG_TIMING_BAR
+	}
 
+	{
+		PROFILE("Stuff");
 	//	uint64_t now = SDL_GetTicks();
 	uint64_t now = GetMicroseconds();
 
@@ -240,6 +248,7 @@ vsTimerSystem::Update( float timeStep )
 	if ( roundTime < minTicksPerRound )
 	{
 #if ENFORCE_FPS_MAXIMUM
+		PROFILE("vsTimerSystem::EnforceFPSMaximum");
 		int delayTicks = (desiredTicksPerRound-roundTime)/1000;
 		// vsLog("Delaying %d ticks.\n", delayTicks);
 		SDL_Delay(delayTicks);
@@ -268,6 +277,7 @@ vsTimerSystem::Update( float timeStep )
 	core::GetGame()->SetTimeStep( actualTimeStep );
 
 	m_startCpu = now;
+	}
 }
 
 void
