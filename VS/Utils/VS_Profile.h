@@ -54,6 +54,11 @@
 // #define PROFILE(name) VSProfileLib __profile(name)
 #define PROFILE_GL(name) ZoneScopedN(name)
 
+#else
+
+#define PROFILE(name)
+#define PROFILE_GL(name)
+
 #endif // TRACY_ENABLE
 
 // #define VSPL_PROFILE_NONE 0
