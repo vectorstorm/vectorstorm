@@ -51,7 +51,7 @@
 #define vsTuneable const
 #endif
 
-#define ENABLE_ASSERTS
+#define ENABLE_ASSERTS 1
 
 #if defined(__cplusplus)
 

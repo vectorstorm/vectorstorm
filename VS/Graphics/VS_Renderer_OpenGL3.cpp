@@ -36,6 +36,9 @@
 #include "VS_TimerSystem.h"
 
 #include "VS_Input.h" // flag event queue to ignore resize events while we're changing window type
+#ifdef TRACY_ENABLE
+#include "tracy/Tracy.hpp"
+#endif // VS_TRACY
 
 #if SDL_VERSION_ATLEAST(2,0,5)
 #define HAS_SDL_SET_RESIZABLE
@@ -927,6 +930,7 @@ vsRenderer_OpenGL3::PreRender(const Settings &s)
 void
 vsRenderer_OpenGL3::PostRender()
 {
+	PROFILE_GL("PostRender");
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
@@ -937,6 +941,10 @@ vsRenderer_OpenGL3::PostRender()
 	m_window->Bind();
 #endif
 	SDL_GL_SwapWindow(g_sdlWindow);
+#endif
+
+#ifdef VS_TRACY
+	FrameMark;
 #endif
 	}
 
@@ -961,6 +969,7 @@ vsRenderer_OpenGL3::PostRender()
 void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
+	// ZoneScopedN("RenderDisplayList");
 	PROFILE_GL("RenderDisplayList");
 	GL_CHECK("RenderDisplayList");
 	m_currentMaterial = NULL;
@@ -975,6 +984,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 void
 vsRenderer_OpenGL3::FlushRenderState()
 {
+	PROFILE_GL("FlushRenderState");
 	// For these immediate-mode style "arrays embedded directly in the display list"
 	// situations, we need to make sure that we have enough space to push all the
 	// data directly;  that we won't run out partway through.  This means that we
@@ -1109,6 +1119,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 void
 vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 {
+	PROFILE("RawRenderDisplayList");
 	m_currentCameraPosition = vsVector3D::Zero;
 
 	vsDisplayList::op *op = list->PopOp();
@@ -1534,8 +1545,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
 				{
-					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleStripBuffer" : "TriangleStripBufferInstanced";
-					PROFILE(section);
+					PROFILE("TriangleStripBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
 					ib->TriStripBuffer(m_currentLocalToWorldCount);
@@ -1543,8 +1553,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
 				{
-					vsString section = m_currentLocalToWorldCount == 1 ? "TriangleListBuffer" : "TriangleListBufferInstanced";
-					PROFILE(section);
+					PROFILE("TriangleListBuffer");
 					// PROFILE_GL("TriangleListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
@@ -1768,6 +1777,7 @@ namespace
 void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
+	PROFILE("SetMaterialInternal");
 	vsAssert( material, "SetMaterialInternal called with NULL material?" );
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{

@@ -507,9 +507,37 @@ vsFile::FlushBufferedWrites()
 	{
 		if ( m_store && m_store->BytesLeftForReading() )
 		{
-			PHYSFS_writeBytes( m_file, m_store->GetReadHead(), m_store->BytesLeftForReading() );
+			_DoWriteLiteralBytes( m_store->GetReadHead(), m_store->BytesLeftForReading() );
 			m_store->Clear();
 		}
+	}
+}
+
+void
+vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
+{
+	PHYSFS_uint64 bytesToWrite = byteCount;
+	PHYSFS_sint64 bytesWritten = PHYSFS_writeBytes( m_file, bytes, bytesToWrite );
+	if ( bytesWritten != (PHYSFS_sint64)bytesToWrite )
+	{
+		PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
+		const char* errStr = PHYSFS_getErrorByCode(code);
+
+		// this file is truncated;  let's try to delete it rather than let it
+		// live in a partially-written state!
+		// bool successfullyDeleted = false;
+
+		PHYSFS_close(m_file);
+		if ( vsFile::Exists(m_tempFilename) )
+			vsFile::Delete( m_tempFilename );
+		if ( vsFile::Exists(m_filename) )
+			vsFile::Delete( m_filename );
+
+		vsAssertF( bytesWritten == (PHYSFS_sint64)bytesToWrite,
+				"Unable to write file(%s): (%ld) %s",
+				m_filename,
+				code,
+				errStr)
 	}
 }
 
@@ -574,7 +602,20 @@ vsFile::Copy( const vsString &from, const vsString &to )
 bool
 vsFile::Move( const vsString &from, const vsString &to )
 {
-	return ( Copy(from, to) && Delete(from) );
+	if ( !vsFile::Exists(from) )
+		return false;
+
+	vsFile *f = new vsFile(from);
+	vsStore s( f->GetLength() );
+	f->Store(&s);
+	vsDelete(f);
+
+	vsFile::Delete(from);
+
+	vsFile t(to, vsFile::MODE_WriteDirectly);
+	t.Store(&s);
+
+	return true;
 }
 
 bool
@@ -794,7 +835,7 @@ vsFile::Record( vsRecord *r )
 	{
 		vsString recordString = r->ToString();
 
-		PHYSFS_writeBytes( m_file, recordString.c_str(), recordString.size() );
+		_DoWriteLiteralBytes( recordString.c_str(), recordString.size() );
 
 		return true;
 	}
@@ -996,7 +1037,7 @@ vsFile::_WriteFinalBytes_Buffered( const void* bytes, size_t byteCount )
 				m_store->WriteBuffer(bytes, bytesWeCanWrite);
 				bytes = (char*)(bytes) + bytesWeCanWrite;
 
-				PHYSFS_writeBytes( m_file, m_store->GetReadHead(), m_store->BytesLeftForReading() );
+				_DoWriteLiteralBytes( m_store->GetReadHead(), m_store->BytesLeftForReading() );
 				m_store->Clear();
 				byteCount -= bytesWeCanWrite;
 			}
@@ -1005,7 +1046,7 @@ vsFile::_WriteFinalBytes_Buffered( const void* bytes, size_t byteCount )
 	else
 	{
 		// we're not writing in a buffered context.  Just write the bytes directly.
-		PHYSFS_writeBytes( m_file, bytes, byteCount );
+		_DoWriteLiteralBytes( bytes, byteCount );
 	}
 }
 

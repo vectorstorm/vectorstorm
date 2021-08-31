@@ -22,6 +22,7 @@
 
 #include "VS_File.h"
 #include "VS_Record.h"
+#include "VS_Profile.h"
 
 #include "VS_Preferences.h"
 #include "Utils/utfcpp/utf8.h"
@@ -851,6 +852,7 @@ void
 vsInput::Update(float timeStep)
 {
 	UNUSED(timeStep);
+	PROFILE("vsInput::Update");
 
 	m_timeSinceAnyInput += timeStep;
 
@@ -948,6 +950,22 @@ vsInput::Update(float timeStep)
 						// not going to spend much time guessing how I'm supposed
 						// to handle this event type.)
 						vsLog("Controller remap event received, ignored: %d", event.cdevice.which);
+						break;
+					}
+				case SDL_CONTROLLERAXISMOTION:
+					{
+						// vsLog("Controller joystickId %d, axis %d: %d",
+						// 		event.caxis.which,
+						// 		event.caxis.axis,
+						// 		event.caxis.value);
+						break;
+					}
+				case SDL_CONTROLLERBUTTONDOWN:
+					{
+						// vsLog("Controller joystickId %d, button %d: %d",
+						// 		event.cbutton.which,
+						// 		event.cbutton.button,
+						// 		event.cbutton.state);
 						break;
 					}
 				case SDL_TEXTINPUT:

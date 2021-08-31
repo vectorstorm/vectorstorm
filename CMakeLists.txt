@@ -18,6 +18,7 @@ option( VS_DEFAULT_VIRTUAL_CONTROLLER "If enabled, we use the default controller
 option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
 option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
 option( VS_PRISTINE_BINDINGS "If enabled, we clear bindings after using them" NO )
+option( VS_TRACY "If enabled, support remote profiling via tracy" NO )
 
 # If we have a choice between legacy libgl.so and more modern
 # libOpenGL.so (the "GL Vendor-Neutral Dispatch" library), let's
@@ -177,6 +178,7 @@ endif ()
 if(MSVC)
 	add_definitions("-DMSVC")
 endif()
+
 
 # find . -type d
 
@@ -476,7 +478,18 @@ if ( MINGW )
 		glew.c
 		${SOURCES}
 		)
-endif()
+endif( MINGW )
+
+if ( VS_TRACY )
+	message("TRACY ENABLED")
+	add_definitions("-DTRACY_ENABLE")
+	include_directories( tracy )
+	set( SOURCES
+		tracy/TracyClient.cpp
+		${SOURCES}
+		)
+endif ( VS_TRACY )
+
 
 	if ( UNIX )
 		add_definitions("-D UNIX")

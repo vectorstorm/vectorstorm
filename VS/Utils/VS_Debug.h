@@ -13,7 +13,7 @@
 #include "VS_String.h"
 #include "VS_Log.h"
 
-#if defined(ENABLE_ASSERTS)
+#if ENABLE_ASSERTS
 
 // A "Check" will output a warning message to the log if the condition fails.
 #define vsCheck(x,y) {if(!(x)){ vsFailedCheck(#x, y,__FILE__, __LINE__); }}
