@@ -38,6 +38,7 @@
 #include "VS_Input.h" // flag event queue to ignore resize events while we're changing window type
 #ifdef TRACY_ENABLE
 #include "tracy/Tracy.hpp"
+// #include "tracy/TracyOpenGL.hpp"
 #endif // VS_TRACY
 
 #if SDL_VERSION_ATLEAST(2,0,5)
@@ -433,6 +434,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		vsAssertF(0, "Failed to create an OpenGL 3.3 context. OpenGL 3.3 support is required for this game.  SDL2 error message: %s", SDL_GetError() );
 		exit(1);
 	}
+
 	printAttributes();
 
 	m_widthPixels = width;
@@ -588,6 +590,10 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 
 	DetermineRefreshRate();
+#ifdef VS_TRACY
+	// TracyGpuContext;
+#endif // VS_TRACY
+
 }
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
@@ -944,6 +950,7 @@ vsRenderer_OpenGL3::PostRender()
 #endif
 
 #ifdef VS_TRACY
+	// TracyGpuCollect;
 	FrameMark;
 #endif
 	}

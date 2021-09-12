@@ -34,7 +34,9 @@
 #ifdef VS_TRACY
 #undef TRACY_ENABLE
 #define TRACY_ENABLE
+// #include "VS_OpenGL.h"
 #include "tracy/Tracy.hpp"
+// #include "tracy/TracyOpenGL.hpp"
 
 // class VSProfileLib
 // {
@@ -52,7 +54,8 @@
 
 #define PROFILE(name) ZoneScopedN(name)
 // #define PROFILE(name) VSProfileLib __profile(name)
-#define PROFILE_GL(name) ZoneScopedN(name)
+// #define PROFILE_GL(name) TracyGpuZone(name)
+#define PROFILE_GL(name) ZoneScopedN(name);
 
 #else
 
