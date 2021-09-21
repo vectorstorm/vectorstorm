@@ -53,6 +53,8 @@ protected:
 	vsTransform3D m_transform;
 	void LoadFrom( vsRecord *record );
 
+	virtual void _TransformChangeCallback() {}
+
 public:
 
 	static vsModel *	Load( const vsString &filename ); // trim the extension (if any) and try to load either binary or text format.
@@ -73,16 +75,16 @@ public:
 	void			SetMaterial( vsMaterial *material ) { vsDelete( m_material ); m_material = material; }
 	vsMaterial *	GetMaterial() { return m_material; }
 
-	virtual void		SetPosition( const vsVector3D &pos ) { m_transform.SetTranslation( pos ); }
+	void				SetPosition( const vsVector3D &pos ) { if ( pos != GetPosition() ) { m_transform.SetTranslation( pos ); _TransformChangeCallback(); } }
 	const vsVector3D &	GetPosition() const { return m_transform.GetTranslation(); }
 
-	virtual void			SetOrientation( const vsQuaternion &quat ) { m_transform.SetRotation( quat ); }
+	void					SetOrientation( const vsQuaternion &quat ) { if ( quat != GetOrientation() ) { m_transform.SetRotation( quat ); _TransformChangeCallback(); } }
 	const vsQuaternion &	GetOrientation() const { return m_transform.GetRotation(); }
 
 	const vsMatrix4x4 &		GetMatrix() const { return m_transform.GetMatrix(); }
 
 	const vsVector3D &		GetScale() const { return m_transform.GetScale(); }
-	void					SetScale( const vsVector3D &s ) { m_transform.SetScale(s); }
+	void					SetScale( const vsVector3D &s ) { if ( s != GetScale() ) { m_transform.SetScale(s); _TransformChangeCallback(); } }
 	void					SetScale( float s ) { m_transform.SetScale(s); }
 
 	const vsBox3D &			GetBoundingBox() const { return m_boundingBox; }
@@ -99,7 +101,7 @@ public:
 
 	float					GetBoundingRadius() { return m_boundingRadius; }
 
-	void				SetTransform( const vsTransform3D &t ) { m_transform = t; }
+	void					SetTransform( const vsTransform3D &t ) { if ( t != m_transform ) { m_transform = t; _TransformChangeCallback(); } }
 	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
