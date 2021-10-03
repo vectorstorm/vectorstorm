@@ -69,7 +69,7 @@ vsVector2D::NormaliseSafe()
 }
 
 vsVector2D
-vsVector2D::Normalised()
+vsVector2D::Normalised() const
 {
 	float length = Length();
 
@@ -82,7 +82,7 @@ vsVector2D::Normalised()
 }
 
 vsVector2D
-vsVector2D::NormalisedSafe()
+vsVector2D::NormalisedSafe() const
 {
 	if ( SqLength() > 0.f )
 		return Normalised();
@@ -124,7 +124,7 @@ vsVector3D::NormaliseSafe()
 }
 
 vsVector3D
-vsVector3D::Normalised()
+vsVector3D::Normalised() const
 {
 	float length = Length();
 
@@ -137,7 +137,7 @@ vsVector3D::Normalised()
 }
 
 vsVector3D
-vsVector3D::NormalisedSafe()
+vsVector3D::NormalisedSafe() const
 {
 	if ( SqLength() > 0.f )
 		return Normalised();
@@ -178,7 +178,7 @@ void vsVector4D::Normalise()
 }
 
 vsVector4D
-vsVector4D::Normalised()
+vsVector4D::Normalised() const
 {
 	float length = Length();
 	if ( length == 0.f )
