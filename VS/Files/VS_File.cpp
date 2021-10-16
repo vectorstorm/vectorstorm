@@ -953,7 +953,20 @@ vsFile::Store( vsStore *s )
 			PHYSFS_sint64 n;
 			n = PHYSFS_readBytes( m_file, s->GetWriteHead(), s->BufferLength() );
 
-			if ( s->BufferLength() < (size_t)n )
+			if ( n < 0 )
+			{
+				// read error occurred.
+				vsLog( "Ut-oh, file reading error has been returned;  PHYSFS_readBytes() has returned %d", n  );;
+				vsLog("File:  %s", m_filename);
+				vsLog("Bytes read: %d", n);
+				vsLog("Space to store them: %d", s->BufferLength());
+
+				PHYSFS_ErrorCode errorCode = PHYSFS_getLastErrorCode();
+				vsLog("Error code: %d", errorCode);
+				vsLog("Error string: %s", PHYSFS_getErrorByCode(errorCode));
+
+			}
+			else if ( s->BufferLength() < (size_t)n )
 			{
 				// fatal error:  Let's trace out deets!
 				vsLog("Ut-oh, major file loading error has happened;  somehow we've read more bytes than expected and we have nowhere to store them?");
