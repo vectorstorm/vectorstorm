@@ -143,7 +143,7 @@ uint32_t vsCalculateHash(const char * data, uint32_t len) {
 	uint32_t hash = len, tmp;
 	int rem;
 
-    if (len <= 0 || data == NULL)
+    if (len <= 0 || data == nullptr)
 	{
 		return 0;
 	}

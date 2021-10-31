@@ -23,12 +23,12 @@
 #include "VS_TimerSystem.h"
 
 const int c_fifoSize = 1024 * 4000;		// 2mb for our FIFO display list
-vsScreen *	vsScreen::s_instance = NULL;
+vsScreen *	vsScreen::s_instance = nullptr;
 
 vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
-	m_renderer(NULL),
-	m_pipeline(NULL),
-	m_scene(NULL),
+	m_renderer(nullptr),
+	m_pipeline(nullptr),
+	m_scene(nullptr),
 	m_sceneCount(0),
 	m_fifoUsageLastFrame(0),
 	m_fifoHighWater(0),
@@ -40,10 +40,10 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 	m_antialias(antialias),
 	m_vsync(vsync),
 	m_resized(false),
-	m_currentRenderTarget(NULL),
-	m_currentSettings(NULL)
+	m_currentRenderTarget(nullptr),
+	m_currentSettings(nullptr)
 {
-	vsAssert(s_instance == NULL, "Tried to create a second vsScreen");
+	vsAssert(s_instance == nullptr, "Tried to create a second vsScreen");
 	s_instance = this;
 	int flags = 0;
 	if ( windowType != vsRenderer::WindowType_Window )
@@ -77,7 +77,7 @@ vsScreen::~vsScreen()
 	DestroyScenes();
 	vsDelete( m_renderer );
 	vsDelete( m_fifo );
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void
@@ -210,7 +210,7 @@ vsScreen::DestroyScenes()
 			vsDelete( m_scene[i] );
 		vsDeleteArray( m_scene );
 
-		m_scene = NULL;
+		m_scene = nullptr;
 	}
 	m_sceneCount = 0;
 }
@@ -270,7 +270,7 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptio
 	vsTimerSystem::Instance()->EndDrawTime();
 	m_renderer->PostRender();
 
-	m_currentSettings = NULL;
+	m_currentSettings = nullptr;
 }
 
 vsScene *
@@ -286,7 +286,7 @@ vsScreen::GetScene(int i)
 	{
 		return m_scene[i];
 	}
-	return NULL;
+	return nullptr;
 }
 
 float

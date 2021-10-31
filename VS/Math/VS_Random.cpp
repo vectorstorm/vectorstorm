@@ -101,7 +101,7 @@ vsRandomSource::Next()
 void
 vsRandomSource::Init()
 {
-	InitWithSeed( (uint64_t)time(NULL) );
+	InitWithSeed( (uint64_t)time(nullptr) );
 }
 
 void

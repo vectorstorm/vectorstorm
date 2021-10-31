@@ -31,7 +31,7 @@
 int vsSingleFloatImage::m_textureMakerCount = 0;
 
 vsSingleFloatImage::vsSingleFloatImage():
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(0),
 	m_height(0),
@@ -41,7 +41,7 @@ vsSingleFloatImage::vsSingleFloatImage():
 }
 
 vsSingleFloatImage::vsSingleFloatImage(unsigned int width, unsigned int height):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(width),
 	m_height(height),
@@ -66,14 +66,14 @@ vsSingleFloatImage::vsSingleFloatImage( const vsString &filename ):
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
 	vsDelete(s);
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
+	vsAssert(loadedImage != nullptr, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
 	LoadFromSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);
 #endif
 }
 
 vsSingleFloatImage::vsSingleFloatImage( vsTexture * texture ):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_width(0),
 	m_height(0),
 	m_pbo(0),
@@ -92,7 +92,7 @@ vsSingleFloatImage::~vsSingleFloatImage()
 		glDeleteBuffers( 1, (GLuint*)&m_pbo );
 		glDeleteSync( m_sync );
 
-		vsAssert( m_pixel == NULL, "async-mapped pixel data not cleared during destruction??" );
+		vsAssert( m_pixel == nullptr, "async-mapped pixel data not cleared during destruction??" );
 		m_pbo = 0;
 		m_sync = 0;
 	}
@@ -151,7 +151,7 @@ vsSingleFloatImage::PrepForAsyncRead( vsTexture *texture )
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(float);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, nullptr, GL_DYNAMIC_READ );
 	}
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
@@ -226,7 +226,7 @@ vsSingleFloatImage::AsyncUnmap()
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
-	m_pixel = NULL;
+	m_pixel = nullptr;
 }
 
 float

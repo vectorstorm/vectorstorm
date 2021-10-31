@@ -20,8 +20,8 @@ vsRecord::vsRecord():
 {
 	m_childList.Clear();
 	m_hasLabel = false;
-	m_lastChild = NULL;
-	// m_pool = NULL;
+	m_lastChild = nullptr;
+	// m_pool = nullptr;
 
 	Init();
 }
@@ -32,8 +32,8 @@ vsRecord::vsRecord( const char* fromString ):
 {
 	m_childList.Clear();
 	m_hasLabel = false;
-	m_lastChild = NULL;
-	// m_pool = NULL;
+	m_lastChild = nullptr;
+	// m_pool = nullptr;
 
 	Init();
 	ParseString( fromString );
@@ -45,8 +45,8 @@ vsRecord::vsRecord( const vsString& fromString ):
 {
 	m_childList.Clear();
 	m_hasLabel = false;
-	m_lastChild = NULL;
-	// m_pool = NULL;
+	m_lastChild = nullptr;
+	// m_pool = nullptr;
 
 	Init();
 	ParseString( fromString );
@@ -78,7 +78,7 @@ vsRecord::Init()
 	m_inBlock = false;
 	m_hasLabel = false;
 	m_lineIsOpen = true;
-	m_lastChild = NULL;
+	m_lastChild = nullptr;
 }
 
 void
@@ -159,12 +159,12 @@ vsRecord::SerialiseBinaryV2( vsSerialiser *s )
 		for (int i = 0; i < m_childList.ItemCount(); i++ )
 		{
 			vsRecord *child = m_childList[i];
-			if ( child == NULL )
+			if ( child == nullptr )
 			{
 				vsLog("Invalid child in record: %s", m_label.AsString());
 				vsLog("Child count: %d", m_childList.ItemCount());
-				vsLog("NULL child is number: %d", i);
-				vsAssert(child !=NULL, "actually NULL child in vsRecord??")
+				vsLog("nullptr child is number: %d", i);
+				vsAssert(child !=nullptr, "actually nullptr child in vsRecord??")
 			}
 			child->SerialiseBinaryV2(s);
 		}
@@ -356,7 +356,7 @@ vsRecord::GetChildCount(const vsString& label) const
 void
 vsRecord::AddChild(vsRecord *record)
 {
-	vsAssert(record != NULL, "Tried to add a NULL subrecord??");
+	vsAssert(record != nullptr, "Tried to add a nullptr subrecord??");
 	m_childList.AddItem(record);
 	m_lastChild = record;
 }

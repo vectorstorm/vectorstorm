@@ -33,7 +33,7 @@ static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 };
 
 vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
-    m_array(NULL),
+    m_array(nullptr),
     m_arrayBytes(0),
     m_glArrayBytes(0),
     m_activeBytes(0),
@@ -87,7 +87,7 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 	{
 		vsDeleteArray( m_array );
 	}
-	if ( m_array == NULL && size > 0 )
+	if ( m_array == nullptr && size > 0 )
 	{
 		m_array = new char[size];
 		m_arrayBytes = size;
@@ -137,7 +137,7 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		}
 		else
 		{
-			// glBufferData(bindPoint, size, NULL, s_glBufferType[m_type]);
+			// glBufferData(bindPoint, size, nullptr, s_glBufferType[m_type]);
 			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
@@ -1208,7 +1208,7 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 		// This shouldn't happen any more;  we should always catch this in the
 		// "EnsureSpaceForVertexColorTexelNormal()" function below.  But leave this
 		// here just for safety for the moment.
-		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, nullptr, GL_DYNAMIC_DRAW);
 		g_vboCursor = 0;
 	}
 	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
@@ -1238,7 +1238,7 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 		glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
 
 		// orphan the buffer and start on the new one.
-		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE, nullptr, GL_DYNAMIC_DRAW);
 		g_vboCursor = 0;
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -1289,7 +1289,7 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 
 	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
 	{
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, EVBO_SIZE, NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, EVBO_SIZE, nullptr, GL_STREAM_DRAW);
 		g_evboCursor = 0;
 	}
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);

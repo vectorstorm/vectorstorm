@@ -30,9 +30,9 @@
 
 
 
-coreGame		*	core::s_game = NULL;
-coreGame		*	core::s_nextGame = NULL;
-vsHeap			*	core::s_gameHeap = NULL;
+coreGame		*	core::s_game = nullptr;
+coreGame		*	core::s_nextGame = nullptr;
+vsHeap			*	core::s_gameHeap = nullptr;
 bool				core::s_exit = false;
 bool				core::s_allowExit = true;
 
@@ -125,7 +125,7 @@ core::Go()
 			s_game->Init();
 			s_game->StartTimer();
 
-			s_nextGame = NULL;
+			s_nextGame = nullptr;
 		}
 		s_game->Go();		// run a frame of the current game.
 	}
@@ -184,7 +184,7 @@ core::GoOneFrame( float timeStep )
 			s_game->Init();
 			s_game->StartTimer();
 
-			s_nextGame = NULL;
+			s_nextGame = nullptr;
 		}
 		s_game->SetTimeStep( timeStep );
 		s_game->Go();		// run a frame of the current game.

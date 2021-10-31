@@ -103,8 +103,8 @@ inline float vsRemapFloat_Clamped( float from, float from_min, float from_max, f
 //
 float vsFadeInOut( float time, float startFadeIn, float endFadeIn, float startFadeOut, float endFadeOut );
 
-float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
-inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL )
+float vsSqDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = nullptr, vsVector3D *closestB = nullptr );
+inline float vsDistanceBetweenLineSegments( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = nullptr, vsVector3D *closestB = nullptr )
 {
 	return vsSqrt( vsSqDistanceBetweenLineSegments( startA, endA, startB, endB, closestA, closestB ) );
 }
@@ -113,11 +113,11 @@ float vsSqDistanceBetweenRays( const vsVector2D& startA, const vsVector2D& endA,
 
 // this finds the closest point between these two line segments, IGNORING Y.  Output
 // variables will have 'y' component set to zero.
-float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
+float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = nullptr, vsVector3D *closestB = nullptr );
 
-float vsSqDistanceFromPointToLineSegment( const vsVector2D& point, const vsVector2D& startLine, const vsVector2D& endLine, vsVector2D* closest = NULL );
+float vsSqDistanceFromPointToLineSegment( const vsVector2D& point, const vsVector2D& startLine, const vsVector2D& endLine, vsVector2D* closest = nullptr );
 
-float vsSqDistanceBetweenLines( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = NULL, vsVector3D *closestB = NULL );
+float vsSqDistanceBetweenLines( const vsVector3D& startA, const vsVector3D& endA, const vsVector3D& startB, const vsVector3D& endB, vsVector3D *closestA = nullptr, vsVector3D *closestB = nullptr );
 
 #endif // VS_MATH_H
 

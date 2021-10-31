@@ -23,8 +23,8 @@ public:
 
 	vsHashStoreEntry<T> *	m_next;
 
-	vsHashStoreEntry() : m_item(NULL) { m_key = vsEmptyString; m_keyHash = 0, m_next = NULL; }
-	vsHashStoreEntry( T *t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = NULL; }
+	vsHashStoreEntry() : m_item(nullptr) { m_key = vsEmptyString; m_keyHash = 0, m_next = nullptr; }
+	vsHashStoreEntry( T *t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = nullptr; }
 };
 
 template <typename T>
@@ -47,7 +47,7 @@ class vsHashTableStore
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -117,7 +117,7 @@ public:
 		{
 			return ent->m_item;
 		}
-		return NULL;
+		return nullptr;
 	}
 };
 

@@ -11,7 +11,7 @@
 #include "VS_HashTable.h"
 #include "VS_Store.h"
 
-static vsHashTable<vsStore> *s_cache = NULL;
+static vsHashTable<vsStore> *s_cache = nullptr;
 
 void
 vsFileCache::Startup()
@@ -37,7 +37,7 @@ vsFileCache::IsFileInCache(const vsString& filename)
 {
 	vsStore *s = s_cache->FindItem(filename);
 
-	return NULL != s;
+	return nullptr != s;
 }
 
 vsStore*

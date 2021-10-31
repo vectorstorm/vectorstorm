@@ -15,8 +15,8 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 	m_group(group),
 	m_model(model),
 	m_lodLevel(lodLevel),
-	m_values(NULL),
-	m_options(NULL)
+	m_values(nullptr),
+	m_options(nullptr)
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	,
 	m_matrixBuffer(vsRenderBuffer::Type_Dynamic),
@@ -175,8 +175,8 @@ vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 	m_bufferIsDirty = true;
 #endif
 
-	inst->group = NULL;
-	inst->lodGroup = NULL;
+	inst->group = nullptr;
+	inst->lodGroup = nullptr;
 }
 
 void

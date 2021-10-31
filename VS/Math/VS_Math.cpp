@@ -219,7 +219,7 @@ float vsSqDistanceBetweenLineSegments_XZ( const vsVector3D& startA, const vsVect
 	}
 	return vsSqDistanceBetweenLineSegments( startA.XZ(), endA.XZ(),
 			startB.XZ(), endB.XZ(),
-			NULL, NULL );
+			nullptr, nullptr );
 }
 
 bool vsLineSegmentsIntersect( const vsVector2D& startA, const vsVector2D& endA, const vsVector2D& startB, const vsVector2D& endB, vsVector2D *where )

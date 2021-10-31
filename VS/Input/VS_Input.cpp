@@ -107,7 +107,7 @@ vsInput::Init()
     //
 #if !TARGET_OS_IPHONE
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
-		m_controller[i] = NULL;
+		m_controller[i] = nullptr;
 
 	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
 	// int joystickCount = SDL_NumJoysticks();
@@ -540,7 +540,7 @@ vsInput::Load()
 	{
 		const char* nameStr = SDL_JoystickName(0);
 		vsString joystickName;
-		if ( nameStr != NULL )
+		if ( nameStr != nullptr )
 			joystickName = nameStr;
 		else
 			joystickName = "GenericController";
@@ -619,7 +619,7 @@ vsInput::Save()
 // 	{
 // 		const char* nameStr = SDL_JoystickName(0);
 // 		vsString joystickName;
-// 		if ( nameStr != NULL )
+// 		if ( nameStr != nullptr )
 // 			joystickName = nameStr;
 // 		else
 // 			joystickName = "GenericController";
@@ -1446,7 +1446,7 @@ float
 vsInput::ReadMouseButton( int buttonID )
 {
 #if !TARGET_OS_IPHONE
-	int buttons = SDL_GetMouseState(NULL,NULL);
+	int buttons = SDL_GetMouseState(nullptr,nullptr);
 	bool buttonDown = !!(buttons & SDL_BUTTON(buttonID));
 
 #if defined(__APPLE_CC__)
@@ -1483,7 +1483,7 @@ vsInput::GetController()
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
 		if ( m_controller[i] )
 			return m_controller[i];
-	return NULL;
+	return nullptr;
 }
 
 float
@@ -2626,7 +2626,7 @@ vsInput::GetAxis(const vsString& name)
 			return &m_axis[i];
 	}
 	vsLog("vsLog: Unable to find requested axis '%s'", name);
-	return NULL;
+	return nullptr;
 }
 
 int

@@ -27,7 +27,7 @@ public:
 	std::vector<vsLocArg> m_args;
 
 	vsLocString();
-	vsLocString( const char* str ); // non-NULL!
+	vsLocString( const char* str ); // non-nullptr!
 	vsLocString( const vsString& key );
 	vsLocString( const vsLocString& other );
 	vsLocString( int value );

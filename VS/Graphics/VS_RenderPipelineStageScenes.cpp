@@ -51,7 +51,7 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 	{
 		if ( m_scene[i] )
 		{
-			vsCamera3D *cam = NULL;
+			vsCamera3D *cam = nullptr;
 			bool reference;
 			if ( m_customCamera && m_scene[i]->Is3D() )
 			{

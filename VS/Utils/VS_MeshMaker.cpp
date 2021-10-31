@@ -38,8 +38,8 @@ public:
 
 	vsMeshMakerTriangleEdge()
 	{
-		m_aTriangle = m_bTriangle = NULL;
-		m_aVertex = m_bVertex = NULL;
+		m_aTriangle = m_bTriangle = nullptr;
+		m_aVertex = m_bVertex = nullptr;
 	}
 };
 
@@ -60,10 +60,10 @@ vsMeshMakerTriangleVertex::vsMeshMakerTriangleVertex()
 {
 	m_flags = 0L;
 	m_mergeCount = 0;
-	m_fakeNormalMergedWith = NULL;
+	m_fakeNormalMergedWith = nullptr;
 
 	//m_triangleCount = 0;
-	m_firstTriangle = NULL;
+	m_firstTriangle = nullptr;
 }
 
 void
@@ -73,7 +73,7 @@ vsMeshMakerTriangleVertex::AddTriangle( vsMeshMakerTriangle *triangle )
 
 	m_triangle[ m_triangleCount++ ] = triangle;*/
 
-	if ( m_firstTriangle == NULL )
+	if ( m_firstTriangle == nullptr )
 	{
 		m_firstTriangle = triangle;
 	}
@@ -121,7 +121,7 @@ float
 vsMeshMakerTriangleVertex::GetMergePriorityWith( const vsMeshMakerTriangleVertex &other, const vsVector3D &faceNormalOther )
 {
 	// no merging if we're a fake vertex.
-	if ( m_fakeNormalMergedWith != NULL )
+	if ( m_fakeNormalMergedWith != nullptr )
 		return -1.f;
 
 	// check my normal against 'faceNormalOther'
@@ -232,7 +232,7 @@ vsMeshMakerTriangle::IsDegenerate() const
 
 vsMeshMaker::vsMeshMaker( int flags )
 {
-	m_octree = NULL;
+	m_octree = nullptr;
 	m_buildingNormals = flags & Flag_BuildNormals;
 	m_attemptMerge = !(flags & Flag_NoMerge);
 	m_triangleCount = 0;
@@ -251,7 +251,7 @@ vsMeshMaker::vsMeshMaker( int flags )
 
 	//m_cellCount = MAKER_CELLS * MAKER_CELLS * MAKER_CELLS;
 	//m_cell = new vsMeshMakerCell[m_cellCount];
-	m_vertex = NULL;
+	m_vertex = nullptr;
 }
 
 vsMeshMaker::~vsMeshMaker()
@@ -324,12 +324,12 @@ vsMeshMaker::BakeTriangleEdge( vsMeshMakerTriangle *triangle, int vertA, int ver
 	{
 		vsMeshMakerTriangleEdge *edge = &*iter;
 
-		if ( edge->m_bTriangle == NULL )
+		if ( edge->m_bTriangle == nullptr )
 		{
 			if ( edge->m_aVertex == &m_vertex[vertA] && edge->m_bVertex == &m_vertex[vertB] )
 			{
 				// found matching pair!
-				vsAssert( edge->m_bTriangle == NULL, "Edge with more than two polygons??" );
+				vsAssert( edge->m_bTriangle == nullptr, "Edge with more than two polygons??" );
 
 				edge->m_bTriangle = triangle;
 				return;
@@ -337,7 +337,7 @@ vsMeshMaker::BakeTriangleEdge( vsMeshMakerTriangle *triangle, int vertA, int ver
 			else if ( edge->m_aVertex == &m_vertex[vertB] && edge->m_bVertex == &m_vertex[vertA] )
 			{
 				// found matching pair!
-				vsAssert( edge->m_bTriangle == NULL, "Edge with more than two polygons??" );
+				vsAssert( edge->m_bTriangle == nullptr, "Edge with more than two polygons??" );
 
 				edge->m_bTriangle = triangle;
 				return;
@@ -359,7 +359,7 @@ vsMeshMaker::BakeTriangleVertex( vsMeshMakerTriangleVertex &vertex, const vsVect
 	if ( m_attemptMerge )
 	{
 		float bestPriority = -1.f;
-		vsMeshMakerTriangleVertex *best = NULL;
+		vsMeshMakerTriangleVertex *best = nullptr;
 
 		vsVector2D deltaTexel;
 
@@ -567,7 +567,7 @@ vsMeshMaker::Bake()
 	m_internalData->m_mesh->Bake();
 
 	vsMesh *result = m_internalData->m_mesh;
-	m_internalData->m_mesh = NULL;
+	m_internalData->m_mesh = nullptr;
 
 	return result;
 }

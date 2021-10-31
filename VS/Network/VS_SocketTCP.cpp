@@ -42,8 +42,8 @@ vsSocketTCP::vsSocketTCP( int maxConnectionCount ):
 	m_privatePort(0),
 	m_listenSocket(-1),
 	m_listening(false),
-	m_listener(NULL),
-	m_connection(NULL),
+	m_listener(nullptr),
+	m_connection(nullptr),
 	m_connectionCount(maxConnectionCount)
 {
 	m_connection = new vsTCPConnection[ maxConnectionCount ];
@@ -54,7 +54,7 @@ vsSocketTCP::vsSocketTCP( int maxConnectionCount ):
 	for ( int i = 0; i < m_connectionCount; i++ )
 	{
 		m_connection[i].m_socket = -1;
-		m_connection[i].m_receiveBuffer = m_connection[i].m_sendBuffer = NULL;
+		m_connection[i].m_receiveBuffer = m_connection[i].m_sendBuffer = nullptr;
 		m_connection[i].m_closing = false;
 		m_connection[i].m_sigHup = false;
 	}
@@ -273,7 +273,7 @@ vsSocketTCP::DoPoll(float maxSleepDuration)
 				int socket = m_pollfds[p].fd;
 
 				// figure out which connection this is.
-				vsTCPConnection *connection = NULL;
+				vsTCPConnection *connection = nullptr;
 				int connectionID = 0;
 				for ( int i = 0; i < m_connectionCount; i++ )
 				{
@@ -285,7 +285,7 @@ vsSocketTCP::DoPoll(float maxSleepDuration)
 					}
 				}
 
-				vsAssert(connection != NULL, "Error:  Couldn't find connection to go with poll results??");
+				vsAssert(connection != nullptr, "Error:  Couldn't find connection to go with poll results??");
 
 				if ( m_pollfds[p].revents & POLLIN )
 				{
@@ -377,7 +377,7 @@ vsSocketTCP::DoSelect(float maxSleepDuration)
 	struct timeval timeout;
 	timeout.tv_sec = (int)maxSleepDuration;
 	timeout.tv_usec = (int)((1000000 * maxSleepDuration) - (1000000 * timeout.tv_sec));
-	int readSocks = select(highsock+1, &rsocks, &wsocks, NULL, &timeout);
+	int readSocks = select(highsock+1, &rsocks, &wsocks, nullptr, &timeout);
 	if ( readSocks == -1 )
 	{
 		// error!
@@ -520,9 +520,9 @@ vsSocketTCP::Poll(float maxSleepDuration)
 #endif
 					m_connection[i].m_socket = -1;
 					delete m_connection[i].m_receiveBuffer;
-					m_connection[i].m_receiveBuffer = NULL;
+					m_connection[i].m_receiveBuffer = nullptr;
 					delete m_connection[i].m_sendBuffer;
-					m_connection[i].m_sendBuffer = NULL;
+					m_connection[i].m_sendBuffer = nullptr;
 				}
 			}
 		}
@@ -537,9 +537,9 @@ vsSocketTCP::Connect(const std::string& hostname, uint16_t port)
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	struct hostent* hp = gethostbyname(hostname.c_str());
-	if ( hp == NULL ||  hp->h_addr_list[0] == NULL )
+	if ( hp == nullptr ||  hp->h_addr_list[0] == nullptr )
 	{
-		return NULL;
+		return nullptr;
 	}
 	addr.sin_addr = *( struct in_addr*)hp->h_addr_list[0];
 	memset(addr.sin_zero, '\0', sizeof addr.sin_zero);
@@ -571,7 +571,7 @@ vsSocketTCP::Connect(const std::string& hostname, uint16_t port)
 		}
 		return &m_connection[0];
 	}
-	return NULL;
+	return nullptr;
 }
 
 int

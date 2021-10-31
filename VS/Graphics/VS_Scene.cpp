@@ -61,10 +61,10 @@ vsScene::vsScene( const vsString& name ):
 	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
-	m_camera( NULL ),
-	m_camera3D( NULL ),
+	m_camera( nullptr ),
+	m_camera3D( nullptr ),
 	m_defaultCamera3D( new vsCamera3D ),
-	m_fog( NULL ),
+	m_fog( nullptr ),
 	m_viewport(),
 	m_is3d( false ),
 	m_cameraIsReference( false ),
@@ -79,7 +79,7 @@ vsScene::vsScene( const vsString& name ):
 
 	for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 	{
-		m_light[i] = NULL;
+		m_light[i] = nullptr;
 	}
 }
 
@@ -94,7 +94,7 @@ vsScene::~vsScene()
 	{
 		vsEntity *next = m_entityList->GetNext();
 		if ( next == m_entityList )
-			next = NULL;
+			next = nullptr;
 
 		vsDelete( m_entityList );
 		m_entityList = next;
@@ -264,7 +264,7 @@ vsScene::Draw( vsDisplayList *list, int flags )
 
 		for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 		{
-			if ( m_light[i] != NULL )
+			if ( m_light[i] != nullptr )
 			{
 				list->Light( *m_light[i] );
 			}
@@ -337,7 +337,7 @@ vsScene::AddLight( vsLight *light )
 {
 	for ( int i = 0; i < MAX_SCENE_LIGHTS; i++ )
 	{
-		if ( m_light[i] == NULL )
+		if ( m_light[i] == nullptr )
 		{
 			m_light[i] = light;
 			return;
@@ -352,7 +352,7 @@ vsScene::RemoveLight( vsLight *light )
 	{
 		if ( m_light[i] == light )
 		{
-			m_light[i] = NULL;
+			m_light[i] = nullptr;
 		}
 	}
 }
@@ -378,8 +378,8 @@ vsEntity *
 vsScene::FindEntityAtPosition( const vsVector2D &pos )
 {
 	if ( !IsEnabled() )
-		return NULL;
-	vsEntity *result = NULL;
+		return nullptr;
+	vsEntity *result = nullptr;
 
 	vsEntity *entity = m_entityList->GetPrev();
 	while ( !result && entity != m_entityList )

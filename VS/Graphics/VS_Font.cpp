@@ -28,11 +28,11 @@
 #include "Utils/utfcpp/utf8.h"
 
 vsFontSize::vsFontSize( const vsString &filename ):
-	m_glyph(NULL),
+	m_glyph(nullptr),
 	m_glyphCount(0),
 	m_baseline(1.f),
 	m_capHeight(1.f),
-	m_kerning(NULL),
+	m_kerning(nullptr),
 	m_kerningCount(0)
 {
 	uint16_t indices[6] = { 0, 2, 1, 1, 2, 3 };
@@ -184,7 +184,7 @@ vsToken * GetBMFontValue( vsRecord *r, const vsString& label )
 			return &r->GetToken(i+2);
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 vsString GetBMFontValue_String( vsRecord *r, const vsString& label )
@@ -366,7 +366,7 @@ vsFontSize::FindGlyphForCharacter(uint32_t letter)
 			return &m_glyph[i];
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 float

@@ -17,7 +17,7 @@ vsRenderPipeline::vsRenderPipeline( int maxStageCount ):
 	m_stageCount(maxStageCount)
 {
 	for ( int i = 0; i < m_stageCount; i++ )
-		m_stage[i] = NULL;
+		m_stage[i] = nullptr;
 }
 
 vsRenderPipeline::~vsRenderPipeline()
@@ -102,7 +102,7 @@ vsRenderPipeline::SetStage( int stageId, vsRenderPipelineStage *stage )
 	// or deallocated.  Fixing this will probably involve setting up reference
 	// counting so the pipeline can figure out which stages are using which
 	// render targets.
-	vsAssert( m_stage[stageId] == NULL, "Resetting a pipeline stage isn't supported" );
+	vsAssert( m_stage[stageId] == nullptr, "Resetting a pipeline stage isn't supported" );
 	m_stage[stageId] = stage;
 
 	stage->PreparePipeline(this);

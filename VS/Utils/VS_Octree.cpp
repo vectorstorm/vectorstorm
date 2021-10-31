@@ -20,7 +20,7 @@ struct vsOctreeModelInfo
 	int			m_nodeId;
 	
 	vsOctreeModelInfo() :
-		m_model(NULL),
+		m_model(nullptr),
 		m_nodeId(-1)
 	{
 	}

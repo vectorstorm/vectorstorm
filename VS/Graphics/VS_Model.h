@@ -61,7 +61,7 @@ public:
 	static vsModel *	LoadBinary( const vsString &filename );
 	static vsModel *	LoadText( const vsString &filename );
 
-	vsModel( vsDisplayList *displayList = NULL );
+	vsModel( vsDisplayList *displayList = nullptr );
 	virtual			~vsModel();
 
 	void SetAsInstanceModel(); // if set, this model won't be drawn;  only instances will.

@@ -72,16 +72,16 @@ void
 vsTask::Start()
 {
 #ifdef UNIX
-	pthread_create( &m_thread, NULL, &vsTask::DoStartThread, (void*)this );
+	pthread_create( &m_thread, nullptr, &vsTask::DoStartThread, (void*)this );
 
 #else
 	m_thread = CreateThread(
-			NULL,                   // default security attributes
+			nullptr,                   // default security attributes
 			0,                      // use default stack size
 			&vsTask::DoStartThread, // thread function name
 			(void*)this,			// argument to thread function
 			0,                      // use default creation flags
-			NULL);					// returns the thread identifier
+			nullptr);					// returns the thread identifier
 
 
 #endif

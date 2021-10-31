@@ -10,12 +10,12 @@
 #include "VS_DynamicBatchManager.h"
 #include "VS_DynamicBatch.h"
 
-vsDynamicBatchManager * vsDynamicBatchManager::s_instance = NULL;
+vsDynamicBatchManager * vsDynamicBatchManager::s_instance = nullptr;
 
 vsDynamicBatchManager::vsDynamicBatchManager():
 	m_unusedBatches(50, vsPool<vsDynamicBatch>::Type_Expandable)
 {
-	vsAssert(s_instance == NULL, "Multiple vsDynamicBatchManagers created??");
+	vsAssert(s_instance == nullptr, "Multiple vsDynamicBatchManagers created??");
 
 	s_instance = this;
 }

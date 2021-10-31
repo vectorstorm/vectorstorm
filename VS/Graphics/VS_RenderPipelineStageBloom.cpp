@@ -62,24 +62,24 @@ public:
 };
 
 vsRenderPipelineStageBloom::vsRenderPipelineStageBloom( vsRenderTarget *from, vsRenderTarget *to, int passes ):
-	m_passes(NULL),
+	m_passes(nullptr),
 	m_passCount(passes),
-	m_hipassMaterial(NULL),
-	m_fromMaterial(NULL),
+	m_hipassMaterial(nullptr),
+	m_fromMaterial(nullptr),
 	m_from(from),
 	m_to(to),
-	m_vertices(NULL),
-	m_indices(NULL),
-	m_bloomBlurShader(NULL)
+	m_vertices(nullptr),
+	m_indices(nullptr),
+	m_bloomBlurShader(nullptr)
 {
 	m_passes = new struct Pass[m_passCount];
 	for ( int i = 0; i < m_passCount; i++ )
 	{
-		m_passes[i].m_pass = NULL;
-		m_passes[i].m_pass2 = NULL;
-		m_passes[i].m_horizontalBlurMaterial = NULL;
-		m_passes[i].m_verticalBlurMaterial = NULL;
-		m_passes[i].m_combinePassMaterial = NULL;
+		m_passes[i].m_pass = nullptr;
+		m_passes[i].m_pass2 = nullptr;
+		m_passes[i].m_horizontalBlurMaterial = nullptr;
+		m_passes[i].m_verticalBlurMaterial = nullptr;
+		m_passes[i].m_combinePassMaterial = nullptr;
 	}
 }
 

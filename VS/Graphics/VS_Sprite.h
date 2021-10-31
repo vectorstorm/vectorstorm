@@ -50,7 +50,7 @@ public:
 
 	static vsSprite *	Load(const vsString &filename);
 
-						vsSprite( vsDisplayList *displayList = NULL );
+						vsSprite( vsDisplayList *displayList = nullptr );
 	virtual				~vsSprite();
 
 	void				LoadFrom( vsRecord *record );

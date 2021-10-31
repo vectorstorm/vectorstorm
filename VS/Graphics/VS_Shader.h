@@ -116,7 +116,7 @@ public:
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );
 
-	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL, vsRenderTarget *renderTarget = NULL ); // called before we start rendering something with this shader
+	virtual void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = nullptr, vsRenderTarget *renderTarget = nullptr ); // called before we start rendering something with this shader
 	void ValidateCache( vsMaterial *activeMaterial ); // after rendering something to check that our cache is working.
 
 

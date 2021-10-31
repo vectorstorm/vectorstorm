@@ -208,7 +208,7 @@ vsSerialiserWrite::ColorPacked( vsColorPacked &value )
 }
 
 vsSerialiserReadStream::vsSerialiserReadStream(vsFile *file):
-	vsSerialiser(NULL, Type_Read),
+	vsSerialiser(nullptr, Type_Read),
 	m_file(file)
 {
 	m_store = new vsStore(1024);
@@ -357,7 +357,7 @@ vsSerialiserReadStream::ColorPacked( vsColorPacked &value )
 }
 
 vsSerialiserWriteStream::vsSerialiserWriteStream(vsFile *file):
-	vsSerialiser(NULL, Type_Write),
+	vsSerialiser(nullptr, Type_Write),
 	m_file(file)
 {
 	m_store = new vsStore(1024 * 100);

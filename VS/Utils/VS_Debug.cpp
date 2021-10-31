@@ -32,12 +32,12 @@
 	// Interesting note:  writing into illegal memory like
 	// this officially triggers "undefined behaviour".  It
 	// won't necessarily crash.  In fact, recent versions
-	// of clang have chosen to simply ignore writes to NULL;
+	// of clang have chosen to simply ignore writes to nullptr;
 	// behaviour is undefined, so they're well within their
 	// rights to not crash when you do that.  But here on
 	// Windows, our nefarious deeds will actually (at time
 	// of writing) crash our program successfully.
-	#define CRASH *((volatile int*)NULL) = 0xDEADBEEF
+	#define CRASH *((volatile int*)nullptr) = 0xDEADBEEF
 
 #elif defined(__APPLE_CC__)
 	#include <execinfo.h>
@@ -81,7 +81,7 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 			DEBUG_BREAK;
 #else
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now close;  when you restart the game we'll report the problem automatically!", msg, conditionStr, trimmedFile.c_str(), line);
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), NULL);
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed assertion", mbString.c_str(), nullptr);
 			vsBacktrace();
 			exit(1); //
 #endif

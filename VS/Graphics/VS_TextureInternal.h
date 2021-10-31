@@ -72,7 +72,7 @@ public:
 
 	uint32_t		GetTexture() { return m_texture; }
 
-	bool IsTextureBuffer() { return m_tbo != NULL; }
+	bool IsTextureBuffer() { return m_tbo != nullptr; }
 	vsRenderBuffer *GetTextureBuffer() { return m_tbo; }
 
 	int		GetWidth() { return m_width; }

@@ -28,11 +28,11 @@
 #include <zlib.h>
 
 vsStore::vsStore():
-	m_buffer( NULL ),
+	m_buffer( nullptr ),
 	m_bufferLength( 0 ),
-	m_bufferEnd( NULL ),
-	m_readHead( NULL ),
-	m_writeHead ( NULL ),
+	m_bufferEnd( nullptr ),
+	m_readHead( nullptr ),
+	m_writeHead ( nullptr ),
 	m_bufferIsExternal( true )
 {
 }
@@ -72,7 +72,7 @@ vsStore::~vsStore()
 {
 	if( !m_bufferIsExternal )
 		delete [] m_buffer;
-	m_buffer = NULL;
+	m_buffer = nullptr;
 }
 
 void

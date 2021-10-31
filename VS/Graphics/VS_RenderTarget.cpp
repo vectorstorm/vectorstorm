@@ -40,10 +40,10 @@ static std::atomic<int> s_renderTargetCount(0);
 
 vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred ):
 	m_settings(settings),
-	m_texture(NULL),
-	m_depthTexture(NULL),
-	m_renderBufferSurface(NULL),
-	m_textureSurface(NULL),
+	m_texture(nullptr),
+	m_depthTexture(nullptr),
+	m_renderBufferSurface(nullptr),
+	m_textureSurface(nullptr),
 	m_type(t),
 	m_needsResolve(0xffff),
 	m_needsDepthResolve(true)
@@ -175,14 +175,13 @@ vsRenderTarget::ResolveDepth()
 	}
 
 	return m_depthTexture;
-	// return NULL;
+	// return nullptr;
 }
 
 vsTexture *
 vsRenderTarget::Resolve(int id)
 {
 	GL_CHECK_SCOPED("vsRenderTarget::Resolve");
-	vsAssert(this != NULL, "vsRenderTarget::Resolve called with NULL this");
 	vsAssert(m_bufferCount > 0, "vsRenderTarget::Resolve called with <= 0 bufferCount?" );
 	vsAssert(m_texture, "No texture array??");
 
@@ -253,7 +252,7 @@ vsRenderTarget::Resolve(int id)
 void
 vsRenderTarget::CreateDeferred()
 {
-	if ( m_textureSurface == NULL )
+	if ( m_textureSurface == nullptr )
 		Create();
 }
 

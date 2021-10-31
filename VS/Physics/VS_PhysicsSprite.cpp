@@ -85,7 +85,7 @@ vsPhysicsSprite::vsPhysicsSprite(vsDisplayList *list, float density, int colFlag
 		m_bodyDef.position.Set(0.f,0.f);
 		m_bodyDef.AddShape( &m_circleDef );
 	}
-	m_body = NULL;
+	m_body = nullptr;
 	*/
 
 

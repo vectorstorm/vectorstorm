@@ -23,9 +23,9 @@
 #ifdef VS_DEFAULT_VIRTUAL_CONTROLLER
 
 vsSimpleMenu::vsSimpleMenu(int count, float letterSize, float capSize, float lineSpacing):
-	vsSprite(NULL),
-	m_itemLabel(NULL),
-	m_itemValue(NULL),
+	vsSprite(nullptr),
+	m_itemLabel(nullptr),
+	m_itemValue(nullptr),
 	m_itemCount(count),
 	m_highlightedId(0),
 	m_pulseTimer(0.f),
@@ -38,8 +38,8 @@ vsSimpleMenu::vsSimpleMenu(int count, float letterSize, float capSize, float lin
 
 	for ( int i = 0; i < count; i++ )
 	{
-		m_itemLabel[i] = NULL;
-		m_itemValue[i] = NULL;
+		m_itemLabel[i] = nullptr;
+		m_itemValue[i] = nullptr;
 	}
 }
 

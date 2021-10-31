@@ -61,7 +61,7 @@ vsPreferences::FindPreference(const vsString &label)
 		s = s->m_next;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 vsPreferenceObject *
@@ -118,7 +118,7 @@ vsPreferences::GetPreference(const vsString &label, int defaultValue, int minVal
 
 
 vsPreferenceObject::vsPreferenceObject():
-	m_label("NULL"),
+	m_label("nullptr"),
 	m_value(0)
 {
 	m_next = this;

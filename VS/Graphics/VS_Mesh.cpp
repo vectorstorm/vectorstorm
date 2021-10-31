@@ -22,11 +22,11 @@ vsMesh::vsMesh( int vertexCount, int maxTriangleListCount, vsRenderBuffer::Type 
 	m_vertexCount = vertexCount;
 	m_type = type;
 
-	m_vertexBuffer = NULL;
-	m_normalBuffer = NULL;
-	m_texelBuffer = NULL;
-	m_colorBuffer = NULL;
-	m_interleavedBuffer = NULL;
+	m_vertexBuffer = nullptr;
+	m_normalBuffer = nullptr;
+	m_texelBuffer = nullptr;
+	m_colorBuffer = nullptr;
+	m_interleavedBuffer = nullptr;
 
 	m_triangleListBuffer = new vsRenderBuffer *[maxTriangleListCount];
 	m_triangleListMaterial = new vsMaterial *[maxTriangleListCount];
@@ -34,8 +34,8 @@ vsMesh::vsMesh( int vertexCount, int maxTriangleListCount, vsRenderBuffer::Type 
 
 	for ( int i = 0; i < maxTriangleListCount; i++ )
 	{
-		m_triangleListBuffer[i] = NULL;
-		m_triangleListMaterial[i] = NULL;
+		m_triangleListBuffer[i] = nullptr;
+		m_triangleListMaterial[i] = nullptr;
 		m_triangleListIndexCount[i] = 0;
 	}
 }
@@ -69,7 +69,7 @@ void
 vsMesh::SetVertex(int i, const vsVector3D &v)
 {
 	vsAssert(i>=0 && i<m_vertexCount, "Error:  tried to set illegal vertex??");
-	if ( m_vertexBuffer == NULL )
+	if ( m_vertexBuffer == nullptr )
 	{
 		m_vertexBuffer = new vsRenderBuffer(m_type);
 		m_vertexBuffer->SetVector3DArraySize(m_vertexCount);
@@ -80,7 +80,7 @@ vsMesh::SetVertex(int i, const vsVector3D &v)
 void
 vsMesh::SetVertexArray( const vsVector3D *array, int arrayCount )
 {
-	if ( m_vertexBuffer == NULL )
+	if ( m_vertexBuffer == nullptr )
 	{
 		m_vertexBuffer = new vsRenderBuffer(m_type);
 	}
@@ -90,7 +90,7 @@ vsMesh::SetVertexArray( const vsVector3D *array, int arrayCount )
 void
 vsMesh::SetNormalArray( const vsVector3D *array, int arrayCount )
 {
-	if ( m_normalBuffer == NULL )
+	if ( m_normalBuffer == nullptr )
 	{
 		m_normalBuffer = new vsRenderBuffer(m_type);
 	}
@@ -100,7 +100,7 @@ vsMesh::SetNormalArray( const vsVector3D *array, int arrayCount )
 void
 vsMesh::SetColorArray( const vsColor *array, int arrayCount )
 {
-	if ( m_colorBuffer == NULL )
+	if ( m_colorBuffer == nullptr )
 	{
 		m_colorBuffer = new vsRenderBuffer(m_type);
 	}
@@ -110,7 +110,7 @@ vsMesh::SetColorArray( const vsColor *array, int arrayCount )
 void
 vsMesh::SetTexelArray( const vsVector2D *array, int arrayCount )
 {
-	if ( m_texelBuffer == NULL )
+	if ( m_texelBuffer == nullptr )
 	{
 		m_texelBuffer = new vsRenderBuffer(m_type);
 	}
@@ -128,7 +128,7 @@ void
 vsMesh::SetNormal(int i, const vsVector3D &n)
 {
 	vsAssert(i>=0 && i<m_vertexCount, "Error:  tried to set illegal vertex??");
-	if ( m_normalBuffer == NULL )
+	if ( m_normalBuffer == nullptr )
 	{
 		m_normalBuffer = new vsRenderBuffer(m_type);
 		m_normalBuffer->SetVector3DArraySize(m_vertexCount);
@@ -140,7 +140,7 @@ void
 vsMesh::SetColor(int i, const vsColor &c)
 {
 	vsAssert(i>=0 && i<m_vertexCount, "Error:  tried to set illegal vertex??");
-	if ( m_colorBuffer == NULL )
+	if ( m_colorBuffer == nullptr )
 	{
 		m_colorBuffer = new vsRenderBuffer(m_type);
 		m_colorBuffer->SetColorArraySize(m_vertexCount);
@@ -152,7 +152,7 @@ void
 vsMesh::SetTexel(int i, const vsVector2D &t)
 {
 	vsAssert(i>=0 && i<m_vertexCount, "Error:  tried to set illegal vertex??");
-	if ( m_texelBuffer == NULL )
+	if ( m_texelBuffer == nullptr )
 	{
 		m_texelBuffer = new vsRenderBuffer(m_type);
 		m_texelBuffer->SetVector2DArraySize(m_vertexCount);
@@ -224,7 +224,7 @@ vsMesh::ResizeTriangleList(int listId, int length)
 	vsAssert(listId>=0 && listId<m_maxTriangleListCount, "Error:  tried to use illegal triangle list??");
 
 	m_triangleListCount = vsMax(m_triangleListCount, listId+1);
-	if ( m_triangleListBuffer[listId] == NULL )
+	if ( m_triangleListBuffer[listId] == nullptr )
 	{
 		m_triangleListBuffer[listId] = new vsRenderBuffer(m_type);
 	}
@@ -350,7 +350,7 @@ vsMesh::MakeFragment(int listId)
 	else
 	{
 		vsAssert(0, "Illegal vsMesh format");
-		return NULL;
+		return nullptr;
 	}
 
 
@@ -393,7 +393,7 @@ vsMesh::Bake()
 {
 	if ( m_vertexBuffer && m_normalBuffer && m_colorBuffer && m_texelBuffer )
 	{
-		if ( m_interleavedBuffer == NULL )
+		if ( m_interleavedBuffer == nullptr )
 		{
 			m_interleavedBuffer = new vsRenderBuffer;
 		}
@@ -414,7 +414,7 @@ vsMesh::Bake()
 	}
 	else if ( m_vertexBuffer && m_normalBuffer && m_colorBuffer )
 	{
-		if ( m_interleavedBuffer == NULL )
+		if ( m_interleavedBuffer == nullptr )
 		{
 			m_interleavedBuffer = new vsRenderBuffer;
 		}
@@ -434,7 +434,7 @@ vsMesh::Bake()
 	}
 	else if ( m_vertexBuffer && m_normalBuffer )
 	{
-		if ( m_interleavedBuffer == NULL )
+		if ( m_interleavedBuffer == nullptr )
 		{
 			m_interleavedBuffer = new vsRenderBuffer;
 		}
@@ -488,7 +488,7 @@ vsMesh::Bake()
 void
 vsMesh::Draw( vsDisplayList *list )
 {
-	vsMaterial *curMaterial = NULL;
+	vsMaterial *curMaterial = nullptr;
 	//bool materialSet = false;
 
 	if ( m_interleavedBuffer )

@@ -32,7 +32,7 @@ void vsBacktrace()
 	context.ContextFlags = CONTEXT_FULL;
 	RtlCaptureContext(&context);
 
-	SymInitialize(process, NULL, TRUE);
+	SymInitialize(process, nullptr, TRUE);
 
 	DWORD image;
 	STACKFRAME64 stackframe;
@@ -70,8 +70,8 @@ void vsBacktrace()
 
 		BOOL result = StackWalk64(
 				image, process, thread,
-				&stackframe, &context, NULL,
-				SymFunctionTableAccess64, SymGetModuleBase64, NULL);
+				&stackframe, &context, nullptr,
+				SymFunctionTableAccess64, SymGetModuleBase64, nullptr);
 
 		if (!result) { continue; }
 

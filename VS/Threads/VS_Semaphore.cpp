@@ -12,9 +12,9 @@
 // unix version of semaphore
 vsSemaphore::vsSemaphore(unsigned int initialValue)
 {
-	pthread_mutex_init( &m_semaphore.mutex, NULL );
+	pthread_mutex_init( &m_semaphore.mutex, nullptr );
 	pthread_mutex_lock( &m_semaphore.mutex );
-    pthread_cond_init( &m_semaphore.cond, NULL );
+    pthread_cond_init( &m_semaphore.cond, nullptr );
 	m_value = initialValue;
 	m_released = false;
 	pthread_mutex_unlock( &m_semaphore.mutex );
@@ -73,7 +73,7 @@ vsSemaphore::Release()
 
 vsSemaphore::vsSemaphore(unsigned int initialValue)
 {
-	m_semaphore = CreateSemaphore( NULL, initialValue, 100000, NULL );
+	m_semaphore = CreateSemaphore( nullptr, initialValue, 100000, nullptr );
 	m_released = false;
 }
 
@@ -94,14 +94,14 @@ vsSemaphore::Wait()
 void
 vsSemaphore::Post()
 {
-	ReleaseSemaphore( m_semaphore, 1, NULL );
+	ReleaseSemaphore( m_semaphore, 1, nullptr );
 }
 
 void
 vsSemaphore::Release()
 {
 	m_released = true;
-	ReleaseSemaphore( m_semaphore, 1000, NULL );
+	ReleaseSemaphore( m_semaphore, 1000, nullptr );
 }
 
 

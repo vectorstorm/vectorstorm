@@ -54,7 +54,7 @@ public:
 /** Returns true if the instance exists. */
 static bool Exists()
 {
-	return (s_instance != NULL);
+	return (s_instance != nullptr);
 }
 
 /** Returns a reference to the instance.
@@ -66,7 +66,7 @@ static T& Singleton()
 }
 
 /** Returns a pointer to the instance.
-*  Returns NULL if the instance does not exist.
+*  Returns nullptr if the instance does not exist.
 *  This is legal to do, as opposed to GetSingleton(), which is not legal to call
 *  when the instance does not exist.
 */

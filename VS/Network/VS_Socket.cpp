@@ -30,7 +30,7 @@ vsSocket::vsSocket(int port):
 	m_privatePort(0),
 	//m_publicIP(0),
 	//m_publicPort(0),
-	m_listener(NULL)
+	m_listener(nullptr)
 {
 	UNUSED(port);
 #ifndef _WIN32

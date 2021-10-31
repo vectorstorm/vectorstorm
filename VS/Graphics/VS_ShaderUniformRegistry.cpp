@@ -11,7 +11,7 @@
 
 namespace
 {
-	vsHashTable<int> *m_uniform = NULL;
+	vsHashTable<int> *m_uniform = nullptr;
 	int m_uniformCount = 0;
 };
 

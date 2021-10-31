@@ -16,15 +16,15 @@
 #include "VS_CollisionSystem.h"
 
 vsCollisionObject::vsCollisionObject(int colFlags, int testFlags, bool isStatic):
-m_responder(NULL)
+m_responder(nullptr)
 {
 	m_colFlags = colFlags;
 	m_testFlags = testFlags;
 
 //	list->GetBoundingBox(topLeft,bottomRight);
 
-	m_body = NULL;
-	m_userData = NULL;
+	m_body = nullptr;
+	m_userData = nullptr;
 
 	m_destroyed = false;
 	m_static = isStatic;
@@ -34,7 +34,7 @@ m_responder(NULL)
 	m_jointCount = 0;
 
 	for ( int i = 0; i < MAX_JOINTS; i++ )
-		m_joint[i] = NULL;
+		m_joint[i] = nullptr;
 
 	m_bodyDef.userData = this;
 	m_bodyDef.type = (isStatic)? b2_staticBody : b2_dynamicBody;
@@ -198,7 +198,7 @@ vsCollisionObject::DestroyRotationJointTo(vsCollisionObject *other)
 		{
 			other->NotifyJointRemoved( m_joint[i] );
 			vsCollisionSystem::Instance()->GetWorld()->DestroyJoint(m_joint[i]);
-			m_joint[i] = NULL;
+			m_joint[i] = nullptr;
 		}
 	}
 }
@@ -221,8 +221,8 @@ vsCollisionObject::NotifyJointRemoved(b2Joint *joint)
 	{
 		if ( m_joint[i] == joint )
 		{
-			m_joint[i] = NULL;
-			m_jointPartner[i] = NULL;
+			m_joint[i] = nullptr;
+			m_jointPartner[i] = nullptr;
 		}
 	}
 }
@@ -259,7 +259,7 @@ vsCollisionObject::Update( float timeStep )
 		}
 		else
 		{
-			evt.otherObject = NULL;
+			evt.otherObject = nullptr;
 			evt.colFlags = ColFlag_World;
 		}
 		b2Contact *contact = node->contact;
@@ -466,7 +466,7 @@ vsCollisionObject::AddTorque( float torque )
 void
 vsCollisionObject::SetCollisionsActive(bool active)
 {
-	bool currentlyActive = (m_body != NULL);
+	bool currentlyActive = (m_body != nullptr);
 
 	if ( currentlyActive != active )
 	{
@@ -482,11 +482,11 @@ vsCollisionObject::SetCollisionsActive(bool active)
 				{
 					m_jointPartner[i]->NotifyJointRemoved(m_joint[i]);
 					vsCollisionSystem::Instance()->GetWorld()->DestroyJoint(m_joint[i]);
-					m_joint[i] = NULL;
+					m_joint[i] = nullptr;
 				}
 			}
 			DeregisterObject();
-			m_body = NULL;
+			m_body = nullptr;
 		}
 	}
 
@@ -518,7 +518,7 @@ vsCollisionObject::DeregisterObject()
 
 	w->DestroyBody( m_body );
 
-	m_body = NULL;
+	m_body = nullptr;
 	m_jointCount = 0;
 }
 

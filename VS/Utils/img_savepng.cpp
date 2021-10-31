@@ -42,7 +42,7 @@ int IMG_SavePNG(const char *file, SDL_Surface *surf,int compression){
 
 	fp=SDL_RWFromFile(file,"wb");
 
-	if( fp == NULL ) {
+	if( fp == nullptr ) {
 		return (-1);
 	}
 
@@ -59,15 +59,15 @@ static void png_write_data(png_structp png_ptr,png_bytep data, png_size_t length
 int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 	png_structp png_ptr;
 	png_infop info_ptr;
-	SDL_PixelFormat *fmt=NULL;
-	SDL_Surface *tempsurf=NULL;
+	SDL_PixelFormat *fmt=nullptr;
+	SDL_Surface *tempsurf=nullptr;
 	int ret,funky_format,used_alpha;
 	int i;
     uint8_t temp_alpha;
 	png_colorp palette;
-	uint8_t *palette_alpha=NULL;
-	png_byte **row_pointers=NULL;
-	png_ptr=NULL;info_ptr=NULL;palette=NULL;ret=-1;
+	uint8_t *palette_alpha=nullptr;
+	png_byte **row_pointers=nullptr;
+	png_ptr=nullptr;info_ptr=nullptr;palette=nullptr;ret=-1;
 	funky_format=0;
 
 	if( !src || !surf) {
@@ -80,7 +80,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 		goto savedone;
 	}
 
-	png_ptr=png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
+	png_ptr=png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr,nullptr,nullptr);
 	if (!png_ptr){
 		SDL_SetError("Couldn't allocate memory for PNG file");
 		goto savedone;
@@ -91,7 +91,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 		goto savedone;
 	}
 	/* setup custom writer functions */
-	png_set_write_fn(png_ptr,(void *)src,png_write_data,NULL);
+	png_set_write_fn(png_ptr,(void *)src,png_write_data,nullptr);
 
 	if (setjmp(png_jmpbuf(png_ptr))){
 		SDL_SetError("Unknown error writing PNG");
@@ -140,7 +140,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 				palette_alpha[i]=255;
 			}
 			palette_alpha[colorkey]=0;
-			png_set_tRNS(png_ptr,info_ptr,palette_alpha,colorkey+1,NULL);
+			png_set_tRNS(png_ptr,info_ptr,palette_alpha,colorkey+1,nullptr);
 		}
 	}else{ /* Truecolor */
 		if (fmt->Amask) {
@@ -234,7 +234,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 					SDL_BlendMode bm;
 					SDL_GetSurfaceBlendMode(surf, &bm);
 					SDL_SetSurfaceBlendMode(surf, SDL_BLENDMODE_NONE);
-					if(SDL_BlitSurface(surf,NULL,tempsurf,NULL)!=0){
+					if(SDL_BlitSurface(surf,nullptr,tempsurf,nullptr)!=0){
 						SDL_SetError("Couldn't blit surface to temp surface");
 						SDL_FreeSurface(tempsurf);
 						goto savedone;
@@ -265,7 +265,7 @@ int IMG_SavePNG_RW(SDL_RWops *src, SDL_Surface *surf,int compression){
 				}
 			}
 
-			png_write_end(png_ptr, NULL);
+			png_write_end(png_ptr, nullptr);
 			ret=0; /* got here, so nothing went wrong. YAY! */
 
 		savedone: /* clean up and return */

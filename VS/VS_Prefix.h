@@ -17,10 +17,6 @@
 #endif
 
 
-#ifndef NULL
-#define NULL (0L)
-#endif //
-
 #define BIT(x) (1<<(x))
 
 #ifdef UNUSED
@@ -69,8 +65,8 @@
 #include "VS/Utils/VS_String.h"
 #include "VS/Utils/VS_Log.h"
 
-#define vsDelete(x) { if ( x ) { delete x; x = NULL; } }
-#define vsDeleteArray(x) { if ( x ) { delete [] x; x = NULL; } }
+#define vsDelete(x) { if ( x ) { delete x; x = nullptr; } }
+#define vsDeleteArray(x) { if ( x ) { delete [] x; x = nullptr; } }
 
 #ifdef VS_OVERLOAD_ALLOCATORS
 void * MyMalloc(size_t size, const char*fileName, int lineNumber, int allocType = 1);	// 1 == Malloc type.  We can ignore this.  :)

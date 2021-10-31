@@ -9,10 +9,10 @@
 
 #include "VS_Renderer.h"
 
-vsRenderer*  vsRenderer::s_instance = NULL;
+vsRenderer*  vsRenderer::s_instance = nullptr;
 
 vsRenderer::Settings::Settings():
-	shaderSuite(NULL),
+	shaderSuite(nullptr),
     aspectRatio(1.f),
 	polygonOffsetUnits(0.f),
     useCustomAspectRatio(false),
@@ -29,12 +29,12 @@ vsRenderer::vsRenderer(int width, int height, int depth, int flags):
 	m_viewportHeight(height),
 	m_refreshRate(60)
 {
-	vsAssert(s_instance == NULL, "Duplicate vsRenderer instance?");
+	vsAssert(s_instance == nullptr, "Duplicate vsRenderer instance?");
 	s_instance = this;
 }
 
 vsRenderer::~vsRenderer()
 {
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 

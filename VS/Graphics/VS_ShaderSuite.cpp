@@ -13,7 +13,7 @@ vsShaderSuite::vsShaderSuite()
 {
 	for ( int i = 0; i < SHADERTYPE_MAX; i++ )
 	{
-		m_shader[i] = NULL;
+		m_shader[i] = nullptr;
 	}
 }
 

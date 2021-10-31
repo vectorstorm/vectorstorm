@@ -87,7 +87,7 @@ vsLocString::SubVars( vsString& str ) const
 			// process this variable!
 			vsString name = str.substr(nameStart, nameEnd-nameStart);
 			// check for an arg with the same name
-			const vsLocArg* arg = NULL;
+			const vsLocArg* arg = nullptr;
 			for ( size_t i = 0; i < m_args.size(); i++ )
 				if ( m_args[i].m_name == name )
 					arg = &m_args[i];

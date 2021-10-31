@@ -25,8 +25,8 @@ public:
 
 	vsHashEntry<T> *	m_next;
 
-	vsHashEntry(): m_key() { m_keyHash = 0, m_next = NULL; }
-	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = NULL; }
+	vsHashEntry(): m_key() { m_keyHash = 0, m_next = nullptr; }
+	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = nullptr; }
 };
 
 template <typename T>
@@ -65,7 +65,7 @@ class vsHashTable
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	vsHashEntry<T>*		FindHashEntry( const vsString &key )
@@ -82,7 +82,7 @@ class vsHashTable
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -151,7 +151,7 @@ public:
 		{
 			return &ent->m_item;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	T *		FindItem( const vsString &key )
@@ -161,7 +161,7 @@ public:
 		{
 			return &ent->m_item;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	T& operator[]( const vsString& key )
@@ -206,7 +206,7 @@ public:
 				shuttle = shuttle->m_next;
 			}
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	bool operator==( const vsHashTable<T>& other ) const

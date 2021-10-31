@@ -9,7 +9,7 @@
 
 #include "CORE_GameRegistry.h"
 
-coreGameEntry *					coreGameRegistry::s_mainMenu = NULL;
+coreGameEntry *					coreGameRegistry::s_mainMenu = nullptr;
 coreGameEntry *					coreGameRegistry::s_game[MAX_GAMES];
 int								coreGameRegistry::s_gameEntries = 0;
 
@@ -29,7 +29,7 @@ coreGameRegistry::RegisterGame( coreGameEntry *entry, bool mainGame )
 
 	if ( mainGame )
 	{
-		vsAssert( s_mainMenu == NULL, "Too many main games registered!" );
+		vsAssert( s_mainMenu == nullptr, "Too many main games registered!" );
 		s_mainMenu = entry;
 	}
 	else
@@ -63,7 +63,7 @@ coreGameRegistry::FindGame( const vsString &name )
 			return s_game[i]->m_game;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 coreGame *
@@ -91,7 +91,7 @@ coreGameRegistry::GetGameName( coreGame *game )
 		if ( s_game[i]->m_game == game )
 			return s_game[i]->m_name;
 
-	// if we're passed NULL, or anything else we don't know about,
+	// if we're passed nullptr, or anything else we don't know about,
 	// just report the name of our main game.
 	return s_mainMenu->m_name;
 }

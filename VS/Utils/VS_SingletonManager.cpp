@@ -9,7 +9,7 @@
 
 #include "VS_SingletonManager.h"
 
-vsSingletonManager *	vsSingletonManager::s_instance = NULL;
+vsSingletonManager *	vsSingletonManager::s_instance = nullptr;
 
 vsSingletonManager::vsSingletonManager():
 	m_table(16)
@@ -19,7 +19,7 @@ vsSingletonManager::vsSingletonManager():
 
 vsSingletonManager::~vsSingletonManager()
 {
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void
@@ -43,6 +43,6 @@ vsSingletonManager::GetSingleton(const vsString &name)
 		return *singletonAddressPointer;
 	}
 	
-	return NULL;
+	return nullptr;
 }
 

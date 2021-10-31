@@ -14,7 +14,7 @@
 #include "VS_Texture.h"
 #include "VS_OpenGL.h"
 
-vsMaterial *vsMaterial::White = NULL;
+vsMaterial *vsMaterial::White = nullptr;
 
 vsMaterial::vsMaterial():
 	vsCacheReference<vsMaterialInternal>( new vsMaterialInternal )

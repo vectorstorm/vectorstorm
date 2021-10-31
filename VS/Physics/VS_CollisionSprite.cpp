@@ -22,7 +22,7 @@ vsCollisionSprite::Load(const vsString &filename, int colFlags, int testFlags)
 	return new vsCollisionSprite( vsDisplayList::Load(filename), colFlags, testFlags );
 }
 
-vsCollisionSprite::vsCollisionSprite(vsDisplayList *list, int colFlags, int testFlags) : vsSprite(list), m_vsCollisionObject(NULL)
+vsCollisionSprite::vsCollisionSprite(vsDisplayList *list, int colFlags, int testFlags) : vsSprite(list), m_vsCollisionObject(nullptr)
 {
 	m_colObject = new colObject(colFlags, testFlags);
 	m_colObject->SetResponder(this);

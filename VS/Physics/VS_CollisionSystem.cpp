@@ -16,7 +16,7 @@
 
 #include "VS_Vector.h"
 
-vsCollisionSystem *		vsCollisionSystem::s_instance = NULL;
+vsCollisionSystem *		vsCollisionSystem::s_instance = nullptr;
 
 #define DEFAULT_WORLD_SIZE (10000.f)
 
@@ -63,8 +63,8 @@ class vsCollisionSystemContactListener : public b2ContactListener
 			b2Body *bOne = point->GetFixtureA()->GetBody();
 			b2Body *bTwo = point->GetFixtureB()->GetBody();
 
-			vsCollisionObject *cOne = NULL;
-			vsCollisionObject *cTwo = NULL;
+			vsCollisionObject *cOne = nullptr;
+			vsCollisionObject *cTwo = nullptr;
 
 			if ( bOne )
 				cOne = (vsCollisionObject *)bOne->GetUserData();
@@ -89,7 +89,7 @@ vsCollisionSystem::vsCollisionSystem()
 
 vsCollisionSystem::~vsCollisionSystem()
 {
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void
@@ -109,7 +109,7 @@ vsCollisionSystem::Init()
 	b2Vec2 gravity(0.0f, 0.0f);
     //bool doSleep = true;
 
-	m_boundaryListener = NULL;//new vsCollisionSystemBoundaryListener;
+	m_boundaryListener = nullptr;//new vsCollisionSystemBoundaryListener;
 	m_destructionListener = new vsCollisionSystemDestructionListener;
 	m_contactListener = new vsCollisionSystemContactListener;
 	m_world = new b2World(gravity);
@@ -242,7 +242,7 @@ public:
 			{
 				if ( m_resultArray[j] == o )
 				{
-					o = NULL;
+					o = nullptr;
 					break;
 				}
 			}

@@ -50,7 +50,7 @@ vsDynamicMaterial::SetShader()
 		vsDelete( GetResource()->m_shader );
 	}
 	else
-		GetResource()->m_shader = NULL;
+		GetResource()->m_shader = nullptr;
 
 	GetResource()->SetShader();
 	SetupParameters();

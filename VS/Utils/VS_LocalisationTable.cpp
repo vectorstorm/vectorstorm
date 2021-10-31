@@ -41,8 +41,8 @@ namespace {
 	}
 };
 
-static vsHashTable<vsString>	*s_localisationTable = NULL;
-static vsHashTable<vsString>	*s_fallbackLocalisationTable = NULL;
+static vsHashTable<vsString>	*s_localisationTable = nullptr;
+static vsHashTable<vsString>	*s_fallbackLocalisationTable = nullptr;
 
 vsLocalisationTable::vsLocalisationTable()
 {

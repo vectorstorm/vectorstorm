@@ -16,10 +16,10 @@
 
 vsHeap *g_globalHeap;
 
-vsHeap * vsHeap::s_current = NULL;
+vsHeap * vsHeap::s_current = nullptr;
 
 #define MAX_HEAP_STACK (4)
-static vsHeap *	s_stack[MAX_HEAP_STACK] = {NULL,NULL,NULL,NULL};
+static vsHeap *	s_stack[MAX_HEAP_STACK] = {nullptr,nullptr,nullptr,nullptr};
 
 #undef new
 #undef malloc
@@ -37,7 +37,7 @@ vsHeap::vsHeap(vsString name, size_t size):
 		s_current = this;
 		Push(this);
 	}
-	if ( m_startOfMemory == NULL )
+	if ( m_startOfMemory == nullptr )
 	{
 		vsLog("UNABLE TO ALLOCATE MEMORY HEAP FOR CUSTOM ALLOCATOR!");
 		exit(1);
@@ -63,10 +63,10 @@ vsHeap::vsHeap(vsString name, size_t size):
 	iniBlock->m_size = m_memorySize;
 	iniBlock->m_sizeRequested = m_memorySize;
 	iniBlock->m_used = false;
-	iniBlock->m_next = NULL;
-	iniBlock->m_prev = NULL;
-	iniBlock->m_nextBlock = NULL;
-	iniBlock->m_prevBlock = NULL;
+	iniBlock->m_next = nullptr;
+	iniBlock->m_prev = nullptr;
+	iniBlock->m_nextBlock = nullptr;
+	iniBlock->m_prevBlock = nullptr;
 
 	m_unusedBlockList.Append( iniBlock );
 #endif // VS_OVERLOAD_ALLOCATORS
@@ -82,7 +82,7 @@ vsHeap::~vsHeap()
 void
 vsHeap::Push( vsHeap *newCurrent )
 {
-	vsAssert( s_stack[MAX_HEAP_STACK-1] == NULL, "Overflowed stack of vsHeaps!" );
+	vsAssert( s_stack[MAX_HEAP_STACK-1] == nullptr, "Overflowed stack of vsHeaps!" );
 
 	for ( int i = MAX_HEAP_STACK-1; i > 0; i-- )
 		s_stack[i] = s_stack[i-1];
@@ -92,20 +92,20 @@ vsHeap::Push( vsHeap *newCurrent )
 }
 
 void
-vsHeap::Pop( vsHeap *oldCurrent /* == NULL */ )
+vsHeap::Pop( vsHeap *oldCurrent /* == nullptr */ )
 {
-	//vsAssert( s_stack[1] != NULL, "Underflowed stack of vsHeaps!" );
+	//vsAssert( s_stack[1] != nullptr, "Underflowed stack of vsHeaps!" );
 
 	// Optional safety measure:
 	//
 	// if someone has specified which vsHeap they expect to be popping off,
 	// then validate that it's actually the heap they expect it to be.
-	if ( oldCurrent != NULL )
+	if ( oldCurrent != nullptr )
 		vsAssert( s_stack[0] == oldCurrent, "Expected oldCurrent!" );
 
 	for ( int i = 0; i < MAX_HEAP_STACK-1; i++ )
 		s_stack[i] = s_stack[i+1];
-	s_stack[MAX_HEAP_STACK-1] = NULL;
+	s_stack[MAX_HEAP_STACK-1] = nullptr;
 
 	s_current = s_stack[0];
 }
@@ -136,7 +136,7 @@ vsHeap::FindFreeMemBlockOfSize( size_t size )
 	vsLog("Unable to find block of size %zu in heap of size %zu.  Largest block available is %zu.", size, m_memorySize, largestBlockSize);
 #endif
 	vsAssert( foundMemBlockForAlloc, "Out of memory!" );	// if this breaks, we're out of memory, or are suffering from memory fragmentation!
-	return NULL;
+	return nullptr;
 }
 
 void *
@@ -400,8 +400,8 @@ memBlock::memBlock():
 	m_end(0),
 	m_size(0),
 	m_used(false),
-	m_next(NULL),
-	m_prev(NULL)
+	m_next(nullptr),
+	m_prev(nullptr)
 {
 }
 
@@ -425,7 +425,7 @@ memBlock::Extract()
 	if ( m_prev )
 		m_prev->m_next = m_next;
 
-	m_next = m_prev = NULL;
+	m_next = m_prev = nullptr;
 }
 
 void
@@ -447,7 +447,7 @@ memBlock::ExtractBlock()
 	if ( m_prevBlock )
 		m_prevBlock->m_nextBlock = m_nextBlock;
 
-	m_nextBlock = m_prevBlock = NULL;
+	m_nextBlock = m_prevBlock = nullptr;
 }
 
 void * MyMalloc(size_t size, const char *fileName, int lineNumber, int allocType)

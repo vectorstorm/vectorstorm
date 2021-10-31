@@ -205,7 +205,7 @@ vsToken::vsToken():
 
 vsToken::vsToken( vsToken::Type t ):
 	m_type(t)
-	// m_string(NULL)
+	// m_string(nullptr)
 {
 	vsAssert(m_type != vsToken::Type_String, "String type");
 	vsAssert(m_type != vsToken::Type_Label, "Label type");
@@ -213,7 +213,7 @@ vsToken::vsToken( vsToken::Type t ):
 
 vsToken::vsToken(const vsToken& other):
 	m_type(Type_None)
-	// m_string(NULL)
+	// m_string(nullptr)
 {
 	SetType(other.m_type);
 	switch ( other.m_type )
@@ -578,10 +578,10 @@ vsToken::SetType(Type t)
 	if ( m_type == Type_String || m_type == Type_Label )
 	{
 		// if we're currently a string time, clear our string.
-		// if ( m_string != NULL )
+		// if ( m_string != nullptr )
 		// {
 		// 	free( m_string );
-		// 	m_string = NULL;
+		// 	m_string = nullptr;
 		// }
 	}
 	m_type = t;
@@ -610,7 +610,7 @@ vsToken::operator=( const vsToken& other )
 {
 	SetType( other.m_type );
 	m_string.clear();
-	// m_string = NULL;
+	// m_string = nullptr;
 	switch ( other.m_type )
 	{
 		case Type_Label:

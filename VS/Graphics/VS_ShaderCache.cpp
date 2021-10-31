@@ -14,7 +14,7 @@
 
 namespace
 {
-	vsHashTable<vsShader*> *m_cache = NULL;
+	vsHashTable<vsShader*> *m_cache = nullptr;
 };
 
 // [TODO]:  This implementation uses a hash table right now, which doesn't
@@ -48,7 +48,7 @@ vsShaderCache::LoadShader( const vsString& vFile, const vsString& fFile, bool li
 	// static int caches = 0;
 	// static int loads = 0;
 
-	vsShader *shader = NULL;
+	vsShader *shader = nullptr;
 	if ( HasShader(uniqueName) )
 	{
 		// caches++;
@@ -87,7 +87,7 @@ vsShaderCache::GetShader( const vsString& name )
 
 	if ( result )
 		return *result;
-	return NULL;
+	return nullptr;
 }
 
 void

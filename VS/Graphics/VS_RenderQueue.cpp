@@ -55,13 +55,13 @@ public:
 	// Add a batch to this stage
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
 	void			AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type );
-	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch, vsShaderValues *values = NULL, vsShaderOptions *options = NULL );
+	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
-	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = NULL, vsShaderOptions *options = NULL );
+	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 
-	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type, vsShaderValues *values = NULL, vsShaderOptions *options = NULL );
+	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type );
-	void			AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type, vsShaderValues *values = NULL, vsShaderOptions *options = NULL );
+	void			AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, const vsMatrix4x4 &matrix, int size );
@@ -88,36 +88,36 @@ struct vsRenderQueueStage::BatchElement
 	vsDynamicBatch * batch;
 
 	BatchElement():
-		material(NULL),
-		shaderValues(NULL),
-		shaderOptions(NULL),
-		instanceMatrix(NULL),
-		instanceColor(NULL),
+		material(nullptr),
+		shaderValues(nullptr),
+		shaderOptions(nullptr),
+		instanceMatrix(nullptr),
+		instanceColor(nullptr),
 		instanceMatrixCount(0),
-		instanceMatrixBuffer(NULL),
-		instanceColorBuffer(NULL),
-		list(NULL),
-		vbo(NULL),
-		ibo(NULL),
-		next(NULL),
-		batch(NULL)
+		instanceMatrixBuffer(nullptr),
+		instanceColorBuffer(nullptr),
+		list(nullptr),
+		vbo(nullptr),
+		ibo(nullptr),
+		next(nullptr),
+		batch(nullptr)
 	{
 	}
 
 	void Clear()
 	{
-		material = NULL;
-		shaderValues = NULL;
-		shaderOptions = NULL;
-		instanceMatrix = NULL;
+		material = nullptr;
+		shaderValues = nullptr;
+		shaderOptions = nullptr;
+		instanceMatrix = nullptr;
 		instanceMatrixCount = 0;
-		instanceMatrixBuffer = NULL;
-		instanceColorBuffer = NULL;
-		instanceColor = NULL;
-		list = NULL;
-		vbo = NULL;
-		ibo = NULL;
-		batch = NULL;
+		instanceMatrixBuffer = nullptr;
+		instanceColorBuffer = nullptr;
+		instanceColor = nullptr;
+		list = nullptr;
+		vbo = nullptr;
+		ibo = nullptr;
+		batch = nullptr;
 	}
 
 };
@@ -138,9 +138,9 @@ struct vsRenderQueueStage::BatchMap
 };
 
 vsRenderQueueStage::Batch::Batch():
-	material(NULL),
-	elementList(NULL),
-	next(NULL)
+	material(nullptr),
+	elementList(nullptr),
+	next(nullptr)
 {
 }
 
@@ -150,10 +150,10 @@ vsRenderQueueStage::Batch::~Batch()
 
 vsRenderQueueStage::vsRenderQueueStage():
 	m_batchMap(new BatchMap),
-	m_batch(NULL),
+	m_batch(nullptr),
 	m_batchCount(0),
-	m_batchPool(NULL),
-	m_batchElementPool(NULL)
+	m_batchPool(nullptr),
+	m_batchElementPool(nullptr)
 {
 }
 
@@ -189,13 +189,13 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 	}
 	Batch *batch = m_batchPool;
 	m_batchPool = batch->next;
-	batch->next = NULL;
+	batch->next = nullptr;
 	batch->material = material->GetResource();
 
 	// insert this batch into our batch list, SORTED.
 	bool inserted = false;
 
-	if ( m_batch == NULL )
+	if ( m_batch == nullptr )
 	{
 		m_batch = batch;
 	}
@@ -246,15 +246,15 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
 	element->matrix = matrix;
 	element->list = batchList;
-	element->instanceMatrix = NULL;
-	element->instanceMatrixBuffer = NULL;
-	element->instanceColorBuffer = NULL;
+	element->instanceMatrix = nullptr;
+	element->instanceMatrixBuffer = nullptr;
+	element->instanceColorBuffer = nullptr;
 
 	element->next = batch->elementList;
 	batch->elementList = element;
@@ -283,7 +283,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 		// with a three-attribute vertex format like PCT, you can do 300 vertices.
 		// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
-		BatchElement *mergeCandidate = NULL;
+		BatchElement *mergeCandidate = nullptr;
 		if ( vsDynamicBatch::Supports( vbo->GetContentType() ) &&
 				vbo->GetPositionCount() < 200 ) // don't even try to merge things that are too big.
 		{
@@ -297,13 +297,13 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 				// time, because each time it would initiate a transfer to the GPU.
 				// Instead, we want to be doing these merges into CPU-side memory
 				// and only push into a GPU buffer once we're *done* merging!
-				if ( mergeCandidate->instanceMatrix == NULL &&
+				if ( mergeCandidate->instanceMatrix == nullptr &&
 						mergeCandidate->vbo &&
 						mergeCandidate->vbo->GetContentType() == vbo->GetContentType() &&
 						mergeCandidate->material->MatchesForBatching( material ) )
 				{
 					// break;
-					if ( mergeCandidate->batch == NULL )
+					if ( mergeCandidate->batch == nullptr )
 					{
 						if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 300 )
 							break;
@@ -332,7 +332,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 			// and ready for use.  And we need a way to mark which BatchElements
 			// represent these "merge" batches
 
-			if ( mergeCandidate->batch == NULL )
+			if ( mergeCandidate->batch == nullptr )
 			{
 				mergeCandidate->batch = vsDynamicBatchManager::Instance()->GetNewBatch();
 				mergeCandidate->batch->StartBatch( mergeCandidate->vbo,
@@ -352,18 +352,18 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
 	element->matrix = matrix;
-	element->list = NULL;
+	element->list = nullptr;
 	element->vbo = vbo;
 	element->ibo = ibo;
 	element->simpleType = simpleType;
-	element->instanceMatrix = NULL;
-	element->instanceMatrixBuffer = NULL;
-	element->instanceColorBuffer = NULL;
+	element->instanceMatrix = nullptr;
+	element->instanceMatrixBuffer = nullptr;
+	element->instanceColorBuffer = nullptr;
 
 	element->next = batch->elementList;
 	batch->elementList = element;
@@ -380,13 +380,13 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
-	element->instanceMatrixBuffer = NULL;
-	element->instanceColorBuffer = NULL;
+	element->instanceMatrixBuffer = nullptr;
+	element->instanceColorBuffer = nullptr;
 	element->list = batchList;
 
 	element->next = batch->elementList;
@@ -404,7 +404,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matr
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
@@ -429,7 +429,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
@@ -454,13 +454,13 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->instanceMatrixCount = matrixCount;
 	element->instanceMatrix = matrix;
-	element->instanceMatrixBuffer = NULL;
-	element->instanceColorBuffer = NULL;
+	element->instanceMatrixBuffer = nullptr;
+	element->instanceColorBuffer = nullptr;
 	element->vbo = vbo;
 	element->ibo = ibo;
 	element->simpleType = simpleType;
@@ -480,7 +480,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
@@ -507,7 +507,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = element->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
@@ -529,13 +529,13 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 {
 	Batch *batch = FindBatch(material);
 
-	if ( m_batchElementPool == NULL )
+	if ( m_batchElementPool == nullptr )
 	{
 		m_batchElementPool = new BatchElement;
 	}
 	BatchElement *element = m_batchElementPool;
 	m_batchElementPool = m_batchElementPool->next;
-	element->next = NULL;
+	element->next = nullptr;
 	element->Clear();
 
 	element->material = material;
@@ -553,8 +553,8 @@ void
 vsRenderQueueStage::StartRender()
 {
 	m_batchCount = 0;
-	vsAssert( m_batch == NULL, "Batches not cleared?" );
-	//	m_batch = NULL;
+	vsAssert( m_batch == nullptr, "Batches not cleared?" );
+	//	m_batch = nullptr;
 
 
 }
@@ -582,9 +582,9 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				else
 					list->SetMatrix4x4( e->matrix );
 
-				// We need to set shader values even if it's NULL, to remove whatever
+				// We need to set shader values even if it's nullptr, to remove whatever
 				// shader values object was last used.  If we were smart we would
-				// remember what went in last so we weren't re-setting NULLs, but
+				// remember what went in last so we weren't re-setting nullptrs, but
 				// maybe I'll leave that as a [TODO] rather than worrying about it
 				// riht now while I'm working on shader options.  -- Trevor 24/6/2020
 				list->SetShaderValues( e->shaderValues );
@@ -620,36 +620,36 @@ void
 vsRenderQueueStage::EndRender()
 {
 	m_batchCount = 0;
-	Batch *last = NULL;
+	Batch *last = nullptr;
 	for (Batch *b = m_batch; b; b = b->next)
 	{
 		last = b;
 		BatchElement *lastElement = b->elementList;
 		while ( lastElement->next )
 		{
-			lastElement->instanceMatrix = NULL;
+			lastElement->instanceMatrix = nullptr;
 			lastElement->instanceMatrixCount = 0;
 			lastElement = lastElement->next;
 		}
-		lastElement->instanceMatrix = NULL;
+		lastElement->instanceMatrix = nullptr;
 		lastElement->instanceMatrixCount = 0;
 		lastElement->next = m_batchElementPool;
 		m_batchElementPool = b->elementList;
-		b->elementList = NULL;
+		b->elementList = nullptr;
 	}
 	if ( last )
 	{
 		last->next = m_batchPool;
 		m_batchPool = m_batch;
 	}
-	m_batch = NULL;
+	m_batch = nullptr;
 
 	m_temporaryLists.Clear();
 	m_batchMap->map.clear();
 }
 
 vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
-	m_parent(NULL),
+	m_parent(nullptr),
 	m_genericList(new vsDisplayList(genericListSize)),
 	m_stage(new vsRenderQueueStage[4]),
 	m_stageCount(4),
@@ -683,7 +683,7 @@ void
 vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags )
 {
 	m_materialHideFlags = materialHideFlags;
-	m_parent = NULL;
+	m_parent = nullptr;
 	m_projection = projection;
 	m_worldToView = worldToView;
 	m_transformStack[0] = iniMatrix;
@@ -965,7 +965,7 @@ vsRenderQueue::GetStage( int i )
 		return &m_stage[i];
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 

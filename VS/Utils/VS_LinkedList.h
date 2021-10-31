@@ -21,8 +21,8 @@ public:
 	vsListEntry<T> *	m_next;
 	vsListEntry<T> *	m_prev;
 
-	vsListEntry() : m_item(NULL), m_next(NULL), m_prev(NULL) {}
-	vsListEntry( const T &t ) : m_item(t), m_next(NULL), m_prev(NULL) {}
+	vsListEntry() : m_item(nullptr), m_next(nullptr), m_prev(nullptr) {}
+	vsListEntry( const T &t ) : m_item(t), m_next(nullptr), m_prev(nullptr) {}
 	~vsListEntry() { Extract(); }
 
 	void	Append( vsListEntry<T> *next )
@@ -71,8 +71,8 @@ public:
 	}
 
 	T&				Get() { return m_current->m_item; }
-	bool			Next() { m_current = m_current->m_next; return (m_current != NULL); }
-	bool			Prev() { m_current = m_current->m_prev; return (m_current != NULL); }
+	bool			Next() { m_current = m_current->m_next; return (m_current != nullptr); }
+	bool			Prev() { m_current = m_current->m_prev; return (m_current != nullptr); }
 	bool						operator==( const vsListIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
 	bool						operator!=( const vsListIterator &b ) { return !((*this)==b); }
 	vsListIterator<T>&		operator++() { Next(); return *this; }
@@ -116,7 +116,7 @@ class vsLinkedList
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -144,8 +144,8 @@ public:
 		}
 		vsDelete( m_listEntry );
 		// m_entry.Return( m_listEntry );
-		m_listEntry = NULL;
-		m_tail = NULL;
+		m_listEntry = nullptr;
+		m_tail = nullptr;
 	}
 
 	void	Clear()
@@ -182,7 +182,7 @@ public:
 			ent = FindEntry(item);
 		}
 
-		return ent != NULL;
+		return ent != nullptr;
 	}
 
 	vsListIterator<T> Remove( vsListIterator<T> &iter )
@@ -205,7 +205,7 @@ public:
 
 	bool	Contains( T item ) const
 	{
-		return (NULL != FindEntry(item));
+		return (nullptr != FindEntry(item));
 	}
 
 	bool	IsEmpty() const
@@ -248,7 +248,7 @@ public:
 			n--;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 };
 

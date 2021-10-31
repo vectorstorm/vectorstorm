@@ -14,7 +14,7 @@
 #include "Core.h"
 #include "CORE_GameRegistry.h"
 
-vsSystem *gSystem = NULL;
+vsSystem *gSystem = nullptr;
 
 #define MAX_TOUCHES (12)
 
@@ -30,7 +30,7 @@ void Init()
 {
 	for ( int i = 0; i < MAX_TOUCHES; i++ )
 	{
-		touchID[i] = NULL;
+		touchID[i] = nullptr;
 		touching[i] = false;
 		touch[i] = vsVector2D::Zero;
 	}

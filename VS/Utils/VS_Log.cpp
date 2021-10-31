@@ -19,8 +19,8 @@
 #define vsprintf vsprintf_s
 #endif
 
-// static PHYSFS_File* s_log = NULL;
-static vsFile *s_log = NULL;
+// static PHYSFS_File* s_log = nullptr;
+static vsFile *s_log = nullptr;
 
 void vsLog_Start()
 {

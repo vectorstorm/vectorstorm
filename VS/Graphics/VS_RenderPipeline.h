@@ -79,7 +79,7 @@ class RenderTargetRegistration
 public:
 
 	RenderTargetRegistration():
-		target(NULL),
+		target(nullptr),
 		user(),
 		request()
 	{

@@ -19,8 +19,8 @@ public:
 	vsListStoreEntry<T> *	m_next;
 	vsListStoreEntry<T> *	m_prev;
 
-	vsListStoreEntry() : m_item(NULL), m_next(NULL), m_prev(NULL) {}
-	vsListStoreEntry( T *t ) : m_item(t), m_next(NULL), m_prev(NULL) {}
+	vsListStoreEntry() : m_item(nullptr), m_next(nullptr), m_prev(nullptr) {}
+	vsListStoreEntry( T *t ) : m_item(t), m_next(nullptr), m_prev(nullptr) {}
 	~vsListStoreEntry()
 	{
 		Extract();
@@ -75,19 +75,19 @@ public:
 		{
 			return m_current->m_item;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	bool			Next()
 	{
 		m_current = m_current->m_next;
-		return (m_current != NULL);
+		return (m_current != nullptr);
 	}
 
 	bool			Previous()
 	{
 		m_current = m_current->m_prev;
-		return (m_current != NULL);
+		return (m_current != nullptr);
 	}
 
 	void	Append( T *item )
@@ -134,7 +134,7 @@ class vsLinkedListStore
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -158,7 +158,7 @@ public:
 			vsDelete( toDelete );
 		}
 		vsDelete( m_listEntry );
-		m_tail = NULL;
+		m_tail = nullptr;
 	}
 
 	void	Clear()
@@ -205,7 +205,7 @@ public:
 	bool	Contains( T *item )
 	{
 		vsListStoreEntry<T> *ent = FindEntry(item);
-		return (ent != NULL);
+		return (ent != nullptr);
 	}
 
 	bool	IsEmpty()
@@ -248,7 +248,7 @@ public:
 			n--;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
 	vsLinkedListStore<T>& operator=( vsLinkedListStore<T> &o )

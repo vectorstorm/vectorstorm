@@ -31,7 +31,7 @@
 int vsFloatImage::m_textureMakerCount = 0;
 
 vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(width),
 	m_height(height),
@@ -56,14 +56,14 @@ vsFloatImage::vsFloatImage( const vsString &filename ):
 	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
 
 	vsDelete(s);
-	vsAssert(loadedImage != NULL, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
+	vsAssert(loadedImage != nullptr, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
 	LoadFromSurface(loadedImage);
 	SDL_FreeSurface(loadedImage);
 #endif
 }
 
 vsFloatImage::vsFloatImage( vsTexture * texture ):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_width(0),
 	m_height(0),
 	m_pbo(0),
@@ -82,7 +82,7 @@ vsFloatImage::~vsFloatImage()
 		glDeleteBuffers( 1, (GLuint*)&m_pbo );
 		glDeleteSync( m_sync );
 
-		vsAssert( m_pixel == NULL, "async-mapped pixel data not cleared during destruction??" );
+		vsAssert( m_pixel == nullptr, "async-mapped pixel data not cleared during destruction??" );
 		m_pbo = 0;
 		m_sync = 0;
 	}
@@ -162,7 +162,7 @@ vsFloatImage::AsyncRead( vsTexture *texture )
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(vsColor);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, nullptr, GL_DYNAMIC_READ );
 	}
 	// int bytes = sizeof(uint32_t) * width * height;
 
@@ -196,7 +196,7 @@ vsFloatImage::AsyncReadRenderTarget(vsRenderTarget *target, int buffer)
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(vsColor);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, nullptr, GL_DYNAMIC_READ );
 	}
 
 	target->Bind();
@@ -234,7 +234,7 @@ vsFloatImage::AsyncUnmap()
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
-	m_pixel = NULL;
+	m_pixel = nullptr;
 }
 
 vsColor

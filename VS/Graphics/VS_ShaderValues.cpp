@@ -14,13 +14,13 @@
 #include "VS_Matrix.h"
 
 vsShaderValues::vsShaderValues():
-	m_parent(NULL),
+	m_parent(nullptr),
 	m_value(16)
 {
 }
 
 vsShaderValues::vsShaderValues( const vsShaderValues& other ):
-	m_parent(NULL),
+	m_parent(nullptr),
 	m_value(16)
 {
 	int valueCount = other.m_value.GetHashEntryCount();
@@ -230,7 +230,7 @@ bool
 vsShaderValues::Has( const vsString& name ) const
 {
 	uint32_t id = vsShaderUniformRegistry::UID(name);
-	return (m_value.FindItem(id) != NULL) ||
+	return (m_value.FindItem(id) != nullptr) ||
 		( m_parent && m_parent->Has(name) );
 }
 

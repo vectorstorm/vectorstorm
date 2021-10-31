@@ -21,7 +21,7 @@ struct vsWeakPointerBase
  *
  *  They notice when the object they are pointing at is destroyed, and
  *  will take on a different value when that happens.
- *  For example, a standard vsWeakPointer becomes NULL when the object being pointed at is destroyed.
+ *  For example, a standard vsWeakPointer becomes nullptr when the object being pointed at is destroyed.
  *
  *\ingroup qcl_types_pointers
  */
@@ -32,7 +32,7 @@ public:
 	vsWeakPointerTarget();
 			///< Initialize the reference count to 0.
 
-	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { m_referenceCount = 0; m_firstWeakPointer = NULL; }
+	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { m_referenceCount = 0; m_firstWeakPointer = nullptr; }
 			///< Copy constructor. Note that this initialize the reference count to 0!
 
 	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { return *this; }
@@ -46,7 +46,7 @@ public:
 			///< Returns the reference count (obscure!)
 
 	void	BreakAllReferences();
-			///< All existing weak pointers to this object will magically become NULL.
+			///< All existing weak pointers to this object will magically become nullptr.
 			///  The object itself is unaffected.
 
 private:
@@ -60,9 +60,9 @@ private:
 inline
 vsWeakPointerBase::vsWeakPointerBase()
 {
-	m_target = NULL;
-	m_previousWeakPointer = NULL;
-	m_nextWeakPointer = NULL;
+	m_target = nullptr;
+	m_previousWeakPointer = nullptr;
+	m_nextWeakPointer = nullptr;
 }
 
 
@@ -70,11 +70,11 @@ inline
 vsWeakPointerTarget::vsWeakPointerTarget()
 {
 	m_referenceCount = 0;
-	m_firstWeakPointer = NULL;
+	m_firstWeakPointer = nullptr;
 }
 
 
-/** Destructor -- detaches all existing weak pointers by setting their object pointer to NULL.
+/** Destructor -- detaches all existing weak pointers by setting their object pointer to nullptr.
  */
 inline
 vsWeakPointerTarget::~vsWeakPointerTarget()
@@ -83,7 +83,7 @@ vsWeakPointerTarget::~vsWeakPointerTarget()
 }
 
 
-/** Force all existing weak pointers to this object to become NULL
+/** Force all existing weak pointers to this object to become nullptr
  */
 
 inline
@@ -104,11 +104,11 @@ inline
 int
 vsWeakPointerTarget::AddReference( vsWeakPointerBase *newReference ) const
 {
-	assert( newReference != NULL );
+	assert( newReference != nullptr );
 
 	newReference->m_target = (vsWeakPointerTarget*)this;
 
-	newReference->m_previousWeakPointer = NULL;
+	newReference->m_previousWeakPointer = nullptr;
 	newReference->m_nextWeakPointer = m_firstWeakPointer;
 
 	m_firstWeakPointer = newReference;
@@ -129,7 +129,7 @@ inline
 int
 vsWeakPointerTarget::ReleaseReference( vsWeakPointerBase *oldReference ) const
 {
-	assert( oldReference != NULL );
+	assert( oldReference != nullptr );
 	assert( oldReference->m_target == this );
 
 
@@ -148,9 +148,9 @@ vsWeakPointerTarget::ReleaseReference( vsWeakPointerBase *oldReference ) const
 		oldReference->m_nextWeakPointer->m_previousWeakPointer = oldReference->m_previousWeakPointer;
 	}
 
-	oldReference->m_target = NULL;
-	oldReference->m_previousWeakPointer = NULL;
-	oldReference->m_nextWeakPointer = NULL;
+	oldReference->m_target = nullptr;
+	oldReference->m_previousWeakPointer = nullptr;
+	oldReference->m_nextWeakPointer = nullptr;
 
 	m_referenceCount--;
 

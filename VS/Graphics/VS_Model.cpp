@@ -46,7 +46,7 @@ vsModel::Load( const vsString &filename_in )
 vsFragment*
 vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 {
-	vsFragment *result = NULL;
+	vsFragment *result = nullptr;
 
 	vsString tag;
 	r.String(tag);
@@ -272,7 +272,7 @@ vsModel::LoadModel_InternalV2( vsSerialiserRead& r )
 vsModel*
 vsModel::LoadModel_Internal( vsSerialiserRead& r )
 {
-	vsModel *result = NULL;
+	vsModel *result = nullptr;
 	vsString tag;
 	r.String(tag);
 	if ( tag == "ModelV1" )
@@ -290,7 +290,7 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 vsModel *
 vsModel::LoadBinary( const vsString &filename )
 {
-	vsModel *result = NULL;
+	vsModel *result = nullptr;
 
 	vsFile file(filename);
 	vsStore store(file.GetLength());
@@ -319,7 +319,7 @@ vsModel::LoadText( const vsString &filename )
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void
@@ -394,8 +394,8 @@ vsModel::LoadFrom( vsRecord *record )
 
 
 vsModel::vsModel( vsDisplayList *list ):
-	m_material(NULL),
-	m_instanceGroup(NULL),
+	m_material(nullptr),
+	m_instanceGroup(nullptr),
 	m_displayList(list)
 {
 	SetLodCount(1);

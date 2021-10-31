@@ -59,7 +59,7 @@ vsFontMaker::MakeFont( const vsString &name, float pointSize )
 
 		for ( int i = 0; i < glyphCount; i++ )
 		{
-			gcache[i].surface = NULL;
+			gcache[i].surface = nullptr;
 			if(TTF_GlyphMetrics(font,glyphsToRender[i],&gcache[i].minx,&gcache[i].maxx,&gcache[i].miny,&gcache[i].maxy,&gcache[i].advance)==-1)
 			{
 				HandleTTFError("TTF_GlyphMetrics");
@@ -76,7 +76,7 @@ vsFontMaker::MakeFont( const vsString &name, float pointSize )
 		//int descent = TTF_FontDescent(font);
 
 		TTF_CloseFont(font);
-		font = NULL;
+		font = nullptr;
 
 		// now at this point, let's try to fit into a 512x512
 
@@ -117,7 +117,7 @@ vsFontMaker::MakeFont( const vsString &name, float pointSize )
 
 		fontPage = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32,
 									   rmask, gmask, bmask, amask);
-		vsAssert(fontPage != NULL, vsFormatString("CreateRGBSurface failed: %s\n", SDL_GetError()));
+		vsAssert(fontPage != nullptr, vsFormatString("CreateRGBSurface failed: %s\n", SDL_GetError()));
 
 		int x = 1;	// start one pixel in, for a safe border
 		int y = 1;	// start one pixel down, for a safe border.

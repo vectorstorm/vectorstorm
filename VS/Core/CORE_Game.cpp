@@ -26,11 +26,11 @@
 
 coreGameSystem	*coreGame::s_system[GameSystem_MAX];
 
-//coreGame *coreGame::s_instance = NULL;
+//coreGame *coreGame::s_instance = nullptr;
 
 coreGame::coreGame():
-	m_system(NULL),
-	m_currentMode(NULL),
+	m_system(nullptr),
+	m_currentMode(nullptr),
 	m_sceneCount(1)
 {
 }
@@ -174,10 +174,10 @@ coreGame::DeinitGameSystems()
 	{
 		m_system[i]->Deinit();
 //		delete m_system[i];
-//		m_system[i] = NULL;
+//		m_system[i] = nullptr;
 	}
 	free(m_system);
-	m_system = NULL;
+	m_system = nullptr;
 }
 
 void

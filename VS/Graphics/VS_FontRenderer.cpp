@@ -211,11 +211,11 @@ vsFontRenderer::CreateString_InFragment( FontContext context, vsFontFragment *fr
 		constructor.tlArray = tlArray;
 		constructor.ptIndex = constructor.tlIndex = 0;
 
-		constructor.glyphBox = NULL;
+		constructor.glyphBox = nullptr;
 		constructor.glyphCount = 0;
-		constructor.lineBox = NULL;
-		constructor.lineFirstGlyph = NULL;
-		constructor.lineLastGlyph = NULL;
+		constructor.lineBox = nullptr;
+		constructor.lineFirstGlyph = nullptr;
+		constructor.lineLastGlyph = nullptr;
 		constructor.lineCount = 0;
 
 		// figure out our wrapping and final render size
@@ -407,11 +407,11 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 // 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
 // 	CreateString_InFragment(FontContext_2D, fragment, string);
 // 	m_font->RegisterFragment(fragment);
-// 	if ( fragment->GetDisplayList() == NULL &&
+// 	if ( fragment->GetDisplayList() == nullptr &&
 // 			!fragment->IsSimple() )
 // 	{
 // 		vsDelete(fragment);
-// 		return NULL;
+// 		return nullptr;
 // 	}
 // 	return fragment;
 // }
@@ -423,11 +423,11 @@ vsFontRenderer::CreateString_InDisplayList( FontContext context, vsDisplayList *
 // 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
 // 	CreateString_InFragment(FontContext_3D, fragment, string);
 // 	m_font->RegisterFragment(fragment);
-// 	if ( fragment->GetDisplayList() == NULL &&
+// 	if ( fragment->GetDisplayList() == nullptr &&
 // 			!fragment->IsSimple() )
 // 	{
 // 		vsDelete(fragment);
-// 		return NULL;
+// 		return nullptr;
 // 	}
 // 	return fragment;
 // }
@@ -439,11 +439,11 @@ vsFontRenderer::Fragment2D( const vsLocString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_2D, string);
 	CreateString_InFragment(FontContext_2D, fragment, string.AsString());
 	m_font->RegisterFragment(fragment);
-	if ( fragment->GetDisplayList() == NULL &&
+	if ( fragment->GetDisplayList() == nullptr &&
 			!fragment->IsSimple() )
 	{
 		vsDelete(fragment);
-		return NULL;
+		return nullptr;
 	}
 	return fragment;
 }
@@ -455,11 +455,11 @@ vsFontRenderer::Fragment3D( const vsLocString& string )
 	vsFontFragment *fragment = new vsFontFragment(*this, FontContext_3D, string);
 	CreateString_InFragment(FontContext_3D, fragment, string.AsString());
 	m_font->RegisterFragment(fragment);
-	if ( fragment->GetDisplayList() == NULL &&
+	if ( fragment->GetDisplayList() == nullptr &&
 			!fragment->IsSimple() )
 	{
 		vsDelete(fragment);
-		return NULL;
+		return nullptr;
 	}
 	return fragment;
 }
@@ -901,11 +901,11 @@ vsFontFragment::vsFontFragment( vsFontRenderer& renderer, FontContext fc, const 
 	m_context(fc),
 	m_string(string.AsString()),
 	m_locString(string),
-	m_lineBox(NULL),
-	m_lineFirstGlyph(NULL),
-	m_lineLastGlyph(NULL),
+	m_lineBox(nullptr),
+	m_lineFirstGlyph(nullptr),
+	m_lineLastGlyph(nullptr),
 	m_lineCount(0),
-	m_glyphBox(NULL),
+	m_glyphBox(nullptr),
 	m_attached(true)
 {
 }

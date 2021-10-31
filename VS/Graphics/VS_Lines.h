@@ -67,8 +67,8 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count
 
 void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *array, int count, float width, bool loop );
 
-vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = NULL, float texScale = 1.f );
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = NULL, float texScale = 1.f );
+vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = nullptr, float texScale = 1.f );
+vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = nullptr, float texScale = 1.f );
 
 vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width, bool loop );
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width );
@@ -111,9 +111,9 @@ public:
 
 	void Clear();
 	void AddLine( vsVector3D &a, vsVector3D &b );
-	void AddStrip( vsVector3D *array, int arraySize ) { AddStrip(array, NULL, arraySize); }
+	void AddStrip( vsVector3D *array, int arraySize ) { AddStrip(array, nullptr, arraySize); }
 	void AddStrip( vsVector3D *array, vsColor *carray, int arraySize );
-	void AddLoop( vsVector3D *array, int arraySize ) { AddLoop(array, NULL, arraySize); }
+	void AddLoop( vsVector3D *array, int arraySize ) { AddLoop(array, nullptr, arraySize); }
 	void AddLoop( vsVector3D *array, vsColor *carray, int arraySize );
 
 	void DynamicDraw( vsRenderQueue *queue );

@@ -51,7 +51,7 @@ public:
 	// to pre-allocate space, so that it happens at a desirable time, instead of
 	// stuttering the first time you read back data.
 	void			PrepForAsyncRead( vsTexture *texture );
-	bool			IsOK() { return m_pixel != NULL; }
+	bool			IsOK() { return m_pixel != nullptr; }
 
 	void			Read( vsTexture *texture );
 	void			AsyncRead( vsTexture *texture );

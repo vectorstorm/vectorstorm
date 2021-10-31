@@ -39,10 +39,10 @@ public:
 */
 
 
-// vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = NULL );
-// vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = NULL );
-// vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = NULL );
-// vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = NULL );
+// vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
+// vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
+// vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = nullptr );
+// vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
 
 
 // A "Fringed" box is surrounded by boxes of equal-size around all edges, but
@@ -50,26 +50,26 @@ public:
 // really really small boxes.  But in general, you can ignore this function.  It's
 // for special case stuff where you're trying to get a little extra anti-aliasing
 // on a very very small box.  :)
-vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = nullptr );
 
-vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset = vsVector2D::Zero, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset = vsVector2D::Zero, vsColor *colorOverride = nullptr );
 // a variant of the above which flips V coordinates.  Useful if we're going to draw this box in a 3D context, where Y is inverted.
-vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride = NULL );
+vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle = vsAngle::Zero, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride = nullptr );
 
 
-vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride = nullptr );
 
-vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride = nullptr );
 
-vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = NULL );
-vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = NULL );
+vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride = nullptr );
 
 #endif // VS_PRIMITIVE_H
 

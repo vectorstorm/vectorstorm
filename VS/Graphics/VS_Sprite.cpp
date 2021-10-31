@@ -81,8 +81,8 @@ vsSprite::vsSprite( vsDisplayList *list ) :
 	m_displayList(list),
 	m_boundingRadius(0.f),
 	m_color(c_white),
-	m_overlay(NULL),
-	m_material(NULL),
+	m_overlay(nullptr),
+	m_material(nullptr),
 	m_useColor(false),
 	m_boundingBoxLocked(false),
 	m_transform()
@@ -315,11 +315,11 @@ vsEntity *
 vsSprite::FindEntityAtPosition(const vsVector2D &pos) const
 {
 	if ( !m_clickable || !m_visible )
-		return NULL;
+		return nullptr;
 
 	vsVector2D localPos = m_transform.ApplyInverseTo(pos);
 
-	vsEntity *result = NULL;
+	vsEntity *result = nullptr;
 	bool isInside = ContainsLocalPoint(localPos);
 
 	if ( isInside )

@@ -96,7 +96,7 @@ vsShader::~vsShader()
 	for ( int i = 0; i < m_variant.ItemCount(); i++ )
 		vsDelete( m_variant[i] );
 	m_variant.Clear();
-	m_current = NULL;
+	m_current = nullptr;
 	// vsDelete( m_current );
 	// vsLog("Destroyed shader %d", m_shader);
 	// vsRenderer_OpenGL3::DestroyShader(m_shader);

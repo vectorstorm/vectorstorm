@@ -433,7 +433,7 @@ vsDisplayList::Load( const vsString &filename )
 //	int vec = filename.find(".vec");
 //	int obj = filename.find(".obj");
 
-	vsDisplayList *result = NULL;
+	vsDisplayList *result = nullptr;
 	// check for a precompiled version of this file.
 
 	{
@@ -455,7 +455,7 @@ vsDisplayList::Load( const vsString &filename )
 }
 
 vsDisplayList::vsDisplayList():
-	m_instanceParent(NULL),
+	m_instanceParent(nullptr),
 	m_instanceCount(0),
 	m_materialCount(0),
 	m_colorSet(false)
@@ -464,7 +464,7 @@ vsDisplayList::vsDisplayList():
 }
 
 vsDisplayList::vsDisplayList( size_t memSize ):
-	m_instanceParent(NULL),
+	m_instanceParent(nullptr),
 	m_instanceCount(0),
 	m_materialCount(0),
 	m_colorSet(false)
@@ -475,7 +475,7 @@ vsDisplayList::vsDisplayList( size_t memSize ):
 	}
 	else
 	{
-		m_fifo = NULL;
+		m_fifo = nullptr;
 	}
 
 	Clear();
@@ -493,7 +493,7 @@ vsDisplayList::~vsDisplayList()
 	if ( m_fifo )
 	{
 		delete m_fifo;
-		m_fifo = NULL;
+		m_fifo = nullptr;
 	}
 	else if ( m_instanceParent )
 	{
@@ -1373,7 +1373,7 @@ vsDisplayList::PopOp()
 		return &m_currentOp;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void
@@ -1598,8 +1598,8 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 		vsTransform2D	transformStack[20];
 		transformStack[0] = vsTransform2D::Zero;
 		int				transformStackLevel = 0;
-		vsVector3D		*currentVertexArray = NULL;
-		vsRenderBuffer *currentVertexBuffer = NULL;
+		vsVector3D		*currentVertexArray = nullptr;
+		vsRenderBuffer *currentVertexBuffer = nullptr;
 
 		Rewind();
 		op *o = PopOp();
@@ -1630,12 +1630,12 @@ vsDisplayList::GetBoundingBox( vsVector2D &topLeft, vsVector2D &bottomRight )
 					vsAssert(transformStackLevel >= 0, "Transform stack underflow while building bounding box");
 					break;
 				case OpCode_VertexArray:
-					currentVertexBuffer = NULL;
+					currentVertexBuffer = nullptr;
 					currentVertexArray = (vsVector3D *)o->data.p;
 					break;
 				case OpCode_VertexBuffer:
 				case OpCode_BindBuffer:
-					currentVertexArray = NULL;
+					currentVertexArray = nullptr;
 					currentVertexBuffer = (vsRenderBuffer *)o->data.p;
 					break;
 				case OpCode_LineListBuffer:
@@ -1706,7 +1706,7 @@ vsDisplayList::GetBoundingBox( vsBox3D &box )
 		vsMatrix4x4			transformStack[20];
 		transformStack[0] = vsMatrix4x4::Identity;
 		int				transformStackLevel = 0;
-		vsVector3D		*currentVertexArray = NULL;
+		vsVector3D		*currentVertexArray = nullptr;
 		//int			currentVertexArraySize = 0;
 
 		Rewind();
@@ -1820,8 +1820,8 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 		vsMatrix4x4			transformStack[20];
 		transformStack[0] = vsMatrix4x4::Identity;
 		int				transformStackLevel = 0;
-		vsVector3D		*currentVertexArray = NULL;
-		vsRenderBuffer		*currentVertexBuffer = NULL;
+		vsVector3D		*currentVertexArray = nullptr;
+		vsRenderBuffer		*currentVertexBuffer = nullptr;
 		//int			currentVertexArraySize = 0;
 
 		Rewind();
@@ -1852,20 +1852,20 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 				vsVector3D pos;
 				float *shuttle = (float *) o->data.p;
 				currentVertexArray = (vsVector3D *)shuttle;
-				currentVertexBuffer = NULL;
+				currentVertexBuffer = nullptr;
 			}
 			else if ( o->type == OpCode_VertexBuffer )
 			{
 				vsVector3D pos;
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
 				currentVertexArray = buffer->GetVector3DArray();
-				currentVertexBuffer = NULL;
+				currentVertexBuffer = nullptr;
 			}
 			else if ( o->type == OpCode_BindBuffer )
 			{
 				vsVector3D pos;
 				vsRenderBuffer *buffer = (vsRenderBuffer *)o->data.p;
-				currentVertexArray = NULL;//buffer->GetVector3DArray();
+				currentVertexArray = nullptr;//buffer->GetVector3DArray();
 				currentVertexBuffer = buffer;
 			}
 			else if ( o->type == OpCode_TriangleListBuffer )

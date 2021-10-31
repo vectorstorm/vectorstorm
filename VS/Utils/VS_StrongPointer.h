@@ -21,7 +21,7 @@ template< class T >
 class vsStrongPointer
 {
 public:
-				vsStrongPointer( T *object = NULL );
+				vsStrongPointer( T *object = nullptr );
 				vsStrongPointer( const vsStrongPointer<T> &sp );
 	virtual    ~vsStrongPointer();
 
@@ -168,25 +168,25 @@ vsStrongPointer<T>::operator const T *() const
 
 
 /**  Arrow operator - write access to the members of the object pointed at.
- *   Only safe to use on non-NULL pointers.
+ *   Only safe to use on non-nullptr pointers.
  *   Requires a non-const vsStrongPointer.
  */
 template< class T >
 T *
 vsStrongPointer<T>::operator->()
 {
-	assert( m_target != NULL );
+	assert( m_target != nullptr );
 	return m_target;
 }
 
 /**  Const arrow operator - read access to the members of the object pointed at.
- *   Only safe to use on non-NULL pointers.
+ *   Only safe to use on non-nullptr pointers.
  */
 template< class T >
 const T *
 vsStrongPointer<T>::operator->() const
 {
-	assert( m_target != NULL );
+	assert( m_target != nullptr );
 	return m_target;
 }
 

@@ -32,7 +32,7 @@ int vsImage::s_textureMakerCount = 0;
 bool vsImage::s_allowLoadFailure = false;
 
 vsImage::vsImage():
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(0),
 	m_height(0),
@@ -42,7 +42,7 @@ vsImage::vsImage():
 }
 
 vsImage::vsImage(unsigned int width, unsigned int height):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(width),
 	m_height(height),
@@ -56,7 +56,7 @@ vsImage::vsImage(unsigned int width, unsigned int height):
 }
 
 vsImage::vsImage( const vsString &filename ):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pbo(0),
 	m_sync(0)
 {
@@ -73,7 +73,7 @@ vsImage::vsImage( const vsString &filename ):
 	vsDelete(s);
 	if ( !loadedImage && s_allowLoadFailure )
 	{
-		vsCheckF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+		vsCheckF(loadedImage != nullptr, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
 
 		m_pixel = new uint32_t[1];
 		m_width = m_height = 1;
@@ -81,7 +81,7 @@ vsImage::vsImage( const vsString &filename ):
 	}
 	else
 	{
-		vsAssertF(loadedImage != NULL, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+		vsAssertF(loadedImage != nullptr, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
 	}
 
 	if ( loadedImage )
@@ -93,7 +93,7 @@ vsImage::vsImage( const vsString &filename ):
 }
 
 vsImage::vsImage( const vsStore &filedata ):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pbo(0),
 	m_sync(0)
 {
@@ -105,7 +105,7 @@ vsImage::vsImage( const vsStore &filedata ):
 
 	if ( !loadedImage )
 	{
-		vsCheckF(loadedImage != NULL, "Unable to load texture from filedata: %s", IMG_GetError());
+		vsCheckF(loadedImage != nullptr, "Unable to load texture from filedata: %s", IMG_GetError());
 
 		m_pixel = new uint32_t[1];
 		m_width = m_height = 1;
@@ -121,7 +121,7 @@ vsImage::vsImage( const vsStore &filedata ):
 }
 
 vsImage::vsImage( vsTexture * texture ):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_width(0),
 	m_height(0),
 	m_pbo(0),
@@ -140,7 +140,7 @@ vsImage::~vsImage()
 		glDeleteBuffers( 1, (GLuint*)&m_pbo );
 		glDeleteSync( m_sync );
 
-		vsAssert( m_pixel == NULL, "async-mapped pixel data not cleared during destruction??" );
+		vsAssert( m_pixel == nullptr, "async-mapped pixel data not cleared during destruction??" );
 		m_pbo = 0;
 		m_sync = 0;
 	}
@@ -235,7 +235,7 @@ vsImage::PrepForAsyncRead( vsTexture *texture )
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(uint32_t);
-		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, NULL, GL_DYNAMIC_READ );
+		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, nullptr, GL_DYNAMIC_READ );
 	}
 
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
@@ -306,7 +306,7 @@ vsImage::AsyncReadIsReady()
 void
 vsImage::AsyncMap()
 {
-	vsAssert( m_pixel == NULL, "Non-null during pbo async mapping");
+	vsAssert( m_pixel == nullptr, "Non-null during pbo async mapping");
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	m_pixel = (uint32_t*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 	m_pixelCount = m_width * m_height;
@@ -319,7 +319,7 @@ vsImage::AsyncUnmap()
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
-	m_pixel = NULL;
+	m_pixel = nullptr;
 }
 
 uint32_t
@@ -456,7 +456,7 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 
 	// now lets copy our image data
 
-	vsAssert( m_pixel == NULL, "Non-null pixel storage during LoadFromSurface" );
+	vsAssert( m_pixel == nullptr, "Non-null pixel storage during LoadFromSurface" );
 	m_pixelCount = w*h;
 	m_pixel = new uint32_t[m_pixelCount];
 

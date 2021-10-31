@@ -253,8 +253,8 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 	return fragment;
 }
 
-vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,NULL,count,width,loop); }
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,NULL,count,width); }
+vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,nullptr,count,width,loop); }
+vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,nullptr,count,width); }
 
 vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width, const vsColor *color_in, float texScale )
 {
@@ -810,7 +810,7 @@ public:
 
 	Strip( vsVector3D *array, int length ):
 		m_vertex( new vsVector3D[length] ),
-		m_color( NULL ),
+		m_color( nullptr ),
 		m_length( length ),
 		m_loop(false)
 	{
@@ -1447,9 +1447,9 @@ vsLineBuilder2D::Bake( const vsString& material, float width )
 {
 	if ( m_strip.ItemCount() == 1 )
 	{
-		return vsLineStrip2D( material, &m_strip[0].vert[0], NULL, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
+		return vsLineStrip2D( material, &m_strip[0].vert[0], nullptr, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
 	}
-	return vsLineStrip2D( material, &m_strip[0].vert[0], NULL, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
-	return NULL;
+	return vsLineStrip2D( material, &m_strip[0].vert[0], nullptr, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
+	return nullptr;
 }
 

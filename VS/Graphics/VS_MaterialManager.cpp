@@ -14,7 +14,7 @@
 vsMaterialManager::vsMaterialManager():
 vsCache<vsMaterialInternal>(512)
 {
-	if ( vsMaterial::White == NULL )
+	if ( vsMaterial::White == nullptr )
 	{
 		vsMaterial::White = new vsMaterial("White");
 	}

@@ -12,7 +12,7 @@
 #include "VS_Model.h"
 
 vsModelInstance::vsModelInstance():
-	group(NULL),
+	group(nullptr),
 	lodLevel(0),
 	visible(false)
 {

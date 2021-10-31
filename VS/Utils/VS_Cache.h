@@ -80,8 +80,8 @@ public:
 
 	vsCacheEntry<T> *	m_next;
 
-	vsCacheEntry() { m_item = NULL; m_key = vsEmptyString; m_keyHash = 0; m_next = NULL; }
-	vsCacheEntry( vsCache<T> *cache, T * object, const vsString &key, int keyHash ) { m_item = object; m_key = key; m_keyHash = keyHash, m_next = NULL; }
+	vsCacheEntry() { m_item = nullptr; m_key = vsEmptyString; m_keyHash = 0; m_next = nullptr; }
+	vsCacheEntry( vsCache<T> *cache, T * object, const vsString &key, int keyHash ) { m_item = object; m_key = key; m_keyHash = keyHash, m_next = nullptr; }
 
 	~vsCacheEntry()
 	{
@@ -128,7 +128,7 @@ protected:
 			}
 			ent = ent->m_next;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 
@@ -158,7 +158,7 @@ protected:
 		{
 			return ent;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -216,7 +216,7 @@ public:
 	// returns true if we have this item in the cache, false otherwise.
 	bool Exists( const vsString &name )
 	{
-		return (NULL != Find( name ));
+		return (nullptr != Find( name ));
 	}
 
 	void	Release( T* object )

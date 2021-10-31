@@ -357,7 +357,7 @@ public:
 	void			CaptureMouse( bool capture );
 	bool			IsMouseCaptured() { return m_captureMouse; }
 
-	bool			HasController() { return GetController() != NULL; }
+	bool			HasController() { return GetController() != nullptr; }
 
 	float			GetState( int id ) { return m_axis[id].currentValue; } //m_controlState[id]; }
 	bool			IsUp( int id ) { return !IsDown( id ); }

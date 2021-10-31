@@ -127,7 +127,7 @@ namespace {
 		else
 		{
 			PHYSFS_File *file = PHYSFS_openRead( filename );
-			if ( file != NULL )
+			if ( file != nullptr )
 			{
 				stat->filetype = PHYSFS_FILETYPE_REGULAR;
 				stat->filesize = PHYSFS_fileLength(file);
@@ -161,7 +161,7 @@ namespace {
 	};
 	PHYSFS_ErrorCode PHYSFS_getLastErrorCode()
 	{
-		if ( PHYSFS_getLastError() == NULL )
+		if ( PHYSFS_getLastError() == nullptr )
 			return PHYSFS_ERR_OK; // no error.
 
 		return PHYSFS_ERR_VERYNOTOK;
@@ -205,7 +205,7 @@ const char* PHYSFS_getLastErrorString()
 	PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
 	if ( code != PHYSFS_ERR_OK )
 		return PHYSFS_getErrorByCode(code);
-	return NULL;
+	return nullptr;
 }
 
 struct zipdata
@@ -213,15 +213,15 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
-static vsFile::openFailureHandler s_openFailureHandler = NULL;
+static vsFile::openFailureHandler s_openFailureHandler = nullptr;
 
 vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_filename(filename),
 	m_tempFilename(),
-	m_file(NULL),
-	m_compressedStore(NULL),
-	m_store(NULL),
-	m_zipData(NULL),
+	m_file(nullptr),
+	m_compressedStore(nullptr),
+	m_store(nullptr),
+	m_zipData(nullptr),
 	m_mode(mode),
 	m_length(0),
 	m_moveOnDestruction(false)
@@ -305,7 +305,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 
 			if ( s_openFailureHandler )
 				(*s_openFailureHandler)( errorFilename, errorMsg );
-			vsAssert( m_file != NULL, STR("Error opening file '%s' (trying '%s'):  %s", filename, errorFilename, errorMsg) );
+			vsAssert( m_file != nullptr, STR("Error opening file '%s' (trying '%s'):  %s", filename, errorFilename, errorMsg) );
 		}
 
 		bool shouldCache = (filename.find(".win") != vsString::npos) ||
@@ -322,7 +322,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			Store(m_store);
 
 			PHYSFS_close(m_file);
-			m_file = NULL;
+			m_file = nullptr;
 
 			if ( shouldCache )
 				vsFileCache::SetFileContents( filename, *m_store );
@@ -342,7 +342,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			vsStore *compressedData = new vsStore( m_length );
 			Store(compressedData);
 			PHYSFS_close(m_file);
-			m_file = NULL;
+			m_file = nullptr;
 
 			// we're going to read the compressed data TWICE.
 			// First, we're just going to count how many bytes we inflate into.
@@ -423,7 +423,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			m_compressedStore = new vsStore( m_length );
 			Store(m_compressedStore);
 			PHYSFS_close(m_file);
-			m_file = NULL;
+			m_file = nullptr;
 
 			m_zipData = new zipdata;
 			m_zipData->m_zipStream.zalloc = Z_NULL;
@@ -483,7 +483,7 @@ vsFile::~vsFile()
 {
 	if ( m_mode == MODE_WriteCompressed )
 	{
-		_PumpCompression( NULL, 0, true );
+		_PumpCompression( nullptr, 0, true );
 		deflateEnd(&m_zipData->m_zipStream);
 	}
 	FlushBufferedWrites();
@@ -732,12 +732,12 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 	{
 		PHYSFS_ErrorCode error = PHYSFS_getLastErrorCode();
 		const char* errorMsg = PHYSFS_getErrorByCode( error );
-		vsAssertF( files != NULL ,"PhysFS reports an error reading contents of directory '%s':  %s", dirName, errorMsg);
+		vsAssertF( files != nullptr ,"PhysFS reports an error reading contents of directory '%s':  %s", dirName, errorMsg);
 		return 0;
 	}
 	char **i;
 	std::vector<char*> s;
-	for (i = files; *i != NULL; i++)
+	for (i = files; *i != nullptr; i++)
 		s.push_back(*i);
 
 	std::sort(s.begin(), s.end(), sortFilesByName());
@@ -799,7 +799,7 @@ vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // stat
 bool
 vsFile::PeekRecord( vsRecord *r )
 {
-	vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
+	vsAssert(r != nullptr, "Called vsFile::Record with a nullptr vsRecord!");
 
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
@@ -829,7 +829,7 @@ vsFile::PeekRecord( vsRecord *r )
 bool
 vsFile::Record( vsRecord *r )
 {
-	vsAssert(r != NULL, "Called vsFile::Record with a NULL vsRecord!");
+	vsAssert(r != nullptr, "Called vsFile::Record with a nullptr vsRecord!");
 
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{

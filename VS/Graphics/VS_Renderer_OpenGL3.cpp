@@ -66,12 +66,12 @@ extern "C" {
 
 namespace
 {
-	static vsMaterial *s_previousMaterial = NULL;
-	static vsShaderValues *s_previousShaderValues = NULL;
+	static vsMaterial *s_previousMaterial = nullptr;
+	static vsShaderValues *s_previousShaderValues = nullptr;
 }
 
 
-SDL_Window *g_sdlWindow = NULL;
+SDL_Window *g_sdlWindow = nullptr;
 static SDL_GLContext m_sdlGlContext;
 static SDL_GLContext m_loadingGlContext;
 static vsMutex m_loadingGlContextMutex;
@@ -255,25 +255,25 @@ static void printAttributes ()
 vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount):
 	vsRenderer(width, height, depth, flags),
 	m_flags(flags),
-	m_currentLocalToWorld(NULL),
-	m_currentLocalToWorldBuffer(NULL),
-	m_currentColors(NULL),
-	m_currentColorsBuffer(NULL),
-	m_window(NULL),
-	m_scene(NULL),
-	m_currentRenderTarget(NULL),
-	m_currentMaterial(NULL),
-	m_currentMaterialInternal(NULL),
-	m_currentShader(NULL),
-	m_currentShaderValues(NULL),
-	m_currentVertexArray(NULL),
-	m_currentNormalArray(NULL),
-	m_currentTexelArray(NULL),
-	m_currentColorArray(NULL),
-	m_currentVertexBuffer(NULL),
-	m_currentNormalBuffer(NULL),
-	m_currentTexelBuffer(NULL),
-	m_currentColorBuffer(NULL),
+	m_currentLocalToWorld(nullptr),
+	m_currentLocalToWorldBuffer(nullptr),
+	m_currentColors(nullptr),
+	m_currentColorsBuffer(nullptr),
+	m_window(nullptr),
+	m_scene(nullptr),
+	m_currentRenderTarget(nullptr),
+	m_currentMaterial(nullptr),
+	m_currentMaterialInternal(nullptr),
+	m_currentShader(nullptr),
+	m_currentShaderValues(nullptr),
+	m_currentVertexArray(nullptr),
+	m_currentNormalArray(nullptr),
+	m_currentTexelArray(nullptr),
+	m_currentColorArray(nullptr),
+	m_currentVertexBuffer(nullptr),
+	m_currentNormalBuffer(nullptr),
+	m_currentTexelBuffer(nullptr),
+	m_currentColorBuffer(nullptr),
 	m_lastShaderId(0),
 	m_bufferCount(bufferCount)
 {
@@ -502,8 +502,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	if ( glDebugMessageCallback )
 	{
 		vsLog("DebugMessageCallback:  SUPPORTED");
-		glDebugMessageCallback( (GLDEBUGPROC)&vsOpenGLDebugMessage, NULL );
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallback( (GLDEBUGPROC)&vsOpenGLDebugMessage, nullptr );
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	}
 #endif
 
@@ -606,7 +606,7 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
-	g_sdlWindow = NULL;
+	g_sdlWindow = nullptr;
 }
 
 void
@@ -816,7 +816,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					target.refresh_rate = 0;
 					target.driverdata = 0;
 
-					if ( SDL_GetClosestDisplayMode(0, &target, &closest) == NULL )
+					if ( SDL_GetClosestDisplayMode(0, &target, &closest) == nullptr )
 						vsLog("No suitable display mode for %dx%d found!", width, height);
 					else
 					{
@@ -979,10 +979,10 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	// ZoneScopedN("RenderDisplayList");
 	PROFILE_GL("RenderDisplayList");
 	GL_CHECK("RenderDisplayList");
-	m_currentMaterial = NULL;
-	m_currentMaterialInternal = NULL;
-	m_currentShader = NULL;
-	m_currentShaderValues = NULL;
+	m_currentMaterial = nullptr;
+	m_currentMaterialInternal = nullptr;
+	m_currentShader = nullptr;
+	m_currentShaderValues = nullptr;
 	RawRenderDisplayList(list);
 
 	GL_CHECK("RenderDisplayList");
@@ -1163,21 +1163,21 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_SetColor:
 				{
 					m_currentColor = op->data.GetColor();
-					m_currentColors = NULL;
-					m_currentColorsBuffer = NULL;
+					m_currentColors = nullptr;
+					m_currentColorsBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetColors:
 				{
 					// m_currentColor = c_white;
 					m_currentColors = (vsColor*)op->data.p;
-					m_currentColorsBuffer = NULL;
+					m_currentColorsBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetColorsBuffer:
 				{
 					// m_currentColor = c_white;
-					m_currentColors = NULL;
+					m_currentColors = nullptr;
 					m_currentColorsBuffer = (vsRenderBuffer*)op->data.p;
 					break;
 				}
@@ -1187,8 +1187,8 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsAssert(material, "SetMaterial called with no material?");
 					SetMaterialInternal( material->GetResource() );
 					SetMaterial( material );
-					m_currentColors = NULL;
-					m_currentColorsBuffer = NULL;
+					m_currentColors = nullptr;
+					m_currentColorsBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetRenderTarget:
@@ -1229,7 +1229,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			// 		// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
 			// 		// if ( target )
 			// 		// 	target->Resolve();
-			// 		// else // NULL target means main render target.
+			// 		// else // nullptr target means main render target.
 			// 		// 	m_scene->Resolve();
 			// 		//
 			// 		// [WARNING] resolving can invalidate current render target
@@ -1268,7 +1268,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_PushTranslation:
@@ -1281,7 +1281,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_PushMatrix4x4:
@@ -1291,7 +1291,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_transformStack[++m_currentTransformStackLevel] = localToWorld;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetMatrix4x4:
@@ -1300,7 +1300,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_transformStack[++m_currentTransformStackLevel] = m;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetMatrices4x4:
@@ -1310,14 +1310,14 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_transformStack[++m_currentTransformStackLevel] = m[0];
 					m_currentLocalToWorld = m;
 					m_currentLocalToWorldCount = count;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetMatrices4x4Buffer:
 				{
 					vsRenderBuffer *b = (vsRenderBuffer*)op->data.p;
 					m_transformStack[++m_currentTransformStackLevel] = vsMatrix4x4::Identity;
-					m_currentLocalToWorld = NULL;
+					m_currentLocalToWorld = nullptr;
 					m_currentLocalToWorldCount = b->GetActiveMatrix4x4ArraySize();
 					m_currentLocalToWorldBuffer = b;
 					break;
@@ -1348,7 +1348,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_transformStack[++m_currentTransformStackLevel] = m;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetWorldToViewMatrix4x4:
@@ -1362,7 +1362,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentTransformStackLevel--;
 					m_currentLocalToWorld = &m_transformStack[m_currentTransformStackLevel];
 					m_currentLocalToWorldCount = 1;
-					m_currentLocalToWorldBuffer = NULL;
+					m_currentLocalToWorldBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_SetCameraTransform:
@@ -1379,13 +1379,13 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_currentVertexArray = (vsVector3D*)op->data.p;
 					m_currentVertexArrayCount = op->data.i;
-					m_currentVertexBuffer = NULL;
+					m_currentVertexBuffer = nullptr;
 					break;
 				}
 			case vsDisplayList::OpCode_VertexBuffer:
 				{
 					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentVertexArray = NULL;
+					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
 					m_currentVertexBuffer->BindVertexBuffer( &m_state );
 					break;
@@ -1400,23 +1400,23 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 				{
 					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentNormalBuffer->BindNormalBuffer( &m_state );
-					m_currentNormalArray = NULL;
+					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
 				{
-					m_currentVertexBuffer = NULL;
-					m_currentVertexArray = NULL;
+					m_currentVertexBuffer = nullptr;
+					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearNormalArray:
 				{
-					m_currentNormalBuffer = NULL;
-					m_currentNormalArray = NULL;
+					m_currentNormalBuffer = nullptr;
+					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 					break;
@@ -1432,7 +1432,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_TexelBuffer:
 				{
 					m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentTexelArray = NULL;
+					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
 					m_currentTexelBuffer->BindTexelBuffer( &m_state );
 					break;
@@ -1461,32 +1461,32 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					if ( m_currentColorBuffer )
 					{
 						//m_currentColorBuffer->UnbindColorBuffer();
-						m_currentColorBuffer = NULL;
+						m_currentColorBuffer = nullptr;
 					}
-					m_currentColorArray = NULL;
+					m_currentColorArray = nullptr;
 					m_currentColorArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearArrays:
 				{
-					m_currentColorArray = NULL;
-					m_currentColorBuffer = NULL;
+					m_currentColorArray = nullptr;
+					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 
-					m_currentTexelBuffer = NULL;
-					m_currentTexelArray = NULL;
+					m_currentTexelBuffer = nullptr;
+					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 
-					m_currentNormalBuffer = NULL;
-					m_currentNormalArray = NULL;
+					m_currentNormalBuffer = nullptr;
+					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 
-					m_currentVertexBuffer = NULL;
-					m_currentVertexArray = NULL;
+					m_currentVertexBuffer = nullptr;
+					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
 					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
@@ -1495,17 +1495,17 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_BindBuffer:
 				{
 					PROFILE_GL("BindBuffer");
-					m_currentColorArray = NULL;
-					m_currentColorBuffer = NULL;
+					m_currentColorArray = nullptr;
+					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
-					m_currentTexelBuffer = NULL;
-					m_currentTexelArray = NULL;
+					m_currentTexelBuffer = nullptr;
+					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
-					m_currentNormalBuffer = NULL;
-					m_currentNormalArray = NULL;
+					m_currentNormalBuffer = nullptr;
+					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_currentVertexBuffer = NULL;
-					m_currentVertexArray = NULL;
+					m_currentVertexBuffer = nullptr;
+					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
 
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
@@ -1785,7 +1785,7 @@ void
 vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
 	PROFILE("SetMaterialInternal");
-	vsAssert( material, "SetMaterialInternal called with NULL material?" );
+	vsAssert( material, "SetMaterialInternal called with nullptr material?" );
 	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
 	{
 		return;
@@ -1860,8 +1860,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		else
 			glStencilMask(0x0);
 
-		vsAssert( m_currentMaterialInternal != NULL, "In SetMaterial() with no material?" );
-		m_currentShader = NULL;
+		vsAssert( m_currentMaterialInternal != nullptr, "In SetMaterial() with no material?" );
+		m_currentShader = nullptr;
 		if ( material->m_shader )
 		{
 			m_currentShader = material->m_shader;
@@ -2199,7 +2199,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 	const GLchar* vert = vert_in.c_str();
 	const GLchar* frag = frag_in.c_str();
 
-	glShaderSource(vertShader, 1, &vert, NULL);
+	glShaderSource(vertShader, 1, &vert, nullptr);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
 	if (!success)
@@ -2214,7 +2214,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 
 	if ( success )
 	{
-		glShaderSource(fragShader, 1, &frag, NULL);
+		glShaderSource(fragShader, 1, &frag, nullptr);
 		glCompileShader(fragShader);
 		glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
 		if (!success)
@@ -2374,7 +2374,7 @@ vsRenderer_OpenGL3::ScreenshotDepth()
 
 	return image;
 #else
-	return NULL;
+	return nullptr;
 #endif
 }
 
@@ -2448,7 +2448,7 @@ vsRenderer_OpenGL3::ClearLoadingContext()
 {
 	FenceLoadingContext();
 	GL_CHECK("ClearLoadingContext");
-	SDL_GL_MakeCurrent( g_sdlWindow, NULL);
+	SDL_GL_MakeCurrent( g_sdlWindow, nullptr);
 	m_loadingGlContextMutex.Unlock();
 }
 
@@ -2478,7 +2478,7 @@ vsRenderer_OpenGL3::FenceLoadingContext()
 vsShader*
 vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 {
-	vsShader *result = NULL;
+	vsShader *result = nullptr;
 	switch( mat->m_drawMode )
 	{
 		case DrawMode_Add:
@@ -2529,28 +2529,28 @@ vsRenderer_OpenGL3::ClearState()
 	m_state.Flush();
 
 	m_currentColor = c_white;
-	m_currentColorArray = NULL;
-	m_currentColorBuffer = NULL;
-	m_currentColors = NULL;
-	m_currentColorsBuffer = NULL;
+	m_currentColorArray = nullptr;
+	m_currentColorBuffer = nullptr;
+	m_currentColors = nullptr;
+	m_currentColorsBuffer = nullptr;
 	m_currentFogDensity = 0.001f;
-	m_currentLocalToWorld = NULL;
-	m_currentLocalToWorldBuffer = NULL;
+	m_currentLocalToWorld = nullptr;
+	m_currentLocalToWorldBuffer = nullptr;
 	m_currentLocalToWorldCount = 0;
-	m_currentMaterial = NULL;
-	m_currentMaterialInternal = NULL;
-	m_currentNormalArray = NULL;
-	m_currentShader = NULL;
-	m_currentShaderValues = NULL;
-	m_currentTexelArray = NULL;
-	m_currentTexelBuffer = NULL;
+	m_currentMaterial = nullptr;
+	m_currentMaterialInternal = nullptr;
+	m_currentNormalArray = nullptr;
+	m_currentShader = nullptr;
+	m_currentShaderValues = nullptr;
+	m_currentTexelArray = nullptr;
+	m_currentTexelBuffer = nullptr;
 	m_currentTransformStackLevel = 0;
-	m_currentVertexArray = NULL;
+	m_currentVertexArray = nullptr;
 	m_currentVertexArrayCount = 0;
 	m_currentColorArrayCount = 0;
 	m_currentTexelArrayCount = 0;
 	m_currentNormalArrayCount = 0;
-	m_currentVertexBuffer = NULL;
+	m_currentVertexBuffer = nullptr;
 	m_invalidateMaterial = true;
 	m_lightCount = 0;
 	m_usingNormalArray = false;
@@ -2558,8 +2558,8 @@ vsRenderer_OpenGL3::ClearState()
 
 	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 
-	s_previousMaterial = NULL;
-	s_previousShaderValues = NULL;
+	s_previousMaterial = nullptr;
+	s_previousShaderValues = nullptr;
 	m_lastShaderId = -1;
 	m_optionsStack.Clear();
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )

@@ -27,8 +27,8 @@ class vsRenderPipelineStageScenes: public vsRenderPipelineStage
 	vsCamera3D *m_customCamera;
 	bool m_clear;
 public:
-	vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = NULL );
-	vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = NULL );
+	vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = nullptr );
+	vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = nullptr );
 	virtual ~vsRenderPipelineStageScenes();
 
 	virtual void Draw( vsDisplayList *list );

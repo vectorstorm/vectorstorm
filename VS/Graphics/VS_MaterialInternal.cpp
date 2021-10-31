@@ -47,8 +47,8 @@ vsMaterialInternal::vsMaterialInternal():
 	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
 	m_textureCount(0),
 	m_shaderIsMine(false),
-	m_shader(NULL),
-	m_shaderRef(NULL),
+	m_shader(nullptr),
+	m_shaderRef(nullptr),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -77,7 +77,7 @@ vsMaterialInternal::vsMaterialInternal():
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
-		m_texture[i] = NULL;
+		m_texture[i] = nullptr;
 		m_textureFromFile[i] = false;
 	}
 
@@ -88,8 +88,8 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
 	m_textureCount(0),
 	m_shaderIsMine(false),
-	m_shader(NULL),
-	m_shaderRef(NULL),
+	m_shader(nullptr),
+	m_shaderRef(nullptr),
 	m_color(c_white),
 	m_specularColor(c_black),
 	m_drawMode(DrawMode_Normal),
@@ -117,7 +117,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
-		m_texture[i] = NULL;
+		m_texture[i] = nullptr;
 		m_textureFromFile[i] = false;
 	}
 
@@ -291,7 +291,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					if ( m_shaderIsMine )
 						vsDelete( m_shader );
-					m_shader = NULL;
+					m_shader = nullptr;
 
 					vsAssert( sr->GetTokenCount() == 2, "Shader directive without more than two tokens??" );
 					vsString vString = sr->GetToken(0).AsString();
@@ -369,7 +369,7 @@ vsMaterialInternal::SetShader()
 bool
 vsMaterialInternal::HasAnyTextures() const
 {
-	if ( m_texture[0] != NULL )
+	if ( m_texture[0] != nullptr )
 		return true;
 	return false;
 }

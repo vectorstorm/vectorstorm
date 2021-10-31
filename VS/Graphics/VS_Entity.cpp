@@ -15,9 +15,9 @@
 
 vsEntity::vsEntity():
 	m_name( vsEmptyString ),
-	m_parent(NULL),
-	m_child(NULL),
-	m_scene(NULL),
+	m_parent(nullptr),
+	m_child(nullptr),
+	m_scene(nullptr),
 	m_visible(true),
 	m_processing(false),
 	m_extractQueued(false)
@@ -47,7 +47,7 @@ vsEntity::~vsEntity()
 		vsEntity *next = child->m_next;
 
 		if ( next == child )
-			next = NULL;
+			next = nullptr;
 
 		delete child;
 		child = next;
@@ -81,7 +81,7 @@ vsEntity::AddChild( vsEntity *sprite )
 
 	sprite->m_parent = this;
 	sprite->m_next = m_child;
-	sprite->m_prev = NULL;
+	sprite->m_prev = nullptr;
 
 	if ( m_child )
 		m_child->m_prev = sprite;
@@ -97,7 +97,7 @@ vsEntity::RemoveChild( vsEntity *sprite )
 	{
 		m_child = m_child->m_next;
 	}
-	sprite->m_parent = NULL;
+	sprite->m_parent = nullptr;
 	sprite->Extract();
 }
 
@@ -118,7 +118,7 @@ vsEntity::DoExtract()
 		m_prev = m_next = this;
 	}
 	m_extractQueued = false;
-	m_scene = NULL;
+	m_scene = nullptr;
 }
 
 void
@@ -206,7 +206,7 @@ vsEntity::Find( const vsString &name ) const
 	if ( m_name == name )
 		return const_cast<vsEntity*>(this);
 
-	vsEntity *result = NULL;
+	vsEntity *result = nullptr;
 
 	for( vsEntity *child = m_child; child; child = child->m_next )
 	{
@@ -225,9 +225,9 @@ vsEntity *
 vsEntity::FindEntityAtPosition(const vsVector2D &pos) const
 {
 	if ( !m_clickable || !m_visible )
-		return NULL;
+		return nullptr;
 
-	vsEntity *result = NULL;
+	vsEntity *result = nullptr;
 
 	vsEntity *child = m_child;
 

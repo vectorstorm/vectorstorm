@@ -29,7 +29,7 @@
 #include <SDL2/SDL.h>
 #endif
 
-vsTimerSystem *	vsTimerSystem::s_instance = NULL;
+vsTimerSystem *	vsTimerSystem::s_instance = nullptr;
 
 vsTimerSystemSprite::vsTimerSystemSprite():
 	m_vertices( new vsRenderBuffer(vsRenderBuffer::Type_Stream) ),
@@ -150,7 +150,7 @@ vsTimerSystem::vsTimerSystem():
 	m_cpuTime(0)
 {
 #if defined(DEBUG_TIMING_BAR)
-	m_sprite = NULL;
+	m_sprite = nullptr;
 #endif // DEBUG_TIMING_BAR
 
 	s_instance = this;
@@ -158,7 +158,7 @@ vsTimerSystem::vsTimerSystem():
 
 vsTimerSystem::~vsTimerSystem()
 {
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void

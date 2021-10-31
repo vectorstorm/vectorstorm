@@ -64,7 +64,7 @@
 
 #include <physfs.h>
 
-vsSystem * vsSystem::s_instance = NULL;
+vsSystem * vsSystem::s_instance = nullptr;
 
 extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use this when changing video modes etc.
 
@@ -89,12 +89,12 @@ typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
 
 bool win32_SetProcessDpiAware(void) {
     HMODULE shcore = LoadLibraryA("Shcore.dll");
-    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
+    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = nullptr;
     if (shcore) {
         SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
     }
     HMODULE user32 = LoadLibraryA("User32.dll");
-    SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
+    SETPROCESSDPIAWARE_T SetProcessDPIAware = nullptr;
     if (user32) {
         SetProcessDPIAware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
     }
@@ -128,7 +128,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_minBuffers(minBuffers),
 	m_orientation( Orientation_Normal ),
 	m_title( title ),
-	m_screen( NULL )
+	m_screen( nullptr )
 {
 #if defined(_WIN32)
 	// extern bool SetProcessDPIAware();
@@ -197,7 +197,7 @@ vsSystem::~vsSystem()
 #if !TARGET_OS_IPHONE
 	SDL_Quit();
 #endif
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void
@@ -334,11 +334,11 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 #endif
 
 	// we need the basedir for in case there's a crash report saved there.
-	success = PHYSFS_mount(PHYSFS_getBaseDir(), NULL, 0);
+	success = PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 0);
 	//
 	// 0 parameter means PREPEND;  each new mount takes priority over the line before
-	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), NULL, 0);
-	success |= PHYSFS_mount(m_dataDirectory.c_str(), NULL, 0);
+	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), nullptr, 0);
+	success |= PHYSFS_mount(m_dataDirectory.c_str(), nullptr, 0);
 	if ( !success )
 	{
 		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
@@ -350,11 +350,11 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	vsFile::DirectoryDirectories( &mods, modsDirectory );
 	for ( int i = 0; i < mods.ItemCount(); i++ )
 	{
-		success |= PHYSFS_mount( (vsString(PHYSFS_getBaseDir()) + "/mod/" + mods[i]).c_str(), NULL, 0);
+		success |= PHYSFS_mount( (vsString(PHYSFS_getBaseDir()) + "/mod/" + mods[i]).c_str(), nullptr, 0);
 	}
 
 
-	success |= PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 0);
+	success |= PHYSFS_mount(PHYSFS_getWriteDir(), nullptr, 0);
 
 	// char** searchPath = PHYSFS_getSearchPath();
 	// int pathId = 0;
@@ -371,8 +371,8 @@ vsSystem::EnableGameDirectory( const vsString &directory )
 	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
 	std::string archiveName = d + ".zip";
 	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
-	PHYSFS_mount(archiveName.c_str(), NULL, 1);
-	PHYSFS_mount(d.c_str(), NULL, 1);
+	PHYSFS_mount(archiveName.c_str(), nullptr, 1);
+	PHYSFS_mount(d.c_str(), nullptr, 1);
 	// char** searchPath = PHYSFS_getSearchPath();
 	// int pathId = 0;
 	// while ( searchPath[pathId] )
@@ -543,14 +543,14 @@ void
 vsSystem::SetWindowCaption(const vsString &caption)
 {
 #if !TARGET_OS_IPHONE
-	//SDL_WM_SetCaption(caption.c_str(),NULL);
+	//SDL_WM_SetCaption(caption.c_str(),nullptr);
 #endif
 }
 
 time_t
 vsSystem::GetTime()
 {
-	return time(NULL);
+	return time(nullptr);
 }
 
 vsString
@@ -603,7 +603,7 @@ void
 vsSystem::Launch( const vsString &target )
 {
 #if defined(_WIN32)
-	ShellExecute(NULL, "open", target.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(nullptr, "open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 #elif defined(__APPLE_CC__)
 	system( vsFormatString("open %s", target.c_str()).c_str() );
 #else
@@ -837,7 +837,7 @@ vsSystem::CPUDescription()
 		}
 	};
 
-	unsigned int maxLevel = __get_cpuid_max(0x80000000, NULL);
+	unsigned int maxLevel = __get_cpuid_max(0x80000000, nullptr);
 	if ( maxLevel < 0x80000004 )
 		return vsString("CPU brand string not supported on this hardware.  Probably Pentium 4 or earlier.");
 	unsigned int eax, ebx, ecx, edx;
@@ -865,7 +865,7 @@ unsigned long long GetTotalSystemMemory()
 #elif defined(__APPLE_CC__)
 	uint64_t mem;
 	size_t len = sizeof(mem);
-	sysctlbyname("hw.memsize", &mem, &len, NULL, 0);
+	sysctlbyname("hw.memsize", &mem, &len, nullptr, 0);
 	return mem;
 #else
 	long pages = sysconf(_SC_PHYS_PAGES);

@@ -29,7 +29,7 @@ vsAutomaticInstanceList<DerivedClass> {};
 *   DerivedClass d, e, f;
 *
 *   for( SomeClass *instance = SomeClass::getFirstInstance();
-		 *        instance != NULL;
+		 *        instance != nullptr;
 		 *        instance = instance->getNextInstance() )
 *   {
 	*      // ...
@@ -65,11 +65,11 @@ private:
     T *m_nextInstance;
 };
 
-template<class T> T *vsAutomaticInstanceList<T>::s_firstInstance = NULL;
+template<class T> T *vsAutomaticInstanceList<T>::s_firstInstance = nullptr;
 /**< Static variable used to hold the head of the list.
 */
 
-template<class T> T *vsAutomaticInstanceList<T>::s_lastInstance = NULL;
+template<class T> T *vsAutomaticInstanceList<T>::s_lastInstance = nullptr;
 
 template<class T> T* GetFirstInstance(void)
 {
@@ -89,7 +89,7 @@ vsAutomaticInstanceList<T>::vsAutomaticInstanceList()
 {
 	T *thisT = (T*)this;
 
-	m_nextInstance = NULL;
+	m_nextInstance = nullptr;
 	m_previousInstance = s_lastInstance;
 	if( m_previousInstance )
 	{
@@ -98,7 +98,7 @@ vsAutomaticInstanceList<T>::vsAutomaticInstanceList()
 
 	s_lastInstance = thisT;
 
-	if ( s_firstInstance == NULL )
+	if ( s_firstInstance == nullptr )
 	{
 		s_firstInstance = thisT;
 	}
@@ -114,7 +114,7 @@ vsAutomaticInstanceList<T>::vsAutomaticInstanceList( const vsAutomaticInstanceLi
 	// T *thisT = (T*)((size_t)this + offset);
 	T *thisT = (T*)this;
 
-	m_nextInstance = NULL;
+	m_nextInstance = nullptr;
 	m_previousInstance = s_lastInstance;
 	if( m_previousInstance )
 	{
@@ -123,7 +123,7 @@ vsAutomaticInstanceList<T>::vsAutomaticInstanceList( const vsAutomaticInstanceLi
 
 	s_lastInstance = thisT;
 
-	if ( s_firstInstance == NULL )
+	if ( s_firstInstance == nullptr )
 	{
 		s_firstInstance = thisT;
 	}
@@ -149,7 +149,7 @@ vsAutomaticInstanceList<T>::~vsAutomaticInstanceList()
 	T *thisT = (T*)this;
 
 	// must be at least one instance if *we're* destructing!
-	vsAssert( s_firstInstance != NULL, "No instance??" );
+	vsAssert( s_firstInstance != nullptr, "No instance??" );
 
 	//
 	// unhook ourselves from the list
@@ -177,7 +177,7 @@ vsAutomaticInstanceList<T>::~vsAutomaticInstanceList()
 }
 
 
-/** Returns the first instance of type T, or NULL if no instances exist.
+/** Returns the first instance of type T, or nullptr if no instances exist.
 *
 *  Note that the "first" instance only corresponds to the instance's
 *  position in the instance list, and bears no guaranteed relation to the age
@@ -189,7 +189,7 @@ vsAutomaticInstanceList<T>::GetFirstInstance()
 	return s_firstInstance;
 }
 
-/** Returns the next instance of type T, or NULL if this is the last instance in the
+/** Returns the next instance of type T, or nullptr if this is the last instance in the
 list.
 */
 template<class T> T*
@@ -200,7 +200,7 @@ vsAutomaticInstanceList<T>::GetNextInstance() const
 
 
 
-/** Returns the previous instance of type T, or NULL if this is the first instance
+/** Returns the previous instance of type T, or nullptr if this is the first instance
 in the list.
 */
 template<class T> T*

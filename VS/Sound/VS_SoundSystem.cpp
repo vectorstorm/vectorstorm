@@ -17,7 +17,7 @@
 #include <SDL2/SDL_mixer.h>
 #endif
 
-vsSoundSystem *	vsSoundSystem::s_instance = NULL;
+vsSoundSystem *	vsSoundSystem::s_instance = nullptr;
 
 vsSoundSystem::vsSoundSystem()
 {
@@ -69,14 +69,14 @@ vsSoundSystem::~vsSoundSystem()
 	Mix_CloseAudio();
 #endif
 
-	s_instance = NULL;
+	s_instance = nullptr;
 }
 
 void
 vsSoundSystem::Init()
 {
 	for ( int i = 0; i < MAX_DEFERRED_SAMPLES; i++ )
-		m_deferredSample[i].m_sample = NULL;
+		m_deferredSample[i].m_sample = nullptr;
 
 	InitVolume();
 }
@@ -119,7 +119,7 @@ vsSoundSystem::Update( float timeStep )
 			if ( m_deferredSample[i].m_fuse <= 0.f )
 			{
 				PlaySound( m_deferredSample[i].m_sample );
-				m_deferredSample[i].m_sample = NULL;
+				m_deferredSample[i].m_sample = nullptr;
 			}
 		}
 	}
@@ -192,7 +192,7 @@ vsSoundSystem::PlaySoundDeferred( vsSoundSample *sound, float fuse )
 {
 	for ( int i = 0; i < MAX_DEFERRED_SAMPLES; i++ )
 	{
-		if ( m_deferredSample[i].m_sample == NULL )
+		if ( m_deferredSample[i].m_sample == nullptr )
 		{
 			m_deferredSample[i].m_sample = sound;
 			m_deferredSample[i].m_fuse = fuse;
@@ -207,6 +207,6 @@ vsSoundSystem::CancelDeferredSounds( vsSoundSample *sound )
 	for ( int i = 0; i < MAX_DEFERRED_SAMPLES; i++ )
 	{
 		if ( m_deferredSample[i].m_sample == sound )
-			m_deferredSample[i].m_sample = NULL;
+			m_deferredSample[i].m_sample = nullptr;
 	}
 }

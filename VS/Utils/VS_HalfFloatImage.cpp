@@ -31,7 +31,7 @@
 int vsHalfFloatImage::s_textureMakerCount = 0;
 
 vsHalfFloatImage::vsHalfFloatImage(unsigned int width, unsigned int height):
-	m_pixel(NULL),
+	m_pixel(nullptr),
 	m_pixelCount(0),
 	m_width(width),
 	m_height(height)

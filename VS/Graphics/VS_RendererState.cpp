@@ -116,7 +116,7 @@ public:
 
 namespace
 {
-	vsRendererState *s_instance = NULL;
+	vsRendererState *s_instance = nullptr;
 }
 vsRendererState *
 vsRendererState::Instance()
@@ -127,7 +127,7 @@ vsRendererState::Instance()
 
 vsRendererState::vsRendererState()
 {
-	vsAssert( s_instance == NULL, "More than one renderer state created??" );
+	vsAssert( s_instance == nullptr, "More than one renderer state created??" );
 	s_instance = this;
 
 	// m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );

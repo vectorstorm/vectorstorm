@@ -91,7 +91,7 @@ public:
 	void	Free(void *ptr, int allocType); // Assumes mutex is already locked
 
 	static void	Push( vsHeap *newCurrent );	// push a new allocator context
-	static void	Pop( vsHeap *oldCurrent = NULL );							// pop it off.
+	static void	Pop( vsHeap *oldCurrent = nullptr );							// pop it off.
 
 	void	PrintStatus();
 	void	PrintBlockList();

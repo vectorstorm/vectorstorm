@@ -42,7 +42,7 @@ class vsPointOctree
 		{
 			for ( int i = 0; i < 8; i++ )
 			{
-				child[i] = NULL;
+				child[i] = nullptr;
 			}
 		}
 

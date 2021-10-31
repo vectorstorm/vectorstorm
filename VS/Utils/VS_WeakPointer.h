@@ -12,7 +12,7 @@
  *
  *  This type of pointer:
  *    - keeps track reference count the objects they point at
- *    - automatically NULLs itself when the target object is deleted.
+ *    - automatically nullptrs itself when the target object is deleted.
  *
  *  Apart from that, they behave just like an ordinary pointer. Enjoy!
  *
@@ -26,7 +26,7 @@ template< class T >
 class vsWeakPointer : protected vsWeakPointerBase
 {
 public:
-				vsWeakPointer( T *object = NULL );
+				vsWeakPointer( T *object = nullptr );
 				vsWeakPointer( const vsWeakPointer<T> &sp );
 	virtual    ~vsWeakPointer();
 
@@ -162,9 +162,9 @@ template< class T >
 const T *
 vsWeakPointer<T>::operator->() const
 {
-	if ( m_target == NULL )
+	if ( m_target == nullptr )
 	{
-		vsAssertF( m_target != NULL, "dereferenced weak pointer of type '%s' which is NULL", Demangle(typeid(T).name()) );
+		vsAssertF( m_target != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
 	}
 	return Target();
 }
@@ -176,9 +176,9 @@ template< class T >
 T *
 vsWeakPointer<T>::operator->()
 {
-	if ( m_target == NULL )
+	if ( m_target == nullptr )
 	{
-		vsAssertF( m_target != NULL, "dereferenced weak pointer of type '%s' which is NULL", Demangle(typeid(T).name()) );
+		vsAssertF( m_target != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
 	}
 	return Target();
 }

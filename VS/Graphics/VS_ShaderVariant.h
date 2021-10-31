@@ -105,7 +105,7 @@ public:
 	int32_t GetUniformCount() const { return m_uniformCount; }
 	int32_t GetAttributeCount() const { return m_attributeCount; }
 
-	void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = NULL, vsRenderTarget *renderTarget = NULL ); // called before we start rendering something with this shader
+	void Prepare( vsMaterial *activeMaterial, vsShaderValues *values = nullptr, vsRenderTarget *renderTarget = nullptr ); // called before we start rendering something with this shader
 	void SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsColor& specular, const vsVector3D& position,
 			const vsVector3D& halfVector );

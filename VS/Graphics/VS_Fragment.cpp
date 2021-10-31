@@ -14,11 +14,11 @@
 #include "VS/Files/VS_Record.h"
 
 vsFragment::vsFragment():
-	m_material(NULL),
-	m_displayList(NULL),
+	m_material(nullptr),
+	m_displayList(nullptr),
 	m_visible(true),
-	m_vbo(NULL),
-	m_ibo(NULL)
+	m_vbo(nullptr),
+	m_ibo(nullptr)
 {
 }
 
@@ -352,7 +352,7 @@ vsFragment::SetMaterial( const vsString &name )
 void
 vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type )
 {
-	m_displayList = NULL;
+	m_displayList = nullptr;
 	m_simpleType = type;
 	m_vbo = vbo;
 	m_ibo = ibo;
@@ -372,7 +372,7 @@ vsFragment::Clear()
 {
 	vsDelete(m_material);
 	vsDelete(m_displayList);
-	m_vbo = m_ibo = NULL;
+	m_vbo = m_ibo = nullptr;
 	m_bufferList.Clear();
 }
 
