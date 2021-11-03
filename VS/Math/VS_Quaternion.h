@@ -32,7 +32,7 @@ public:
 	vsQuaternion(const vsVector3D &forward, const vsVector3D &up);	// these do NOT have to be normalised vectors;  we normalise them inside the engine.
 	vsQuaternion(const vsEulerAngles &ang);
 
-	vsQuaternion operator*(const vsQuaternion &b) const;
+	const vsQuaternion operator*(const vsQuaternion &b) const;
 	const vsQuaternion &	operator*=(const vsQuaternion &b) {*this = (*this)*b; return *this; };
 
 	bool	operator==(const vsQuaternion &b) const { return (x==b.x && y==b.y && z==b.z && w==b.w); }
@@ -44,16 +44,16 @@ public:
 	void	Normalise();
 	void	NormaliseIfNeeded();
 
-	vsVector3D	ApplyTo( const vsVector3D &in ) const;
+	const vsVector3D	ApplyTo( const vsVector3D &in ) const;
 
 	void			Invert();
-	vsQuaternion	Inverse() const;
+	const vsQuaternion	Inverse() const;
 };
 
 // Spherical linear linearpolation from one quaternion to another.
-vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &a, const vsQuaternion &b );
-vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q );
+const vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &a, const vsQuaternion &b );
+const vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q );
 
-inline vsQuaternion vsInterpolate( float alpha, const vsQuaternion &a, const vsQuaternion &b ) { return vsQuaternionSlerp(alpha,a,b); }
+inline const vsQuaternion vsInterpolate( float alpha, const vsQuaternion &a, const vsQuaternion &b ) { return vsQuaternionSlerp(alpha,a,b); }
 
 #endif // VS_QUATERNION_H

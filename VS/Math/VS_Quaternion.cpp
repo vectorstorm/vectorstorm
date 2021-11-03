@@ -138,7 +138,7 @@ vsQuaternion::Set( const vsEulerAngles &ang )
 	z = cr * cp * sy - sr * sp * cy;
 }
 
-vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q )
+const vsEulerAngles vsEulerAnglesFromQuaternion( const vsQuaternion &q )
 {
 	vsEulerAngles result;
 
@@ -188,7 +188,7 @@ vsQuaternion::NormaliseIfNeeded()
 	}
 }
 
-vsQuaternion
+const vsQuaternion
 vsQuaternion::operator*(const vsQuaternion &b) const
 {
 	float A, B, C, D, E, F, G, H;
@@ -215,7 +215,7 @@ vsQuaternion::operator*(const vsQuaternion &b) const
 	return res;
 }
 
-vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &from, const vsQuaternion &to )
+const vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &from, const vsQuaternion &to )
 {
 	float	to1[4];
 	float	omega, cosom, sinom, scale0, scale1;
@@ -272,7 +272,7 @@ vsQuaternion vsQuaternionSlerp( float alpha, const vsQuaternion &from, const vsQ
 }
 
 
-vsVector3D
+const vsVector3D
 vsQuaternion::ApplyTo( const vsVector3D &in ) const
 {
 	// This math is based on Laurent Couvidou's answer here:
@@ -306,7 +306,7 @@ vsQuaternion::Invert()
 	z *= -1.0f;
 }
 
-vsQuaternion
+const vsQuaternion
 vsQuaternion::Inverse() const
 {
 	vsQuaternion b(*this);

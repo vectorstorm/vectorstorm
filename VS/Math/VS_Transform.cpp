@@ -58,7 +58,7 @@ vsTransform2D::SetScale( const vsVector2D &scale )
 }
 
 
-vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransform2D &b )
+const vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransform2D &b )
 {
 	vsTransform2D result;
 
@@ -69,7 +69,7 @@ vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransf
 	return result;
 }
 
-vsVector2D
+const vsVector2D
 vsTransform2D::ApplyTo( const vsVector2D &v ) const
 {
 	vsVector2D result = m_angle.ApplyRotationTo(v);
@@ -80,7 +80,7 @@ vsTransform2D::ApplyTo( const vsVector2D &v ) const
 	return result;
 }
 
-vsVector2D
+const vsVector2D
 vsTransform2D::ApplyInverseTo( const vsVector2D &v ) const
 {
 	vsVector2D result = v;
@@ -94,7 +94,7 @@ vsTransform2D::ApplyInverseTo( const vsVector2D &v ) const
 	return result;
 }
 
-vsTransform2D
+const vsTransform2D
 vsTransform2D::operator*( const vsTransform2D &o ) const
 {
 	vsTransform2D result;
@@ -108,7 +108,7 @@ vsTransform2D::operator*( const vsTransform2D &o ) const
 	return result;
 }
 
-vsTransform2D
+const vsTransform2D
 vsTransform2D::ApplyInverseTo( const vsTransform2D &o ) const
 {
 	vsTransform2D result;
@@ -158,19 +158,19 @@ vsTransform3D::vsTransform3D( const vsQuaternion &quat, const vsVector3D &transl
 {
 }
 
-vsVector3D
+const vsVector3D
 vsTransform3D::ApplyTo( const vsVector3D &v ) const
 {
 	return GetMatrix().ApplyTo(v);
 }
 
-vsVector3D
+const vsVector3D
 vsTransform3D::ApplyInverseTo( const vsVector3D &v ) const
 {
 	return GetMatrix().Inverse().ApplyTo(v);
 }
 
-vsTransform3D
+const vsTransform3D
 vsTransform3D::ApplyInverseTo( const vsTransform3D &t ) const
 {
 	vsMatrix4x4 resMat = GetMatrix().Inverse() * t.GetMatrix();
@@ -183,7 +183,7 @@ vsTransform3D::ApplyInverseTo( const vsTransform3D &t ) const
 	return result;
 }
 
-vsTransform3D
+const vsTransform3D
 vsTransform3D::ApplyTo( const vsTransform3D &o ) const
 {
 	vsTransform3D result;
@@ -219,7 +219,7 @@ vsTransform3D::GetMatrix() const
 }
 
 
-vsTransform3D vsInterpolate( float alpha, const vsTransform3D &a, const vsTransform3D &b )
+const vsTransform3D vsInterpolate( float alpha, const vsTransform3D &a, const vsTransform3D &b )
 {
 	vsTransform3D result;
 

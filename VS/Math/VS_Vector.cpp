@@ -68,7 +68,7 @@ vsVector2D::NormaliseSafe()
 		Normalise();
 }
 
-vsVector2D
+const vsVector2D
 vsVector2D::Normalised() const
 {
 	float length = Length();
@@ -81,7 +81,7 @@ vsVector2D::Normalised() const
 	return vsVector2D(x/length, y/length);
 }
 
-vsVector2D
+const vsVector2D
 vsVector2D::NormalisedSafe() const
 {
 	if ( SqLength() > 0.f )
@@ -123,7 +123,7 @@ vsVector3D::NormaliseSafe()
 	}
 }
 
-vsVector3D
+const vsVector3D
 vsVector3D::Normalised() const
 {
 	float length = Length();
@@ -136,7 +136,7 @@ vsVector3D::Normalised() const
 	return vsVector3D(x/length, y/length, z/length);
 }
 
-vsVector3D
+const vsVector3D
 vsVector3D::NormalisedSafe() const
 {
 	if ( SqLength() > 0.f )
@@ -177,7 +177,7 @@ void vsVector4D::Normalise()
 	*this *= (1.0f/Length());
 }
 
-vsVector4D
+const vsVector4D
 vsVector4D::Normalised() const
 {
 	float length = Length();
@@ -206,13 +206,13 @@ float & vsVector4D::operator[]( int n )
 }
 
 
-vsVector2D operator*(float b, const vsVector2D &vec) { return vec * b; }
-vsVector3D operator*(float b, const vsVector3D &vec) { return vec * b; }
-vsVector3D operator*(float b, const vsVector4D &vec) { return vec * b; }
+const vsVector2D operator*(float b, const vsVector2D &vec) { return vec * b; }
+const vsVector3D operator*(float b, const vsVector3D &vec) { return vec * b; }
+const vsVector3D operator*(float b, const vsVector4D &vec) { return vec * b; }
 
-vsVector2D operator-(const vsVector2D &vec) { return vsVector2D(-vec.x,-vec.y); }
-vsVector3D operator-(const vsVector3D &vec) { return vsVector3D(-vec.x,-vec.y,-vec.z); }
-vsVector3D operator-(const vsVector4D &vec) { return vsVector4D(-vec.x,-vec.y,-vec.z,-vec.w); }
+const vsVector2D operator-(const vsVector2D &vec) { return vsVector2D(-vec.x,-vec.y); }
+const vsVector3D operator-(const vsVector3D &vec) { return vsVector3D(-vec.x,-vec.y,-vec.z); }
+const vsVector3D operator-(const vsVector4D &vec) { return vsVector4D(-vec.x,-vec.y,-vec.z,-vec.w); }
 
 
 #define POSITION_BITS (16)
@@ -240,7 +240,7 @@ vsPosition3D::vsPosition3D( const vsVector3D &pos )
 	m_z = (int32_t)(pos.z * POSITION_FACTOR);
 }
 
-vsPosition3D
+const vsPosition3D
 vsPosition3D::operator+( const vsVector3D &b ) const
 {
 	vsPosition3D result = *this;
@@ -248,7 +248,7 @@ vsPosition3D::operator+( const vsVector3D &b ) const
 	return result;
 }
 
-vsPosition3D
+const vsPosition3D
 vsPosition3D::operator+=( const vsVector3D &b )
 {
 	m_x += (int32_t)(b.x * POSITION_FACTOR);
@@ -258,7 +258,7 @@ vsPosition3D::operator+=( const vsVector3D &b )
 	return *this;
 }
 
-vsVector3D
+const vsVector3D
 vsPosition3D::operator-( const vsPosition3D &b ) const
 {
 	vsVector3D result( (float)m_x - b.m_x,
@@ -270,17 +270,17 @@ vsPosition3D::operator-( const vsPosition3D &b ) const
 }
 
 
-vsVector2D vsInterpolate( float alpha, const vsVector2D &a, const vsVector2D &b )
+const vsVector2D vsInterpolate( float alpha, const vsVector2D &a, const vsVector2D &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
-vsVector3D vsInterpolate( float alpha, const vsVector3D &a, const vsVector3D &b )
+const vsVector3D vsInterpolate( float alpha, const vsVector3D &a, const vsVector3D &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
-vsVector4D vsInterpolate( float alpha, const vsVector4D &a, const vsVector4D &b )
+const vsVector4D vsInterpolate( float alpha, const vsVector4D &a, const vsVector4D &b )
 {
 	return ((1.0f-alpha)*a) + (alpha*b);
 }

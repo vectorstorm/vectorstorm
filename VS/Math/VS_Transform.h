@@ -42,11 +42,11 @@ public:
     const vsAngle&  GetAngle() const            { return m_angle; }
     const vsVector2D& GetScale() const          { return m_scale; }
 
-	vsVector2D		ApplyTo( const vsVector2D &v ) const;
-	vsVector2D		ApplyInverseTo( const vsVector2D &v ) const;
+	const vsVector2D		ApplyTo( const vsVector2D &v ) const;
+	const vsVector2D		ApplyInverseTo( const vsVector2D &v ) const;
 
-	vsTransform2D operator*( const vsTransform2D &o ) const;
-	vsTransform2D	ApplyInverseTo( const vsTransform2D &o ) const;
+	const vsTransform2D operator*( const vsTransform2D &o ) const;
+	const vsTransform2D	ApplyInverseTo( const vsTransform2D &o ) const;
 
 	const vsMatrix4x4 & GetMatrix() const;
 };
@@ -79,23 +79,23 @@ public:
 
 //	bool			IsIdentity() { return (this == vsTransform3D::Identity); }
 
-	vsTransform3D	Inverse() const;
-	vsTransform3D	Transpose() const;
+	const vsTransform3D	Inverse() const;
+	const vsTransform3D	Transpose() const;
 
 	void			Set( const vsVector4D &x, const vsVector4D &y, const vsVector4D &z, const vsVector4D &t );
 
-	vsVector3D		ApplyTo( const vsVector3D &v ) const;
-	vsVector3D		ApplyInverseTo( const vsVector3D &v ) const;
+	const vsVector3D		ApplyTo( const vsVector3D &v ) const;
+	const vsVector3D		ApplyInverseTo( const vsVector3D &v ) const;
 
-	vsTransform3D	operator*( const vsTransform3D &o ) const { return ApplyTo(o); }
-	vsTransform3D	ApplyTo( const vsTransform3D &o ) const;
-	vsTransform3D	ApplyInverseTo( const vsTransform3D &o ) const;
+	const vsTransform3D	operator*( const vsTransform3D &o ) const { return ApplyTo(o); }
+	const vsTransform3D	ApplyTo( const vsTransform3D &o ) const;
+	const vsTransform3D	ApplyInverseTo( const vsTransform3D &o ) const;
 
 	bool			operator==( const vsTransform3D &b ) const { return (m_quaternion==b.m_quaternion && m_translation==b.m_translation && m_scale==b.m_scale); }
 	bool			operator!=( const vsTransform3D &b ) const { return !(*this==b); }
 };
 
-vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransform2D &b );
-vsTransform3D vsInterpolate( float alpha, const vsTransform3D &a, const vsTransform3D &b );
+const vsTransform2D vsInterpolate( float alpha, const vsTransform2D &a, const vsTransform2D &b );
+const vsTransform3D vsInterpolate( float alpha, const vsTransform3D &a, const vsTransform3D &b );
 
 #endif // VS_TRANSFORM_H
