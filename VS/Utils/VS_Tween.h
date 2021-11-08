@@ -21,12 +21,14 @@ class vsTween
 	float	m_tweenDuration;
 	bool	m_tweening;
 	bool	m_smoothTween;
+	bool	m_acceleratedSmoothTween;
 
 public:
 
 	vsTween<T>(const T &value, bool smooth = true)
 	{
 		m_smoothTween = smooth;
+		m_acceleratedSmoothTween = false;
 		SetValue(value);
 	}
 
@@ -34,6 +36,7 @@ public:
 	{
 		m_start = m_end = m_current = value;
 		m_tweening = false;
+		m_acceleratedSmoothTween = false;
 	}
 
 	bool		IsTweening() const
@@ -66,8 +69,9 @@ public:
 				// see whether it's valid to just make this change, somehow.
 				m_start = m_current;
 				m_end = value;
-				m_tweenDuration = vsMin(time, m_tweenDuration-m_tweenTimer);
+				m_tweenDuration = time;
 				m_tweenTimer = 0.f;
+				m_acceleratedSmoothTween = m_smoothTween;
 			}
 			else
 			{
@@ -77,6 +81,7 @@ public:
 				m_tweenDuration = time;
 				m_tweenTimer = 0.f;
 				m_tweening = true;
+				m_acceleratedSmoothTween = false;
 			}
 		}
 	}
@@ -93,7 +98,11 @@ public:
 				return;
 			}
 			float fraction = m_tweenTimer / m_tweenDuration;
-			if ( m_smoothTween )
+			if ( m_acceleratedSmoothTween )
+			{
+				fraction = 1.f - ((1.f-fraction) * (1.f-fraction));
+			}
+			else if ( m_smoothTween )
 			{
 				fraction = (3.0f * fraction * fraction) - (2.0f * fraction * fraction * fraction);
 			}
