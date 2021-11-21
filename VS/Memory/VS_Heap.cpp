@@ -543,4 +543,44 @@ void operator delete[](void* p, std::nothrow_t const&) throw()
 	::operator delete[](p);
 }
 
+#else //!VS_OVERLOAD_ALLOCATORS
+
+void* operator new(std::size_t n)
+{
+	void* result( malloc(n) );
+	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+	return result;
+}
+
+// Array regular new
+void* operator new[](std::size_t n)
+{
+	void* result( malloc(n) );
+	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+	return result;
+}
+
+// Scalar regular delete (doesn't throw either)
+void operator delete(void* p) throw()
+{
+	free(p);
+}
+
+// Scalar nothrow delete
+void operator delete(void* p, std::nothrow_t const&) throw()
+{
+	free(p);
+}
+
+// Array regular delete
+void operator delete[](void* p) throw()
+{
+	free(p);
+}
+
+// Array nothrow delete
+void operator delete[](void* p, std::nothrow_t const&) throw()
+{
+	free(p);
+}
 #endif //VS_OVERLOAD_ALLOCATORS

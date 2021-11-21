@@ -83,7 +83,12 @@ void operator delete[](void* pointer, const char* file, size_t line);
 #define malloc(x) MyMalloc(x, __FILE__, __LINE__)
 #define free(p) MyFree(p)
 
-#endif // VS_OVERLOAD_ALLOCATORS
+#else // !VS_OVERLOAD_ALLOCATORS
+
+void* operator new(std::size_t n);
+void* operator new[](std::size_t n);
+
+#endif // !VS_OVERLOAD_ALLOCATORS
 
 #if defined(_WIN32)
 
