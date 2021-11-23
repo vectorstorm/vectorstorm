@@ -57,6 +57,8 @@ vsModelInstanceLodGroup::TakeInstancesFromGroup( vsModelInstanceLodGroup *otherG
 void
 vsModelInstanceLodGroup::UpdateInstance( vsModelInstance *inst, bool show )
 {
+	vsScopedLock lock(m_mutex);
+
 	vsAssert(inst->lodGroup == this, "Wrong group??");
 
 	if ( show )
@@ -109,6 +111,8 @@ vsModelInstanceLodGroup::UpdateInstance( vsModelInstance *inst, bool show )
 void
 vsModelInstanceLodGroup::AddInstance( vsModelInstance *inst )
 {
+	vsScopedLock lock(m_mutex);
+
 	bool wasVisible = inst->visible;
 	inst->group = m_group;
 	inst->lodGroup = this;
@@ -130,18 +134,21 @@ vsModelInstanceLodGroup::AddInstance( vsModelInstance *inst )
 bool
 vsModelInstanceLodGroup::ContainsInstance( vsModelInstance *instance )
 {
+	vsScopedLock lock(m_mutex);
 	return m_instance.Contains(instance);
 }
 
 bool
 vsModelInstanceLodGroup::IsEmpty()
 {
+	vsScopedLock lock(m_mutex);
 	return m_instance.IsEmpty();
 }
 
 void
 vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 {
+	vsScopedLock lock(m_mutex);
 	// FIRST, update this instance to not be visible.  That gets it out of our
 	// matrix and matrixInstanceId arrays, if it had been visible.
 	UpdateInstance( inst, false );
@@ -182,6 +189,8 @@ vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 void
 vsModelInstanceLodGroup::Draw( vsRenderQueue *queue )
 {
+	vsScopedLock lock(m_mutex);
+
 	if ( m_matrix.IsEmpty() )
 		return;
 
