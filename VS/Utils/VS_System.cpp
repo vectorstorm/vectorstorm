@@ -35,7 +35,10 @@
 // MSVC
 #include <intrin.h>
 #else
+#if !__ARM_NEON__
+	// no cpuid on M1 chips
 #include <cpuid.h>
+#endif
 #endif
 
 #if defined(_WIN32)
@@ -825,6 +828,9 @@ vsSystem::CPUDescription()
 	// everybody else (GCC or GCC-like) uses the GCC interface to the CPUID
 	// op.
 
+#if __ARM_NEON__
+	return vsString("arm");
+#else
 	struct BrandString {
 		unsigned int eax;
 		unsigned int ebx;
@@ -852,6 +858,7 @@ vsSystem::CPUDescription()
 	}
 
 	return identification;
+#endif
 #endif
 }
 

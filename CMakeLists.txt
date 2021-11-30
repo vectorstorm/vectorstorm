@@ -42,12 +42,6 @@ else()
 	add_definitions("-D IS_32BIT")
 endif()
 
-if(UNIX OR MINGW)
-	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		set(CMAKE_CXX_FLAGS "-march=x86-64 -msse -msse2 ${CMAKE_CXX_FLAGS}")
-	endif()
-endif()
-
 if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
