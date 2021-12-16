@@ -38,7 +38,7 @@ vsShaderValues::SetUniformF( const vsString& name, float value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].f32 = value;
+		m_value[id].u.f32 = value;
 		m_value[id].type = Value::Type_Float;
 		m_value[id].bound = false;
 	}
@@ -49,7 +49,7 @@ vsShaderValues::SetUniformB( const vsString& name, bool value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].b = value;
+		m_value[id].u.b = value;
 		m_value[id].type = Value::Type_Bool;
 		m_value[id].bound = false;
 	}
@@ -60,7 +60,7 @@ vsShaderValues::SetUniformI( const vsString& name, int value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].i = value;
+		m_value[id].u.i = value;
 		m_value[id].type = Value::Type_Int;
 		m_value[id].bound = false;
 	}
@@ -71,10 +71,10 @@ vsShaderValues::SetUniformColor( const vsString& name, const vsColor& value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].vec4[0] = value.r;
-		m_value[id].vec4[1] = value.g;
-		m_value[id].vec4[2] = value.b;
-		m_value[id].vec4[3] = value.a;
+		m_value[id].u.vec4[0] = value.r;
+		m_value[id].u.vec4[1] = value.g;
+		m_value[id].u.vec4[2] = value.b;
+		m_value[id].u.vec4[3] = value.a;
 		m_value[id].type = Value::Type_Vec4;
 		m_value[id].bound = false;
 	}
@@ -85,10 +85,10 @@ vsShaderValues::SetUniformVec2( const vsString& name, const vsVector2D& value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].vec4[0] = value.x;
-		m_value[id].vec4[1] = value.y;
-		m_value[id].vec4[2] = 0.0;
-		m_value[id].vec4[3] = 0.0;
+		m_value[id].u.vec4[0] = value.x;
+		m_value[id].u.vec4[1] = value.y;
+		m_value[id].u.vec4[2] = 0.0;
+		m_value[id].u.vec4[3] = 0.0;
 		m_value[id].type = Value::Type_Vec4;
 		m_value[id].bound = false;
 	}
@@ -99,10 +99,10 @@ vsShaderValues::SetUniformVec3( const vsString& name, const vsVector3D& value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].vec4[0] = value.x;
-		m_value[id].vec4[1] = value.y;
-		m_value[id].vec4[2] = value.z;
-		m_value[id].vec4[3] = 0.0;
+		m_value[id].u.vec4[0] = value.x;
+		m_value[id].u.vec4[1] = value.y;
+		m_value[id].u.vec4[2] = value.z;
+		m_value[id].u.vec4[3] = 0.0;
 		m_value[id].type = Value::Type_Vec4;
 		m_value[id].bound = false;
 	}
@@ -113,10 +113,10 @@ vsShaderValues::SetUniformVec4( const vsString& name, const vsVector4D& value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].vec4[0] = value.x;
-		m_value[id].vec4[1] = value.y;
-		m_value[id].vec4[2] = value.z;
-		m_value[id].vec4[3] = value.w;
+		m_value[id].u.vec4[0] = value.x;
+		m_value[id].u.vec4[1] = value.y;
+		m_value[id].u.vec4[2] = value.z;
+		m_value[id].u.vec4[3] = value.w;
 		m_value[id].type = Value::Type_Vec4;
 		m_value[id].bound = false;
 	}
@@ -127,7 +127,7 @@ vsShaderValues::BindUniformF( const vsString& name, const float* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -140,7 +140,7 @@ vsShaderValues::BindUniformB( const vsString& name, const bool* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -153,7 +153,7 @@ vsShaderValues::BindUniformI( const vsString& name, const int* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -166,7 +166,7 @@ vsShaderValues::BindUniformColor( const vsString& name, const vsColor* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -179,7 +179,7 @@ vsShaderValues::BindUniformVec2( const vsString& name, const vsVector2D* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -192,7 +192,7 @@ vsShaderValues::BindUniformVec3( const vsString& name, const vsVector3D* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -205,7 +205,7 @@ vsShaderValues::BindUniformVec4( const vsString& name, const vsVector4D* value )
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -218,7 +218,7 @@ vsShaderValues::BindUniformMat4( const vsString& name, const vsMatrix4x4* value 
 {
 	{
 		uint32_t id = vsShaderUniformRegistry::UID(name);
-		m_value[id].bind = value;
+		m_value[id].u.bind = value;
 		m_value[id].type = Value::Type_Bind;
 		m_value[id].bound = true;
 		return true;
@@ -294,9 +294,9 @@ vsShaderValues::UniformF( uint32_t uid, float& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(float*)v->bind;
+		out = *(float*)v->u.bind;
 	else
-		out = v->f32;
+		out = v->u.f32;
 	return true;
 }
 
@@ -311,9 +311,9 @@ vsShaderValues::UniformB( uint32_t uid, bool& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(bool*)v->bind;
+		out = *(bool*)v->u.bind;
 	else
-		out = v->b;
+		out = v->u.b;
 	return true;
 }
 
@@ -328,9 +328,9 @@ vsShaderValues::UniformI( uint32_t uid, int& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(int*)v->bind;
+		out = *(int*)v->u.bind;
 	else
-		out = v->i;
+		out = v->u.i;
 	return true;
 }
 
@@ -345,9 +345,9 @@ vsShaderValues::UniformVec2( uint32_t uid, vsVector2D& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(vsVector2D*)v->bind;
+		out = *(vsVector2D*)v->u.bind;
 	else
-		out = *(vsVector2D*)v->vec4;
+		out = *(vsVector2D*)v->u.vec4;
 	return true;
 }
 
@@ -362,9 +362,9 @@ vsShaderValues::UniformVec3( uint32_t uid, vsVector3D& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(vsVector3D*)v->bind;
+		out = *(vsVector3D*)v->u.bind;
 	else
-		out = *(vsVector3D*)v->vec4;
+		out = *(vsVector3D*)v->u.vec4;
 	return true;
 }
 
@@ -379,9 +379,9 @@ vsShaderValues::UniformVec4( uint32_t uid, vsVector4D& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(vsVector4D*)v->bind;
+		out = *(vsVector4D*)v->u.bind;
 	else
-		out = *(vsVector4D*)v->vec4;
+		out = *(vsVector4D*)v->u.vec4;
 	return true;
 }
 
@@ -396,7 +396,7 @@ vsShaderValues::UniformMat4( uint32_t uid, vsMatrix4x4& out ) const
 		return false;
 	}
 	if ( v->bound )
-		out = *(vsMatrix4x4*)v->bind;
+		out = *(vsMatrix4x4*)v->u.bind;
 	// else
 	// 	out = *(vsMatrix4x4*)v->mat4;
 	return true;
@@ -466,24 +466,27 @@ vsShaderValues::Value::operator==( const struct Value& other ) const
 	switch ( type )
 	{
 		case Value::Type_Float:
-			if ( f32 != other.f32 )
+			if ( u.f32 != other.u.f32 )
 				return false;
 			break;
 		case Value::Type_Bool:
-			if ( b != other.b )
+			if ( u.b != other.u.b )
 				return false;
 			break;
 		case Value::Type_Int:
-			if ( i != other.i )
+			if ( u.i != other.u.i )
 				return false;
 			break;
 		case Value::Type_Vec4:
-			if ( vec4 != other.vec4 )
-				return false;
+			for ( int i = 0; i < 4; i++ )
+			{
+				if ( u.vec4[i] != other.u.vec4[i] )
+					return false;
+			}
 			break;
 		case Value::Type_Bind:
 			// uhhhh.. should I be trying to check the value?
-			if ( bind != other.bind )
+			if ( u.bind != other.u.bind )
 				return false;
 			break;
 		case Value::Type_MAX:

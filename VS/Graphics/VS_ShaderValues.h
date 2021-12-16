@@ -40,12 +40,20 @@ class vsShaderValues
 			int i;
 			float vec4[4];
 			const void* bind;
-		};
+		} u;
 		vsString name;
 		Type type;
 		bool bound;
 
 		Value(): type(Type_MAX), bound (false) {}
+		Value( const Value& other ){
+			name = other.name;
+			bound = other.bound;
+			type = other.type;
+			// our union contains only POD data types so technically it's safe
+			// to just memcpy its data across from one object to the other.
+			memcpy(&u, &other.u, sizeof(u)); // ugh.
+		}
 		bool operator==( const struct Value& other ) const;
 		bool operator!=( const struct Value& other ) const { return !(*this == other); }
 
