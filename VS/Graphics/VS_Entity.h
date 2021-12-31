@@ -30,7 +30,7 @@ protected:
 	vsEntity *		m_parent;
 	vsEntity *		m_child;
 
-	vsScene *		m_scene; // pointer to our scene IFF we're placed directly on the scene
+	vsScene *		m_registeredScene; // pointer to our scene IFF we're placed directly on the scene
 
 	bool			m_visible;
 	bool			m_clickable;
@@ -68,7 +68,7 @@ public:
 	vsEntity *		GetNext() const { return m_next; }
 	vsEntity *		GetPrev() const { return m_prev; }
 	vsEntity *		GetParent() const { return m_parent; }
-	vsScene *		GetScene() const { return m_scene; }
+	vsScene *		GetRegisteredScene() const { return m_registeredScene; }
 
 	void			Append( vsEntity *sprite );
 	void			Prepend( vsEntity *sprite );

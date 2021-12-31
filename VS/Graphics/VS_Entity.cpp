@@ -17,7 +17,7 @@ vsEntity::vsEntity():
 	m_name( vsEmptyString ),
 	m_parent(nullptr),
 	m_child(nullptr),
-	m_scene(nullptr),
+	m_registeredScene(nullptr),
 	m_visible(true),
 	m_processing(false),
 	m_extractQueued(false)
@@ -118,7 +118,7 @@ vsEntity::DoExtract()
 		m_prev = m_next = this;
 	}
 	m_extractQueued = false;
-	m_scene = nullptr;
+	m_registeredScene = nullptr;
 }
 
 void
@@ -196,7 +196,7 @@ vsEntity::RegisterOnScene(int sceneId)
 void
 vsEntity::RegisterOnScene(vsScene *scene)
 {
-	m_scene = scene;
+	m_registeredScene = scene;
 	scene->RegisterEntityOnTop(this);
 }
 
