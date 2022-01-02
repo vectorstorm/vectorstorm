@@ -19,8 +19,8 @@
 #include "VS_Store.h"
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL_image.h>
-#include <png.h>
+#include <SDL_image.h>
+// #include <png.h>
 #include "VS_OpenGL.h"
 
 #ifndef _WIN32

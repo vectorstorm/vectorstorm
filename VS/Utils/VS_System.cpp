@@ -29,7 +29,7 @@
 
 #include <time.h>
 #include <SDL2/SDL_filesystem.h>
-#include <SDL2/SDL_image.h>
+#include <SDL_image.h>
 
 #if defined(MSVC)
 // MSVC
