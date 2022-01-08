@@ -638,7 +638,7 @@ static size_t
 _memory_map_align_span_count(size_t span_count) {
 	size_t request_count = (span_count > _memory_span_map_count) ? span_count : _memory_span_map_count;
 	if ((_memory_page_size > _memory_span_size) && ((request_count * _memory_span_size) % _memory_page_size))
-		request_count += _memory_span_map_count - (request_count % _memory_span_map_count);	
+		request_count += _memory_span_map_count - (request_count % _memory_span_map_count);
 	return request_count;
 }
 
@@ -657,7 +657,7 @@ _memory_span_initialize(span_t* span, size_t total_span_count, size_t span_count
 	span->span_count = (uint32_t)span_count;
 	span->align_offset = (uint32_t)align_offset;
 	span->flags = SPAN_FLAG_MASTER;
-	atomic_store32(&span->remaining_spans, (int32_t)total_span_count);	
+	atomic_store32(&span->remaining_spans, (int32_t)total_span_count);
 }
 
 //! Map a akigned set of spans, taking configured mapping granularity and the page size into account
@@ -1062,7 +1062,7 @@ _memory_heap_extract_new_span(heap_t* heap, size_t span_count, uint32_t class_id
 	if (spans_current > heap->size_class_use[class_idx].spans_peak)
 		heap->size_class_use[class_idx].spans_peak = spans_current;
 #endif
-#endif	
+#endif
 	span_t* span = _memory_heap_thread_cache_extract(heap, span_count);
 	if (EXPECTED(span != 0)) {
 		_memory_statistics_inc(heap->size_class_use[class_idx].spans_from_cache, 1);
@@ -1147,7 +1147,7 @@ _memory_span_set_new_active(heap_t* heap, heap_class_t* heap_class, span_t* span
 
 	//Setup free list. Only initialize one system page worth of free blocks in list
 	void* block;
-	span->free_list_limit = free_list_partial_init(&heap_class->free_list, &block, 
+	span->free_list_limit = free_list_partial_init(&heap_class->free_list, &block,
 		span, pointer_offset(span, SPAN_HEADER_SIZE), size_class->block_count, size_class->block_size);
 	atomic_store_ptr(&span->free_list_deferred, 0);
 	span->list_size = 0;
@@ -1278,7 +1278,7 @@ _memory_allocate_small(heap_t* heap, size_t size) {
 static void*
 _memory_allocate_medium(heap_t* heap, size_t size) {
 	//Calculate the size class index and do a dependent lookup of the final class index (in case of merged classes)
-	const uint32_t base_idx = (uint32_t)(SMALL_CLASS_COUNT + ((size - (SMALL_SIZE_LIMIT + 1)) >> MEDIUM_GRANULARITY_SHIFT));
+	const uint32_t base_idx = ((uint32_t)(SMALL_CLASS_COUNT + ((size - (SMALL_SIZE_LIMIT + 1)) >> MEDIUM_GRANULARITY_SHIFT))) % SIZE_CLASS_COUNT;
 	const uint32_t class_idx = _memory_size_class[base_idx].class_idx;
 	_memory_statistics_inc_alloc(heap, class_idx);
 	if (EXPECTED(heap->span_class[class_idx].free_list != 0))

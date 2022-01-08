@@ -48,8 +48,8 @@
 #include "../../server/IconsFontAwesome5.h"
 
 #include "misc/freetype/imgui_freetype.h"
-#include "Arimo.hpp"
-#include "Cousine.hpp"
+#include "DroidSans.hpp"
+#include "FiraCodeRetina.hpp"
 #include "FontAwesomeSolid.hpp"
 #include "icon.hpp"
 #include "ResolvService.hpp"
@@ -130,9 +130,9 @@ static uint32_t updateVersion = 0;
 static bool showReleaseNotes = false;
 static std::string releaseNotes;
 
-void RunOnMainThread( std::function<void()> cb )
+void RunOnMainThread( std::function<void()> cb, bool forceDelay = false )
 {
-    if( std::this_thread::get_id() == mainThread )
+    if( !forceDelay && std::this_thread::get_id() == mainThread )
     {
         cb();
     }
@@ -141,6 +141,64 @@ void RunOnMainThread( std::function<void()> cb )
         std::lock_guard<std::mutex> lock( mainThreadLock );
         mainThreadTasks.emplace_back( cb );
     }
+}
+
+static void LoadFonts( float scale, ImFont*& cb_fixedWidth, ImFont*& cb_bigFont, ImFont*& cb_smallFont )
+{
+    static const ImWchar rangesBasic[] = {
+        0x0020, 0x00FF, // Basic Latin + Latin Supplement
+        0x03BC, 0x03BC, // micro
+        0x03C3, 0x03C3, // small sigma
+        0x2013, 0x2013, // en dash
+        0x2264, 0x2264, // less-than or equal to
+        0,
+    };
+    static const ImWchar rangesIcons[] = {
+        ICON_MIN_FA, ICON_MAX_FA,
+        0
+    };
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImFontConfig configBasic;
+    configBasic.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting;
+    ImFontConfig configMerge;
+    configMerge.MergeMode = true;
+    configMerge.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting;
+
+    io.Fonts->Clear();
+    io.Fonts->AddFontFromMemoryCompressedTTF( tracy::DroidSans_compressed_data, tracy::DroidSans_compressed_size, round( 15.0f * scale ), &configBasic, rangesBasic );
+    io.Fonts->AddFontFromMemoryCompressedTTF( tracy::FontAwesomeSolid_compressed_data, tracy::FontAwesomeSolid_compressed_size, round( 14.0f * scale ), &configMerge, rangesIcons );
+    fixedWidth = cb_fixedWidth = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::FiraCodeRetina_compressed_data, tracy::FiraCodeRetina_compressed_size, round( 15.0f * scale ), &configBasic );
+    fixedWidth->ExtraLineHeight = round( -5.f * scale );
+    bigFont = cb_bigFont = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::DroidSans_compressed_data, tracy::DroidSans_compressed_size, round( 21.0f * scale ), &configBasic );
+    io.Fonts->AddFontFromMemoryCompressedTTF( tracy::FontAwesomeSolid_compressed_data, tracy::FontAwesomeSolid_compressed_size, round( 20.0f * scale ), &configMerge, rangesIcons );
+    smallFont = cb_smallFont = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::DroidSans_compressed_data, tracy::DroidSans_compressed_size, round( 10.0f * scale ), &configBasic );
+
+    ImGui_ImplOpenGL3_DestroyFontsTexture();
+    ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+
+static void SetupDPIScale( float scale, ImFont*& cb_fixedWidth, ImFont*& cb_bigFont, ImFont*& cb_smallFont )
+{
+    LoadFonts( scale, cb_fixedWidth, cb_bigFont, cb_smallFont );
+
+    auto& style = ImGui::GetStyle();
+    style = ImGuiStyle();
+    ImGui::StyleColorsDark();
+    style.WindowBorderSize = 1.f * scale;
+    style.FrameBorderSize = 1.f * scale;
+    style.FrameRounding = 5.f;
+    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4( 1, 1, 1, 0.03f );
+    style.Colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.45f);
+    style.ScaleAllSizes( scale );
+}
+
+static void SetupScaleCallback( float scale, ImFont*& cb_fixedWidth, ImFont*& cb_bigFont, ImFont*& cb_smallFont )
+{
+    RunOnMainThread( [scale, &cb_fixedWidth, &cb_bigFont, &cb_smallFont] { SetupDPIScale( scale * dpiScale, cb_fixedWidth, cb_bigFont, cb_smallFont ); }, true );
 }
 
 int main( int argc, char** argv )
@@ -299,48 +357,14 @@ int main( int argc, char** argv )
     ImGui_ImplGlfw_InitForOpenGL( window, true );
     ImGui_ImplOpenGL3_Init( "#version 150" );
 
-    static const ImWchar rangesBasic[] = {
-        0x0020, 0x00FF, // Basic Latin + Latin Supplement
-        0x03BC, 0x03BC, // micro
-        0x03C3, 0x03C3, // small sigma
-        0x2013, 0x2013, // en dash
-        0x2264, 0x2264, // less-than or equal to
-        0,
-    };
-    static const ImWchar rangesIcons[] = {
-        ICON_MIN_FA, ICON_MAX_FA,
-        0
-    };
-
-    ImFontConfig configBasic;
-    configBasic.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting;
-    ImFontConfig configMerge;
-    configMerge.MergeMode = true;
-    configMerge.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting;
-
-    io.Fonts->AddFontFromMemoryCompressedTTF( tracy::Arimo_compressed_data, tracy::Arimo_compressed_size, 15.0f * dpiScale, &configBasic, rangesBasic );
-    io.Fonts->AddFontFromMemoryCompressedTTF( tracy::FontAwesomeSolid_compressed_data, tracy::FontAwesomeSolid_compressed_size, 14.0f * dpiScale, &configMerge, rangesIcons );
-    fixedWidth = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::Cousine_compressed_data, tracy::Cousine_compressed_size, 14.0f * dpiScale, &configBasic );
-    bigFont = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::Arimo_compressed_data, tracy::Arimo_compressed_size, 20.0f * dpiScale, &configBasic );
-    smallFont = io.Fonts->AddFontFromMemoryCompressedTTF( tracy::Arimo_compressed_data, tracy::Arimo_compressed_size, 10.0f * dpiScale, &configBasic );
-
-    ImGui::StyleColorsDark();
-    auto& style = ImGui::GetStyle();
-    style.WindowBorderSize = 1.f * dpiScale;
-    style.FrameBorderSize = 1.f * dpiScale;
-    style.FrameRounding = 5.f;
-    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4( 1, 1, 1, 0.03f );
-    style.Colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.45f);
-    style.ScaleAllSizes( dpiScale );
+    SetupDPIScale( dpiScale, fixedWidth, bigFont, smallFont );
 
     if( argc == 2 )
     {
         auto f = std::unique_ptr<tracy::FileRead>( tracy::FileRead::Open( argv[1] ) );
         if( f )
         {
-            view = std::make_unique<tracy::View>( RunOnMainThread, *f, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+            view = std::make_unique<tracy::View>( RunOnMainThread, *f, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
         }
     }
     else
@@ -366,7 +390,7 @@ int main( int argc, char** argv )
     }
     if( connectTo )
     {
-        view = std::make_unique<tracy::View>( RunOnMainThread, connectTo, port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+        view = std::make_unique<tracy::View>( RunOnMainThread, connectTo, port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
     }
 
     glfwShowWindow( window );
@@ -733,14 +757,14 @@ static void DrawContents()
             {
                 std::string addrPart = std::string( addr, ptr );
                 uint16_t portPart = (uint16_t)atoi( ptr+1 );
-                view = std::make_unique<tracy::View>( RunOnMainThread, addrPart.c_str(), portPart, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+                view = std::make_unique<tracy::View>( RunOnMainThread, addrPart.c_str(), portPart, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
             }
             else
             {
-                view = std::make_unique<tracy::View>( RunOnMainThread, addr, port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+                view = std::make_unique<tracy::View>( RunOnMainThread, addr, port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
             }
         }
-        ImGui::SameLine( 0, ImGui::GetFontSize() * 2 );
+        ImGui::SameLine( 0, ImGui::GetTextLineHeight() * 2 );
 
 #ifndef TRACY_NO_FILESELECTOR
         if( ImGui::Button( ICON_FA_FOLDER_OPEN " Open saved trace" ) && !loadThread.joinable() )
@@ -757,7 +781,7 @@ static void DrawContents()
                         loadThread = std::thread( [f] {
                             try
                             {
-                                view = std::make_unique<tracy::View>( RunOnMainThread, *f, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+                                view = std::make_unique<tracy::View>( RunOnMainThread, *f, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
                             }
                             catch( const tracy::UnsupportedVersion& e )
                             {
@@ -786,7 +810,7 @@ static void DrawContents()
         if( badVer.state != tracy::BadVersionState::Ok )
         {
             if( loadThread.joinable() ) { loadThread.join(); }
-            tracy::BadVersion( badVer );
+            tracy::BadVersion( badVer, bigFont );
         }
 #endif
 
@@ -800,12 +824,7 @@ static void DrawContents()
             {
                 ImGui::SameLine();
                 tracy::TextColoredUnformatted( 0xFF00FFFF, ICON_FA_EXCLAMATION_TRIANGLE );
-                if( ImGui::IsItemHovered() )
-                {
-                    ImGui::BeginTooltip();
-                    ImGui::TextUnformatted( "Filters are active" );
-                    ImGui::EndTooltip();
-                }
+                tracy::TooltipIfHovered( "Filters are active" );
                 if( showFilter )
                 {
                     ImGui::SameLine();
@@ -819,7 +838,7 @@ static void DrawContents()
             }
             if( showFilter )
             {
-                const auto w = ImGui::GetFontSize() * 12;
+                const auto w = ImGui::GetTextLineHeight() * 12;
                 ImGui::Separator();
                 addrFilter.Draw( "Address filter", w );
                 portFilter.Draw( "Port filter", w );
@@ -858,7 +877,7 @@ static void DrawContents()
                 ImGui::PushID( idx++ );
                 const bool selected = ImGui::Selectable( name->second.c_str(), &sel, flags );
                 ImGui::PopID();
-                if( ImGui::IsItemHovered() )
+                if( ImGui::IsItemHovered( ImGuiHoveredFlags_AllowWhenDisabled ) )
                 {
                     char portstr[32];
                     sprintf( portstr, "%" PRIu16, v.second.port );
@@ -880,7 +899,7 @@ static void DrawContents()
                 }
                 if( selected && !loadThread.joinable() )
                 {
-                    view = std::make_unique<tracy::View>( RunOnMainThread, v.second.address.c_str(), v.second.port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+                    view = std::make_unique<tracy::View>( RunOnMainThread, v.second.address.c_str(), v.second.port, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
                 }
                 ImGui::NextColumn();
                 const auto acttime = ( v.second.activeTime + ( time - v.second.time ) / 1000 ) * 1000000000ll;
@@ -915,7 +934,7 @@ static void DrawContents()
         if( showReleaseNotes )
         {
             assert( updateNotesThread.joinable() );
-            ImGui::SetNextWindowSize( ImVec2( 600, 400 ), ImGuiCond_FirstUseEver );
+            ImGui::SetNextWindowSize( ImVec2( 600 * dpiScale, 400 * dpiScale ), ImGuiCond_FirstUseEver );
             ImGui::Begin( "Update available!", &showReleaseNotes );
             if( ImGui::Button( ICON_FA_DOWNLOAD " Download" ) )
             {
@@ -972,7 +991,9 @@ static void DrawContents()
     }
     if( ImGui::BeginPopupModal( "Loading trace...", nullptr, ImGuiWindowFlags_AlwaysAutoResize ) )
     {
+        ImGui::PushFont( bigFont );
         tracy::TextCentered( ICON_FA_HOURGLASS_HALF );
+        ImGui::PopFont();
 
         animTime += ImGui::GetIO().DeltaTime;
         tracy::DrawWaitingDots( animTime );
@@ -1047,7 +1068,7 @@ static void DrawContents()
         viewShutdown.store( ViewShutdown::False, std::memory_order_relaxed );
         if( reconnect )
         {
-            view = std::make_unique<tracy::View>( RunOnMainThread, reconnectAddr.c_str(), reconnectPort, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative );
+            view = std::make_unique<tracy::View>( RunOnMainThread, reconnectAddr.c_str(), reconnectPort, fixedWidth, smallFont, bigFont, SetWindowTitleCallback, GetMainWindowNative, SetupScaleCallback );
         }
         break;
     default:
@@ -1056,7 +1077,9 @@ static void DrawContents()
     if( ImGui::BeginPopupModal( "Capture cleanup...", nullptr, ImGuiWindowFlags_AlwaysAutoResize ) )
     {
         if( viewShutdown.load( std::memory_order_relaxed ) != ViewShutdown::True ) ImGui::CloseCurrentPopup();
+        ImGui::PushFont( bigFont );
         tracy::TextCentered( ICON_FA_BROOM );
+        ImGui::PopFont();
         animTime += ImGui::GetIO().DeltaTime;
         tracy::DrawWaitingDots( animTime );
         ImGui::TextUnformatted( "Please wait, cleanup is in progress" );

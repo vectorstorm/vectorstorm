@@ -290,18 +290,20 @@ vsScene::Draw( vsDisplayList *list, int flags )
 		list->EnableStencil();
 	}
 
-	vsEntity *entity = m_entityList->GetNext();
-	while ( entity != m_entityList )
 	{
-		if ( m_is3d || (!m_camera || entity->OnScreen( m_camera->GetCameraTransform() )) )
+		PROFILE("Scene::DrawEntities");
+		vsEntity *entity = m_entityList->GetNext();
+		while ( entity != m_entityList )
 		{
-			entity->Draw( m_queue );
+			if ( m_is3d || (!m_camera || entity->OnScreen( m_camera->GetCameraTransform() )) )
+			{
+				entity->Draw( m_queue );
+			}
+			entity = entity->GetNext();
 		}
-		entity = entity->GetNext();
 	}
 
 	m_queue->Draw(list);
-
 	m_queue->EndRender();
 
 	if ( m_stencilTest )

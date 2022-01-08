@@ -23,6 +23,8 @@
 #include <map>
 #include "VS/VS_EnableDebugNew.h"
 
+#include "VS_Profile.h"
+
 class vsRenderQueueStage
 {
 public:
@@ -699,6 +701,8 @@ vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& wo
 void
 vsRenderQueue::Draw( vsDisplayList *list )
 {
+	PROFILE("RenderQueue::Draw");
+
 	for ( int i = 0; i < 3; i++ )
 	{
 		m_stage[i].Draw(list);
@@ -713,6 +717,7 @@ vsRenderQueue::Draw( vsDisplayList *list )
 void
 vsRenderQueue::EndRender()
 {
+	PROFILE("RenderQueue::EndRender");
 	for ( int i = 0; i < m_stageCount; i++ )
 	{
 		m_stage[i].EndRender();

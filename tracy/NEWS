@@ -6,10 +6,11 @@ here.
 v0.x.x (xxxx-xx-xx)
 -------------------
 
-- Cygwin and Mingw are deprecated due to lack of interest.
+- Support for Cygwin has been dropped. It was not working for a very long
+  time and nobody had complained about it.
+- Mingw is deprecated due to lack of interest.
 - Added TRACY_NO_CALLSTACK_INLINES macro to disable inline functions
   resolution in call stacks on Windows.
-- Limited client query response rate.
 - Improved function matching algorithm in compare traces view.
 - Added CMake integration.
 - Reworked rpmalloc initialization.
@@ -27,6 +28,8 @@ v0.x.x (xxxx-xx-xx)
     originating function.
   - If symbol view is restricted to a single inline function, all assembly
     instructions not in this context will be dimmed out.
+  - Likewise, the navigation in assembly code will be limited just to the
+    inline context, if a single function is selected.
 - Kernel call stacks will be now properly captured and displayed in the
   profiler. Kernel functions are marked with the red color.
 - The CPU hardware performance counters can be now sampled on Linux.
@@ -39,7 +42,7 @@ v0.x.x (xxxx-xx-xx)
     stack sampling.
 - The image name filter entry field is now providing a list of available
   images.
-- Reentrant function calls may be not excluded from calculations in the
+- Reentrant function calls may be now excluded from calculations in the
   statistics view.
 - Crash handler is now properly removed during profiler destruction.
 - Repeatedly right-clicking on the same source line in the symbol view
@@ -47,6 +50,50 @@ v0.x.x (xxxx-xx-xx)
   line.
 - Vulkan headers must be now explicitly included before including
   TracyVulkan.hpp.
+- The capture utility may now limit capture time to a specified number of
+  seconds.
+- Fixed message thread assignment in the import-chrome utility.
+- Sampling data can be now also found in the find zone menu.
+- Instrumentation failures may now display their context, e.g. the zone text
+  that was to be set.
+- A warning is now displayed when sampling data is out-of-order.
+- Average value for plots can be now viewed.
+- Moved symbol resolution to a separate thread. Profiling will no longer be
+  stuck when there is a large number of symbols to resolve. This not only
+  improves user experience, but also prevents buildup of data (and memory
+  consumption) on the client side.
+- Android device name will be now reported.
+- Added support for capturing fibers.
+  - Fibers require additional processing, which has to be enabled by adding
+    the TRACY_FIBERS define on the client side.
+  - Client code requires additional instrumentation using the new macros
+    TracyFiberEnter and TracyFiberLeave (or the corresponding C API
+    variants).
+  - Fibers are represented in traces as separate threads, and are
+    distinguished by green color. Faux context switch regions are used to
+    indicate when a fiber is being run by the worker thread.
+- Continuous frame marks no longer need to be issued from a single thread.
+- Context switch call stacks are now captured on Windows and Linux.
+  - Hovering the context switch wait region will now display wait stack,
+    which may provide additional insight into why the switch happened.
+  - Wait stacks inspection can be performed in a new view.
+    - Stacks can be limited to certain threads and to a selected time range.
+    - Stacks are presented either as a sorted list, or as a bottom-up and
+      top-down trees.
+- Entry call stacks can be now also viewed as a bottom-up and top-down
+  trees.
+- Updated project build files to MSVC 2022.
+- Call stack tooltips now also show the executable image name.
+- Playback frames can be now changed by interacting with the frame image
+  slider using the mouse wheel.
+- Signal used to handle crashes on Linux can be now redefined.
+- Various DPI scaling improvements.
+- User interface can be now scaled in run time.
+- Symbol code retrieval now also supports kernel on Windows.
+- Added low-level C API interface for GPU zones.
+- Symbol child calls can be now listed.
+- Replaced "restrict time" in memory window with a proper time range limit.
+- Added Alder Lake microarchitectural data.
 
 
 v0.7.8 (2021-05-19)
