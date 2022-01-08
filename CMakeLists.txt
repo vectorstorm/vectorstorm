@@ -34,7 +34,8 @@ find_package(ZLIB)
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED )
 endif()
-find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED )
+find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED HINTS ${SDL_LIBRARY}/Headers)
+find_path(SDL_IMAGE_INCLUDE_DIR SDL_image.h REQUIRED PATH_SUFFIXES SDL2 HINTS ${SDL_LIBRARY}/Headers)
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 	add_definitions("-D IS_64BIT")
@@ -47,7 +48,7 @@ if(UNIX)
 	find_package(PhysFS REQUIRED)
 	# find_library(GLEW_LIBRARY GLEW REQUIRED)
 	if(APPLE)
-		find_library(GLEW_LIBRARIES glew REQUIRED)
+		# find_library(GLEW_LIBRARIES glew REQUIRED)
 	else(APPLE)
 		find_package(GLEW REQUIRED)
 	endif(APPLE)
@@ -147,6 +148,7 @@ configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 
 include_directories(
 	${SDL_INCLUDE_DIR}
+	${SDL_IMAGE_INCLUDE_DIR}
 	${SDLMIXER_INCLUDE_DIR}
 	${SDLIMAGE_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIRS}
@@ -473,6 +475,12 @@ if ( MINGW )
 		${SOURCES}
 		)
 endif( MINGW )
+if ( APPLE )
+	set( SOURCES
+		glew.c
+		${SOURCES}
+		)
+endif (APPLE )
 
 if ( VS_TRACY )
 	message("TRACY ENABLED")
@@ -544,7 +552,7 @@ endif()
 		${PRE_LIBRARIES}
 		${DBGHELP_LIBRARY}
 		${OPENGL_LIBRARIES}
-		${PNG_LIBRARY}
+		# ${PNG_LIBRARY}
 		${SDL_LIBRARY}
 		${SDL_IMAGE_LIBRARY}
 		${GLEW_LIBRARIES}
