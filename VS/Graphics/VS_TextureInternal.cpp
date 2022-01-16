@@ -22,6 +22,12 @@
 
 #include "VS_OpenGL.h"
 
+#define STB
+#ifdef STB
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
+
 #if TARGET_OS_IPHONE
 
 #include "VS_TextureInternalIPhone.h"
@@ -159,16 +165,13 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0)
 {
+#ifdef STB
+	if ( vsFile::Exists(filename_in) )
+#else // !STB
 	vsImage image(filename_in);
-
 	if ( image.IsOK() )
+#endif // STB
 	{
-		int w = image.GetWidth();
-		int h = image.GetHeight();
-
-		m_width = w;
-		m_height = w;
-
 		GLuint t;
 		glGenTextures(1, &t);
 		m_texture = t;
@@ -176,6 +179,31 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+#ifdef STB
+		vsFile img(filename_in, vsFile::MODE_Read);
+		vsStore *s = new vsStore( img.GetLength() );
+		img.Store(s);
+
+		int w,h,n;
+		unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+		if ( !data )
+			vsLog( "Failure: %s", stbi_failure_reason() );
+
+		vsDelete(s);
+		glTexImage2D(GL_TEXTURE_2D,
+				0,
+				GL_RGBA,
+				w, h,
+				0,
+				GL_RGBA,
+				GL_UNSIGNED_INT_8_8_8_8_REV,
+				data);
+		stbi_image_free(data);
+#else // !STB
+
+		int w = image.GetWidth();
+		int h = image.GetHeight();
 		glTexImage2D(GL_TEXTURE_2D,
 				0,
 				GL_RGBA,
@@ -184,6 +212,11 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 				GL_RGBA,
 				GL_UNSIGNED_INT_8_8_8_8_REV,
 				image.RawData());
+#endif // !STB
+
+		m_width = w;
+		m_height = w;
+
 		glGenerateMipmap(GL_TEXTURE_2D);
 		m_nearestSampling = false;
 	}
