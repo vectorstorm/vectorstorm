@@ -50,6 +50,23 @@ class vsHashTableStore
 		return nullptr;
 	}
 
+	const vsHashStoreEntry<T>*		FindHashEntry( const vsString &key ) const
+	{
+		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		int bucket = hash % m_bucketCount;
+
+		vsHashStoreEntry<T> *ent = m_bucket[bucket].m_next;
+		while( ent )
+		{
+			if ( ent->m_keyHash == hash && ent->m_key == key )
+			{
+				return ent;
+			}
+			ent = ent->m_next;
+		}
+		return nullptr;
+	}
+
 public:
 
 	vsHashTableStore(int bucketCount)
@@ -113,6 +130,16 @@ public:
 	T *		FindItem( const vsString &key )
 	{
 		vsHashStoreEntry<T> *ent = FindHashEntry(key);
+		if ( ent )
+		{
+			return ent->m_item;
+		}
+		return nullptr;
+	}
+
+	const T *		FindItem( const vsString &key ) const
+	{
+		const vsHashStoreEntry<T> *ent = FindHashEntry(key);
 		if ( ent )
 		{
 			return ent->m_item;
