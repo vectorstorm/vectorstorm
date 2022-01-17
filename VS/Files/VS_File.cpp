@@ -372,7 +372,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 				vsAssertF(ret != Z_MEM_ERROR, "Out of memory loading file '%s' (zlib reports Z_MEM_ERROR)", filename);
 				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
 				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+				vsAssertF(ret != Z_VERSION_ERROR, "File '%s' is incompatible (zlib reports Z_VERSION_ERROR)", filename);
 
 				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 				decompressedSize += decompressedBytes;
@@ -386,7 +386,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
-				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", m_filename, ret );
 				return;
 			}
 

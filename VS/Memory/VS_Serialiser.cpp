@@ -237,7 +237,7 @@ vsSerialiserReadStream::Ensure(size_t bytes_required)
 		// m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
 		// m_store->Clear();
 		// m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
-		vsAssert(m_store->BytesLeftForReading() >= bytes_required, "Not enough data to fulfill stream?");
+		vsAssertF(m_store->BytesLeftForReading() >= bytes_required, "Not enough data in file '%s' to fulfill stream?", m_file->GetFilename());
 	}
 }
 
@@ -376,7 +376,7 @@ vsSerialiserWriteStream::Ensure(size_t bytes)
 	{
 		m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
 		m_store->Clear();
-		vsAssert(m_store->BytesLeftForWriting() >= bytes, "Not enough data to fulfill stream?");
+		vsAssertF(m_store->BytesLeftForWriting() >= bytes, "Unable to fit %d bytes into store of size %d, while writing to file '%s'.", bytes, m_store->BytesLeftForWriting(), m_file->GetFilename() );
 	}
 }
 

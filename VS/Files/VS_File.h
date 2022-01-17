@@ -73,6 +73,7 @@ public:
 	virtual		~vsFile();
 
 	size_t		GetLength() { return m_length; }
+	const vsString& GetFilename() const { return m_filename; }
 
 	static bool	Exists( const vsString &filename );	// returns true if the specified file exists.
 	static bool	DirectoryExists( const vsString &dirName );	// returns true if the specified directory exists.
