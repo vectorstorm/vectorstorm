@@ -486,6 +486,11 @@ vsFile::~vsFile()
 		_PumpCompression( nullptr, 0, true );
 		deflateEnd(&m_zipData->m_zipStream);
 	}
+	else if ( m_mode == MODE_ReadCompressed_Progressive )
+	{
+		inflateEnd(&m_zipData->m_zipStream);
+	}
+
 	FlushBufferedWrites();
 
 	vsDelete( m_compressedStore );
