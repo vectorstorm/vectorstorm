@@ -829,7 +829,28 @@ vsSystem::CPUDescription()
 	// op.
 
 #if __ARM_NEON__
-	return vsString("arm");
+
+	// On Mac M1 platforms, we can get the data we want from sysctl.
+
+	const char* label = "machdep.cpu.brand_string";
+	size_t bufferSize = 128;
+	char buffer[bufferSize];
+	int32_t ncpu;
+	const char* ncpulabel = "hw.ncpu";
+	size_t ncpuSize = sizeof(ncpu);
+	if ( sysctlbyname( label, buffer, &bufferSize, nullptr, 0) == 0 &&
+			sysctlbyname( ncpulabel, &ncpu, &ncpuSize, nullptr, 0) == 0 ) {
+		return vsFormatString("%s (%d cores)", (char*)buffer, ncpu);
+	}
+	return "Unrecognised ARM";
+
+// machdep.cpu.brand_string: Apple M1 Pro
+// machdep.cpu.core_count: 10
+// machdep.cpu.cores_per_package: 10
+// machdep.cpu.logical_per_package: 10
+// machdep.cpu.thread_count: 10
+
+	// return vsString("arm");
 #else
 	struct BrandString {
 		unsigned int eax;
