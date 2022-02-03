@@ -1191,11 +1191,12 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	{
 		vsString dir(physDir);
 
-#if defined(_WIN32)
-		return dir + "\\" + filename;
-#else
-		return dir + "/" + filename;
-#endif
+		return dir + filename;
+// #if defined(_WIN32)
+// 		return dir + "\\" + filename;
+// #else
+// 		return dir + "/" + filename;
+// #endif
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;
