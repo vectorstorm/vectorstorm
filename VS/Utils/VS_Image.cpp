@@ -30,6 +30,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include "stb_image.h"
 
 int vsImage::s_textureMakerCount = 0;
 bool vsImage::s_allowLoadFailure = false;
@@ -63,36 +64,33 @@ vsImage::vsImage( const vsString &filename ):
 	m_pbo(0),
 	m_sync(0)
 {
-#if !TARGET_OS_IPHONE
 	vsFile img(filename, vsFile::MODE_Read);
 	vsStore *s = new vsStore( img.GetLength() );
 	img.Store(s);
 
-	vsCheck( img.GetLength() > 0, "Zero-length file??" );
-
-	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
-	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+	int w,h,n;
+	unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+	if ( !data )
+		vsLog( "Failure: %s", stbi_failure_reason() );
 
 	vsDelete(s);
-	if ( !loadedImage && s_allowLoadFailure )
-	{
-		vsCheckF(loadedImage != nullptr, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
 
-		m_pixel = new uint32_t[1];
-		m_width = m_height = 1;
-		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
-	}
-	else
+	m_width = w;
+	m_height = w;
+
+	m_pixel = new uint32_t[m_width*m_height];
+
+	for ( unsigned int v = 0; v < m_height; v++ )
 	{
-		vsAssertF(loadedImage != nullptr, "Unable to load texture %s: %s", filename.c_str(), IMG_GetError());
+		for ( unsigned int u = 0; u < m_width; u++ )
+		{
+			int ind = PixelIndex(u,v);
+			m_pixel[ind] = ((uint32_t*)(data))[ind];
+		}
 	}
 
-	if ( loadedImage )
-	{
-		LoadFromSurface(loadedImage);
-		SDL_FreeSurface(loadedImage);
-	}
-#endif
+	stbi_image_free(data);
+
 }
 
 vsImage::vsImage( const vsStore &filedata ):
@@ -100,27 +98,26 @@ vsImage::vsImage( const vsStore &filedata ):
 	m_pbo(0),
 	m_sync(0)
 {
-#if !TARGET_OS_IPHONE
-	vsCheck( filedata.Length() > 0, "Zero-length file??" );
+	int w,h,n;
+	unsigned char* data = stbi_load_from_memory( (uint8_t*)filedata.GetReadHead(), filedata.BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+	if ( !data )
+		vsLog( "Failure: %s", stbi_failure_reason() );
 
-	SDL_RWops* rwops = SDL_RWFromMem( filedata.GetReadHead(), filedata.BytesLeftForReading() );
-	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+	m_width = w;
+	m_height = w;
 
-	if ( !loadedImage )
+	m_pixel = new uint32_t[m_width*m_height];
+
+	for ( unsigned int v = 0; v < m_height; v++ )
 	{
-		vsCheckF(loadedImage != nullptr, "Unable to load texture from filedata: %s", IMG_GetError());
-
-		m_pixel = new uint32_t[1];
-		m_width = m_height = 1;
-		SetPixel(0, 0, vsColor(1.f,0.f,1.f,1.f)); // magenta for missing texture
+		for ( unsigned int u = 0; u < m_width; u++ )
+		{
+			int ind = PixelIndex(u,v);
+			m_pixel[ind] = ((uint32_t*)(data))[ind];
+		}
 	}
 
-	if ( loadedImage )
-	{
-		LoadFromSurface(loadedImage);
-		SDL_FreeSurface(loadedImage);
-	}
-#endif
+	stbi_image_free(data);
 }
 
 vsImage::vsImage( vsTexture * texture ):
@@ -410,87 +407,6 @@ vsImage::Bake( const vsString& name_in )
 	vsTextureManager::Instance()->Add(ti);
 
 	return new vsTexture(name);
-}
-
-void
-vsImage::LoadFromSurface( SDL_Surface *source )
-{
-#if !TARGET_OS_IPHONE
-	//	SDL_Surface *screen = SDL_GetVideoSurface();
-	SDL_Rect	area;
-
-	SDL_BlendMode bm;
-	SDL_GetSurfaceBlendMode(source, &bm);
-	SDL_SetSurfaceBlendMode(source, SDL_BLENDMODE_NONE);
-
-	m_width = source->w;
-	m_height = source->h;
-
-	int w = source->w;
-	int h = source->h;
-
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			w, h,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(image, "Error??");
-
-
-	/* Copy the surface into the GL-format texture image, to make loading easier */
-	area.x = 0;
-	area.y = 0;
-	area.w = source->w;
-	area.h = source->h;
-	SDL_BlitSurface(source, &area, image, &area);
-
-	SDL_SetSurfaceBlendMode(source, bm);
-
-	// now lets copy our image data
-
-	vsAssert( m_pixel == nullptr, "Non-null pixel storage during LoadFromSurface" );
-	m_pixelCount = w*h;
-	m_pixel = new uint32_t[m_pixelCount];
-
-	for ( int v = 0; v < h; v++ )
-	{
-		for ( int u = 0; u < w; u++ )
-		{
-			int i = v*image->pitch + u*4;
-			int ri = i;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
-
-			unsigned char r = ((unsigned char*)image->pixels)[ri];
-			unsigned char g = ((unsigned char*)image->pixels)[gi];
-			unsigned char b = ((unsigned char*)image->pixels)[bi];
-			unsigned char a = ((unsigned char*)image->pixels)[ai];
-
-			uint32_t pixel;
-			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
-			cp[0] = r;
-			cp[1] = g;
-			cp[2] = b;
-			cp[3] = a;
-
-			SetRawPixel( u, v, pixel );
-		}
-	}
-
-	SDL_FreeSurface(image); /* No longer needed */
-#endif // TARGET_OS_IPHONE
 }
 
 namespace

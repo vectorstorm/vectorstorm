@@ -22,103 +22,8 @@
 
 #include "VS_OpenGL.h"
 
-#define STB
-#ifdef STB
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#endif
-
-#if TARGET_OS_IPHONE
-
-#include "VS_TextureInternalIPhone.h"
-
-vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
-	vsResource(filename_in),
-	m_texture(0),
-	m_premultipliedAlpha(true),
-	m_tbo(nullptr),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	vsString filename = vsFile::GetFullFilename(filename_in);
-
-	m_texture = ::loadTexture( filename.c_str() );
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *maker ):
-	vsResource(name),
-	m_texture(0),
-	m_premultipliedAlpha(true),
-	m_tbo(nullptr),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
-	vsResource(name),
-	m_texture(0),
-	m_premultipliedAlpha(true),
-	m_tbo(nullptr),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
-	vsResource(name),
-	m_texture(0),
-	m_premultipliedAlpha(true),
-	m_tbo(nullptr),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsSurface *surface, bool depth ):
-	vsResource(name),
-	m_texture(0),
-	m_premultipliedAlpha(true),
-	m_tbo(nullptr),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	if ( surface )
-		m_texture = (depth) ? surface->m_depth : surface->m_texture;
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
-	vsResource(name),
-	m_texture(0),
-	m_premultipliedAlpha(false),
-	m_tbo(buffer),
-	m_renderTarget(nullptr),
-	m_surfaceBuffer(0)
-{
-	GLuint t;
-	glGenTextures(1, &t);
-	m_texture = t;
-	m_nearestSampling = false;
-}
-
-vsTextureInternal::~vsTextureInternal()
-{
-	GLuint t = m_texture;
-	glDeleteTextures(1, &t);
-	m_texture = 0;
-
-	vsDelete( m_tbo );
-	m_renderTarget = nullptr;
-}
-
-
-
-#else // TARGET_OS_IPHONE
 
 void
 vsTextureInternal::PrepareToBind()
@@ -165,12 +70,7 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0)
 {
-#ifdef STB
 	if ( vsFile::Exists(filename_in) )
-#else // !STB
-	vsImage image(filename_in);
-	if ( image.IsOK() )
-#endif // STB
 	{
 		GLuint t;
 		glGenTextures(1, &t);
@@ -180,7 +80,6 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-#ifdef STB
 		vsFile img(filename_in, vsFile::MODE_Read);
 		vsStore *s = new vsStore( img.GetLength() );
 		img.Store(s);
@@ -200,19 +99,6 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 				GL_UNSIGNED_INT_8_8_8_8_REV,
 				data);
 		stbi_image_free(data);
-#else // !STB
-
-		int w = image.GetWidth();
-		int h = image.GetHeight();
-		glTexImage2D(GL_TEXTURE_2D,
-				0,
-				GL_RGBA,
-				w, h,
-				0,
-				GL_RGBA,
-				GL_UNSIGNED_INT_8_8_8_8_REV,
-				image.RawData());
-#endif // !STB
 
 		m_width = w;
 		m_height = w;
@@ -512,8 +398,6 @@ vsTextureInternal::SetLinearSampling(bool linearMipmaps)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	m_nearestSampling = false;
 }
-
-#endif // TARGET_OS_IPHONE
 
 uint32_t
 vsTextureInternal::ScaleColour(uint32_t ini, float amt)

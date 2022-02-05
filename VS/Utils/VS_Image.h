@@ -33,7 +33,6 @@ private:
 
 	int				PixelIndex(int u, int v) const { return u + (v*m_width); }
 
-    void            LoadFromSurface( SDL_Surface *source );
 protected:
 
 	void		CopyTo( vsImage *other );
