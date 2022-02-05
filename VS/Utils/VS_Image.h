@@ -76,9 +76,8 @@ public:
 	vsTexture *		Bake( const vsString& name = vsEmptyString );
 
 	vsStore *		BakePNG(int compression); // lossless format;  compression is in [0..9] with higher values giving higher compression (but taking longer to calculate).
-	vsStore *		BakeJPG(int quality); // quality in [0..100] with higher values == higher quality.
 	void			SavePNG(int compression, const vsString& filename);
-	void			SaveJPG(int quality, const vsString& filename);
+	void			SaveJPG(int quality, const vsString& filename); // quality is in [0..100], with higher values being higher quality.
 	void			SavePNG_FullAlpha(int compression, const vsString& filename);
 	void *			RawData() { return m_pixel; }
 

@@ -28,6 +28,9 @@
 #endif // _WIN32
 #endif // TARGET_OS_IPHONE
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 int vsImage::s_textureMakerCount = 0;
 bool vsImage::s_allowLoadFailure = false;
 
@@ -558,81 +561,27 @@ vsImage::BakePNG(int compression)
 	return result;
 }
 
-vsStore *
-vsImage::BakeJPG(int quality)
+namespace
 {
-	// first, create an SDL_Surface from our raw pixel data.
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			m_width, m_height,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(image, "Error??");
-	int err = SDL_LockSurface( image );
-	vsAssert(!err, "Couldn't lock surface??");
-	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
-	for ( size_t v = 0; v < m_height; v++ )
+	void vsfile_write_func(void *context, void *data, int size)
 	{
-		for ( size_t u = 0; u < m_width; u++ )
-		{
-			int i = v*image->pitch + u*4;
-			int ri = i;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
-
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			uint32_t pixel = GetRawPixel(u,(m_height-1)-v);
-			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
-
-			((unsigned char*)image->pixels)[ri] = cp[0];
-			((unsigned char*)image->pixels)[gi] = cp[1];
-			((unsigned char*)image->pixels)[bi] = cp[2];
-			((unsigned char*)image->pixels)[ai] = cp[3];
-		}
+		vsFile* file = (vsFile*)(context);
+		file->WriteBytes(data, size);
 	}
-	//
-	// now, let's save out our surface.
-	const int pngDataSize = 1024*1024*10;
-	char* pngData = new char[pngDataSize];
-	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
-	if ( !dst )
-		vsLog( "%s", SDL_GetError() );
-	int retval = IMG_SaveJPG_RW(image,
-			dst,
-			false,
-			quality);
-	SDL_UnlockSurface( image );
-	if ( retval == -1 )
-		vsLog( "%s", SDL_GetError() );
-	int bytes = (int)SDL_RWtell(dst);
-	vsStore *result = new vsStore(bytes);
-	result->WriteBuffer(pngData,bytes);
-	SDL_RWclose(dst);
-	SDL_FreeSurface(image);
-	delete [] pngData;
-
-	return result;
-}
+};
 
 void
 vsImage::SaveJPG(int quality, const vsString& filename)
 {
-	vsStore *store = BakeJPG(quality);
 	vsFile file( filename, vsFile::MODE_Write );
-	file.Store(store);
-	vsDelete(store);
+
+	stbi_flip_vertically_on_write(1);
+	int retval = stbi_write_jpg_to_func(vsfile_write_func, &file,
+			m_width, m_height, 4,
+			m_pixel, quality);
+
+	if ( retval == 0 )
+		vsLog("Failed to write jpg '%s'", filename, retval);
 }
 
 void
