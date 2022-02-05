@@ -1753,7 +1753,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					{
 						static int foo = 0;
 						vsImage img(m_currentRenderTarget->Resolve(0));
-						img.SavePNG_FullAlpha(5, vsFormatString("screenshot-%d.png", foo++));
+						img.SavePNG_FullAlpha(vsFormatString("screenshot-%d.png", foo++));
 					}
 					else
 						vsRenderDebug( op->data.string );

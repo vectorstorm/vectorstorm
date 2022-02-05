@@ -493,74 +493,6 @@ vsImage::LoadFromSurface( SDL_Surface *source )
 #endif // TARGET_OS_IPHONE
 }
 
-vsStore *
-vsImage::BakePNG(int compression)
-{
-	// first, create an SDL_Surface from our raw pixel data.
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			m_width, m_height,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(image, "Error??");
-	int err = SDL_LockSurface( image );
-	vsAssert(!err, "Couldn't lock surface??");
-	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
-	for ( size_t v = 0; v < m_height; v++ )
-	{
-		for ( size_t u = 0; u < m_width; u++ )
-		{
-			int i = v*image->pitch + u*4;
-			int ri = i;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
-
-			uint32_t pixel = GetRawPixel(u,v);
-			uint8_t *cp = reinterpret_cast<uint8_t*>(&pixel);
-
-			((unsigned char*)image->pixels)[ri] = cp[0];
-			((unsigned char*)image->pixels)[gi] = cp[1];
-			((unsigned char*)image->pixels)[bi] = cp[2];
-			((unsigned char*)image->pixels)[ai] = cp[3];
-		}
-	}
-	//
-	// now, let's save out our surface.
-	// raw image size will be width*height*4 bytes.  So let's allocate that much
-	// space to start with;  our PNG should be no bigger than that!.
-	const int pngDataSize = m_width*m_height*4;
-	char* pngData = new char[pngDataSize];
-	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
-	if ( !dst )
-		vsLog( "%s", SDL_GetError() );
-	int retval = IMG_SavePNG_RW(image,
-			dst,
-			false);
-	SDL_UnlockSurface( image );
-	if ( retval == -1 )
-		vsLog( "%s", SDL_GetError() );
-	int bytes = (int)SDL_RWtell(dst);
-	vsStore *result = new vsStore(bytes);
-	result->WriteBuffer(pngData,bytes);
-	SDL_RWclose(dst);
-	SDL_FreeSurface(image);
-	delete [] pngData;
-
-	return result;
-}
-
 namespace
 {
 	void vsfile_write_func(void *context, void *data, int size)
@@ -585,16 +517,21 @@ vsImage::SaveJPG(int quality, const vsString& filename)
 }
 
 void
-vsImage::SavePNG(int compression, const vsString& filename)
+vsImage::SavePNG(const vsString& filename)
 {
-	vsStore *store = BakePNG(compression);
 	vsFile file( filename, vsFile::MODE_Write );
-	file.Store(store);
-	vsDelete(store);
+
+	stbi_flip_vertically_on_write(1);
+	int retval = stbi_write_png_to_func(vsfile_write_func, &file,
+			m_width, m_height, 4,
+			m_pixel, m_width * sizeof(uint32_t));
+
+	if ( retval == 0 )
+		vsLog("Failed to write png '%s'", filename, retval);
 }
 
 void
-vsImage::SavePNG_FullAlpha(int compression, const vsString& filename)
+vsImage::SavePNG_FullAlpha(const vsString& filename)
 {
 	vsImage dup( m_width, m_height );
 	for ( size_t y = 0; y < m_height; y++ )
@@ -606,6 +543,6 @@ vsImage::SavePNG_FullAlpha(int compression, const vsString& filename)
 			dup.SetPixel(x,y,c);
 		}
 	}
-	dup.SavePNG(compression, filename);
+	dup.SavePNG(filename);
 }
 
