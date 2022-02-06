@@ -27,7 +27,6 @@ option( VS_TRACY "If enabled, support remote profiling via tracy" NO )
 set( OpenGL_GL_PREFERENCE "GLVND" )
 find_package(OpenGL REQUIRED)
 find_library(SDL_LIBRARY SDL2 REQUIRED)
-find_library(SDL_IMAGE_LIBRARY SDL2_image REQUIRED )
 find_package(ZLIB)
 # find_library(ZLIB_LIBRARY zlib REQUIRED)
 
@@ -35,7 +34,6 @@ if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED )
 endif()
 find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED HINTS ${SDL_LIBRARY}/Headers)
-find_path(SDL_IMAGE_INCLUDE_DIR SDL_image.h REQUIRED PATH_SUFFIXES SDL2 HINTS ${SDL_LIBRARY}/Headers)
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 	add_definitions("-D IS_64BIT")
@@ -148,7 +146,6 @@ configure_file( "${PROJECT_SOURCE_DIR}/VS_Config.h.in"
 
 include_directories(
 	${SDL_INCLUDE_DIR}
-	${SDL_IMAGE_INCLUDE_DIR}
 	${SDLMIXER_INCLUDE_DIR}
 	${SDLIMAGE_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIRS}
@@ -163,7 +160,7 @@ if(APPLE)
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )
 	set(GUI_TYPE MACOSX_BUNDLE)
 	add_definitions("-D__apple_cc__")
-	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY SDL_IMAGE_LIBRARY PNG_LIBRARY GLEW_LIBRARIES)
+	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY PNG_LIBRARY GLEW_LIBRARIES)
 	include_directories(${GLEW_INCLUDE_DIR} ${BOX2D_INCLUDE_DIR})
 	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
 	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
@@ -556,7 +553,6 @@ endif()
 		${OPENGL_LIBRARIES}
 		# ${PNG_LIBRARY}
 		${SDL_LIBRARY}
-		${SDL_IMAGE_LIBRARY}
 		${GLEW_LIBRARIES}
 		${ZLIB_LIBRARY}
 		${PTHREAD_LIBRARY}
