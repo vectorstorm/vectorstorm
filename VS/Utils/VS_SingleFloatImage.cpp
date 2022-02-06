@@ -17,16 +17,11 @@
 
 #include "VS_File.h"
 #include "VS_Store.h"
+#include "VS_Image.h"
 
-#if !TARGET_OS_IPHONE
-#include <SDL_image.h>
+#include "stb_image.h"
 // #include <png.h>
 #include "VS_OpenGL.h"
-
-#ifndef _WIN32
-#include <zlib.h>
-#endif // _WIN32
-#endif // TARGET_OS_IPHONE
 
 int vsSingleFloatImage::m_textureMakerCount = 0;
 
@@ -57,19 +52,35 @@ vsSingleFloatImage::vsSingleFloatImage( const vsString &filename ):
 	m_pbo(0),
 	m_sync(0)
 {
-#if !TARGET_OS_IPHONE
 	vsFile img(filename, vsFile::MODE_Read);
 	vsStore *s = new vsStore( img.GetLength() );
 	img.Store(s);
 
-	SDL_RWops* rwops = SDL_RWFromMem( s->GetReadHead(), s->BytesLeftForReading() );
-	SDL_Surface *loadedImage = IMG_Load_RW( rwops, true );
+	// [TODO] handle loading actual floats from HDR formats.
+
+	int w,h,n;
+	unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_grey );
+	if ( !data )
+		vsLog( "Failure: %s", stbi_failure_reason() );
 
 	vsDelete(s);
-	vsAssert(loadedImage != nullptr, vsFormatString("Unable to load texture %s: %s", filename.c_str(), IMG_GetError()));
-	LoadFromSurface(loadedImage);
-	SDL_FreeSurface(loadedImage);
-#endif
+
+	m_width = w;
+	m_height = h;
+
+	m_pixelCount = m_width*m_height;
+	m_pixel = new float[m_pixelCount];
+
+	for ( unsigned int v = 0; v < m_height; v++ )
+	{
+		for ( unsigned int u = 0; u < m_width; u++ )
+		{
+			int ind = PixelIndex(u,v);
+			m_pixel[ind] = ((uint8_t*)(data))[ind] / 255.f;
+		}
+	}
+
+	stbi_image_free(data);
 }
 
 vsSingleFloatImage::vsSingleFloatImage( vsTexture * texture ):
@@ -373,90 +384,23 @@ vsSingleFloatImage::LoadFromSurface( SDL_Surface *source )
 #endif // TARGET_OS_IPHONE
 }
 
-vsStore *
-vsSingleFloatImage::BakePNG(int compression)
+void
+vsSingleFloatImage::SavePNG(const vsString& filename)
 {
-	// first, create an SDL_Surface from our raw pixel data.
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
-			m_width, m_height,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
-			);
-	vsAssert(image, "Error??");
-	int err = SDL_LockSurface( image );
-	vsAssert(!err, "Couldn't lock surface??");
-	vsAssert(image->format->BytesPerPixel == 4, "Didn't get a 4-byte surface??");
-	for ( size_t v = 0; v < m_height; v++ )
+	vsFile file( filename, vsFile::MODE_Write );
+
+	vsImage *dup = new vsImage( m_width, m_height );
+	for ( size_t y = 0; y < m_height; y++ )
 	{
-		for ( size_t u = 0; u < m_width; u++ )
+		for ( size_t x = 0; x < m_width; x++ )
 		{
-			int i = v*image->pitch + u*4;
-			int ri = i;
-			int gi = ri+1;
-			int bi = ri+2;
-			int ai = ri+3;
-
-			// flip our image.  Our image is stored upside-down, relative to a standard SDL Surface.
-			float pixel = GetPixel(u,(m_height-1)-v);
-
-			float val = vsProgressFraction( pixel, -200.f, 500.f );
-			((unsigned char*)image->pixels)[ri] = val * 255;
-			((unsigned char*)image->pixels)[gi] = val * 255;
-			((unsigned char*)image->pixels)[bi] = val * 255;
-			((unsigned char*)image->pixels)[ai] = 255;
-
-			// uint8_t *pp = reinterpret_cast<uint8_t*>(&pixel);
-			// ((unsigned char*)image->pixels)[ri] = pp[0];
-			// ((unsigned char*)image->pixels)[gi] = pp[1];
-			// ((unsigned char*)image->pixels)[bi] = pp[2];
-			// ((unsigned char*)image->pixels)[ai] = pp[3];
-
-			// ((unsigned char*)image->pixels)[ri] = (unsigned char)(255.f * pixel);
-			// ((unsigned char*)image->pixels)[gi] = (unsigned char)(255.f * pixel);
-			// ((unsigned char*)image->pixels)[bi] = (unsigned char)(255.f * pixel);
-			// ((unsigned char*)image->pixels)[ai] = (unsigned char)(255);
+			vsColor c = c_white * GetPixel(x,y);
+			c.a = 1.0;
+			dup->SetPixel(x,y,c);
 		}
 	}
-	//
-	// now, let's save out our surface.
-	const int pngDataSize = 1024*1024*10;
-	char* pngData = new char[pngDataSize];
-	SDL_RWops *dst = SDL_RWFromMem(pngData, pngDataSize);
-	if ( !dst )
-		vsLog( "%s", SDL_GetError() );
-	int retval = IMG_SavePNG_RW(image,
-			dst,
-			false);
-	SDL_UnlockSurface( image );
-	if ( retval == -1 )
-		vsLog( "%s", SDL_GetError() );
-	int bytes = (int)SDL_RWtell(dst);
-	vsStore *result = new vsStore(bytes);
-	result->WriteBuffer(pngData,bytes);
-	SDL_RWclose(dst);
-	SDL_FreeSurface(image);
-	delete [] pngData;
 
-	return result;
-}
-
-void
-vsSingleFloatImage::SavePNG(int compression, const vsString& filename)
-{
-	vsStore *store = BakePNG(compression);
-	vsFile file( filename, vsFile::MODE_Write );
-	file.Store(store);
-	vsDelete(store);
+	dup->SavePNG( filename );
+	vsDelete(dup);
 }
 

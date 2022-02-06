@@ -63,8 +63,7 @@ public:
 
 	vsTexture *		Bake( const vsString& name = vsEmptyString );
 
-	vsStore *		BakePNG(int compression);
-	void			SavePNG(int compression, const vsString& filename);
+	void			SavePNG(const vsString& filename);
 	void *			RawData() { return m_pixel; }
 };
 

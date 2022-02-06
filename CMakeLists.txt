@@ -460,6 +460,7 @@ set(UTILS_SOURCES
 	VS/Utils/VS_WeakPointerTarget.h
 	VS/Utils/fmt/format.cc
 	VS/Utils/fmt/format.h
+	VS/Utils/stb/stb.cpp
 	)
 set(SOURCES
 	VS/VS_Headers.h
@@ -512,6 +513,7 @@ include_directories(
 	VS/Sound
 	VS/Threads
 	VS/Utils
+	VS/Utils/stb
 	SYSTEM
 	)
 

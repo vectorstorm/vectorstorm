@@ -18,17 +18,9 @@
 #include "VS_File.h"
 #include "VS_Store.h"
 
-#if !TARGET_OS_IPHONE
-#include <SDL_image.h>
-// #include <png.h>
 #include "VS_OpenGL.h"
 
-#ifndef _WIN32
-#include <zlib.h>
-#endif // _WIN32
-#endif // TARGET_OS_IPHONE
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "stb_image.h"
 
@@ -76,7 +68,7 @@ vsImage::vsImage( const vsString &filename ):
 	vsDelete(s);
 
 	m_width = w;
-	m_height = w;
+	m_height = h;
 
 	m_pixel = new uint32_t[m_width*m_height];
 
