@@ -162,12 +162,15 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	}
 	atexit(SDL_Quit);
 
+#if defined( VS_GAMEPADS )
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+#endif // VS_GAMEPADS
+
 #if defined(USE_SDL_SOUND)
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 #endif // USE_SDL_SOUND
-#endif
-	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+#endif // !TARGET_OS_IPHONE
 
 #if defined(_WIN32)
 	static bool startedUp = false;

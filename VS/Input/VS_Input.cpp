@@ -1489,7 +1489,7 @@ vsInput::GetController()
 float
 vsController::ReadAxis_Raw( int axisID )
 {
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE && defined(VS_GAMEPADS)
 	float axisValue;
 	if ( m_controller )
 		axisValue = SDL_GameControllerGetAxis(m_controller, (SDL_GameControllerAxis)axisID) / 32767.0f;
@@ -1585,7 +1585,7 @@ float
 vsController::ReadButton( int buttonID )
 {
 	float result = 0.f;
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE && defined(VS_GAMEPADS)
 	bool buttonDown = false;
 	if ( m_controller )
 		buttonDown = !!SDL_GameControllerGetButton(m_controller, (SDL_GameControllerButton)buttonID);
@@ -2470,6 +2470,7 @@ vsInput::HandleMouseButtonEvent( const SDL_Event& event )
 void
 vsInput::InitController(int i)
 {
+#if defined(VS_GAMEPADS)
 	SDL_GameController *gc = SDL_GameControllerOpen(i);
 	if ( gc && i < MAX_JOYSTICKS )
 	{
@@ -2480,16 +2481,19 @@ vsInput::InitController(int i)
 	{
 		vsLog("...ignoring it.");
 	}
+#endif // VS_GAMEPADS
 }
 
 void
 vsInput::DestroyController(SDL_GameController *gc)
 {
+#if defined(VS_GAMEPADS)
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
 	if ( m_controller[i] && m_controller[i]->Matches(gc) )
 	{
 		vsDelete( m_controller[i] );
 	}
+#endif // VS_GAMEPADS
 }
 
 float

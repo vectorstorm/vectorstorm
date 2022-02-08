@@ -1,4 +1,5 @@
 // Configured build settings, as detected by cmake
+#cmakedefine VS_GAMEPADS
 #cmakedefine VS_PRISTINE_BINDINGS
 #cmakedefine VS_OVERLOAD_ALLOCATORS
 #cmakedefine HIGHDPI_SUPPORTED
