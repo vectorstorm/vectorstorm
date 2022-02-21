@@ -17,6 +17,11 @@ vsShaderValues::vsShaderValues():
 	m_parent(nullptr),
 	m_value(16)
 {
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = nullptr;
+		m_textureSet[i] = false;
+	}
 }
 
 vsShaderValues::vsShaderValues( const vsShaderValues& other ):
@@ -30,6 +35,11 @@ vsShaderValues::vsShaderValues( const vsShaderValues& other ):
 		const vsIntHashEntry<Value> *v = other.m_value.GetHashEntry(i);
 
 		m_value[v->m_key] = v->m_item;
+	}
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = other.m_texture[i];
+		m_textureSet[i] = false;
 	}
 }
 
@@ -400,6 +410,27 @@ vsShaderValues::UniformMat4( uint32_t uid, vsMatrix4x4& out ) const
 	// else
 	// 	out = *(vsMatrix4x4*)v->mat4;
 	return true;
+}
+
+vsTexture *
+vsShaderValues::GetTextureOverride( int i )
+{
+	if ( m_textureSet[i] )
+		return m_texture[i];
+	else if ( m_parent )
+		return m_parent->GetTextureOverride(i);
+
+	return nullptr;
+}
+
+bool
+vsShaderValues::HasTextureOverride( int i ) const
+{
+	if ( m_textureSet[i] )
+		return true;
+	else if ( m_parent )
+		return m_parent->HasTextureOverride(i);
+	return false;
 }
 
 bool
