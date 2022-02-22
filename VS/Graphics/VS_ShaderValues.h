@@ -99,6 +99,8 @@ public:
 	bool operator==( const vsShaderValues& other ) const;
 	bool operator!=( const vsShaderValues& other ) const { return ! (*this == other); }
 
+	const vsShaderValues& operator=( const vsShaderValues& other );
+
 	void SetTextureOverride( int i, vsTexture *texture ) { m_texture[i] = texture; m_textureSet[i] = true; }
 	void ClearTextureOverride( int i, vsTexture *texture ) { m_textureSet[i] = false; }
 	vsTexture *GetTextureOverride( int i );

@@ -39,7 +39,7 @@ vsShaderValues::vsShaderValues( const vsShaderValues& other ):
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 	{
 		m_texture[i] = other.m_texture[i];
-		m_textureSet[i] = false;
+		m_textureSet[i] = other.m_textureSet[i];
 	}
 }
 
@@ -433,11 +433,33 @@ vsShaderValues::HasTextureOverride( int i ) const
 	return false;
 }
 
+const vsShaderValues&
+vsShaderValues::operator=( const vsShaderValues& other )
+{
+	int valueCount = other.m_value.GetHashEntryCount();
+	m_value.Clear();
+
+	for ( int i = 0; i < valueCount; i++ )
+	{
+		const vsIntHashEntry<Value> *v = other.m_value.GetHashEntry(i);
+
+		m_value[v->m_key] = v->m_item;
+	}
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = other.m_texture[i];
+		m_textureSet[i] = other.m_textureSet[i];
+	}
+	return *this;
+}
+
 bool
 vsShaderValues::operator==( const vsShaderValues& other ) const
 {
 	if ( m_parent != other.m_parent )
 		return false;
+
+	// we should also check our texture bindings here
 
 	return m_value == other.m_value;
 	// now check the values.
