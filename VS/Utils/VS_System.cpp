@@ -130,7 +130,13 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_minBuffers(minBuffers),
 	m_orientation( Orientation_Normal ),
 	m_title( title ),
-	m_screen( nullptr )
+	m_screen( nullptr ),
+#ifdef _DEBUG
+	m_allowMods( true ),
+#else
+	m_allowMods( false ),
+#endif
+	m_customFilesCount( 0 )
 {
 #if defined(_WIN32)
 	// extern bool SetProcessDPIAware();
@@ -202,7 +208,7 @@ vsSystem::~vsSystem()
 }
 
 void
-vsSystem::Init()
+vsSystem::Init( bool allowMods )
 {
 	m_cursor[CursorStyle_Arrow] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_ARROW );
 	m_cursor[CursorStyle_IBeam] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_IBEAM );
@@ -334,53 +340,139 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
 #endif
 
-	// we need the basedir for in case there's a crash report saved there.
-	success = PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 0);
-	//
-	// 0 parameter means PREPEND;  each new mount takes priority over the line before
-	success |= PHYSFS_mount((m_dataDirectory+"/Default.zip").c_str(), nullptr, 0);
-	success |= PHYSFS_mount(m_dataDirectory.c_str(), nullptr, 0);
-	if ( !success )
-	{
-		vsLog("Failed to mount %s, either loose or as a zip!", m_dataDirectory.c_str());
-		exit(1);
-	}
-
-	vsString modsDirectory = "mod";
-	vsArray<vsString> mods;
-	vsFile::DirectoryDirectories( &mods, modsDirectory );
-	for ( int i = 0; i < mods.ItemCount(); i++ )
-	{
-		success |= PHYSFS_mount( (vsString(PHYSFS_getBaseDir()) + "/mod/" + mods[i]).c_str(), nullptr, 0);
-	}
-
-
-	success |= PHYSFS_mount(PHYSFS_getWriteDir(), nullptr, 0);
-
-	// char** searchPath = PHYSFS_getSearchPath();
-	// int pathId = 0;
-	// while ( searchPath[pathId] )
-	// {
-	// 	vsLog("Search path: %s",searchPath[pathId]);
-	// 	pathId++;
-	// }
+	m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
+	m_mountpoints.AddItem(m_dataDirectory+"/Default.zip");
+	if ( m_allowMods )
+		m_mountpoints.AddItem(m_dataDirectory);
+	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
 }
 
 void
-vsSystem::EnableGameDirectory( const vsString &directory )
+vsSystem::SetCurrentGameName( const vsString& name, bool trace )
 {
-	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
+	m_currentGameDirectoryName = name;
+
+	MountPhysFSVolumes(trace);
+}
+
+void
+vsSystem::_DoRemountConfiguredPhysFSVolumes()
+{
+	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
+	{
+		if ( PHYSFS_unmount( m_mountedpoints[i].filepath.c_str() ) )
+		{
+			vsLog("Unmounted %s", m_mountedpoints[i].filepath);
+		}
+	}
+	m_mountedpoints.Clear();
+
+	for ( int i = 0; i < m_mountpoints.ItemCount(); i++ )
+	{
+		if ( _DoMount( m_mountpoints[i], true ) )
+		{
+			vsLog("Mounted %s", m_mountpoints[i].filepath);
+			m_mountedpoints.AddItem( m_mountpoints[i] );
+		}
+	}
+}
+
+bool
+vsSystem::_DoMount( const Mount& m, bool trace )
+{
+	bool success = PHYSFS_mount( m.filepath.c_str(), m.mount.c_str(), 1 );
+	if ( !success )
+	{
+		PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
+		vsLog("Failed to mount %s: %s (%d)", m.filepath, PHYSFS_getErrorByCode(ec), ec );
+		return false;
+	}
+	return true;
+}
+
+void
+vsSystem::MountPhysFSVolumes( bool trace )
+{
+	// configure our file mount points in DESCENDING ORDER.  Each specified
+	// directory is preferred over the previous one!
+
+	vsArray<vsString> activeMods;
+	if ( m_allowMods )
+	{
+		// mount our write directory at the root of our read files for long enough
+		// to check for mod directories.
+		m_mountpoints.Clear();
+		m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir() ) );
+		_DoRemountConfiguredPhysFSVolumes();
+
+		// allow explicit 'mod' files!
+		vsString modsDirectory = "mod";
+		vsArray<vsString> mods;
+		vsFile::DirectoryDirectories( &mods, modsDirectory );
+		for ( int i = 0; i < mods.ItemCount(); i++ )
+		{
+			activeMods.AddItem(vsFormatString("%smod/%s", PHYSFS_getWriteDir(), mods[i]));
+		}
+	}
+
+	m_mountpoints.Clear();
+	m_mountpoints.AddItem( Mount(PHYSFS_getWriteDir(), "user") );
+
+	for ( int i = 0; i < activeMods.ItemCount(); i++ )
+	{
+		m_mountpoints.AddItem( Mount(activeMods[i]) );
+	}
+
+
+	// we need the basedir for in case there's a crash report saved there.
+	m_mountpoints.AddItem( Mount(PHYSFS_getBaseDir()) );
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"/Default.zip") );
+
+	if ( m_allowMods )
+	{
+		// allow loading loose files from the data directory
+		m_mountpoints.AddItem(m_dataDirectory);
+	}
+
+	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + m_currentGameDirectoryName;
 	std::string archiveName = d + ".zip";
-	// 1 parameter means APPEND;  each new mount has LOWER priority than the previous
-	PHYSFS_mount(archiveName.c_str(), nullptr, 1);
-	PHYSFS_mount(d.c_str(), nullptr, 1);
-	// char** searchPath = PHYSFS_getSearchPath();
-	// int pathId = 0;
-	// while ( searchPath[pathId] )
-	// {
-	// 	vsLog("Search path: %s",searchPath[pathId]);
-	// 	pathId++;
-	// }
+
+	if ( m_allowMods )
+	{
+		// allow loose overridden files
+		m_mountpoints.AddItem(d);
+	}
+	m_mountpoints.AddItem(archiveName);
+
+	_DoRemountConfiguredPhysFSVolumes();
+}
+
+void
+vsSystem::UnmountPhysFSVolumes()
+{
+	m_mountpoints.Clear();
+	_DoRemountConfiguredPhysFSVolumes();
+}
+
+void
+vsSystem::EnableGameDirectory( const vsString &directory, bool trace )
+{
+	SetCurrentGameName(directory,trace);
+
+
+
+	// std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + directory;
+	// std::string archiveName = d + ".zip";
+	// // 1 parameter means APPEND;  each new mount has LOWER priority than the previous
+	// PHYSFS_mount(archiveName.c_str(), nullptr, 1);
+	// PHYSFS_mount(d.c_str(), nullptr, 1);
+	// // char** searchPath = PHYSFS_getSearchPath();
+	// // int pathId = 0;
+	// // while ( searchPath[pathId] )
+	// // {
+	// // 	vsLog("Search path: %s",searchPath[pathId]);
+	// // 	pathId++;
+	// // }
 }
 
 #if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
@@ -395,9 +487,9 @@ vsSystem::EnableGameDirectory( const vsString &directory )
 void
 vsSystem::DisableGameDirectory( const vsString &directory )
 {
-	std::string d = m_dataDirectory + "/" + directory;
-	PHYSFS_unmount(d.c_str());
-	PHYSFS_unmount((d+".zip").c_str());
+	// std::string d = m_dataDirectory + "/" + directory;
+	// PHYSFS_unmount(d.c_str());
+	// PHYSFS_unmount((d+".zip").c_str());
 }
 
 void

@@ -213,10 +213,23 @@ struct zipdata
 	z_stream m_zipStream;
 };
 
+namespace
+{
+	vsString MakeWriteFilename( const vsString& in )
+	{
+		vsString out(in);
+		if ( 0 == out.find("user/") )
+		{
+			out.erase(0,5);
+		}
+		return out;
+	}
+};
+
 static vsFile::openFailureHandler s_openFailureHandler = nullptr;
 
-vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
-	m_filename(filename),
+vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
+	m_filename(filename_in),
 	m_tempFilename(),
 	m_file(nullptr),
 	m_compressedStore(nullptr),
@@ -226,6 +239,15 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_length(0),
 	m_moveOnDestruction(false)
 {
+	vsString filename(filename_in);
+
+	if ( mode == MODE_Write || mode == MODE_WriteDirectly || mode == MODE_WriteCompressed )
+	{
+		// Convert our 'user/' filename into a write directory-relative path.
+
+		filename = MakeWriteFilename(filename_in);
+	}
+
 	// vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
 	if ( (mode == MODE_Read || mode == MODE_ReadCompressed) &&
@@ -250,12 +272,12 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			// then move it into position when the file is closed.  We do this so
 			// that crashes in the middle of file writing don't obliterate the
 			// original file (if any), or leave a half-written file.
-			m_tempFilename = vsFormatString("tmp/%s", m_filename.c_str());
+			m_tempFilename = vsFormatString("user/tmp/%s", filename.c_str());
 			vsString directoryOnly = m_tempFilename;
 			size_t separator = directoryOnly.rfind("/");
 			directoryOnly.erase(separator);
 			EnsureWriteDirectoryExists(directoryOnly);
-			m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
+			m_file = PHYSFS_openWrite( MakeWriteFilename(m_tempFilename).c_str() );
 			m_moveOnDestruction = true;
 
 			m_store = new vsStore( 1024 * 1024 );
@@ -386,7 +408,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
-				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", m_filename, ret );
+				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", filename, ret );
 				return;
 			}
 
@@ -585,7 +607,7 @@ vsFile::Delete( const vsString &filename ) // static method
 	if ( DirectoryExists(filename) ) // This file is a directory, don't delete it!
 		return false;
 
-	return PHYSFS_delete(filename.c_str()) != 0;
+	return PHYSFS_delete( MakeWriteFilename(filename).c_str() ) != 0;
 }
 
 bool
@@ -631,22 +653,22 @@ vsFile::DeleteEmptyDirectory( const vsString &filename )
 	// Note that PHYSFS_delete will return an error if we
 	// try to delete a non-empty directory.
 	//
-	if ( DirectoryExists(filename) )
-		return PHYSFS_delete(filename.c_str()) != 0;
+	if ( DirectoryExists(filename) ) // This directory exists?
+		return PHYSFS_delete(MakeWriteFilename(filename).c_str()) != 0;
 	return false;
 }
 
 bool
 vsFile::DeleteDirectory( const vsString &filename )
 {
-	if ( DirectoryExists(filename) )
+	if ( DirectoryExists(filename) ) // This directory exists?
 	{
 		vsArray<vsString> files;
-        DirectoryContents(&files, filename);
+		DirectoryContents(&files, filename);
 		for ( int i = 0; i < files.ItemCount(); i++ )
 		{
 			vsString ff = vsFormatString("%s/%s", filename.c_str(), files[i].c_str());
-			if ( vsFile::DirectoryExists( ff ) )
+			if ( vsFile::DirectoryExists(ff) )
 			{
 				// it's a directory;  remove it!
 				DeleteDirectory( ff );
@@ -791,13 +813,13 @@ vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName
 }
 
 void
-vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // static method
+vsFile::EnsureWriteDirectoryExists( const vsString &directoryName ) // static method
 {
-	if ( !DirectoryExists(writeDirectoryName) )
+	if ( !DirectoryExists(directoryName) )
 	{
-		int mkdirResult = PHYSFS_mkdir( writeDirectoryName.c_str() );
+		int mkdirResult = PHYSFS_mkdir( MakeWriteFilename(directoryName).c_str() );
 		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s%s%s': %s",
-				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), writeDirectoryName.c_str(), PHYSFS_getLastErrorString()) );
+				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), directoryName.c_str(), PHYSFS_getLastErrorString()) );
 	}
 }
 
@@ -1172,35 +1194,18 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	return filename_in;
 #endif
 
-#if TARGET_OS_IPHONE
-	vsString filename = filename_in;
-
-	// find the slash, if any.
-	int pos = filename.rfind("/");
-	if ( pos != vsString::npos )
-	{
-		filename.erase(0,pos+1);
-	}
-
-	vsString result = vsFormatString("./%s",filename.c_str());
-	return result;
-#else
 	vsString filename(filename_in);
 	const char* physDir = PHYSFS_getRealDir( filename.c_str() );
+	filename = MakeWriteFilename( filename ); // make sure we pull out the virtual 'user' folder if any!
+
 	if ( physDir )
 	{
 		vsString dir(physDir);
 
 		return dir + filename;
-// #if defined(_WIN32)
-// 		return dir + "\\" + filename;
-// #else
-// 		return dir + "/" + filename;
-// #endif
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;
-#endif
 }
 
 

@@ -11,6 +11,7 @@
 #define VS_SYSTEM_H
 
 #include "Utils/VS_Singleton.h"
+#include "Utils/VS_Array.h"
 
 class vsDynamicBatchManager;
 class vsMaterialManager;
@@ -86,8 +87,45 @@ class vsSystem
 	vsSystemPreferences *m_preferences;
 
 	vsString m_dataDirectory;
+	vsString m_currentGameDirectoryName;
+
+	bool m_allowMods;
+	int m_customFilesCount;
+
+	struct Mount
+	{
+		vsString filepath;
+		vsString mount;
+
+		Mount() {}
+
+		Mount( const vsString& fp ):
+			filepath(fp),
+			mount("/")
+		{
+		}
+
+		Mount( const vsString& fp, const vsString& m ):
+			filepath(fp),
+			mount(m)
+		{
+		}
+	};
+
+	vsArray<Mount> m_mountedpoints;
+	vsArray<Mount> m_mountpoints;
+
 	void InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title);
 	void DeinitPhysFS();
+
+	void _DoRemountConfiguredPhysFSVolumes();
+	bool _DoMount( const Mount& m, bool trace );
+
+	void SetCurrentGameName( const vsString& game, bool trace );
+	void MountPhysFSVolumes(bool trace);
+	void UnmountPhysFSVolumes();
+
+	void PrepareModGuard();
 
 public:
 
@@ -96,12 +134,12 @@ public:
 	vsSystem( const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64, size_t minBuffers = 1 );
 	~vsSystem();
 
-	void Init();
+	void Init( bool allowMods );
 	void Deinit();
 
 	const vsString& GetTitle() const { return m_title; }
 
-	void		EnableGameDirectory( const vsString &directory );
+	void		EnableGameDirectory( const vsString &directory, bool trace );
 	void		DisableGameDirectory( const vsString &directory );
 
 	void		InitGameData();	// game has exitted, kill anything else we know about that it might have been using.
@@ -157,6 +195,8 @@ public:
 
 	bool IsExitGameKeyEnabled() const { return m_exitGameKeyEnabled; }
 	bool IsExitApplicationKeyEnabled() const { return m_exitApplicationKeyEnabled; }
+
+	int HasCustomFiles() const { return m_customFilesCount; }
 };
 
 

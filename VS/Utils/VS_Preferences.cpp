@@ -14,17 +14,19 @@
 
 vsPreferences::vsPreferences(const vsString &filename_in)
 {
-	vsString filename = vsFormatString("%s.prefs",filename_in.c_str());
+	vsString filename = vsFormatString("%s.prefs",filename_in);
 	m_filename = filename;
+
+	vsString readFilename = vsFormatString("user/%s.prefs", filename_in);
 
 	m_preferenceList = new vsPreferenceObject;
 
-	if ( vsFile::Exists(filename) )	// if the file exists, then read the current pref values out of it.
+	if ( vsFile::Exists(readFilename) )	// if the file exists, then read the current pref values out of it.
 	{
 		vsRecord record;
-		vsFile prevsFile(filename);
+		vsFile prefsFile(readFilename);
 
-		while( prevsFile.Record(&record) )
+		while( prefsFile.Record(&record) )
 		{
 			if ( record.GetTokenCount() < 1 )
 				vsLog("%s preference has wrong number of arguments!", record.GetLabel().AsString().c_str() );
