@@ -24,7 +24,7 @@ static vsFile *s_log = nullptr;
 
 void vsLog_Start()
 {
-	s_log = new vsFile("log.txt", vsFile::MODE_WriteDirectly);
+	s_log = new vsFile("user/log.txt", vsFile::MODE_WriteDirectly);
 	// s_log = PHYSFS_openWrite( "log.txt" );
 }
 

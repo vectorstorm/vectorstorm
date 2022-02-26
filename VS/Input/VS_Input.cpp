@@ -394,9 +394,9 @@ void
 vsInput::Load()
 {
 	vsHeap::Push(g_globalHeap);
-	if ( vsFile::Exists("binds.txt") )
+	if ( vsFile::Exists("user/binds.txt") )
 	{
-		vsFile f("binds.txt", vsFile::MODE_Read);
+		vsFile f("user/binds.txt", vsFile::MODE_Read);
 
 		vsRecord a;
 		while ( f.Record(&a) )
@@ -577,7 +577,7 @@ vsInput::Load()
 void
 vsInput::Save()
 {
-	vsFile f("binds.txt", vsFile::MODE_Write);
+	vsFile f("user/binds.txt", vsFile::MODE_Write);
 
 	for ( int i = 0; i < m_axis.ItemCount(); i++ )
 	{

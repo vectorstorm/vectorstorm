@@ -244,6 +244,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 	if ( mode == MODE_Write || mode == MODE_WriteDirectly || mode == MODE_WriteCompressed )
 	{
 		// Convert our 'user/' filename into a write directory-relative path.
+		vsAssert(0 == filename.find("user/"), "Trying to write into a file that's not in 'user/'??");
 
 		filename = MakeWriteFilename(filename_in);
 	}
