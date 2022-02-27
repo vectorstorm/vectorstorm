@@ -197,6 +197,8 @@ set(FILES_SOURCES
 	VS/Files/VS_Record.h
 	VS/Files/VS_Token.cpp
 	VS/Files/VS_Token.h
+	VS/Files/VS_PhysFS.cpp
+	VS/Files/VS_PhysFS.h
 	)
 set(GRAPHICS_SOURCES
 	VS/Graphics/VS_BuiltInFont.cpp

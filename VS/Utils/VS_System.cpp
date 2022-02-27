@@ -64,7 +64,7 @@
 #include <SDL2/SDL_mouse.h>
 #endif
 
-#include <physfs.h>
+#include "Files/VS_PhysFS.h"
 
 vsSystem * vsSystem::s_instance = nullptr;
 
