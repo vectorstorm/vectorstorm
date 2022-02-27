@@ -89,8 +89,7 @@ class vsSystem
 	vsString m_dataDirectory;
 	vsString m_currentGameDirectoryName;
 
-	bool m_allowMods;
-	int m_customFilesCount;
+	bool m_dataIsPristine;
 
 	struct Mount
 	{
@@ -120,6 +119,8 @@ class vsSystem
 
 	void _DoRemountConfiguredPhysFSVolumes();
 	bool _DoMount( const Mount& m, bool trace );
+	bool _DoUnmount( const Mount& m );
+	void _TraceMods();
 
 	void SetCurrentGameName( const vsString& game, bool trace );
 	void MountPhysFSVolumes(bool trace);
@@ -134,7 +135,7 @@ public:
 	vsSystem( const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64, size_t minBuffers = 1 );
 	~vsSystem();
 
-	void Init( bool allowMods );
+	void Init();
 	void Deinit();
 
 	const vsString& GetTitle() const { return m_title; }
@@ -196,7 +197,22 @@ public:
 	bool IsExitGameKeyEnabled() const { return m_exitGameKeyEnabled; }
 	bool IsExitApplicationKeyEnabled() const { return m_exitApplicationKeyEnabled; }
 
-	int HasCustomFiles() const { return m_customFilesCount; }
+	// IsDataPristine returns true if we're loading out a zipfiles and have no
+	// mods mounted.  Note that it does not attempt to validate the integrity
+	// of the zipfiles themselves;  it ONLY verifies that we're not loading
+	// game data from loose files.  (since I figure that nobody's going to
+	// bother zipping their files back up after making modifications;  this
+	// is only so that crash reports can note whether they were using any custom
+	// data files to aid in debugging efforts, and should not be used for any
+	// other purpose)
+	int IsDataPristine() const { return m_dataIsPristine; }
+
+	// by default, we *don't* mount our base directory for reading, but we can
+	// do so if the game needs it for some reason (for example, MT2's Windows
+	// build can sometimes save out crash reports there, and this is required
+	// in order to pick up those crash reports)
+	void			MountBaseDirectory();
+	void			UnmountBaseDirectory();
 };
 
 
@@ -295,6 +311,7 @@ public:
 
 	float			GetTrackpadWheelScaling();
 	void			SetTrackpadWheelScaling(float scaling); // range: [0..100]
+
 };
 
 #endif // VS_SYSTEM_H

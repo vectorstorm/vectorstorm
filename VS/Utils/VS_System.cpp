@@ -131,12 +131,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_orientation( Orientation_Normal ),
 	m_title( title ),
 	m_screen( nullptr ),
-#ifdef _DEBUG
-	m_allowMods( true ),
-#else
-	m_allowMods( false ),
-#endif
-	m_customFilesCount( 0 )
+	m_dataIsPristine( false )
 {
 #if defined(_WIN32)
 	// extern bool SetProcessDPIAware();
@@ -208,7 +203,7 @@ vsSystem::~vsSystem()
 }
 
 void
-vsSystem::Init( bool allowMods )
+vsSystem::Init()
 {
 	m_cursor[CursorStyle_Arrow] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_ARROW );
 	m_cursor[CursorStyle_IBeam] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_IBEAM );
@@ -317,12 +312,10 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 
 #if defined(__APPLE_CC__)
 	// loading out of an app bundle, so use that data directory
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data";
-#elif defined(_WIN32)
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data/";
+#elif defined(_DEBUG) && defined(_WIN32)
 
 	vsString baseDirectory = PHYSFS_getBaseDir();
-#if defined(_DEBUG) // only in debug builds do we mess with the directory name!
-
 	// Under Win32, Visual Studio likes to put debug and release builds into a directory
 	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
 	// but it means that the executable location isn't in the same place as our Data
@@ -332,18 +325,19 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		baseDirectory.erase(baseDirectory.rfind("\\Debug\\"));
 	else if ( baseDirectory.rfind("\\Release\\") == baseDirectory.size()-9 )
 		baseDirectory.erase(baseDirectory.rfind("\\Release\\"));
-#endif
-	m_dataDirectory = baseDirectory + "Data";
+
+	m_dataDirectory = baseDirectory + "Data/";
 
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data";
+	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data/";
 #endif
 
+	_TraceMods();
+
+	m_mountpoints.AddItem(m_dataDirectory+"VS/");
+	m_mountpoints.AddItem(m_dataDirectory+"VS.zip");
 	m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
-	m_mountpoints.AddItem(m_dataDirectory+"/Default.zip");
-	if ( m_allowMods )
-		m_mountpoints.AddItem(m_dataDirectory);
 	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
 }
 
@@ -360,10 +354,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 {
 	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
 	{
-		if ( PHYSFS_unmount( m_mountedpoints[i].filepath.c_str() ) )
-		{
-			vsLog("Unmounted %s", m_mountedpoints[i].filepath);
-		}
+		_DoUnmount( m_mountedpoints[i] );
 	}
 	m_mountedpoints.Clear();
 
@@ -371,7 +362,6 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 	{
 		if ( _DoMount( m_mountpoints[i], true ) )
 		{
-			vsLog("Mounted %s", m_mountpoints[i].filepath);
 			m_mountedpoints.AddItem( m_mountpoints[i] );
 		}
 	}
@@ -387,6 +377,21 @@ vsSystem::_DoMount( const Mount& m, bool trace )
 		vsLog("Failed to mount %s: %s (%d)", m.filepath, PHYSFS_getErrorByCode(ec), ec );
 		return false;
 	}
+	vsLog("Mounted %s", m.filepath);
+	return true;
+}
+
+bool
+vsSystem::_DoUnmount( const Mount& m )
+{
+	bool success = PHYSFS_unmount( m.filepath.c_str() );
+	if ( !success )
+	{
+		PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
+		vsLog("Failed to unmount %s: %s (%d)", m.filepath, PHYSFS_getErrorByCode(ec), ec );
+		return false;
+	}
+	vsLog("Unmounted %s", m.filepath);
 	return true;
 }
 
@@ -394,10 +399,11 @@ void
 vsSystem::MountPhysFSVolumes( bool trace )
 {
 	// configure our file mount points in DESCENDING ORDER.  Each specified
-	// directory is preferred over the previous one!
+	// directory is preferred over the next one!
 
+	// first, figure out what mods exist.  [TODO] Someday we'll want to have a
+	// way to enable/disable these, probably?
 	vsArray<vsString> activeMods;
-	if ( m_allowMods )
 	{
 		// mount our write directory at the root of our read files for long enough
 		// to check for mod directories.
@@ -412,37 +418,46 @@ vsSystem::MountPhysFSVolumes( bool trace )
 		for ( int i = 0; i < mods.ItemCount(); i++ )
 		{
 			activeMods.AddItem(vsFormatString("%smod/%s", PHYSFS_getWriteDir(), mods[i]));
+			vsLog("MOD Active: %s", mods[i]);
 		}
 	}
 
-	m_mountpoints.Clear();
-	m_mountpoints.AddItem( Mount(PHYSFS_getWriteDir(), "user") );
+	// Our mounts go in this order/priority, with highest priority at the
+	// TOP of this list:
+	//
+	// 1:  Mods, mounted into "/".
+	// 2:  The game's data, preferring loose files over .zip files, mounted into "/".
+	// 3:  VS engine data, preferring loose files over .zip files, mounted into "/".
+	// 4:  The write directory, mounted into "/user".
+	//
+	// When we request to load a file, PhysFS goes down this list until it finds a
+	// matching filename from one of these sources.  When it finds one, it stops
+	// looking through files, so files from Mods override ones from the game data
+	// which overrides ones from the VS engine data.
 
+	m_mountpoints.Clear();
 	for ( int i = 0; i < activeMods.ItemCount(); i++ )
 	{
 		m_mountpoints.AddItem( Mount(activeMods[i]) );
 	}
 
+	std::string d = m_dataDirectory + m_currentGameDirectoryName + "/";
+	std::string archiveName = m_dataDirectory + m_currentGameDirectoryName + ".zip";
+
+	// allow loose overridden files
+	m_mountpoints.AddItem(d);
+	m_mountpoints.AddItem(archiveName);
+
 
 	// we need the basedir for in case there's a crash report saved there.
-	m_mountpoints.AddItem( Mount(PHYSFS_getBaseDir()) );
-	m_mountpoints.AddItem( Mount(m_dataDirectory+"/Default.zip") );
+	// m_mountpoints.AddItem( Mount(PHYSFS_getBaseDir()) );
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS/") );
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS.zip") );
 
-	if ( m_allowMods )
-	{
-		// allow loading loose files from the data directory
-		m_mountpoints.AddItem(m_dataDirectory);
-	}
+	// No loading loose files from the data directory.
 
-	std::string d = m_dataDirectory + PHYSFS_getDirSeparator() + m_currentGameDirectoryName;
-	std::string archiveName = d + ".zip";
-
-	if ( m_allowMods )
-	{
-		// allow loose overridden files
-		m_mountpoints.AddItem(d);
-	}
-	m_mountpoints.AddItem(archiveName);
+	// and finally, last of all, our 'write' directory, which we mount under the 'user' tree.
+	m_mountpoints.AddItem( Mount(PHYSFS_getWriteDir(), "user") );
 
 	_DoRemountConfiguredPhysFSVolumes();
 }
@@ -1193,5 +1208,71 @@ vsString
 vsSystem::GetWriteDirectory() const
 {
 	return PHYSFS_getWriteDir();
+}
+
+void
+vsSystem::MountBaseDirectory()
+{
+	_DoMount( Mount(PHYSFS_getBaseDir(), "base/"), false );
+}
+
+void
+vsSystem::UnmountBaseDirectory()
+{
+	_DoUnmount( Mount(PHYSFS_getBaseDir()) );
+}
+
+void
+vsSystem::_TraceMods()
+{
+	// we get called during startup AFTER PhysFS has been initialised but BEFORE
+	// anything has been mounted.  So let's look for user-modified files.
+	//
+	// First, we need to mount a couple of paths for us to look in.
+	vsArray<vsString> unpackedDataDirectories;
+	vsArray<vsString> modDirectories;
+
+	PHYSFS_mount(m_dataDirectory.c_str(), "probedata/", 1);
+	PHYSFS_mount(PHYSFS_getWriteDir(), "probeuser/", 1);
+
+	{
+		// Now that we have some file access, let's look for whether we have
+		// any loose files hanging around in our Data directory.
+		//
+		// And let's check for mod directories
+
+		vsFile::DirectoryDirectories(&unpackedDataDirectories, "probedata/");
+
+		if ( vsFile::DirectoryExists("probeuser/mod/") )
+			vsFile::DirectoryDirectories(&modDirectories, "probeuser/mod/");
+	}
+
+	// and unmount the paths we mounted before
+	PHYSFS_unmount(m_dataDirectory.c_str());
+	PHYSFS_unmount(PHYSFS_getWriteDir());
+
+	if ( unpackedDataDirectories.IsEmpty() && modDirectories.IsEmpty() )
+	{
+		vsLog("Pristine Data:  YES");
+	}
+	else
+	{
+		vsLog("Pristine Data:  NO");
+
+		if ( !unpackedDataDirectories.IsEmpty() )
+		{
+			vsLog("> Unpacked data directories:");
+			for ( int i = 0; i < unpackedDataDirectories.ItemCount(); i++ )
+				vsLog(">   + %s", unpackedDataDirectories[i]);
+			vsLog(">");
+		}
+		if ( !modDirectories.IsEmpty() )
+		{
+			vsLog("> Mods:");
+			for ( int i = 0; i < modDirectories.ItemCount(); i++ )
+				vsLog(">   + %s", modDirectories[i]);
+			vsLog(">");
+		}
+	}
 }
 

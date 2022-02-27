@@ -44,7 +44,7 @@ bool				core::s_allowExit = true;
 void
 core::Init( size_t mainMemorySize )
 {
-	vsSystem::Instance()->Init(false);
+	vsSystem::Instance()->Init();
 
 	s_gameHeap = new vsHeap("game",mainMemorySize);
 }
