@@ -29,6 +29,7 @@
 
 #define PHYSFS_writeBytes(file, bytes, count) PHYSFS_write(file, bytes, 1, count)
 #define PHYSFS_readBytes(file, bytes, count) PHYSFS_read(file, bytes, 1, count)
+#define PHYSFS_unmount(x) PHYSFS_removeFromSearchPath(x)
 
 	// Additionally, in PhysFS 2.1.0 a whole bunch of file query functions got
 	// removed and replaced by a single "Stat" function that fetches a whole
