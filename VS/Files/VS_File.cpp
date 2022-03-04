@@ -92,6 +92,10 @@ namespace
 		{
 			out.erase(0,5);
 		}
+		if ( 0 == out.find("base/") )
+		{
+			out.erase(0,5);
+		}
 		return out;
 	}
 };
