@@ -440,6 +440,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	printAttributes();
 
+	vsLog("Post printAttributes");
 	m_widthPixels = width;
 	m_heightPixels = height;
 	m_currentViewportPixels.Set(
@@ -447,12 +448,17 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 			vsVector2D( m_widthPixels, m_heightPixels )
 			);
 #ifdef HIGHDPI_SUPPORTED
+	vsLog("HighDPI Supported?");
 	if ( flags & Flag_HighDPI )
 		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+	vsLog("Post HighDPI Supported?");
 #endif
+	vsLog("SetWindowTitlePre");
 	// SDL_SetWindowMinimumSize(g_sdlWindow, 1024, 768);
 	SDL_SetWindowTitle( g_sdlWindow, vsSystem::Instance()->GetTitle().c_str() );
+	vsLog("SetWindowTitlePost");
 
+	vsLog("GetDoubleBuffered");
 	int isDoubleBuffered = 0;
 	SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &isDoubleBuffered );
 	if (!isDoubleBuffered)

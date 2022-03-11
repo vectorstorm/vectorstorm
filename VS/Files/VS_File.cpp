@@ -34,6 +34,10 @@
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
 
+#include <filesystem>
+
+#include "Utils/utfcpp/utf8.h"
+
 // #define PROFILE_FILE_SYSTEM
 #ifdef PROFILE_FILE_SYSTEM
 
@@ -502,22 +506,49 @@ vsFile::Copy( const vsString &from, const vsString &to )
 }
 
 bool
-vsFile::Move( const vsString &from, const vsString &to )
+vsFile::Move( const vsString &from, const vsString &to_in )
 {
 	if ( !vsFile::Exists(from) )
 		return false;
+	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
 
-	vsFile *f = new vsFile(from);
-	vsStore s( f->GetLength() );
-	f->Store(&s);
-	vsDelete(f);
+#ifdef _WIN32
+	// BAH ON BOTH YOUR HOUSES
 
-	vsFile::Delete(from);
+	// std::filesystem::rename magically wants filepaths to be expressed in
+	// wchar_t UTF-16 on this platform because of course it does.
 
-	vsFile t(to, vsFile::MODE_WriteDirectly);
-	t.Store(&s);
+	std::u16string f = utf8::utf8to16(GetFullFilename(from));
+	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
 
+#else
+	vsString f = GetFullFilename(from);
+	vsString t = PHYSFS_getWriteDir() + to;
+
+#endif
+
+	try
+	{
+		std::filesystem::rename( f, t );
+	}
+	catch( std::exception &e )
+	{
+		vsLog("Rename error: %s", e.what());
+		return false;
+	}
 	return true;
+
+	// vsFile *f = new vsFile(from);
+	// vsStore s( f->GetLength() );
+	// f->Store(&s);
+	// vsDelete(f);
+    //
+	// vsFile::Delete(from);
+    //
+	// vsFile t(to, vsFile::MODE_WriteDirectly);
+	// t.Store(&s);
+    //
+	// return true;
 }
 
 bool
