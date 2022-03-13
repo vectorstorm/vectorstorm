@@ -10,6 +10,8 @@
 #ifndef VS_BACKTRACE_H
 #define VS_BACKTRACE_H
 
+extern vsString g_crashReportFile;
+
 void vsInstallBacktraceHandler();
 void vsBacktrace();
 

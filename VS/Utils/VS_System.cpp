@@ -23,6 +23,7 @@
 #include "VS_File.h"
 #include "VS_ShaderCache.h"
 #include "VS_ShaderUniformRegistry.h"
+#include "VS_Backtrace.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -339,6 +340,12 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_mountpoints.AddItem(m_dataDirectory+"VS.zip");
 	m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
 	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
+
+#ifdef __APPLE_CC__
+	g_crashReportFile = PHYSFS_getWriteDir();
+	g_crashReportFile += "crash.rpt";
+	vsLog("Setting crash logs to be saved to %s", g_crashReportFile);
+#endif //__APPLE_CC__
 }
 
 void
