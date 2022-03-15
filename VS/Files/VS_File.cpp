@@ -533,8 +533,33 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 	}
 	catch( std::exception &e )
 	{
-		vsLog("Rename error: %s", e.what());
-		return false;
+		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
+		// to trying to delete and move.
+		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
+		try
+		{
+			std::filesystem::remove(t);
+			std::filesystem::rename( f, t );
+		}
+		catch( std::exception &ee )
+		{
+			// okay, that failed too for some reason.  Just do a manual copy.
+			vsLog("Remove and rename error: \"%s\"", ee.what());
+
+			vsLog("Trying manual copy instead...");
+			vsFile *f = new vsFile(from);
+			vsStore s( f->GetLength() );
+			f->Store(&s);
+			vsDelete(f);
+
+			vsFile::Delete(from);
+
+			vsFile t(to, vsFile::MODE_WriteDirectly);
+			t.Store(&s);
+
+			return true;
+
+		}
 	}
 	return true;
 
