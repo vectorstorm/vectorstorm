@@ -62,12 +62,6 @@ enum StencilOp
 	STENCILOP_MAX
 };
 
-struct TextureBinding
-{
-	int textureSlot;
-	vsTexture *texture;
-};
-
 class vsMaterialInternal : public vsResource
 {
 	void		SetShader();

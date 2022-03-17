@@ -17,6 +17,11 @@ vsShaderValues::vsShaderValues():
 	m_parent(nullptr),
 	m_value(16)
 {
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = nullptr;
+		m_textureSet[i] = false;
+	}
 }
 
 vsShaderValues::vsShaderValues( const vsShaderValues& other ):
@@ -30,6 +35,11 @@ vsShaderValues::vsShaderValues( const vsShaderValues& other ):
 		const vsIntHashEntry<Value> *v = other.m_value.GetHashEntry(i);
 
 		m_value[v->m_key] = v->m_item;
+	}
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = other.m_texture[i];
+		m_textureSet[i] = other.m_textureSet[i];
 	}
 }
 
@@ -402,11 +412,54 @@ vsShaderValues::UniformMat4( uint32_t uid, vsMatrix4x4& out ) const
 	return true;
 }
 
+vsTexture *
+vsShaderValues::GetTextureOverride( int i )
+{
+	if ( m_textureSet[i] )
+		return m_texture[i];
+	else if ( m_parent )
+		return m_parent->GetTextureOverride(i);
+
+	return nullptr;
+}
+
+bool
+vsShaderValues::HasTextureOverride( int i ) const
+{
+	if ( m_textureSet[i] )
+		return true;
+	else if ( m_parent )
+		return m_parent->HasTextureOverride(i);
+	return false;
+}
+
+const vsShaderValues&
+vsShaderValues::operator=( const vsShaderValues& other )
+{
+	int valueCount = other.m_value.GetHashEntryCount();
+	m_value.Clear();
+
+	for ( int i = 0; i < valueCount; i++ )
+	{
+		const vsIntHashEntry<Value> *v = other.m_value.GetHashEntry(i);
+
+		m_value[v->m_key] = v->m_item;
+	}
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		m_texture[i] = other.m_texture[i];
+		m_textureSet[i] = other.m_textureSet[i];
+	}
+	return *this;
+}
+
 bool
 vsShaderValues::operator==( const vsShaderValues& other ) const
 {
 	if ( m_parent != other.m_parent )
 		return false;
+
+	// we should also check our texture bindings here
 
 	return m_value == other.m_value;
 	// now check the values.

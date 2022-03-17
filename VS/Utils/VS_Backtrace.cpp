@@ -160,15 +160,24 @@ void vsInstallBacktraceHandler()
 
 #include "VS/Files/VS_File.h"
 
+vsString g_crashReportFile = "crash.rpt";
+
 void vsBacktrace()
 {
 	void *array[20];
 	size_t size;
 
+	printf("Backtracing!");
+
 	// get void*'s for all entries on the stack
 	size = backtrace(array, 20);
 
-	FILE* f = fopen("crash.rpt", "w");
+	FILE* f = fopen(g_crashReportFile.c_str(), "w");
+	if ( f )
+		printf("opened file %s!", g_crashReportFile.c_str());
+	else
+		printf("FAILED TO OPEN file %s!", g_crashReportFile.c_str());
+
 	fprintf(f, "Caught signal: %d\n", g_signal);
 	backtrace_symbols_fd(array, size, fileno(f));
 	backtrace_symbols_fd(array, size, STDERR_FILENO);

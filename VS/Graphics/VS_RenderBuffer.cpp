@@ -391,7 +391,7 @@ vsRenderBuffer::BindAsTexture()
 	}
 	else if ( m_contentType == ContentType_ColorPacked )
 	{
-		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, m_bufferID);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA8, m_bufferID);
 	}
 	else if ( m_contentType == ContentType_UInt16 )
 	{

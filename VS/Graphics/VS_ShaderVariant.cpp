@@ -776,9 +776,8 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			case GL_SAMPLER_BUFFER:
 				{
 					int b = 0;
-					// TODO:  Expose samplers through shadervalue objects, maybe?
-					// if ( material->GetShaderValues()->UniformI( m_uniform[i].uid, b) )
-					material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
+						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
 					SetUniformValueI( i, b );
 					break;
 				}
@@ -786,14 +785,15 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					GL_CHECK_SCOPED("UnsignedInt");
 					int b = 0;
-					material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
-					uint32_t ui = (uint32_t)b; // TODO: make less horrible
+					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
+						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					uint32_t ui = (uint32_t)b; // [TODO] make less horrible
 					SetUniformValueUI( i, ui );
 					break;
 				}
 
 			default:
-				// TODO:  Handle more uniform types
+				// [TODO]  Handle more uniform types
 				break;
 		}
 	}

@@ -14,6 +14,8 @@
 #include "Core.h"
 #include "CORE_Game.h"
 
+#include "VS_PhysFS.h"
+
 #if defined(UNIX)
 #include <dirent.h>
 #include <sys/stat.h>
@@ -25,13 +27,16 @@
 #include <SDL2/SDL_filesystem.h>
 
 #include <errno.h>
-#include <physfs.h>
 #include <zlib.h>
 
 #include "VS_DisableDebugNew.h"
 #include <vector>
 #include <algorithm>
 #include "VS_EnableDebugNew.h"
+
+#include <filesystem>
+
+#include "Utils/utfcpp/utf8.h"
 
 // #define PROFILE_FILE_SYSTEM
 #ifdef PROFILE_FILE_SYSTEM
@@ -76,147 +81,33 @@ namespace {
 #endif
 
 
-// PhysFS made a bunch of changes to its interface in version 2.1.0.  Let's
-// check what version of PhysFS we're compiling against and create the necessary
-// glue code to make everything work.
-//
-// Our goal here is for the code in this file to exclusively be using the
-// MODERN interfaces (i.e.: v2.1+), but to provide glue code so that those
-// running older versions of the library (i.e.: me, in all my Steam builds) can
-// still compile and run.
-
-#if PHYSFS_VER_MAJOR < 2 || (PHYSFS_VER_MAJOR == 2 && PHYSFS_VER_MINOR < 1)
-
-	// We're in a PhysFS version before 2.1.0.  This means that
-	// PHYSFS_writeBytes() and PHYSFS_readBytes() don't exist yet, so let's
-	// make them!
-
-#define PHYSFS_writeBytes(file, bytes, count) PHYSFS_write(file, bytes, 1, count)
-#define PHYSFS_readBytes(file, bytes, count) PHYSFS_read(file, bytes, 1, count)
-
-	// Additionally, in PhysFS 2.1.0 a whole bunch of file query functions got
-	// removed and replaced by a single "Stat" function that fetches a whole
-	// lot of file status data in a single go.  Stat doesn't exist yet in
-	// versions before 2.1.0, so let's make one!
-
-	// in 2.1.0 there are more filetypes than these, but for now this is all I
-	// need for compatibility purposes.
-	enum PHYSFS_FileType
-	{
-		PHYSFS_FILETYPE_REGULAR,
-		PHYSFS_FILETYPE_DIRECTORY
-	};
-	struct PHYSFS_Stat
-	{
-		PHYSFS_sint64 filesize;
-		PHYSFS_sint64 modtime;
-		// PHYSFS_sint64 createtime; // no way to get these values in <2.1.0
-		// PHYSFS_sint64 accesstime;
-		PHYSFS_FileType filetype;
-		// int readonly;
-	};
-
-	int PHYSFS_stat( const char* filename, PHYSFS_Stat* stat )
-	{
-		if ( !PHYSFS_exists(filename) )
-			return 0;
-		if ( PHYSFS_isDirectory(filename) )
-		{
-			stat->filetype = PHYSFS_FILETYPE_DIRECTORY;
-		}
-		else
-		{
-			PHYSFS_File *file = PHYSFS_openRead( filename );
-			if ( file != nullptr )
-			{
-				stat->filetype = PHYSFS_FILETYPE_REGULAR;
-				stat->filesize = PHYSFS_fileLength(file);
-				PHYSFS_close(file);
-			}
-			else
-			{
-				vsAssert(false, vsFormatString("No clue what file type this is: %s", filename));
-				return 0;
-			}
-		}
-		stat->modtime = PHYSFS_getLastModTime(filename);
-		return 1;
-	}
-
-	// Okay.  This is ugly.  In v2.1.0, PhysFS went from "getLastError()" which
-	// returned a string, to "getLastErrorCode()" which returned an integer,
-	// and "getErrorByCode()" which would convert the integer into a string.
-	//
-	// This is a really good change because it means that errors can be
-	// localised into other languages.  But it's really inconvenient because
-	// those functions don't exist before v2.1.0, and so we can't create them
-	// ourselves, the way that we did for those other new functions.
-
-	// So we're going to be absurd and evil in our glue code.  Hold my drink.
-
-	enum PHYSFS_ErrorCode
-	{
-		PHYSFS_ERR_OK,
-		PHYSFS_ERR_VERYNOTOK
-	};
-	PHYSFS_ErrorCode PHYSFS_getLastErrorCode()
-	{
-		if ( PHYSFS_getLastError() == nullptr )
-			return PHYSFS_ERR_OK; // no error.
-
-		return PHYSFS_ERR_VERYNOTOK;
-		// So if there's an error string, we're going to return non-0, which
-		// code will correctly interpret as being an error code.  Nothing here
-		// actually understands these codes right now, so it's safe for us
-		// to just return an arbitrary non-0 amount.
-	}
-
-	const char* PHYSFS_getErrorByCode(int code)
-	{
-		return PHYSFS_getLastError();
-		//
-		// Hey look, they've asked us to translate the "error code" we gave them
-		// in getLastErrorCode().  That code was meaningless, but let's just give
-		// them the actual error string that PhysFS has given us.
-		//
-		// So normal code will go:
-		//
-		//     if ( getLastErrorCode() )
-		//       Report( getErrorByCode( getLastErrorCode() ) );
-		//
-		// Or something like that.  And this approach works for that!
-		//
-		// Yeah this will break if anybody's doing something clever, such as
-		// saving off an error code and looking it up later, but for all the
-		// usage in this file right now, it'll be fine.
-		//
-		// But really, people should upgrade to 2.1.0 or later, so they don't need
-		// to use this slightly-fragile hack.
-		//
-		// And by 'people', I mean 'me'.
-		//
-	}
-
-#endif
-
-// utility function, mimicking the behaviour of deprecated PHYSFS_getLastError().
-const char* PHYSFS_getLastErrorString()
-{
-	PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
-	if ( code != PHYSFS_ERR_OK )
-		return PHYSFS_getErrorByCode(code);
-	return nullptr;
-}
 
 struct zipdata
 {
 	z_stream m_zipStream;
 };
 
+namespace
+{
+	vsString MakeWriteFilename( const vsString& in )
+	{
+		vsString out(in);
+		if ( 0 == out.find("user/") )
+		{
+			out.erase(0,5);
+		}
+		if ( 0 == out.find("base/") )
+		{
+			out.erase(0,5);
+		}
+		return out;
+	}
+};
+
 static vsFile::openFailureHandler s_openFailureHandler = nullptr;
 
-vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
-	m_filename(filename),
+vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
+	m_filename(filename_in),
 	m_tempFilename(),
 	m_file(nullptr),
 	m_compressedStore(nullptr),
@@ -226,6 +117,16 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 	m_length(0),
 	m_moveOnDestruction(false)
 {
+	vsString filename(filename_in);
+
+	if ( mode == MODE_Write || mode == MODE_WriteDirectly || mode == MODE_WriteCompressed )
+	{
+		// Convert our 'user/' filename into a write directory-relative path.
+		vsAssert(0 == filename.find("user/"), "Trying to write into a file that's not in 'user/'??");
+
+		filename = MakeWriteFilename(filename_in);
+	}
+
 	// vsAssert( !DirectoryExists(filename), vsFormatString("Attempted to open directory '%s' as a plain file", filename.c_str()) );
 
 	if ( (mode == MODE_Read || mode == MODE_ReadCompressed) &&
@@ -250,12 +151,12 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			// then move it into position when the file is closed.  We do this so
 			// that crashes in the middle of file writing don't obliterate the
 			// original file (if any), or leave a half-written file.
-			m_tempFilename = vsFormatString("tmp/%s", m_filename.c_str());
+			m_tempFilename = vsFormatString("user/tmp/%s", filename.c_str());
 			vsString directoryOnly = m_tempFilename;
 			size_t separator = directoryOnly.rfind("/");
 			directoryOnly.erase(separator);
 			EnsureWriteDirectoryExists(directoryOnly);
-			m_file = PHYSFS_openWrite( m_tempFilename.c_str() );
+			m_file = PHYSFS_openWrite( MakeWriteFilename(m_tempFilename).c_str() );
 			m_moveOnDestruction = true;
 
 			m_store = new vsStore( 1024 * 1024 );
@@ -386,7 +287,7 @@ vsFile::vsFile( const vsString &filename, vsFile::Mode mode ):
 			ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
-				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", m_filename, ret );
+				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", filename, ret );
 				return;
 			}
 
@@ -585,7 +486,7 @@ vsFile::Delete( const vsString &filename ) // static method
 	if ( DirectoryExists(filename) ) // This file is a directory, don't delete it!
 		return false;
 
-	return PHYSFS_delete(filename.c_str()) != 0;
+	return PHYSFS_delete( MakeWriteFilename(filename).c_str() ) != 0;
 }
 
 bool
@@ -605,22 +506,74 @@ vsFile::Copy( const vsString &from, const vsString &to )
 }
 
 bool
-vsFile::Move( const vsString &from, const vsString &to )
+vsFile::Move( const vsString &from, const vsString &to_in )
 {
 	if ( !vsFile::Exists(from) )
 		return false;
+	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
 
-	vsFile *f = new vsFile(from);
-	vsStore s( f->GetLength() );
-	f->Store(&s);
-	vsDelete(f);
+#ifdef _WIN32
+	// BAH ON BOTH YOUR HOUSES
 
-	vsFile::Delete(from);
+	// std::filesystem::rename magically wants filepaths to be expressed in
+	// wchar_t UTF-16 on this platform because of course it does.
 
-	vsFile t(to, vsFile::MODE_WriteDirectly);
-	t.Store(&s);
+	std::u16string f = utf8::utf8to16(GetFullFilename(from));
+	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
 
+#else
+	vsString f = GetFullFilename(from);
+	vsString t = PHYSFS_getWriteDir() + to;
+
+#endif
+
+	try
+	{
+		std::filesystem::rename( f, t );
+	}
+	catch( std::exception &e )
+	{
+		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
+		// to trying to delete and move.
+		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
+		try
+		{
+			std::filesystem::remove(t);
+			std::filesystem::rename( f, t );
+		}
+		catch( std::exception &ee )
+		{
+			// okay, that failed too for some reason.  Just do a manual copy.
+			vsLog("Remove and rename error: \"%s\"", ee.what());
+
+			vsLog("Trying manual copy instead...");
+			vsFile *f = new vsFile(from);
+			vsStore s( f->GetLength() );
+			f->Store(&s);
+			vsDelete(f);
+
+			vsFile::Delete(from);
+
+			vsFile t(to, vsFile::MODE_WriteDirectly);
+			t.Store(&s);
+
+			return true;
+
+		}
+	}
 	return true;
+
+	// vsFile *f = new vsFile(from);
+	// vsStore s( f->GetLength() );
+	// f->Store(&s);
+	// vsDelete(f);
+    //
+	// vsFile::Delete(from);
+    //
+	// vsFile t(to, vsFile::MODE_WriteDirectly);
+	// t.Store(&s);
+    //
+	// return true;
 }
 
 bool
@@ -631,22 +584,22 @@ vsFile::DeleteEmptyDirectory( const vsString &filename )
 	// Note that PHYSFS_delete will return an error if we
 	// try to delete a non-empty directory.
 	//
-	if ( DirectoryExists(filename) )
-		return PHYSFS_delete(filename.c_str()) != 0;
+	if ( DirectoryExists(filename) ) // This directory exists?
+		return PHYSFS_delete(MakeWriteFilename(filename).c_str()) != 0;
 	return false;
 }
 
 bool
 vsFile::DeleteDirectory( const vsString &filename )
 {
-	if ( DirectoryExists(filename) )
+	if ( DirectoryExists(filename) ) // This directory exists?
 	{
 		vsArray<vsString> files;
-        DirectoryContents(&files, filename);
+		DirectoryContents(&files, filename);
 		for ( int i = 0; i < files.ItemCount(); i++ )
 		{
 			vsString ff = vsFormatString("%s/%s", filename.c_str(), files[i].c_str());
-			if ( vsFile::DirectoryExists( ff ) )
+			if ( vsFile::DirectoryExists(ff) )
 			{
 				// it's a directory;  remove it!
 				DeleteDirectory( ff );
@@ -791,13 +744,13 @@ vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName
 }
 
 void
-vsFile::EnsureWriteDirectoryExists( const vsString &writeDirectoryName ) // static method
+vsFile::EnsureWriteDirectoryExists( const vsString &directoryName ) // static method
 {
-	if ( !DirectoryExists(writeDirectoryName) )
+	if ( !DirectoryExists(directoryName) )
 	{
-		int mkdirResult = PHYSFS_mkdir( writeDirectoryName.c_str() );
+		int mkdirResult = PHYSFS_mkdir( MakeWriteFilename(directoryName).c_str() );
 		vsAssert( mkdirResult != 0, vsFormatString("Failed to create directory '%s%s%s': %s",
-				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), writeDirectoryName.c_str(), PHYSFS_getLastErrorString()) );
+				PHYSFS_getWriteDir(), PHYSFS_getDirSeparator(), directoryName.c_str(), PHYSFS_getLastErrorString()) );
 	}
 }
 
@@ -1172,35 +1125,18 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	return filename_in;
 #endif
 
-#if TARGET_OS_IPHONE
-	vsString filename = filename_in;
-
-	// find the slash, if any.
-	int pos = filename.rfind("/");
-	if ( pos != vsString::npos )
-	{
-		filename.erase(0,pos+1);
-	}
-
-	vsString result = vsFormatString("./%s",filename.c_str());
-	return result;
-#else
 	vsString filename(filename_in);
 	const char* physDir = PHYSFS_getRealDir( filename.c_str() );
+	filename = MakeWriteFilename( filename ); // make sure we pull out the virtual 'user' folder if any!
+
 	if ( physDir )
 	{
 		vsString dir(physDir);
 
 		return dir + filename;
-// #if defined(_WIN32)
-// 		return dir + "\\" + filename;
-// #else
-// 		return dir + "/" + filename;
-// #endif
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;
-#endif
 }
 
 

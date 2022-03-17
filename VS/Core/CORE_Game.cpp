@@ -44,7 +44,7 @@ coreGame::Init()
 {
 	const vsString &name = coreGameRegistry::GetGameName(this);
 	vsLog(" -- Initialising game \"%s\"", name.c_str());
-	vsSystem::Instance()->EnableGameDirectory( name );
+	vsSystem::Instance()->EnableGameDirectory( name, true );
 	vsSystem::Instance()->SetWindowCaption( name );
 	vsSystem::Instance()->InitGameData();
 	vsScreen::Instance()->CreateScenes(m_sceneCount);	// just one layer for now

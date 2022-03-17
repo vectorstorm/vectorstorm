@@ -96,6 +96,12 @@ public:
 
 	~vsIntHashTable()
 	{
+		Clear();
+		vsDeleteArray( m_bucket );
+	}
+
+	void Clear()
+	{
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
 			while ( m_bucket[i].m_next )
@@ -106,7 +112,6 @@ public:
 				vsDelete( toDelete );
 			}
 		}
-		vsDeleteArray( m_bucket );
 	}
 
 	void	AddItemWithKey( const T &item, uint32_t key)
