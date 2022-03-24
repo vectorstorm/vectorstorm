@@ -20,6 +20,9 @@ option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
 option( VS_TOOL "Various adjustments for tool (non-game) support" NO )
 option( VS_PRISTINE_BINDINGS "If enabled, we clear bindings after using them" NO )
 option( VS_TRACY "If enabled, support remote profiling via tracy" NO )
+if ( APPLE )
+	option(VS_APPBUNDLE "Build in app bundle" YES)
+endif()
 
 # If we have a choice between legacy libgl.so and more modern
 # libOpenGL.so (the "GL Vendor-Neutral Dispatch" library), let's

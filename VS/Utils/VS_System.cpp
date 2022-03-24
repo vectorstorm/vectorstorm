@@ -24,6 +24,7 @@
 #include "VS_ShaderCache.h"
 #include "VS_ShaderUniformRegistry.h"
 #include "VS_Backtrace.h"
+#include "VS_Config.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -311,7 +312,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 
 	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
 
-#if defined(__APPLE_CC__)
+#if defined(__APPLE_CC__) && defined(VS_APPBUNDLE)
 	// loading out of an app bundle, so use that data directory
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data/";
 #elif defined(_DEBUG) && defined(_WIN32)
