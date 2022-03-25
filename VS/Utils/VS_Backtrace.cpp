@@ -22,7 +22,7 @@
 
 void vsBacktrace()
 {
-	vsFile f("crash.rpt", vsFile::MODE_WriteDirectly);
+	vsFile f("user/crash.rpt", vsFile::MODE_WriteDirectly);
 
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = GetCurrentThread();
