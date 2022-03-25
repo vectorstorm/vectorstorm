@@ -359,6 +359,7 @@ vsSystem::SetCurrentGameName( const vsString& name, bool trace )
 void
 vsSystem::_DoRemountConfiguredPhysFSVolumes()
 {
+	vsLog("==vsSystem::_DoRemountConfiguredPhysFSVolumes");
 	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
 	{
 		_DoUnmount( m_mountedpoints[i] );
@@ -372,6 +373,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 			m_mountedpoints.AddItem( m_mountpoints[i] );
 		}
 	}
+	vsLog("==vsSystem::_DoRemountConfiguredPhysFSVolumes complete");
 }
 
 bool
@@ -381,10 +383,10 @@ vsSystem::_DoMount( const Mount& m, bool trace )
 	if ( !success )
 	{
 		PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
-		vsLog("Failed to mount %s: %s (%d)", m.filepath, PHYSFS_getErrorByCode(ec), ec );
+		vsLog(">  not mounting %s to %s: %s (%d)", m.filepath, m.mount, PHYSFS_getErrorByCode(ec), ec );
 		return false;
 	}
-	vsLog("Mounted %s", m.filepath);
+	vsLog("Mounted '%s' to '%s'", m.filepath, m.mount);
 	return true;
 }
 
