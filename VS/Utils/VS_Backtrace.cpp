@@ -22,7 +22,11 @@
 
 void vsBacktrace()
 {
-	vsFile f("user/crash.rpt", vsFile::MODE_WriteDirectly);
+	FILE* f = fopen("crash.rpt", "w");
+	if ( f )
+		printf("opened file crash.rpt!");
+	else
+		printf("FAILED TO OPEN file crash.rpt!");
 
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = GetCurrentThread();
@@ -83,15 +87,16 @@ void vsBacktrace()
 		// vsString s = vsFormatString("[%d] %x\n", i, (unsigned int)stackframe.AddrPC.Offset);
 		char strin[2000];
 		sprintf(strin, "[%i] %#010x\n", i, (unsigned int)stackframe.AddrPC.Offset);
-		f.WriteBytes( strin, strlen(strin) );
+		fwrite( strin, 1, strlen(strin), f );
 
 		// DWORD64 displacement = 0;
 		// if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
 		// 	printf("[%i] %s\n", i, symbol->Name);
 		// } else {
-			printf(strin);
+			// printf(strin);
 		// }
 
+		fclose(f);
 	}
 
 	SymCleanup(process);
