@@ -243,6 +243,16 @@ public:
 	{
 		return GetItem(id);
 	}
+	const T& Random() const
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
+	}
+
+	T Random()
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
+	}
+
 
 	static const int npos = -1;
 };

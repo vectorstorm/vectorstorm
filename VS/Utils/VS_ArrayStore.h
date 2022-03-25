@@ -277,6 +277,16 @@ public:
 	{
 		return GetItem(id);
 	}
+	const T& Random() const
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
+	}
+
+	T Random()
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
+	}
+
 
 	void Sort( SortFunction lessThanFn )
 	{

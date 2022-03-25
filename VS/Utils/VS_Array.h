@@ -12,6 +12,7 @@
 #define VS_ARRAY_H
 
 #include "VS/Utils/VS_Demangle.h"
+#include "VS/Math/VS_Random.h"
 
 template<class T> class vsArray;
 
@@ -308,6 +309,16 @@ public:
 				}
 			}
 		}
+	}
+
+	const T& Random() const
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
+	}
+
+	T Random()
+	{
+		return operator[]( vsRandom::GetInt( ItemCount() ) );
 	}
 
 	static const int npos = -1;
