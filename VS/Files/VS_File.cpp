@@ -516,7 +516,9 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 	// BAH ON BOTH YOUR HOUSES
 
 	// std::filesystem::rename magically wants filepaths to be expressed in
-	// wchar_t UTF-16 on this platform because of course it does.
+	// wchar_t UTF-16 on this platform because of course it does.  And
+	// make_preferred() doesn't do that automatically, so we have to do
+	// it ourselves in here in an ifdef.
 
 	std::u16string f = utf8::utf8to16(GetFullFilename(from));
 	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
@@ -527,22 +529,32 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 
 #endif
 
+	std::filesystem::path fp(f);
+	std::filesystem::path tp(t);
+	fp.make_preferred();
+	tp.make_preferred();
+
+	// std::string fps = fp.string();
+
+	// vsLog("From: %s", GetFullFilename(from));
+	// vsLog("FromPath: %s", fp.string());
+	// vsLog("To: %s", PHYSFS_getWriteDir() + to);
+	// vsLog("ToPath: %s", tp.string());
+
 	try
 	{
-		std::filesystem::rename( f, t );
+		std::filesystem::rename( fp, tp );
 	}
 	catch( std::exception &e )
 	{
 		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
 		// to trying to delete and move.
-		vsLog("While attempting rename: %s -> %s",
-				GetFullFilename(from),
-				PHYSFS_getWriteDir() + to);
+		vsLog("While attempting rename: %s -> %s", fp.string(), tp.string());
 		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
 		try
 		{
-			std::filesystem::remove(t);
-			std::filesystem::rename( f, t );
+			std::filesystem::remove( tp );
+			std::filesystem::rename( fp, tp );
 		}
 		catch( std::exception &ee )
 		{
@@ -567,18 +579,6 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 		}
 	}
 	return true;
-
-	// vsFile *f = new vsFile(from);
-	// vsStore s( f->GetLength() );
-	// f->Store(&s);
-	// vsDelete(f);
-    //
-	// vsFile::Delete(from);
-    //
-	// vsFile t(to, vsFile::MODE_WriteDirectly);
-	// t.Store(&s);
-    //
-	// return true;
 }
 
 bool
