@@ -277,12 +277,12 @@ public:
 	{
 		return GetItem(id);
 	}
-	const T& Random() const
+	const T*& Random() const
 	{
 		return operator[]( vsRandom::GetInt( ItemCount() ) );
 	}
 
-	T Random()
+	T* Random()
 	{
 		return operator[]( vsRandom::GetInt( ItemCount() ) );
 	}
