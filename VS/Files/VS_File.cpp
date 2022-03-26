@@ -535,6 +535,9 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 	{
 		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
 		// to trying to delete and move.
+		vsLog("While attempting rename: %s -> %s",
+				GetFullFilename(from),
+				PHYSFS_getWriteDir() + to);
 		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
 		try
 		{
@@ -554,7 +557,9 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 
 			vsFile::Delete(from);
 
-			vsFile t(to, vsFile::MODE_WriteDirectly);
+			// need to use the raw 'to_in' here so we still have the 'user' bit
+			// out in front
+			vsFile t(to_in, vsFile::MODE_WriteDirectly);
 			t.Store(&s);
 
 			return true;
