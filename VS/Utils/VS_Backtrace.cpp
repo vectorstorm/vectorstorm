@@ -95,9 +95,8 @@ void vsBacktrace()
 		// } else {
 			// printf(strin);
 		// }
-
-		fclose(f);
 	}
+	fclose(f);
 
 	SymCleanup(process);
 }
