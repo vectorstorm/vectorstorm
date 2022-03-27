@@ -198,11 +198,10 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 		}
 		else
 		{
+			vsString errorMsg = PHYSFS_getLastErrorString();
 			vsString errorFilename = filename;
 			if ( vsFile::Exists(errorFilename) )
 				errorFilename = GetFullFilename(filename);
-
-			vsString errorMsg = PHYSFS_getLastErrorString();
 
 			if ( s_openFailureHandler )
 				(*s_openFailureHandler)( errorFilename, errorMsg );
