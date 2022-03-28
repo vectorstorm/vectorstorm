@@ -214,6 +214,56 @@ vsTimerSystem::Update( float timeStep )
 	PROFILE("vsTimerSystem::Update");
 	UNUSED(timeStep);
 
+	uint64_t now = GetMicroseconds();
+
+	{
+		PROFILE("vsTimerSystem::Update");
+		int maxFPS = vsRenderer::Instance()->GetRefreshRate();
+
+		uint64_t desiredTicksPerRound = 1000000 / maxFPS;
+		uint64_t minTicksPerRound = desiredTicksPerRound / 2;// close enough
+
+		uint64_t roundTime = now - m_startCpu;
+
+		// slow down our frame rate by a lot, if our window isn't visible.
+		// if ( !vsSystem::Instance()->AppIsVisible() )
+		// {
+		// 	minTicksPerRound = 160000;
+		// 	desiredTicksPerRound = 160000;
+		// }
+
+		if ( roundTime > 100000 )	// probably hit a breakpoint or something
+			roundTime = m_startCpu = now - desiredTicksPerRound;
+
+		if ( roundTime < minTicksPerRound )
+		{
+#if ENFORCE_FPS_MAXIMUM
+			PROFILE("vsTimerSystem::EnforceFPSMaximum");
+			int delayTicks = (desiredTicksPerRound-roundTime)/1000;
+			// vsLog("Delaying %d ticks.", delayTicks);
+			SDL_Delay(delayTicks);
+			now = GetMicroseconds();
+			roundTime = now - m_startCpu;
+#endif
+		}
+
+		float actualTimeStep = (roundTime) / 1000000.0f;
+		if ( m_firstFrame )	// first frame.
+		{
+			actualTimeStep = MIN_TIME_PER_FRAME;
+			m_firstFrame = false;
+		}
+		if ( actualTimeStep > MAX_TIME_PER_FRAME )
+		{
+			actualTimeStep = MAX_TIME_PER_FRAME;
+			m_missedFrames++;
+		}
+
+		core::GetGame()->SetTimeStep( actualTimeStep );
+
+		m_startCpu = now;
+	}
+
 	if ( vsScreen::Instance()->Resized() )
 	{
 #if defined(DEBUG_TIMING_BAR)
@@ -223,61 +273,6 @@ vsTimerSystem::Update( float timeStep )
 #endif // DEBUG_TIMING_BAR
 	}
 
-	{
-		PROFILE("Stuff");
-	//	uint64_t now = SDL_GetTicks();
-	uint64_t now = GetMicroseconds();
-
-	int maxFPS = vsRenderer::Instance()->GetRefreshRate();
-
-	uint64_t desiredTicksPerRound = 1000000 / maxFPS;
-	uint64_t minTicksPerRound = desiredTicksPerRound - 1000; // close enough
-
-	uint64_t roundTime = now - m_startCpu;
-
-	// slow down our frame rate by a lot, if our window isn't visible.
-	if ( !vsSystem::Instance()->AppIsVisible() )
-	{
-		minTicksPerRound = 160000;
-		desiredTicksPerRound = 160000;
-	}
-
-	if ( roundTime > 100000 )	// probably hit a breakpoint or something
-		roundTime = m_startCpu = now - desiredTicksPerRound;
-
-	if ( roundTime < minTicksPerRound )
-	{
-#if ENFORCE_FPS_MAXIMUM
-		PROFILE("vsTimerSystem::EnforceFPSMaximum");
-		int delayTicks = (desiredTicksPerRound-roundTime)/1000;
-		// vsLog("Delaying %d ticks.\n", delayTicks);
-		SDL_Delay(delayTicks);
-		now = GetMicroseconds();
-		roundTime = now - m_startCpu;
-#endif
-	}
-
-	if ( roundTime < 1000 )
-	{
-		// less than a millisecond between frames?  Looks like we have a driver that's refusing to wait for a vsync!
-	}
-
-	float actualTimeStep = (roundTime) / 1000000.0f;
-	if ( m_firstFrame )	// first frame.
-	{
-		actualTimeStep = MIN_TIME_PER_FRAME;
-		m_firstFrame = false;
-	}
-	if ( actualTimeStep > MAX_TIME_PER_FRAME )
-	{
-		actualTimeStep = MAX_TIME_PER_FRAME;
-		m_missedFrames++;
-	}
-
-	core::GetGame()->SetTimeStep( actualTimeStep );
-
-	m_startCpu = now;
-	}
 }
 
 void
