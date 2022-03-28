@@ -324,10 +324,11 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			// and instead load data into a temporary buffer when we need more to
 			// finish some decompression.
 			//
-			m_compressedStore = new vsStore( m_length );
-			Store(m_compressedStore);
-			PHYSFS_close(m_file);
-			m_file = nullptr;
+			const uint32_t compressedBufferSize = 1024 * 100;
+			m_compressedStore = new vsStore( compressedBufferSize );
+			// Store(m_compressedStore);
+			// PHYSFS_close(m_file);
+			// m_file = nullptr;
 
 			m_zipData = new zipdata;
 			m_zipData->m_zipStream.zalloc = Z_NULL;
@@ -946,6 +947,27 @@ vsFile::ReadBytes( void* data, size_t bytes )
 	}
 	else if ( m_mode == MODE_ReadCompressed_Progressive )
 	{
+		// out of bytes to decompress;  load more!
+
+		if ( m_file )
+		{
+			m_compressedStore->EraseReadBytes();
+			int n = PHYSFS_readBytes( m_file,
+					m_compressedStore->GetWriteHead(),
+					m_compressedStore->BytesLeftForWriting() );
+			m_compressedStore->AdvanceWriteHead(n);
+
+			// did we hit the end?
+			if ( n < m_compressedStore->BytesLeftForWriting() )
+			{
+				PHYSFS_close( m_file );
+				m_file = nullptr;
+			}
+		}
+
+		m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
+		m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
+
 		m_zipData->m_zipStream.avail_out = bytes;
 		m_zipData->m_zipStream.next_out = (Bytef*)data;
 		int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
@@ -955,6 +977,10 @@ vsFile::ReadBytes( void* data, size_t bytes )
 		// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
 		// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
 		vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+
+		uint32_t compressedBytesDecompressed =
+			m_compressedStore->BytesLeftForReading() - m_zipData->m_zipStream.avail_in;
+		m_compressedStore->AdvanceReadHead(compressedBytesDecompressed);
 
 		uint32_t decompressedBytes = bytes - m_zipData->m_zipStream.avail_out;
 
