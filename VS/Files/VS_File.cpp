@@ -320,6 +320,10 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			// variable, and are then going to set up a decompression buffer to load
 			// data into.
 			//
+			// [TODO] Maybe don't do a full load of the comrpessed data into memory
+			// and instead load data into a temporary buffer when we need more to
+			// finish some decompression.
+			//
 			m_compressedStore = new vsStore( m_length );
 			Store(m_compressedStore);
 			PHYSFS_close(m_file);
@@ -329,6 +333,14 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			m_zipData->m_zipStream.zalloc = Z_NULL;
 			m_zipData->m_zipStream.zfree = Z_NULL;
 			m_zipData->m_zipStream.opaque = Z_NULL;
+
+			// Now, we need to set up our zip stream
+			const uint32_t zipBufferSize = 1024 * 100;
+			m_store = new vsStore( zipBufferSize );
+			m_zipData->m_zipStream.avail_out = m_store->BytesLeftForWriting();
+			m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
+
+			// Now let's get set to decompress it FOR REAL.
 			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
@@ -336,45 +348,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				return;
 			}
 
-			// Now, we need to set up our zip stream
-			uint32_t decompressedSize = 0;
-			const uint32_t zipBufferSize = 1024 * 100;
-			char zipBuffer[zipBufferSize];
 			m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
 			m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
-			do
-			{
-				m_zipData->m_zipStream.avail_out = zipBufferSize;
-				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
-				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-				vsAssertF(ret != Z_DATA_ERROR, "File '%s' is corrupt on disk (zlib reports Z_DATA_ERROR)", filename);
-				vsAssertF(ret != Z_MEM_ERROR, "Out of memory loading file '%s' (zlib reports Z_MEM_ERROR)", filename);
-				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
-				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-				vsAssertF(ret != Z_VERSION_ERROR, "File '%s' is incompatible (zlib reports Z_VERSION_ERROR)", filename);
-
-				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
-				decompressedSize += decompressedBytes;
-
-			}while( m_zipData->m_zipStream.avail_out == 0 );
-			inflateEnd(&m_zipData->m_zipStream);
-
-			m_store = new vsStore( zipBufferSize );
-			m_zipData->m_zipStream.avail_out = m_store->BytesLeftForWriting();
-			m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
-
-			// Now let's get set to decompress it FOR REAL.
-			ret = inflateInit(&m_zipData->m_zipStream);
-			if ( ret != Z_OK )
-			{
-				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
-				return;
-			}
-
-			m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
-			m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
-			_PumpDecompression(); // grab some decompressed data
 		}
 	}
 }
@@ -1040,27 +1015,6 @@ vsFile::_WriteBytes( const void* bytes, size_t byteCount )
 	{
 		vsAssert(0, "Tried to write bytes when we're not in a 'write' mode??");
 	}
-}
-
-void
-vsFile::_PumpDecompression()
-{
-	// vsAssert( m_mode == MODE_ReadCompressed_Progressive, "Trying to pump decompression when we're not in ReadCompressed_Progressive mode??" );
-    //
-	// 	int spaceLeftBeforeDecompressing = m_store->BytesLeftForWriting();
-	// 	m_zipData->m_zipStream.avail_out = spaceLeftBeforeDecompressing;
-	// 	m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
-	// 	int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-	// 	vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered by deflate()");
-    //
-	// 	int spaceLeftAfterDecompressing = m_zipData->m_zipStream.avail_out;
-	// 	int decompressedBytes = spaceLeftBeforeDecompressing - spaceLeftAfterDecompressing;
-	// 	m_store->AdvanceWriteHead( decompressedBytes );
-    //
-	// 	if ( spaceLeftAfterDecompressing > 0 ) // we didn't fill our buffer somehow??
-	// 	{
-	// 		vsLog( "I think I'm done!" );
-	// 	}
 }
 
 void

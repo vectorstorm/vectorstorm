@@ -59,8 +59,6 @@ private:
 	// do some processing of file compression.
 	void _PumpCompression( const void* bytes, size_t byteCount, bool finish );
 
-	void _PumpDecompression(); // grab another 1kb chunk of decompressed data.
-
 public:
 
 			// In general, files should be opened by creating an vsFile;  the vsFile class automatically deals with finding where the file is
