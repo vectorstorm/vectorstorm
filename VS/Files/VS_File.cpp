@@ -938,6 +938,8 @@ vsFile::WriteBytes( const void* data, size_t bytes )
 int
 vsFile::ReadBytes( void* data, size_t bytes )
 {
+	// Return number of bytes read
+
 	if ( m_mode == MODE_Read )
 	{
 		int bytesToRead = vsMin(bytes, m_store->BytesLeftForReading());
@@ -947,44 +949,64 @@ vsFile::ReadBytes( void* data, size_t bytes )
 	}
 	else if ( m_mode == MODE_ReadCompressed_Progressive )
 	{
+		bool atEnd = false;
 		// out of bytes to decompress;  load more!
-
-		if ( m_file )
+		while ( m_store->BytesLeftForReading() < bytes && !atEnd )
 		{
-			m_compressedStore->EraseReadBytes();
-			int n = PHYSFS_readBytes( m_file,
-					m_compressedStore->GetWriteHead(),
-					m_compressedStore->BytesLeftForWriting() );
-			m_compressedStore->AdvanceWriteHead(n);
-
-			// did we hit the end?
-			if ( n < m_compressedStore->BytesLeftForWriting() )
+			// decompress data from our compressed buffer!
+			if ( m_compressedStore->BytesLeftForReading() )
 			{
-				PHYSFS_close( m_file );
-				m_file = nullptr;
+				m_store->EraseReadBytes();
+
+				m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
+				m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
+
+				m_zipData->m_zipStream.avail_out = m_store->BytesLeftForWriting();
+				m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
+
+				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
+				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
+				vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
+				vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
+				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+
+				uint32_t compressedBytesDecompressed = m_compressedStore->BytesLeftForReading() - m_zipData->m_zipStream.avail_in;
+				uint32_t decompressedBytes = m_store->BytesLeftForWriting() - m_zipData->m_zipStream.avail_out;
+
+				m_compressedStore->AdvanceReadHead(compressedBytesDecompressed);
+				m_store->AdvanceWriteHead( decompressedBytes );
+			}
+
+			if ( m_store->BytesLeftForReading() < bytes )
+			{
+				// okay, we've exhausted our compressed store!  Let's load more
+				// data from disk into the compressed store, if there's any more
+				// data to read!
+				if ( m_file )
+				{
+					m_compressedStore->EraseReadBytes();
+					int n = PHYSFS_readBytes( m_file,
+							m_compressedStore->GetWriteHead(),
+							m_compressedStore->BytesLeftForWriting() );
+
+					// did we hit the end?
+					if ( n < (int)m_compressedStore->BytesLeftForWriting() )
+					{
+						PHYSFS_close( m_file );
+						m_file = nullptr;
+					}
+					m_compressedStore->AdvanceWriteHead(n);
+				}
+				else
+					atEnd = true;
 			}
 		}
 
-		m_zipData->m_zipStream.avail_in = m_compressedStore->BytesLeftForReading();
-		m_zipData->m_zipStream.next_in = (Bytef*)m_compressedStore->GetReadHead();
-
-		m_zipData->m_zipStream.avail_out = bytes;
-		m_zipData->m_zipStream.next_out = (Bytef*)data;
-		int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-		vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
-		vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
-		// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
-		// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-		vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
-
-		uint32_t compressedBytesDecompressed =
-			m_compressedStore->BytesLeftForReading() - m_zipData->m_zipStream.avail_in;
-		m_compressedStore->AdvanceReadHead(compressedBytesDecompressed);
-
-		uint32_t decompressedBytes = bytes - m_zipData->m_zipStream.avail_out;
-
-		return decompressedBytes;
+		bytes = vsMin(bytes, m_store->BytesLeftForReading());
+		m_store->ReadBuffer(data, bytes);
+		return bytes;
 	}
 	else
 	{
