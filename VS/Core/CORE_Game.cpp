@@ -96,7 +96,8 @@ coreGame::StopTimer()
 
 	float fps = m_framesRendered / ((timer->GetCurrentMillis()-m_startTicks)/1000.0f);
 
-	vsLog(" ## Frames rendered: %ld\n ## Average FPS: %f", m_framesRendered, fps);
+	vsLog(" ## Frames rendered: %ld", m_framesRendered );
+	vsLog(" ## Average FPS: %f", fps);
 
 	int missedFrames = timer->GetMissedFrameCount();		// how many times did we miss rendering at 60?
 

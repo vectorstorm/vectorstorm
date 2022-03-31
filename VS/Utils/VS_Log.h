@@ -17,28 +17,31 @@
 // use this when an assert is thrown, so that end-users can more easily find the
 // log file so they can e-mail it to us.  (TODO:  Consider whether we want to set
 // up a system which will cause asserts to submit logs to us anonymously, instead?)
-void vsLog_Start();
+void vsLog_Start(const char* companyName, const char* title);
 void vsLog_End();
 void vsLog_Show();
 
 #include "Utils/fmt/printf.h"
 #include "Utils/fmt/format.h"
 
-void vsLog_(const vsString& str);
-void vsErrorLog_(const vsString &str);
+void vsLog_(const char*file, int line, const vsString& str);
+void vsErrorLog_(const char*file, int line, const vsString &str);
+
+#define vsLog(...) vsDoLog(__FILE__,__LINE__,__VA_ARGS__)
+#define vsErrorLog(...) vsDoErrorLog(__FILE__,__LINE__,_VA_ARGS__)
 
 template <typename S, typename... Args, typename Char = fmt::char_t<S> >
-void vsLog(S format, Args&&... args)
+void vsDoLog(const char* file, int line, S format, Args&&... args)
 {
 	vsString str = fmt::sprintf(format,args...);
-	vsLog_(str);
+	vsLog_(file, line, str);
 }
 
 template <typename S, typename... Args, typename Char = fmt::char_t<S> >
-void vsErrorLog(S format, Args&&... args)
+void vsDoErrorLog(const char* file, int line, S format, Args&&... args)
 {
 	vsString str = fmt::sprintf(format,args...);
-	vsErrorLog_(str);
+	vsErrorLog_(file, line, str);
 }
 
 

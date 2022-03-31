@@ -13,25 +13,31 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstddef>
+#include <SDL2/SDL_filesystem.h>
 #include "VS_File.h"
+#include "VS_TimerSystem.h"
+#include "VS_Mutex.h"
 
 #ifdef MSVC
 #define vsprintf vsprintf_s
 #endif
 
+static FILE* s_logFile = nullptr;
+static vsString prefPath;
+static vsMutex s_mutex;
 // static PHYSFS_File* s_log = nullptr;
-static vsFile *s_log = nullptr;
+// static vsFile *s_log = nullptr;
 
-void vsLog_Start()
+void vsLog_Start(const char* companyName, const char* title)
 {
-	s_log = new vsFile("user/log.txt", vsFile::MODE_WriteDirectly);
-	// s_log = PHYSFS_openWrite( "log.txt" );
+	prefPath = SDL_GetPrefPath(companyName, title);
+	vsString logFile = prefPath + "log.txt";
+	s_logFile = fopen(logFile.c_str(), "w");
 }
 
 void vsLog_End()
 {
-	delete s_log;
-	// PHYSFS_close(s_log);
+	fclose( s_logFile );
 }
 
 void vsLog_Show()
@@ -43,32 +49,48 @@ void vsLog_Show()
 	// }
 }
 
-void vsLog_(const vsString &str)
+void vsLog_(const char* file, int line, const vsString &str)
 {
-	fprintf(stdout, "%s\n", str.c_str());
-	if ( s_log )
+	float time = 0.f;
+	if ( vsTimerSystem::Instance() )
+		time = vsTimerSystem::Instance()->GetMicrosecondsSinceInit() / 1000000.f;
+
+	for ( const char* ptr = file; *ptr; ++ptr )
+		if ( *ptr == '/' || *ptr == '\\' )
+		{
+			file = ptr+1;
+		}
+
+	vsString msg( vsFormatString( "%fs - %*s:%*d -- %s\n", time, 25, file, 4,line, str ) );
+
+	vsScopedLock lock(s_mutex);
+
+	fprintf(stdout, "%s", msg.c_str());
+	if ( s_logFile )
 	{
-#ifdef _WIN32
-		vsString fullLine = str + "\r\n";
-#else
-		vsString fullLine = str + "\n";
-#endif
-		s_log->WriteBytes( (const void*)fullLine.c_str(), fullLine.size() );
+		fprintf( s_logFile, "%s", msg.c_str() );
 	}
 }
 
 
-void vsErrorLog_(const vsString &str)
+void vsErrorLog_(const char* file, int line, const vsString &str)
 {
+	float time = 0.f;
+	if ( vsTimerSystem::Instance() )
+		time = vsTimerSystem::Instance()->GetMicrosecondsSinceInit() / 1000000.f;
+
+	for ( const char* ptr = file; *file; ++ptr )
+		if ( *ptr == '/' || *ptr == '\\' )
+		{
+			file = ptr+1;
+		}
+
+	vsScopedLock lock(s_mutex);
+
 	fprintf(stderr, "%s\n", str.c_str() );
-	if ( s_log )
+	if ( s_logFile )
 	{
-#ifdef _WIN32
-		vsString fullLine = str + "\r\n";
-#else
-		vsString fullLine = str + "\n";
-#endif
-		s_log->WriteBytes( (const void*)fullLine.c_str(), fullLine.size() );
+		fprintf( s_logFile, "ERR: %fs - %s:%d -- %s\n", time, file, line, str.c_str() );
 	}
 }
 

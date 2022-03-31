@@ -149,6 +149,7 @@ vsTimerSystem::vsTimerSystem():
 	m_drawTime(0),
 	m_cpuTime(0)
 {
+	m_initTime = GetMicroseconds();
 #if defined(DEBUG_TIMING_BAR)
 	m_sprite = nullptr;
 #endif // DEBUG_TIMING_BAR
