@@ -19,6 +19,8 @@ typedef HANDLE thread_t;
 
 #endif
 
+void vsTask_Init();
+
 class vsTask
 {
 	thread_t m_thread;
@@ -48,6 +50,7 @@ public:
 	void Start();
 	bool IsDone() { return m_done; }
 
+	static int GetCurrentThreadId();
 };
 
 #endif // VS_TASK_H

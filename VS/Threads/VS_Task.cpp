@@ -7,6 +7,21 @@
 //
 
 #include "VS_Task.h"
+#include <thread>
+#include <map>
+
+namespace
+{
+	std::map<std::thread::id, int> s_threadTable;
+	int s_nextId = 0;
+};
+
+void vsTask_Init()
+{
+	// register the main thread so we recognise it in future
+	std::thread::id id = std::this_thread::get_id();
+	s_threadTable[id] = s_nextId++;
+}
 
 #ifdef UNIX
 void *vsTask::DoStartThread(void* arg)
@@ -31,6 +46,9 @@ DWORD WINAPI vsTask::DoStartThread( LPVOID arg )
 #elif defined(UNIX)
 	pthread_setname_np( pthread_self(), task->m_name.c_str() );
 #endif
+
+	std::thread::id id = std::this_thread::get_id();
+	s_threadTable[id] = s_nextId++;
 
 #endif
 
@@ -86,3 +104,15 @@ vsTask::Start()
 
 #endif
 }
+
+int
+vsTask::GetCurrentThreadId()
+{
+	std::thread::id id = std::this_thread::get_id();
+	if ( s_threadTable.find(id) != s_threadTable.end() )
+	{
+		return s_threadTable[id];
+	}
+	return -1;
+}
+

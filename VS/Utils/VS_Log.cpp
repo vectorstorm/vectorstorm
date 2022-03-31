@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <SDL2/SDL_filesystem.h>
 #include "VS_File.h"
+#include "VS_Task.h"
 #include "VS_TimerSystem.h"
 #include "VS_Mutex.h"
 
@@ -33,6 +34,8 @@ void vsLog_Start(const char* companyName, const char* title)
 	prefPath = SDL_GetPrefPath(companyName, title);
 	vsString logFile = prefPath + "log.txt";
 	s_logFile = fopen(logFile.c_str(), "w");
+
+	vsTask_Init();
 }
 
 void vsLog_End()
@@ -61,7 +64,8 @@ void vsLog_(const char* file, int line, const vsString &str)
 			file = ptr+1;
 		}
 
-	vsString msg( vsFormatString( "%fs - %*s:%*d -- %s\n", time, 25, file, 4,line, str ) );
+	int threadId = vsTask::GetCurrentThreadId();
+	vsString msg( vsFormatString( "%d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
 
 	vsScopedLock lock(s_mutex);
 
@@ -85,7 +89,8 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 			file = ptr+1;
 		}
 
-	vsString msg( vsFormatString( "ERR:%fs - %*s:%*d -- %s\n", time, 25, file, 4,line, str ) );
+	int threadId = vsTask::GetCurrentThreadId();
+	vsString msg( vsFormatString( "ERR: %d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
 	vsScopedLock lock(s_mutex);
 
 	fprintf(stderr, "%s\n", str.c_str() );
