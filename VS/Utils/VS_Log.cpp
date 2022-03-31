@@ -85,12 +85,13 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 			file = ptr+1;
 		}
 
+	vsString msg( vsFormatString( "ERR:%fs - %*s:%*d -- %s\n", time, 25, file, 4,line, str ) );
 	vsScopedLock lock(s_mutex);
 
 	fprintf(stderr, "%s\n", str.c_str() );
 	if ( s_logFile )
 	{
-		fprintf( s_logFile, "ERR: %fs - %s:%d -- %s\n", time, file, line, str.c_str() );
+		fprintf( s_logFile, "%s", msg.c_str() );
 	}
 }
 
