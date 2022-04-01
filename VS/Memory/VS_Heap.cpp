@@ -549,6 +549,9 @@ void* operator new(std::size_t n)
 {
 	void* result( malloc(n) );
 	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+#ifdef _DEBUG
+	memset(result, 0xcd, n);
+#endif // _DEBUG
 	return result;
 }
 
@@ -557,6 +560,9 @@ void* operator new[](std::size_t n)
 {
 	void* result( malloc(n) );
 	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+#ifdef _DEBUG
+	memset(result, 0xcd, n);
+#endif // _DEBUG
 	return result;
 }
 
