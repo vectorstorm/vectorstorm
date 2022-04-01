@@ -9,31 +9,17 @@
 #ifndef VS_TASK_H
 #define VS_TASK_H
 
-#ifdef UNIX
-#include <pthread.h>
-typedef pthread_t thread_t;
-#else
-#include <windows.h>
-
-typedef HANDLE thread_t;
-
-#endif
+struct SDL_Thread;
 
 void vsTask_Init();
 
 class vsTask
 {
-	thread_t m_thread;
-#ifdef _DEBUG
+	SDL_Thread *m_thread;
 	vsString m_name;
-#endif // DEBUG
 	bool m_done;
 
-#ifdef UNIX
-	static void *DoStartThread(void* arg);
-#else
-	static DWORD WINAPI DoStartThread( LPVOID arg );
-#endif
+	static int DoStartThread(void* arg);
 
 protected:
 
