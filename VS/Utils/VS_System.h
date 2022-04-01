@@ -206,6 +206,7 @@ public:
 	// data files to aid in debugging efforts, and should not be used for any
 	// other purpose)
 	int IsDataPristine() const { return m_dataIsPristine; }
+	void TraceMods() { _TraceMods(); }
 
 	// by default, we *don't* mount our base directory for reading, but we can
 	// do so if the game needs it for some reason (for example, MT2's Windows

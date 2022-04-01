@@ -34,8 +34,6 @@ void vsLog_Start(const char* companyName, const char* title)
 	prefPath = SDL_GetPrefPath(companyName, title);
 	vsString logFile = prefPath + "log.txt";
 	s_logFile = fopen(logFile.c_str(), "w");
-
-	vsTask_Init();
 }
 
 void vsLog_End()
