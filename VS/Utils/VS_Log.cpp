@@ -98,3 +98,11 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 	}
 }
 
+void vsStripLogLine(vsString& line)
+{
+	const vsString separator(" -- ");
+	size_t pos = line.find(separator);
+	if ( pos != vsString::npos )
+		line.erase(0,pos+separator.size());
+}
+

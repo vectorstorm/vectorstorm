@@ -44,6 +44,9 @@ void vsDoErrorLog(const char* file, int line, S format, Args&&... args)
 	vsErrorLog_(file, line, str);
 }
 
+// When reading a log line, call this function to strip out any preamble
+// data on the line and retain only the log message.
+void vsStripLogLine(vsString& line);
 
 
 // utility macro to trace out this message ONLY ONCE.
