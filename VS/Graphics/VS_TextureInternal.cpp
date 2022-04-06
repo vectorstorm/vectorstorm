@@ -86,7 +86,7 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 		int w,h,n;
 		unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
 		if ( !data )
-			vsLog( "Failure: %s", stbi_failure_reason() );
+			vsLog( "Failure while loading %s: %s", filename_in, stbi_failure_reason() );
 
 		vsDelete(s);
 		glTexImage2D(GL_TEXTURE_2D,
