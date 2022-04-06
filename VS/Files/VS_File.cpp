@@ -480,13 +480,35 @@ vsFile::Copy( const vsString &from, const vsString &to )
 	return true;
 }
 
+namespace {
+
+	// this is our fallback "rename" functionality which just loads
+	// the file and writes it out into a new place, then deletes the
+	// original.  Works everywhere with no special OS support required.
+	bool FallbackRename( const vsString& from, const vsString& to )
+	{
+		vsFile *f = new vsFile(from);
+		vsStore s( f->GetLength() );
+		f->Store(&s);
+		vsDelete(f);
+
+		vsFile::Delete(from);
+
+		// need to use the raw 'to_in' here so we still have the 'user' bit
+		// out in front
+		vsFile t(to, vsFile::MODE_WriteDirectly);
+		t.Store(&s);
+
+		return true;
+	}
+}
+
 bool
 vsFile::Move( const vsString &from, const vsString &to_in )
 {
 	if ( !vsFile::Exists(from) )
 		return false;
 	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
-
 #ifdef _WIN32
 	// BAH ON BOTH YOUR HOUSES
 
@@ -503,6 +525,28 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 	vsString t = PHYSFS_getWriteDir() + to;
 
 #endif
+
+#if defined(__APPLE_CC__)
+	// For whatever reason, apple has tied C++ features to OS versions, and
+	// we've declared ourselves as only requiring OSX 10.9, which means we
+	// don't have access to std::filesystem.  (We can get it in 10.15, but as
+	// that's only two years old (at time of writing), it feels like a big
+	// ask).  Let's have Mac builds just do our fallback rename for now, rather
+	// than requiring an updated OS just so we can use std::filesystem.  It's
+	// not worth requiring the OS upgrade!
+	//
+	// Let's use POSIX ::rename() and then our fallback, here.  That should be
+	// available everywhere/everywhen on OSX!
+
+	if ( 0 != ::rename(f.c_str(),t.c_str()) )
+	{
+		vsLog("While attempting rename: %s -> %s", f.c_str(), t.c_str());
+		vsLog("::rename error: %d;  doing remove+rename instead", errno);
+		return FallbackRename(from, to_in);
+	}
+	return true;
+#else // !defined(__APPLE_CC__)
+
 
 	std::filesystem::path fp(f);
 	std::filesystem::path tp(t);
@@ -535,25 +579,12 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 		{
 			// okay, that failed too for some reason.  Just do a manual copy.
 			vsLog("Remove and rename error: \"%s\"", ee.what());
-
 			vsLog("Trying manual copy instead...");
-			vsFile *f = new vsFile(from);
-			vsStore s( f->GetLength() );
-			f->Store(&s);
-			vsDelete(f);
-
-			vsFile::Delete(from);
-
-			// need to use the raw 'to_in' here so we still have the 'user' bit
-			// out in front
-			vsFile t(to_in, vsFile::MODE_WriteDirectly);
-			t.Store(&s);
-
-			return true;
-
+			return FallbackRename(from, to_in);
 		}
 	}
 	return true;
+#endif // !defined(__APPLE_CC__)
 }
 
 bool
