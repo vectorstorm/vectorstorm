@@ -11,6 +11,7 @@
 #include "VS_FileCache.h"
 #include "VS_Record.h"
 #include "VS_Store.h"
+#include "VS_Mutex.h"
 #include "Core.h"
 #include "CORE_Game.h"
 
@@ -26,6 +27,7 @@
 
 #include <SDL2/SDL_filesystem.h>
 
+#include <atomic>
 #include <errno.h>
 #include <zlib.h>
 
@@ -38,6 +40,17 @@
 
 #include "Utils/utfcpp/utf8.h"
 
+namespace
+{
+	vsMutex s_renameMutex;
+	std::atomic<int> s_tempFileCount;
+
+	int NextTmpFileCount()
+	{
+		return ++s_tempFileCount;
+	}
+}
+
 // #define PROFILE_FILE_SYSTEM
 #ifdef PROFILE_FILE_SYSTEM
 
@@ -45,6 +58,10 @@
 
 
 namespace {
+
+	// this mutex ensures that we don't try to rename multiple files
+	// simultaneously, which prevents us from having two threads both
+	// trying to overwrite the same file at the same time.
 
 	class vsFileProfiler
 	{
@@ -143,6 +160,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 		PROFILE(filename);
 		if ( mode == MODE_Read || mode == MODE_ReadCompressed || mode == MODE_ReadCompressed_Progressive )
 		{
+			if ( filename_in.find("shot.jpg") != vsString::npos )
+				vsLog("Reading .jpg file");
 			m_file = PHYSFS_openRead( filename.c_str() );
 		}
 		else if ( mode == MODE_Write || mode == MODE_WriteCompressed )
@@ -151,7 +170,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			// then move it into position when the file is closed.  We do this so
 			// that crashes in the middle of file writing don't obliterate the
 			// original file (if any), or leave a half-written file.
-			m_tempFilename = vsFormatString("user/tmp/%s", filename.c_str());
+			m_tempFilename = vsFormatString("user/tmp/%s.%d", filename.c_str(), NextTmpFileCount());
 			vsString directoryOnly = m_tempFilename;
 			size_t separator = directoryOnly.rfind("/");
 			directoryOnly.erase(separator);
@@ -506,8 +525,11 @@ namespace {
 bool
 vsFile::Move( const vsString &from, const vsString &to_in )
 {
+	vsScopedLock lock(s_renameMutex);
+
 	if ( !vsFile::Exists(from) )
 		return false;
+
 	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
 #ifdef _WIN32
 	// BAH ON BOTH YOUR HOUSES
