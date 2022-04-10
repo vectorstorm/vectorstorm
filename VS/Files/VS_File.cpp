@@ -160,8 +160,6 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 		PROFILE(filename);
 		if ( mode == MODE_Read || mode == MODE_ReadCompressed || mode == MODE_ReadCompressed_Progressive )
 		{
-			if ( filename_in.find("shot.jpg") != vsString::npos )
-				vsLog("Reading .jpg file");
 			m_file = PHYSFS_openRead( filename.c_str() );
 		}
 		else if ( mode == MODE_Write || mode == MODE_WriteCompressed )

@@ -60,6 +60,8 @@ public:
 	void			AsyncMap(); // map our async-read data into ourselves so we can be accessed to get pixels directly
 	void			AsyncUnmap(); // unmap
 
+	vsImage *		CreateFlipped_V();
+
 	int				GetWidth() const { return m_width; }
 	int				GetHeight() const { return m_height; }
 

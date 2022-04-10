@@ -371,6 +371,23 @@ vsImage::CopyTo( vsImage *other )
 	}
 }
 
+vsImage *
+vsImage::CreateFlipped_V()
+{
+	vsImage *result = new vsImage( m_width, m_height );
+
+	for ( size_t y = 0; y < m_height; y++ )
+	{
+		int otherY = (m_height-1)-y;
+		for ( size_t x = 0; x < m_width; x++ )
+		{
+			result->SetPixel(x,otherY, GetPixel(x,y));
+		}
+	}
+
+	return result;
+}
+
 void
 vsImage::Copy( vsImage *other )
 {
