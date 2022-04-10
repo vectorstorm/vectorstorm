@@ -57,6 +57,7 @@ public:
 
 	bool ContainsPoint(const vsVector2D &pos) const;	// 'pos' must be in local coordinates!
 	bool Intersects(const vsBox2D &other) const;
+	bool Encompasses(const vsBox2D &box) const;
 
 	void ExpandToInclude( const vsVector2D &pos );
 	void ExpandToInclude( const vsBox2D &box );
@@ -106,7 +107,8 @@ public:
 	bool		IntersectsXZ(const vsBox3D &other) const;
 	bool		IntersectsSphere(const vsVector3D &center, float radius) const;
 
-	bool		EncompassesBox(const vsBox3D &box) const;
+	bool		Encompasses(const vsBox3D &box) const;
+	bool		EncompassesBox(const vsBox3D &box) const { return Encompasses(box); }
 
 	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 

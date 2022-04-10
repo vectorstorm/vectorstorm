@@ -23,6 +23,12 @@ vsBox2D::Intersects(const vsBox2D &other) const
 	return true;
 }
 
+bool
+vsBox2D::Encompasses(const vsBox2D &box) const
+{
+	return ContainsPoint(box.min) && ContainsPoint(box.max);
+}
+
 vsVector2D
 vsBox2D::Corner(int i) const
 {
@@ -318,7 +324,7 @@ vsBox3D::ContainsPointXZ( const vsVector3D &pos ) const
 
 
 bool
-vsBox3D::EncompassesBox(const vsBox3D &box) const
+vsBox3D::Encompasses(const vsBox3D &box) const
 {
 	return ContainsPoint(box.min) && ContainsPoint(box.max);
 }
