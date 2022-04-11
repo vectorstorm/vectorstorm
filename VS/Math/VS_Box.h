@@ -25,7 +25,6 @@ class vsBox2D
 public:
 
 	vsBox2D() { min = max = vsVector2D::Zero; set = false; }
-	vsBox2D(const vsBox2D &o) { *this = o; }
 	vsBox2D(const vsVector2D &min_in, const vsVector2D &max_in) { Set(min_in,max_in); }
 
 	static vsBox2D CenteredBox( const vsVector2D &dimensions ) { vsBox2D result(vsVector2D::Zero, dimensions); result -= 0.5f * dimensions; return result; }
@@ -85,7 +84,6 @@ class vsBox3D
 public:
 
 				vsBox3D() { min = max = vsVector2D::Zero; set = false; }
-				vsBox3D(const vsBox3D &o) { *this = o; set = true; }
 				vsBox3D(const vsVector3D &min_in, const vsVector3D &max_in) { Set(min_in,max_in); set = true; }
 
 	static vsBox3D CenteredBox( const vsVector3D &dimensions ) { vsBox3D result(vsVector3D::Zero, dimensions); result -= 0.5f * dimensions; return result; }

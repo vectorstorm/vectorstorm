@@ -102,7 +102,7 @@ public:
 	const vsShaderValues& operator=( const vsShaderValues& other );
 
 	void SetTextureOverride( int i, vsTexture *texture ) { m_texture[i] = texture; m_textureSet[i] = true; }
-	void ClearTextureOverride( int i, vsTexture *texture ) { m_textureSet[i] = false; }
+	void ClearTextureOverride( int i ) { m_texture[i] = nullptr; m_textureSet[i] = false; }
 	vsTexture *GetTextureOverride( int i );
 	bool HasTextureOverride( int i ) const;
 };

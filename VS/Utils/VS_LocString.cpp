@@ -25,12 +25,6 @@ vsLocString::vsLocString( const vsString& key ):
 {
 }
 
-vsLocString::vsLocString( const vsLocString& other ):
-	m_string(other.m_string),
-	m_args(other.m_args)
-{
-}
-
 vsLocString::vsLocString( int value ):
 	m_string("{value}")
 {

@@ -33,7 +33,6 @@ public:
 	static vsAngle FromForwardVector( const vsVector2D &forward );
 
 	vsAngle(float angle_in=0.f);
-	vsAngle(const vsAngle& o);
 
 	void	Set(float angle_in);
 	void	Rotate(float rotation);

@@ -81,7 +81,7 @@ public:
 	vsCacheEntry<T> *	m_next;
 
 	vsCacheEntry() { m_item = nullptr; m_key = vsEmptyString; m_keyHash = 0; m_next = nullptr; }
-	vsCacheEntry( vsCache<T> *cache, T * object, const vsString &key, int keyHash ) { m_item = object; m_key = key; m_keyHash = keyHash, m_next = nullptr; }
+	vsCacheEntry( T * object, const vsString &key, int keyHash ) { m_item = object; m_key = key; m_keyHash = keyHash, m_next = nullptr; }
 
 	~vsCacheEntry()
 	{
@@ -190,7 +190,7 @@ public:
 	{
 		const vsString &key = item->GetName();
 		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		vsCacheEntry<T> *ent = new vsCacheEntry<T>( this, item, key, hash );
+		vsCacheEntry<T> *ent = new vsCacheEntry<T>( item, key, hash );
 
 		int bucket = HashToBucket(hash);
 

@@ -126,6 +126,8 @@ public:
 
 	void	RemoveItemWithKey( const T &item, uint32_t key)
 	{
+		// [TODO] We should really be verifying that this item matches?
+		UNUSED(item);
 		uint32_t  hash = vsCalculateIntHash(key);
 		int bucket = HashToBucket(hash);
 		bool found = false;

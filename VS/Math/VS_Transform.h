@@ -63,7 +63,6 @@ class vsTransform3D
 public:
 	static vsTransform3D	Identity;
 
-	vsTransform3D( const vsTransform3D& other );
 	vsTransform3D( const vsQuaternion &quat = vsQuaternion::Identity, const vsVector3D &translation = vsVector3D::Zero, const vsVector3D &scale = vsVector3D::One );
 
 	const vsVector3D &		GetTranslation() const		{ return m_translation; }

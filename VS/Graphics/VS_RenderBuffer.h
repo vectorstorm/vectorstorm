@@ -263,7 +263,7 @@ public:
 	void	LineStripBuffer(int instanceCount);
 	void	LineListBuffer(int instanceCount);
 
-	const bool IsVBO() { return m_vbo; }
+	bool IsVBO() const { return m_vbo; }
 
 
 	// Advanced interface;  TODO is to figure out whether there's a nicer

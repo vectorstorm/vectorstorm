@@ -142,14 +142,6 @@ vsTransform2D::GetMatrix() const
 	return m_matrix;
 }
 
-vsTransform3D::vsTransform3D( const vsTransform3D& other ):
-	m_quaternion(other.m_quaternion),
-	m_translation(other.m_translation),
-	m_scale(other.m_scale),
-	m_dirty(true)
-{
-}
-
 vsTransform3D::vsTransform3D( const vsQuaternion &quat, const vsVector3D &translation, const vsVector3D &scale):
 	m_quaternion(quat),
 	m_translation(translation),

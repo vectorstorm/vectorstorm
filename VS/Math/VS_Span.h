@@ -24,7 +24,6 @@ class vsSpan
 public:
 
 	vsSpan() { min = max = 0.f; set = false; }
-	vsSpan(const vsSpan &o) { *this = o; }
 	vsSpan(float min_in, float max_in) { Set(min_in,max_in); }
 
 	void Clear() { set = false; min = max = 0.f; }

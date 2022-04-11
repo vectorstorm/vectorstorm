@@ -105,6 +105,8 @@ public:
 
 	void	RemoveItemWithKey( T* item, const vsString &key )
 	{
+		// [TODO] We should be testing that the object we're removing is actually this item!
+		UNUSED(item);
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		int bucket = hash % m_bucketCount;
 		bool found = false;

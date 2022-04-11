@@ -29,7 +29,6 @@ public:
 	vsLocString();
 	vsLocString( const char* str ); // non-nullptr!
 	vsLocString( const vsString& key );
-	vsLocString( const vsLocString& other );
 	vsLocString( int value );
 	vsLocString( float value,int places );
 
@@ -59,25 +58,6 @@ struct vsLocArg
 	float m_floatLiteral;
 	Type m_type;
 
-	vsLocArg(const vsLocArg& other):
-		m_name(other.m_name),
-		m_type(other.m_type)
-	{
-		switch( m_type )
-		{
-			case Type_LocString:
-				m_locString = other.m_locString;
-				break;
-			case Type_Int:
-				m_intLiteral = other.m_intLiteral;
-				break;
-			case Type_Float:
-				// floats use both the float and the int part.
-				m_floatLiteral = other.m_floatLiteral;
-				m_intLiteral = other.m_intLiteral;
-				break;
-		}
-	}
 	vsLocArg(const vsString& name, float literal): m_name(name), m_intLiteral(-1), m_floatLiteral(literal), m_type(Type_Float) {}
 	vsLocArg(const vsString& name, int literal): m_name(name), m_intLiteral(literal), m_type(Type_Int) {}
 	vsLocArg(const vsString& name, const vsLocString& loc): m_name(name), m_locString(loc), m_type(Type_LocString) {}

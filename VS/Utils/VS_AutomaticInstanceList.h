@@ -110,6 +110,10 @@ template<class T>
 vsAutomaticInstanceList<T>::vsAutomaticInstanceList( const vsAutomaticInstanceList<T>
 												   &otherObject )
 {
+	// This is an absolute abuse of a C++ copy constructor;  we don't actually want to copy,
+	// instead this is just a new instance of the type so we just put it in our list.
+	UNUSED(otherObject);
+
 	// const size_t offset = (size_t)(T*)1 - (size_t)(vsAutomaticInstanceList<T>*)(T*)1;
 	// T *thisT = (T*)((size_t)this + offset);
 	T *thisT = (T*)this;
@@ -136,6 +140,7 @@ template<class T>
 vsAutomaticInstanceList<T> &
 vsAutomaticInstanceList<T>::operator =( const vsAutomaticInstanceList<T> &otherObject )
 {
+	UNUSED(otherObject);
 	// nothing to do
 	return *this;
 }

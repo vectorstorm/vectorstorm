@@ -85,7 +85,7 @@ public:
 	{
 	}
 
-	RenderTargetRegistration( vsRenderTarget *t, const RenderTargetRequest& req, bool s=true ):
+	RenderTargetRegistration( vsRenderTarget *t, const RenderTargetRequest& req ):
 		target(t),
 		user(),
 		request(req)

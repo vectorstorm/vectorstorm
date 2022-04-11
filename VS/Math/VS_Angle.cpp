@@ -23,14 +23,6 @@ vsAngle::vsAngle(float angle_in):
 	Set(angle_in);
 }
 
-vsAngle::vsAngle(const vsAngle& o):
-	m_angle(o.m_angle),
-	m_cosValue(0.f),
-	m_sinValue(0.f),
-	m_trigCalculated(false)
-{
-}
-
 vsAngle
 vsAngle::FromForwardVector( const vsVector2D &forward )
 {

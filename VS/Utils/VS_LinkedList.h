@@ -76,10 +76,10 @@ public:
 	bool						operator==( const vsListIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
 	bool						operator!=( const vsListIterator &b ) { return !((*this)==b); }
 	vsListIterator<T>&		operator++() { Next(); return *this; }
-	vsListIterator<T>		operator++(int postFix) { vsListIterator<T> other(m_current); Next(); return other; }
+	vsListIterator<T>		operator++(int postFix) { UNUSED(postFix); vsListIterator<T> other(m_current); Next(); return other; }
 
 	vsListIterator<T>&		operator--() { Prev(); return *this; }
-	vsListIterator<T>		operator--(int postFix) { vsListIterator<T> other(m_current); Prev(); return other; }
+	vsListIterator<T>		operator--(int postFix) { UNUSED(postFix); vsListIterator<T> other(m_current); Prev(); return other; }
 	T* operator->() { return &Get(); }
 	T& operator*() { return Get(); }
 
@@ -200,6 +200,7 @@ public:
 	void	Prepend( vsListIterator<T> &iter, const T &item )
 	{
 		vsListEntry<T> *ent = new vsListEntry<T>;//m_entry.Borrow();
+		ent->m_item = item;
 		iter.GetEntry()->Prepend( ent );
 	}
 

@@ -32,10 +32,10 @@ public:
 	vsWeakPointerTarget();
 			///< Initialize the reference count to 0.
 
-	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { m_referenceCount = 0; m_firstWeakPointer = nullptr; }
+	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { UNUSED(otherCount); m_referenceCount = 0; m_firstWeakPointer = nullptr; }
 			///< Copy constructor. Note that this initialize the reference count to 0!
 
-	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { return *this; }
+	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { UNUSED(otherCount); return *this; }
 			///< Assignment operator.
 
 	virtual ~vsWeakPointerTarget();

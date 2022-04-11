@@ -36,10 +36,10 @@ public:
 	bool						operator==( const vsVolatileArrayIterator &b ) { return (m_current == b.m_current && m_parent == b.m_parent ); }
 	bool						operator!=( const vsVolatileArrayIterator &b ) { return !((*this)==b); }
 	vsVolatileArrayIterator<T>&		operator++() { Next(); return *this; }
-	vsVolatileArrayIterator<T>		operator++(int postFix) { vsVolatileArrayIterator<T> other(m_parent, m_current); Next(); return other; }
+	vsVolatileArrayIterator<T>		operator++(int postFix) { UNUSED(postFix); vsVolatileArrayIterator<T> other(m_parent, m_current); Next(); return other; }
 
 	vsVolatileArrayIterator<T>&		operator--() { Prev(); return *this; }
-	vsVolatileArrayIterator<T>		operator--(int postFix) { vsVolatileArrayIterator<T> other(m_parent, m_current); Prev(); return other; }
+	vsVolatileArrayIterator<T>		operator--(int postFix) { UNUSED(postFix); vsVolatileArrayIterator<T> other(m_parent, m_current); Prev(); return other; }
 	T& operator*() { return Get(); }
 	T* operator->() { return &Get(); }
 

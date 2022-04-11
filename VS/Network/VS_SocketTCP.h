@@ -39,9 +39,9 @@ public:
 	vsTCPListener() {}
 	virtual ~vsTCPListener() {}
 
-	virtual void	NewConnection( vsTCPConnection *connection ) {}
-	virtual void	ConnectionClosed( vsTCPConnection *connection ) {}
-	virtual void	HandleBuffer( vsTCPConnection *connection, vsStore *packet ) {}
+	virtual void	NewConnection( vsTCPConnection *connection ) { UNUSED(connection); }
+	virtual void	ConnectionClosed( vsTCPConnection *connection ) { UNUSED(connection); }
+	virtual void	HandleBuffer( vsTCPConnection *connection, vsStore *packet ) { UNUSED(connection); UNUSED(packet); }
 };
 
 

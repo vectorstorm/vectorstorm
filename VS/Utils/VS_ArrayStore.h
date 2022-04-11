@@ -33,10 +33,10 @@ public:
 	bool						operator==( const vsArrayStoreIterator &b ) { return (m_current == b.m_current && m_parent == b.m_parent ); }
 	bool						operator!=( const vsArrayStoreIterator &b ) { return !((*this)==b); }
 	vsArrayStoreIterator<T>&	operator++() { Next(); return *this; }
-	vsArrayStoreIterator<T>		operator++(int postFix) { vsArrayStoreIterator<T> other(m_parent, m_current); Next(); return other; }
+	vsArrayStoreIterator<T>		operator++(int postFix) { UNUSED(postFix); vsArrayStoreIterator<T> other(m_parent, m_current); Next(); return other; }
 
 	vsArrayStoreIterator<T>&	operator--() { Prev(); return *this; }
-	vsArrayStoreIterator<T>		operator--(int postFix) { vsArrayStoreIterator<T> other(m_parent, m_current); Prev(); return other; }
+	vsArrayStoreIterator<T>		operator--(int postFix) { UNUSED(postFix); vsArrayStoreIterator<T> other(m_parent, m_current); Prev(); return other; }
 	T* operator->() { return Get(); }
 	T* operator*() { return Get(); }
 

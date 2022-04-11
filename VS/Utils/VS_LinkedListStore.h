@@ -107,9 +107,9 @@ public:
 	bool						operator==( const vsListStoreIterator &b ) { return (m_current->m_item == b.m_current->m_item); }
 	bool						operator!=( const vsListStoreIterator &b ) { return !((*this)==b); }
 	vsListStoreIterator<T>&		operator++() { Next(); return *this; }
-	vsListStoreIterator<T>		operator++(int postFix) { vsListStoreIterator<T> other(m_current); Next(); return other; }
+	vsListStoreIterator<T>		operator++(int postFix) { UNUSED(postFix); vsListStoreIterator<T> other(m_current); Next(); return other; }
 	vsListStoreIterator<T>&		operator--() { Previous(); return *this; }
-	vsListStoreIterator<T>		operator--(int postFix) { vsListStoreIterator<T> other(m_current); Previous(); return other; }
+	vsListStoreIterator<T>		operator--(int postFix) { UNUSED(postFix); vsListStoreIterator<T> other(m_current); Previous(); return other; }
 	T* operator->() { return Get(); }
 	T* operator*() { return Get(); }
 };

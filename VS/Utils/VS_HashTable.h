@@ -128,6 +128,8 @@ public:
 
 	void	RemoveItemWithKey( const T &item, const vsString &key )
 	{
+		// [TODO] We should verify that the element we remove is actually this item!
+		UNUSED(item);
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
 		int bucket = HashToBucket(hash);
 		bool found = false;
