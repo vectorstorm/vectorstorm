@@ -65,12 +65,15 @@ void vsLog_(const char* file, int line, const vsString &str)
 	int threadId = vsTask::GetCurrentThreadId();
 	vsString msg( vsFormatString( "%d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
 
-	vsScopedLock lock(s_mutex);
-
-	fprintf(stdout, "%s", msg.c_str());
-	if ( s_logFile )
 	{
-		fprintf( s_logFile, "%s", msg.c_str() );
+		vsScopedLock lock(s_mutex);
+
+		fprintf(stdout, "%s", msg.c_str());
+		if ( s_logFile )
+		{
+			fprintf( s_logFile, "%s", msg.c_str() );
+			fflush( s_logFile );
+		}
 	}
 }
 
@@ -89,12 +92,16 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 
 	int threadId = vsTask::GetCurrentThreadId();
 	vsString msg( vsFormatString( "ERR: %d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
-	vsScopedLock lock(s_mutex);
 
-	fprintf(stderr, "%s\n", str.c_str() );
-	if ( s_logFile )
 	{
-		fprintf( s_logFile, "%s", msg.c_str() );
+		vsScopedLock lock(s_mutex);
+
+		fprintf(stderr, "%s\n", str.c_str() );
+		if ( s_logFile )
+		{
+			fprintf( s_logFile, "%s", msg.c_str() );
+			fflush( s_logFile );
+		}
 	}
 }
 
