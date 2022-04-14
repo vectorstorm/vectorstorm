@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <sys/statvfs.h>
 #endif // UNIX
 
 #include <SDL2/SDL_filesystem.h>
@@ -37,6 +38,7 @@
 #include "VS_EnableDebugNew.h"
 
 #include <filesystem>
+
 
 #include "Utils/utfcpp/utf8.h"
 
@@ -1257,5 +1259,42 @@ vsFile::GetDirectory( const vsString &filename )
 	if ( i != vsString::npos )
 		return filename.substr(0,i);
 	return vsString("./");
+}
+
+size_t
+vsFile::AvailableDriveBytes( const vsString& directory )
+{
+#if defined(__APPLE_CC__)
+	struct statvfs info;
+	if ( ::statvfs( directory.c_str(), &info ) != 0 )
+	{
+		vsLog("fstatvfs for directory %s failed", directory);
+	}
+	else
+	{
+		vsLog("Directory: %s", directory);
+		vsLog("  Block size:   %d", info.f_frsize);
+		vsLog("  Total blocks: %d", info.f_blocks);
+		vsLog("  Free blocks:  %d", info.f_bfree);
+
+		return info.f_frsize * info.f_bfree;
+	}
+	return std::numeric_limits<size_t>::max();
+#else
+	try
+	{
+		std::filesystem::space_info si = std::filesystem::space(directory);
+		vsLog("Directory: %s", directory);
+		vsLog("  capacity:   %d", si.capacity);
+		vsLog("  free: %d", si.free);
+		vsLog("  available:  %d", si.available);
+		return si.available;
+	}
+	catch(const std::exception& e)
+	{
+		vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
+	}
+	return std::numeric_limits<size_t>::max();
+#endif
 }
 

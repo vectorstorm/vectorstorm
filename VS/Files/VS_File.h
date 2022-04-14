@@ -73,6 +73,10 @@ public:
 	size_t		GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }
 
+	// returns how many bytes of file can be written to this directory.  This
+	// directory must be a WRITE path.
+	static size_t AvailableDriveBytes( const vsString& directory );
+
 	static bool	Exists( const vsString &filename );	// returns true if the specified file exists.
 	static bool	DirectoryExists( const vsString &dirName );	// returns true if the specified directory exists.
 	// Delete functions return TRUE on success.
