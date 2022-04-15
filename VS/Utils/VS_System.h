@@ -214,6 +214,8 @@ public:
 	// in order to pick up those crash reports)
 	void			MountBaseDirectory();
 	void			UnmountBaseDirectory();
+
+	void			ShowErrorMessageBox(const vsString& title, const vsString& message);
 };
 
 

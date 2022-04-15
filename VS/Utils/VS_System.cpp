@@ -66,6 +66,7 @@
 #if !TARGET_OS_IPHONE
 #include <SDL2/SDL_mouse.h>
 #endif
+#include <SDL2/SDL_messagebox.h>
 
 #include "Files/VS_PhysFS.h"
 
@@ -1295,5 +1296,12 @@ vsSystem::_TraceMods()
 			vsLog(">");
 		}
 	}
+}
+
+void
+vsSystem::ShowErrorMessageBox(const vsString& title, const vsString& message)
+{
+	extern SDL_Window *g_sdlWindow;
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), message.c_str(), g_sdlWindow);
 }
 
