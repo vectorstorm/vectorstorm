@@ -95,18 +95,21 @@ class vsSystem
 	{
 		vsString filepath;
 		vsString mount;
+		bool mod;
 
-		Mount() {}
+		Mount(): mod(false) {}
 
 		Mount( const vsString& fp ):
 			filepath(fp),
-			mount("/")
+			mount("/"),
+			mod(false)
 		{
 		}
 
 		Mount( const vsString& fp, const vsString& m ):
 			filepath(fp),
-			mount(m)
+			mount(m),
+			mod(false)
 		{
 		}
 	};
@@ -216,6 +219,9 @@ public:
 	void			UnmountBaseDirectory();
 
 	void			ShowErrorMessageBox(const vsString& title, const vsString& message);
+
+	void			AddMod( const vsString& directory, const vsString& mountPoint );
+	void			Remount();
 };
 
 

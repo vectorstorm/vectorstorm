@@ -392,7 +392,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 bool
 vsSystem::_DoMount( const Mount& m, bool trace )
 {
-	bool success = PHYSFS_mount( m.filepath.c_str(), m.mount.c_str(), 1 );
+	bool success = PHYSFS_mount( m.filepath.c_str(), m.mount.c_str(), m.mod ? 0 : 1 );
 	if ( !success )
 	{
 		PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
@@ -1304,4 +1304,19 @@ vsSystem::ShowErrorMessageBox(const vsString& title, const vsString& message)
 	extern SDL_Window *g_sdlWindow;
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), message.c_str(), g_sdlWindow);
 }
+
+void
+vsSystem::AddMod( const vsString& directory, const vsString& mountPoint )
+{
+	Mount m(directory, mountPoint);
+	m.mod = true;
+	m_mountpoints.AddItem(m);
+}
+
+void
+vsSystem::Remount()
+{
+	_DoRemountConfiguredPhysFSVolumes();
+}
+
 
