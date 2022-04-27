@@ -589,7 +589,8 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				// remember what went in last so we weren't re-setting nullptrs, but
 				// maybe I'll leave that as a [TODO] rather than worrying about it
 				// riht now while I'm working on shader options.  -- Trevor 24/6/2020
-				list->SetShaderValues( e->shaderValues );
+				if ( e->shaderValues )
+					list->SetShaderValues( e->shaderValues );
 				if ( e->shaderOptions )
 					list->PushShaderOptions( *e->shaderOptions );
 				if ( e->instanceColorBuffer )
@@ -612,6 +613,8 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				}
 				if ( e->shaderOptions )
 					list->PopShaderOptions();
+				if ( e->shaderValues )
+					list->ClearShaderValues();
 				list->PopTransform();
 			}
 		}

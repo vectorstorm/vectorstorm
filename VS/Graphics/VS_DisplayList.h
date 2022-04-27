@@ -122,6 +122,7 @@ public:
 		OpCode_SnapMatrix, // snaps localToWorld matrix from wherever it is to pixels, assuming ortho projection.  Counts as a matrix push.
 
 		OpCode_SetShaderValues, // set supplementary shader values which may be used by any current shader
+		OpCode_ClearShaderValues, // clear supplementary shader values which may be used by any current shader
 		OpCode_PushShaderOptions, // push supplementary shader options onto the stack
 		OpCode_PopShaderOptions,  // pop shader options off the stack
 
@@ -240,6 +241,7 @@ public:
 	void	SetMatrices4x4Buffer( vsRenderBuffer *buffer );
 	void	SnapMatrix();
 	void	SetShaderValues( vsShaderValues *values );
+	void	ClearShaderValues();
 	void	PushShaderOptions( const vsShaderOptions &options );
 	void	PopShaderOptions();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );

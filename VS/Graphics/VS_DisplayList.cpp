@@ -105,6 +105,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"SnapMatrix",
 
 	"SetShaderValues",
+	"ClearShaderValues",
 	"PushShaderOptions",
 	"PopShaderOptions",
 
@@ -699,6 +700,12 @@ vsDisplayList::SetShaderValues( vsShaderValues *values )
 {
 	m_fifo->WriteUint8( OpCode_SetShaderValues );
 	m_fifo->WriteVoidStar( (char*)values );
+}
+
+void
+vsDisplayList::ClearShaderValues()
+{
+	m_fifo->WriteUint8( OpCode_ClearShaderValues );
 }
 
 void
@@ -1363,6 +1370,7 @@ vsDisplayList::PopOp()
 			case OpCode_DisableStencil:
 			case OpCode_DisableScissor:
 			case OpCode_ClearStencil:
+			case OpCode_ClearShaderValues:
 			case OpCode_ClearDepth:
 			case OpCode_ClearViewport:
 			case OpCode_PopShaderOptions:

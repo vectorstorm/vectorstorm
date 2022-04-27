@@ -1404,6 +1404,11 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					m_currentShaderValues = sv;
 					break;
 				}
+			case vsDisplayList::OpCode_ClearShaderValues:
+				{
+					m_currentShaderValues = nullptr;
+					break;
+				}
 			case vsDisplayList::OpCode_PushShaderOptions:
 				{
 					m_optionsStack.AddItem( op->data.shaderOptions );
