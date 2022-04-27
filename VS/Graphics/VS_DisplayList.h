@@ -308,7 +308,7 @@ public:
 
 	struct Triangle
 	{
-		vsVector3D vert[3];
+		vsVector3D vertex[3];
 	};
 	int	GetTriangles(vsArray<struct Triangle>& result);
 

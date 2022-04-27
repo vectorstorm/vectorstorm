@@ -1882,15 +1882,15 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 					Triangle t;
 					if ( currentVertexArray )
 					{
-						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
-						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
-						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+						t.vertex[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+						t.vertex[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+						t.vertex[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
 					}
 					else if ( currentVertexBuffer )
 					{
-						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
-						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
-						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
+						t.vertex[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
+						t.vertex[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
+						t.vertex[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
 					}
 					else
 						break;
@@ -1912,15 +1912,15 @@ vsDisplayList::GetTriangles(vsArray<struct Triangle>& result)
 					Triangle t;
 					if ( currentVertexArray )
 					{
-						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
-						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
-						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
+						t.vertex[0] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index0] );
+						t.vertex[1] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index1] );
+						t.vertex[2] = transformStack[transformStackLevel].ApplyTo( currentVertexArray[index2] );
 					}
 					else if ( currentVertexBuffer )
 					{
-						t.vert[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
-						t.vert[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
-						t.vert[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
+						t.vertex[0] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index0) );
+						t.vertex[1] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index1) );
+						t.vertex[2] = transformStack[transformStackLevel].ApplyTo( currentVertexBuffer->GetPosition(index2) );
 					}
 					else
 						break;

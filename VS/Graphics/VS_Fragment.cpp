@@ -402,9 +402,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vert[0] = m_vbo->GetPosition(index0);
-				t.vert[1] = m_vbo->GetPosition(index1);
-				t.vert[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_vbo->GetPosition(index0);
+				t.vertex[1] = m_vbo->GetPosition(index1);
+				t.vertex[2] = m_vbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}
@@ -416,9 +416,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vert[0] = m_vbo->GetPosition(index0);
-				t.vert[1] = m_vbo->GetPosition(index1);
-				t.vert[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_vbo->GetPosition(index0);
+				t.vertex[1] = m_vbo->GetPosition(index1);
+				t.vertex[2] = m_vbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}
@@ -430,9 +430,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vert[0] = m_vbo->GetPosition(index0);
-				t.vert[1] = m_vbo->GetPosition(index1);
-				t.vert[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_vbo->GetPosition(index0);
+				t.vertex[1] = m_vbo->GetPosition(index1);
+				t.vertex[2] = m_vbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}

@@ -671,7 +671,7 @@ vsModel::CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT
 		vsDisplayList::Triangle &t = triangles[i];
 		float localT;
 		if ( vsCollideRayVsTriangle( localPos, localDir,
-					t.vert[0], t.vert[1], t.vert[2],
+					t.vertex[0], t.vertex[1], t.vertex[2],
 					&localT, &u, &v ) )
 		{
 			if ( localT < *resultT )
@@ -680,7 +680,7 @@ vsModel::CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT
 				*result = pos + dir * (*resultT);
 				*resultT = localT;
 
-				vsVector3D triangleNormal = (t.vert[2]-t.vert[0]).Cross( t.vert[1]-t.vert[0] );
+				vsVector3D triangleNormal = (t.vertex[2]-t.vertex[0]).Cross( t.vertex[1]-t.vertex[0] );
 				triangleNormal.NormaliseSafe();
 				if ( triangleNormal.Dot( localDir ) > 0.f ) // reversed!  (is this the right thing to do if we're hitting the back of a triangle?
 					triangleNormal *= -1.f;
