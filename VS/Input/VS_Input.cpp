@@ -1072,6 +1072,27 @@ vsInput::Update(float timeStep)
 						HandleMouseButtonEvent(event);
 						break;
 					}
+				case SDL_DROPBEGIN:
+					{
+						vsLog("Filedrop begins");
+						break;
+					}
+				case SDL_DROPCOMPLETE:
+					{
+						vsLog("Filedrop complete");
+						break;
+					}
+				case SDL_DROPTEXT:
+					{
+						vsLog("Text dropped on window: %s", event.drop.file);
+						break;
+					}
+				case SDL_DROPFILE:
+					{
+						vsLog("File dropped on window: %s", event.drop.file);
+						SDL_free(event.drop.file); // bah, SDL shouldn't require this.
+						break;
+					}
 				case SDL_WINDOWEVENT:
 					switch (event.window.event)
 					{
