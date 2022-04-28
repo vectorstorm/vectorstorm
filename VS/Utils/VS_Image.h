@@ -52,6 +52,9 @@ public:
 	void			PrepForAsyncRead( vsTexture *texture );
 	bool			IsOK() { return m_pixel != nullptr; }
 
+	// ReadFromFileData() is called with a vsStore of an image.  It should work
+	// with either PNG or JPG, or anything else that stb_image supports loading.
+	void			ReadFromFileData( const vsStore &store );
 	void			Read( vsTexture *texture );
 	void			AsyncRead( vsTexture *texture );
 	void			AsyncReadRenderTarget(vsRenderTarget *target, int buffer);

@@ -785,9 +785,8 @@ vsStore::Expand()
 		zipstream.avail_out = zipBufferSize;
 		zipstream.next_out = (Bytef*)zipBuffer;
 		int ret = inflate(&zipstream, Z_NO_FLUSH);
-		if ( ret == Z_STREAM_END )
-			break;
-		else if ( ret != Z_OK )
+
+		if ( ret != Z_OK && ret != Z_STREAM_END )
 		{
 			switch ( ret )
 			{

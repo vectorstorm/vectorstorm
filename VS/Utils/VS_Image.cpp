@@ -57,32 +57,10 @@ vsImage::vsImage( const vsString &filename ):
 	m_sync(0)
 {
 	vsFile img(filename, vsFile::MODE_Read);
-	vsStore *s = new vsStore( img.GetLength() );
-	img.Store(s);
+	vsStore s( img.GetLength() );
+	img.Store(&s);
 
-	int w,h,n;
-	unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
-	if ( !data )
-		vsLog( "Failure: %s", stbi_failure_reason() );
-
-	vsDelete(s);
-
-	m_width = w;
-	m_height = h;
-
-	m_pixel = new uint32_t[m_width*m_height];
-
-	for ( unsigned int v = 0; v < m_height; v++ )
-	{
-		for ( unsigned int u = 0; u < m_width; u++ )
-		{
-			int ind = PixelIndex(u,v);
-			m_pixel[ind] = ((uint32_t*)(data))[ind];
-		}
-	}
-
-	stbi_image_free(data);
-
+	ReadFromFileData( s );
 }
 
 vsImage::vsImage( const vsStore &filedata ):
@@ -90,26 +68,7 @@ vsImage::vsImage( const vsStore &filedata ):
 	m_pbo(0),
 	m_sync(0)
 {
-	int w,h,n;
-	unsigned char* data = stbi_load_from_memory( (uint8_t*)filedata.GetReadHead(), filedata.BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
-	if ( !data )
-		vsLog( "Failure: %s", stbi_failure_reason() );
-
-	m_width = w;
-	m_height = w;
-
-	m_pixel = new uint32_t[m_width*m_height];
-
-	for ( unsigned int v = 0; v < m_height; v++ )
-	{
-		for ( unsigned int u = 0; u < m_width; u++ )
-		{
-			int ind = PixelIndex(u,v);
-			m_pixel[ind] = ((uint32_t*)(data))[ind];
-		}
-	}
-
-	stbi_image_free(data);
+	ReadFromFileData( filedata );
 }
 
 vsImage::vsImage( vsTexture * texture ):
@@ -138,6 +97,42 @@ vsImage::~vsImage()
 	}
 
 	vsDeleteArray( m_pixel );
+}
+
+void
+vsImage::ReadFromFileData( const vsStore &filedata )
+{
+	int w,h,n;
+
+	// when we're reading from a file, that texture needs to be flipped during
+	// the file read.
+	//
+	// JPG and PNG files natively put their (0,0) point at the BOTTOM left of
+	// the image like chumps, whereas cool people like OpenGL and I know to put
+	// our 0,0 point at the TOP left, because we are SMART and UNDERSTAND how
+	// scanlines work.  So we need to flip them during any load!
+	// -- Trevor 2022-04-28
+	stbi_set_flip_vertically_on_load(1);
+
+	unsigned char* data = stbi_load_from_memory( (uint8_t*)filedata.GetReadHead(), filedata.BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+	if ( !data )
+		vsLog( "Failure: %s", stbi_failure_reason() );
+
+	m_width = w;
+	m_height = w;
+
+	m_pixel = new uint32_t[m_width*m_height];
+
+	for ( unsigned int v = 0; v < m_height; v++ )
+	{
+		for ( unsigned int u = 0; u < m_width; u++ )
+		{
+			int ind = PixelIndex(u,v);
+			m_pixel[ind] = ((uint32_t*)(data))[ind];
+		}
+	}
+
+	stbi_image_free(data);
 }
 
 void
@@ -184,7 +179,7 @@ vsImage::Read( vsTexture *texture )
 				int rInd = rowStart + (x);
 				float rVal = pixels[rInd];
 
-				SetPixel(x, (m_height-1)-y, vsColor(rVal, rVal, rVal, 1.0f) );
+				SetPixel(x, y, vsColor(rVal, rVal, rVal, 1.0f) );
 			}
 		}
 		vsDeleteArray( pixels );
@@ -206,7 +201,7 @@ vsImage::Read( vsTexture *texture )
 				int rInd = rowStart + (x);
 				uint32_t pixel = pixels[rInd];
 
-				SetRawPixel(x, (m_height-1)-y, pixel);
+				SetRawPixel(x, y, pixel);
 			}
 		}
 		vsDeleteArray( pixels );
