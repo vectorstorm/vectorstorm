@@ -64,10 +64,13 @@ public:
 	void			AsyncUnmap(); // unmap
 
 	vsImage *		CreateFlipped_V();
+	vsImage *		CreateOpaque();
 
 	int				GetWidth() const { return m_width; }
 	int				GetHeight() const { return m_height; }
 
+	// 'u' is [0..width-1] from left to right.
+	// 'v' is [0..height-1] from bottom to top.
 	vsColor			GetPixel(unsigned int u, unsigned int v) const;
 	void			SetPixel(unsigned int u, unsigned int v, const vsColor &c);
 

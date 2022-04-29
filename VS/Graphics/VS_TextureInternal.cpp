@@ -85,13 +85,13 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 
 		int w,h,n;
 
-		// glTexImage2D expects pixel data to start at the BOTTOM LEFT for some
-		// reason, which matches how texture data gets loaded in, so ensure
-		// that we're not flipping texture data when we load it in!
+		// glTexImage2D expects pixel data to start at the BOTTOM LEFT, but
+		// stbi_load functions give us the pixel data starting at the TOP LEFT.
+		// So we need to flip them here!
 		//
 		// ref:	https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
 
-		stbi_set_flip_vertically_on_load(0);
+		stbi_set_flip_vertically_on_load(1);
 		unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
 		if ( !data )
 			vsLog( "Failure while loading %s: %s", filename_in, stbi_failure_reason() );

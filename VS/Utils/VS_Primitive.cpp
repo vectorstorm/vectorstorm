@@ -58,7 +58,7 @@ vsSphere::vsSphere( float radius, int slices, const vsString &materialName, cons
 			mesh->SetVertex( (y*slices)+x, matrix.z * radius + offset );
 			mesh->SetNormal( (y*slices)+x, matrix.z );
 			mesh->SetColor( (y*slices)+x, c );
-			mesh->SetTexel( (y*slices)+x, vsVector2D(x * xIncrement, y * yIncrement) );
+			mesh->SetTexel( (y*slices)+x, vsVector2D(x * xIncrement, 1.f - (y * yIncrement)) );
 		}
 	}
 
@@ -153,10 +153,10 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsCo
 	};
 	vsVector2D tex[4] =
 	{
-		vsVector2D( 0.f, 0.f),
-		vsVector2D( 1.f, 0.f),
 		vsVector2D( 0.f, 1.f),
-		vsVector2D( 1.f, 1.f)
+		vsVector2D( 1.f, 1.f),
+		vsVector2D( 0.f, 0.f),
+		vsVector2D( 1.f, 0.f)
 	};
 	int ts[4] =
 	{
@@ -412,15 +412,15 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsCo
 			array[vId+6].position = box.Middle() - main + u + v;
 			array[vId+7].position = box.Middle() - main - u + v;
 
-			array[vId+0].texel = vsVector2D(0.f,0.f);
-			array[vId+1].texel = vsVector2D(1.f,0.f);
-			array[vId+2].texel = vsVector2D(1.f,1.f);
-			array[vId+3].texel = vsVector2D(0.f,1.f);
+			array[vId+0].texel = vsVector2D(0.f,1.f);
+			array[vId+1].texel = vsVector2D(1.f,1.f);
+			array[vId+2].texel = vsVector2D(1.f,0.f);
+			array[vId+3].texel = vsVector2D(0.f,0.f);
 
-			array[vId+4].texel = vsVector2D(1.f,0.f);
-			array[vId+5].texel = vsVector2D(0.f,0.f);
-			array[vId+6].texel = vsVector2D(0.f,1.f);
-			array[vId+7].texel = vsVector2D(1.f,1.f);
+			array[vId+4].texel = vsVector2D(1.f,1.f);
+			array[vId+5].texel = vsVector2D(0.f,1.f);
+			array[vId+6].texel = vsVector2D(0.f,0.f);
+			array[vId+7].texel = vsVector2D(1.f,0.f);
 
 			for ( int i = 0; i < 4; i++ )
 			{
@@ -676,10 +676,10 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 	};
 	vsVector2D tex[4] =
 	{
-		vsVector2D( 0.f * texScale.x, 0.f * texScale.y) + texOffset,
-		vsVector2D( 1.f * texScale.x, 0.f * texScale.y) + texOffset,
 		vsVector2D( 0.f * texScale.x, 1.f * texScale.y) + texOffset,
-		vsVector2D( 1.f * texScale.x, 1.f * texScale.y) + texOffset
+		vsVector2D( 1.f * texScale.x, 1.f * texScale.y) + texOffset,
+		vsVector2D( 0.f * texScale.x, 0.f * texScale.y) + texOffset,
+		vsVector2D( 1.f * texScale.x, 0.f * texScale.y) + texOffset
 	};
 	uint16_t ts[4] =
 	{
@@ -952,15 +952,15 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, 
 			array[vId+6].position = box.Middle() - main + u + v;
 			array[vId+7].position = box.Middle() - main - u + v;
 
-			array[vId+0].texel = vsVector2D(0.f,0.f);
-			array[vId+1].texel = vsVector2D(1.f,0.f);
-			array[vId+2].texel = vsVector2D(1.f,1.f);
-			array[vId+3].texel = vsVector2D(0.f,1.f);
+			array[vId+0].texel = vsVector2D(0.f,1.f);
+			array[vId+1].texel = vsVector2D(1.f,1.f);
+			array[vId+2].texel = vsVector2D(1.f,0.f);
+			array[vId+3].texel = vsVector2D(0.f,0.f);
 
-			array[vId+4].texel = vsVector2D(1.f,0.f);
-			array[vId+5].texel = vsVector2D(0.f,0.f);
-			array[vId+6].texel = vsVector2D(0.f,1.f);
-			array[vId+7].texel = vsVector2D(1.f,1.f);
+			array[vId+4].texel = vsVector2D(1.f,1.f);
+			array[vId+5].texel = vsVector2D(0.f,1.f);
+			array[vId+6].texel = vsVector2D(0.f,0.f);
+			array[vId+7].texel = vsVector2D(1.f,0.f);
 
 			for ( int i = 0; i < 4; i++ )
 			{

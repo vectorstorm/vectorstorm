@@ -91,6 +91,7 @@ vsFontSize::LoadOldFormat( vsFile *font )
 		}
 		else if ( r.GetLabel().AsString() == "Glyph" )
 		{
+			vsLog("OldFormat");
 			vsAssert(i < m_glyphCount, "ERROR:  Too many glyphs!");
 			vsGlyph *g = &m_glyph[i++];
 
@@ -309,10 +310,12 @@ vsFontSize::LoadBMFont( vsFile *file )
 				float w = GetBMFontValue_Integer(&r, "width") / width;
 				float h = GetBMFontValue_Integer(&r, "height") / height;
 
-				m_glyph[i].texel[0].Set(l,t);
-				m_glyph[i].texel[1].Set(l+w,t);
-				m_glyph[i].texel[2].Set(l,t+h);
-				m_glyph[i].texel[3].Set(l+w,t+h);
+				float b = 1.0f - t; // BMFont coords are relative to top left, we use bottom left.
+
+				m_glyph[i].texel[0].Set(l,b);
+				m_glyph[i].texel[1].Set(l+w,b);
+				m_glyph[i].texel[2].Set(l,b-h);
+				m_glyph[i].texel[3].Set(l+w,b-h);
 			}
 			i++;
 		}

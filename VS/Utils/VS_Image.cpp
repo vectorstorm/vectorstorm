@@ -105,12 +105,15 @@ vsImage::ReadFromFileData( const vsStore &filedata )
 	int w,h,n;
 
 	// when we're reading from a file, that texture needs to be flipped during
-	// the file read.
+	// the file read because STB defines images as going Left->Right,
+	// Top->Bottom.  , but in OpenGL (and also PNG files, Jpg files, etc) and
+	// also (for reasons of interoperability) our vsImage interface also goes
+	// Left->Right, Bottom->Top.  That is, our data is inverted from what STB
+	// wants our data to be.
 	//
-	// JPG and PNG files natively put their (0,0) point at the BOTTOM left of
-	// the image like chumps, whereas cool people like OpenGL and I know to put
-	// our 0,0 point at the TOP left, because we are SMART and UNDERSTAND how
-	// scanlines work.  So we need to flip them during any load!
+	// So it's important to note here that when we're talking about whether
+	// STB should "flip vertically", what we're saying is how our storage
+	// is oriented compared against STB's assumptions.
 	// -- Trevor 2022-04-28
 	stbi_set_flip_vertically_on_load(1);
 
@@ -377,6 +380,24 @@ vsImage::CreateFlipped_V()
 		for ( size_t x = 0; x < m_width; x++ )
 		{
 			result->SetPixel(x,otherY, GetPixel(x,y));
+		}
+	}
+
+	return result;
+}
+
+vsImage *
+vsImage::CreateOpaque()
+{
+	vsImage *result = new vsImage( m_width, m_height );
+
+	for ( size_t y = 0; y < m_height; y++ )
+	{
+		for ( size_t x = 0; x < m_width; x++ )
+		{
+			vsColor c(GetPixel(x,y));
+			c.a = 1.f;
+			result->SetPixel(x,y, c);
 		}
 	}
 
