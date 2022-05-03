@@ -347,7 +347,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data/";
 #endif
 
-	_TraceMods();
+	_FindMods();
 
 	m_mountpoints.AddItem(m_dataDirectory+"VS/");
 	m_mountpoints.AddItem(m_dataDirectory+"VS.zip");
@@ -1245,14 +1245,12 @@ vsSystem::UnmountBaseDirectory()
 }
 
 void
-vsSystem::_TraceMods()
+vsSystem::_FindMods()
 {
 	// we get called during startup AFTER PhysFS has been initialised but BEFORE
 	// anything has been mounted.  So let's look for user-modified files.
 	//
 	// First, we need to mount a couple of paths for us to look in.
-	vsArray<vsString> unpackedDataDirectories;
-	vsArray<vsString> modDirectories;
 
 	PHYSFS_mount(m_dataDirectory.c_str(), "probedata/", 1);
 	PHYSFS_mount(PHYSFS_getWriteDir(), "probeuser/", 1);
@@ -1263,17 +1261,22 @@ vsSystem::_TraceMods()
 		//
 		// And let's check for mod directories
 
-		vsFile::DirectoryDirectories(&unpackedDataDirectories, "probedata/");
+		vsFile::DirectoryDirectories(&m_unpackedDataDirectories, "probedata/");
 
 		if ( vsFile::DirectoryExists("probeuser/mod/") )
-			vsFile::DirectoryDirectories(&modDirectories, "probeuser/mod/");
+			vsFile::DirectoryDirectories(&m_modDirectories, "probeuser/mod/");
 	}
 
 	// and unmount the paths we mounted before
 	PHYSFS_unmount(m_dataDirectory.c_str());
 	PHYSFS_unmount(PHYSFS_getWriteDir());
 
-	if ( unpackedDataDirectories.IsEmpty() && modDirectories.IsEmpty() )
+}
+
+void
+vsSystem::TraceMods() const
+{
+	if ( m_unpackedDataDirectories.IsEmpty() && m_modDirectories.IsEmpty() )
 	{
 		vsLog("Pristine Data:  YES");
 	}
@@ -1281,18 +1284,18 @@ vsSystem::_TraceMods()
 	{
 		vsLog("Pristine Data:  NO");
 
-		if ( !unpackedDataDirectories.IsEmpty() )
+		if ( !m_unpackedDataDirectories.IsEmpty() )
 		{
 			vsLog("> Unpacked data directories:");
-			for ( int i = 0; i < unpackedDataDirectories.ItemCount(); i++ )
-				vsLog(">   + %s", unpackedDataDirectories[i]);
+			for ( int i = 0; i < m_unpackedDataDirectories.ItemCount(); i++ )
+				vsLog(">   + %s", m_unpackedDataDirectories[i]);
 			vsLog(">");
 		}
-		if ( !modDirectories.IsEmpty() )
+		if ( !m_modDirectories.IsEmpty() )
 		{
 			vsLog("> Mods:");
-			for ( int i = 0; i < modDirectories.ItemCount(); i++ )
-				vsLog(">   + %s", modDirectories[i]);
+			for ( int i = 0; i < m_modDirectories.ItemCount(); i++ )
+				vsLog(">   + %s", m_modDirectories[i]);
 			vsLog(">");
 		}
 	}

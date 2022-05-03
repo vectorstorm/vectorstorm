@@ -116,6 +116,8 @@ class vsSystem
 
 	vsArray<Mount> m_mountedpoints;
 	vsArray<Mount> m_mountpoints;
+	vsArray<vsString> m_unpackedDataDirectories;
+	vsArray<vsString> m_modDirectories;
 
 	void InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title);
 	void DeinitPhysFS();
@@ -123,7 +125,7 @@ class vsSystem
 	void _DoRemountConfiguredPhysFSVolumes();
 	bool _DoMount( const Mount& m, bool trace );
 	bool _DoUnmount( const Mount& m );
-	void _TraceMods();
+	void _FindMods();
 
 	void SetCurrentGameName( const vsString& game, bool trace );
 	void MountPhysFSVolumes(bool trace);
@@ -209,7 +211,7 @@ public:
 	// data files to aid in debugging efforts, and should not be used for any
 	// other purpose)
 	int IsDataPristine() const { return m_dataIsPristine; }
-	void TraceMods() { _TraceMods(); }
+	void TraceMods() const;
 
 	// by default, we *don't* mount our base directory for reading, but we can
 	// do so if the game needs it for some reason (for example, MT2's Windows
