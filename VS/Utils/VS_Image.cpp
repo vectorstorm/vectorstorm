@@ -60,6 +60,8 @@ vsImage::vsImage( const vsString &filename ):
 	vsStore s( img.GetLength() );
 	img.Store(&s);
 
+	vsAssertF( s.BytesLeftForReading() > 0, "Trying to load image '%s' but got zero bytes?", filename );
+
 	ReadFromFileData( s );
 }
 
@@ -68,6 +70,7 @@ vsImage::vsImage( const vsStore &filedata ):
 	m_pbo(0),
 	m_sync(0)
 {
+	vsAssert( filedata.BytesLeftForReading() > 0, "Trying to load image from vsStore but got zero bytes?" );
 	ReadFromFileData( filedata );
 }
 
