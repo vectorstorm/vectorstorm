@@ -9,6 +9,7 @@
 
 #include "VS_Heap.h"
 #include "VS_Config.h"
+#include "VS_Backtrace.h"
 
 #ifdef MSVC
 #define strncpy strncpy_s
@@ -548,10 +549,17 @@ void operator delete[](void* p, std::nothrow_t const&) throw()
 void* operator new(std::size_t n)
 {
 	void* result( malloc(n) );
-	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+	if ( result == nullptr )
+	{
+		vsLog( "!! Memory allocation of %d bytes failed", n );
+		vsBacktrace();
+	}
+	else
+	{
 #ifdef _DEBUG
-	memset(result, 0xcd, n);
+		memset(result, 0xcd, n);
 #endif // _DEBUG
+	}
 	return result;
 }
 
@@ -559,10 +567,17 @@ void* operator new(std::size_t n)
 void* operator new[](std::size_t n)
 {
 	void* result( malloc(n) );
-	vsAssertF(result != nullptr, "Memory allocation of %d bytes failed", n );
+	if ( result == nullptr )
+	{
+		vsLog( "!! Memory allocation of %d bytes failed", n );
+		vsBacktrace();
+	}
+	else
+	{
 #ifdef _DEBUG
-	memset(result, 0xcd, n);
+		memset(result, 0xcd, n);
 #endif // _DEBUG
+	}
 	return result;
 }
 
