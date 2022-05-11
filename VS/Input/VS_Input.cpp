@@ -1195,6 +1195,14 @@ vsInput::Update(float timeStep)
 							// issue around this somewhere.
 							break;
 #endif
+#if SDL_VERSION_ATLEAST( 2, 0, 18 ) // new window events added in SDL 2.0.18
+						case SDL_WINDOWEVENT_ICCPROF_CHANGED:
+							// vsLog("Window ICC profile changed!  (do we care?  no we do not, right now.)");
+							break;
+						case SDL_WINDOWEVENT_DISPLAY_CHANGED:
+							// vsLog("Window has changed which display it's centered on.  (do we care?  no we do not.)");
+							break;
+#endif
 						default:
 							vsLog("Unhandled window event:  %d", event.window.event);
 							break;
