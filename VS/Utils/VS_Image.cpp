@@ -56,9 +56,10 @@ vsImage::vsImage( const vsString &filename ):
 	m_pbo(0),
 	m_sync(0)
 {
-	vsFile img(filename, vsFile::MODE_Read);
-	vsStore s( img.GetLength() );
-	img.Store(&s);
+	vsFile *img = new vsFile(filename, vsFile::MODE_Read);
+	vsStore s( img->GetLength() );
+	img->Store(&s);
+	vsDelete(img);
 
 	vsAssertF( s.BytesLeftForReading() > 0, "Trying to load image '%s' but got zero bytes?", filename );
 
