@@ -280,6 +280,12 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_lastShaderId(0),
 	m_bufferCount(bufferCount)
 {
+	vsLog("SDL Compiled Version: %d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+	SDL_version sdlVersion;
+	SDL_GetVersion(&sdlVersion);
+	vsLog("SDL Runtime Version: %d.%d.%d", sdlVersion.major, sdlVersion.minor, sdlVersion.patch);
+
+
 	int displayCount = SDL_GetNumVideoDisplays();
 	if (displayCount < 1)
 	{
@@ -412,7 +418,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		// }
 // #endif
 	}
-
 
 
 	m_viewportWidth = m_width = width;

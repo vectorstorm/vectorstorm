@@ -162,6 +162,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 #if !TARGET_OS_IPHONE
 
+	vsLog("Initialising SDL");
 	if ( SDL_Init(SDL_INIT_VIDEO) < 0 ){
 		fprintf(stderr, "Couldn't initialise SDL: %s\n", SDL_GetError() );
 		exit(1);
@@ -177,6 +178,12 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 #endif // USE_SDL_SOUND
 #endif // !TARGET_OS_IPHONE
+
+#if SDL_VERSION_ATLEAST( 2, 0, 22 )
+	bool autoCaptureMouse = false;
+	SDL_SetHint( SDL_HINT_MOUSE_AUTO_CAPTURE, &autoCaptureMouse );
+	vsLog("Disabling SDL_HINT_MOUSE_AUTO_CAPTURE");
+#endif
 
 #if defined(_WIN32)
 	static bool startedUp = false;
