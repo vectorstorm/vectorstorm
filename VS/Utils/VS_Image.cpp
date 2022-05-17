@@ -106,27 +106,40 @@ vsImage::~vsImage()
 void
 vsImage::ReadFromFileData( const vsStore &filedata )
 {
-	int w,h,n;
-
 	// when we're reading from a file, that texture needs to be flipped during
-	// the file read because STB defines images as going Left->Right,
-	// Top->Bottom.  , but in OpenGL (and also PNG files, Jpg files, etc) and
-	// also (for reasons of interoperability) our vsImage interface also goes
-	// Left->Right, Bottom->Top.  That is, our data is inverted from what STB
-	// wants our data to be.
+	// the file read because STB defines image data as going Left->Right,
+	// Top->Bottom, but OpenGL wants it to go Left->Right, Bottom->Top.
+	// That is, we want our data to be vertically flipped compared against
+	// what STB gives us by default.
 	//
-	// So it's important to note here that when we're talking about whether
-	// STB should "flip vertically", what we're saying is how our storage
-	// is oriented compared against STB's assumptions.
+	// (personally, I agree re: it'd make more sense for textures to have their
+	// 'origin' at the top left than how OpenGL wants it to be at the bottom left.
+	// But it's a lot more work to make OpenGL work the way I'd rather than to
+	// just make STB do what OpenGL wants, so that's the direction we're going here,
+	// and just making stbi flip images vertically on load to match OpenGL's ideas
+	// about how textures should be formatted)
+	//
 	// -- Trevor 2022-04-28
 	stbi_set_flip_vertically_on_load(1);
 
-	unsigned char* data = stbi_load_from_memory( (uint8_t*)filedata.GetReadHead(), filedata.BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+	int w,h,n;
+	unsigned char* data = stbi_load_from_memory(
+			(uint8_t*)filedata.GetReadHead(),
+			filedata.BytesLeftForReading(),
+			&w, &h, &n,
+			STBI_rgb_alpha );
+
 	if ( !data )
-		vsLog( "Failure: %s", stbi_failure_reason() );
+	{
+		vsLog( "Image load failure: %s", stbi_failure_reason() );
+		return;
+	}
+	// vsLog( "File contained %d channels per pixel", n );
+	// (but stbi converts to 4 per pixel if it was 3 or lower, because we nicely asked it to
+	// by specifying STBI_rgb_alpha for the final parameter)
 
 	m_width = w;
-	m_height = w;
+	m_height = h;
 
 	m_pixel = new uint32_t[m_width*m_height];
 

@@ -180,7 +180,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 #endif // !TARGET_OS_IPHONE
 
 #if SDL_VERSION_ATLEAST( 2, 0, 22 )
-	bool autoCaptureMouse = false;
+	char autoCaptureMouse = 0;
 	SDL_SetHint( SDL_HINT_MOUSE_AUTO_CAPTURE, &autoCaptureMouse );
 	vsLog("Disabling SDL_HINT_MOUSE_AUTO_CAPTURE");
 #endif
