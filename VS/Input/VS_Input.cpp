@@ -34,7 +34,7 @@
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
 #else
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #endif
 
 extern SDL_Window *g_sdlWindow;

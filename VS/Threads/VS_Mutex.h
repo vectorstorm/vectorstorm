@@ -12,7 +12,7 @@
 // for the moment, we don't ever actually want to use mutexes;
 // we're a video game!  Let's use spinlocks instead.
 
-#include "SDL2/SDL.h"
+#include "SDL.h"
 typedef SDL_mutex* mutex_t;
 
 class vsMutex

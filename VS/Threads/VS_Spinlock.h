@@ -12,7 +12,7 @@
 // for the moment, we don't ever actually want to use spinlockes;
 // we're a video game!  Let's use spinlocks instead.
 
-#include "SDL2/SDL.h"
+#include "SDL.h"
 typedef SDL_SpinLock spinlock_t;
 
 class vsSpinlock

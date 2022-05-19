@@ -26,7 +26,7 @@
  * 11/08/2004 - Compr fix, levels -1,1-7 now work - Tyler Montbriand
  */
 #include <stdlib.h>
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #include <SDL2/SDL_endian.h>
 #if defined(__APPLE_CC__)
 #include <libpng15/png.h>

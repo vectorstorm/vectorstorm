@@ -22,7 +22,7 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #endif
 
 // Macros for defining custom axes to watch.  See vsInput::Load() for

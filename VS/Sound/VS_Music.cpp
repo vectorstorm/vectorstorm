@@ -13,7 +13,7 @@
 #include "VS_TimerSystem.h"
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #endif
 
 int music_buffer_pos=-1;
