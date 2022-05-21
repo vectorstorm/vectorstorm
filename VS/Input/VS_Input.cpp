@@ -1826,7 +1826,6 @@ vsInput::CaptureMouse( bool capture )
 		m_captureMouse = capture;
 		if ( capture )
 		{
-			vsLog("++Capturing mouse state");
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
 			SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -1836,7 +1835,6 @@ vsInput::CaptureMouse( bool capture )
 		}
 		else
 		{
-			vsLog("--Releasing mouse capture");
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 // #ifndef _WIN32
 			// Bug in SDL2 on OSX:  Relative mouse mode moves the cursor to the
@@ -1854,7 +1852,6 @@ vsInput::CaptureMouse( bool capture )
 			// So I guess that's just expected behaviour, now.  :)  Enabling
 			// mouse warping for Windows, too!
 			//
-			vsLog("--Warping mouse back to initial position");
 			SDL_WarpMouseInWindow( g_sdlWindow, m_capturedMouseX, m_capturedMouseY );
 // #endif
 
