@@ -27,6 +27,15 @@ public:
 
 	vsHashEntry(): m_key() { m_keyHash = 0, m_next = nullptr; }
 	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = nullptr; }
+	vsHashEntry( const vsHashEntry& o ) :
+		m_item(o.m_item),
+		m_key(o.m_key),
+		m_keyHash(o.m_keyHash),
+		m_next(nullptr)
+	{
+		if ( o.m_next )
+			m_next = new vsHashEntry<T>( *o.m_next );
+	}
 };
 
 template <typename T>
@@ -93,6 +102,18 @@ public:
 		m_shift = 32 - vsHighBitPosition(m_bucketCount);
 
 		m_bucket = new vsHashEntry<T>[m_bucketCount];
+	}
+
+	vsHashTable(const vsHashTable& other):
+		m_bucketCount( other.m_bucketCount ),
+		m_shift( other.m_shift )
+	{
+		m_bucket = new vsHashEntry<T>[m_bucketCount];
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			if ( other.m_bucket[i].m_next )
+				m_bucket[i].m_next = new vsHashEntry<T>(*other.m_bucket[i].m_next);
+		}
 	}
 
 	~vsHashTable()

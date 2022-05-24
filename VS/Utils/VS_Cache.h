@@ -10,7 +10,7 @@
 #ifndef VS_CACHE_H
 #define VS_CACHE_H
 
-#include "VS_HashTable.h"
+// #include "VS_HashTable.h"
 #include "VS/Utils/VS_Singleton.h"
 
 template <typename T> class vsCache;
