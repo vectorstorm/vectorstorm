@@ -34,9 +34,15 @@ public:
 	// virtual void DynamicDraw( vsRenderQueue *queue );
 };
 
+#define FRAMETIME_SAMPLE_COUNT (5)
+
 class vsTimerSystem : public coreGameSystem
 {
 	static vsTimerSystem *s_instance;
+
+	uint64_t m_frameTimeSample[FRAMETIME_SAMPLE_COUNT];
+	int m_nextFrameTimeSample;
+	int m_frameTimeSampleCount;
 
 	uint64_t m_initTime;
 

@@ -22,7 +22,7 @@
 
 // set to 1 to explicitly insert delays between frames,
 // if the user has disabled vsync, in order to try to
-// render just at 60fps.
+// render just at no more than our monitor's refresh rate.
 #define ENFORCE_FPS_MAXIMUM (1)
 
 #if !TARGET_OS_IPHONE
@@ -165,6 +165,9 @@ vsTimerSystem::~vsTimerSystem()
 void
 vsTimerSystem::Init()
 {
+	m_frameTimeSampleCount = 0;
+	m_nextFrameTimeSample = 0;
+
 	m_initTime = GetMicroseconds();
 	//	m_startCpu = SDL_GetTicks();
 	//	m_startGpu = SDL_GetTicks();
@@ -247,6 +250,18 @@ vsTimerSystem::Update( float timeStep )
 			roundTime = now - m_startCpu;
 #endif
 		}
+
+#define SMOOTH_TIMESTEPS
+#ifdef SMOOTH_TIMESTEPS
+		m_frameTimeSample[m_nextFrameTimeSample] = roundTime;
+		m_nextFrameTimeSample = (m_nextFrameTimeSample+1)%FRAMETIME_SAMPLE_COUNT; // wrap around
+		m_frameTimeSampleCount = vsMax( m_frameTimeSampleCount, m_nextFrameTimeSample );
+
+		roundTime = 0;
+		for ( int i = 0; i < m_frameTimeSampleCount; i++ )
+			roundTime += m_frameTimeSample[i];
+		roundTime /= m_frameTimeSampleCount;
+#endif
 
 		float actualTimeStep = (roundTime) / 1000000.0f;
 		if ( m_firstFrame )	// first frame.
