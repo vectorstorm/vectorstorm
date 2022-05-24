@@ -23,8 +23,12 @@
 
 #include "stb_image_write.h"
 #include "stb_image.h"
+#include <atomic>
 
-int vsImage::s_textureMakerCount = 0;
+namespace
+{
+	std::atomic<int> s_textureMakerCount = 0;
+}
 bool vsImage::s_allowLoadFailure = false;
 
 vsImage::vsImage():

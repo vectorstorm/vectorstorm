@@ -17,6 +17,7 @@
 
 #include "VS_File.h"
 #include "VS_Store.h"
+#include <atomic>
 
 #if !TARGET_OS_IPHONE
 #include "VS_OpenGL.h"
@@ -26,7 +27,10 @@
 #endif // _WIN32
 #endif // TARGET_OS_IPHONE
 
-int vsHalfFloatImage::s_textureMakerCount = 0;
+namespace
+{
+	std::atomic<int> s_textureMakerCount = 0;
+}
 
 vsHalfFloatImage::vsHalfFloatImage(unsigned int width, unsigned int height):
 	m_pixel(nullptr),

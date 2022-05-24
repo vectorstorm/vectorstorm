@@ -24,7 +24,6 @@ private:
 	unsigned int	m_width;
 	unsigned int	m_height;
 
-	static int		s_textureMakerCount;
 	static bool		s_allowLoadFailure;
 
 	int				PixelIndex(int u, int v) const { return u + (v*m_width); }

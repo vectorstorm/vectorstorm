@@ -24,8 +24,6 @@ class vsFloatImage
 	unsigned int	m_width;
 	unsigned int	m_height;
 
-	static int		m_textureMakerCount;
-
 	int				PixelIndex(int u, int v) const { return u + (v*m_width); }
 
     void            LoadFromSurface( SDL_Surface *source );

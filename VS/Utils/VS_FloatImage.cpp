@@ -21,8 +21,12 @@
 #include "stb_image.h"
 #include "VS_OpenGL.h"
 #include "VS_Image.h"
+#include <atomic>
 
-int vsFloatImage::m_textureMakerCount = 0;
+namespace
+{
+	static std::atomic<int> s_textureMakerCount = 0;
+};
 
 vsFloatImage::vsFloatImage(unsigned int width, unsigned int height):
 	m_pixel(nullptr),
@@ -315,7 +319,7 @@ vsFloatImage::Bake( const vsString& name_in )
 {
 	vsString name(name_in);
 	if ( name.empty() )
-		name = vsFormatString("FloatMakerTexture%d", m_textureMakerCount++);
+		name = vsFormatString("FloatMakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);

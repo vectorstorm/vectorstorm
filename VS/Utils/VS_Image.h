@@ -25,7 +25,6 @@ private:
 	unsigned int	m_width;
 	unsigned int	m_height;
 
-	static int		s_textureMakerCount;
 	static bool		s_allowLoadFailure;
 
 	uint32_t m_pbo;
