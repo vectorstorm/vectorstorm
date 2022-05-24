@@ -322,8 +322,6 @@ vsFloatImage::Bake( const vsString& name_in )
 		name = vsFormatString("FloatMakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
-	vsTextureManager::Instance()->Add(ti);
-
 	return new vsTexture(ti);
 }
 

@@ -450,8 +450,6 @@ vsImage::Bake( const vsString& name_in )
 		name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
-	vsTextureManager::Instance()->Add(ti);
-
 	return new vsTexture(ti);
 }
 
