@@ -23,6 +23,11 @@ vsTexture::vsTexture( vsTexture *other ):
 {
 }
 
+vsTexture::vsTexture(vsTextureInternal *ti):
+	vsCacheReference<vsTextureInternal>( ti )
+{
+}
+
 vsTexture::~vsTexture()
 {
 }

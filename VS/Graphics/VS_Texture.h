@@ -19,6 +19,7 @@ class vsTexture : public vsCacheReference<vsTextureInternal>
 public:
 	vsTexture(const vsString &filename_in);
 	vsTexture(vsTexture *other);
+	vsTexture(vsTextureInternal *ti);
 	~vsTexture();
 
 	/**

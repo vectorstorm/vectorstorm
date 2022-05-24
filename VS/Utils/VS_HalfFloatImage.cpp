@@ -84,5 +84,5 @@ vsHalfFloatImage::Bake( const vsString& name_in )
 	vsTextureInternal *ti = new vsTextureInternal(name, this);
 	vsTextureManager::Instance()->Add(ti);
 
-	return new vsTexture(name);
+	return new vsTexture(ti);
 }
