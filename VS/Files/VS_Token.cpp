@@ -11,6 +11,7 @@
 
 #include "VS/Memory/VS_Serialiser.h"
 #include <stdexcept>
+#include <sstream>
 
 // #ifdef MSVC
 // visual studio defines its own "secure" sscanf.  So use that to keep
@@ -235,6 +236,24 @@ vsToken::vsToken(const vsToken& other):
 	}
 }
 
+vsToken::vsToken( const vsString& string ):
+	vsToken()
+{
+	SetString(string);
+}
+
+vsToken::vsToken( int i ):
+	vsToken()
+{
+	SetInteger(i);
+}
+
+vsToken::vsToken( float f ):
+	vsToken()
+{
+	SetFloat(f);
+}
+
 vsToken::~vsToken()
 {
 	SetInteger(0); // cleanup any string data we had lying around
@@ -363,32 +382,49 @@ vsToken::ExtractFrom( vsString &string )
 	return false;
 }
 
+namespace
+{
+	// This string escaping routine is based on one provided by Paul
+	// Draper, and then modified for our own purposes:
+	// https://stackoverflow.com/questions/12449737/programmatically-get-escaped-string-representation-in-c
+	//
+	// We use this routine so that when we "BackToString()" a token, it gets all the
+	// necessary escapes to exist inside of a quoted string inside another
+	// string.
+
+	vsString escape(vsString const &str)
+	{
+		std::ostringstream result;
+		for (vsString::const_iterator it = str.begin(); it != str.end(); it++)
+		{
+				switch (*it) {
+					case '\n':
+						result << "\\n";
+						break;
+					case '\t':
+						result << "\\t";
+						break;
+					case '\"':
+						result << "\\\"";
+						break;
+					case '\\':
+						result << "\\\\";
+						break;
+					default:
+						result << *it;
+				}
+		}
+		return result.str();
+	}
+}
+
 vsString
 vsToken::BackToString() const
 {
 	if ( m_type == Type_String )
 	{
-		// check for newlines and other special characters;  we need to escape them!
-		vsString escapedString = m_string;
-		while ( escapedString.find('\n') != vsString::npos )
-		{
-			size_t pos = escapedString.find('\n');
-			escapedString.erase(pos,1);
-			escapedString.insert(pos, "\\n");
-		}
-		while ( escapedString.find('\t') != vsString::npos )
-		{
-			size_t pos = escapedString.find('\t');
-			escapedString.erase(pos,1);
-			escapedString.insert(pos, "\\t");
-		}
-		while ( escapedString.find('\"') != vsString::npos )
-		{
-			size_t pos = escapedString.find('\"');
-			escapedString.erase(pos,1);
-			escapedString.insert(pos, "\\\"");
-		}
-		return "\"" + escapedString + "\"";
+		vsString escapedString = escape(m_string);
+		return vsFormatString("\"%s\"", escapedString);
 	}
 
 	return AsString();

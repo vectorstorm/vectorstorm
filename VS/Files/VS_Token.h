@@ -46,10 +46,20 @@ public:
 	vsToken();
 	vsToken(Type t);
 	vsToken(const vsToken& other);
+
+	explicit vsToken( const vsString& string );
+	explicit vsToken( int i );
+	explicit vsToken( float f );
+
 	~vsToken();
 
 	bool		ExtractFrom( vsString &string );
-	vsString	BackToString() const;			// back to a string, exactly as we were extracted from.  (If we're of "String" type, this will have quotes around it)
+
+	// back to a string, exactly as we were extracted from.
+	//
+	// N.B.: If we're of "String" type, the returned string will have quotes
+	// around it and the string contents will be escaped (\" instead of ", etc)
+	vsString	BackToString() const;
 
 	void		SerialiseBinaryV1( vsSerialiser *s, vsStringTable& stringTable );
 	void		SerialiseBinaryV2( vsSerialiser *s );

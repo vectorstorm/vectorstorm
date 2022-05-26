@@ -55,10 +55,10 @@ public:
 	// void		SetPool( vsPool<vsRecord> *pool ) { m_pool = pool; }
 	void		Init();
 
-	bool		Parse( vsFile *file );				// attempt to fill out this vsRecord from a vsString
+	bool		Parse( vsFile *file );                 // attempt to fill out this vsRecord from a vsString
 	bool		ParseString( vsString string );
-	bool		AppendToken( const vsToken &token );		// add this token to me.
-	vsString	ToString( int childLevel = 0 );							// convert this vsRecord into a vsString.
+	bool		AppendToken( const vsToken &token );   // add this token to me.
+	vsString	ToString( int childLevel = 0 ) const;  // convert this vsRecord into a vsString.
 
 	void LoadFromFilename( const vsString& filename );
 

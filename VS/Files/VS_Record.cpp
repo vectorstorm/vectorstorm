@@ -265,7 +265,7 @@ vsRecord::LoadFromFilename( const vsString& filename )
 }
 
 vsString
-vsRecord::ToString( int childLevel )
+vsRecord::ToString( int childLevel ) const
 {
 	vsString tabbing = vsEmptyString;
 	vsString result = vsEmptyString;
