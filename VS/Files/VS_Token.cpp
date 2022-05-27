@@ -149,33 +149,58 @@ static vsString ExtractWhitespaceStringToken( vsString &string )	// pull out a s
 	return label;
 }
 
-static vsString ExtractLabelToken( vsString &string )
+// static vsString ExtractLabelToken( vsString &string )
+// {
+// 	vsAssert(IsAlpha(string[0]), "Tried to extract a label from something that isn't alpha!");
+// 	// okay.  We need to find
+// 	vsString label;
+//
+// 	size_t len = string.length();
+// 	size_t index = 0;
+//
+// 	for ( index = 0; index < len; index++ )
+// 	{
+// 		if ( !IsAlphaNumeric(string[index]) )	// this character isn't alphanumeric, so isn't part of the label
+// 		{
+// 			index--;					// back up one character
+// 			break;						// exit the loop
+// 		}
+// 	}
+//
+// 	label = string.substr(0, index+1);
+// 	string.erase(0,index+1);
+//
+// 	return label;
+// }
+//
+// static vsString ExtractNumberToken( vsString &string )
+// {
+// 	vsAssert(IsNumeric(string[0]), "Tried to extract a number from something that isn't a number!");
+// 	// okay.  We need to find
+// 	vsString numberString;
+//
+// 	size_t len = string.length();
+// 	size_t index = 0;
+//
+// 	for ( index = 0; index < len; index++ )
+// 	{
+// 		if ( !IsNumeric(string[index]) )	// this character isn't alphabetic, so isn't part of the label
+// 		{
+// 			index--;					// back up one character
+// 			break;						// exit the loop
+// 		}
+// 	}
+//
+// 	numberString = string.substr(0, index+1);
+// 	string.erase(0,index+1);
+//
+// 	return numberString;
+// }
+//
+
+static vsString PeekNumberToken( vsString &string )
 {
-	vsAssert(IsAlpha(string[0]), "Tried to extract a label from something that isn't alpha!");
-	// okay.  We need to find
-	vsString label;
-
-	size_t len = string.length();
-	size_t index = 0;
-
-	for ( index = 0; index < len; index++ )
-	{
-		if ( !IsAlphaNumeric(string[index]) )	// this character isn't alphanumeric, so isn't part of the label
-		{
-			index--;					// back up one character
-			break;						// exit the loop
-		}
-	}
-
-	label = string.substr(0, index+1);
-	string.erase(0,index+1);
-
-	return label;
-}
-
-static vsString ExtractNumberToken( vsString &string )
-{
-	vsAssert(IsNumeric(string[0]), "Tried to extract a number from something that isn't a number!");
+	vsAssert(::IsNumeric(string[0]), "Tried to extract a number from something that isn't a number!");
 	// okay.  We need to find
 	vsString numberString;
 
@@ -192,8 +217,6 @@ static vsString ExtractNumberToken( vsString &string )
 	}
 
 	numberString = string.substr(0, index+1);
-	string.erase(0,index+1);
-
 	return numberString;
 }
 
@@ -260,8 +283,86 @@ vsToken::~vsToken()
 }
 
 bool
+vsToken::ExtractLabelString( vsString* output, vsString& input )
+{
+	if ( !::IsAlpha( input[0] ) )
+		return false;
+
+	while ( ::IsAlphaNumeric( input[0] ) )
+	{
+		output->push_back(input[0]);
+		input.erase(0,1);
+	}
+	return true;
+}
+
+bool
+vsToken::ExtractFloat( float* output, vsString& input )
+{
+	if (!::IsNumeric(input[0]))
+		return false;
+
+	vsString numberToken = PeekNumberToken(input);
+	if ( numberToken.find('.') == vsString::npos )
+		return false;
+
+	size_t bytesProcessed = 0;
+	float val = 0.f;
+	try
+	{
+		val = std::stof( input.c_str(), &bytesProcessed );
+
+		*output = val;
+		input.erase(0,bytesProcessed);
+		return true;
+	}
+	catch(std::out_of_range& oor)
+	{
+		vsLog("Token '%s' out of float range", input);
+		*output = 0;
+		return true;
+	}
+	catch(std::exception& e)
+	{
+	}
+	return false;
+}
+
+bool
+vsToken::ExtractInteger( int* output, vsString& input )
+{
+	if (!::IsNumeric(input[0]))
+		return false;
+
+	size_t bytesProcessed = 0;
+	int val = 0;
+	try
+	{
+		val = std::stoi( input.c_str(), &bytesProcessed );
+
+		*output = val;
+		input.erase(0,bytesProcessed);
+		return true;
+	}
+	catch(std::out_of_range& oor)
+	{
+		vsLog("Token '%s' out of int range", input);
+		*output = 0;
+		return true;
+	}
+	catch(std::exception& e)
+	{
+	}
+	return false;
+}
+
+bool
 vsToken::ExtractFrom( vsString &string )
 {
+	vsString labelResult;
+	float floatResult;
+	int intResult;
+
 	SetType( Type_None );
 
 	RemoveLeadingWhitespace(string);
@@ -297,71 +398,24 @@ vsToken::ExtractFrom( vsString &string )
 			string.erase(0,1);
 			return true;
 		}
-		else if ( ::IsAlpha(string[0]) )
+		else if ( ExtractLabelString(&labelResult, string) )
 		{
-			SetLabel( ExtractLabelToken(string) );
+			SetLabel( labelResult );
 			return true;
 		}
-		else if ( ::IsNumeric( string[0]) )
+		else if ( ExtractFloat(&floatResult, string) )
 		{
-			vsString token = ExtractNumberToken(string);
-
-			if ( token == "-" ) // Ugly:  handle negative nans as zeroes.
-			{
-				SetInteger(0);
-				return false;
-			}
-
-			bool isAFloat = ( token.find('.') != token.npos );
-			if ( isAFloat )
-			{
-				float val = 0.f;
-				// bool success = (sscanf( token.c_str(), "%f", &val )!=0);
-				try
-				{
-					val = std::stof( token.c_str() );
-				}
-				catch(std::out_of_range& oor)
-				{
-					vsLog("Token '%s' out of float range", token);
-					val = 0;
-				}
-				catch(std::exception& e)
-				{
-					vsAssertF(false, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s', error: '%s'", string, token, e.what());
-				}
-				// bool success = (sscanf( token.c_str(), "%f", &val )!=0);
-				// vsAssertF(success, "Couldn't find a floating value where we expected one?  Remaining string: '%s', extracted token: '%s'", string, token);
-				SetFloat(val);
-				return true;
-			}
-			else
-			{
-				int val = 0;
-				try
-				{
-					val = std::stoi( token.c_str() );
-				}
-				catch(std::out_of_range& oor)
-				{
-					vsLog("Token '%s' out of integer range", token);
-					if ( token[0] == '-' )
-						val = std::numeric_limits<int>::lowest();
-					else
-						val = std::numeric_limits<int>::max();
-					// val = 0;
-				}
-				catch(std::exception& e)
-				{
-					vsAssertF(false, "Couldn't find an integer value where we expected one?  Remaining string: '%s', extracted token: '%s', error: '%s'", string, token, e.what());
-				}
-				SetInteger(val);
-				return true;
-			}
+			SetFloat(floatResult);
+			return true;
+		}
+		else if ( ExtractInteger(&intResult, string) )
+		{
+			SetInteger(intResult);
+			return true;
 		}
 		else if ( string[0] == '#' )
 		{
-			// comment!
+			// comment!  Consume the rest of the line!
 			string = vsEmptyString;
 		}
 		else if ( string[0] == '=' )

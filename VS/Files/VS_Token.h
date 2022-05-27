@@ -41,6 +41,11 @@ private:
 		int32_t		m_int;
 	};
 	void SetStringField( const vsString& s );
+
+	bool ExtractLabelString( vsString* output, vsString& input );
+	bool ExtractFloat( float* output, vsString& input );
+	bool ExtractInteger( int* output, vsString& input );
+
 public:
 
 	vsToken();
