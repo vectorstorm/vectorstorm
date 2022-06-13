@@ -58,7 +58,7 @@ vsScene::SetDebugCamera()
 
 vsScene::vsScene( const vsString& name ):
 	m_name(name),
-	m_queue( new vsRenderQueue( 3, 1024*200 ) ),
+	m_queue( new vsRenderQueue( 3, 1024*300 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
 	m_camera( nullptr ),
