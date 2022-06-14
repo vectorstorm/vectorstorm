@@ -310,6 +310,7 @@ vsRenderTarget::Clear()
 	glClearStencil(0);
 	glClearColor(0,0,0,0);
 	glClear(bits);
+	InvalidateResolve();
 }
 
 void
@@ -334,6 +335,7 @@ vsRenderTarget::ClearColor( const vsColor&c )
 	glClearColor(c.r,c.g,c.b,c.a);
 	glClear(bits);
 	glClearColor(0,0,0,0);
+	InvalidateResolve();
 }
 
 void
@@ -388,8 +390,7 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	vsRendererState::Instance()->Apply( backup );
 	vsRendererState::Instance()->Flush();
 	// mark 'other' as needing a resolve.
-	other->m_needsResolve = 0xffff;
-	other->m_needsDepthResolve = true;
+	other->InvalidateResolve();
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
