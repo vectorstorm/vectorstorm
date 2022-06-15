@@ -208,11 +208,11 @@ public:
 	static vsDisplayList *	Load(const vsString &);
 	static vsDisplayList *	Load( vsRecord *record );
 
-			vsDisplayList();		// if no memory size is specified, we size dynamically, in 4kb chunks.
-			vsDisplayList(size_t memSize);
+			vsDisplayList(size_t memSize = 50 * 1024, bool autoResize = false );
 	virtual	~vsDisplayList();
 
 	vsStore *		GetFifo() { return m_fifo; }
+	void SetResizable();
 
 	vsDisplayList *	CreateInstance();
 

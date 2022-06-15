@@ -33,12 +33,16 @@ class vsStore
 	char *		m_writeHead;
 
 	bool		m_bufferIsExternal;
+	bool		m_resizable;
 
-	void	AssertBytesLeftForWriting(size_t bytes);
+	void _AssertBytesLeftForWriting( size_t bytes );
+	void _EnsureBytesLeftForWriting( size_t bytes );
+
 
 	// ordinarily we shouldn't need to do this, but.. for decompressing
 	// it becomes important.
-	void	ReplaceBuffer( size_t newLength );
+	void	_ReplaceBuffer( size_t newLength );
+	void	_ResizeBuffer( size_t newLength );
 
 public:
 			vsStore();
@@ -46,6 +50,8 @@ public:
 			vsStore( char *buffer, int bufferLength );
 			vsStore( const vsStore& store ); // make a copy of the other store
 	virtual ~vsStore();
+
+	void	SetResizable();
 
 	char *	GetReadHead() const	{ return m_readHead; }
 	char *	GetWriteHead() const{ return m_writeHead; }

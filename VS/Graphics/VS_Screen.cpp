@@ -22,7 +22,7 @@
 
 #include "VS_TimerSystem.h"
 
-const int c_fifoSize = 1024 * 4000;		// 2mb for our FIFO display list
+const int c_fifoSize = 1024 * 4000;		// 4mb for our FIFO display list
 vsScreen *	vsScreen::s_instance = nullptr;
 
 vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
@@ -69,6 +69,7 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 	vsLog("Screen Ratio:  %f", m_aspectRatio);
 
 	m_fifo = new vsDisplayList(c_fifoSize);
+	m_fifo->SetResizable();
 }
 
 vsScreen::~vsScreen()

@@ -455,31 +455,23 @@ vsDisplayList::Load( const vsString &filename )
 	return result;
 }
 
-vsDisplayList::vsDisplayList():
+vsDisplayList::vsDisplayList( size_t memSize, bool resizable ):
 	m_instanceParent(nullptr),
 	m_instanceCount(0),
 	m_materialCount(0),
 	m_colorSet(false)
 {
+	m_fifo = new vsStore(memSize);
+	if ( resizable )
+		SetResizable();
+
 	Clear();
 }
 
-vsDisplayList::vsDisplayList( size_t memSize ):
-	m_instanceParent(nullptr),
-	m_instanceCount(0),
-	m_materialCount(0),
-	m_colorSet(false)
+void
+vsDisplayList::SetResizable()
 {
-	if ( memSize )
-	{
-		m_fifo = new vsStore(memSize);
-	}
-	else
-	{
-		m_fifo = nullptr;
-	}
-
-	Clear();
+	m_fifo->SetResizable();
 }
 
 vsDisplayList::~vsDisplayList()

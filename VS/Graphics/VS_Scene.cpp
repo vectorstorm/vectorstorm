@@ -58,7 +58,7 @@ vsScene::SetDebugCamera()
 
 vsScene::vsScene( const vsString& name ):
 	m_name(name),
-	m_queue( new vsRenderQueue( 3, 1024*300 ) ),
+	m_queue( new vsRenderQueue( 3, 1024*50 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
 	m_camera( nullptr ),
@@ -74,6 +74,7 @@ vsScene::vsScene( const vsString& name ):
 	m_enabled( true ),
 	m_clearDepth( false )
 {
+	m_queue->GetGenericList()->SetResizable();
 	m_camera = m_defaultCamera;
 	m_camera3D = m_defaultCamera3D;
 

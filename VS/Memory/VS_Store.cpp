@@ -33,7 +33,8 @@ vsStore::vsStore():
 	m_bufferEnd( nullptr ),
 	m_readHead( nullptr ),
 	m_writeHead ( nullptr ),
-	m_bufferIsExternal( true )
+	m_bufferIsExternal( true ),
+	m_resizable(false)
 {
 }
 
@@ -43,7 +44,8 @@ vsStore::vsStore( size_t maxSize ):
 	m_bufferEnd( &m_buffer[m_bufferLength] ),
 	m_readHead( m_buffer ),
 	m_writeHead( m_buffer ),
-	m_bufferIsExternal( false )
+	m_bufferIsExternal( false ),
+	m_resizable(false)
 {
 }
 
@@ -53,7 +55,8 @@ vsStore::vsStore( char *buffer, int bufferLength ):
 	m_bufferEnd( &m_buffer[m_bufferLength] ),
 	m_readHead( m_buffer ),
 	m_writeHead( m_bufferEnd ),
-	m_bufferIsExternal( true )
+	m_bufferIsExternal( true ),
+	m_resizable(false)
 {
 }
 
@@ -63,7 +66,8 @@ vsStore::vsStore( const vsStore& other ):
 	m_bufferEnd( &m_buffer[m_bufferLength] ),
 	m_readHead( m_buffer ),
 	m_writeHead( m_bufferEnd ),
-	m_bufferIsExternal( false )
+	m_bufferIsExternal( false ),
+	m_resizable(false)
 {
 	memcpy( m_buffer, other.m_buffer, m_bufferLength );
 }
@@ -138,7 +142,7 @@ vsStore::Clear()
 }
 
 void
-vsStore::AssertBytesLeftForWriting(size_t bytes)
+vsStore::_AssertBytesLeftForWriting(size_t bytes)
 {
 	if ( BytesLeftForWriting() < bytes )
 	{
@@ -153,7 +157,7 @@ vsStore::AssertBytesLeftForWriting(size_t bytes)
 void
 vsStore::Append( vsStore *o )
 {
-	AssertBytesLeftForWriting( o->Length() );
+	_EnsureBytesLeftForWriting( o->Length() );
 
 	memcpy( m_writeHead, o->m_buffer, o->Length() );
 	m_writeHead += o->Length();
@@ -162,7 +166,7 @@ vsStore::Append( vsStore *o )
 void
 vsStore::WriteInt8( int8_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -171,7 +175,7 @@ vsStore::WriteInt8( int8_t v )
 void
 vsStore::WriteUint8( uint8_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	//memcpy( m_writeHead, &v, sizeof(v) );
 	*(uint8_t*)m_writeHead = v;
@@ -181,7 +185,7 @@ vsStore::WriteUint8( uint8_t v )
 void
 vsStore::WriteInt16( int16_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -191,7 +195,7 @@ vsStore::WriteInt16( int16_t v )
 void
 vsStore::WriteUint16( uint16_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	v = htons(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -201,7 +205,7 @@ vsStore::WriteUint16( uint16_t v )
 void
 vsStore::WriteUint16Native( uint16_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -210,7 +214,7 @@ vsStore::WriteUint16Native( uint16_t v )
 void
 vsStore::WriteInt32( int32_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -220,7 +224,7 @@ vsStore::WriteInt32( int32_t v )
 void
 vsStore::WriteUint32( uint32_t v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	v = htonl(v);
 	memcpy( m_writeHead, &v, sizeof(v) );
@@ -230,7 +234,7 @@ vsStore::WriteUint32( uint32_t v )
 void
 vsStore::WriteFloat( float v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -252,7 +256,7 @@ vsStore::WriteString( const vsString &string )
 void
 vsStore::WriteBuffer( const void *buffer, size_t bufferLength )
 {
-	AssertBytesLeftForWriting( bufferLength );
+	_EnsureBytesLeftForWriting( bufferLength );
 
 	memcpy( m_writeHead, buffer, bufferLength );
 	m_writeHead += bufferLength;
@@ -322,7 +326,7 @@ vsStore::ReadBufferAsString( vsString *string )
 void
 vsStore::WriteVoidStar( void *v )
 {
-	AssertBytesLeftForWriting( sizeof(v) );
+	_EnsureBytesLeftForWriting( sizeof(v) );
 
 	memcpy( m_writeHead, &v, sizeof(v) );
 	m_writeHead += sizeof(v);
@@ -644,7 +648,7 @@ vsStore::ReadTransform2D(vsTransform2D *t)
 void
 vsStore::WriteMatrix4x4(const vsMatrix4x4 &m)
 {
-	AssertBytesLeftForWriting( sizeof(m) );
+	_EnsureBytesLeftForWriting( sizeof(m) );
 	memcpy( m_writeHead, &m, sizeof(m) );
 	m_writeHead += sizeof(m);
 }
@@ -818,7 +822,7 @@ vsStore::Expand()
 	inflateEnd(&zipstream);
 
 
-	ReplaceBuffer( inflateStore->Length() );
+	_ReplaceBuffer( inflateStore->Length() );
 	Append(inflateStore);
 	vsDelete(inflateStore);
 
@@ -826,15 +830,54 @@ vsStore::Expand()
 }
 
 void
-vsStore::ReplaceBuffer( size_t newLength )
+vsStore::_ReplaceBuffer( size_t newLength )
 {
 	vsAssert( !m_bufferIsExternal, "Replacing an external vsStore buffer isn't supported" );
 
 	vsDeleteArray(m_buffer);
-	m_bufferLength = newLength;
 	m_buffer = new char[newLength];
 	m_bufferLength = newLength;
 	m_bufferEnd = &m_buffer[m_bufferLength];
 	m_readHead = m_writeHead = m_buffer;
+}
+
+void
+vsStore::_ResizeBuffer( size_t newLength )
+{
+	vsLog("!! Auto-resizing vsStore to %d bytes", newLength);
+
+	char* newBuffer = new char[newLength];
+	size_t bytesRead = GetReadHead() - m_buffer;
+	size_t bytesWritten = GetWriteHead() - m_buffer;
+	memcpy( newBuffer, m_buffer, bytesWritten );
+
+	vsDeleteArray(m_buffer);
+	m_bufferLength = newLength;
+	m_buffer = newBuffer;
+	m_bufferEnd = &m_buffer[m_bufferLength];
+	m_readHead = m_buffer + bytesRead;
+	m_writeHead = m_buffer + bytesWritten;
+}
+
+void
+vsStore::SetResizable()
+{
+	vsAssert(!m_bufferIsExternal, "Can't set a vsStore as resizable if we don't own our own buffer");
+	m_resizable = true;
+}
+
+void
+vsStore::_EnsureBytesLeftForWriting( size_t bytes )
+{
+	if ( !m_resizable )
+		_AssertBytesLeftForWriting( bytes );
+	else
+	{
+		if ( BytesLeftForWriting() < bytes )
+		{
+			int newLength = m_bufferLength * 2;
+			_ResizeBuffer( newLength );
+		}
+	}
 }
 
