@@ -33,6 +33,38 @@ void vsLog_Start(const char* companyName, const char* title)
 {
 	prefPath = SDL_GetPrefPath(companyName, title);
 	vsString logFile = prefPath + "log.txt";
+	vsString prevLogFile = prefPath + "log_previous.txt";
+
+	// Now we need to copy this log to a different spot.
+	FILE *logRead = fopen(logFile.c_str(), "r");
+
+	if ( logRead )
+	{
+		FILE *logWrite = fopen(prevLogFile.c_str(), "w");
+		if ( logWrite )
+		{
+			fseek( logRead, 0L, SEEK_END );
+			long bytes = ftell( logRead );
+			fseek( logRead, 0L, SEEK_SET );
+
+			// copy 20kb at a time.
+			const long c_bufferSize = 1024 * 24;
+
+			char buffer[c_bufferSize];
+			while ( bytes > 0 )
+			{
+				long bytesToReadThisTime = vsMin( bytes, c_bufferSize );
+				size_t bb = fread( buffer, 1, bytesToReadThisTime, logRead );
+				vsAssert( bb == (size_t)bytesToReadThisTime, "copying log file failed??" );
+				fwrite( buffer, 1, bytesToReadThisTime, logWrite );
+				bytes -= bytesToReadThisTime;
+			}
+
+			fclose( logWrite );
+		}
+		fclose( logRead );
+	}
+
 	s_logFile = fopen(logFile.c_str(), "w");
 }
 
