@@ -33,7 +33,7 @@ class vsRenderQueueStage;
 
 class vsRenderQueue
 {
-	vsScene *				m_parent;
+	vsScene *				m_scene;
 
 	vsDisplayList *			m_genericList;
 
@@ -56,15 +56,7 @@ class vsRenderQueue
 	void			DeinitialiseTransformStack();
 
 public:
-	// stageCount is historic;  it is now ignored;  the queue uses exactly
-	// as many render stages as it itself wants to use.  (Previously, it
-	// assumed that everyone was going to pass in a value of '3', and would
-	// misbehave if not.  Now it just always works, but ignores that parameter,
-	// instead)
-	//
-	// TODO is to remove that parameter.
-	//
-	vsRenderQueue( int stageCount, int genericListSize);
+	vsRenderQueue();
 	~vsRenderQueue();
 
 	void			StartRender( vsScene *scene, int materialHideFlags = 0 );
@@ -88,7 +80,7 @@ public:
 
 	void SetProjectionMatrix( const vsMatrix4x4& mat ) { m_projection = mat; }
 
-	vsScene *		GetScene() { return m_parent; }
+	vsScene *		GetScene() { return m_scene; }
 
 	// Usual way to add a batch
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );

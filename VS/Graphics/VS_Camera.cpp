@@ -28,7 +28,7 @@ vsCamera2D::~vsCamera2D()
 }
 
 vsMatrix4x4
-vsCamera2D::GetProjectionMatrix()
+vsCamera2D::GetProjectionMatrix() const
 {
 	float hh = m_transform.GetScale().x * -.5f;
 	float hw = -hh * m_aspectRatio;
@@ -44,6 +44,27 @@ vsCamera2D::GetProjectionMatrix()
 			);
 
 	return m;
+}
+
+vsMatrix4x4
+vsCamera2D::GetWorldToViewMatrix() const
+{
+	vsTransform3D startingTransform = vsSystem::Instance()->GetOrientationTransform_2D();
+	vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
+	vsTransform2D cameraTransform = GetCameraTransform();
+
+	// cameraTransform will have a scale on its members from the camera. (Since
+	// that's where the 2D camera stores the FOV).
+	//
+	// We remove that here, since that eventually becomes part of the
+	// PROJECTION transform, not the MODELVIEW transform, which is all we care
+	// about here.
+
+	cameraTransform.SetScale(vsVector2D(1.f,1.f));
+	vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
+	cameraMatrix.Invert();
+
+	return cameraMatrix * startingMatrix;
 }
 
 bool
@@ -142,7 +163,7 @@ vsCamera3D::~vsCamera3D()
 }
 
 vsMatrix4x4
-vsCamera3D::GetProjectionMatrix()
+vsCamera3D::GetProjectionMatrix() const
 {
 	if ( m_type == PT_Perspective )
 	{
@@ -224,5 +245,35 @@ bool
 vsCamera3D::IsBox3DVisible( const vsBox3D &box ) const
 {
 	return m_frustum.IsBox3DInside( box );
+}
+
+vsMatrix4x4
+vsCamera3D::GetWorldToViewMatrix() const
+{
+	vsTransform3D startingTransform = vsSystem::Instance()->GetOrientationTransform_3D();
+	vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
+
+	vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
+
+	requestedMatrix.w -= GetPosition();
+	//
+	vsMatrix4x4 myIdentity;
+	myIdentity.x *= -1.f;
+	//
+	vsMatrix4x4 cameraMatrix = GetTransform().GetMatrix();
+
+	vsVector3D forward = cameraMatrix.z;
+	vsVector3D up = cameraMatrix.y;
+	vsVector3D side = forward.Cross(up);
+
+	cameraMatrix.x = side;
+	cameraMatrix.y = up;
+	cameraMatrix.z = forward;
+	cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
+	cameraMatrix.Invert();
+
+	cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
+
+	return cameraMatrix * requestedMatrix;
 }
 

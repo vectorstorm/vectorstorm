@@ -653,9 +653,9 @@ vsRenderQueueStage::EndRender()
 	m_batchMap->map.clear();
 }
 
-vsRenderQueue::vsRenderQueue( int stageCount, int genericListSize):
-	m_parent(nullptr),
-	m_genericList(new vsDisplayList(genericListSize)),
+vsRenderQueue::vsRenderQueue():
+	m_scene(nullptr),
+	m_genericList(new vsDisplayList(1024 * 50, true)),
 	m_stage(new vsRenderQueueStage[4]),
 	m_stageCount(4),
 	m_transformStack(),
@@ -674,7 +674,7 @@ void
 vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 {
 	m_materialHideFlags = materialHideFlags;
-	m_parent = parent;
+	m_scene = parent;
 	InitialiseTransformStack();
 
 	for ( int i = 0; i < m_stageCount; i++ )
@@ -688,7 +688,7 @@ void
 vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags )
 {
 	m_materialHideFlags = materialHideFlags;
-	m_parent = nullptr;
+	m_scene = nullptr;
 	m_projection = projection;
 	m_worldToView = worldToView;
 	m_transformStack[0] = iniMatrix;
@@ -731,93 +731,17 @@ vsRenderQueue::EndRender()
 void
 vsRenderQueue::InitialiseTransformStack()
 {
-	if ( m_parent->Is3D() )
-	{
-		vsTransform3D startingTransform;
-		switch( vsSystem::Instance()->GetOrientation() )
-		{
-			case Orientation_Normal:
-				break;
-			case Orientation_Six:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
-				break;
-			case Orientation_Three:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
-				break;
-			case Orientation_Nine:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
-				break;
-		}
-		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
-
-		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
-
-		requestedMatrix.w -= m_parent->GetCamera3D()->GetPosition();
-        //
-		vsMatrix4x4 myIdentity;
-		myIdentity.x *= -1.f;
-        //
-		vsMatrix4x4 cameraMatrix = m_parent->GetCamera3D()->GetTransform().GetMatrix();
-
-		vsVector3D forward = cameraMatrix.z;
-		vsVector3D up = cameraMatrix.y;
-		vsVector3D side = forward.Cross(up);
-
-		cameraMatrix.x = side;
-		cameraMatrix.y = up;
-		cameraMatrix.z = forward;
-		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
-		cameraMatrix.Invert();
-
-		// vsMatrix4x4 cameraMatrix = m_parent->GetCamera3D()->GetTransform().GetMatrix();
-		// cameraMatrix.Invert();
-		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
-
-		m_worldToView = cameraMatrix * requestedMatrix;
-		m_transformStack[0] = vsMatrix4x4::Identity;
-		m_transformStackLevel = 1;
-	}
-	else
-	{
-		vsTransform3D startingTransform;
-		switch( vsSystem::Instance()->GetOrientation() )
-		{
-			case Orientation_Normal:
-				break;
-			case Orientation_Six:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
-				break;
-			case Orientation_Three:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
-				break;
-			case Orientation_Nine:
-				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
-				break;
-		}
-		//
-		//		startingTransform.SetTranslation( vsVector3D(0.f, 0.0f, 0.f) );
-		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
-		vsTransform2D cameraTransform = m_parent->GetCamera()->GetCameraTransform();
-		// cameraMatrix will have a scale on its members from the camera. (Since
-		// that's where it stores the FOV).
-		// We remove that, since that eventually becomes part of the PROJECTION
-		// transform, not the MODELVIEW transform, which is all we care about here..
-		cameraTransform.SetScale(vsVector2D(1.f,1.f));
-		vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
-		cameraMatrix.Invert();
-
-		m_worldToView = cameraMatrix * startingMatrix;
-		m_transformStack[0] = vsMatrix4x4::Identity;
-		m_transformStackLevel = 1;
-	}
+	m_worldToView = m_scene->CalculateWorldToViewMatrix();
+	m_transformStack[0] = vsMatrix4x4::Identity;
+	m_transformStackLevel = 1;
 }
 
 bool
 vsRenderQueue::IsOrthographic()
 {
-	if ( m_parent->Is3D() )
+	if ( m_scene->Is3D() )
 	{
-		if ( m_parent->GetCamera3D()->GetProjectionType() == vsCamera3D::PT_Perspective )
+		if ( m_scene->GetCamera3D()->GetProjectionType() == vsCamera3D::PT_Perspective )
 			return false;
 	}
 	return true;

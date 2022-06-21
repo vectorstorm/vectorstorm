@@ -43,8 +43,9 @@ public:
 	void				SetAspectRatio( float ar ) { m_aspectRatio = ar; }
 
 		// this "GetCameraTransform()" function is giving an incorrect 'scale' value.  Need to fix it!
-	const vsTransform2D &		GetCameraTransform() { return m_transform; }
-	vsMatrix4x4			GetProjectionMatrix();
+	const vsTransform2D &		GetCameraTransform() const { return m_transform; }
+	vsMatrix4x4			GetProjectionMatrix() const;
+	vsMatrix4x4			GetWorldToViewMatrix() const;
 
 	bool				IsPositionVisible( const vsVector2D &pos, float r=0.f );
 	bool				WrapAround( vsVector2D &pos, float r=0.f );
@@ -90,7 +91,8 @@ public:
 	void				SetProjectionType( ProjectionType t ) { m_type = t; }
 	ProjectionType		GetProjectionType() const { return m_type; }
 
-	vsMatrix4x4			GetProjectionMatrix();
+	vsMatrix4x4			GetProjectionMatrix() const;
+	vsMatrix4x4			GetWorldToViewMatrix() const;
 
 	void				SetTransform( const vsTransform3D &t ) { m_transform = t; UpdateFrustum();}
 	void				SetPosition( const vsVector4D &pos ) { m_transform.SetTranslation( pos ); UpdateFrustum();}

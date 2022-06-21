@@ -32,7 +32,7 @@ extern vsTransform2D	g_drawingCameraTransform;	// this transform is active durin
 class vsScene
 {
 	vsString		m_name;
-	vsRenderQueue *	m_queue;
+	// vsRenderQueue *	m_queue;
 	vsEntity *		m_entityList;
 	vsCamera2D *	m_defaultCamera;
 	vsCamera2D *	m_camera;
@@ -57,14 +57,14 @@ public:
 	virtual			~vsScene();
 
 	void			Set3D(bool i) { m_is3d = i; }
-	bool			Is3D() { return m_is3d; }
+	bool			Is3D() const { return m_is3d; }
 
 	void			SetClearDepth(bool cd) { m_clearDepth = cd; }
 
 	void			SetEnabled(bool enable) { m_enabled = enable; }
 	bool			IsEnabled() { return m_enabled; }
 
-	float			GetFOV();
+	float			GetFOV() const;
 
 	void			UpdateVideoMode();
 
@@ -76,18 +76,20 @@ public:
 
 	// Note that the following 'Corner' and 'Center' functions are only well-defined
 	// for 2D scenes.
-	vsVector2D		GetCorner(bool bottom, bool right);
-	vsVector2D		GetCenter();
+	vsVector2D		GetCorner(bool bottom, bool right) const;
+	vsVector2D		GetCenter() const;
 
-	vsVector2D		GetTopLeftCorner() { return GetCorner(false,false); }
-	vsVector2D		GetTopRightCorner() { return GetCorner(false,true); }
-	vsVector2D		GetBottomLeftCorner() { return GetCorner(true,false); }
-	vsVector2D		GetBottomRightCorner() { return GetCorner(true,true); }
+	vsVector2D		GetTopLeftCorner() const { return GetCorner(false,false); }
+	vsVector2D		GetTopRightCorner() const { return GetCorner(false,true); }
+	vsVector2D		GetBottomLeftCorner() const { return GetCorner(true,false); }
+	vsVector2D		GetBottomRightCorner() const { return GetCorner(true,true); }
 
 	//	vsDisplayList *	GetDisplayList() { return m_displayList; }
 	vsCamera2D *		GetCamera() { return m_camera; }
 	vsCamera3D *		GetCamera3D() { return m_camera3D; }
-	bool				CameraIsReference() { return m_cameraIsReference; }
+	const vsCamera2D *		GetCamera() const { return m_camera; }
+	const vsCamera3D *		GetCamera3D() const { return m_camera3D; }
+	bool				CameraIsReference() const { return m_cameraIsReference; }
 	void			SetCamera2D( vsCamera2D *camera, bool reference=false );	// if the camera is "reference", then we don't own this camera;
 	void			SetCamera3D( vsCamera3D *camera, bool reference=false );	// and so do not call Update() on it.  (This is for use if we want to set the same camera on multiple layers)
 
@@ -110,6 +112,9 @@ public:
 	void			SetStencilTest( bool enableTest ) { m_stencilTest = enableTest; }
 
 	vsEntity *		FindEntityAtPosition( const vsVector2D &pos );	// returns which entity is at the passed position (if any)
+
+	vsMatrix4x4		CalculateWorldToViewMatrix() const;
+
 };
 
 #endif // VS_SCENE_H

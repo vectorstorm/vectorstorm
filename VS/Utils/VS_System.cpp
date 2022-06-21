@@ -1329,4 +1329,45 @@ vsSystem::Remount()
 	_DoRemountConfiguredPhysFSVolumes();
 }
 
+vsTransform3D
+vsSystem::GetOrientationTransform_2D() const
+{
+	vsTransform3D result;
+	switch( vsSystem::Instance()->GetOrientation() )
+	{
+		case Orientation_Normal:
+			break;
+		case Orientation_Six:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
+			break;
+		case Orientation_Three:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
+			break;
+		case Orientation_Nine:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
+			break;
+	}
+	return result;
+}
+
+vsTransform3D
+vsSystem::GetOrientationTransform_3D() const
+{
+	vsTransform3D result;
+	switch( vsSystem::Instance()->GetOrientation() )
+	{
+		case Orientation_Normal:
+			break;
+		case Orientation_Six:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
+			break;
+		case Orientation_Three:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
+			break;
+		case Orientation_Nine:
+			result.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
+			break;
+	}
+	return result;
+}
 

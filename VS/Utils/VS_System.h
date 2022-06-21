@@ -177,6 +177,9 @@ public:
 
 	void	SetOrientation( Orientation orient ) { m_orientation = orient; }
 	Orientation	GetOrientation() { return m_orientation; }
+	vsTransform3D GetOrientationTransform_2D() const;
+	vsTransform3D GetOrientationTransform_3D() const;
+
 
 	static void Launch( const vsString &string );
 	int		GetNumberOfCores();		// estimates the number of LOGICAL cores on this computer.  (includes hyperthreading, if available/enabled).  In effect, this returns the number of hardware threads.

@@ -56,9 +56,15 @@ vsScene::SetDebugCamera()
 #endif // DEBUG_SCENE
 
 
+namespace
+{
+	vsRenderQueue s_renderQueue;
+};
+
+
 vsScene::vsScene( const vsString& name ):
 	m_name(name),
-	m_queue( new vsRenderQueue( 3, 1024*50 ) ),
+	// m_queue( new vsRenderQueue( 3, 1024*50 ) ),
 	m_entityList( new vsEntity ),
 	m_defaultCamera( new vsCamera2D ),
 	m_camera( nullptr ),
@@ -74,7 +80,7 @@ vsScene::vsScene( const vsString& name ):
 	m_enabled( true ),
 	m_clearDepth( false )
 {
-	m_queue->GetGenericList()->SetResizable();
+	// m_queue->GetGenericList()->SetResizable();
 	m_camera = m_defaultCamera;
 	m_camera3D = m_defaultCamera3D;
 
@@ -86,7 +92,7 @@ vsScene::vsScene( const vsString& name ):
 
 vsScene::~vsScene()
 {
-	vsDelete( m_queue );
+	// vsDelete( m_queue );
 	vsDelete( m_defaultCamera3D );
 	vsDelete( m_defaultCamera );
 
@@ -126,7 +132,7 @@ vsScene::SetCamera3D( vsCamera3D *camera, bool reference )
 }
 
 float
-vsScene::GetFOV()
+vsScene::GetFOV() const
 {
 	return m_camera->GetFOV();
 }
@@ -250,7 +256,7 @@ vsScene::Draw( vsDisplayList *list, int flags )
 		list->SetViewport( m_viewport );
 	}
 
-	m_queue->StartRender(this, flags);
+	s_renderQueue.StartRender(this, flags);
 
 	if ( m_clearDepth )
 		list->ClearDepth();
@@ -258,8 +264,8 @@ vsScene::Draw( vsDisplayList *list, int flags )
 	if ( m_is3d )
 	{
 		list->SetProjectionMatrix4x4( m_camera3D->GetProjectionMatrix() );
-		m_queue->SetProjectionMatrix(  m_camera3D->GetProjectionMatrix() );
-		m_queue->SetFOV( m_camera3D->GetFieldOfView() );
+		s_renderQueue.SetProjectionMatrix(  m_camera3D->GetProjectionMatrix() );
+		s_renderQueue.SetFOV( m_camera3D->GetFieldOfView() );
 		//list->Set3DProjection( m_camera3D->GetFOV(), m_camera3D->GetNearPlane(), m_camera3D->GetFarPlane() );
 		// list->SetCameraTransform( m_camera3D->GetTransform() );
 
@@ -281,9 +287,9 @@ vsScene::Draw( vsDisplayList *list, int flags )
 	{
 		g_drawingCameraTransform = m_camera->GetCameraTransform();
 		list->SetProjectionMatrix4x4( m_camera->GetProjectionMatrix() );
-		m_queue->SetProjectionMatrix(  m_camera->GetProjectionMatrix() );
+		s_renderQueue.SetProjectionMatrix(  m_camera->GetProjectionMatrix() );
 	}
-	list->SetWorldToViewMatrix4x4( m_queue->GetWorldToViewMatrix() );
+	list->SetWorldToViewMatrix4x4( s_renderQueue.GetWorldToViewMatrix() );
 
 	if ( m_stencilTest )
 	{
@@ -298,14 +304,14 @@ vsScene::Draw( vsDisplayList *list, int flags )
 		{
 			if ( m_is3d || (!m_camera || entity->OnScreen( m_camera->GetCameraTransform() )) )
 			{
-				entity->Draw( m_queue );
+				entity->Draw( &s_renderQueue );
 			}
 			entity = entity->GetNext();
 		}
 	}
 
-	m_queue->Draw(list);
-	m_queue->EndRender();
+	s_renderQueue.Draw(list);
+	s_renderQueue.EndRender();
 
 	if ( m_stencilTest )
 	{
@@ -396,7 +402,7 @@ vsScene::FindEntityAtPosition( const vsVector2D &pos )
 }
 
 vsVector2D
-vsScene::GetCenter()
+vsScene::GetCenter() const
 {
 	vsVector2D pos = vsVector2D::Zero;
 
@@ -410,7 +416,7 @@ vsScene::GetCenter()
 }
 
 vsVector2D
-vsScene::GetCorner(bool bottom, bool right)
+vsScene::GetCorner(bool bottom, bool right) const
 {
 	vsVector2D pos = vsVector2D::Zero;
 	// okay.  First, let's start by grabbing the coordinate of our requested corner,
@@ -450,4 +456,83 @@ vsScene::GetCorner(bool bottom, bool right)
 	return pos;
 }
 
-
+vsMatrix4x4
+vsScene::CalculateWorldToViewMatrix() const
+{
+	if ( Is3D() )
+	{
+		return GetCamera3D()->GetWorldToViewMatrix();
+	}
+	return GetCamera()->GetWorldToViewMatrix();
+}
+// 		vsTransform3D startingTransform;
+// 		switch( vsSystem::Instance()->GetOrientation() )
+// 		{
+// 			case Orientation_Normal:
+// 				break;
+// 			case Orientation_Six:
+// 				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
+// 				break;
+// 			case Orientation_Three:
+// 				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
+// 				break;
+// 			case Orientation_Nine:
+// 				startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
+// 				break;
+// 		}
+// 		vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
+//
+// 		vsMatrix4x4 requestedMatrix = vsMatrix4x4::Identity;
+//
+// 		requestedMatrix.w -= GetCamera3D()->GetPosition();
+//         //
+// 		vsMatrix4x4 myIdentity;
+// 		myIdentity.x *= -1.f;
+//         //
+// 		vsMatrix4x4 cameraMatrix = GetCamera3D()->GetTransform().GetMatrix();
+//
+// 		vsVector3D forward = cameraMatrix.z;
+// 		vsVector3D up = cameraMatrix.y;
+// 		vsVector3D side = forward.Cross(up);
+//
+// 		cameraMatrix.x = side;
+// 		cameraMatrix.y = up;
+// 		cameraMatrix.z = forward;
+// 		cameraMatrix.w.Set(0.f,0.f,0.f,1.f);
+// 		cameraMatrix.Invert();
+//
+// 		cameraMatrix = startingMatrix * myIdentity * cameraMatrix;
+//
+// 		return cameraMatrix * requestedMatrix;
+// 	}
+//
+// 	// 2D case
+// 	vsTransform3D startingTransform;
+// 	switch( vsSystem::Instance()->GetOrientation() )
+// 	{
+// 		case Orientation_Normal:
+// 			break;
+// 		case Orientation_Six:
+// 			startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(180.f) ) );
+// 			break;
+// 		case Orientation_Three:
+// 			startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(90.f) ) );
+// 			break;
+// 		case Orientation_Nine:
+// 			startingTransform.SetRotation ( vsQuaternion( vsVector3D::ZAxis, DEGREES(270.f) ) );
+// 			break;
+// 	}
+//
+// 	vsMatrix4x4 startingMatrix = startingTransform.GetMatrix();
+// 	vsTransform2D cameraTransform = GetCamera()->GetCameraTransform();
+// 	// cameraMatrix will have a scale on its members from the camera. (Since
+// 	// that's where the 2D camera stores the FOV).
+// 	// We remove that, since that eventually becomes part of the PROJECTION
+// 	// transform, not the MODELVIEW transform, which is all we care about here..
+// 	cameraTransform.SetScale(vsVector2D(1.f,1.f));
+// 	vsMatrix4x4 cameraMatrix = cameraTransform.GetMatrix();
+// 	cameraMatrix.Invert();
+//
+// 	return cameraMatrix * startingMatrix;
+// }
+//
