@@ -36,11 +36,11 @@ void vsLog_Start(const char* companyName, const char* title)
 	vsString prevLogFile = prefPath + "log_previous.txt";
 
 	// Now we need to copy this log to a different spot.
-	FILE *logRead = fopen(logFile.c_str(), "r");
+	FILE *logRead = fopen(logFile.c_str(), "rb");
 
 	if ( logRead )
 	{
-		FILE *logWrite = fopen(prevLogFile.c_str(), "w");
+		FILE *logWrite = fopen(prevLogFile.c_str(), "wb");
 		if ( logWrite )
 		{
 			fseek( logRead, 0L, SEEK_END );
