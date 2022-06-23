@@ -88,18 +88,22 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, vsColor *
 	return fragment;
 }
 
-vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor *color, int count, float width, bool loop )
+void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *point, vsColor *color, int count, float width, bool loop, bool finalise )
 {
 	width *= 0.707f;
-	size_t vertexCount = count * 4;
-	size_t indexCount = count * 18;
-
 	float halfWidth = width * 0.5f;
 
-	vsRenderBuffer::PC *va = new vsRenderBuffer::PC[vertexCount];
-	uint16_t *ia = new uint16_t[indexCount];
-	int vertexCursor = 0;
-	int indexCursor = 0;
+	size_t newVertexCount = count * 4;
+	size_t newIndexCount = count * 18;
+	size_t nowVertexCount = vbo->GetPositionCount();
+	size_t nowIndexCount = ibo->GetIntArraySize();
+
+	vbo->ResizeArray( sizeof(vsRenderBuffer::PC) * (newVertexCount + nowVertexCount) );
+	vsRenderBuffer::PC *va = vbo->GetPCArray();
+	ibo->ResizeArray( sizeof(uint16_t) * (newIndexCount + nowIndexCount) );
+	uint16_t *ia = ibo->GetIntArray();
+	int vertexCursor = nowVertexCount;
+	int indexCursor = nowIndexCount;
 
 	for ( int i = 0; i < count; i++ )
 	{
@@ -232,24 +236,37 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 			vertexCursor += 4;
 	}
 
-	vsRenderBuffer* vertexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
-	vsRenderBuffer* indexBuffer = new vsRenderBuffer( vsRenderBuffer::Type_Static );
-	vertexBuffer->SetArray(va, vertexCursor);
-	indexBuffer->SetArray(ia, indexCursor);
+	if ( finalise )
+	{
+		vbo->SetArray( va, vertexCursor );
+		ibo->SetArray( ia, indexCursor );
+	}
+	else
+	{
+		// this will size the array properly *without* actually uploading the data to OpenGL.
+		vbo->ResizeArray( sizeof(vsRenderBuffer::PC) * vertexCursor );
+		ibo->ResizeArray( sizeof(uint16_t) * indexCursor );
+	}
+}
+
+void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise )
+{
+	vbo->SetContentType( vsRenderBuffer::ContentType_PC );
+	ibo->SetContentType( vsRenderBuffer::ContentType_UInt16 );
+	vbo->ResizeArray(0);
+	ibo->ResizeArray(0);
+	vsLineStrip2D_VBO_IBO_Append(vbo, ibo, array, carray, count, width, loop, finalise);
+}
+
+vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor *color, int count, float width, bool loop )
+{
+	vsRenderBuffer *vbo = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vsRenderBuffer *ibo = new vsRenderBuffer( vsRenderBuffer::Type_Static );
+	vsLineStrip2D_VBO_IBO(vbo, ibo, point, color, count, width, loop);
+
 	vsFragment *fragment = new vsFragment;
-	// vsDisplayList *dlist = new vsDisplayList(128);
-	// dlist->BindBuffer(vertexBuffer);
-	// dlist->TriangleListBuffer(indexBuffer);
-	// dlist->ClearArrays();
-	// fragment->SetDisplayList(dlist);
 	fragment->SetMaterial( material );
-	// fragment->AddBuffer(vertexBuffer);
-	// fragment->AddBuffer(indexBuffer);
-	fragment->SetSimple(vertexBuffer, indexBuffer, vsFragment::SimpleType_TriangleList);
-
-	vsDeleteArray(va);
-	vsDeleteArray(ia);
-
+	fragment->SetSimple(vbo, ibo, vsFragment::SimpleType_TriangleList);
 	return fragment;
 }
 

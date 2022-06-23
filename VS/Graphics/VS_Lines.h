@@ -64,6 +64,11 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, vsColor *
 vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
 vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
 
+// utility functions for writing data into render buffers, instead of returning whole fragments.
+// The returned VBO and IBO are intended to be rendered as a TRIANGLE LIST.
+void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise = true );
+void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise = true );
+
 
 void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *array, int count, float width, bool loop );
 
