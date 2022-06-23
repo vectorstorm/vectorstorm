@@ -350,15 +350,17 @@ vsFragment::SetMaterial( const vsString &name )
 }
 
 void
-vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type )
+vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type, SimpleBufferOwnershipType ownershipType )
 {
 	m_displayList = nullptr;
 	m_simpleType = type;
 	m_vbo = vbo;
 	m_ibo = ibo;
 
-	AddBuffer(vbo);
-	AddBuffer(ibo);
+	if ( ownershipType & Owned_VBO )
+		AddBuffer(vbo);
+	if ( ownershipType & Owned_IBO )
+		AddBuffer(ibo);
 }
 
 void

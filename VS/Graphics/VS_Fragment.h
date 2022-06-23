@@ -42,6 +42,14 @@ private:
 
 public:
 
+	enum SimpleBufferOwnershipType
+	{
+		Owned_None = 0,
+		Owned_VBO = BIT(0),
+		Owned_IBO = BIT(1),
+		Owned_Both = BIT(0)|BIT(1)
+	};
+
 	static vsFragment *	Load( vsRecord *record );
 
 	vsFragment();
@@ -56,7 +64,8 @@ public:
 
 	// A "Simple" fragment has no display list;  it just binds the vbo and
 	// draws the ibo as a triangle list.
-	void	SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type );
+	void	SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type, SimpleBufferOwnershipType ownershipType = Owned_Both );
+	void	SetSimple_UnownedBuffers( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type );
 	bool	IsSimple() const { return m_vbo && m_ibo; }
 	SimpleType GetSimpleType() const { return m_simpleType; }
 	vsRenderBuffer * GetSimpleVBO() { return m_vbo; }
