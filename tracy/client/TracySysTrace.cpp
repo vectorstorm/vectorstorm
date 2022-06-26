@@ -1175,6 +1175,7 @@ void SysTraceWorker( void* ptr )
                             break;
                         default:
                             assert( false );
+							exit(1);
                             break;
                         }
 
