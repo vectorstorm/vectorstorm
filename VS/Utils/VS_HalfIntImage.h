@@ -44,8 +44,9 @@ public:
 	uint64_t		GetRawPixel(unsigned int u, unsigned int v) const;
 	void			SetRawPixel(unsigned int u, unsigned int v, uint64_t c);
 
-	vsTexture *		Bake( const vsString& name = vsEmptyString );
+	vsTexture *		Bake( const vsString& name = vsEmptyString ) const;
 	void *			RawData() { return m_pixel; }
+	const void *	RawData() const { return m_pixel; }
 };
 
 #endif // VS_HALFIMAGE_H

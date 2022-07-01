@@ -165,7 +165,7 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 	}
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
@@ -199,7 +199,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsImage *image ):
 	m_nearestSampling = false;
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image ):
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
@@ -233,7 +233,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsFloatImage *image 
 	m_nearestSampling = false;
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *image ):
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
@@ -267,7 +267,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfIntImage *imag
 	m_nearestSampling = false;
 }
 
-vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *image ):
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatImage *image ):
 	vsResource(name),
 	m_texture(0),
 	m_depth(false),
@@ -300,6 +300,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsHalfFloatImage *im
 			image->RawData());
 	m_nearestSampling = false;
 }
+
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
 	vsResource(name),
 	m_texture(0),

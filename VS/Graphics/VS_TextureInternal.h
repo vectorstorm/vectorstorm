@@ -45,10 +45,10 @@ public:
 
 	vsTextureInternal( const vsString &string );
 	vsTextureInternal( const vsString &name, const vsArray<vsString> &mipmaps );
-	vsTextureInternal( const vsString &name, vsImage *image );
-	vsTextureInternal( const vsString &name, vsFloatImage *image );
-	vsTextureInternal( const vsString &name, vsHalfFloatImage *image );
-	vsTextureInternal( const vsString &name, vsHalfIntImage *image );
+	vsTextureInternal( const vsString &name, const vsImage *image );
+	vsTextureInternal( const vsString &name, const vsFloatImage *image );
+	vsTextureInternal( const vsString &name, const vsHalfFloatImage *image );
+	vsTextureInternal( const vsString &name, const vsHalfIntImage *image );
 	vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
 

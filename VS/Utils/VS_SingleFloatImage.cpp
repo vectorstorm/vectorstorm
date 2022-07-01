@@ -385,7 +385,7 @@ vsSingleFloatImage::LoadFromSurface( SDL_Surface *source )
 }
 
 void
-vsSingleFloatImage::SavePNG(const vsString& filename)
+vsSingleFloatImage::SavePNG(const vsString& filename) const
 {
 	vsFile file( filename, vsFile::MODE_Write );
 

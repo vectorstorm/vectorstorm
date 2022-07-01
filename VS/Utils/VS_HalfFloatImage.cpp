@@ -75,7 +75,7 @@ vsHalfFloatImage::SetPixel(unsigned int u, unsigned int v, const vsColor &c)
 }
 
 vsTexture *
-vsHalfFloatImage::Bake( const vsString& name_in )
+vsHalfFloatImage::Bake( const vsString& name_in ) const
 {
 	vsString name(name_in);
 	if ( name_in.empty() )

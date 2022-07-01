@@ -79,12 +79,13 @@ public:
 	void			Clear( const vsColor &clearColor );
 	void			Copy( vsImage *other );
 
-	vsTexture *		Bake( const vsString& name = vsEmptyString );
+	vsTexture *		Bake( const vsString& name = vsEmptyString ) const;
 
-	void			SavePNG(const vsString& filename);
-	void			SaveJPG(int quality, const vsString& filename); // quality is in [0..100], with higher values being higher quality.
-	void			SavePNG_FullAlpha(const vsString& filename);
+	void			SavePNG(const vsString& filename) const;
+	void			SaveJPG(int quality, const vsString& filename) const; // quality is in [0..100], with higher values being higher quality.
+	void			SavePNG_FullAlpha(const vsString& filename) const;
 	void *			RawData() { return m_pixel; }
+	const void *	RawData() const { return m_pixel; }
 
 
 	static void SetAllowLoadFailure(bool allow) { s_allowLoadFailure = allow; }

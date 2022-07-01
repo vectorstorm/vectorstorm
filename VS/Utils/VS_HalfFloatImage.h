@@ -44,8 +44,9 @@ public:
 	vsColor			GetRawPixel(unsigned int u, unsigned int v) const;
 	void			SetRawPixel(unsigned int u, unsigned int v, const vsColor& c);
 
-	vsTexture *		Bake( const vsString& name = vsEmptyString );
+	vsTexture *		Bake( const vsString& name = vsEmptyString ) const;
 	void *			RawData() { return m_pixel; }
+	const void *	RawData() const { return m_pixel; }
 };
 
 #endif // VS_HALFFLOATIMAGE_H

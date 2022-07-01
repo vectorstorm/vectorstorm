@@ -443,7 +443,7 @@ vsImage::Copy( vsImage *other )
 }
 
 vsTexture *
-vsImage::Bake( const vsString& name_in )
+vsImage::Bake( const vsString& name_in ) const
 {
 	vsString name(name_in);
 	if ( name.empty() )
@@ -463,7 +463,7 @@ namespace
 };
 
 void
-vsImage::SaveJPG(int quality, const vsString& filename)
+vsImage::SaveJPG(int quality, const vsString& filename) const
 {
 	vsFile file( filename, vsFile::MODE_Write );
 
@@ -477,7 +477,7 @@ vsImage::SaveJPG(int quality, const vsString& filename)
 }
 
 void
-vsImage::SavePNG(const vsString& filename)
+vsImage::SavePNG(const vsString& filename) const
 {
 	vsFile file( filename, vsFile::MODE_Write );
 
@@ -491,7 +491,7 @@ vsImage::SavePNG(const vsString& filename)
 }
 
 void
-vsImage::SavePNG_FullAlpha(const vsString& filename)
+vsImage::SavePNG_FullAlpha(const vsString& filename) const
 {
 	vsImage dup( m_width, m_height );
 	for ( size_t y = 0; y < m_height; y++ )

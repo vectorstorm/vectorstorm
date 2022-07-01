@@ -315,7 +315,7 @@ vsFloatImage::Copy( vsFloatImage *other )
 
 
 vsTexture *
-vsFloatImage::Bake( const vsString& name_in )
+vsFloatImage::Bake( const vsString& name_in ) const
 {
 	vsString name(name_in);
 	if ( name.empty() )
@@ -400,7 +400,7 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 }
 
 void
-vsFloatImage::SavePNG(const vsString& filename)
+vsFloatImage::SavePNG(const vsString& filename) const
 {
 	vsFile file( filename, vsFile::MODE_Write );
 
