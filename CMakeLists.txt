@@ -463,6 +463,8 @@ set(UTILS_SOURCES
 	VS/Utils/fmt/format.cc
 	VS/Utils/fmt/format.h
 	VS/Utils/stb/stb.cpp
+
+	VS/Utils/uni-algo/src/cpp_uni_data.cpp
 	)
 set(SOURCES
 	VS/VS_Headers.h

@@ -283,8 +283,8 @@ private:
 		StringModeState() {}
 
 		vsString string;
-		int anchorCodePoint;
-		int floatingCodePoint;
+		int anchorByteOffset;
+		int floatingByteOffset;
 	};
 	vsArrayStore<StringModeState> m_stringModeUndoStack;
 	// When selecting text, one side or the other is the "anchor";  it's the
@@ -292,10 +292,13 @@ private:
 	// before dragging.  When we create a selection using shift+arrow keys, It's
 	// wherever the cursor was before using shift+arrows.  This side of the selection
 	// never moves;  only the other end is moved around by shift+arrows.
-	int				m_stringModeCursorAnchorCodePoint;
-	int				m_stringModeCursorFloatingCodePoint;
-	int				m_stringModeCursorFirstCodePoint;		// we go from before the first codepoint
-	int				m_stringModeCursorLastCodePoint;		// to before the last codepoint  (legal to specify codepoint values past the end of the string, to put cursor at the very end)
+	//
+	// These values should all be byte offsets into the string, and must be on
+	// code point boundaries.
+	int				m_stringModeCursorAnchorByteOffset;
+	int				m_stringModeCursorFloatingByteOffset;
+	int				m_stringModeCursorFirstByteOffset;		// we go from before the first codepoint
+	int				m_stringModeCursorLastByteOffset;		// to before the last codepoint  (legal to specify codepoint values past the end of the string, to put cursor at the very end)
 	vsString		m_stringModeString;
 
 	ValidationType	m_stringValidationType;
@@ -378,12 +381,15 @@ public:
 	void			SetStringModeString( const vsString &s );
 	vsString		GetStringModeString() { return m_stringModeString; }
 	vsString		GetStringModeSelection();
-	void			SetStringModeCursor( int anchorCodePoint, bool endEdit ); // collapse the floating codepoint.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
-	void			SetStringModeCursor( int anchorCodePoint, int floatingCodePoint, bool endEdit );
-	int				GetStringModeCursorFirstCodePoint();
-	int				GetStringModeCursorLastCodePoint();
-	int				GetStringModeCursorAnchorCodePoint();
-	int				GetStringModeCursorFloatingCodePoint();
+	void			SetStringModeCursor( int anchorByteOffset, bool endEdit ); // collapse the floating codepoint.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
+	void			SetStringModeCursor( int anchorByteOffset, int floatingByteOffset, bool endEdit );
+	int				GetStringModeCursorFirstByteOffset();
+	int				GetStringModeCursorLastByteOffset();
+	int				GetStringModeCursorAnchorByteOffset();
+	int				GetStringModeCursorFloatingByteOffset();
+
+	bool			IsStringModeGlyphSelected(int glyphId);
+
 	void			SetStringModeSelectAll( bool selectAll );
 	bool			GetStringModeSelectAll();
 	void HandleTextInput( const vsString& input );
