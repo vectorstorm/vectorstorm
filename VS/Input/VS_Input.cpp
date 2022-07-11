@@ -703,7 +703,7 @@ vsInput::GetStringModeSelection()
 		int length = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
 		for ( int i = 0; i < length; i++ )
 		{
-			if ( i >= m_stringModeCursorFirstGlyph && i < m_stringModeCursorLastGlyph )
+			if ( i >= m_stringModeCursorFirstCodePoint && i < m_stringModeCursorLastCodePoint )
 				utf8::append( *str, back_inserter(result) );
 			str++;
 		}
@@ -716,13 +716,13 @@ vsInput::GetStringModeSelection()
 }
 
 void
-vsInput::SetStringModeCursor( int anchorGlyph, bool endEdit )
+vsInput::SetStringModeCursor( int anchorCodePoint, bool endEdit )
 {
-	SetStringModeCursor(anchorGlyph, anchorGlyph, endEdit );
+	SetStringModeCursor(anchorCodePoint, anchorCodePoint, endEdit );
 }
 
 void
-vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
+vsInput::SetStringModeCursor( int anchorCodePoint, int floatingCodePoint, bool endEdit )
 {
 	try
 	{
@@ -732,22 +732,22 @@ vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
 			StringModeSaveUndoState();
 			m_stringModeEditing = false;
 		}
-		else if ( endEdit && anchorGlyph != floatingGlyph && m_stringModeCursorFirstGlyph == m_stringModeCursorLastGlyph )
+		else if ( endEdit && anchorCodePoint != floatingCodePoint && m_stringModeCursorFirstCodePoint == m_stringModeCursorLastCodePoint )
 		{
 			// if we're makign a wide selection and previously we had an I-beam-style cursor,
 			// save the I-beam-style position.
 			StringModeSaveUndoState();
 		}
 
-		// first, clamp these positions into legal positions between glyphs
+		// first, clamp these positions into legal positions between codepoints
 		int inLength = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-		anchorGlyph = vsClamp( anchorGlyph, 0, inLength );
-		floatingGlyph = vsClamp( floatingGlyph, 0, inLength );
+		anchorCodePoint = vsClamp( anchorCodePoint, 0, inLength );
+		floatingCodePoint = vsClamp( floatingCodePoint, 0, inLength );
 
-		m_stringModeCursorFirstGlyph = vsMin(anchorGlyph, floatingGlyph);
-		m_stringModeCursorLastGlyph = vsMax(anchorGlyph, floatingGlyph);
-		m_stringModeCursorAnchorGlyph = anchorGlyph;
-		m_stringModeCursorFloatingGlyph = floatingGlyph;
+		m_stringModeCursorFirstCodePoint = vsMin(anchorCodePoint, floatingCodePoint);
+		m_stringModeCursorLastCodePoint = vsMax(anchorCodePoint, floatingCodePoint);
+		m_stringModeCursorAnchorCodePoint = anchorCodePoint;
+		m_stringModeCursorFloatingCodePoint = floatingCodePoint;
 	}
 	catch(...)
 	{
@@ -756,27 +756,27 @@ vsInput::SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit )
 }
 
 int
-vsInput::GetStringModeCursorFirstGlyph()
+vsInput::GetStringModeCursorFirstCodePoint()
 {
-	return m_stringModeCursorFirstGlyph;
+	return m_stringModeCursorFirstCodePoint;
 }
 
 int
-vsInput::GetStringModeCursorLastGlyph()
+vsInput::GetStringModeCursorLastCodePoint()
 {
-	return m_stringModeCursorLastGlyph;
+	return m_stringModeCursorLastCodePoint;
 }
 
 int
-vsInput::GetStringModeCursorAnchorGlyph()
+vsInput::GetStringModeCursorAnchorCodePoint()
 {
-	return m_stringModeCursorAnchorGlyph;
+	return m_stringModeCursorAnchorCodePoint;
 }
 
 int
-vsInput::GetStringModeCursorFloatingGlyph()
+vsInput::GetStringModeCursorFloatingCodePoint()
 {
-	return m_stringModeCursorFloatingGlyph;
+	return m_stringModeCursorFloatingCodePoint;
 }
 
 void
@@ -784,18 +784,18 @@ vsInput::SetStringModeSelectAll( bool selectAll )
 {
 	try
 	{
-		int lastGlyph = utf8::distance(
+		int lastCodePoint = utf8::distance(
 				m_stringModeString.c_str(),
 				m_stringModeString.c_str() + m_stringModeString.size()
 				);
 
 		if ( selectAll )
 		{
-			SetStringModeCursor( 0, lastGlyph+1, true);
+			SetStringModeCursor( 0, lastCodePoint+1, true);
 		}
 		else
 		{
-			SetStringModeCursor( lastGlyph+1, true );
+			SetStringModeCursor( lastCodePoint+1, true );
 		}
 	}
 	catch(...)
@@ -809,13 +809,13 @@ vsInput::GetStringModeSelectAll()
 {
 	try
 	{
-		int lastGlyph = utf8::distance(
+		int lastCodePoint = utf8::distance(
 				m_stringModeString.c_str(),
 				m_stringModeString.c_str() + m_stringModeString.size()
 				);
 
-		return ( m_stringModeCursorFirstGlyph == 0 &&
-				m_stringModeCursorLastGlyph == lastGlyph+1 );
+		return ( m_stringModeCursorFirstCodePoint == 0 &&
+				m_stringModeCursorLastCodePoint == lastCodePoint+1 );
 	}
 	catch(...)
 	{
@@ -988,7 +988,7 @@ vsInput::Update(float timeStep)
 					// 		event.edit.length );
 
 					// This event is for partial, in-progress code points
-					// which haven't yet settled on a final glyph.  For now,
+					// which haven't yet settled on a final codepoint.  For now,
 					// let's just ignore them.
 					//
 					//m_stringModeString = event.text.text;
@@ -1888,16 +1888,16 @@ vsInput::HandleTextInput( const vsString& _input )
 
 	try
 	{
-		// Okay.  First, let's copy all the glyphs up to the cursor
+		// Okay.  First, let's copy all the codepoints up to the cursor
 		// to the new string
 		utf8::iterator<std::string::iterator> old( oldString.begin(), oldString.begin(), oldString.end() );
 		int oldLength = utf8::distance(oldString.begin(), oldString.end());
-		for ( int i = 0; i < m_stringModeCursorFirstGlyph; i++ )
+		for ( int i = 0; i < m_stringModeCursorFirstCodePoint; i++ )
 			utf8::append( *(old++), back_inserter(m_stringModeString) );
 
-		// skip any glyphs which were inside a cursor selection;  they'll be
+		// skip any codepoints which were inside a cursor selection;  they'll be
 		// replaced by the new input.
-		for ( int i = m_stringModeCursorFirstGlyph; i < m_stringModeCursorLastGlyph; i++ )
+		for ( int i = m_stringModeCursorFirstCodePoint; i < m_stringModeCursorLastCodePoint; i++ )
 			old++;
 
 		// Now, append our new input onto the string we're building up.
@@ -1927,10 +1927,10 @@ vsInput::HandleTextInput( const vsString& _input )
 
 		// now add the end of our original input string;  anything which was past
 		// the end of the cursor selection
-		for ( int i = m_stringModeCursorLastGlyph; i < oldLength; i++ )
+		for ( int i = m_stringModeCursorLastCodePoint; i < oldLength; i++ )
 			utf8::append( *(old++), back_inserter(m_stringModeString));
 
-		SetStringModeCursor( m_stringModeCursorFirstGlyph + inputLength, false );
+		SetStringModeCursor( m_stringModeCursorFirstCodePoint + inputLength, false );
 
 		ValidateString();
 	}
@@ -1955,7 +1955,7 @@ vsInput::ValidateString()
 		int length = utf8::distance(oldString.begin(), oldString.end());
 
 		bool hasDecimalSeparator = false;
-		int glyphsSoFar = 0;
+		int codepointsSoFar = 0;
 
 		extern vsString s_decimalSeparator;
 
@@ -2061,27 +2061,27 @@ vsInput::ValidateString()
 				}
 			}
 
-			if ( valid && (m_stringModeMaxLength < 0 || glyphsSoFar < m_stringModeMaxLength) )
+			if ( valid && (m_stringModeMaxLength < 0 || codepointsSoFar < m_stringModeMaxLength) )
 			{
-				glyphsSoFar++;
+				codepointsSoFar++;
 				utf8::append( *it, back_inserter(m_stringModeString) );
 			}
 			else
 			{
-				// This glyph wasn't valid!  Therefore, we're removing it, and we
+				// This codepoint wasn't valid!  Therefore, we're removing it, and we
 				// need to adjust the cursor positioning.
 
-				if ( m_stringModeCursorFirstGlyph > glyphsSoFar )
-					m_stringModeCursorFirstGlyph--;
-				if ( m_stringModeCursorLastGlyph > glyphsSoFar )
-					m_stringModeCursorLastGlyph--;
+				if ( m_stringModeCursorFirstCodePoint > codepointsSoFar )
+					m_stringModeCursorFirstCodePoint--;
+				if ( m_stringModeCursorLastCodePoint > codepointsSoFar )
+					m_stringModeCursorLastCodePoint--;
 			}
 
 			it++;
 		}
 
-		m_stringModeCursorFirstGlyph = vsMin( m_stringModeCursorFirstGlyph, glyphsSoFar );
-		m_stringModeCursorLastGlyph = vsMin( m_stringModeCursorLastGlyph, glyphsSoFar );
+		m_stringModeCursorFirstCodePoint = vsMin( m_stringModeCursorFirstCodePoint, codepointsSoFar );
+		m_stringModeCursorLastCodePoint = vsMin( m_stringModeCursorLastCodePoint, codepointsSoFar );
 	}
 	catch( ... )
 	{
@@ -2104,8 +2104,8 @@ vsInput::StringModeSaveUndoState()
 {
 	StringModeState *state = new StringModeState;
 	state->string = m_stringModeString;
-	state->anchorGlyph = m_stringModeCursorAnchorGlyph;
-	state->floatingGlyph = m_stringModeCursorFloatingGlyph;
+	state->anchorCodePoint = m_stringModeCursorAnchorCodePoint;
+	state->floatingCodePoint = m_stringModeCursorFloatingCodePoint;
 	m_stringModeUndoStack.AddItem(state);
 	// vsLog("Saved undo state");
 }
@@ -2139,7 +2139,7 @@ vsInput::StringModeUndo()
 		// SetStringModeString( last->string );
 		m_stringModeString = last->string;
 		m_stringModeEditing = false;
-		SetStringModeCursor( last->anchorGlyph, last->floatingGlyph, false );
+		SetStringModeCursor( last->anchorCodePoint, last->floatingCodePoint, false );
 		m_stringModeUndoStack.PopBack();
 
 
@@ -2158,7 +2158,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_BACKSPACE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				if ( m_stringModeCursorFirstCodePoint != m_stringModeCursorLastCodePoint )
 				{
 					// delete the stuff that's selected.  Which is equivalent
 					// to inserting nothing "".
@@ -2166,7 +2166,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				else
 				{
-					if ( m_stringModeCursorFirstGlyph == 0 ) // no-op, deleting from 0.
+					if ( m_stringModeCursorFirstCodePoint == 0 ) // no-op, deleting from 0.
 						return;
 					if ( !m_backspaceMode )
 						StringModeSaveUndoState();
@@ -2176,20 +2176,20 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						// delete one character
 						vsString oldString = m_stringModeString;
 						m_stringModeString = vsEmptyString;
-						// Okay.  copy all the glyphs up to the cursor MINUS ONE.
+						// Okay.  copy all the codepoints up to the cursor MINUS ONE.
 						// then copy the rest.
 						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
 						int inLength = utf8::distance(oldString.begin(), oldString.end());
 						for ( int i = 0; i < inLength; i++ )
 						{
-							if ( i != m_stringModeCursorFirstGlyph-1 )
+							if ( i != m_stringModeCursorFirstCodePoint-1 )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
 							in++;
 						}
 
 						m_backspaceMode = true;
 						m_undoMode = false;
-						SetStringModeCursor( m_stringModeCursorFirstGlyph-1, true );
+						SetStringModeCursor( m_stringModeCursorFirstCodePoint-1, true );
 					}
 					catch(...)
 					{
@@ -2201,7 +2201,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_DELETE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstGlyph != m_stringModeCursorLastGlyph )
+				if ( m_stringModeCursorFirstCodePoint != m_stringModeCursorLastCodePoint )
 				{
 					// delete the stuff that's selected.  Which is equivalent
 					// to inserting nothing "".
@@ -2209,9 +2209,9 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				else
 				{
-					int glyphCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
-					// Check if we're deleting forward from last glyph
-					if ( m_stringModeCursorFirstGlyph == glyphCount )
+					int codepointCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+					// Check if we're deleting forward from last codepoint
+					if ( m_stringModeCursorFirstCodePoint == codepointCount )
 						return;
 					if ( !m_backspaceMode )
 						StringModeSaveUndoState();
@@ -2221,20 +2221,20 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						// delete one character
 						vsString oldString = m_stringModeString;
 						m_stringModeString = vsEmptyString;
-						// Okay.  copy all the glyphs up to the cursor.
+						// Okay.  copy all the codepoints up to the cursor.
 						// then skip one and copy the rest.
 						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
 						int inLength = utf8::distance(oldString.begin(), oldString.end());
 						for ( int i = 0; i < inLength; i++ )
 						{
-							if ( i != m_stringModeCursorFirstGlyph )
+							if ( i != m_stringModeCursorFirstCodePoint )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
 							in++;
 						}
 
 						m_backspaceMode = true;
 						m_undoMode = false;
-						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+						SetStringModeCursor( m_stringModeCursorFirstCodePoint, true );
 					}
 					catch(...)
 					{
@@ -2247,12 +2247,12 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
-					// shift is held down;  move the floating glyph, but not the anchor glyph!
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph, 0, true );
+					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
+					SetStringModeCursor( m_stringModeCursorAnchorCodePoint, 0, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
+					// shift isn't down;  move the anchor codepoint and collapse any selection
 					SetStringModeCursor( 0, true );
 				}
 			}
@@ -2262,12 +2262,12 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				int len = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
-					// shift is held down;  move the floating glyph, but not the anchor glyph!
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph, len+1, true );
+					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
+					SetStringModeCursor( m_stringModeCursorAnchorCodePoint, len+1, true );
 				}
 				else
 				{
-					// shift isn't down;  move the anchor glyph and collapse any selection
+					// shift isn't down;  move the anchor codepoint and collapse any selection
 					SetStringModeCursor( len+1, true );
 				}
 			}
@@ -2276,22 +2276,22 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
-					// shift is held down;  move the floating glyph, but not the anchor glyph!
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph-1, true );
+					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
+					SetStringModeCursor( m_stringModeCursorAnchorCodePoint, m_stringModeCursorFloatingCodePoint-1, true );
 				}
 				else
 				{
 					// shift isn't down
 					// if it's a single insertion point
-					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					if ( m_stringModeCursorAnchorCodePoint == m_stringModeCursorFloatingCodePoint )
 					{
-						//move the anchor glyph and collapse any selection
-						SetStringModeCursor( m_stringModeCursorAnchorGlyph-1, true );
+						//move the anchor codepoint and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorCodePoint-1, true );
 					}
 					else
 					{
-						//collapse selection to the leftmost glyph in the selection
-						SetStringModeCursor( m_stringModeCursorFirstGlyph, true );
+						//collapse selection to the leftmost codepoint in the selection
+						SetStringModeCursor( m_stringModeCursorFirstCodePoint, true );
 					}
 				}
 			}
@@ -2300,20 +2300,20 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
-					// shift is held down;  move the floating glyph, but not the anchor glyph!
-					SetStringModeCursor( m_stringModeCursorAnchorGlyph, m_stringModeCursorFloatingGlyph+1, true );
+					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
+					SetStringModeCursor( m_stringModeCursorAnchorCodePoint, m_stringModeCursorFloatingCodePoint+1, true );
 				}
 				else
 				{
-					if ( m_stringModeCursorAnchorGlyph == m_stringModeCursorFloatingGlyph )
+					if ( m_stringModeCursorAnchorCodePoint == m_stringModeCursorFloatingCodePoint )
 					{
-						// shift isn't down;  move the anchor glyph and collapse any selection
-						SetStringModeCursor( m_stringModeCursorAnchorGlyph+1, true );
+						// shift isn't down;  move the anchor codepoint and collapse any selection
+						SetStringModeCursor( m_stringModeCursorAnchorCodePoint+1, true );
 					}
 					else
 					{
-						//collapse selection to the last glyph in the selection
-						SetStringModeCursor( m_stringModeCursorLastGlyph, true );
+						//collapse selection to the last codepoint in the selection
+						SetStringModeCursor( m_stringModeCursorLastCodePoint, true );
 					}
 				}
 			}

@@ -272,7 +272,7 @@ private:
 	bool			m_stringModeIsMultiline;			// if true, 'enter' inserts a linefeed.  If fast, 'enter' commits changes and exits string mode.
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
 	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
-	int				m_stringModeMaxLength;				// if positive, this is how many glyphs we can have in our string!
+	int				m_stringModeMaxLength;				// if positive, this is how many codepoints we can have in our string!
 
 	bool m_hasFocus;
 	bool m_hadFocus;
@@ -283,8 +283,8 @@ private:
 		StringModeState() {}
 
 		vsString string;
-		int anchorGlyph;
-		int floatingGlyph;
+		int anchorCodePoint;
+		int floatingCodePoint;
 	};
 	vsArrayStore<StringModeState> m_stringModeUndoStack;
 	// When selecting text, one side or the other is the "anchor";  it's the
@@ -292,10 +292,10 @@ private:
 	// before dragging.  When we create a selection using shift+arrow keys, It's
 	// wherever the cursor was before using shift+arrows.  This side of the selection
 	// never moves;  only the other end is moved around by shift+arrows.
-	int				m_stringModeCursorAnchorGlyph;
-	int				m_stringModeCursorFloatingGlyph;
-	int				m_stringModeCursorFirstGlyph;		// we go from before the first glyph
-	int				m_stringModeCursorLastGlyph;		// to before the last glyph  (legal to specify glyph values past the end of the string, to put cursor at the very end)
+	int				m_stringModeCursorAnchorCodePoint;
+	int				m_stringModeCursorFloatingCodePoint;
+	int				m_stringModeCursorFirstCodePoint;		// we go from before the first codepoint
+	int				m_stringModeCursorLastCodePoint;		// to before the last codepoint  (legal to specify codepoint values past the end of the string, to put cursor at the very end)
 	vsString		m_stringModeString;
 
 	ValidationType	m_stringValidationType;
@@ -378,12 +378,12 @@ public:
 	void			SetStringModeString( const vsString &s );
 	vsString		GetStringModeString() { return m_stringModeString; }
 	vsString		GetStringModeSelection();
-	void			SetStringModeCursor( int anchorGlyph, bool endEdit ); // collapse the floating glyph.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
-	void			SetStringModeCursor( int anchorGlyph, int floatingGlyph, bool endEdit );
-	int				GetStringModeCursorFirstGlyph();
-	int				GetStringModeCursorLastGlyph();
-	int				GetStringModeCursorAnchorGlyph();
-	int				GetStringModeCursorFloatingGlyph();
+	void			SetStringModeCursor( int anchorCodePoint, bool endEdit ); // collapse the floating codepoint.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
+	void			SetStringModeCursor( int anchorCodePoint, int floatingCodePoint, bool endEdit );
+	int				GetStringModeCursorFirstCodePoint();
+	int				GetStringModeCursorLastCodePoint();
+	int				GetStringModeCursorAnchorCodePoint();
+	int				GetStringModeCursorFloatingCodePoint();
 	void			SetStringModeSelectAll( bool selectAll );
 	bool			GetStringModeSelectAll();
 	void HandleTextInput( const vsString& input );
