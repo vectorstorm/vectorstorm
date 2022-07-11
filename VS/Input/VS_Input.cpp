@@ -53,6 +53,7 @@ namespace
 
 vsInput::vsInput():
 	m_stringMode(false),
+	m_stringModeIsMultiline(false),
 	m_hasFocus(true),
 	m_hadFocus(true),
 	m_stringValidationType(Validation_None),
@@ -93,6 +94,7 @@ vsInput::Init()
 	m_preparingToPoll = false;
 	m_pollingForDeviceControl = false;
 	m_stringMode = false;
+	m_stringModeIsMultiline = false;
 	m_stringModeClearing = false;
 	vsSystem::Instance()->GetPreferences();
 	m_wheelSmoothing = true;
@@ -642,13 +644,13 @@ vsInput::Save()
 }
 
 void
-vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt)
+vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt, bool multiline)
 {
-	SetStringMode(mode, -1, box, vt);
+	SetStringMode(mode, -1, box, vt, multiline);
 }
 
 void
-vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationType vt)
+vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationType vt, bool multiline)
 {
 	if ( mode != m_stringMode )
 	{
@@ -656,6 +658,7 @@ vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationT
 		{
 			SDL_StartTextInput();
 			m_stringMode = true;
+			m_stringModeIsMultiline = multiline;
 			m_stringModePaused = false;
 			m_stringModeString.clear();
 			m_stringModeMaxLength = maxLength;
@@ -2377,8 +2380,18 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_RETURN:
 			if ( m_stringMode )
 			{
-				StringModeSaveUndoState();
-				SetStringMode(false, vsBox2D());
+				if ( m_stringModeIsMultiline )
+				{
+					// our regular text input doesn't support adding newlines to strings
+					// for some reason (seems like they don't come through in SDL's TextInput
+					// events?), so let's do it here explicitly.
+					HandleTextInput("\n");
+				}
+				else
+				{
+					StringModeSaveUndoState();
+					SetStringMode(false, vsBox2D());
+				}
 			}
 			break;
 		case SDLK_ESCAPE:
