@@ -2290,6 +2290,22 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 			}
 			break;
+		case SDLK_HOME:
+			{
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, 0, true );
+				else
+					SetStringModeCursor( 0, true );
+				break;
+			}
+		case SDLK_END:
+			{
+				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, m_stringModeString.size(), true );
+				else
+					SetStringModeCursor( m_stringModeString.size(), true );
+				break;
+			}
 		case SDLK_LEFT:
 			{
 				int nextFloatingPosition = m_stringModeCursorFloatingByteOffset;
