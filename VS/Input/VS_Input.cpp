@@ -64,6 +64,7 @@ vsInput::vsInput():
 	m_captureMouse = false;
 	m_suppressFirstMotion = false;
 	m_suppressResizeEvent = false;
+	m_cursorHandler = nullptr;
 }
 
 vsInput::~vsInput()
@@ -645,14 +646,22 @@ vsInput::Save()
 }
 
 void
+vsInput::SetStringModeCursorHandler( vsStringModeCursorHandler *handler )
+{
+	m_cursorHandler = handler;
+}
+
+void
 vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt, bool multiline)
 {
+	m_cursorHandler = nullptr;
 	SetStringMode(mode, -1, box, vt, multiline);
 }
 
 void
 vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationType vt, bool multiline)
 {
+	m_cursorHandler = nullptr;
 	if ( mode != m_stringMode )
 	{
 		if ( mode )
@@ -2167,12 +2176,18 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						// Okay.  copy all the codepoints up to the cursor MINUS ONE.
 						// then copy the rest.
 						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+						utf8::iterator<std::string::iterator> next = in;
+
 						int inLength = utf8::distance(oldString.begin(), oldString.end());
 						for ( int i = 0; i < inLength; i++ )
 						{
-							if ( i != m_stringModeCursorFirstByteOffset-1 )
+							next++;
+
+							int byteOffset = next.base() - oldString.begin();
+							if ( byteOffset != m_stringModeCursorFirstByteOffset )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
-							in++;
+
+							in = next;
 						}
 
 						m_backspaceMode = true;
@@ -2212,11 +2227,14 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						// Okay.  copy all the codepoints up to the cursor.
 						// then skip one and copy the rest.
 						utf8::iterator<std::string::iterator> in( oldString.begin(), oldString.begin(), oldString.end() );
+
 						int inLength = utf8::distance(oldString.begin(), oldString.end());
 						for ( int i = 0; i < inLength; i++ )
 						{
-							if ( i != m_stringModeCursorFirstByteOffset )
+							int byteOffset = in.base() - oldString.begin();
+							if ( byteOffset != m_stringModeCursorFirstByteOffset )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
+
 							in++;
 						}
 
@@ -2233,17 +2251,21 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			break;
 		case SDLK_UP:
 			{
-				if ( !m_stringModeIsMultiline )
+				int newPosition = 0;
 				{
 					if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 					{
+						if ( m_cursorHandler )
+							newPosition = m_cursorHandler->Up( m_stringModeCursorFloatingByteOffset );
 						// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-						SetStringModeCursor( m_stringModeCursorAnchorByteOffset, 0, true );
+						SetStringModeCursor( m_stringModeCursorAnchorByteOffset, newPosition, true );
 					}
 					else
 					{
+						if ( m_cursorHandler )
+							newPosition = m_cursorHandler->Up( m_stringModeCursorFloatingByteOffset );
 						// shift isn't down;  move the anchor codepoint and collapse any selection
-						SetStringModeCursor( 0, true );
+						SetStringModeCursor( newPosition, true );
 					}
 				}
 			}
@@ -2251,34 +2273,47 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_DOWN:
 			{
 				int len = m_stringModeString.size();
+				int newPosition = len;
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->Down( m_stringModeCursorFloatingByteOffset );
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, len, true );
+					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, newPosition, true );
 				}
 				else
 				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->Down( m_stringModeCursorFloatingByteOffset );
 					// shift isn't down;  move the anchor codepoint and collapse any selection
-					SetStringModeCursor( len, true );
+					SetStringModeCursor( newPosition, true );
 				}
 			}
 			break;
 		case SDLK_LEFT:
 			{
-				// [TODO]: uni-algo doesn't have reverse iterators yet, so we have
-				// to do a full grapheme search FORWARD through the string.  This
-				// is something they're interested in fixing, so this will simplify
-				// a lot once that happens.
-				uni::breaks::grapheme::utf8 begin{m_stringModeString.cbegin(), m_stringModeString.cend()};
-				uni::breaks::grapheme::utf8 end{m_stringModeString.cend(), m_stringModeString.cend()};
-
 				int nextFloatingPosition = m_stringModeCursorFloatingByteOffset;
-				for ( auto it = begin; it != end; ++it )
+
+				if ( m_cursorHandler )
 				{
-					int byteOffset = (it-begin);
-					if ( byteOffset >= m_stringModeCursorFloatingByteOffset )
-						break;
-					nextFloatingPosition = byteOffset;
+					nextFloatingPosition = m_cursorHandler->Left( nextFloatingPosition );
+				}
+				else
+				{
+					// [TODO]: uni-algo doesn't have reverse iterators yet, so we have
+					// to do a full grapheme search FORWARD through the string.  This
+					// is something they're interested in fixing, so this will simplify
+					// a lot once that happens.
+					uni::breaks::grapheme::utf8 begin{m_stringModeString.cbegin(), m_stringModeString.cend()};
+					uni::breaks::grapheme::utf8 end{m_stringModeString.cend(), m_stringModeString.cend()};
+
+					for ( auto it = begin; it != end; ++it )
+					{
+						int byteOffset = (it-begin);
+						if ( byteOffset >= m_stringModeCursorFloatingByteOffset )
+							break;
+						nextFloatingPosition = byteOffset;
+					}
 				}
 
 				// now we need to move back to the previous grapheme break
@@ -2313,17 +2348,28 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					int nextFloatingPosition = m_stringModeCursorFloatingByteOffset;
-					for ( auto it = begin; it != end; ++it )
+					if ( m_cursorHandler )
 					{
-						int byteOffset = (it-begin);
-						if ( byteOffset > m_stringModeCursorFloatingByteOffset )
-						{
-							nextFloatingPosition = byteOffset;
-							break;
-						}
+						nextFloatingPosition = m_cursorHandler->Right( nextFloatingPosition );
 					}
-					if ( nextFloatingPosition == m_stringModeCursorFloatingByteOffset )
-						nextFloatingPosition = m_stringModeString.size();
+					else
+					{
+						// [TODO]: uni-algo doesn't have reverse iterators yet, so we have
+						// to do a full grapheme search FORWARD through the string.  This
+						// is something they're interested in fixing, so this will simplify
+						// a lot once that happens.
+
+						for ( auto it = begin; it != end; ++it )
+						{
+							int byteOffset = (it-begin);
+							if ( byteOffset >= m_stringModeCursorFloatingByteOffset )
+								break;
+							nextFloatingPosition = byteOffset;
+						}
+						if ( nextFloatingPosition == m_stringModeCursorFloatingByteOffset )
+							nextFloatingPosition = m_stringModeString.size();
+					}
+
 
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
 					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, nextFloatingPosition, true );
@@ -2334,17 +2380,24 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 					{
 						// shift isn't down;  move the anchor codepoint and collapse any selection
 						int nextAnchorPosition = m_stringModeCursorAnchorByteOffset;
-						for ( auto it = begin; it != end; ++it )
+						if ( m_cursorHandler )
 						{
-							int byteOffset = (it-begin);
-							if ( byteOffset > m_stringModeCursorAnchorByteOffset )
-							{
-								nextAnchorPosition = byteOffset;
-								break;
-							}
+							nextAnchorPosition = m_cursorHandler->Right( nextAnchorPosition );
 						}
-						if ( nextAnchorPosition == m_stringModeCursorAnchorByteOffset )
-							nextAnchorPosition = m_stringModeString.size();
+						else
+						{
+							for ( auto it = begin; it != end; ++it )
+							{
+								int byteOffset = (it-begin);
+								if ( byteOffset > m_stringModeCursorAnchorByteOffset )
+								{
+									nextAnchorPosition = byteOffset;
+									break;
+								}
+							}
+							if ( nextAnchorPosition == m_stringModeCursorAnchorByteOffset )
+								nextAnchorPosition = m_stringModeString.size();
+						}
 						SetStringModeCursor( nextAnchorPosition, true );
 					}
 					else

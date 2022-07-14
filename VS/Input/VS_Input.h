@@ -213,6 +213,20 @@ public:
 
 };
 
+class vsStringModeCursorHandler
+{
+public:
+
+	vsStringModeCursorHandler() {}
+	virtual ~vsStringModeCursorHandler() {}
+
+	// return new byte offset based on current byte offset
+	virtual int Left( int byteOffset ) = 0;
+	virtual int Right( int byteOffset ) = 0;
+	virtual int Up( int byteOffset ) = 0;
+	virtual int Down( int byteOffset ) = 0;
+};
+
 class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 {
 #define MAX_JOYSTICKS (4)
@@ -273,6 +287,8 @@ private:
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
 	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
 	int				m_stringModeMaxLength;				// if positive, this is how many codepoints we can have in our string!
+	vsStringModeCursorHandler *m_cursorHandler;
+
 
 	bool m_hasFocus;
 	bool m_hadFocus;
@@ -387,6 +403,8 @@ public:
 	int				GetStringModeCursorLastByteOffset();
 	int				GetStringModeCursorAnchorByteOffset();
 	int				GetStringModeCursorFloatingByteOffset();
+
+	void			SetStringModeCursorHandler( vsStringModeCursorHandler *handler );
 
 	bool			IsStringModeGlyphSelected(int glyphId);
 
