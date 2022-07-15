@@ -299,10 +299,12 @@ public:
 		virtual ~CursorHandler() {}
 
 		// return new byte offset based on current byte offset
-		virtual vsInput::CursorPos Left( const vsInput::CursorPos& byteOffset ) = 0;
-		virtual vsInput::CursorPos Right( const vsInput::CursorPos& byteOffset ) = 0;
-		virtual vsInput::CursorPos Up( const vsInput::CursorPos& byteOffset ) = 0;
-		virtual vsInput::CursorPos Down( const vsInput::CursorPos& byteOffset ) = 0;
+		virtual vsInput::CursorPos Left( const vsInput::CursorPos& from ) = 0;
+		virtual vsInput::CursorPos Right( const vsInput::CursorPos& from ) = 0;
+		virtual vsInput::CursorPos Up( const vsInput::CursorPos& from ) = 0;
+		virtual vsInput::CursorPos Down( const vsInput::CursorPos& from ) = 0;
+		virtual vsInput::CursorPos Home( const vsInput::CursorPos& from ) = 0;
+		virtual vsInput::CursorPos End( const vsInput::CursorPos& from ) = 0;
 		virtual TextInputResult TextInput( const vsString& input ) = 0;
 	};
 

@@ -2326,18 +2326,37 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			break;
 		case SDLK_HOME:
 			{
+				CursorPos newPosition = CursorPos::Byte(0);
+
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
-					SetStringModeCursor( m_stringModeCursorAnchor, CursorPos::Byte(0), Opt_EndEdit );
+				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->Home( m_stringModeCursorFloating );
+					SetStringModeCursor( m_stringModeCursorAnchor, newPosition, Opt_EndEdit );
+				}
 				else
-					SetStringModeCursor( CursorPos::Byte(0), Opt_EndEdit );
+				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->Home( m_stringModeCursorFirst );
+					SetStringModeCursor( newPosition, Opt_EndEdit );
+				}
 				break;
 			}
 		case SDLK_END:
 			{
+				CursorPos newPosition = CursorPos::Byte(m_stringModeString.size());
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
-					SetStringModeCursor( m_stringModeCursorAnchor, CursorPos::Byte(m_stringModeString.size()), Opt_EndEdit );
+				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->End( m_stringModeCursorFloating );
+					SetStringModeCursor( m_stringModeCursorAnchor, newPosition, Opt_EndEdit );
+				}
 				else
-					SetStringModeCursor( CursorPos::Byte(m_stringModeString.size()), Opt_EndEdit );
+				{
+					if ( m_cursorHandler )
+						newPosition = m_cursorHandler->End( m_stringModeCursorLast );
+					SetStringModeCursor( newPosition, Opt_EndEdit );
+				}
 				break;
 			}
 		case SDLK_LEFT:
