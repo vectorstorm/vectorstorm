@@ -213,20 +213,6 @@ public:
 
 };
 
-class vsStringModeCursorHandler
-{
-public:
-
-	vsStringModeCursorHandler() {}
-	virtual ~vsStringModeCursorHandler() {}
-
-	// return new byte offset based on current byte offset
-	virtual int Left( int byteOffset ) = 0;
-	virtual int Right( int byteOffset ) = 0;
-	virtual int Up( int byteOffset ) = 0;
-	virtual int Down( int byteOffset ) = 0;
-};
-
 class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 {
 #define MAX_JOYSTICKS (4)
@@ -280,6 +266,46 @@ public:
 		Validation_PositiveInteger,
 		Validation_PositiveIntegerPercent
 	};
+
+	class CursorPos
+	{
+	public:
+		int byteOffset;
+		int line;
+
+		CursorPos(): byteOffset(-1), line(-1) {}
+		CursorPos( const CursorPos& other ): byteOffset(other.byteOffset), line(other.line) {}
+
+		static CursorPos Byte(int byteOffset) { CursorPos r; r.byteOffset = byteOffset; return r; }
+		static CursorPos LineByte(int line, int byteOffset) { CursorPos r; r.line = line; r.byteOffset = byteOffset; return r; }
+
+		bool operator==(const CursorPos& o) const { return byteOffset == o.byteOffset && line == o.line; }
+		bool operator!=(const CursorPos& o) const { return !(*this == o); }
+		bool operator<(const CursorPos& o) const { return line < o.line || byteOffset < o.byteOffset; }
+		bool operator>(const CursorPos& o) const { return line > o.line || byteOffset > o.byteOffset; }
+		const CursorPos& operator=(const CursorPos& o) { line = o.line; byteOffset = o.byteOffset; return *this; }
+	};
+	struct TextInputResult
+	{
+		vsString newString;
+		vsInput::CursorPos newCursorPos;
+	};
+
+	class CursorHandler
+	{
+	public:
+
+		CursorHandler() {}
+		virtual ~CursorHandler() {}
+
+		// return new byte offset based on current byte offset
+		virtual vsInput::CursorPos Left( const vsInput::CursorPos& byteOffset ) = 0;
+		virtual vsInput::CursorPos Right( const vsInput::CursorPos& byteOffset ) = 0;
+		virtual vsInput::CursorPos Up( const vsInput::CursorPos& byteOffset ) = 0;
+		virtual vsInput::CursorPos Down( const vsInput::CursorPos& byteOffset ) = 0;
+		virtual TextInputResult TextInput( const vsString& input ) = 0;
+	};
+
 private:
 
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
@@ -287,7 +313,7 @@ private:
 	bool			m_stringModeClearing;				// if true, we're waiting for all keyboard keys to be released before re-enabling control.
 	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
 	int				m_stringModeMaxLength;				// if positive, this is how many codepoints we can have in our string!
-	vsStringModeCursorHandler *m_cursorHandler;
+	CursorHandler	*m_cursorHandler;
 
 
 	bool m_hasFocus;
@@ -299,8 +325,11 @@ private:
 		StringModeState() {}
 
 		vsString string;
-		int anchorByteOffset;
-		int floatingByteOffset;
+		CursorPos anchor;
+		CursorPos floating;
+
+		int anchorByteLine;
+		int floatingByteLine;
 	};
 	vsArrayStore<StringModeState> m_stringModeUndoStack;
 	// When selecting text, one side or the other is the "anchor";  it's the
@@ -311,10 +340,10 @@ private:
 	//
 	// These values should all be byte offsets into the string, and must be on
 	// code point boundaries.
-	int				m_stringModeCursorAnchorByteOffset;
-	int				m_stringModeCursorFloatingByteOffset;
-	int				m_stringModeCursorFirstByteOffset;		// we go from before the first codepoint
-	int				m_stringModeCursorLastByteOffset;		// to before the last codepoint  (legal to specify codepoint values past the end of the string, to put cursor at the very end)
+	CursorPos				m_stringModeCursorAnchor;
+	CursorPos				m_stringModeCursorFloating;
+	CursorPos				m_stringModeCursorFirst;		// we go from before the first codepoint
+	CursorPos				m_stringModeCursorLast;		// to before the last codepoint  (legal to specify codepoint values past the end of the string, to put cursor at the very end)
 	vsString		m_stringModeString;
 
 	ValidationType	m_stringValidationType;
@@ -397,14 +426,22 @@ public:
 	void			SetStringModeString( const vsString &s );
 	vsString		GetStringModeString() { return m_stringModeString; }
 	vsString		GetStringModeSelection();
-	void			SetStringModeCursor( int anchorByteOffset, bool endEdit ); // collapse the floating codepoint.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
-	void			SetStringModeCursor( int anchorByteOffset, int floatingByteOffset, bool endEdit );
-	int				GetStringModeCursorFirstByteOffset();
-	int				GetStringModeCursorLastByteOffset();
-	int				GetStringModeCursorAnchorByteOffset();
-	int				GetStringModeCursorFloatingByteOffset();
 
-	void			SetStringModeCursorHandler( vsStringModeCursorHandler *handler );
+	enum Opt
+	{
+		Opt_None,
+		Opt_EndEdit
+	};
+
+	void			SetStringModeCursor( const CursorPos& anchor, Opt options ); // collapse the floating codepoint.  'endEdit' means that we've reached an 'undo' point BEFORE this cursor movement.
+	void			SetStringModeCursor( const CursorPos& anchor, const CursorPos& floating, Opt options );
+
+	const CursorPos&				GetStringModeCursorFirst() const;
+	const CursorPos&				GetStringModeCursorLast() const;
+	const CursorPos&				GetStringModeCursorAnchor() const;
+	const CursorPos&				GetStringModeCursorFloating() const;
+
+	void			SetStringModeCursorHandler( CursorHandler *handler );
 
 	bool			IsStringModeGlyphSelected(int glyphId);
 

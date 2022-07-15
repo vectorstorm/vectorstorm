@@ -646,7 +646,7 @@ vsInput::Save()
 }
 
 void
-vsInput::SetStringModeCursorHandler( vsStringModeCursorHandler *handler )
+vsInput::SetStringModeCursorHandler( vsInput::CursorHandler *handler )
 {
 	m_cursorHandler = handler;
 }
@@ -713,7 +713,7 @@ vsInput::GetStringModeSelection()
 		int length = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
 		for ( int i = 0; i < length; i++ )
 		{
-			if ( i >= m_stringModeCursorFirstByteOffset && i < m_stringModeCursorLastByteOffset )
+			if ( i >= m_stringModeCursorFirst.byteOffset && i < m_stringModeCursorLast.byteOffset )
 				utf8::append( *str, back_inserter(result) );
 			str++;
 		}
@@ -726,38 +726,43 @@ vsInput::GetStringModeSelection()
 }
 
 void
-vsInput::SetStringModeCursor( int anchorByteOffset, bool endEdit )
+vsInput::SetStringModeCursor( const CursorPos& anchor, Opt options )
 {
-	SetStringModeCursor(anchorByteOffset, anchorByteOffset, endEdit );
+	SetStringModeCursor(anchor, anchor, options );
 }
 
 void
-vsInput::SetStringModeCursor( int anchorByteOffset, int floatingByteOffset, bool endEdit )
+vsInput::SetStringModeCursor( const CursorPos& anchor_in, const CursorPos& floating_in, Opt options )
 {
+	CursorPos anchor(anchor_in);
+	CursorPos floating(floating_in);
 	try
 	{
 		m_undoMode = false; // if we're moving the cursor around, we're not in undo mode any more!
-		if ( endEdit && m_stringModeEditing )
+		if ( options == Opt_EndEdit )
 		{
-			StringModeSaveUndoState();
-			m_stringModeEditing = false;
-		}
-		else if ( endEdit && anchorByteOffset != floatingByteOffset && m_stringModeCursorFirstByteOffset == m_stringModeCursorLastByteOffset )
-		{
-			// if we're makign a wide selection and previously we had an I-beam-style cursor,
-			// save the I-beam-style position.
-			StringModeSaveUndoState();
+			if ( m_stringModeEditing )
+			{
+				StringModeSaveUndoState();
+				m_stringModeEditing = false;
+			}
+			else if ( anchor != floating && m_stringModeCursorFirst == m_stringModeCursorLast )
+			{
+				// if we're makign a wide selection and previously we had an I-beam-style cursor,
+				// save the I-beam-style position.
+				StringModeSaveUndoState();
+			}
 		}
 
 		// first, clamp these positions into legal positions between codepoints
 		int inLength = m_stringModeString.size();
-		anchorByteOffset = vsClamp( anchorByteOffset, 0, inLength );
-		floatingByteOffset = vsClamp( floatingByteOffset, 0, inLength );
+		anchor.byteOffset = vsClamp( anchor.byteOffset, 0, inLength );
+		floating.byteOffset = vsClamp( floating.byteOffset, 0, inLength );
 
-		m_stringModeCursorFirstByteOffset = vsMin(anchorByteOffset, floatingByteOffset);
-		m_stringModeCursorLastByteOffset = vsMax(anchorByteOffset, floatingByteOffset);
-		m_stringModeCursorAnchorByteOffset = anchorByteOffset;
-		m_stringModeCursorFloatingByteOffset = floatingByteOffset;
+		m_stringModeCursorFirst = vsMin(anchor, floating);
+		m_stringModeCursorLast = vsMax(anchor, floating);
+		m_stringModeCursorAnchor = anchor;
+		m_stringModeCursorFloating = floating;
 	}
 	catch(...)
 	{
@@ -765,28 +770,28 @@ vsInput::SetStringModeCursor( int anchorByteOffset, int floatingByteOffset, bool
 	}
 }
 
-int
-vsInput::GetStringModeCursorFirstByteOffset()
+const vsInput::CursorPos&
+vsInput::GetStringModeCursorFirst() const
 {
-	return m_stringModeCursorFirstByteOffset;
+	return m_stringModeCursorFirst;
 }
 
-int
-vsInput::GetStringModeCursorLastByteOffset()
+const vsInput::CursorPos&
+vsInput::GetStringModeCursorLast() const
 {
-	return m_stringModeCursorLastByteOffset;
+	return m_stringModeCursorLast;
 }
 
-int
-vsInput::GetStringModeCursorAnchorByteOffset()
+const vsInput::CursorPos&
+vsInput::GetStringModeCursorAnchor() const
 {
-	return m_stringModeCursorAnchorByteOffset;
+	return m_stringModeCursorAnchor;
 }
 
-int
-vsInput::GetStringModeCursorFloatingByteOffset()
+const vsInput::CursorPos&
+vsInput::GetStringModeCursorFloating() const
 {
-	return m_stringModeCursorFloatingByteOffset;
+	return m_stringModeCursorFloating;
 }
 
 bool
@@ -805,8 +810,8 @@ vsInput::IsStringModeGlyphSelected(int glyphId)
 		if ( glyph == glyphId )
 		{
 			int byteOffset = (it-begin);
-			if ( byteOffset >= m_stringModeCursorFirstByteOffset &&
-					byteOffset < m_stringModeCursorLastByteOffset )
+			if ( byteOffset >= m_stringModeCursorFirst.byteOffset &&
+					byteOffset < m_stringModeCursorLast.byteOffset )
 				return true;
 			return false;
 		}
@@ -825,11 +830,11 @@ vsInput::SetStringModeSelectAll( bool selectAll )
 
 		if ( selectAll )
 		{
-			SetStringModeCursor( 0, lastByteOffset+1, true);
+			SetStringModeCursor( CursorPos::Byte(1), CursorPos::Byte(lastByteOffset+1), Opt_EndEdit);
 		}
 		else
 		{
-			SetStringModeCursor( lastByteOffset+1, true );
+			SetStringModeCursor( CursorPos::Byte(lastByteOffset+1), Opt_EndEdit );
 		}
 	}
 	catch(...)
@@ -845,8 +850,8 @@ vsInput::GetStringModeSelectAll()
 	{
 		int lastByteOffset = m_stringModeString.size();
 
-		return ( m_stringModeCursorFirstByteOffset == 0 &&
-				m_stringModeCursorLastByteOffset == lastByteOffset+1 );
+		return ( m_stringModeCursorFirst.byteOffset == 0 &&
+				m_stringModeCursorLast.byteOffset == lastByteOffset+1 );
 	}
 	catch(...)
 	{
@@ -1914,28 +1919,39 @@ vsInput::HandleTextInput( const vsString& _input )
 		m_stringModeEditing = true;
 	}
 
-	vsString oldString = m_stringModeString;
-	m_stringModeString = vsEmptyString;
-
-	try
+	if ( m_cursorHandler )
 	{
-		// Okay, we're going to insert this new input into the utf8 string.
-
-		if ( m_stringModeCursorFirstByteOffset != m_stringModeCursorLastByteOffset )
-			oldString.erase( m_stringModeCursorFirstByteOffset, m_stringModeCursorLastByteOffset-m_stringModeCursorFirstByteOffset );
-
-		oldString.insert( m_stringModeCursorFirstByteOffset, _input );
-		m_stringModeString = oldString;
-
-		SetStringModeCursor( m_stringModeCursorFirstByteOffset + _input.size(), false );
+		TextInputResult tir = m_cursorHandler->TextInput(_input);
+		m_stringModeString = tir.newString;
+		SetStringModeCursor( tir.newCursorPos, Opt_None );
 
 		ValidateString();
 	}
-	catch (...)
+	else
 	{
-		vsLog("Failed to handle UTF8 text input!");
-		vsLog("  String: %s", oldString);
-		vsLog("  New input: %s", _input);
+		vsString oldString = m_stringModeString;
+		m_stringModeString = vsEmptyString;
+
+		try
+		{
+			// Okay, we're going to insert this new input into the utf8 string.
+
+			if ( m_stringModeCursorFirst.byteOffset != m_stringModeCursorLast.byteOffset )
+				oldString.erase( m_stringModeCursorFirst.byteOffset, m_stringModeCursorLast.byteOffset-m_stringModeCursorFirst.byteOffset );
+
+			oldString.insert( m_stringModeCursorFirst.byteOffset, _input );
+			m_stringModeString = oldString;
+
+			SetStringModeCursor( CursorPos::Byte(m_stringModeCursorFirst.byteOffset + _input.size()), Opt_None );
+
+			ValidateString();
+		}
+		catch (...)
+		{
+			vsLog("Failed to handle UTF8 text input!");
+			vsLog("  String: %s", oldString);
+			vsLog("  New input: %s", _input);
+		}
 	}
 }
 
@@ -2067,18 +2083,24 @@ vsInput::ValidateString()
 			{
 				// This codepoint wasn't valid!  Therefore, we're removing it, and we
 				// need to adjust the cursor positioning.
+				utf8::iterator<std::string::iterator> n(it);
+				n++;
 
-				if ( m_stringModeCursorFirstByteOffset > codepointsSoFar )
-					m_stringModeCursorFirstByteOffset--;
-				if ( m_stringModeCursorLastByteOffset > codepointsSoFar )
-					m_stringModeCursorLastByteOffset--;
+				int bytesSoFar = it.base()-oldString.begin();
+				int invalidBytes = n.base()-it.base();
+
+				if ( m_stringModeCursorFirst.byteOffset > bytesSoFar )
+					m_stringModeCursorFirst.byteOffset-=invalidBytes;
+				if ( m_stringModeCursorLast.byteOffset > bytesSoFar )
+					m_stringModeCursorLast.byteOffset-=invalidBytes;
 			}
 
 			it++;
 		}
 
-		m_stringModeCursorFirstByteOffset = vsMin( m_stringModeCursorFirstByteOffset, codepointsSoFar );
-		m_stringModeCursorLastByteOffset = vsMin( m_stringModeCursorLastByteOffset, codepointsSoFar );
+		int validBytes = m_stringModeString.size();
+		m_stringModeCursorFirst.byteOffset = vsMin( m_stringModeCursorFirst.byteOffset, validBytes );
+		m_stringModeCursorLast.byteOffset = vsMin( m_stringModeCursorLast.byteOffset, validBytes );
 	}
 	catch( ... )
 	{
@@ -2092,7 +2114,7 @@ vsInput::SetStringModeString( const vsString &s )
 	m_stringModeEditing = true; // 'true', since we just reset the string!  Now when we set the cursor position, we'll automatically save off an undo state.
 	m_stringModeUndoStack.Clear();
 	m_stringModeString = s;
-	SetStringModeCursor( s.size(), false );
+	SetStringModeCursor( CursorPos::Byte(s.size()), Opt_None );
 	// vsLog("Clearing undo stack");
 }
 
@@ -2101,8 +2123,8 @@ vsInput::StringModeSaveUndoState()
 {
 	StringModeState *state = new StringModeState;
 	state->string = m_stringModeString;
-	state->anchorByteOffset = m_stringModeCursorAnchorByteOffset;
-	state->floatingByteOffset = m_stringModeCursorFloatingByteOffset;
+	state->anchor = m_stringModeCursorAnchor;
+	state->floating = m_stringModeCursorFloating;
 	m_stringModeUndoStack.AddItem(state);
 	// vsLog("Saved undo state");
 }
@@ -2136,7 +2158,7 @@ vsInput::StringModeUndo()
 		// SetStringModeString( last->string );
 		m_stringModeString = last->string;
 		m_stringModeEditing = false;
-		SetStringModeCursor( last->anchorByteOffset, last->floatingByteOffset, false );
+		SetStringModeCursor( last->anchor, last->floating, Opt_None );
 		m_stringModeUndoStack.PopBack();
 
 
@@ -2155,15 +2177,21 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_BACKSPACE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstByteOffset != m_stringModeCursorLastByteOffset )
+				if ( m_stringModeCursorFirst.byteOffset != m_stringModeCursorLast.byteOffset )
 				{
 					// delete the stuff that's selected.  Which is equivalent
 					// to inserting nothing "".
+					//
+					// [Note] The above 'if' test is explicitly ONLY checking
+					// byte offsets, not lines.  If we've somehow got a selection
+					// on a single byte offset across two lines (as theoretically
+					// could happen over a linewrapped line), we DON'T want to
+					// "replace" that zero-byte span with an empty string.
 					HandleTextInput("");
 				}
 				else
 				{
-					if ( m_stringModeCursorFirstByteOffset == 0 ) // no-op, deleting from 0.
+					if ( m_stringModeCursorFirst.byteOffset == 0 ) // no-op, deleting from 0.
 						return;
 					if ( !m_backspaceMode )
 						StringModeSaveUndoState();
@@ -2179,20 +2207,24 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						utf8::iterator<std::string::iterator> next = in;
 
 						int inLength = utf8::distance(oldString.begin(), oldString.end());
+						int trimmedBytes = 0;
 						for ( int i = 0; i < inLength; i++ )
 						{
 							next++;
 
 							int byteOffset = next.base() - oldString.begin();
-							if ( byteOffset != m_stringModeCursorFirstByteOffset )
+							if ( byteOffset != m_stringModeCursorFirst.byteOffset )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
+							else
+								trimmedBytes += next.base()-in.base();
 
 							in = next;
 						}
 
 						m_backspaceMode = true;
 						m_undoMode = false;
-						SetStringModeCursor( m_stringModeCursorFirstByteOffset-1, true );
+
+						SetStringModeCursor( CursorPos::LineByte(m_stringModeCursorFirst.line, m_stringModeCursorFirst.byteOffset-trimmedBytes), Opt_EndEdit );
 					}
 					catch(...)
 					{
@@ -2204,7 +2236,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_DELETE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
 			{
-				if ( m_stringModeCursorFirstByteOffset != m_stringModeCursorLastByteOffset )
+				if ( m_stringModeCursorFirst.byteOffset != m_stringModeCursorLast.byteOffset )
 				{
 					// delete the stuff that's selected.  Which is equivalent
 					// to inserting nothing "".
@@ -2212,9 +2244,9 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				else
 				{
-					int codepointCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
+					// int codepointCount = utf8::distance(m_stringModeString.begin(), m_stringModeString.end());
 					// Check if we're deleting forward from last codepoint
-					if ( m_stringModeCursorFirstByteOffset == codepointCount )
+					if ( m_stringModeCursorFirst.byteOffset == (int)m_stringModeString.length() )
 						return;
 					if ( !m_backspaceMode )
 						StringModeSaveUndoState();
@@ -2232,7 +2264,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						for ( int i = 0; i < inLength; i++ )
 						{
 							int byteOffset = in.base() - oldString.begin();
-							if ( byteOffset != m_stringModeCursorFirstByteOffset )
+							if ( byteOffset != m_stringModeCursorFirst.byteOffset )
 								utf8::append( *in, std::back_inserter(m_stringModeString) );
 
 							in++;
@@ -2240,7 +2272,9 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 
 						m_backspaceMode = true;
 						m_undoMode = false;
-						SetStringModeCursor( m_stringModeCursorFirstByteOffset, true );
+						// end the edit but I don't think the selection can actually
+						// move due to a forward-deletion??
+						SetStringModeCursor( m_stringModeCursorFirst, Opt_EndEdit );
 					}
 					catch(...)
 					{
@@ -2251,21 +2285,21 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			break;
 		case SDLK_UP:
 			{
-				int newPosition = 0;
+				CursorPos newPosition = CursorPos::LineByte(0,0);
 				{
 					if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 					{
 						if ( m_cursorHandler )
-							newPosition = m_cursorHandler->Up( m_stringModeCursorFloatingByteOffset );
+							newPosition = m_cursorHandler->Up( m_stringModeCursorFloating );
 						// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-						SetStringModeCursor( m_stringModeCursorAnchorByteOffset, newPosition, true );
+						SetStringModeCursor( m_stringModeCursorAnchor, newPosition, Opt_EndEdit );
 					}
 					else
 					{
 						if ( m_cursorHandler )
-							newPosition = m_cursorHandler->Up( m_stringModeCursorFloatingByteOffset );
+							newPosition = m_cursorHandler->Up( m_stringModeCursorFloating );
 						// shift isn't down;  move the anchor codepoint and collapse any selection
-						SetStringModeCursor( newPosition, true );
+						SetStringModeCursor( newPosition, Opt_EndEdit );
 					}
 				}
 			}
@@ -2273,42 +2307,42 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_DOWN:
 			{
 				int len = m_stringModeString.size();
-				int newPosition = len;
+				CursorPos newPosition = CursorPos::Byte(len);
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					if ( m_cursorHandler )
-						newPosition = m_cursorHandler->Down( m_stringModeCursorFloatingByteOffset );
+						newPosition = m_cursorHandler->Down( m_stringModeCursorFloating );
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, newPosition, true );
+					SetStringModeCursor( m_stringModeCursorAnchor, newPosition, Opt_EndEdit );
 				}
 				else
 				{
 					if ( m_cursorHandler )
-						newPosition = m_cursorHandler->Down( m_stringModeCursorFloatingByteOffset );
+						newPosition = m_cursorHandler->Down( m_stringModeCursorFloating );
 					// shift isn't down;  move the anchor codepoint and collapse any selection
-					SetStringModeCursor( newPosition, true );
+					SetStringModeCursor( newPosition, Opt_EndEdit );
 				}
 			}
 			break;
 		case SDLK_HOME:
 			{
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, 0, true );
+					SetStringModeCursor( m_stringModeCursorAnchor, CursorPos::Byte(0), Opt_EndEdit );
 				else
-					SetStringModeCursor( 0, true );
+					SetStringModeCursor( CursorPos::Byte(0), Opt_EndEdit );
 				break;
 			}
 		case SDLK_END:
 			{
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, m_stringModeString.size(), true );
+					SetStringModeCursor( m_stringModeCursorAnchor, CursorPos::Byte(m_stringModeString.size()), Opt_EndEdit );
 				else
-					SetStringModeCursor( m_stringModeString.size(), true );
+					SetStringModeCursor( CursorPos::Byte(m_stringModeString.size()), Opt_EndEdit );
 				break;
 			}
 		case SDLK_LEFT:
 			{
-				int nextFloatingPosition = m_stringModeCursorFloatingByteOffset;
+				CursorPos nextFloatingPosition = m_stringModeCursorFloating;
 
 				if ( m_cursorHandler )
 				{
@@ -2326,9 +2360,9 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 					for ( auto it = begin; it != end; ++it )
 					{
 						int byteOffset = (it-begin);
-						if ( byteOffset >= m_stringModeCursorFloatingByteOffset )
+						if ( byteOffset >= m_stringModeCursorFloating.byteOffset )
 							break;
-						nextFloatingPosition = byteOffset;
+						nextFloatingPosition.byteOffset = byteOffset;
 					}
 				}
 
@@ -2337,21 +2371,21 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, nextFloatingPosition, true );
+					SetStringModeCursor( m_stringModeCursorAnchor, nextFloatingPosition, Opt_EndEdit );
 				}
 				else
 				{
 					// shift isn't down
 					// if it's a single insertion point
-					if ( m_stringModeCursorAnchorByteOffset == m_stringModeCursorFloatingByteOffset )
+					if ( m_stringModeCursorAnchor == m_stringModeCursorFloating )
 					{
 						//move the anchor codepoint and collapse any selection
-						SetStringModeCursor( nextFloatingPosition, true );
+						SetStringModeCursor( nextFloatingPosition, Opt_EndEdit );
 					}
 					else
 					{
 						//collapse selection to the leftmost codepoint in the selection
-						SetStringModeCursor( m_stringModeCursorFirstByteOffset, true );
+						SetStringModeCursor( m_stringModeCursorFirst, Opt_EndEdit );
 					}
 				}
 			}
@@ -2363,7 +2397,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 
 				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
 				{
-					int nextFloatingPosition = m_stringModeCursorFloatingByteOffset;
+					CursorPos nextFloatingPosition = m_stringModeCursorFloating;
 					if ( m_cursorHandler )
 					{
 						nextFloatingPosition = m_cursorHandler->Right( nextFloatingPosition );
@@ -2378,24 +2412,28 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						for ( auto it = begin; it != end; ++it )
 						{
 							int byteOffset = (it-begin);
-							if ( byteOffset >= m_stringModeCursorFloatingByteOffset )
+							if ( byteOffset >= m_stringModeCursorFloating.byteOffset )
 								break;
-							nextFloatingPosition = byteOffset;
+							nextFloatingPosition.byteOffset = byteOffset;
 						}
-						if ( nextFloatingPosition == m_stringModeCursorFloatingByteOffset )
-							nextFloatingPosition = m_stringModeString.size();
+						// NOTE TO FUTURE TREVOR:  The following 'if' statement
+						// looks weird but it's handling the case where we're moving
+						// to the right *past* the end of the string.  We need to
+						// keep it!  Best, past-Trevor, 15/7/2022
+						if ( nextFloatingPosition == m_stringModeCursorFloating )
+							nextFloatingPosition.byteOffset = m_stringModeString.size();
 					}
 
 
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
-					SetStringModeCursor( m_stringModeCursorAnchorByteOffset, nextFloatingPosition, true );
+					SetStringModeCursor( m_stringModeCursorAnchor, nextFloatingPosition, Opt_EndEdit );
 				}
 				else
 				{
-					if ( m_stringModeCursorAnchorByteOffset == m_stringModeCursorFloatingByteOffset )
+					if ( m_stringModeCursorAnchor.byteOffset == m_stringModeCursorFloating.byteOffset )
 					{
 						// shift isn't down;  move the anchor codepoint and collapse any selection
-						int nextAnchorPosition = m_stringModeCursorAnchorByteOffset;
+						CursorPos nextAnchorPosition = m_stringModeCursorAnchor;
 						if ( m_cursorHandler )
 						{
 							nextAnchorPosition = m_cursorHandler->Right( nextAnchorPosition );
@@ -2405,21 +2443,25 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 							for ( auto it = begin; it != end; ++it )
 							{
 								int byteOffset = (it-begin);
-								if ( byteOffset > m_stringModeCursorAnchorByteOffset )
+								if ( byteOffset > m_stringModeCursorAnchor.byteOffset )
 								{
-									nextAnchorPosition = byteOffset;
+									nextAnchorPosition.byteOffset = byteOffset;
 									break;
 								}
 							}
-							if ( nextAnchorPosition == m_stringModeCursorAnchorByteOffset )
-								nextAnchorPosition = m_stringModeString.size();
+							// as above, the following 'if' handles the case
+							// where we've moved to the right to beyond the end
+							// of the string, which can't be caught by our
+							// iterator above
+							if ( nextAnchorPosition == m_stringModeCursorAnchor )
+								nextAnchorPosition.byteOffset = m_stringModeString.size();
 						}
-						SetStringModeCursor( nextAnchorPosition, true );
+						SetStringModeCursor( nextAnchorPosition, Opt_EndEdit );
 					}
 					else
 					{
-						//collapse selection to the last codepoint in the selection
-						SetStringModeCursor( m_stringModeCursorLastByteOffset, true );
+						//collapse selection to the end of the selection
+						SetStringModeCursor( m_stringModeCursorLast, Opt_EndEdit );
 					}
 				}
 			}
