@@ -1926,6 +1926,8 @@ vsInput::HandleTextInput( const vsString& _input )
 		SetStringModeCursor( tir.newCursorPos, Opt_None );
 
 		ValidateString();
+		if ( m_cursorHandler )
+			m_cursorHandler->NotifyStringChanged( m_stringModeString );
 	}
 	else
 	{
@@ -2160,6 +2162,8 @@ vsInput::StringModeUndo()
 		m_stringModeEditing = false;
 		SetStringModeCursor( last->anchor, last->floating, Opt_None );
 		m_stringModeUndoStack.PopBack();
+		if ( m_cursorHandler )
+			m_cursorHandler->NotifyStringChanged( m_stringModeString );
 
 
 		m_undoMode = true;
@@ -2225,6 +2229,9 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						m_undoMode = false;
 
 						SetStringModeCursor( CursorPos::LineByte(m_stringModeCursorFirst.line, m_stringModeCursorFirst.byteOffset-trimmedBytes), Opt_EndEdit );
+
+						if ( m_cursorHandler )
+							m_cursorHandler->NotifyStringChanged( m_stringModeString );
 					}
 					catch(...)
 					{
@@ -2275,6 +2282,8 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 						// end the edit but I don't think the selection can actually
 						// move due to a forward-deletion??
 						SetStringModeCursor( m_stringModeCursorFirst, Opt_EndEdit );
+						if ( m_cursorHandler )
+							m_cursorHandler->NotifyStringChanged( m_stringModeString );
 					}
 					catch(...)
 					{

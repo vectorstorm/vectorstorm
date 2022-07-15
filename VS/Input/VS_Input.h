@@ -306,6 +306,7 @@ public:
 		virtual vsInput::CursorPos Home( const vsInput::CursorPos& from ) = 0;
 		virtual vsInput::CursorPos End( const vsInput::CursorPos& from ) = 0;
 		virtual TextInputResult TextInput( const vsString& input ) = 0;
+		virtual void NotifyStringChanged( const vsString& s ) {}
 	};
 
 private:
