@@ -875,7 +875,11 @@ vsStore::_EnsureBytesLeftForWriting( size_t bytes )
 	{
 		if ( BytesLeftForWriting() < bytes )
 		{
-			int newLength = m_bufferLength * 2;
+			// In general, we're going to double our size.  If doubling
+			// isn't enough, then just go however big we have to go to fit
+			// these bytes.
+			size_t minBytesNeeded = Length() + bytes;
+			size_t newLength = vsMax( minBytesNeeded, m_bufferLength * 2 );
 			_ResizeBuffer( newLength );
 		}
 	}
