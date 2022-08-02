@@ -38,6 +38,7 @@ class vsTimerSystem : public coreGameSystem
 {
 	static vsTimerSystem *s_instance;
 
+	uint64_t m_launchTime;
 	uint64_t m_initTime;
 
 	// we divide our frame into four phases:
@@ -76,7 +77,8 @@ public:
 	void SetMaxFPS( int fps );
 
 	uint64_t GetMicroseconds();
-	uint64_t GetMicrosecondsSinceInit();
+	uint64_t GetMicrosecondsSinceInit();   // time since current game finished initialising
+	uint64_t GetMicrosecondsSinceLaunch(); // time since program launch
 
 	virtual void Update( float timeStep );
 	virtual void PostUpdate(float timeStep);

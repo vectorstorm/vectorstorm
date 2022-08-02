@@ -149,7 +149,7 @@ vsTimerSystem::vsTimerSystem():
 	m_drawTime(0),
 	m_cpuTime(0)
 {
-	m_initTime = GetMicroseconds();
+	m_launchTime = m_initTime = GetMicroseconds();
 #if defined(DEBUG_TIMING_BAR)
 	m_sprite = nullptr;
 #endif // DEBUG_TIMING_BAR
@@ -204,6 +204,12 @@ uint64_t
 vsTimerSystem::GetMicrosecondsSinceInit()
 {
 	return GetMicroseconds() - m_initTime;
+}
+
+uint64_t
+vsTimerSystem::GetMicrosecondsSinceLaunch()
+{
+	return GetMicroseconds() - m_launchTime;
 }
 
 #define MAX_TIME_PER_FRAME (2.0f/60.0f)		// 60fps.

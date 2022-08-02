@@ -85,6 +85,9 @@ coreGame::StartTimer()
 {
 	vsTimerSystem *timer = GetTimer();
 
+	const vsString &name = coreGameRegistry::GetGameName(this);
+	vsLog(" ## Starting Game: %s", name );
+
 	timer->Init();	// reinit our timer, so as not to have missed frames during our load sequence tallied.
 	m_startTicks = timer->GetCurrentMillis();
 }
@@ -96,6 +99,8 @@ coreGame::StopTimer()
 
 	float fps = m_framesRendered / ((timer->GetCurrentMillis()-m_startTicks)/1000.0f);
 
+	const vsString &name = coreGameRegistry::GetGameName(this);
+	vsLog(" ## Stopping Game: %s", name );
 	vsLog(" ## Frames rendered: %ld", m_framesRendered );
 	vsLog(" ## Average FPS: %f", fps);
 
