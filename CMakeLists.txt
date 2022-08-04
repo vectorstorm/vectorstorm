@@ -197,6 +197,8 @@ set(FILES_SOURCES
 	VS/Files/VS_FileCache.h
 	VS/Files/VS_Record.cpp
 	VS/Files/VS_Record.h
+	VS/Files/VS_RecordStream.cpp
+	VS/Files/VS_RecordStream.h
 	VS/Files/VS_Token.cpp
 	VS/Files/VS_Token.h
 	VS/Files/VS_PhysFS.cpp
