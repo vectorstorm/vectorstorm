@@ -286,6 +286,30 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 	return childCount;
 }
 
+
+void
+vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s, uint32_t childCount )
+{
+	vsString identifier("RecordV2");
+	s->String(identifier);
+	return WriteBinary_Stream(s, childCount);
+}
+
+void
+vsRecord::WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount )
+{
+	m_label.SerialiseBinaryV2(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV2(s);
+	}
+	s->Uint32(childCount);
+}
+
 void
 vsRecord::LoadFromFilename( const vsString& filename )
 {

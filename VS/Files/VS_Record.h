@@ -22,6 +22,7 @@ class vsFile;
 class vsSerialiser;
 
 class vsSerialiserReadStream;
+class vsSerialiserWriteStream;
 
 #include "VS_Token.h"
 
@@ -108,6 +109,9 @@ public:
 	// Testbed for streaming record loads
 	int LoadBinary_Stream_Init( vsSerialiserReadStream *s );
 	int LoadBinary_Stream( vsSerialiserReadStream *s );
+
+	void WriteBinary_Stream_Init( vsSerialiserWriteStream *s, uint32_t childCount );
+	void WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount );
 };
 
 #endif // FS_RECORD_H

@@ -103,3 +103,68 @@ vsRecordStream::_Skip( int elements )
 	}
 }
 
+
+struct vsRecordStreamWrite::InternalData
+{
+	std::stack<int> cursor;
+};
+
+
+vsRecordStreamWrite::vsRecordStreamWrite( vsSerialiserWriteStream *stream ):
+	m_stream(stream),
+	m_level(0),
+	m_remainingChildrenToWrite(-1),
+	m_remainingToWriteAtThisLevel(-1),
+	m_hasValidRecord(false)
+{
+	m_data = new InternalData;
+}
+
+vsRecordStreamWrite::~vsRecordStreamWrite()
+{
+	vsDelete( m_data );
+}
+
+	// Because we don't want to be storing whole hierarchies, we have to know
+	// in advance how many children we're going to have for each record
+	// we add.
+void
+vsRecordStreamWrite::AddWithChildCount( vsRecord& r, int childCount )
+{
+	if ( m_level > 0 )
+	{
+		vsAssert( m_remainingToWriteAtThisLevel >= 0, "Trying to add a record where we didn't make space for one earlier??");
+		vsAssert( m_remainingChildrenToWrite == 0, "Writing a new record without first setting the declared children of the last one??");
+		m_remainingToWriteAtThisLevel--;
+
+		// should I be checking to make sure that we haven't skipped any children?
+	}
+	r.WriteBinary_Stream( m_stream, childCount );
+	m_hasValidRecord = true;
+	m_remainingChildrenToWrite = childCount;
+}
+
+	// As a utility, you can call 'AddWithChildren' and we'll add the whole
+	// hierarchy of the vsRecord recursively, instead of only this specific
+	// record itself.  Useful for when you just have a simple structure and
+	// don't want to have to mess with the 'Child()' and 'Parent()' interfaces.
+	// void AddWithChildren( vsRecord& r );
+
+void
+vsRecordStreamWrite::Child()
+{
+	m_level++;
+	m_data->cursor.push( m_remainingToWriteAtThisLevel );
+	m_remainingChildrenToWrite = 0;
+}
+
+void
+vsRecordStreamWrite::Parent()
+{
+	vsAssert( m_remainingToWriteAtThisLevel == 0, "Called Parent() before filling in all declared Child records??" );
+	m_remainingChildrenToWrite = m_remainingToWriteAtThisLevel;
+	m_remainingToWriteAtThisLevel = m_data->cursor.top();
+	m_data->cursor.pop();
+	m_level--;
+}
+
