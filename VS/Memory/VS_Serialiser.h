@@ -158,6 +158,8 @@ public:
 	vsSerialiserWriteStream( vsFile *file );
 	virtual ~vsSerialiserWriteStream();
 
+	void Flush();
+
 	virtual void	Bool(bool &value);
 
 	virtual void	Int8(int8_t &value);

@@ -35,8 +35,6 @@ class vsRecordWriter
 
 	bool m_hasValidRecord;
 
-	bool m_first;
-
 	void _WriteRecord();
 
 public:
@@ -51,6 +49,10 @@ public:
 	vsRecord& Get();
 	// utility functions
 	void SetLabel( const vsString& label );
+	void SetInt( int value );
+	void SetFloat( float value );
+	void SetTokenCount( int count );
+	vsToken& GetToken( int i );
 
 	// As a utility, you can call 'AddWithChildren' and we'll add the whole
 	// hierarchy of the vsRecord recursively, instead of only this specific

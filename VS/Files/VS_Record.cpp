@@ -252,14 +252,14 @@ vsRecord::LoadBinary( vsFile *file )
 	return true;
 }
 
-int
+bool
 vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
 {
 	vsString identifier("RecordV2");
 	s->String(identifier);
 	vsAssert( identifier == "RecordV2", "Invalid identifier in loadbinary nochildren init?" );
 
-	return LoadBinary_Stream( s );
+	return true;
 }
 
 int
@@ -288,11 +288,10 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 
 
 void
-vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s, uint32_t childCount )
+vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
 {
 	vsString identifier("RecordV2");
 	s->String(identifier);
-	return WriteBinary_Stream(s, childCount);
 }
 
 void

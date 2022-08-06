@@ -106,11 +106,16 @@ public:
 	bool operator==(const vsString& string) const;
 
 
+	// The following functions should really only be used by the vsRecordReader
+	// and vsRecordWriter classes;  they're kind of dangerous in terms of being able
+	// to write out invalid files otherwise!
+
 	// Testbed for streaming record loads
-	int LoadBinary_Stream_Init( vsSerialiserReadStream *s );
+	bool LoadBinary_Stream_Init( vsSerialiserReadStream *s );
 	int LoadBinary_Stream( vsSerialiserReadStream *s );
 
-	void WriteBinary_Stream_Init( vsSerialiserWriteStream *s, uint32_t childCount );
+	// Testbed for streaming record writes
+	void WriteBinary_Stream_Init( vsSerialiserWriteStream *s );
 	void WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount );
 };
 
