@@ -101,7 +101,7 @@ vsRecordReader::EndChildren()
 void
 vsRecordReader::_Skip( int elements )
 {
-	int elementsToSkip = m_remainingAtThisLevel;
+	int elementsToSkip = elements;
 	for ( int i = 0; i < elementsToSkip; i++ )
 	{
 		m_record.LoadBinary_Stream(m_stream);
