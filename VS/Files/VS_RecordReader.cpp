@@ -87,6 +87,10 @@ vsRecordReader::EndChildren()
 {
 	vsAssert( m_level > 0, "Trying to go up from the top of a record??" );
 
+	// did we recurse into our current child?  If so, skip to the end of it!
+	if ( m_hasValidRecord && m_record.GetChildCount() )
+		_Skip( m_record.GetChildCount() );
+
 	if ( m_remainingAtThisLevel )
 		vsLog("Skipped %d records at this level", m_remainingAtThisLevel);
 
