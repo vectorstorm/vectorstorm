@@ -78,6 +78,7 @@ vsRecord::Init()
 	}
 	m_childList.Clear();
 	m_token.Clear();
+	m_label.SetType( vsToken::Type_None );
 	m_inBlock = false;
 	m_hasLabel = false;
 	m_lineIsOpen = true;
