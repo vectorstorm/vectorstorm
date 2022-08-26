@@ -830,7 +830,7 @@ vsInput::SetStringModeSelectAll( bool selectAll )
 
 		if ( selectAll )
 		{
-			SetStringModeCursor( CursorPos::Byte(1), CursorPos::Byte(lastByteOffset+1), Opt_EndEdit);
+			SetStringModeCursor( CursorPos::Byte(0), CursorPos::Byte(lastByteOffset+1), Opt_EndEdit);
 		}
 		else
 		{
