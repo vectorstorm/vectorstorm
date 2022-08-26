@@ -18,6 +18,7 @@ class vsFloatImage;
 class vsImage;
 class vsHalfIntImage;
 class vsHalfFloatImage;
+class vsSingleFloatImage;
 class vsRenderBuffer;
 class vsRenderTarget;
 class vsSurface;
@@ -48,6 +49,7 @@ public:
 	vsTextureInternal( const vsString &name, const vsImage *image );
 	vsTextureInternal( const vsString &name, const vsFloatImage *image );
 	vsTextureInternal( const vsString &name, const vsHalfFloatImage *image );
+	vsTextureInternal( const vsString &name, const vsSingleFloatImage *image );
 	vsTextureInternal( const vsString &name, const vsHalfIntImage *image );
 	vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
@@ -66,6 +68,7 @@ public:
 
 	void		Blit( vsImage *image, const vsVector2D& where);
 	void		Blit( vsFloatImage *image, const vsVector2D& where);
+	void		Blit( vsSingleFloatImage *image, const vsVector2D& where);
 
 	void		SetNearestSampling();
 	void		SetLinearSampling(bool linearMipmaps = true);

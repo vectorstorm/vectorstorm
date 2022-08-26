@@ -14,6 +14,7 @@
 #include "VS_Image.h"
 #include "VS_HalfIntImage.h"
 #include "VS_HalfFloatImage.h"
+#include "VS_SingleFloatImage.h"
 #include "VS_RenderTarget.h"
 #include "VS_RenderBuffer.h"
 
@@ -301,6 +302,40 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatIma
 	m_nearestSampling = false;
 }
 
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsSingleFloatImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_tbo(nullptr),
+	m_renderTarget(nullptr),
+	m_surfaceBuffer(0)
+{
+	int w = image->GetWidth();
+	int h = image->GetHeight();
+
+	m_width = w;
+	m_height = w;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_R32F,
+			w, h,
+			0,
+			GL_RED,
+			GL_FLOAT,
+			image->RawData());
+	m_nearestSampling = false;
+}
+
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
 	vsResource(name),
 	m_texture(0),
@@ -350,6 +385,20 @@ vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 			(int)where.x, (int)where.y,
 			image->GetWidth(), image->GetHeight(),
 			GL_RGBA,
+			GL_FLOAT,
+			image->RawData());
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void
+vsTextureInternal::Blit( vsSingleFloatImage *image, const vsVector2D& where)
+{
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexSubImage2D(GL_TEXTURE_2D,
+			0,
+			(int)where.x, (int)where.y,
+			image->GetWidth(), image->GetHeight(),
+			GL_RED,
 			GL_FLOAT,
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
