@@ -21,6 +21,9 @@ class vsColor;
 class vsFile;
 class vsSerialiser;
 
+class vsSerialiserReadStream;
+class vsSerialiserWriteStream;
+
 #include "VS_Token.h"
 
 class vsRecord
@@ -37,6 +40,9 @@ class vsRecord
 	bool		m_inBlock;
 	bool		m_hasLabel;
 	bool		m_lineIsOpen;
+
+	int			m_streamModeChildCount;
+	bool		m_streamMode;
 
 	float		GetArg(int i);
 
@@ -77,7 +83,7 @@ public:
 	void				SetTokenCount( int count );
 
 	vsRecord *			GetChild(int i);
-	int					GetChildCount() const { return m_childList.ItemCount(); }
+	int					GetChildCount() const { return m_streamMode ? m_streamModeChildCount : m_childList.ItemCount(); }
 	int					GetChildCount(const vsString& label) const;	// returns number of children with this label
 	void				AddChild(vsRecord *record);
 	void				SetExpectedChildCount( int count );
@@ -98,6 +104,19 @@ public:
 
 	bool operator==(const char* string) const { return operator==( vsString(string) ); }
 	bool operator==(const vsString& string) const;
+
+
+	// The following functions should really only be used by the vsRecordReader
+	// and vsRecordWriter classes;  they're kind of dangerous in terms of being able
+	// to write out invalid files otherwise!
+
+	// Testbed for streaming record loads
+	bool LoadBinary_Stream_Init( vsSerialiserReadStream *s );
+	int LoadBinary_Stream( vsSerialiserReadStream *s );
+
+	// Testbed for streaming record writes
+	void WriteBinary_Stream_Init( vsSerialiserWriteStream *s );
+	void WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount );
 };
 
 #endif // FS_RECORD_H

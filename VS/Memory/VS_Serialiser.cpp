@@ -365,8 +365,18 @@ vsSerialiserWriteStream::vsSerialiserWriteStream(vsFile *file):
 
 vsSerialiserWriteStream::~vsSerialiserWriteStream()
 {
-	m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
+	Flush();
 	vsDelete(m_store);
+}
+
+void
+vsSerialiserWriteStream::Flush()
+{
+	if ( m_store->BytesLeftForReading() )
+	{
+		m_file->StoreBytes(m_store, m_store->BytesLeftForReading());
+		m_store->Clear();
+	}
 }
 
 void

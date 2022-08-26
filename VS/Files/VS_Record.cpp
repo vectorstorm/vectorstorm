@@ -16,7 +16,8 @@
 
 vsRecord::vsRecord():
 	m_token(0),
-	m_childList(0)
+	m_childList(0),
+	m_streamMode(false)
 {
 	m_childList.Clear();
 	m_hasLabel = false;
@@ -28,7 +29,8 @@ vsRecord::vsRecord():
 
 vsRecord::vsRecord( const char* fromString ):
 	m_token(0),
-	m_childList(0)
+	m_childList(0),
+	m_streamMode(false)
 {
 	m_childList.Clear();
 	m_hasLabel = false;
@@ -41,7 +43,8 @@ vsRecord::vsRecord( const char* fromString ):
 
 vsRecord::vsRecord( const vsString& fromString ):
 	m_token(0),
-	m_childList(0)
+	m_childList(0),
+	m_streamMode(false)
 {
 	m_childList.Clear();
 	m_hasLabel = false;
@@ -75,6 +78,7 @@ vsRecord::Init()
 	}
 	m_childList.Clear();
 	m_token.Clear();
+	m_label.SetType( vsToken::Type_None );
 	m_inBlock = false;
 	m_hasLabel = false;
 	m_lineIsOpen = true;
@@ -249,6 +253,63 @@ vsRecord::LoadBinary( vsFile *file )
 	return true;
 }
 
+bool
+vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
+{
+	vsString identifier("RecordV2");
+	s->String(identifier);
+	vsAssert( identifier == "RecordV2", "Invalid identifier in loadbinary nochildren init?" );
+
+	return true;
+}
+
+int
+vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
+{
+	Init();
+
+	m_label.SerialiseBinaryV2(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV2(s);
+	}
+
+	uint32_t childCount = m_childList.ItemCount();
+	s->Uint32(childCount);
+
+	m_streamMode = true;
+	m_streamModeChildCount = childCount;
+
+	return childCount;
+}
+
+
+void
+vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
+{
+	vsString identifier("RecordV2");
+	s->String(identifier);
+}
+
+void
+vsRecord::WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount )
+{
+	m_label.SerialiseBinaryV2(s);
+
+	uint32_t tokenCount = m_token.ItemCount();
+	s->Uint32(tokenCount);
+	m_token.SetArraySize(tokenCount);
+	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	{
+		m_token[i].SerialiseBinaryV2(s);
+	}
+	s->Uint32(childCount);
+}
+
 void
 vsRecord::LoadFromFilename( const vsString& filename )
 {
@@ -327,6 +388,7 @@ vsRecord::SetTokenCount(int count)
 vsRecord *
 vsRecord::GetChild(int i)
 {
+	vsAssert( !m_streamMode, "GetChild() called in stream mode??" );
 	return m_childList[i];
 	// vsArrayStore<vsRecord>::Iterator iter = m_childList.Begin();
 	// while(i-->0)

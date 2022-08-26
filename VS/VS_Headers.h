@@ -17,6 +17,8 @@
 
 #include <Files/VS_File.h>
 #include <Files/VS_Record.h>
+#include <Files/VS_RecordReader.h>
+#include <Files/VS_RecordWriter.h>
 #include <Files/VS_Token.h>
 
 #include <Memory/VS_Heap.h>
