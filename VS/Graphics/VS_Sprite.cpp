@@ -252,9 +252,12 @@ vsSprite::BuildBoundingBox()
 		}
 		else
 		{
-			fragment->GetDisplayList()->GetBoundingBox(tl,br);
-			boundingBox.ExpandToInclude(tl);
-			boundingBox.ExpandToInclude(br);
+			if ( fragment->GetDisplayList() )
+			{
+				fragment->GetDisplayList()->GetBoundingBox(tl,br);
+				boundingBox.ExpandToInclude(tl);
+				boundingBox.ExpandToInclude(br);
+			}
 		}
 	}
 
@@ -297,7 +300,7 @@ vsSprite::CalculateBoundingRadius()
 			for (int i = 0; i < b->GetPositionCount(); i++ )
 				m_boundingRadius = vsMax( m_boundingRadius, b->GetPosition(i).Length() );
 		}
-		else
+		else if ( fragment->GetDisplayList() )
 		{
 			m_boundingRadius = vsMax( m_boundingRadius, fragment->GetDisplayList()->GetBoundingRadius() );
 		}

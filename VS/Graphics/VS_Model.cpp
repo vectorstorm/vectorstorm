@@ -472,8 +472,11 @@ vsModel::BuildBoundingBox()
 		}
 		else
 		{
-			fragment->GetDisplayList()->GetBoundingBox( fragmentBox );
-			boundingBox.ExpandToInclude( fragmentBox );
+			if ( fragment->GetDisplayList() )
+			{
+				fragment->GetDisplayList()->GetBoundingBox( fragmentBox );
+				boundingBox.ExpandToInclude( fragmentBox );
+			}
 		}
 	}
 
@@ -517,7 +520,7 @@ vsModel::BuildLowBoundingBox( float threshhold )
 					boundingBox.ExpandToInclude(v);
 			}
 		}
-		// else
+		// else if ( fragment->GetDisplayList() )
 		// {
 		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
 		// 	boundingBox.ExpandToInclude( fragmentBox );
@@ -711,7 +714,7 @@ vsModel::GatherVerticesInYInterval( vsArray<vsVector3D>& result, float minY, flo
 		}
 		// [TODO] Also implement for non-simple fragments, maybe?
 		//
-		// else
+		// else if ( fragment->GetDisplayList() )
 		// {
 		// 	fragment->GetDisplayList()->GetLowBoundingBox( fragmentBox );
 		// 	boundingBox.ExpandToInclude( fragmentBox );
