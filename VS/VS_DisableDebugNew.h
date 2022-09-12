@@ -1,4 +1,4 @@
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 #undef new
 // #undef delete
 #endif

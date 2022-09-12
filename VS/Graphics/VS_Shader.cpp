@@ -174,7 +174,7 @@ vsShader::Load_System( const vsString &vFile, const vsString &fFile, bool lit, b
 void
 vsShader::Reload()
 {
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 	// If we're using overloaded allocators and multiple heaps and stuff, our
 	// 'system' shaders exist in system memory, not in game memory.  And so we
 	// can't reload them while a game is running;  it'd put them in the wrong

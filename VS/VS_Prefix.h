@@ -68,7 +68,7 @@
 #define vsDelete(x) { if ( x ) { delete x; x = nullptr; } }
 #define vsDeleteArray(x) { if ( x ) { delete [] x; x = nullptr; } }
 
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 void * MyMalloc(size_t size, const char*fileName, int lineNumber, int allocType = 1);	// 1 == Malloc type.  We can ignore this.  :)
 void MyFree(void *p, int allocType = 1);
 
@@ -83,12 +83,7 @@ void operator delete[](void* pointer, const char* file, size_t line);
 #define malloc(x) MyMalloc(x, __FILE__, __LINE__)
 #define free(p) MyFree(p)
 
-#else // !VS_OVERLOAD_ALLOCATORS
-
-void* operator new(std::size_t n);
-void* operator new[](std::size_t n);
-
-#endif // !VS_OVERLOAD_ALLOCATORS
+#endif // !VS_INTERNAL_ALLOCATORS
 
 #if defined(_WIN32)
 

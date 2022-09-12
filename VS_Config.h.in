@@ -1,7 +1,8 @@
 // Configured build settings, as detected by cmake
 #cmakedefine VS_GAMEPADS
 #cmakedefine VS_PRISTINE_BINDINGS
-#cmakedefine VS_OVERLOAD_ALLOCATORS
+#cmakedefine VS_INTERNAL_ALLOCATORS
+#cmakedefine VS_WRAP_ALLOCATORS
 #cmakedefine HIGHDPI_SUPPORTED
 #cmakedefine USE_SDL_SOUND
 #cmakedefine USE_BOX2D_PHYSICS

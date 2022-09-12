@@ -29,7 +29,7 @@ static vsHeap *	s_stack[MAX_HEAP_STACK] = {nullptr,nullptr,nullptr,nullptr};
 vsHeap::vsHeap(vsString name, size_t size):
 	m_name(name)
 {
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 	if ( s_current )
 		m_startOfMemory = s_current->Alloc(size, __FILE__, __LINE__, Type_Heap);
 	else
@@ -70,7 +70,7 @@ vsHeap::vsHeap(vsString name, size_t size):
 	iniBlock->m_prevBlock = nullptr;
 
 	m_unusedBlockList.Append( iniBlock );
-#endif // VS_OVERLOAD_ALLOCATORS
+#endif // VS_INTERNAL_ALLOCATORS
 }
 
 vsHeap::~vsHeap()
@@ -307,7 +307,7 @@ vsHeap::Free(void *p, int allocType)
 void
 vsHeap::PrintStatus()
 {
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 	vsLog(" >> MEMORY STATUS");
 
 	size_t bytesFree = m_memorySize - m_memoryUsed;
@@ -332,7 +332,7 @@ vsHeap::PrintStatus()
 	vsLog(" >> Heap highwater usage %zu / %zu (%0.2f%% usage)", m_highWaterMark, m_memorySize, 100.0f*m_highWaterMark/m_memorySize);
 	vsLog(" >> Heap largest free block %zu / %zu bytes free (%0.2f%% fragmentation)", largestBlock, bytesFree, 100.0f - (100.0f*largestBlock / bytesFree) );
 #endif
-#endif // VS_OVERLOAD_ALLOCATORS
+#endif // VS_INTERNAL_ALLOCATORS
 
 }
 
@@ -492,7 +492,7 @@ void MyFree(void *p, int allocType)
 	}
 }
 
-#ifdef VS_OVERLOAD_ALLOCATORS
+#ifdef VS_INTERNAL_ALLOCATORS
 void* operator new(std::size_t n, const char* file, size_t line)
 {
 	if (n == 0) n = 1;
@@ -544,8 +544,9 @@ void operator delete[](void* p, std::nothrow_t const&) throw()
 	::operator delete[](p);
 }
 
-#else //!VS_OVERLOAD_ALLOCATORS
+#else //!VS_INTERNAL_ALLOCATORS
 
+#ifdef VS_WRAP_ALLOCATORS
 void* operator new(std::size_t n)
 {
 	void* result( malloc(n) );
@@ -604,4 +605,5 @@ void operator delete[](void* p, std::nothrow_t const&) throw()
 {
 	free(p);
 }
-#endif //VS_OVERLOAD_ALLOCATORS
+#endif //VS_WRAP_ALLOCATORS
+#endif //!VS_INTERNAL_ALLOCATORS
