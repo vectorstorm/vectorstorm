@@ -176,6 +176,11 @@ vsString s_decimalSeparator(".");
 
 static vsString DoFormatNumber( int value )
 {
+	// this stupid algorithm doesn't work for negative numbers over 100.
+	// So let's switch to positive and append a '-' sign.
+	if ( value < 0 )
+		return "-" + DoFormatNumber( vsAbs(value) );
+
 	vsString result = vsFormatString("%d",value);
 	int insertPosition = result.length() - 3;
 	while (insertPosition > 0) {
