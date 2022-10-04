@@ -65,6 +65,7 @@ vsInput::vsInput():
 	m_suppressFirstMotion = false;
 	m_suppressResizeEvent = false;
 	m_cursorHandler = nullptr;
+	m_dropHandler = nullptr;
 }
 
 vsInput::~vsInput()
@@ -652,6 +653,12 @@ vsInput::SetStringModeCursorHandler( vsInput::CursorHandler *handler )
 }
 
 void
+vsInput::SetDropHandler( DropHandler *handler )
+{
+	m_dropHandler = handler;
+}
+
+void
 vsInput::SetStringMode(bool mode, const vsBox2D& box, ValidationType vt, bool multiline)
 {
 	m_cursorHandler = nullptr;
@@ -1113,22 +1120,48 @@ vsInput::Update(float timeStep)
 					}
 				case SDL_DROPBEGIN:
 					{
-						vsLog("Filedrop begins");
+						vsLog("drop begins");
+						if ( m_dropHandler )
+						{
+							m_dropHandler->BeginDrop();
+						}
 						break;
 					}
 				case SDL_DROPCOMPLETE:
 					{
 						vsLog("Filedrop complete");
+						if ( m_dropHandler )
+						{
+							m_dropHandler->EndDrop();
+						}
 						break;
 					}
 				case SDL_DROPTEXT:
 					{
 						vsLog("Text dropped on window: %s", event.drop.file);
+						if ( m_dropHandler )
+						{
+							m_dropHandler->Text(event.drop.file);
+						}
+						else
+						{
+							vsLog("No file drop handler installed");
+						}
 						break;
 					}
 				case SDL_DROPFILE:
 					{
 						vsLog("File dropped on window: %s", event.drop.file);
+
+						if ( m_dropHandler )
+						{
+							m_dropHandler->File( event.drop.file );
+						}
+						else
+						{
+							vsLog("No file drop handler installed");
+						}
+
 						SDL_free(event.drop.file); // bah, SDL shouldn't require this.
 						break;
 					}

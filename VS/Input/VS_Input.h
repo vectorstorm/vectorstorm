@@ -309,6 +309,20 @@ public:
 		virtual void NotifyStringChanged( const vsString& s ) {}
 	};
 
+	class DropHandler
+	{
+	public:
+
+		DropHandler() {}
+		virtual ~DropHandler() {}
+
+		// return new byte offset based on current byte offset
+		virtual void BeginDrop() {}
+		virtual void File( const vsString& filename ) = 0;
+		virtual void Text( const vsString& filename ) = 0;
+		virtual void EndDrop() {}
+	};
+
 private:
 
 	bool			m_stringMode;						// if true, interpret all keyboard keys as entering a string.
@@ -317,6 +331,7 @@ private:
 	bool			m_stringModePaused;					// if true, all keyboard key input is ignored in string mode, to allow a game to adjust cursor position without keypresses doing anything
 	int				m_stringModeMaxLength;				// if positive, this is how many codepoints we can have in our string!
 	CursorHandler	*m_cursorHandler;
+	DropHandler     *m_dropHandler;
 
 
 	bool m_hasFocus;
@@ -445,6 +460,8 @@ public:
 	const CursorPos&				GetStringModeCursorFloating() const;
 
 	void			SetStringModeCursorHandler( CursorHandler *handler );
+
+	void			SetDropHandler( DropHandler *handler );
 
 	bool			IsStringModeGlyphSelected(int glyphId);
 
