@@ -26,6 +26,7 @@ public:
 	bool IsEnabled() { return m_enabled; }
 
 	virtual void Draw( vsDisplayList *list );
+	virtual void PostDraw() {} // called after all draws are submitted to GPU
 };
 
 #endif // VS_RENDERPIPELINESTAGE_H

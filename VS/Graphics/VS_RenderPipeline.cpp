@@ -119,6 +119,16 @@ vsRenderPipeline::Draw( vsDisplayList *list )
 }
 
 void
+vsRenderPipeline::PostDraw()
+{
+	for ( int i = 0; i < m_stageCount; i++ )
+	{
+		if ( m_stage[i] && m_stage[i]->IsEnabled() )
+			m_stage[i]->PostDraw();
+	}
+}
+
+void
 vsRenderPipeline::Prepare()
 {
 	for ( int i = 0; i < m_stageCount; i++ )

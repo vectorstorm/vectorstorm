@@ -144,6 +144,7 @@ public:
 
 	void SetStage( int stageId, vsRenderPipelineStage *stage );
 	void Draw( vsDisplayList *list );
+	void PostDraw(); // called after everything is submitted to GPU
 
 	void Prepare(); // prepare all stages again
 };

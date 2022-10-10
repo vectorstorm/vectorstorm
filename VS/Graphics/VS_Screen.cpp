@@ -271,6 +271,8 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptio
 	vsTimerSystem::Instance()->EndDrawTime();
 	m_renderer->PostRender();
 
+	pipeline->PostDraw();
+
 	m_currentSettings = nullptr;
 }
 
