@@ -675,6 +675,9 @@ vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 {
 	m_materialHideFlags = materialHideFlags;
 	m_scene = parent;
+
+	m_screenBox.Set( m_scene->GetTopLeftCorner(), m_scene->GetBottomRightCorner() );
+
 	InitialiseTransformStack();
 
 	for ( int i = 0; i < m_stageCount; i++ )
@@ -685,10 +688,11 @@ vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 }
 
 void
-vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags )
+vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, const vsBox2D& screenBox, int materialHideFlags )
 {
 	m_materialHideFlags = materialHideFlags;
 	m_scene = nullptr;
+	m_screenBox = screenBox;
 	m_projection = projection;
 	m_worldToView = worldToView;
 	m_transformStack[0] = iniMatrix;

@@ -35,6 +35,7 @@ class vsRenderQueue
 {
 	vsScene *				m_scene;
 
+	vsBox2D					m_screenBox;
 	vsDisplayList *			m_genericList;
 
 	vsRenderQueueStage *	m_stage;
@@ -60,13 +61,14 @@ public:
 	~vsRenderQueue();
 
 	void			StartRender( vsScene *scene, int materialHideFlags = 0 );
-	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, int materialHideFlags = 0);
+	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, const vsBox2D& screenBox, int materialHideFlags = 0);
 	void			Draw( vsDisplayList *list );	// write our queue contents into here.  Called internally.
 	void			EndRender();
 
 	const vsMatrix4x4& PushMatrix( const vsMatrix4x4 &matrix );
     const vsMatrix4x4& PushTransform2D( const vsTransform2D &transform );
 	const vsMatrix4x4& PushTranslation( const vsVector3D &vector );
+	const vsBox2D& GetScreenBox() const { return m_screenBox; } // really only makes sense for 2D, where it tells us the coordinate space we're drawing inside.
 
 	const vsMatrix4x4& SetMatrix( const vsMatrix4x4 &matrix ); // explicitly set a full local-to-world matrix.  (The 'Push' commands multiply on top of whatever matrix was already set)
 
