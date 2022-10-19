@@ -8,6 +8,7 @@
  */
 
 #include "VS_MaterialManager.h"
+#include "VS_Material.h"
 #include "VS_Shader.h"
 #include "VS_FileCache.h"
 

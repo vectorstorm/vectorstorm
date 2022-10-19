@@ -16,22 +16,7 @@
 #include "VS_Texture.h"
 #include "VS_ShaderValues.h"
 #include "VS_ShaderOptions.h"
-
-	// [TODO] These draw modes are outdated historical oddities;  I should really
-	// be exposing blend modes directly, instead of these!
-enum vsDrawMode
-{
-	DrawMode_Absolute,
-	DrawMode_Normal,
-	DrawMode_PremultipliedAlpha,
-	DrawMode_Lit,
-	DrawMode_Add,
-	DrawMode_Subtract,
-	DrawMode_Multiply,         // multiply, modulated by source alpha
-	DrawMode_MultiplyAbsolute, // multiply all channels, including alpha
-
-	DRAWMODE_MAX
-};
+#include "VS_MaterialInternal.h"
 
 class vsMaterialInternal;
 

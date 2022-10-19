@@ -15,6 +15,7 @@ class vsRenderBuffer;
 class vsMatrix4x4;
 class vsShaderValues;
 class vsShaderVariant;
+class vsMaterial;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"

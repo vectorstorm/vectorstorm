@@ -40,7 +40,9 @@
 #include <filesystem>
 
 
+#define UTF_CPP_CPLUSPLUS (201703L) // C++17 - __cplusplus isn't being filled in by Visual Studio by default for some reason??  Really we should be giving VS a /Zc:__cplusplus compiler option to make it do what the standard says it should always do.
 #include "Utils/utfcpp/utf8.h"
+#undef UTF_CPP_CPLUSPLUS
 
 namespace
 {
@@ -279,7 +281,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			uint32_t decompressedSize = 0;
 			const uint32_t zipBufferSize = 1024 * 100;
 			char zipBuffer[zipBufferSize];
-			m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+			m_zipData->m_zipStream.avail_in = (uInt)compressedData->BytesLeftForReading();
 			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
 			do
 			{
@@ -309,7 +311,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				return;
 			}
 
-			m_zipData->m_zipStream.avail_in = compressedData->BytesLeftForReading();
+			m_zipData->m_zipStream.avail_in = (uInt)compressedData->BytesLeftForReading();
 			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
 			do
 			{
@@ -357,7 +359,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			// Now, we need to set up our zip stream
 			const uint32_t zipBufferSize = 1024 * 100;
 			m_store = new vsStore( zipBufferSize );
-			m_zipData->m_zipStream.avail_out = m_store->BytesLeftForWriting();
+			m_zipData->m_zipStream.avail_out = (uInt)m_store->BytesLeftForWriting();
 			m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
 
 			// Now let's get set to decompress it FOR REAL.
@@ -539,7 +541,7 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 	// make_preferred() doesn't do that automatically, so we have to do
 	// it ourselves in here in an ifdef.
 
-	std::u16string f = utf8::utf8to16(GetFullFilename(from));
+	std::u16string f = utf8::utf8to16(GetFullFilename(from).c_str());
 	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
 
 #else

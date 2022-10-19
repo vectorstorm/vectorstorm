@@ -12,10 +12,24 @@
 
 #include "VS/Utils/VS_Cache.h"
 
-#include "VS_Material.h"
-
 #include "VS_Color.h"
 #include "VS_Texture.h"
+
+ // [TODO] These draw modes are outdated historical oddities;  I should really
+ // be exposing blend modes directly, instead of these!
+enum vsDrawMode
+{
+	DrawMode_Absolute,
+	DrawMode_Normal,
+	DrawMode_PremultipliedAlpha,
+	DrawMode_Lit,
+	DrawMode_Add,
+	DrawMode_Subtract,
+	DrawMode_Multiply,         // multiply, modulated by source alpha
+	DrawMode_MultiplyAbsolute, // multiply all channels, including alpha
+
+	DRAWMODE_MAX
+};
 
 // In OpenGL 3.2 and later, we support a minimum of 48 texture binding
 // points.
