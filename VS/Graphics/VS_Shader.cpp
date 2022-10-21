@@ -119,6 +119,12 @@ vsShader::FigureOutAvailableVariants( const vsString& s_in )
 			done = false;
 			size_t nextNewLine = s.find('\n', variantPos+1);
 			vsString variant = s.substr(variantPos+pattern.size(), nextNewLine-(variantPos+pattern.size()));
+			if ( !variant.empty() && variant[variant.size()-1] == '\r' ) // Bah, Windows, always putting \rs everywhere and breaking my very clever shader systems
+			{
+				variant.erase(variant.size()-1);
+				//variantPos++;
+			}
+			
 			s.erase(variantPos, nextNewLine-variantPos);
 
 			for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )
