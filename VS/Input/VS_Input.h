@@ -319,7 +319,7 @@ public:
 		// return new byte offset based on current byte offset
 		virtual void BeginDrop() {}
 		virtual void File( const vsString& filename ) = 0;
-		virtual void Text( const vsString& filename ) = 0;
+		virtual void Text( const vsString& text ) = 0;
 		virtual void EndDrop() {}
 	};
 
@@ -461,7 +461,8 @@ public:
 
 	void			SetStringModeCursorHandler( CursorHandler *handler );
 
-	void			SetDropHandler( DropHandler *handler );
+	void					SetDropHandler( DropHandler *handler );
+	DropHandler*	GetDropHandler() const { return m_dropHandler; }
 
 	bool			IsStringModeGlyphSelected(int glyphId);
 

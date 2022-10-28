@@ -61,6 +61,10 @@ enum CursorStyle
 	CursorStyle_MAX
 };
 
+#ifdef _WIN32
+	class DropTargetWindows;
+#endif
+
 class vsSystem
 {
 	static vsSystem *	s_instance;
@@ -88,6 +92,10 @@ class vsSystem
 
 	vsString m_dataDirectory;
 	vsString m_currentGameDirectoryName;
+
+#ifdef _WIN32
+	DropTargetWindows *m_dropTargetWindows;
+#endif
 
 	bool m_dataIsPristine;
 
