@@ -137,7 +137,7 @@ public:
 	{
 
 	}
-	
+
 	virtual ~DropTargetWindows()
 	{
 
@@ -211,7 +211,7 @@ public:
 		return S_OK;
 	}
 
-	virtual HRESULT QueryInterface(REFIID iid, void ** ppvObject) override
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void ** ppvObject) override
 	{
 		if(iid == IID_IDropTarget || iid == IID_IUnknown)
 		{
@@ -226,15 +226,15 @@ public:
 		}
 	}
 
-	virtual ULONG AddRef() override
+	virtual ULONG STDMETHODCALLTYPE AddRef() override
 	{
 		return InterlockedIncrement(&m_lRefCount);
 	}
 
-	virtual ULONG Release() override
+	virtual ULONG STDMETHODCALLTYPE Release() override
 	{
 		LONG count = InterlockedDecrement(&m_lRefCount);
-		
+
 		if(count == 0)
 		{
 			delete this;
