@@ -26,6 +26,7 @@
 #include "VS_Backtrace.h"
 #include "VS_Config.h"
 #include "VS_Task.h"
+#include "VS_Input.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -123,6 +124,146 @@ bool win32_SetProcessDpiAware(void) {
 
 #endif
 
+#ifdef _WIN32
+#include <ole2.h>
+#include <SDL2/SDL_syswm.h>
+#include <shlobj.h>
+
+class DropTargetWindows : public IDropTarget
+{
+public:
+	DropTargetWindows()
+		: m_lRefCount(1)
+	{
+
+	}
+
+	virtual ~DropTargetWindows()
+	{
+
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override
+	{
+		SetDragEffect(pdwEffect);
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override
+	{
+		SetDragEffect(pdwEffect);
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE DragLeave() override
+	{
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override
+	{
+		if (vsInput::Instance() && vsInput::Instance()->GetDropHandler())
+		{
+			// construct a FORMATETC object
+			FORMATETC fmtetcText = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			STGMEDIUM stgmed;
+
+			// See if the dataobject contains any TEXT stored as a HGLOBAL
+			if(pDataObj->QueryGetData(&fmtetcText) == S_OK)
+			{
+				if(pDataObj->GetData(&fmtetcText, &stgmed) == S_OK)
+				{
+					// we asked for the data as a HGLOBAL, so access it appropriately
+					PVOID data = GlobalLock(stgmed.hGlobal);
+
+					// Get the actual text data
+					vsString text = (char *)data;
+
+					// Pass the text onto vsInput::DropHandler
+					vsInput::Instance()->GetDropHandler()->Text(text);
+
+					GlobalUnlock(stgmed.hGlobal);
+
+					// release the data using the COM API
+					ReleaseStgMedium(&stgmed);
+				}
+			}
+
+			FORMATETC fmtetcFile = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			if(pDataObj->QueryGetData(&fmtetcFile) == S_OK)
+			{
+				if(pDataObj->GetData(&fmtetcFile, &stgmed) == S_OK)
+				{
+					char filepath[FILENAME_MAX];
+
+					if (DragQueryFile((HDROP)stgmed.hGlobal, 0, filepath, FILENAME_MAX))
+					{
+						// Pass the text onto vsInput::DropHandler
+						vsInput::Instance()->GetDropHandler()->File(filepath);
+					}
+
+					// release the data using the COM API
+					ReleaseStgMedium(&stgmed);
+				}
+			}
+		}
+
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void ** ppvObject) override
+	{
+		if(iid == IID_IDropTarget || iid == IID_IUnknown)
+		{
+			AddRef();
+			*ppvObject = this;
+			return S_OK;
+		}
+		else
+		{
+			*ppvObject = 0;
+			return E_NOINTERFACE;
+		}
+	}
+
+	virtual ULONG STDMETHODCALLTYPE AddRef() override
+	{
+		return InterlockedIncrement(&m_lRefCount);
+	}
+
+	virtual ULONG STDMETHODCALLTYPE Release() override
+	{
+		LONG count = InterlockedDecrement(&m_lRefCount);
+
+		if(count == 0)
+		{
+			delete this;
+			return 0;
+		}
+		else
+		{
+			return count;
+		}
+	}
+
+private:
+	void SetDragEffect(DWORD *pdwEffect)
+	{
+		if (vsInput::Instance() && vsInput::Instance()->GetDropHandler())
+		{
+			*pdwEffect = DROPEFFECT_COPY;
+		}
+		else
+		{
+			*pdwEffect = DROPEFFECT_NONE;
+		}
+	}
+
+	LONG	m_lRefCount;
+};
+
+#endif
+
 
 vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes, size_t minBuffers):
 	m_showCursor( true ),
@@ -135,6 +276,9 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	m_orientation( Orientation_Normal ),
 	m_title( title ),
 	m_screen( nullptr ),
+#ifdef _WIN32
+	m_dropTargetWindows( nullptr ),
+#endif
 	m_dataIsPristine( false )
 {
 #if defined(_WIN32)
@@ -270,6 +414,24 @@ vsSystem::Init()
 	LogSystemDetails();
 
 	vsBuiltInFont::Init();
+
+#if defined(_WIN32)
+	// Initialize OLE, which is where all the windows Drag & Drop stuff takes place
+	OleInitialize(nullptr);
+
+	// Get the hwnd from the SDL window
+	extern SDL_Window *g_sdlWindow;
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(g_sdlWindow, &wmInfo);
+	HWND hwnd = wmInfo.info.win.window;
+
+	// Create the DropTarget object and register it
+	m_dropTargetWindows = new DropTargetWindows();
+	CoLockObjectExternal(m_dropTargetWindows, TRUE, FALSE);
+
+	RegisterDragDrop(hwnd, m_dropTargetWindows);
+#endif
 }
 
 void
@@ -297,6 +459,14 @@ vsSystem::Deinit()
 
 	for ( int i = 0; i < CursorStyle_MAX; i++ )
 		SDL_FreeCursor( m_cursor[i] );
+
+#if defined(_WIN32)
+	// remove the strong lock
+	CoLockObjectExternal(m_dropTargetWindows, FALSE, TRUE);
+
+	// release our own reference
+	m_dropTargetWindows->Release();
+#endif
 }
 
 void
