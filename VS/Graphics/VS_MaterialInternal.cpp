@@ -130,7 +130,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	}
 	else
 	{
-		vsAssert(vsFile::Exists(fileName), vsFormatString("Unable to open material %s", name.c_str()));
+		vsAssert(vsFile::Exists(fileName), vsFormatString("Requested material file doesn't exist: %s", fileName.c_str()));
 	}
 	SetShader();
 }
