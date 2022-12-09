@@ -1312,14 +1312,6 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			// 		// 	target->Resolve();
 			// 		// else // nullptr target means main render target.
 			// 		// 	m_scene->Resolve();
-			// 		//
-			// 		// [WARNING] resolving can invalidate current render target
-			// 		// cache.  Re-bind the correct render target!
-			// 		//
-			// 		// [TODO]: Figure out a nicer way to do this!
-			// 		//
-			// 		// if ( m_currentRenderTarget )
-			// 		// 	m_currentRenderTarget->Bind();
 			// 		break;
 			// 	}
 			case vsDisplayList::OpCode_BlitRenderTarget:
@@ -1329,15 +1321,18 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
 					from->BlitTo(to);
+					break;
+				}
+			case vsDisplayList::OpCode_BlitRenderTargetRect:
+				{
+					PROFILE_GL("Blit");
+					m_state.Flush(); // flush our renderer state before blitting!
+					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
+					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
+					vsBox2D fromRect = op->data.box2D;
+					vsBox2D toRect = op->data.box2D2;
+					from->BlitRect(to, fromRect, toRect);
 
-					// [WARNING] blitting can cause the vsRenderTarget to
-					// resolve, which can invalidate current render target
-					// cache.  Re-bind the correct render target!
-					//
-					// [TODO]: Figure out a nicer way to do this!
-					//
-					// if ( m_currentRenderTarget )
-					// 	m_currentRenderTarget->Bind();
 					break;
 				}
 			case vsDisplayList::OpCode_PushTransform:

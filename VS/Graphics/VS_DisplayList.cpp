@@ -81,6 +81,7 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"ClearRenderTarget",
 	// "ResolveRenderTarget",
 	"BlitRenderTarget",
+	"BlitRenderTargetRect",
 
 	"Light",
 	"ClearLights",
@@ -1059,6 +1060,18 @@ vsDisplayList::BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to )
 }
 
 void
+vsDisplayList::BlitRenderTargetRect( vsRenderTarget *from, vsRenderTarget *to, const vsBox2D& fromRect, const vsBox2D& toRect )
+{
+	m_fifo->WriteUint8( OpCode_BlitRenderTargetRect );
+	m_fifo->WriteVoidStar( from );
+	m_fifo->WriteVoidStar( to );
+	m_fifo->WriteVector2D( fromRect.GetMin() );
+	m_fifo->WriteVector2D( fromRect.GetMax() );
+	m_fifo->WriteVector2D( toRect.GetMin() );
+	m_fifo->WriteVector2D( toRect.GetMax() );
+}
+
+void
 vsDisplayList::Light( const vsLight &light )
 {
 	m_fifo->WriteUint8( OpCode_Light );
@@ -1332,6 +1345,24 @@ vsDisplayList::PopOp()
 			case OpCode_BlitRenderTarget:
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
+				break;
+			case OpCode_BlitRenderTargetRect:
+				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.SetPointer2( (char *)m_fifo->ReadVoidStar() );
+				m_currentOp.data.box2D.Clear();
+				m_currentOp.data.box2D2.Clear();
+				{
+					vsVector2D v;
+
+					m_fifo->ReadVector2D(&v);
+					m_currentOp.data.box2D.ExpandToInclude( v );
+					m_fifo->ReadVector2D(&v);
+					m_currentOp.data.box2D.ExpandToInclude( v );
+					m_fifo->ReadVector2D(&v);
+					m_currentOp.data.box2D2.ExpandToInclude( v );
+					m_fifo->ReadVector2D(&v);
+					m_currentOp.data.box2D2.ExpandToInclude( v );
+				}
 				break;
 			case OpCode_Light:
 				m_fifo->ReadLight( &m_currentOp.data.light );

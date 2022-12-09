@@ -162,6 +162,8 @@ public:
 	void		ClearColor( const vsColor& c );
 	void		BlitTo( vsRenderTarget *other );
 
+	void		BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst );
+
 	GLsizei GetWidth() { return m_textureSurface->m_width; }
 	GLsizei GetHeight() { return m_textureSurface->m_height; }
 	GLsizei GetViewportWidth() { return m_viewportWidth; }

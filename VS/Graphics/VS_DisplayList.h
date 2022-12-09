@@ -98,6 +98,7 @@ public:
 		//
 		// OpCode_ResolveRenderTarget,
 		OpCode_BlitRenderTarget,
+		OpCode_BlitRenderTargetRect,
 
 		OpCode_Light,
 		OpCode_ClearLights,
@@ -139,6 +140,7 @@ public:
 		vsShaderOptions shaderOptions;
 		vsVector3D vector;
 		vsBox2D box2D;
+		vsBox2D box2D2;
 		vsColor color;
 		vsTransform2D transform;
 		vsLight light;
@@ -293,6 +295,7 @@ public:
 	void	ClearRenderTargetColor(const vsColor& c); // clears the currently set render target to a specific color.
 	void	ResolveRenderTarget( vsRenderTarget *target );
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
+	void	BlitRenderTargetRect( vsRenderTarget *from, vsRenderTarget *to, const vsBox2D& fromRect, const vsBox2D& toRect );
 
 	void	Light( const vsLight &light );
 	void	ClearLights();

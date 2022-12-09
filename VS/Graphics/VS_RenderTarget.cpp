@@ -341,6 +341,18 @@ vsRenderTarget::ClearColor( const vsColor&c )
 void
 vsRenderTarget::BlitTo( vsRenderTarget *other )
 {
+	vsBox2D from, to;
+	from.ExpandToInclude( vsVector2D::Zero );
+	from.ExpandToInclude( vsVector2D(m_viewportWidth, m_viewportHeight) );
+	to.ExpandToInclude( vsVector2D::Zero );
+	to.ExpandToInclude( vsVector2D(other->m_viewportWidth, other->m_viewportHeight) );
+
+	BlitRect( other, from, to );
+}
+
+void
+vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst )
+{
 	CreateDeferred();
 	other->CreateDeferred();
 
@@ -380,10 +392,10 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 
 
-		glBlitFramebuffer(0, 0,
-				m_viewportWidth, m_viewportHeight,
-				0, 0, other->m_viewportWidth,
-				other->m_viewportHeight,
+		glBlitFramebuffer(src.GetMin().x, src.GetMin().y,
+				src.GetMax().x, src.GetMax().y,
+				dst.GetMin().x, dst.GetMin().y,
+				dst.GetMax().x, dst.GetMax().y,
 				GL_COLOR_BUFFER_BIT,
 				GL_LINEAR);
 	}
