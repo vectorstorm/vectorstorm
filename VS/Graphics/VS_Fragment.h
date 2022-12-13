@@ -74,6 +74,7 @@ public:
 	vsMaterial *	GetMaterial() { return m_material; }
 	vsDisplayList *	GetDisplayList() { return m_displayList; }
 	const vsDisplayList *	GetDisplayList() const { return m_displayList; }
+	vsBox3D GetBoundingBox() const;
 	int	GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const;
 
 	void	Draw( vsDisplayList *list );

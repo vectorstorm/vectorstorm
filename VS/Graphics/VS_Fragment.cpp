@@ -447,3 +447,15 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 	return result.ItemCount();
 }
 
+vsBox3D
+vsFragment::GetBoundingBox() const
+{
+	vsBox3D result;
+
+	for ( int i = 0; i < m_vbo->GetPositionCount(); i++ )
+	{
+		result.ExpandToInclude( m_vbo->GetPosition(i) );
+	}
+
+	return result;
+}
