@@ -73,6 +73,7 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, v
 
 
 vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride = nullptr );
+vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, vsMaterial *material );
 
 #endif // VS_PRIMITIVE_H
 

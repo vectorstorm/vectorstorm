@@ -553,6 +553,32 @@ vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, const vsVector3D &offset, 
 	return fragment;
 }
 
+vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, vsMaterial *material )
+{
+	vsRenderBuffer::P va[4];
+	va[0].position = vsVector3D( box.GetMin().x, 0.f, box.GetMin().z );
+	va[1].position = vsVector3D( box.GetMax().x, 0.f, box.GetMin().z );
+	va[2].position = vsVector3D( box.GetMin().x, 0.f, box.GetMax().z );
+	va[3].position = vsVector3D( box.GetMax().x, 0.f, box.GetMax().z );
+
+	uint16_t ts[4] =
+	{
+		0,2,1,3
+	};
+
+	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
+
+	vbo->SetArray(va,4);
+	ibo->SetArray(ts,4);
+
+	vsFragment *fragment = new vsFragment;
+	fragment->SetSimple(vbo,ibo,vsFragment::SimpleType_TriangleStrip);
+	fragment->SetMaterial( material );
+
+	return fragment;
+}
+
 vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
 {
 	vsRenderBuffer::PC va[4];
