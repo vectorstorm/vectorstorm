@@ -680,7 +680,7 @@ vsModel::CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT
 			if ( localT < *resultT )
 			{
 				hit = true;
-				*result = pos + dir * (*resultT);
+				*result = pos + dir * (localT);
 				*resultT = localT;
 
 				vsVector3D triangleNormal = (t.vertex[2]-t.vertex[0]).Cross( t.vertex[1]-t.vertex[0] );
