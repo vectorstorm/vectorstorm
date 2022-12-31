@@ -28,10 +28,10 @@ vsMaterial::vsMaterial( const vsString &name ):
 	SetupParameters();
 }
 
-vsMaterial::vsMaterial( vsMaterial *other ):
-	vsCacheReference<vsMaterialInternal>(other->GetResource()->GetName()),
-	m_values( other->m_values ),
-	m_options( other->m_options )
+vsMaterial::vsMaterial( const vsMaterial &other ):
+	vsCacheReference<vsMaterialInternal>(other.GetResource()->GetName()),
+	m_values( other.m_values ),
+	m_options( other.m_options )
 {
 	SetupParameters();
 }

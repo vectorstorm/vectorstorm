@@ -45,7 +45,7 @@ protected:
 public:
 
 	vsMaterial( const vsString &name );
-	vsMaterial( vsMaterial *other );
+	vsMaterial( const vsMaterial &other );
 	virtual ~vsMaterial();
 
 	// int32_t UniformId( const vsString& name );

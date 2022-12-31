@@ -182,7 +182,7 @@ vsMesh::SetTriangleListMaterial( int list, vsMaterial *material )
 	vsAssert( list >= 0 && list < m_triangleListCount, "Unknown triangle list requested??" );
 
 	vsDelete( m_triangleListMaterial[list] );
-	m_triangleListMaterial[list] = new vsMaterial(material);
+	m_triangleListMaterial[list] = new vsMaterial(*material);
 }
 
 vsMaterial *

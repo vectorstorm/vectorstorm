@@ -460,7 +460,7 @@ vsMeshMaker::BakeTriangleMaterial( vsMaterial *material )
 		}
 	}
 
-	m_internalData->m_material[m_internalData->m_materialCount++] = new vsMaterial(material);
+	m_internalData->m_material[m_internalData->m_materialCount++] = new vsMaterial(*material);
 
 	return m_internalData->m_materialCount-1;
 }

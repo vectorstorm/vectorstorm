@@ -339,7 +339,7 @@ void
 vsFragment::SetMaterial( vsMaterial *material )
 {
 	vsDelete( m_material );
-	m_material = new vsMaterial(material);
+	m_material = new vsMaterial(*material);
 }
 
 void

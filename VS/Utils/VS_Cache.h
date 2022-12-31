@@ -12,6 +12,7 @@
 
 // #include "VS_HashTable.h"
 #include "VS/Utils/VS_Singleton.h"
+#include "VS/Utils/VS_Debug.h"
 
 template <typename T> class vsCache;
 
@@ -33,7 +34,7 @@ public:
 	void				SetTransient() { m_transient = true; }
 
 	void				AddReference()	{ m_refCount++; }
-	void				ReleaseReference()	{ m_refCount--; }
+	void				ReleaseReference()	{ m_refCount--; vsAssert( m_refCount >= 0, "Refcount negative??" ); }
 	int					GetReferenceCount() const { return m_refCount; }
 	bool				IsTransient() const { return m_transient; }
 
