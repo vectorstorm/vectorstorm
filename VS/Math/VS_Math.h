@@ -74,6 +74,12 @@ class vsVector2D;
 class vsVector3D;
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v);
 
+
+bool vsIsPointInsideTriangle( const vsVector3D &point, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2);
+bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float sphereRadius, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, vsVector3D *output);
+
+bool vsCollideLineVsSphere( const vsVector3D &sphereCenter, float sphereRadius, const vsVector3D &vert0, const vsVector3D &vert1, int* intersectionCount, float* tA, float* tB );
+
 float vsInterpolate( float alpha, float a, float b );
 float vsProgressFraction( float value, float a, float b );	// returned value is what you'd pass as 'alpha' to vsInterpolate, to get back the 'value' value.
 float vsProgressFraction_Clamped( float value, float a, float b ); // as above, but result is clamped into [0..1].
