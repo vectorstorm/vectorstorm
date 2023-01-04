@@ -179,19 +179,26 @@ static bool getLowestRoot( float a, float b, float c, float maxR, float* root)
 
 bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float sphereRadius,
 		const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2,
-		float *outputT, vsVector3D *output)
+		float *outputT, vsVector3D *contactPoint)
 {
+	// This is an experimental swept-sphere-vs-triangle implementation *very* loosely
+	// based on an algorithm as described at:
+	//
+	// https://www.braynzarsoft.net/viewtutorial/q16390-31-sliding-camera-collision-detection
+	//
 	vsVector3D direction = dir;
 	direction.NormaliseSafe();
 
 	// float minDist = std::numeric_limits<float>::max();
 	bool hit = false;
 
-	float hitT = std::numeric_limits<float>::max();
+	// float hitT = std::numeric_limits<float>::max();
+	float hitT = *outputT;
 
 	vsVector3D sideA = (vert1-vert0);
 	vsVector3D sideB = (vert2-vert0);
 	vsVector3D triNormal = (sideB.Normalised()).Cross(sideA.Normalised());
+	triNormal.Normalise();
 
 	// first, check if we're moving the wrong direction to hit this triangle.
 	if ( triNormal.Dot( dir ) > 0.0f )
@@ -201,36 +208,77 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 	// is going to enter or pass through the triangle's plane and that's going
 	// to happen inside the bounds of the triangle.
 
-	vsVector3D triToSphereCenter = sphereCenter - vert0;
-	float heightOverPlane = triToSphereCenter.Dot( triNormal );
-	if ( heightOverPlane < -sphereRadius )
-		return false; // we're already behind this triangle;  no collision!
-	else if ( heightOverPlane > sphereRadius )
 	{
-		// we're in front of this triangle, so now we have to check whether we're
-		// close enough to hit.
+		float t0, t1;
+		float planeConstant = - vert0.Dot(triNormal);
+		float distanceFromSphereCenterToTriPlane = sphereCenter.Dot(triNormal) + planeConstant;
+		float planeNormalDotDirection = triNormal.Dot(dir);
 
-		heightOverPlane -= sphereRadius; // how high our closest point is over the triangle plane
-		float dot = triNormal.Dot( dir );
-		if ( dot != 0.f )
+		if ( planeNormalDotDirection == 0.f ) // parallel with plane
 		{
-			float testT = -heightOverPlane / dot;
-			vsVector3D positionOnPlane = sphereCenter + dir * testT;
-			if ( vsIsPointInsideTriangle( positionOnPlane, vert0, vert1, vert2 ) )
+			if ( vsFabs( distanceFromSphereCenterToTriPlane >= sphereRadius ) )
+				return false; // sphere not in plane and velocity is parallel to plane;  no collision
+							  // otherwise, we're in the plane and will skip the "hitting center" test
+							  // since we would have to hit a vertex or an edge first.
+		}
+		else
+		{
+			t0 = ( sphereRadius - distanceFromSphereCenterToTriPlane) / planeNormalDotDirection;
+			t1 = ( -sphereRadius - distanceFromSphereCenterToTriPlane) / planeNormalDotDirection;
+
+			// make sure t0 is lower than t1
+			if ( t0 > t1 || t0 < 0.f )
 			{
-				// technically this next condition always passes because it's
-				// our first hit test that doesn't make us exit immediately.
-				if ( testT < hitT )
+				float tmp = t0;
+				t0 = t1;
+				t1 = tmp;
+			}
+
+			vsVector3D planeIntersectionPoint = sphereCenter + t0 * dir - (sphereRadius * triNormal);
+			if ( vsIsPointInsideTriangle( planeIntersectionPoint, vert0, vert1, vert2 ) )
+			{
+				if ( t0 > 0.f && t0 < hitT )
 				{
-					hitT = testT;
-					if (output)
-						*output = triNormal;
+					hitT = t0;
+					if ( contactPoint )
+						*contactPoint = planeIntersectionPoint;
 					hit = true;
-					// vsLog("CASE 0 HIT");
 				}
 			}
 		}
 	}
+
+	// vsVector3D triToSphereCenter = sphereCenter - vert0;
+	// float heightOverPlane = triToSphereCenter.Dot( triNormal );
+	// if ( heightOverPlane < -sphereRadius )
+	// 	return false; // we're already behind this triangle;  no collision!
+	// else if ( heightOverPlane > sphereRadius )
+	// {
+	// 	// we're in front of this triangle, so now we have to check whether we're
+	// 	// close enough to hit.
+    //
+	// 	heightOverPlane -= sphereRadius; // how high our closest point is over the triangle plane
+	// 	float dot = triNormal.Dot( dir );
+	// 	if ( dot != 0.f )
+	// 	{
+	// 		float testT = -heightOverPlane / dot;
+	// 		// vsVector3D positionOnPlane = sphereCenter + dir * (testT+sphereRadius);
+	// 		vsVector3D positionOnPlane = sphereCenter + dir * testT - (triNormal * sphereRadius);
+	// 		if ( vsIsPointInsideTriangle( positionOnPlane, vert0, vert1, vert2 ) )
+	// 		{
+	// 			// technically this next condition always passes because it's
+	// 			// our first hit test that doesn't make us exit immediately.
+	// 			if ( testT < hitT )
+	// 			{
+	// 				hitT = testT;
+	// 				if (contactPoint)
+	// 					*contactPoint = positionOnPlane;
+	// 				hit = true;
+	// 				// vsLog("CASE 0 HIT");
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Okay, so we've tested whether the sphere is going to hit the triangle based
 	// on its centerpoint travelling through the center of the triangle plane.
@@ -239,28 +287,22 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 	vsVector3D p[3] = {vert0,vert1,vert2};
 	for ( int i = 0; i < 3; i++ )
 	{
-		vsVector3D segment_p0 = p[i];
-		vsVector3D segment_p1 = segment_p0 - dir;
-		int intersectionCount = 0;
-		float tA, tB;
+		float a,b,c;
 
-		if ( !vsCollideLineVsSphere( sphereCenter, sphereRadius, segment_p0, segment_p1,
-				&intersectionCount, &tA, &tB ) ) // no collision
-			continue;
+		float dirLengthSquared = 1.f;
+		float thisT;
+		a = dirLengthSquared;
 
-		float testT = vsMin( tA, tB );
-		if ( testT < 0 ) // collision in the past!
-			continue;
+		vsVector3D delta =  sphereCenter - p[i];
+		b = 2.f * dir.Dot(delta);
+		c = delta.SqLength() - sphereRadius*sphereRadius;
 
-		if ( testT < hitT )
+		if ( getLowestRoot(a,b,c,hitT,&thisT) )
 		{
-			// is this right?  That output hit position isn't giving a normalised value, is it?
-			hitT = testT;
-			vsVector3D hitPosition = segment_p0 + (-dir * testT);
-			if ( output )
-				*output = sphereCenter - hitPosition;
+			vsLog("HIT VERTEX WOO");
+			hitT = thisT;
 			hit = true;
-					// vsLog("CASE 1 HIT");
+			*contactPoint = p[i];
 		}
 	}
 
@@ -282,7 +324,7 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 
 		float a = edgeLengthSquared * -directionLengthSquared + (edgeDotDirection * edgeDotDirection);
 		float b = edgeLengthSquared * (2.f * dir.Dot(sphereToEdge)) - (2.f * edgeDotDirection * edgeDotSpherePositionToEdge);
-		float c = edgeLengthSquared * (1.f - spherePositionToEdgeLengthSquared) + (edgeDotSpherePositionToEdge * edgeDotSpherePositionToEdge);
+		float c = edgeLengthSquared * (sphereRadius*sphereRadius - spherePositionToEdgeLengthSquared) + (edgeDotSpherePositionToEdge * edgeDotSpherePositionToEdge);
 		float thisT = 0.f;
 
 		if ( getLowestRoot(a,b,c,hitT,&thisT) )
@@ -290,11 +332,12 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 			// we hit the edge.
 
 			float f = (edgeDotDirection * thisT - edgeDotSpherePositionToEdge) / edgeLengthSquared;
-			if ( f >= 0.f && f < 1.f ) {
+			if ( f >= 0.f && f <= 1.f ) {
 				vsLog("HIT EDGE WOO");
 				// if this collision happened, set results.
 				hitT = thisT;
 				hit = true;
+				*contactPoint = edge0 + f * edge;
 			}
 		}
 
@@ -331,7 +374,6 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 	if ( hit )
 	{
 		*outputT = hitT;
-		// output->Normalise();
 	}
 	return hit;
 }

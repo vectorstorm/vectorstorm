@@ -76,7 +76,7 @@ bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, cons
 
 
 bool vsIsPointInsideTriangle( const vsVector3D &point, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2);
-bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float sphereRadius, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, vsVector3D *output);
+bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float sphereRadius, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, vsVector3D *contactPoint);
 
 bool vsCollideLineVsSphere( const vsVector3D &sphereCenter, float sphereRadius, const vsVector3D &vert0, const vsVector3D &vert1, int* intersectionCount, float* tA, float* tB );
 
