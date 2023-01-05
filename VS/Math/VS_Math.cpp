@@ -117,6 +117,28 @@ bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, cons
 
 bool vsIsPointInsideTriangle( const vsVector3D &point, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2)
 {
+#if 1
+
+	// Check whether the given point is inside all of our edges.
+
+	vsVector3D vert[3] = { vert0, vert1, vert2 };
+	bool inside = true;
+	for ( int i = 0; i < 3 && inside; i++ )
+	{
+		int ni = (i+1)%3;
+		int pi = (i+2)%3;
+
+		vsVector3D cp1 = (vert[ni]-vert[i]).Cross( point - vert[i] );
+		vsVector3D cp2 = (vert[ni]-vert[i]).Cross( vert[pi] - vert[i] );
+
+		if ( cp1.Dot(cp2) < 0.f )
+		{
+			inside = false;
+		}
+	}
+	return inside;
+#else
+
 	// calculate barycentric coordinates, and if we have them (that is, if 's'
 	// and 't' are both in the range of [0..1]), then we're inside the
 	// triangle.  Otherwise, not!
@@ -143,6 +165,7 @@ bool vsIsPointInsideTriangle( const vsVector3D &point, const vsVector3D &vert0, 
 		return false;
 
 	return true;
+#endif
 }
 
 static bool getLowestRoot( float a, float b, float c, float maxR, float* root)
