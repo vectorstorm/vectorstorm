@@ -211,7 +211,7 @@ vsSerialiserReadStream::vsSerialiserReadStream(vsFile *file):
 	vsSerialiser(nullptr, Type_Read),
 	m_file(file)
 {
-	m_store = new vsStore(1024);
+	m_store = new vsStore(1024 * 2);
 	// m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
 	int bytes = m_file->ReadBytes( m_store->GetWriteHead(), m_store->BytesLeftForWriting() );
 	m_store->AdvanceWriteHead(bytes);
@@ -232,6 +232,19 @@ vsSerialiserReadStream::Ensure(size_t bytes_required)
 	if ( m_store->BytesLeftForReading() < bytes_required )
 	{
 		m_store->EraseReadBytes();
+
+		if ( bytes_required > m_store->BufferLength() )
+		{
+			// make a bigger store
+			vsStore *newStore = new vsStore( bytes_required * 2.f );
+
+			// copy the old store's contents into the new store.
+			newStore->WriteBuffer( m_store->GetReadHead(), m_store->BytesLeftForReading() );
+
+			vsDelete( m_store );
+			m_store = newStore;
+		}
+
 		int bytes = m_file->ReadBytes( m_store->GetWriteHead(), m_store->BytesLeftForWriting() );
 		m_store->AdvanceWriteHead(bytes);
 		// m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
