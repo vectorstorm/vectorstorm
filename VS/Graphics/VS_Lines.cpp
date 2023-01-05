@@ -904,7 +904,7 @@ vsLines3D::Clear()
 }
 
 void
-vsLines3D::AddLine( vsVector3D &a, vsVector3D &b )
+vsLines3D::AddLine( const vsVector3D &a, const vsVector3D &b )
 {
 	vsVector3D vert[2] = { a, b };
 	AddStrip(vert, 2);
