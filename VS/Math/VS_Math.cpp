@@ -322,7 +322,7 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 
 		if ( getLowestRoot(a,b,c,hitT,&thisT) )
 		{
-			vsLog("HIT VERTEX WOO");
+			// vsLog("HIT VERTEX");
 			hitT = thisT;
 			hit = true;
 			*contactPoint = p[i];
@@ -356,7 +356,7 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 
 			float f = (edgeDotDirection * thisT - edgeDotSpherePositionToEdge) / edgeLengthSquared;
 			if ( f >= 0.f && f <= 1.f ) {
-				vsLog("HIT EDGE WOO");
+				// vsLog("HIT EDGE");
 				// if this collision happened, set results.
 				hitT = thisT;
 				hit = true;
