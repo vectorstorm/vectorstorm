@@ -239,7 +239,7 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 
 		if ( planeNormalDotDirection == 0.f ) // parallel with plane
 		{
-			if ( vsFabs( distanceFromSphereCenterToTriPlane >= sphereRadius ) )
+			if ( vsFabs( distanceFromSphereCenterToTriPlane ) >= sphereRadius )
 				return false; // sphere not in plane and velocity is parallel to plane;  no collision
 							  // otherwise, we're in the plane and will skip the "hitting center" test
 							  // since we would have to hit a vertex or an edge first.
