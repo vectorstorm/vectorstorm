@@ -119,8 +119,17 @@ vsInput::Init()
     //
 	// if ( joystickCount )
 	// {
-	// 	vsLog("Found %d joysticks.", joystickCount);
+	// 	vsLog("Found %d joysticks:", joystickCount);
     //
+	// 	for ( int i = 0; i < joystickCount; i++ )
+	// 	{
+	// 		SDL_Joystick* js = SDL_JoystickOpen(i);
+	// 		const char* name = SDL_JoystickName(js);
+    //
+	// 		vsLog(" %d: %s", i, name ? name : "(unknown)");
+    //
+	// 		SDL_JoystickClose(js);
+	// 	}
 	// 	for ( int i = 0; i < joystickCount; i++ )
 	// 	{
 	// 		if ( SDL_IsGameController(i) )
