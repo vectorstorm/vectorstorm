@@ -354,6 +354,12 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 		}
 	}
 
+	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
+	{
+		if ( m_texture[i] )
+			m_texture[i]->GetResource()->ClampUV( m_clampU, m_clampV );
+	}
+
 }
 
 void
