@@ -65,8 +65,6 @@ vsMaterialInternal::vsMaterialInternal():
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
-	m_clampU(false),
-	m_clampV(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -105,8 +103,6 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
-	m_clampU(false),
-	m_clampV(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -279,11 +275,22 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					m_texture[m_textureCount] = new vsTexture( textureString );
 					m_textureFromFile[m_textureCount] = true;
 
-					if ( sr->GetTokenCount() == 2 )
+					if ( sr->GetTokenCount() > 1 )
 					{
-						vsString textureMode = sr->GetToken(1).AsString();
-						if ( textureMode == "nearest" )
-							m_texture[m_textureCount]->GetResource()->SetNearestSampling();
+						for ( int i = 1; i < sr->GetTokenCount(); i++ )
+						{
+							vsString textureMode = sr->GetToken(i).AsString();
+							if ( textureMode == "nearest" )
+								m_texture[m_textureCount]->SetNearestSampling();
+							if ( textureMode == "linear" )
+								m_texture[m_textureCount]->SetLinearSampling();
+							if ( textureMode == "clampU" )
+								m_texture[m_textureCount]->SetClampU(true);
+							if ( textureMode == "clampV" )
+								m_texture[m_textureCount]->SetClampV(true);
+							if ( textureMode == "clampUV" )
+								m_texture[m_textureCount]->SetClampUV(true);
+						}
 					}
 					m_textureCount++;
 				}
@@ -299,14 +306,6 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 					m_shaderRef = vsShaderCache::LoadShader( vString, fString, m_drawMode == DrawMode_Lit, HasAnyTextures() );
 					m_shader = m_shaderRef->GetShader();
 					m_shaderIsMine = false;
-				}
-				else if ( label == "clampU" )
-				{
-					m_clampU = sr->Bool();
-				}
-				else if ( label == "clampV" )
-				{
-					m_clampV = sr->Bool();
 				}
 				else if ( label == "blend" )
 				{
@@ -352,12 +351,6 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 			}
 			break;
 		}
-	}
-
-	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-	{
-		if ( m_texture[i] )
-			m_texture[i]->GetResource()->ClampUV( m_clampU, m_clampV );
 	}
 
 }

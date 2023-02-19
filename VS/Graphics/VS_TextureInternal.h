@@ -40,7 +40,15 @@ class vsTextureInternal : public vsResource
 	vsRenderTarget *m_renderTarget; // this is NOT owned by us!
 	int				m_surfaceBuffer; // which buffer within the renderTarget was this?
 
-	bool		m_nearestSampling;
+	// bool		m_nearestSampling;
+
+	enum
+	{
+		State_ClampU = BIT(0),
+		State_ClampV = BIT(1),
+		State_LinearSampling = BIT(2)
+	};
+	uint8_t m_state;
 
 public:
 
@@ -70,19 +78,33 @@ public:
 	void		Blit( vsFloatImage *image, const vsVector2D& where);
 	void		Blit( vsSingleFloatImage *image, const vsVector2D& where);
 
-	void		SetNearestSampling();
-	void		SetLinearSampling(bool linearMipmaps = true);
+	// void		SetNearestSampling();
+	// void		SetLinearSampling(bool linearMipmaps = true);
 
-	uint32_t		GetTexture() { return m_texture; }
+	uint32_t		GetTexture() const { return m_texture; }
 
-	bool IsTextureBuffer() { return m_tbo != nullptr; }
+	bool IsTextureBuffer() const { return m_tbo != nullptr; }
 	vsRenderBuffer *GetTextureBuffer() { return m_tbo; }
 
-	int		GetWidth() { return m_width; }
-	int		GetHeight() { return m_height; }
-    bool        IsDepth() { return m_depth; }
+	int		GetWidth() const { return m_width; }
+	int		GetHeight() const { return m_height; }
+    bool        IsDepth() const { return m_depth; }
 
-	void	ClampUV( bool u, bool v );
+	// ===============================================================================
+	// used as a cache during rendering, so we can remember what render state
+	// is set on this texture.
+	bool IsClampedU() const { return (m_state & State_ClampU) != 0; }
+	bool IsClampedV() const { return (m_state & State_ClampV) != 0; }
+
+	void SetClampedU(bool c) { if ( c ) m_state |= State_ClampU; else m_state &= ~State_ClampU; }
+	void SetClampedV(bool c) { if ( c ) m_state |= State_ClampV; else m_state &= ~State_ClampV; }
+
+	bool IsLinearSampling() const { return (m_state & State_LinearSampling) != 0; }
+	void SetLinearSampling(bool linear) { if ( linear ) m_state |= State_LinearSampling; else m_state &= ~State_LinearSampling; }
+	// ===============================================================================
+
+	// void	ApplyClampUV( bool u, bool v );
+	// void	ClampUV( bool u, bool v );
 
 	int		GetGLWidth() { return m_glTextureWidth; }
 	int		GetGLHeight() { return m_glTextureHeight; }

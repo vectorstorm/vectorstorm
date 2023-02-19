@@ -57,15 +57,15 @@ vsDynamicMaterial::SetShader()
 }
 
 void
-vsDynamicMaterial::SetTexture( int i, vsTexture *texture, bool linear )
+vsDynamicMaterial::SetTexture( int i, vsTexture *texture )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
 	vsDelete(GetResource()->m_texture[i]);
 	if ( texture )
 	{
 		GetResource()->m_texture[i] = new vsTexture(texture);
-		if ( !linear )
-			GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
+		// if ( !linear )
+		// 	GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
 	}
 }
 
@@ -82,13 +82,13 @@ vsDynamicMaterial::SetBufferTexture( vsTexture *texture)
 }
 
 void
-vsDynamicMaterial::SetTexture( int i, const vsString &texture, bool linear )
+vsDynamicMaterial::SetTexture( int i, const vsString &texture )
 {
 	vsAssert(i >= 0 && i < MAX_TEXTURE_SLOTS, "Out of range texture requested");
 	vsDelete(GetResource()->m_texture[i]);
 	GetResource()->m_texture[i] = new vsTexture(texture);
-	if ( !linear )
-		GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
+	// if ( !linear )
+	// 	GetResource()->m_texture[i]->GetResource()->SetNearestSampling();
 }
 
 void
@@ -169,18 +169,6 @@ void
 vsDynamicMaterial::SetZWrite( bool zWrite )
 {
 	GetResource()->m_zWrite = zWrite;
-}
-
-void
-vsDynamicMaterial::SetClampU( bool clampU )
-{
-	GetResource()->m_clampU = clampU;
-}
-
-void
-vsDynamicMaterial::SetClampV( bool clampV )
-{
-	GetResource()->m_clampV = clampV;
 }
 
 void

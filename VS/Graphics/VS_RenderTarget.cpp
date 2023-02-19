@@ -67,6 +67,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 		// creation..
 		m_texture[i]->GetResource()->m_width = settings.width;
 		m_texture[i]->GetResource()->m_height = settings.height;
+		m_texture[i]->SetClampUV(true);
 	}
 
 	if ( settings.depth && !isDepth )
@@ -654,8 +655,8 @@ vsSurface::Resize( int width, int height )
 				/* } */
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+				// glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+				// glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
 				// Anisotropic filtering didn't become part of OpenGL core contextx until
 				// OpenGL 4.6 (!!), so.. we sort of still have to explicitly check for
@@ -709,8 +710,8 @@ vsSurface::Resize( int width, int height )
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+			// glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+			// glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
 			if ( m_depthCompare )
 			{

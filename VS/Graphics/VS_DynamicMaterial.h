@@ -22,8 +22,8 @@ class vsDynamicMaterial: public vsMaterial
 public:
 	vsDynamicMaterial();
 
-	void SetTexture( int i, vsTexture *texture, bool linear = true );
-	void SetTexture( int i, const vsString &texture, bool linear = true );
+	void SetTexture( int i, vsTexture *texture );
+	void SetTexture( int i, const vsString &texture );
 	void SetShadowTexture( vsTexture *texture);
 	void SetBufferTexture( vsTexture *texture);
 	void SetColor( const vsColor& color );
@@ -39,8 +39,6 @@ public:
 	void SetFog( bool fog );
 	void SetZRead( bool zRead );
 	void SetZWrite( bool zWrite );
-	void SetClampU( bool clampU );
-	void SetClampV( bool clampV );
 	void SetGlow( bool glow );
 	void SetPostGlow( bool postGlow );
 	void SetHasColor( bool hasColor );

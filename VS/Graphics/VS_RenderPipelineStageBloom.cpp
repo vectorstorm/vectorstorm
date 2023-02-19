@@ -118,6 +118,9 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		pipeline->ReleaseRenderTarget( m_passes[i].m_pass2, this );
 		m_passes[i].m_pass = pipeline->RequestRenderTarget(req, this);
 		m_passes[i].m_pass2 = pipeline->RequestRenderTarget(req, this);
+
+		m_passes[i].m_pass->GetTexture()->SetClampUV(true);
+		m_passes[i].m_pass2->GetTexture()->SetClampUV(true);
 	}
 
 	if ( !kernel_normalised )
@@ -153,8 +156,6 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		float offsety = 1.2f / m_passes[i].m_pass->GetHeight();
 		if ( !m_passes[i].m_horizontalBlurMaterial )
 			m_passes[i].m_horizontalBlurMaterial = new vsDynamicMaterial;
-		m_passes[i].m_horizontalBlurMaterial->SetClampU(true);
-		m_passes[i].m_horizontalBlurMaterial->SetClampV(true);
 		m_passes[i].m_horizontalBlurMaterial->SetBlend(false);
 		m_passes[i].m_horizontalBlurMaterial->SetTexture(0,m_passes[i].m_pass->GetTexture());
 		m_passes[i].m_horizontalBlurMaterial->SetShader(m_bloomBlurShader);
@@ -164,8 +165,6 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 
 		if ( !m_passes[i].m_verticalBlurMaterial )
 			m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
-		m_passes[i].m_verticalBlurMaterial->SetClampU(true);
-		m_passes[i].m_verticalBlurMaterial->SetClampV(true);
 		m_passes[i].m_verticalBlurMaterial->SetBlend(false);
 		m_passes[i].m_verticalBlurMaterial->SetTexture(0,m_passes[i].m_pass2->GetTexture());
 		m_passes[i].m_verticalBlurMaterial->SetShader(m_bloomBlurShader);
@@ -182,8 +181,6 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_combinePassMaterial->SetZWrite(false);
 		m_passes[i].m_combinePassMaterial->SetDrawMode(DrawMode_Add);
 		m_passes[i].m_combinePassMaterial->SetGlow(false);
-		m_passes[i].m_combinePassMaterial->SetClampU(true);
-		m_passes[i].m_combinePassMaterial->SetClampV(true);
 		m_passes[i].m_combinePassMaterial->SetTexture(0, m_passes[i].m_pass->GetTexture());
 		m_passes[i].m_combinePassMaterial->SetShader(new vsBloomCombineShader);
 	}
@@ -196,8 +193,6 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_fromMaterial->SetZRead(false);
 	m_fromMaterial->SetZWrite(false);
 	m_fromMaterial->SetGlow(false);
-	m_fromMaterial->SetClampU(true);
-	m_fromMaterial->SetClampV(true);
 	m_fromMaterial->SetTexture(0, m_from->GetTexture());
 	m_fromMaterial->SetShader(new vsBloomPassShader);
 

@@ -1134,6 +1134,36 @@ vsRenderer_OpenGL3::FlushRenderState()
 							{
 								t->GetResource()->PrepareToBind();
 								glBindTexture( GL_TEXTURE_2D, tval);
+								const bool clampU = t->GetClampU();
+								const bool clampV = t->GetClampV();
+								const bool linearSampling = t->GetLinearSampling();
+
+								if ( clampU != t->GetResource()->IsClampedU() )
+								{
+									glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+									t->GetResource()->SetClampedU(clampU);
+								}
+								if ( clampV != t->GetResource()->IsClampedV() )
+								{
+									glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+									t->GetResource()->SetClampedV(clampV);
+								}
+								if ( linearSampling != t->GetResource()->IsLinearSampling() )
+								{
+									if ( linearSampling )
+									{
+										glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+										glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+										// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+									}
+									else
+									{
+										glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+										glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+									}
+									t->GetResource()->SetLinearSampling(linearSampling);
+								}
+
 								// if ( m_currentMaterialInternal->m_clampU )
 								// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_currentMaterialInternal->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 								// if ( m_currentMaterialInternal->m_clampV )
