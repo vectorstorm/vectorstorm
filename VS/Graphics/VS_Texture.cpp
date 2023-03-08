@@ -70,6 +70,15 @@ vsTexture::SetClampV( bool v )
 }
 
 void
+vsTexture::SetUseMipmap( bool m )
+{
+	if ( m )
+		m_options |= Option_Mipmap;
+	else
+		m_options &= ~Option_Mipmap;
+}
+
+void
 vsTexture::SetLinearSampling()
 {
 	m_options |= Option_LinearSampling;

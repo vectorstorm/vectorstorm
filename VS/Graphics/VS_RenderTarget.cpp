@@ -68,6 +68,12 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 		m_texture[i]->GetResource()->m_width = settings.width;
 		m_texture[i]->GetResource()->m_height = settings.height;
 		m_texture[i]->SetClampUV(true);
+
+		if ( settings.bufferSettings[i].linear )
+			m_texture[i]->SetLinearSampling();
+		else
+			m_texture[i]->SetNearestSampling();
+		m_texture[i]->SetUseMipmap(settings.mipMaps);
 	}
 
 	if ( settings.depth && !isDepth )
@@ -233,8 +239,8 @@ vsRenderTarget::Resolve(int id)
 		// since somebody's asked for them, such as with the following
 		// (currently disabled) code.
 		//
-#if 0
-		if ( m_textureSurface )
+#if 1
+		if ( m_textureSurface && m_settings.mipMaps )
 		{
 			for ( int i = 0; i < m_bufferCount; i++ )
 			{

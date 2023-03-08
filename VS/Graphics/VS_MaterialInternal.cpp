@@ -284,6 +284,8 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 								m_texture[m_textureCount]->SetNearestSampling();
 							if ( textureMode == "linear" )
 								m_texture[m_textureCount]->SetLinearSampling();
+							if ( textureMode == "mipmap" )
+								m_texture[m_textureCount]->SetUseMipmap(true);
 							if ( textureMode == "clampU" )
 								m_texture[m_textureCount]->SetClampU(true);
 							if ( textureMode == "clampV" )

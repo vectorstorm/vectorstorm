@@ -21,6 +21,7 @@ class vsTexture : public vsCacheReference<vsTextureInternal>
 		Option_ClampU = BIT(0),
 		Option_ClampV = BIT(1),
 		Option_LinearSampling = BIT(2),
+		Option_Mipmap = BIT(3), // implies LinearSampling
 	};
 	uint8_t m_options;
 
@@ -52,6 +53,9 @@ public:
 	void SetClampUV( bool u, bool v ) { SetClampU(u); SetClampV(v); }
 	bool GetClampU() const { return m_options & Option_ClampU; }
 	bool GetClampV() const { return m_options & Option_ClampV; }
+
+	void SetUseMipmap( bool m );
+	bool GetUseMipmap() const { return m_options & Option_Mipmap; }
 
 	bool GetLinearSampling() const { return m_options & Option_LinearSampling; }
 

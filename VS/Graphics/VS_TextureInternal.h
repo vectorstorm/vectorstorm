@@ -46,7 +46,8 @@ class vsTextureInternal : public vsResource
 	{
 		State_ClampU = BIT(0),
 		State_ClampV = BIT(1),
-		State_LinearSampling = BIT(2)
+		State_LinearSampling = BIT(2),
+		State_Mipmap = BIT(3)
 	};
 	uint8_t m_state;
 
@@ -101,6 +102,9 @@ public:
 
 	bool IsLinearSampling() const { return (m_state & State_LinearSampling) != 0; }
 	void SetLinearSampling(bool linear) { if ( linear ) m_state |= State_LinearSampling; else m_state &= ~State_LinearSampling; }
+
+	bool IsUseMipmap() const { return (m_state & State_Mipmap) != 0; }
+	void SetUseMipmap(bool mipmap) { if ( mipmap ) m_state |= State_Mipmap; else m_state &= ~State_Mipmap; }
 	// ===============================================================================
 
 	// void	ApplyClampUV( bool u, bool v );
