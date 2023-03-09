@@ -36,6 +36,8 @@ class vsTextureInternal : public vsResource
 
 	bool		m_premultipliedAlpha;
 
+	bool		m_lockedSampling;
+
 	vsRenderBuffer *m_tbo;
 	vsRenderTarget *m_renderTarget; // this is NOT owned by us!
 	int				m_surfaceBuffer; // which buffer within the renderTarget was this?
@@ -90,6 +92,8 @@ public:
 	int		GetWidth() const { return m_width; }
 	int		GetHeight() const { return m_height; }
     bool        IsDepth() const { return m_depth; }
+
+	bool IsSamplingLocked() const { return m_lockedSampling; }
 
 	// ===============================================================================
 	// used as a cache during rendering, so we can remember what render state
