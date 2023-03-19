@@ -25,6 +25,15 @@ const vsColor c_purple(1.0f,0.2f,1.0f,1.0f);
 const vsColor c_black(0.0f,0.0f,0.0f,1.0f);
 const vsColor c_clear(0.0f,0.0f,0.0f,0.0f);
 
+namespace
+{
+	// wrap into 0..1
+	float wrap_hue(float x)
+	{
+		return x - std::floor(x);
+	}
+}
+
 vsColor
 vsColor::FromBytes(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
@@ -66,7 +75,7 @@ vsColor::vsColor(const vsColorHSV& in)
 		a = in.a;
 		return;
 	}
-	hh = in.h * 360.f;
+	hh = wrap_hue(in.h) * 360.f;
 	if(hh >= 360.f) hh = 0.0;
 	hh /= 60.f;
 	i = vsFloor(hh);
@@ -113,6 +122,7 @@ vsColor::vsColor(const vsColorHSV& in)
 
 static float hue2rgb(float p, float q, float t)
 {
+	t = wrap_hue(t);
 	if(t < 0) t += 1;
 	if(t > 1) t -= 1;
 	if(t < 1.f/6.f) return p + (q - p) * 6 * t;

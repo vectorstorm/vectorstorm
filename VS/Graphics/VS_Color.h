@@ -91,6 +91,18 @@ public:
 class vsColorHSV
 {
 public:
+	// values:
+	//
+	//  h: hue.  [0..1] and wraps around if values are given outside of that range.
+	//
+	//  s: saturation.  [0..1] for how saturated the hue is.  (see the 'Technically'
+	//     note on the vsColorHSL for an important note, though)
+	//
+	//  v: value.  [0..1] for how bright the color is.  A value of '1' is max
+	//     brightness of the specified hue at the specified saturation.
+	//
+	//  a: alpha.  [0..1] for how opaque the color is.
+	//
 	float h, s, v, a;
 
 	vsColorHSV();
@@ -103,21 +115,35 @@ class vsColorHSL
 public:
 	float h, s, l, a;
 
+	// values:
+	//
+	//  h: hue.  [0..1] and wraps around if values are given outside of that range.
+	//
+	//  s: saturation.  [0..1] for how saturated the hue is.  (see the 'Technically'
+	//     note below for an important note, though)
+	//
+	//  l: lightness.  [0..1] for how bright the color is.  A value of '1' is
+	//     absolute white, a value of 0 is absolute black, and values in between
+	//     show the specified hue and saturation.
+	//
+	//  a: alpha.  [0..1] for how opaque the color is.
+	//
+
 	vsColorHSL();
 	vsColorHSL( float h, float s, float l, float a );
 	vsColorHSL( const vsColor& other );
 
-	// Technically, our 'S' value both here in the vsColorHSL and
-	// vsColorHSV classes are actually storing "chroma" values;  scaled
-	// within the value range of saturation levels for the specified
-	// lightness/value (because otherwise, it would be possible to go
-	// outside the representable RGB color space).  If we need an
-	// absolute saturation value, we can use these conversion functions.
+	// [NOTE] Technically, our 'S' value both here in the vsColorHSL and
+	// vsColorHSV classes are actually storing "chroma" values;  scaled within
+	// the value range of saturation levels for the specified lightness/value
+	// (because otherwise, it would be possible to go outside the representable
+	// RGB color space when converting to a vsColor).  If we truly need an
+	// absolute saturation value, we can use the following conversion functions.
 	//
-	// Again, in order to cause maximum confusion, the 's' value on
-	// this class is actually storing chroma, and "saturation" is traditionally
-	// the 'true' non-scaled value.  So to get that true non-scaled value,
-	// pass that 's' value into "ChromaToSaturation".
+	// Again, in order to cause maximum confusion, the 's' value on this class
+	// is actually storing chroma, and "saturation" is traditionally the 'true'
+	// non-scaled value.  So to get that true non-scaled value, pass that 's'
+	// value into "ChromaToSaturation".
 	static float SaturationToChroma(float saturation, float lightness);
 	static float ChromaToSaturation(float chroma, float lightness);
 };
