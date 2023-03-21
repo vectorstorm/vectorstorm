@@ -57,26 +57,26 @@ class vsRenderQueue;
 // for a 2D line set, we can just spit out a static fragment.  Not like
 // 3D where we need to check the camera position and recreate our
 // renderable model each frame.
-vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, vsColor *carray, int count, float width, bool loop );
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, vsColor *carray, int count, float width );
+vsFragment *vsLineStrip2D( const vsString &material, const vsVector2D *array, const vsColor *carray, int count, float width, bool loop );
+vsFragment *vsLineList2D( const vsString &material, const vsVector2D *array, const vsColor *carray, int count, float width );
 
 // Old function signature for backwards-compatibility
-vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop );
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width );
+vsFragment *vsLineStrip2D( const vsString &material, const vsVector2D *array, int count, float width, bool loop );
+vsFragment *vsLineList2D( const vsString &material, const vsVector2D *array, int count, float width );
 
 // utility functions for writing data into render buffers, instead of returning whole fragments.
 // The returned VBO and IBO are intended to be rendered as a TRIANGLE LIST.
-void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise = true );
-void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise = true );
+void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsVector2D *array, const vsColor *carray, int count, float width, bool loop, bool finalise = true );
+void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsVector2D *array, const vsColor *carray, int count, float width, bool loop, bool finalise = true );
 
 
-void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *array, int count, float width, bool loop );
+void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, const vsVector2D *array, int count, float width, bool loop );
 
-vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, int count, float width, bool loop, const vsColor *color = nullptr, float texScale = 1.f );
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, int count, float width, const vsColor *color = nullptr, float texScale = 1.f );
+vsFragment *vsLineStrip3D( const vsString &material, const vsVector3D *array, int count, float width, bool loop, const vsColor *color = nullptr, float texScale = 1.f );
+vsFragment *vsLineList3D( const vsString &material, const vsVector3D *array, int count, float width, const vsColor *color = nullptr, float texScale = 1.f );
 
-vsFragment *vsLineStrip3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width, bool loop );
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *array, vsColor *carray, int count, float width );
+vsFragment *vsLineStrip3D( const vsString &material, const vsVector3D *array, const vsColor *carray, int count, float width, bool loop );
+vsFragment *vsLineList3D( const vsString &material, const vsVector3D *array, const vsColor *carray, int count, float width );
 
 class vsLines3D: public vsModel
 {

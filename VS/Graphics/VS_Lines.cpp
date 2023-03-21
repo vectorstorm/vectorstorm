@@ -14,7 +14,7 @@
 
 float vsLines3D::s_widthFactor = 1.f;
 
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, vsColor *color, int count, float width )
+vsFragment *vsLineList2D( const vsString &material, const vsVector2D *point, const vsColor *color, int count, float width )
 {
 	size_t vertexCount = (count/2) * 4;
 	size_t indexCount = (count/2) * 6;
@@ -88,7 +88,7 @@ vsFragment *vsLineList2D( const vsString &material, vsVector2D *point, vsColor *
 	return fragment;
 }
 
-void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *point, vsColor *color, int count, float width, bool loop, bool finalise )
+void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsVector2D *point, const vsColor *color, int count, float width, bool loop, bool finalise )
 {
 	width *= 0.707f;
 	float halfWidth = width * 0.5f;
@@ -249,7 +249,7 @@ void vsLineStrip2D_VBO_IBO_Append( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsV
 	}
 }
 
-void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D *array, vsColor *carray, int count, float width, bool loop, bool finalise )
+void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsVector2D *array, const vsColor *carray, int count, float width, bool loop, bool finalise )
 {
 	vbo->SetContentType( vsRenderBuffer::ContentType_PC );
 	ibo->SetContentType( vsRenderBuffer::ContentType_UInt16 );
@@ -258,7 +258,7 @@ void vsLineStrip2D_VBO_IBO( vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsVector2D
 	vsLineStrip2D_VBO_IBO_Append(vbo, ibo, array, carray, count, width, loop, finalise);
 }
 
-vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor *color, int count, float width, bool loop )
+vsFragment *vsLineStrip2D( const vsString& material, const vsVector2D *point, const vsColor *color, int count, float width, bool loop )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer( vsRenderBuffer::Type_Static );
 	vsRenderBuffer *ibo = new vsRenderBuffer( vsRenderBuffer::Type_Static );
@@ -270,10 +270,10 @@ vsFragment *vsLineStrip2D( const vsString& material, vsVector2D *point, vsColor 
 	return fragment;
 }
 
-vsFragment *vsLineStrip2D( const vsString &material, vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,nullptr,count,width,loop); }
-vsFragment *vsLineList2D( const vsString &material, vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,nullptr,count,width); }
+vsFragment *vsLineStrip2D( const vsString &material, const vsVector2D *array, int count, float width, bool loop ) { return vsLineStrip2D(material,array,nullptr,count,width,loop); }
+vsFragment *vsLineList2D( const vsString &material, const vsVector2D *array, int count, float width ) { return vsLineList2D(material,array,nullptr,count,width); }
 
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count, float width, const vsColor *color_in, float texScale )
+vsFragment *vsLineList3D( const vsString &material, const vsVector3D *point, int count, float width, const vsColor *color_in, float texScale )
 {
 	const vsColor color = (color_in) ? *color_in : c_white;
 	const vsColor colorTransparent(color.r, color.g, color.b, 0.f);
@@ -346,7 +346,7 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, int count
 	return fragment;
 }
 
-vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int count, float width, bool loop, const vsColor *color_in, float texScale )
+vsFragment *vsLineStrip3D( const vsString& material, const vsVector3D *point, int count, float width, bool loop, const vsColor *color_in, float texScale )
 {
 	const vsColor *color = (color_in) ? color_in : &c_white;
 	size_t lineCount = count;
@@ -567,7 +567,7 @@ vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, int coun
 }
 
 // color array version
-vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, vsColor *color, int count, float width)
+vsFragment *vsLineList3D( const vsString &material, const vsVector3D *point, const vsColor *color, int count, float width)
 {
 	size_t lineCount = count/2;         // number of lines we're going to draw.
 	size_t vertexCount = lineCount * 8; // number of vertices we're going to output
@@ -662,7 +662,7 @@ vsFragment *vsLineList3D( const vsString &material, vsVector3D *point, vsColor *
 	return fragment;
 }
 
-vsFragment *vsLineStrip3D( const vsString& material, vsVector3D *point, vsColor *color, int count, float width, bool loop )
+vsFragment *vsLineStrip3D( const vsString& material, const vsVector3D *point, const vsColor *color, int count, float width, bool loop )
 {
 	size_t vertexCount = count * 2;
 	size_t indexCount = count * 6;
@@ -1199,7 +1199,7 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	}
 }
 
-void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, vsVector2D *point, int count, float width, bool loop )
+void vsMakeOutlineFromLineStrip2D( vsArray<vsVector2D> *result, const vsVector2D *point, int count, float width, bool loop )
 {
 	size_t vertexCount = count * 2;
 	float halfWidth = width * 0.5f;
