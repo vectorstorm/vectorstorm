@@ -224,6 +224,14 @@ vsMaterial::BindUniformVec4( const vsString& name, const vsVector4D* value )
 	return true;
 }
 
+
+bool
+vsMaterial::BindUniformMat3(const vsString& name, const vsMatrix3x3* value)
+{
+	m_values.BindUniformMat3(name, value);
+	return true;
+}
+
 bool
 vsMaterial::BindUniformMat4( const vsString& name, const vsMatrix4x4* value )
 {

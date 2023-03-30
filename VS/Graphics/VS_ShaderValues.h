@@ -18,6 +18,7 @@ class vsColor;
 class vsShader;
 class vsVector3D;
 class vsVector4D;
+class vsMatrix3x3;
 class vsMatrix4x4;
 class vsTexture;
 
@@ -86,6 +87,7 @@ public:
 	bool BindUniformVec2( const vsString& name, const vsVector2D* value );
 	bool BindUniformVec3( const vsString& name, const vsVector3D* value );
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
+	bool BindUniformMat3( const vsString& name, const vsMatrix3x3* value );
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
 	bool Has( const vsString& name ) const;
 	bool UniformF( uint32_t uid, float& out ) const;
@@ -94,6 +96,7 @@ public:
 	bool UniformVec2( uint32_t uid, vsVector2D& out ) const;
 	bool UniformVec3( uint32_t uid, vsVector3D& out ) const;
 	bool UniformVec4( uint32_t uid, vsVector4D& out ) const;
+	bool UniformMat3( uint32_t uid, vsMatrix3x3& out ) const;
 	bool UniformMat4( uint32_t uid, vsMatrix4x4& out ) const;
 
 	bool operator==( const vsShaderValues& other ) const;

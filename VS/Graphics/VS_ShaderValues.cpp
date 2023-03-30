@@ -224,6 +224,19 @@ vsShaderValues::BindUniformVec4( const vsString& name, const vsVector4D* value )
 }
 
 bool
+vsShaderValues::BindUniformMat3( const vsString& name, const vsMatrix3x3* value )
+{
+	{
+		uint32_t id = vsShaderUniformRegistry::UID(name);
+		m_value[id].u.bind = value;
+		m_value[id].type = Value::Type_Bind;
+		m_value[id].bound = true;
+		return true;
+	}
+	return false;
+}
+
+bool
 vsShaderValues::BindUniformMat4( const vsString& name, const vsMatrix4x4* value )
 {
 	{
@@ -392,6 +405,21 @@ vsShaderValues::UniformVec4( uint32_t uid, vsVector4D& out ) const
 		out = *(vsVector4D*)v->u.bind;
 	else
 		out = *(vsVector4D*)v->u.vec4;
+	return true;
+}
+
+bool
+vsShaderValues::UniformMat3( uint32_t uid, vsMatrix3x3& out ) const
+{
+	const Value* v = m_value.FindItem(uid);
+	if ( !v )
+	{
+		if ( m_parent )
+			return m_parent->UniformMat3(uid,out);
+		return false;
+	}
+	if ( v->bound )
+		out = *(vsMatrix3x3*)v->u.bind;
 	return true;
 }
 

@@ -67,6 +67,7 @@ private:
 	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
 	void SetUniformValueVec4( int i, const vsVector4D& value );
 	void SetUniformValueVec4( int i, const vsColor& value );
+	void SetUniformValueMat3( int i, const vsMatrix3x3& value );
 	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
 
 	void Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, uint32_t variantBits );

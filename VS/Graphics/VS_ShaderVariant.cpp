@@ -759,6 +759,14 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 					SetUniformValueVec4( i, v );
 					break;
 				}
+			case GL_FLOAT_MAT3:
+				{
+					vsMatrix3x3 v;
+					if ( !values || !values->UniformMat3( m_uniform[i].uid, v ) )
+						material->GetShaderValues()->UniformMat3( m_uniform[i].uid, v );
+					SetUniformValueMat3( i, v );
+					break;
+				}
 			case GL_FLOAT_MAT4:
 				{
 					vsMatrix4x4 v;
@@ -913,6 +921,12 @@ vsShaderVariant::SetUniformValueVec4( int i, const vsColor& value )
 {
 	glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
 	m_uniform[i].vec4.Set(value.r, value.g, value.b, value.a);
+}
+
+void
+vsShaderVariant::SetUniformValueMat3(int i, const vsMatrix3x3& value)
+{
+	glUniformMatrix3fv(m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value);
 }
 
 void
