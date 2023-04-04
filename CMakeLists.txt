@@ -91,6 +91,7 @@ if(WIN32)
 		if ( BACKTRACE_SUPPORTED )
 			find_library(DBGHELP_LIBRARY dbghelp REQUIRED )
 			find_file(DBGHELP_DLL dbghelp.dll REQUIRED )
+			find_file(DBGCORE_DLL dbgcore.dll REQUIRED )
 			find_file(EXCHNDL_DLL exchndl.dll REQUIRED )
 			find_file(MGWHELP_DLL mgwhelp.dll REQUIRED )
 			find_file(SYMSRV_DLL symsrv.dll REQUIRED )
@@ -109,7 +110,7 @@ if(WIN32)
 			SET( PRE_LIBRARIES "stdc++" )
 		endif()
 
-		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
+		# find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		if ( USE_SDL_SOUND )
 			find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
 			find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
@@ -123,8 +124,10 @@ if(WIN32)
 	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
-		${PHYSFS_DLL} ${OGG_DLL}
+		# ${PHYSFS_DLL}
+		${OGG_DLL}
 		${DBGHELP_DLL}
+		${DBGCORE_DLL}
 		${EXCHNDL_DLL}
 		${MGWHELP_DLL}
 		${SYMSRV_DLL}
