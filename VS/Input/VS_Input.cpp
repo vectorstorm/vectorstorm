@@ -1952,8 +1952,18 @@ vsInput::CaptureMouse( bool capture )
 void
 vsInput::HandleTextInput( const vsString& _input )
 {
+	vsString input(_input);
 	m_undoMode = false;
 	m_backspaceMode = false;
+
+	// always remove all \r;  we don't use those!
+	input.erase(std::remove(input.begin(), input.end(), '\r'), input.end());
+
+	if ( !m_stringModeIsMultiline )
+	{
+		// if we're not doing multiline editing, replace all '\n' with ' '
+		std::replace( input.begin(), input.end(), '\n', ' ' );
+	}
 
 	if ( !m_stringModeEditing )
 	{
@@ -1963,7 +1973,7 @@ vsInput::HandleTextInput( const vsString& _input )
 
 	if ( m_cursorHandler )
 	{
-		TextInputResult tir = m_cursorHandler->TextInput(_input);
+		TextInputResult tir = m_cursorHandler->TextInput(input);
 		m_stringModeString = tir.newString;
 		SetStringModeCursor( tir.newCursorPos, Opt_None );
 
@@ -1983,10 +1993,10 @@ vsInput::HandleTextInput( const vsString& _input )
 			if ( m_stringModeCursorFirst.byteOffset != m_stringModeCursorLast.byteOffset )
 				oldString.erase( m_stringModeCursorFirst.byteOffset, m_stringModeCursorLast.byteOffset-m_stringModeCursorFirst.byteOffset );
 
-			oldString.insert( m_stringModeCursorFirst.byteOffset, _input );
+			oldString.insert( m_stringModeCursorFirst.byteOffset, input );
 			m_stringModeString = oldString;
 
-			SetStringModeCursor( CursorPos::Byte(m_stringModeCursorFirst.byteOffset + _input.size()), Opt_None );
+			SetStringModeCursor( CursorPos::Byte(m_stringModeCursorFirst.byteOffset + input.size()), Opt_None );
 
 			ValidateString();
 		}
@@ -1994,7 +2004,7 @@ vsInput::HandleTextInput( const vsString& _input )
 		{
 			vsLog("Failed to handle UTF8 text input!");
 			vsLog("  String: %s", oldString);
-			vsLog("  New input: %s", _input);
+			vsLog("  New input: %s", input);
 		}
 	}
 }
