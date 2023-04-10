@@ -26,11 +26,15 @@
 #  include <mach/mach_time.h>
 #endif
 
-#if !defined TRACY_TIMER_FALLBACK && ( defined _WIN32 || ( defined __i386 || defined _M_IX86 || defined __x86_64__ || defined _M_X64 ) || ( defined TARGET_OS_IOS && TARGET_OS_IOS == 1 ) )
+#if ( defined _WIN32 || ( defined __i386 || defined _M_IX86 || defined __x86_64__ || defined _M_X64 ) || ( defined TARGET_OS_IOS && TARGET_OS_IOS == 1 ) )
 #  define TRACY_HW_TIMER
 #endif
 
-#if !defined TRACY_HW_TIMER
+#ifdef __linux__
+#  include <signal.h>
+#endif
+
+#if defined TRACY_TIMER_FALLBACK || !defined TRACY_HW_TIMER
 #  include <chrono>
 #endif
 
@@ -65,7 +69,25 @@ TRACY_API std::atomic<uint8_t>& GetGpuCtxCounter();
 TRACY_API GpuCtxWrapper& GetGpuCtx();
 TRACY_API uint32_t GetThreadHandle();
 TRACY_API bool ProfilerAvailable();
+TRACY_API bool ProfilerAllocatorAvailable();
 TRACY_API int64_t GetFrequencyQpc();
+
+#if defined TRACY_TIMER_FALLBACK && defined TRACY_HW_TIMER && ( defined __i386 || defined _M_IX86 || defined __x86_64__ || defined _M_X64 )
+TRACY_API bool HardwareSupportsInvariantTSC();  // check, if we need fallback scenario
+#else
+#  if defined TRACY_HW_TIMER
+tracy_force_inline bool HardwareSupportsInvariantTSC()
+{
+    return true;  // this is checked at startup
+}
+#  else
+tracy_force_inline bool HardwareSupportsInvariantTSC()
+{
+    return false;
+}
+#  endif
+#endif
+
 
 struct SourceLocationData
 {
@@ -127,7 +149,8 @@ struct LuaZoneState
 #endif
 
 
-typedef void(*ParameterCallback)( uint32_t idx, int32_t val );
+typedef void(*ParameterCallback)( void* data, uint32_t idx, int32_t val );
+typedef char*(*SourceContentsCallback)( void* data, const char* filename, size_t& size );
 
 class Profiler
 {
@@ -144,16 +167,17 @@ class Profiler
     {
         CallstackFrame,
         SymbolQuery,
-        CodeLocation,
         ExternalName,
-        KernelCode
+        KernelCode,
+        SourceCode
     };
 
     struct SymbolQueueItem
     {
         SymbolQueueItemType type;
         uint64_t ptr;
-        uint32_t extra;
+        uint64_t extra;
+        uint32_t id;
     };
 
 public:
@@ -166,25 +190,33 @@ public:
     {
 #ifdef TRACY_HW_TIMER
 #  if defined TARGET_OS_IOS && TARGET_OS_IOS == 1
-        return mach_absolute_time();
+        if( HardwareSupportsInvariantTSC() ) return mach_absolute_time();
 #  elif defined _WIN32
 #    ifdef TRACY_TIMER_QPC
         return GetTimeQpc();
 #    else
-        return int64_t( __rdtsc() );
+        if( HardwareSupportsInvariantTSC() ) return int64_t( __rdtsc() );
 #    endif
 #  elif defined __i386 || defined _M_IX86
-        uint32_t eax, edx;
-        asm volatile ( "rdtsc" : "=a" (eax), "=d" (edx) );
-        return ( uint64_t( edx ) << 32 ) + uint64_t( eax );
+        if( HardwareSupportsInvariantTSC() )
+        {
+            uint32_t eax, edx;
+            asm volatile ( "rdtsc" : "=a" (eax), "=d" (edx) );
+            return ( uint64_t( edx ) << 32 ) + uint64_t( eax );
+        }
 #  elif defined __x86_64__ || defined _M_X64
-        uint64_t rax, rdx;
-        asm volatile ( "rdtsc" : "=a" (rax), "=d" (rdx) );
-        return (int64_t)(( rdx << 32 ) + rax);
+        if( HardwareSupportsInvariantTSC() )
+        {
+            uint64_t rax, rdx;
+            asm volatile ( "rdtsc" : "=a" (rax), "=d" (rdx) );
+            return (int64_t)(( rdx << 32 ) + rax);
+        }
 #  else
 #    error "TRACY_HW_TIMER detection logic needs fixing"
 #  endif
-#else
+#endif
+
+#if !defined TRACY_HW_TIMER || defined TRACY_TIMER_FALLBACK
 #  if defined __linux__ && defined CLOCK_MONOTONIC_RAW
         struct timespec ts;
         clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
@@ -192,6 +224,10 @@ public:
 #  else
         return std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::high_resolution_clock::now().time_since_epoch() ).count();
 #  endif
+#endif
+
+#if !defined TRACY_TIMER_FALLBACK
+        return 0;  // unreachable branch
 #endif
     }
 
@@ -277,11 +313,10 @@ public:
 #ifdef TRACY_ON_DEMAND
         if( !GetProfiler().IsConnected() ) return;
 #endif
-        TracyLfqPrepare( QueueType::PlotData );
-        MemWrite( &item->plotData.name, (uint64_t)name );
-        MemWrite( &item->plotData.time, GetTime() );
-        MemWrite( &item->plotData.type, PlotDataType::Int );
-        MemWrite( &item->plotData.data.i, val );
+        TracyLfqPrepare( QueueType::PlotDataInt );
+        MemWrite( &item->plotDataInt.name, (uint64_t)name );
+        MemWrite( &item->plotDataInt.time, GetTime() );
+        MemWrite( &item->plotDataInt.val, val );
         TracyLfqCommit;
     }
 
@@ -290,11 +325,10 @@ public:
 #ifdef TRACY_ON_DEMAND
         if( !GetProfiler().IsConnected() ) return;
 #endif
-        TracyLfqPrepare( QueueType::PlotData );
-        MemWrite( &item->plotData.name, (uint64_t)name );
-        MemWrite( &item->plotData.time, GetTime() );
-        MemWrite( &item->plotData.type, PlotDataType::Float );
-        MemWrite( &item->plotData.data.f, val );
+        TracyLfqPrepare( QueueType::PlotDataFloat );
+        MemWrite( &item->plotDataFloat.name, (uint64_t)name );
+        MemWrite( &item->plotDataFloat.time, GetTime() );
+        MemWrite( &item->plotDataFloat.val, val );
         TracyLfqCommit;
     }
 
@@ -303,19 +337,21 @@ public:
 #ifdef TRACY_ON_DEMAND
         if( !GetProfiler().IsConnected() ) return;
 #endif
-        TracyLfqPrepare( QueueType::PlotData );
-        MemWrite( &item->plotData.name, (uint64_t)name );
-        MemWrite( &item->plotData.time, GetTime() );
-        MemWrite( &item->plotData.type, PlotDataType::Double );
-        MemWrite( &item->plotData.data.d, val );
+        TracyLfqPrepare( QueueType::PlotDataDouble );
+        MemWrite( &item->plotDataDouble.name, (uint64_t)name );
+        MemWrite( &item->plotDataDouble.time, GetTime() );
+        MemWrite( &item->plotDataDouble.val, val );
         TracyLfqCommit;
     }
 
-    static tracy_force_inline void ConfigurePlot( const char* name, PlotFormatType type )
+    static tracy_force_inline void ConfigurePlot( const char* name, PlotFormatType type, bool step, bool fill, uint32_t color )
     {
         TracyLfqPrepare( QueueType::PlotConfig );
         MemWrite( &item->plotConfig.name, (uint64_t)name );
         MemWrite( &item->plotConfig.type, (uint8_t)type );
+        MemWrite( &item->plotConfig.step, (uint8_t)step );
+        MemWrite( &item->plotConfig.fill, (uint8_t)fill );
+        MemWrite( &item->plotConfig.color, color );
 
 #ifdef TRACY_ON_DEMAND
         GetProfiler().DeferItem( *item );
@@ -378,9 +414,9 @@ public:
         TracyQueuePrepare( callstack == 0 ? QueueType::MessageColor : QueueType::MessageColorCallstack );
         MemWrite( &item->messageColorFat.time, GetTime() );
         MemWrite( &item->messageColorFat.text, (uint64_t)ptr );
-        MemWrite( &item->messageColorFat.r, uint8_t( ( color       ) & 0xFF ) );
+        MemWrite( &item->messageColorFat.b, uint8_t( ( color       ) & 0xFF ) );
         MemWrite( &item->messageColorFat.g, uint8_t( ( color >> 8  ) & 0xFF ) );
-        MemWrite( &item->messageColorFat.b, uint8_t( ( color >> 16 ) & 0xFF ) );
+        MemWrite( &item->messageColorFat.r, uint8_t( ( color >> 16 ) & 0xFF ) );
         MemWrite( &item->messageColorFat.size, (uint16_t)size );
         TracyQueueCommit( messageColorFatThread );
     }
@@ -398,9 +434,9 @@ public:
         TracyQueuePrepare( callstack == 0 ? QueueType::MessageLiteralColor : QueueType::MessageLiteralColorCallstack );
         MemWrite( &item->messageColorLiteral.time, GetTime() );
         MemWrite( &item->messageColorLiteral.text, (uint64_t)txt );
-        MemWrite( &item->messageColorLiteral.r, uint8_t( ( color       ) & 0xFF ) );
+        MemWrite( &item->messageColorLiteral.b, uint8_t( ( color       ) & 0xFF ) );
         MemWrite( &item->messageColorLiteral.g, uint8_t( ( color >> 8  ) & 0xFF ) );
-        MemWrite( &item->messageColorLiteral.b, uint8_t( ( color >> 16 ) & 0xFF ) );
+        MemWrite( &item->messageColorLiteral.r, uint8_t( ( color >> 16 ) & 0xFF ) );
         TracyQueueCommit( messageColorLiteralThread );
     }
 
@@ -472,6 +508,11 @@ public:
     static tracy_force_inline void MemFreeCallstack( const void* ptr, int depth, bool secure )
     {
         if( secure && !ProfilerAvailable() ) return;
+        if( !ProfilerAllocatorAvailable() )
+        {
+            MemFree( ptr, secure );
+            return;
+        }
 #ifdef TRACY_HAS_CALLSTACK
         auto& profiler = GetProfiler();
 #  ifdef TRACY_ON_DEMAND
@@ -579,7 +620,13 @@ public:
 #endif
     }
 
-    static tracy_force_inline void ParameterRegister( ParameterCallback cb ) { GetProfiler().m_paramCallback = cb; }
+    static tracy_force_inline void ParameterRegister( ParameterCallback cb, void* data )
+    {
+        auto& profiler = GetProfiler();
+        profiler.m_paramCallback = cb;
+        profiler.m_paramCallbackData = data;
+    }
+
     static tracy_force_inline void ParameterSetup( uint32_t idx, const char* name, bool isBool, int32_t val )
     {
         TracyLfqPrepare( QueueType::ParamSetup );
@@ -593,6 +640,13 @@ public:
 #endif
 
         TracyLfqCommit;
+    }
+
+    static tracy_force_inline void SourceCallbackRegister( SourceContentsCallback cb, void* data )
+    {
+        auto& profiler = GetProfiler();
+        profiler.m_sourceCallback = cb;
+        profiler.m_sourceCallbackData = data;
     }
 
 #ifdef TRACY_FIBERS
@@ -753,18 +807,17 @@ private:
 
     void QueueCallstackFrame( uint64_t ptr );
     void QueueSymbolQuery( uint64_t symbol );
-    void QueueCodeLocation( uint64_t ptr );
     void QueueExternalName( uint64_t ptr );
     void QueueKernelCode( uint64_t symbol, uint32_t size );
+    void QueueSourceCodeQuery( uint32_t id );
 
     bool HandleServerQuery();
     void HandleDisconnect();
     void HandleParameter( uint64_t payload );
     void HandleSymbolCodeQuery( uint64_t symbol, uint32_t size );
-    void HandleSourceCodeQuery();
+    void HandleSourceCodeQuery( char* data, char* image, uint32_t id );
 
     void AckServerQuery();
-    void AckSourceCodeNotAvailable();
     void AckSymbolCodeNotAvailable();
 
     void CalibrateTimer();
@@ -889,7 +942,11 @@ private:
 #endif
 
     ParameterCallback m_paramCallback;
+    void* m_paramCallbackData;
+    SourceContentsCallback m_sourceCallback;
+    void* m_sourceCallbackData;
 
+    char* m_queryImage;
     char* m_queryData;
     char* m_queryDataPtr;
 

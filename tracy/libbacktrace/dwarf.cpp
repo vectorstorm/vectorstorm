@@ -52,6 +52,7 @@ enum dwarf_tag {
   DW_TAG_compile_unit = 0x11,
   DW_TAG_inlined_subroutine = 0x1d,
   DW_TAG_subprogram = 0x2e,
+  DW_TAG_skeleton_unit = 0x4a,
 };
 
 enum dwarf_form {
@@ -2325,14 +2326,16 @@ find_address_ranges (struct backtrace_state *state, uintptr_t base_address,
 	      break;
 
 	    case DW_AT_stmt_list:
-	      if (abbrev->tag == DW_TAG_compile_unit
+	      if ((abbrev->tag == DW_TAG_compile_unit
+		   || abbrev->tag == DW_TAG_skeleton_unit)
 		  && (val.encoding == ATTR_VAL_UINT
 		      || val.encoding == ATTR_VAL_REF_SECTION))
 		u->lineoff = val.u.uint;
 	      break;
 
 	    case DW_AT_name:
-	      if (abbrev->tag == DW_TAG_compile_unit)
+	      if (abbrev->tag == DW_TAG_compile_unit
+		  || abbrev->tag == DW_TAG_skeleton_unit)
 		{
 		  name_val = val;
 		  have_name_val = 1;
@@ -2340,7 +2343,8 @@ find_address_ranges (struct backtrace_state *state, uintptr_t base_address,
 	      break;
 
 	    case DW_AT_comp_dir:
-	      if (abbrev->tag == DW_TAG_compile_unit)
+	      if (abbrev->tag == DW_TAG_compile_unit
+		  || abbrev->tag == DW_TAG_skeleton_unit)
 		{
 		  comp_dir_val = val;
 		  have_comp_dir_val = 1;
@@ -2348,19 +2352,22 @@ find_address_ranges (struct backtrace_state *state, uintptr_t base_address,
 	      break;
 
 	    case DW_AT_str_offsets_base:
-	      if (abbrev->tag == DW_TAG_compile_unit
+	      if ((abbrev->tag == DW_TAG_compile_unit
+		   || abbrev->tag == DW_TAG_skeleton_unit)
 		  && val.encoding == ATTR_VAL_REF_SECTION)
 		u->str_offsets_base = val.u.uint;
 	      break;
 
 	    case DW_AT_addr_base:
-	      if (abbrev->tag == DW_TAG_compile_unit
+	      if ((abbrev->tag == DW_TAG_compile_unit
+		   || abbrev->tag == DW_TAG_skeleton_unit)
 		  && val.encoding == ATTR_VAL_REF_SECTION)
 		u->addr_base = val.u.uint;
 	      break;
 
 	    case DW_AT_rnglists_base:
-	      if (abbrev->tag == DW_TAG_compile_unit
+	      if ((abbrev->tag == DW_TAG_compile_unit
+		   || abbrev->tag == DW_TAG_skeleton_unit)
 		  && val.encoding == ATTR_VAL_REF_SECTION)
 		u->rnglists_base = val.u.uint;
 	      break;
@@ -2388,7 +2395,8 @@ find_address_ranges (struct backtrace_state *state, uintptr_t base_address,
 	}
 
       if (abbrev->tag == DW_TAG_compile_unit
-	  || abbrev->tag == DW_TAG_subprogram)
+	  || abbrev->tag == DW_TAG_subprogram
+	  || abbrev->tag == DW_TAG_skeleton_unit)
 	{
 	  if (!add_ranges (state, dwarf_sections, base_address,
 			   is_bigendian, u, pcrange.lowpc, &pcrange,
@@ -2396,9 +2404,10 @@ find_address_ranges (struct backtrace_state *state, uintptr_t base_address,
 			   (void *) addrs))
 	    return 0;
 
-	  /* If we found the PC range in the DW_TAG_compile_unit, we
-	     can stop now.  */
-	  if (abbrev->tag == DW_TAG_compile_unit
+	  /* If we found the PC range in the DW_TAG_compile_unit or
+	     DW_TAG_skeleton_unit, we can stop now.  */
+	  if ((abbrev->tag == DW_TAG_compile_unit
+	       || abbrev->tag == DW_TAG_skeleton_unit)
 	      && (pcrange.have_ranges
 		  || (pcrange.have_lowpc && pcrange.have_highpc)))
 	    return 1;
@@ -2557,6 +2566,9 @@ build_address_map (struct backtrace_state *state, uintptr_t base_address,
       u->comp_dir = NULL;
       u->abs_filename = NULL;
       u->lineoff = 0;
+      u->str_offsets_base = 0;
+      u->addr_base = 0;
+      u->rnglists_base = 0;
 
       /* The actual line number mappings will be read as needed.  */
       u->lines = NULL;
@@ -3607,7 +3619,8 @@ read_function_entry (struct backtrace_state *state, struct dwarf_data *ddata,
 
 	  /* The compile unit sets the base address for any address
 	     ranges in the function entries.  */
-	  if (abbrev->tag == DW_TAG_compile_unit
+	  if ((abbrev->tag == DW_TAG_compile_unit
+	       || abbrev->tag == DW_TAG_skeleton_unit)
 	      && abbrev->attrs[i].name == DW_AT_low_pc)
 	    {
 	      if (val.encoding == ATTR_VAL_ADDRESS)
@@ -3885,7 +3898,7 @@ read_function_info (struct backtrace_state *state, struct dwarf_data *ddata,
    Returns whatever CALLBACK returns, or 0 to keep going.  */
 
 static int
-report_inlined_functions (uintptr_t pc, struct function *function,
+report_inlined_functions (uintptr_t pc, struct function *function, const char* comp_dir,
 			  backtrace_full_callback callback, void *data,
 			  const char **filename, int *lineno)
 {
@@ -3939,13 +3952,22 @@ report_inlined_functions (uintptr_t pc, struct function *function,
   inlined = match->function;
 
   /* Report any calls inlined into this one.  */
-  ret = report_inlined_functions (pc, inlined, callback, data,
+  ret = report_inlined_functions (pc, inlined, comp_dir, callback, data,
 				  filename, lineno);
   if (ret != 0)
     return ret;
 
   /* Report this inlined call.  */
-  ret = callback (data, pc, match->low, *filename, *lineno, inlined->name);
+  if (*filename[0] != '/' && comp_dir)
+  {
+    char buf[1024];
+    snprintf (buf, 1024, "%s/%s", comp_dir, *filename);
+    ret = callback (data, pc, match->low, buf, *lineno, inlined->name);
+  }
+  else
+  {
+    ret = callback (data, pc, match->low, *filename, *lineno, inlined->name);
+  }
   if (ret != 0)
     return ret;
 
@@ -4212,12 +4234,21 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
   filename = ln->filename;
   lineno = ln->lineno;
 
-  ret = report_inlined_functions (pc, function, callback, data,
+  ret = report_inlined_functions (pc, function, entry->u->comp_dir, callback, data,
 				  &filename, &lineno);
   if (ret != 0)
     return ret;
 
-  return callback (data, pc, fmatch->low, filename, lineno, function->name);
+  if (filename[0] != '/' && entry->u->comp_dir)
+  {
+    char buf[1024];
+    snprintf (buf, 1024, "%s/%s", entry->u->comp_dir, filename);
+    return callback (data, pc, fmatch->low, buf, lineno, function->name);
+  }
+  else
+  {
+    return callback (data, pc, fmatch->low, filename, lineno, function->name);
+  }
 }
 
 

@@ -30,6 +30,11 @@ SOFTWARE.
 
 #include "../common/TracyAlloc.hpp"
 
+#if defined (_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4324)
+#endif
+
 namespace tracy {
 
 template <typename T> class SPSCQueue {
@@ -107,7 +112,10 @@ public:
     return static_cast<size_t>(diff);
   }
 
-  bool empty() const noexcept { return size() == 0; }
+  bool empty() const noexcept {
+      return writeIdx_.load(std::memory_order_acquire) ==
+          readIdx_.load(std::memory_order_acquire);
+  }
 
   size_t capacity() const noexcept { return capacity_ - 1; }
 
@@ -131,6 +139,10 @@ private:
 
   // Padding to avoid adjacent allocations to share cache line with
   // writeIdxCache_
-  char padding_[kCacheLineSize - sizeof(writeIdxCache_)];
+  char padding_[kCacheLineSize - sizeof(SPSCQueue<T>::writeIdxCache_)];
 };
 } // namespace rigtorp
+
+#if defined (_MSC_VER)
+#pragma warning(pop)
+#endif

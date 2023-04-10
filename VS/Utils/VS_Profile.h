@@ -35,7 +35,7 @@
 #undef TRACY_ENABLE
 #define TRACY_ENABLE
 // #include "VS_OpenGL.h"
-#include "tracy/Tracy.hpp"
+#include "tracy/tracy/Tracy.hpp"
 // #include "tracy/TracyOpenGL.hpp"
 
 // class VSProfileLib
