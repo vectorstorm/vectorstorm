@@ -199,12 +199,10 @@ vsTransform3D::GetMatrix() const
 	{
 		m_dirty = false;
 
-		vsMatrix3x3 m;
-		m.Set(m_quaternion);
-
+		vsMatrix3x3 m(m_quaternion);
 		m_matrix.SetRotationMatrix( m );
-		m_matrix.SetTranslation( m_translation );
 		m_matrix.Scale( m_scale );
+		m_matrix.SetTranslation( m_translation );
 	}
 
 	return m_matrix;

@@ -64,6 +64,9 @@ public:
 
 	void			SetRotationMatrix( const vsMatrix3x3 &m );
 	void			SetTranslation( const vsVector3D &t );
+
+	void			Translate( const vsVector3D& t );
+	void			Rotate( const vsMatrix3x3&m );
 	void			Scale( const vsVector3D &s );
 
 	void			SetAsRotationAroundX( const vsAngle &a );

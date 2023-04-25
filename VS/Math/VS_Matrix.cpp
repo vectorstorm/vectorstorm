@@ -276,19 +276,26 @@ vsMatrix4x4::SetTranslation( const vsVector3D &t_in )
 }
 
 void
+vsMatrix4x4::Translate( const vsVector3D& t )
+{
+	w += t;
+}
+
+void
+vsMatrix4x4::Rotate( const vsMatrix3x3& m )
+{
+	vsMatrix4x4 rotMatrix;
+	rotMatrix.SetRotationMatrix( m );
+
+	(*this) = rotMatrix * (*this);
+}
+
+void
 vsMatrix4x4::Scale( const vsVector3D &s )
 {
-	x.x *= s.x;
-	x.y *= s.y;
-	x.z *= s.z;
-
-	y.x *= s.x;
-	y.y *= s.y;
-	y.z *= s.z;
-
-	z.x *= s.x;
-	z.y *= s.y;
-	z.z *= s.z;
+	x *= s.x;
+	y *= s.y;
+	z *= s.z;
 }
 
 void
