@@ -23,7 +23,7 @@ vsSpring::Update(float timeStep)
 {
 	float delta = m_center - m_position;
 
-	m_velocity *= m_damping * timeStep;
+	m_velocity -= (m_velocity * m_damping * timeStep);
 	m_velocity += delta * m_stiffness * timeStep;
 
 	m_position += m_velocity * timeStep;
