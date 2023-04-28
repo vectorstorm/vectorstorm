@@ -23,7 +23,7 @@ vsSpring::Update(float timeStep)
 {
 	float delta = m_center - m_position;
 
-	m_velocity -= (m_velocity * m_damping * timeStep);
+	m_velocity -= m_velocity * m_damping * timeStep;
 	m_velocity += delta * m_stiffness * timeStep;
 
 	m_position += m_velocity * timeStep;
@@ -44,8 +44,8 @@ vsSpring2D::Update(float timeStep)
 {
 	vsVector2D delta = m_center - m_position;
 
-	m_velocity.x *= m_damping.x * timeStep;
-	m_velocity.y *= m_damping.y * timeStep;
+	m_velocity.x -= m_velocity.x * m_damping.x * timeStep;
+	m_velocity.y -= m_velocity.y * m_damping.y * timeStep;
 
 	m_velocity.x += delta.x * m_stiffness.x * timeStep;
 	m_velocity.y += delta.y * m_stiffness.y * timeStep;
@@ -58,7 +58,7 @@ vsSpring2D::Update(float timeStep)
 
 
 vsSpring3D::vsSpring3D(const vsVector3D &stiffness, float dampingFactor):
-m_stiffness(stiffness)
+	m_stiffness(stiffness)
 {
 	m_damping.Set( dampingFactor, dampingFactor, dampingFactor );
 }
@@ -68,9 +68,9 @@ vsSpring3D::Update(float timeStep)
 {
 	vsVector3D delta = m_center - m_position;
 
-	m_velocity.x *= m_damping.x * timeStep;
-	m_velocity.y *= m_damping.y * timeStep;
-	m_velocity.z *= m_damping.z * timeStep;
+	m_velocity.x -= m_velocity.x * m_damping.x * timeStep;
+	m_velocity.y -= m_velocity.y * m_damping.y * timeStep;
+	m_velocity.z -= m_velocity.z * m_damping.z * timeStep;
 
 	m_velocity.x += delta.x * m_stiffness.x * timeStep;
 	m_velocity.y += delta.y * m_stiffness.y * timeStep;
