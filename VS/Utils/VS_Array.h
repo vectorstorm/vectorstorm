@@ -291,6 +291,11 @@ public:
 		return true;
 	}
 
+	bool operator!=(const vsArray<T>& other) const
+	{
+		return !operator==(other);
+	}
+
 	void Sort( SortFunction lessThanFn )
 	{
 		// simple bubble sort as a first experiment with this approach.
