@@ -142,7 +142,7 @@ vsGem::vsGem( float radius, int resolution, const vsString &materialName )
 }
 
 
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, vsMaterial *material, const vsColor *colorOverride )
 {
 	vsVector3D va[4] =
 	{
@@ -221,7 +221,7 @@ vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, vsMaterial *material,
 	return fragment;
 }
 
-vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsColor *colorOverride )
+vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
@@ -272,7 +272,7 @@ vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, vsMaterial *material, vsCol
 }
 
 
-vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *buffer = new vsRenderBuffer;
 
@@ -363,7 +363,7 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, vsMaterial *material, vsColor
 	return fragment;
 }
 
-vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *buffer = new vsRenderBuffer;
 
@@ -466,7 +466,7 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, vsMaterial *material, vsCo
 }
 
 
-vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsColor *colorOverride )
+vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, const vsColor *colorOverride )
 {
 	vsVector3D va[8];
 	float dx = box.Width() * 0.5f;
@@ -520,7 +520,7 @@ vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, vsMaterial *material, vsCol
 	return fragment;
 }
 
-vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, const vsVector3D &offset, const vsString &material, const vsColor *colorOverride )
 {
 	vsRenderBuffer::PC va[4];
 	va[0].position = vsVector3D( box.GetMin().x, 0.f, box.GetMin().z );
@@ -579,7 +579,7 @@ vsFragment *	vsMakeSolidBox2D_XZ( const vsBox3D &box, vsMaterial *material )
 	return fragment;
 }
 
-vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &offset, const vsString &material, const vsColor *colorOverride )
 {
 	vsRenderBuffer::PC va[4];
 	va[0].position = box.GetMin();
@@ -612,7 +612,7 @@ vsFragment *	vsMakeSolidBox2D_AtOffset( const vsBox2D &box, const vsVector3D &of
 	return fragment;
 }
 
-vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
 	// vsVector3D va[4] =
 	// {
@@ -679,17 +679,17 @@ vsFragment *	vsMakeFringedBox2D( const vsBox2D &box, const vsString &material, v
 	return fragment;
 }
 
-vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
 	return vsMakeSolidBox2D_AtOffset( box, vsVector3D::Zero, material, colorOverride );
 }
 
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
 	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,1.f), vsVector2D::Zero, colorOverride);
 }
 
-vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, const vsVector2D& texScale, const vsVector2D& texOffset, const vsColor *colorOverride )
 {
 	vsRenderBuffer *vbo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
 	vsRenderBuffer *ibo = new vsRenderBuffer(vsRenderBuffer::Type_Static);
@@ -743,12 +743,12 @@ vsFragment *	vsMakeTexturedBox2D( const vsBox2D &box, const vsString &material, 
 	return fragment;
 }
 
-vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox2D_FlipV( const vsBox2D &box, const vsString &material, const vsColor *colorOverride )
 {
 	return vsMakeTexturedBox2D(box, material, vsVector2D(1.f,-1.f), vsVector2D(0.f,1.f), colorOverride);
 }
 
-vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle, vsColor *colorOverride )
+vsFragment *	vsMakeTiledTexturedBox2D( const vsBox2D &box, const vsString &material, float tileSize, const vsAngle &angle, const vsColor *colorOverride )
 {
 	vsVector3D va[4] =
 	{
@@ -839,7 +839,7 @@ vsFragment *	vsMakeOutlineBox2D( const vsBox2D &box, const vsString &material, c
 }
 
 
-vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *buffer = new vsRenderBuffer;
 
@@ -929,7 +929,7 @@ vsFragment *	vsMakeSolidBox3D( const vsBox3D &box, const vsString &material, vsC
 	return fragment;
 }
 
-vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, const vsColor *colorOverride )
 {
 	vsRenderBuffer *buffer = new vsRenderBuffer;
 
@@ -1032,7 +1032,7 @@ vsFragment *	vsMakeTexturedBox3D( const vsBox3D &box, const vsString &material, 
 }
 
 
-vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, vsColor *colorOverride )
+vsFragment *	vsMakeOutlineBox3D( const vsBox3D &box, const vsString &material, const vsColor *colorOverride )
 {
 	vsVector3D va[8];
 	float dx = box.Width() * 0.5f;
