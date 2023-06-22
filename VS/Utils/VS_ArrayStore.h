@@ -307,6 +307,38 @@ public:
 			}
 		}
 	}
+
+	void MoveItemBefore(T* item, int newIndex)
+	{
+		int oldIndex = FindEntry(item);
+
+		// If it's not in our list already, add it
+		if (oldIndex == npos)
+		{
+			AddItem(item);
+			oldIndex = ItemCount() - 1;
+		}
+
+		if (newIndex >= ItemCount() - 1)
+		{
+			newIndex = ItemCount() - 1;
+		}
+
+		if (newIndex < 0)
+		{
+			newIndex = 0;
+		}
+
+		int direction = oldIndex > newIndex ? -1 : 1;
+
+		for (int i = oldIndex; i != newIndex; i += direction)
+		{
+			m_array[i] = m_array[i + direction];
+		}
+
+		m_array[newIndex] = item;
+	}
+
 	static const int npos = -1;
 };
 
