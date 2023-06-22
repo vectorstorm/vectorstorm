@@ -54,11 +54,14 @@ vsMatrix3x3::Set( const vsVector3D &forward, const vsVector3D &up )
 	f = forward;
 	u = up;
 
-	f.Normalise();
-	u.Normalise();
+	f.NormaliseSafe();
+	u.NormaliseSafe();
 
 	r = u.Cross(f);
 	u = f.Cross(r);
+
+	r.NormaliseSafe();
+	u.NormaliseSafe();
 
 	x = r;
 	y = u;
