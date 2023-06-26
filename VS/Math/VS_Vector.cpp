@@ -8,7 +8,7 @@
  */
 
 #include "VS_Vector.h"
-#include "VS_Backtrace.h"
+// #include "VS_Backtrace.h"
 //#include <math.h>
 
 vsVector2D vsVector2D::Zero(0.0f,0.0f);
@@ -56,13 +56,13 @@ vsVector2D::Normalise()
 
 	if ( vsIsNaN(x) || vsIsNaN(y) )
 	{
-		static bool traced = false;
-		if ( !traced )
-		{
-			traced = true;
-			vsBacktrace();
-		}
-
+		// static bool traced = false;
+		// if ( !traced )
+		// {
+		// 	traced = true;
+		// 	vsBacktrace();
+		// }
+        //
 		vsCheck(!vsIsNaN(x) && !vsIsNaN(y), "Error, NaN in normalised vector2D!");
 		length = 1.f; // avoid creating NaNs.
 		x = y = 0.f;
@@ -117,12 +117,12 @@ vsVector3D::Normalise()
 	*this *= (1.0f/length);
 	if ( vsIsNaN(x) || vsIsNaN(y) || vsIsNaN(z) )
 	{
-		static bool traced = false;
-		if ( !traced )
-		{
-			traced = true;
-			vsBacktrace();
-		}
+		// static bool traced = false;
+		// if ( !traced )
+		// {
+		// 	traced = true;
+		// 	vsBacktrace();
+		// }
 		vsCheck( !vsIsNaN(x) && !vsIsNaN(y) && !vsIsNaN(z), "Error, NaN in normalised vector3d!");
 		x = y = z = 0.f;
 	}
