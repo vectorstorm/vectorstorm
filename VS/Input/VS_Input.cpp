@@ -2617,6 +2617,11 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				else
 				{
+					if (m_cursorHandler)
+					{
+						m_cursorHandler->NotifyReturnPressed();
+					}
+
 					StringModeSaveUndoState();
 					SetStringMode(false, vsBox2D());
 				}
