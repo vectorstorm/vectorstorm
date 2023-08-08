@@ -239,6 +239,19 @@ public:
 		return GetItem(id);
 	}
 
+	void operator=( const vsVolatileArray<T>& other )
+	{
+		vsDeleteArray(m_array);
+		m_array = new T[ other.ItemCount() ];
+		m_arrayLength = other.ItemCount();
+		m_arrayStorage = m_arrayLength;
+		for ( int i = 0; i < m_arrayLength; i++ )
+		{
+			m_array[i] = other.m_array[i];
+		}
+	}
+
+
 	const T	&operator[](int id) const
 	{
 		return GetItem(id);
