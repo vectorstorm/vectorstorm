@@ -83,9 +83,9 @@ vsLocalisationTable::Deinit()
 }
 
 void
-vsLocalisationTable::AddKey( const vsString& key, const vsString& translation )
+vsLocalisationTable::SetKey( const vsString& key, const vsString& translation )
 {
-	s_localisationTable->AddItemWithKey(translation, key);
+	(*s_localisationTable)[key] = translation;
 }
 
 vsString
