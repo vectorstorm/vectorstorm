@@ -7,10 +7,11 @@ class vsWeakPointerTarget;
  *
  *\ingroup qcl_types_pointers
  */
-struct vsWeakPointerBase
+class vsWeakPointerBase
 {
+public:
 	vsWeakPointerBase();
-	vsWeakPointerTarget *m_target;
+	virtual void Clear() = 0;
 	vsWeakPointerBase   *m_previousWeakPointer;
 	vsWeakPointerBase   *m_nextWeakPointer;
 };
@@ -60,7 +61,6 @@ private:
 inline
 vsWeakPointerBase::vsWeakPointerBase()
 {
-	m_target = nullptr;
 	m_previousWeakPointer = nullptr;
 	m_nextWeakPointer = nullptr;
 }
@@ -106,8 +106,6 @@ vsWeakPointerTarget::AddReference( vsWeakPointerBase *newReference ) const
 {
 	assert( newReference != nullptr );
 
-	newReference->m_target = (vsWeakPointerTarget*)this;
-
 	newReference->m_previousWeakPointer = nullptr;
 	newReference->m_nextWeakPointer = m_firstWeakPointer;
 
@@ -130,8 +128,6 @@ int
 vsWeakPointerTarget::ReleaseReference( vsWeakPointerBase *oldReference ) const
 {
 	assert( oldReference != nullptr );
-	assert( oldReference->m_target == this );
-
 
 	if( oldReference->m_previousWeakPointer )
 	{
@@ -148,7 +144,7 @@ vsWeakPointerTarget::ReleaseReference( vsWeakPointerBase *oldReference ) const
 		oldReference->m_nextWeakPointer->m_previousWeakPointer = oldReference->m_previousWeakPointer;
 	}
 
-	oldReference->m_target = nullptr;
+	oldReference->Clear();
 	oldReference->m_previousWeakPointer = nullptr;
 	oldReference->m_nextWeakPointer = nullptr;
 

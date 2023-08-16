@@ -1,80 +1,54 @@
-#ifndef QCL_TYPES_POINTERS_WEAKPOINTER_H
-#define QCL_TYPES_POINTERS_WEAKPOINTER_H
+#ifndef VS_WEAKPOINTER_H
+#define VS_WEAKPOINTER_H
 
 #include "VS_WeakPointerTarget.h"
 #include "VS/Utils/VS_Demangle.h"
 
-
-
-/** A smart pointer to class T with weak semantics.
- *
- *  The T type must have been derived from vsWeakPointerTarget.
- *
- *  This type of pointer:
- *    - keeps track reference count the objects they point at
- *    - automatically nullptrs itself when the target object is deleted.
- *
- *  Apart from that, they behave just like an ordinary pointer. Enjoy!
- *
- *	Be wary of using a vsWeakPointer in conjunction with a qCopyOnWritePointer!
- *
- *  See also qDerivedWeakPointer< T, ParentTargetT >
- *
- *\ingroup qcl_types_pointers
- */
 template< class T >
 class vsWeakPointer : protected vsWeakPointerBase
 {
+	T* m_ptr;
 public:
-				vsWeakPointer( T *object = nullptr );
-				vsWeakPointer( const vsWeakPointer<T> &sp );
-	virtual    ~vsWeakPointer();
+	vsWeakPointer( T *object = nullptr );
+	vsWeakPointer( const vsWeakPointer<T> &sp );
+	virtual ~vsWeakPointer();
 
-	vsWeakPointer<T> &	operator = ( const vsWeakPointer<T> &sp );
-	vsWeakPointer<T> &	operator = ( T *object );
+	virtual void Clear() { m_ptr = nullptr; }
 
-						operator const T *() const;
-						operator T *();
+	vsWeakPointer<T> & operator=( const vsWeakPointer<T> &sp );
+	vsWeakPointer<T> & operator=( T *object );
 
-			 const T *	operator->() const;
-				   T *	operator->();
+	operator const T *() const;
+	operator T *();
 
-					 T *	Target();
-			   const T *	Target() const;
-private:
-	friend class vsWeakPointerTarget;
+	const T * operator->() const;
+	T * operator->();
+
+	T * Target();
+	const T * Target() const;
 };
 
-
-
-
-
-/** Construct a new vsWeakPointer from a dumb pointer.
- *  The object being attached do won't necessarily have a 0 reference count!
- */
 template< class T >
-vsWeakPointer<T>::vsWeakPointer( T *object )
+vsWeakPointer<T>::vsWeakPointer( T *object ):
+	m_ptr(object)
 {
-	if( object )
+	if( m_ptr )
 	{
-		object->AddReference( this );
+		m_ptr->AddReference( this );
 	}
 }
 
 
-/** Copy constructor.
- */
 template< class T >
-vsWeakPointer<T>::vsWeakPointer( const vsWeakPointer<T> &sp )
+vsWeakPointer<T>::vsWeakPointer( const vsWeakPointer<T> &sp ):
+	m_ptr( sp.m_ptr )
 {
-	if( sp.Target() )
+	if( m_ptr )
 	{
-		sp.Target()->AddReference( this );
+		m_ptr->AddReference( this );
 	}
 }
 
-/** Destructor. Will release the object if this is the last pointer!
- */
 template< class T >
 vsWeakPointer<T>::~vsWeakPointer()
 {
@@ -85,17 +59,13 @@ vsWeakPointer<T>::~vsWeakPointer()
 }
 
 
-/** Standard assignment.
- *   If this pointer was the last pointing to its object,
- *   that object will be deleted when the new pointer is assigned.
- */
 template< class T >
 vsWeakPointer<T> &
 vsWeakPointer<T>::operator=( const vsWeakPointer &sp )
 {
 	if( this == &sp )
 	{
-		// self assignment, sod off!
+		// self-assignment, nothing to do here!
 		return *this;
 	}
 
@@ -105,20 +75,18 @@ vsWeakPointer<T>::operator=( const vsWeakPointer &sp )
 		Target()->ReleaseReference( this );
 	}
 
-	// get the new reference
-	if( sp.Target() )
+	m_ptr = sp.m_ptr;
+
+	// add the new reference
+	if( m_ptr )
 	{
-		sp.Target()->AddReference( this );
+		m_ptr->AddReference( this );
 	}
 
 	return *this;
 }
 
 
-/**  Standard assignment.
- *   If this pointer was the last pointing to its object,
- *   that object will be deleted when the new pointer is assigned.
- */
 template< class T >
 vsWeakPointer<T> &
 vsWeakPointer<T>::operator=( T *object )
@@ -129,7 +97,9 @@ vsWeakPointer<T>::operator=( T *object )
 		Target()->ReleaseReference( this );
 	}
 
-	// get the new reference
+	m_ptr = object;
+
+	// add the new reference
 	if( object )
 	{
 		object->AddReference( this );
@@ -139,16 +109,14 @@ vsWeakPointer<T>::operator=( T *object )
 }
 
 
-/**  Conversion to a const dumb pointer.
- */
+//  Conversion to a const C pointer.
 template< class T >
 vsWeakPointer<T>::operator const T *() const
 {
 	return Target();
 }
 
-/**  Conversion to a dumb pointer.
- */
+//  Conversion to a non-const C pointer.
 template< class T >
 vsWeakPointer<T>::operator T *()
 {
@@ -156,50 +124,46 @@ vsWeakPointer<T>::operator T *()
 }
 
 
-/**  Arrow operator - access to the members of the object pointed at.
- */
+//  Arrow operator - access to const members of the object pointed at.
 template< class T >
 const T *
 vsWeakPointer<T>::operator->() const
 {
-	if ( m_target == nullptr )
+	if ( m_ptr == nullptr )
 	{
-		vsAssertF( m_target != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
+		vsAssertF( m_ptr != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
 	}
 	return Target();
 }
 
 
-/**  Arrow operator - access to the members of the object pointed at.
- */
+//  Arrow operator - access to the non-const members of the object pointed at.
 template< class T >
 T *
 vsWeakPointer<T>::operator->()
 {
-	if ( m_target == nullptr )
+	if ( m_ptr == nullptr )
 	{
-		vsAssertF( m_target != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
+		vsAssertF( m_ptr != nullptr, "dereferenced weak pointer of type '%s' which is nullptr", Demangle(typeid(T).name()) );
 	}
 	return Target();
 }
 
 
-/**  Write access to the members of the object pointed at.
- */
+//  Direct pointer access
 template< class T >
 T *
 vsWeakPointer<T>::Target()
 {
-	return (T*)m_target;
+	return m_ptr;
 }
 
-/**  Read access to the members of the object pointed at.
- */
+//  Direct pointer access
 template< class T >
 const T *
 vsWeakPointer<T>::Target() const
 {
-	return (const T *)m_target;
+	return m_ptr;
 }
 
-#endif // QCL_TYPES_POINTERS_WEAKPOINTER_H
+#endif // VS_WEAKPOINTER_H
