@@ -62,7 +62,6 @@ void main(void)
 	// 		pow(NdotHV, shininess);
 	// }
 	color = ambientPart + diffusePart;
-	color.r = 1.0;
 #endif // LIT
 
 	vec3 finalColor = mix(fogColor.rgb, color.rgb, fogFactor );
