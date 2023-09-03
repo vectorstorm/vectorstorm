@@ -225,7 +225,7 @@ vsSpline3D::ClosestTimeTo( const vsVector3D& position ) const
 	float scale = 0.75f;
 	vsVector3D lastBestPoint;
 	vsVector3D lastBestTangent;
-	int iterations = 0;
+	// int iterations = 0;
 
 	while ( lastMove > 0.0001f )
 	{
@@ -238,7 +238,7 @@ vsSpline3D::ClosestTimeTo( const vsVector3D& position ) const
 		move = vsClamp(move, -lastMove*scale, lastMove*scale);
 		lastBestT = vsClamp( lastBestT+move, 0.f, 1.f );
 		lastMove = vsFabs(move);
-		iterations++;
+		// iterations++;
 	}
 	return lastBestT;
 }
