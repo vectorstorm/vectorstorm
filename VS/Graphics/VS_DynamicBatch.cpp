@@ -236,9 +236,19 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 						o[oo++] = i[ii] + indexOfFirstVertex;
 					else
 					{
-						o[oo++] = i[ii-2] + indexOfFirstVertex;
-						o[oo++] = i[ii-1] + indexOfFirstVertex;
-						o[oo++] = i[ii-0] + indexOfFirstVertex;
+						if ( (ii & 0x1) == 0 ) // even triangles in the strip
+						{
+							o[oo++] = i[ii-2] + indexOfFirstVertex;
+							o[oo++] = i[ii-1] + indexOfFirstVertex;
+							o[oo++] = i[ii-0] + indexOfFirstVertex;
+						}
+						else // odd triangles in the strip
+						{
+							// flip winding order!
+							o[oo++] = i[ii-0] + indexOfFirstVertex;
+							o[oo++] = i[ii-1] + indexOfFirstVertex;
+							o[oo++] = i[ii-2] + indexOfFirstVertex;
+						}
 					}
 				}
 				break;
