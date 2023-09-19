@@ -21,6 +21,7 @@ inline bool	vsIsNaN(float x) { volatile float o_x = x; return (x != o_x); }	// N
 inline int vsAbs( int in ) { return (in >= 0.f)?in:-in; }
 inline float vsFabs( float in ) { return (in >= 0.f)?in:-in; }
 inline float vsSqrt( float in ) { return sqrtf(in); }
+inline float vsSaturate( float in ) { return vsClamp(in, 0.f, 1.f); }
 
 float vsCos( float theta );
 float vsSin( float theta );

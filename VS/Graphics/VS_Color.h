@@ -50,6 +50,8 @@ public:
 	bool	operator!=( const vsColor &o ) const { return !(*this==o); }
 
 	float	Magnitude() { return vsSqrt( r*r + g*g + b*b + a*a ); }
+	void	Saturate() { r = vsSaturate(r); g = vsSaturate(g); b = vsSaturate(b); a = vsSaturate(a); }
+	vsColor	Saturated() const { return vsColor(vsSaturate(r), vsSaturate(g), vsSaturate(b), vsSaturate(a)); }
 
 	void Set(float red=0.f, float green=0.f, float blue=0.f, float alpha=1.f) { r=red; g=green; b=blue; a=alpha; };
 };
