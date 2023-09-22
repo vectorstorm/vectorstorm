@@ -481,15 +481,13 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		exit(1);
 	}
 	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
-	size_t bytes = vsFile::AvailableDriveBytes( PHYSFS_getWriteDir() );
+	size_t bytes = vsFile::AvailableWriteBytes();
 	if ( bytes < 1024 )
-		vsLog("Available space: %d bytes", bytes );
+		vsLog(" [!] Low space available on write drive: %d bytes", bytes );
 	else if ( bytes < 1024 * 1024 )
-		vsLog("Available space: %d kilobytes", bytes/1024 );
+		vsLog(" [!] Low space available on write drive: %d kilobytes", bytes/1024 );
 	else if ( bytes < 1024 * 1024 * 1024 )
-		vsLog("Available space: %d megabytes", bytes/(1024*1024) );
-	else
-		vsLog("Available space: %d gigabytes", bytes/(1024*1024*1024) );
+		vsLog(" [!] Low space available on write drive: %0.1f megabytes", bytes/(1024.f*1024.f) );
 
 	PHYSFS_Version compiled;
 	PHYSFS_Version linked;

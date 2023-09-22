@@ -1194,7 +1194,7 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	{
 		vsString dir(physDir);
 
-		return dir + filename;
+		return dir + "/" + filename;
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;
@@ -1264,8 +1264,9 @@ vsFile::GetDirectory( const vsString &filename )
 }
 
 size_t
-vsFile::AvailableDriveBytes( const vsString& directory )
+vsFile::AvailableWriteBytes()
 {
+	vsString directory( PHYSFS_getWriteDir() );
 #if defined(__APPLE_CC__)
 	struct statvfs info;
 	if ( ::statvfs( directory.c_str(), &info ) != 0 )
