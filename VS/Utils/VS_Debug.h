@@ -21,10 +21,10 @@
 void vsFailedCheck(const char* conditionStr, const char* msg, const char *file, int line);
 
 
-template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+template <typename S, typename... Args>
 void vsFailedCheckF(const char* conditionStr, const char* file, int line, S format, Args&&... args)
 {
-	vsString msgFormatted = fmt::sprintf(format,args...);
+	vsString msgFormatted = tfm::format(format,args...);
 	vsFailedCheck( conditionStr, msgFormatted.c_str(), file, line );
 }
 
@@ -40,10 +40,10 @@ inline void vsFailedAssert( const char* conditionStr, const vsString &msg, const
 	return vsFailedAssert( conditionStr, msg.c_str(), file, line );
 }
 
-template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+template <typename S, typename... Args>
 void vsFailedAssertF(const char* conditionStr, const char* file, int line, S msg, Args&&... args)
 {
-	vsString msgFormatted = fmt::sprintf(msg,args...);
+	vsString msgFormatted = tfm::format(msg,args...);
 	vsFailedAssert( conditionStr, msgFormatted.c_str(), file, line );
 }
 

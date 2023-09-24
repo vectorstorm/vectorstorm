@@ -241,10 +241,11 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				if ( fmt_in.empty() )
 					return DoFormatNumber( m_intLiteral );
 
-				vsString fmt = vsFormatString("{%s}", fmt_in);
+				vsString fmt = fmt_in;//vsFormatString("{%s}", fmt_in);
+				std::replace( fmt.begin(), fmt.end(), ':', '%');
 				if ( fmt != vsEmptyString )
 				{
-					return fmt::format(fmt, m_intLiteral);
+					return tfm::format(fmt.c_str(), m_intLiteral);
 				}
 			}
 		case Type_Float:
@@ -252,10 +253,11 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				if ( m_intLiteral != -1 )
 					return DoFormatFloat( m_floatLiteral, m_intLiteral );
 
-				vsString fmt = vsFormatString("{%s}", fmt_in);
+				vsString fmt = fmt_in;//vsFormatString("{%s}", fmt_in);
+				std::replace( fmt.begin(), fmt.end(), ':', '%');
 				if ( fmt != vsEmptyString )
 				{
-					return fmt::format(fmt, m_floatLiteral);
+					return tfm::format(fmt.c_str(), m_floatLiteral);
 				}
 			}
 	}

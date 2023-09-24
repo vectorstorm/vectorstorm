@@ -9,16 +9,10 @@
 
 #ifndef VS_STRING_H
 #define VS_STRING_H
-#include "Utils/fmt/printf.h"
+#include "Utils/tinyformat.h"
 
 typedef std::string vsString;
 
-// vsString vsFormatString( const char* format, ... );
-//
-// For historical reasons, vsFormatString() uses a printf-style format,
-// fully supporting POSIX argument position extensions (even on non-POSIX
-// platforms, yay!)
-#define vsFormatString fmt::sprintf
 
 vsString vsNumberString(int number);
 
@@ -28,6 +22,21 @@ vsString vsTrimWhitespace( const vsString& input );
 
 extern const vsString vsEmptyString;
 
+
+vsString vsFormatString(const vsString& fmt);
+vsString vsFormatString(const char* fmt);
+
+template<typename... Args>
+vsString vsFormatString(const vsString& fmt, Args&& ...args)
+{
+	return tfm::format(fmt.c_str(), args...);
+}
+
+template<typename... Args>
+vsString vsFormatString(const char* fmt, Args&& ...args)
+{
+	return tfm::format(fmt, args...);
+}
 
 #endif // VS_STRING_H
 

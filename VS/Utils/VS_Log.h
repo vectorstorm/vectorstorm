@@ -10,6 +10,8 @@
 #ifndef VS_LOG
 #define VS_LOG
 
+#include "VS/Utils/tinyformat.h"
+
 // vsLog_Start() creates a file named "log.txt" in our current output directory.
 // All subsequent calls to vsLog() will write out text into that file, in addition
 // to the console.  vsLog_End() closes that file, and stops writing vsLog() messages
@@ -21,26 +23,30 @@ void vsLog_Start(const char* companyName, const char* title);
 void vsLog_End();
 void vsLog_Show();
 
-#include "Utils/fmt/printf.h"
-#include "Utils/fmt/format.h"
-
 void vsLog_(const char*file, int line, const vsString& str);
 void vsErrorLog_(const char*file, int line, const vsString &str);
 
 #define vsLog(...) vsDoLog(__FILE__,__LINE__,__VA_ARGS__)
 #define vsErrorLog(...) vsDoErrorLog(__FILE__,__LINE__,_VA_ARGS__)
 
-template <typename S, typename... Args, typename Char = fmt::char_t<S> >
-void vsDoLog(const char* file, int line, S format, Args&&... args)
+template <typename... Args>
+void vsDoLog(const char* file, int line, const char* format, Args&&... args)
 {
-	vsString str = fmt::sprintf(format,args...);
+	vsString str = tfm::format(format,args...);
 	vsLog_(file, line, str);
 }
 
-template <typename S, typename... Args, typename Char = fmt::char_t<S> >
+template <typename... Args>
+void vsDoLog(const char* file, int line, const vsString& format, Args&&... args)
+{
+	vsString str = tfm::format(format.c_str(),args...);
+	vsLog_(file, line, str);
+}
+
+template <typename S, typename... Args>
 void vsDoErrorLog(const char* file, int line, S format, Args&&... args)
 {
-	vsString str = fmt::sprintf(format,args...);
+	vsString str = tfm::format(format,args...);
 	vsErrorLog_(file, line, str);
 }
 

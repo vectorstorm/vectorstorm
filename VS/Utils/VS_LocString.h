@@ -10,7 +10,6 @@
 #ifndef VS_LOCSTRING_H
 #define VS_LOCSTRING_H
 
-#include "VS/Utils/fmt/format.h"
 #include <vector>
 // #include "VS/Utils/VS_String.h"
 // #include "VS/Utils/VS_Array.h"
@@ -80,35 +79,12 @@ vsLocString vsLocFormat(S key, Args&&... args)
 	return result;
 }
 
-// =========  INTEGRATION WITH FMT
+// =========  INTEGRATION WITH TinyFormat
 //
-// FMTLIB needs an operator<< in order to work with printf-style
-// formatting, and needs an fmt::formatter template specialisation
-// to work with Python-style formatting (which is what we're using
-// for most localisation stuff, but maybe isn't going to be useful
-// any more in future, since I'm writing my own localisation formatting?)
+// TinyFormat needs an operator<< in order to work with printf-style
+// formatting, so we're declaring one here.
 //
 std::ostream& operator <<(std::ostream &s, const vsLocString &ls);
-
-namespace fmt
-{
-template <>
-struct formatter<vsLocString> {
-	auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-		auto it = ctx.begin();
-		return it;
-	}
-
-	template <typename FormatContext>
-		auto format(const vsLocString& p, FormatContext& ctx) -> decltype(ctx.out()) {
-			return format_to(
-					ctx.out(),
-					"{}",
-					p.AsString()
-					);
-		}
-};
-};
 
 #endif // VS_LOCSTRING_H
 

@@ -468,8 +468,6 @@ set(UTILS_SOURCES
 	VS/Utils/VS_VolatileArrayStore.h
 	VS/Utils/VS_WeakPointer.h
 	VS/Utils/VS_WeakPointerTarget.h
-	VS/Utils/fmt/format.cc
-	VS/Utils/fmt/format.h
 	VS/Utils/stb/stb.cpp
 
 	VS/Utils/uni-algo/src/cpp_uni_data.cpp

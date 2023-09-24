@@ -12,7 +12,6 @@
 //#include <string>
 #include <stdarg.h>
 #include "Utils/utfcpp/utf8.h"
-#include "Utils/fmt/printf.h"
 
 const vsString vsEmptyString = "";
 
@@ -21,13 +20,6 @@ const vsString vsEmptyString = "";
 #define localtime localtime_s
 #define gmtime gmtime_s
 #endif
-
-vsString test()
-{
-	int thing = 42;
-	return fmt::sprintf("Foo %d", thing++);
-	return fmt::sprintf("Foo %d", thing);
-}
 
 // vsString vsFormatString( const char* format, ... )
 // {
@@ -158,5 +150,15 @@ vsString vsTrimWhitespace( const vsString& input )
 		vsLog("Failed to trim whitespace from string %s", input);
 	}
 	return input;
+}
+
+vsString vsFormatString(const vsString& fmt)
+{
+	return fmt;
+}
+
+vsString vsFormatString(const char* fmt)
+{
+	return fmt;
 }
 

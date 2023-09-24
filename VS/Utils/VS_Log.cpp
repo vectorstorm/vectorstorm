@@ -95,7 +95,7 @@ void vsLog_(const char* file, int line, const vsString &str)
 		}
 
 	int threadId = vsTask::GetCurrentThreadId();
-	vsString msg( vsFormatString( "%d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
+	vsString msg( vsFormatString( "%d: %fs - %25s:%4d -- %s\n", threadId, time, file, line, str ) );
 
 	{
 		vsScopedLock lock(s_mutex);
