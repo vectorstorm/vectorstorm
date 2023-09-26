@@ -247,6 +247,8 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				{
 					return tfm::format(fmt.c_str(), m_intLiteral);
 				}
+				else
+					return tfm::format("%d", m_intLiteral);
 			}
 		case Type_Float:
 			{
@@ -259,6 +261,8 @@ vsLocArg::AsString( const vsString& fmt_in ) const
 				{
 					return tfm::format(fmt.c_str(), m_floatLiteral);
 				}
+				else
+					return tfm::format("%0.1f", m_floatLiteral);
 			}
 	}
 	return vsEmptyString;
