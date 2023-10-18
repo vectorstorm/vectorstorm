@@ -144,7 +144,8 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 	m_hipassMaterial->SetZRead(false);
 	m_hipassMaterial->SetZWrite(false);
 	m_hipassMaterial->SetGlow(false);
-	m_hipassMaterial->SetTexture(0, m_from->GetTexture(1));
+	m_hipassMaterial->SetTexture(0, m_from->GetTexture(0));
+	m_hipassMaterial->SetTexture(1, m_from->GetTexture(1));
 	m_hipassMaterial->SetShader(new vsShader(passv, normalf, false, false));
 
 	if ( !m_bloomBlurShader )
@@ -365,8 +366,9 @@ const char *row3v = STRINGIFY( #version 330\n
 
 			void main(void)\n
 			{\n
-			vec4 color = texture(textures[0], fragment_texcoord);\n
-			fragment_color = color;\n
+			vec4 colorA = texture(textures[0], fragment_texcoord);\n
+			vec4 colorB = texture(textures[1], fragment_texcoord);\n
+			fragment_color = colorB + 0.02 * colorA;\n
 			}\n
 			);
 
