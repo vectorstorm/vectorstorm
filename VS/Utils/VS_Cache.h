@@ -57,7 +57,7 @@ public:
 	virtual ~vsCacheReference() { m_resource->ReleaseReference(); }
 
 	T*		GetResource() const { return m_resource; }
-	virtual void operator=(const vsCacheReference<T> &b)
+	void operator=(const vsCacheReference<T> &b)
 	{
 		// add before release, just because that's always safer.
 		b.m_resource->AddReference();
