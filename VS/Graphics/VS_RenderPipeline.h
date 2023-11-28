@@ -37,6 +37,7 @@ struct RenderTargetRequest
 	bool depth;     // includes depth buffer
 	bool stencil;   // has a stencil buffer
 	bool linear;    // linear sampling
+	bool floating;  // floating point
 	bool mipmaps;   // automatic mipmaps of the contents
 	bool antialias; // antialiasing enabled
 	bool share;     // this target can be shared with other stages
@@ -49,6 +50,7 @@ struct RenderTargetRequest
 		depth(false),
 		stencil(false),
 		linear(false),
+		floating(false),
 		mipmaps(false),
 		antialias(false),
 		share(true)
@@ -64,6 +66,7 @@ struct RenderTargetRequest
 			depth == o.depth &&
 			stencil == o.stencil &&
 			linear == o.linear &&
+			floating == o.floating &&
 			mipmaps == o.mipmaps &&
 			antialias == o.antialias &&
 			share == o.share);

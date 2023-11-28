@@ -765,3 +765,22 @@ vsRenderTarget::IsDepthOnly()
 	return m_type == Type_Depth || m_type == Type_DepthCompare;
 }
 
+bool
+vsSurface::Settings::operator==( const vsSurface::Settings& other ) const
+{
+	if ( width != other.width ||
+			height != other.height ||
+			buffers != other.buffers ||
+			depth != other.depth ||
+			mipMaps != other.mipMaps ||
+			stencil != other.stencil)
+		return false;
+
+	for ( int i = 0; i < buffers; i++ )
+	{
+		if ( bufferSettings[i] != other.bufferSettings[i] )
+			return false;
+	}
+	return true;
+}
+

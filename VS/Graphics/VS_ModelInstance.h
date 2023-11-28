@@ -48,6 +48,7 @@ public:
 	vsModelInstanceGroup * GetInstanceGroup() { return group; }
 	const vsVector4D& GetPosition() const { return matrix.w; }
 	const vsMatrix4x4& GetMatrix() const { return matrix; }
+	const vsColor& GetColor() const { return color; }
 };
 
 #endif // VS_MODELINSTANCE_H

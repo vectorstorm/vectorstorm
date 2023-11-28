@@ -39,6 +39,19 @@ public:
 				singleChannel(false)
 			{
 			}
+
+			bool operator==(const vsSurface::Settings::Buffer& o) const
+			{
+				return ( floating == o.floating &&
+						halfFloating == o.halfFloating &&
+						linear == o.linear &&
+						anisotropy == o.anisotropy &&
+						singleChannel == o.singleChannel );
+			}
+			bool operator!=(const vsSurface::Settings::Buffer& o) const
+			{
+				return !( *this == o );
+			}
 		};
 
 		Settings():
@@ -59,6 +72,8 @@ public:
 		bool depth;
 		bool mipMaps; // currently unused
 		bool stencil;
+
+		bool operator==( const vsSurface::Settings& other ) const;
 	};
 
 
