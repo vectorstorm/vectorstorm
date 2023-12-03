@@ -53,6 +53,7 @@ public:
 	bool		CollideRay(vsVector2D *result, float *resultT, const vsVector2D &pos, const vsVector2D &dir) const;
 
 	void Set(const vsVector2D &min_in, const vsVector2D &max_in) { min = min_in; max = max_in; set = true; }
+	bool		IsSet() const { return set; }
 
 	bool ContainsPoint(const vsVector2D &pos) const;	// 'pos' must be in local coordinates!
 	bool Intersects(const vsBox2D &other) const;
@@ -97,6 +98,7 @@ public:
 
 	void		Set(const vsVector3D &min_in, const vsVector3D &max_in) { min = min_in; max = max_in; set = true; }
 	void		Set(vsVector3D *pointArray, int pointCount);
+	bool		IsSet() const { return set; }
 
 	bool		ContainsPoint(const vsVector3D &pos) const;
 	bool		ContainsPointXZ(const vsVector3D &pos) const;	// only tests x and z components.
