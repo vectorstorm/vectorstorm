@@ -588,23 +588,35 @@ GLenum FormatToGLInternalFormat( vsSurface::Channels c, vsSurface::Format f )
 		// GL_DEPTH32F_STENCIL8,
         //
 		GL_R8,
+		GL_R8_SNORM,
+		GL_R16,
+		GL_R16_SNORM,
 		GL_R16F,
 		GL_R32F,
 
 		GL_RG8,
+		GL_RG8_SNORM,
+		GL_RG16,
+		GL_RG16_SNORM,
 		GL_RG16F,
 		GL_RG32F,
 
 		GL_RGB8,
+		GL_RGB8_SNORM,
+		GL_RGB16,
+		GL_RGB16_SNORM,
 		GL_RGB16F,
 		GL_RGB32F,
 
 		GL_RGBA8,
+		GL_RGBA8_SNORM,
+		GL_RGBA16,
+		GL_RGBA16_SNORM,
 		GL_RGBA16F,
 		GL_RGBA32F
 	};
 
-	return results[ (c*3) + f ];
+	return results[ (c*6) + f ];
 }
 
 GLenum ChannelsToGLType( vsSurface::Format f )
@@ -612,7 +624,13 @@ GLenum ChannelsToGLType( vsSurface::Format f )
 	switch ( f )
 	{
 		case vsSurface::Format_Byte:
+			return GL_UNSIGNED_BYTE;
+		case vsSurface::Format_SByte:
 			return GL_BYTE;
+		case vsSurface::Format_Int16:
+			return GL_UNSIGNED_SHORT;
+		case vsSurface::Format_SInt16:
+			return GL_SHORT;
 		case vsSurface::Format_HalfFloat:
 			return GL_HALF_FLOAT;
 		case vsSurface::Format_Float:

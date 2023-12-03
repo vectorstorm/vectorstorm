@@ -35,6 +35,9 @@ public:
 	enum Format
 	{
 		Format_Byte,
+		Format_SByte,
+		Format_Int16,
+		Format_SInt16,
 		Format_HalfFloat,
 		Format_Float
 	};
