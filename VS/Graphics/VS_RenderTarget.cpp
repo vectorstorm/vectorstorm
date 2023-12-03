@@ -543,6 +543,84 @@ vsRenderTarget::Resize( int width, int height )
 	}
 }
 
+GLenum ChannelsToGLBaseFormat( vsSurface::Channels c )
+{
+	switch( c )
+	{
+		// case vsSurface::Channels_Depth:
+		// 	{
+		// 		return GL_DEPTH_COMPONENT;
+		// 	}
+		// case vsSurface::Channels_DepthStencil:
+		// 	{
+		// 		return GL_DEPTH_STENCIL;
+		// 	}
+		case vsSurface::Channels_R:
+			{
+				return GL_RED;
+			}
+		case vsSurface::Channels_RG:
+			{
+				return GL_RG;
+			}
+		case vsSurface::Channels_RGB:
+			{
+				return GL_RGB;
+			}
+		case vsSurface::Channels_RGBA:
+			{
+				return GL_RGBA;
+			}
+	}
+	return GL_RGBA;
+}
+
+GLenum FormatToGLInternalFormat( vsSurface::Channels c, vsSurface::Format f )
+{
+	const GLenum results[] =
+	{
+		// GL_DEPTH_COMPONENT24,
+		// GL_DEPTH_COMPONENT32F,
+		// GL_DEPTH_COMPONENT32F,
+        //
+		// GL_DEPTH24_STENCIL8,
+		// GL_DEPTH32F_STENCIL8,
+		// GL_DEPTH32F_STENCIL8,
+        //
+		GL_R8,
+		GL_R16F,
+		GL_R32F,
+
+		GL_RG8,
+		GL_RG16F,
+		GL_RG32F,
+
+		GL_RGB8,
+		GL_RGB16F,
+		GL_RGB32F,
+
+		GL_RGBA8,
+		GL_RGBA16F,
+		GL_RGBA32F
+	};
+
+	return results[ (c*3) + f ];
+}
+
+GLenum ChannelsToGLType( vsSurface::Format f )
+{
+	switch ( f )
+	{
+		case vsSurface::Format_Byte:
+			return GL_BYTE;
+		case vsSurface::Format_HalfFloat:
+			return GL_HALF_FLOAT;
+		case vsSurface::Format_Float:
+			return GL_FLOAT;
+	}
+	return GL_BYTE;
+}
+
 void
 vsSurface::Resize( int width, int height )
 {
@@ -612,30 +690,9 @@ vsSurface::Resize( int width, int height )
 			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
-			GLenum internalFormat = GL_RGBA8;
-			GLenum format = GL_RGBA;
-			GLenum type = GL_UNSIGNED_BYTE;
-			if ( settings.floating )
-			{
-				internalFormat = GL_RGBA32F;
-				type = GL_FLOAT;
-
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R32F;
-				}
-			}
-			if ( settings.halfFloating )
-			{
-				internalFormat = GL_RGBA16F;
-				type = GL_FLOAT;
-				if ( settings.singleChannel )
-				{
-					format = GL_RED;
-					internalFormat = GL_R16F;
-				}
-			}
+			GLenum format = ChannelsToGLBaseFormat( settings.channels );
+			GLenum internalFormat = FormatToGLInternalFormat( settings.channels, settings.format );
+			GLenum type = ChannelsToGLType( settings.format );
 			GLenum filter =  settings.linear  ? GL_LINEAR : GL_NEAREST;
 
 			if (m_multisample)

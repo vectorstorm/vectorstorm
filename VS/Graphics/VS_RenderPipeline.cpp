@@ -64,7 +64,8 @@ vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRen
 	}
 	settings.depth = request.depth;
 	settings.bufferSettings[0].linear = request.linear;
-	settings.bufferSettings[0].floating = request.floating;
+	settings.bufferSettings[0].channels = request.channels;
+	settings.bufferSettings[0].format = request.format;
 	settings.mipMaps = request.mipmaps;
 	settings.stencil = request.stencil;
 	vsRenderTarget::Type type = vsRenderTarget::Type_Texture;

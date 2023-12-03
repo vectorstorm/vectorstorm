@@ -37,7 +37,8 @@ struct RenderTargetRequest
 	bool depth;     // includes depth buffer
 	bool stencil;   // has a stencil buffer
 	bool linear;    // linear sampling
-	bool floating;  // floating point
+	vsSurface::Channels channels;
+	vsSurface::Format format;
 	bool mipmaps;   // automatic mipmaps of the contents
 	bool antialias; // antialiasing enabled
 	bool share;     // this target can be shared with other stages
@@ -50,7 +51,8 @@ struct RenderTargetRequest
 		depth(false),
 		stencil(false),
 		linear(false),
-		floating(false),
+		channels(vsSurface::Channels_RGBA),
+		format(vsSurface::Format_Byte),
 		mipmaps(false),
 		antialias(false),
 		share(true)
@@ -66,7 +68,8 @@ struct RenderTargetRequest
 			depth == o.depth &&
 			stencil == o.stencil &&
 			linear == o.linear &&
-			floating == o.floating &&
+			channels == o.channels &&
+			format == o.format &&
 			mipmaps == o.mipmaps &&
 			antialias == o.antialias &&
 			share == o.share);

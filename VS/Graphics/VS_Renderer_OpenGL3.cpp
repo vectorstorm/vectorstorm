@@ -676,7 +676,7 @@ vsRenderer_OpenGL3::ResizeRenderTargetsToMatchWindow()
 		// we want to be big enough to hold our full m_window resolution, and set our viewport to match the window.
 
 		vsSurface::Settings settings;
-		settings.bufferSettings[2].halfFloating = true;
+		settings.bufferSettings[2].format = vsSurface::Format_HalfFloat;
 		settings.width = GetWidthPixels();
 		settings.height = GetHeightPixels();
 		settings.depth = true;

@@ -19,34 +19,51 @@ class vsTexture;
 class vsSurface
 {
 public:
+
+	// [TODO]  Depth and DepthStencil both belong here in the 'Channels'
+	// enum, but that's a bigger refactor than I really want to do today.
+
+	enum Channels
+	{
+		// Channels_Depth,
+		// Channels_DepthStencil,
+		Channels_R,
+		Channels_RG,
+		Channels_RGB,
+		Channels_RGBA,
+	};
+	enum Format
+	{
+		Format_Byte,
+		Format_HalfFloat,
+		Format_Float
+	};
+
 	class Settings
 	{
 	public:
 		class Buffer
 		{
 		public:
-			bool floating;
-			bool halfFloating;
 			bool linear;
 			bool anisotropy;
-			bool singleChannel;
+			Format format;
+			Channels channels;
 
 			Buffer():
-				floating(false),
-				halfFloating(false),
 				linear(true),
 				anisotropy(true),
-				singleChannel(false)
+				format(Format_Byte),
+				channels(Channels_RGBA)
 			{
 			}
 
 			bool operator==(const vsSurface::Settings::Buffer& o) const
 			{
-				return ( floating == o.floating &&
-						halfFloating == o.halfFloating &&
+				return ( format == o.format &&
 						linear == o.linear &&
 						anisotropy == o.anisotropy &&
-						singleChannel == o.singleChannel );
+						channels == o.channels );
 			}
 			bool operator!=(const vsSurface::Settings::Buffer& o) const
 			{
