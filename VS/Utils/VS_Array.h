@@ -122,6 +122,14 @@ public:
 		}
 	}
 
+	void	Append( const vsArray<T> &o )
+	{
+		for ( int i = 0; i < o.ItemCount(); i++ )
+		{
+			AddItem(o[i]);
+		}
+	}
+
 	void Reserve( int newSize )
 	{
 		if ( newSize <= m_arrayStorage )
