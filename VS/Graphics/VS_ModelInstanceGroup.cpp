@@ -333,6 +333,7 @@ vsModelInstanceGroup::UpdateInstance( vsModelInstance *instance, bool show )
 		// instance has changed LOD level, so swap it into a new lod instance group.
 		instance->lodGroup->RemoveInstance(instance);
 		m_lod[instance->lodLevel]->AddInstance(instance);
+		m_lod[instance->lodLevel]->UpdateInstance(instance, show);
 	}
 }
 
