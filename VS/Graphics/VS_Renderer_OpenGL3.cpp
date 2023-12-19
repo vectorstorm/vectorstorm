@@ -1116,6 +1116,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					else
 					{
 						uint32_t tval = t->GetResource()->GetTexture();
+						t->GetResource()->PrepareToBind();
 						if ( currentlyBoundTexture[i] != tval )
 						{
 							glActiveTexture(GL_TEXTURE0 + i);
@@ -1132,7 +1133,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 							}
 							else
 							{
-								t->GetResource()->PrepareToBind();
 								glBindTexture( GL_TEXTURE_2D, tval);
 								const bool clampU = t->GetClampU();
 								const bool clampV = t->GetClampV();
@@ -1359,6 +1359,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsRenderTarget *from = (vsRenderTarget*)op->data.p;
 					vsRenderTarget *to = (vsRenderTarget*)op->data.p2;
 					from->BlitTo(to);
+					to->InvalidateResolve();
 					break;
 				}
 			case vsDisplayList::OpCode_BlitRenderTargetRect:
@@ -1370,6 +1371,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 					vsBox2D fromRect = op->data.box2D;
 					vsBox2D toRect = op->data.box2D2;
 					from->BlitRect(to, fromRect, toRect);
+					to->InvalidateResolve();
 
 					break;
 				}
