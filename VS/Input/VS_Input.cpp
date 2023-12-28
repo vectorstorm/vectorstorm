@@ -18,6 +18,7 @@
 #include "VS_System.h"
 
 #include "VS_MaterialManager.h" // TEMP:  For triggering material reload.
+#include "VS_TextureManager.h" // TEMP:  For triggering material reload.
 #include "VS_Shader.h" // TEMP:  For triggering shader reload.
 
 #include "VS_File.h"
@@ -2694,6 +2695,9 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 				vsMaterialManager *mm = static_cast<vsMaterialManager*>(vsMaterialManager::Instance());
 				if ( mm )
 					mm->ReloadAll();
+				vsTextureManager *tm = static_cast<vsTextureManager*>(vsTextureManager::Instance());
+				if ( tm )
+					tm->ReloadAll();
 			}
 			break;
 #endif // _DEBUG

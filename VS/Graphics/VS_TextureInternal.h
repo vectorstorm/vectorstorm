@@ -53,6 +53,8 @@ class vsTextureInternal : public vsResource
 	};
 	uint8_t m_state;
 
+	void _SimpleLoadFilename( const vsString &filename );
+
 public:
 
 	vsTextureInternal( const vsString &string );
@@ -119,6 +121,9 @@ public:
 
 	uint32_t		ScaleColour(uint32_t ini, float amt);
 	uint32_t		SafeAddColour(uint32_t a, uint32_t b);
+
+
+	void Reload(); // try to reload our content
 
 	friend class vsRenderTarget;
 };

@@ -19,10 +19,11 @@ class vsTextureInternal;
 class vsTextureManager : public vsCache<vsTextureInternal>
 {
 public:
-	
+
 	vsTextureManager();
 
 	vsTextureInternal *	LoadTexture( const vsString &name );
+	void ReloadAll();
 };
 
 

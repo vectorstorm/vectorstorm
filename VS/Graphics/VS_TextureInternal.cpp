@@ -72,50 +72,11 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_surfaceBuffer(0),
 	m_state(0)
 {
-	if ( vsFile::Exists(filename_in) )
-	{
-		GLuint t;
-		glGenTextures(1, &t);
-		m_texture = t;
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
 
-		glBindTexture(GL_TEXTURE_2D, m_texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-		vsFile img(filename_in, vsFile::MODE_Read);
-		vsStore *s = new vsStore( img.GetLength() );
-		img.Store(s);
-
-		int w,h,n;
-
-		// glTexImage2D expects pixel data to start at the BOTTOM LEFT, but
-		// stbi_load functions give us the pixel data starting at the TOP LEFT.
-		// So we need to flip them here!
-		//
-		// ref:	https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
-
-		stbi_set_flip_vertically_on_load(1);
-		unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
-		if ( !data )
-			vsLog( "Failure while loading %s: %s", filename_in, stbi_failure_reason() );
-
-		vsDelete(s);
-		glTexImage2D(GL_TEXTURE_2D,
-				0,
-				GL_RGBA,
-				w, h,
-				0,
-				GL_RGBA,
-				GL_UNSIGNED_INT_8_8_8_8_REV,
-				data);
-		stbi_image_free(data);
-
-		m_width = w;
-		m_height = w;
-
-		glGenerateMipmap(GL_TEXTURE_2D);
-		// m_nearestSampling = false;
-	}
+	_SimpleLoadFilename(filename_in);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsString> &mipmaps ):
@@ -532,3 +493,64 @@ vsTextureInternal::SafeAddColour(uint32_t acolour, uint32_t bcolour)
 // 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, v ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 // }
 //
+
+void
+vsTextureInternal::Reload()
+{
+	vsString filename = vsFormatString("%s", GetName().c_str());
+
+	if ( vsFile::Exists(filename) )
+	{
+		// skip files which don't end in .png;  we've only implemented PNG reloading here.
+		if ( filename.find(".png") != filename.size()-4 )
+			return;
+
+		// vsLog("Would reload %s", filename);
+		_SimpleLoadFilename(filename);
+	}
+}
+
+void
+vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
+{
+	if ( vsFile::Exists(filename_in) )
+	{
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		vsFile img(filename_in, vsFile::MODE_Read);
+		vsStore *s = new vsStore( img.GetLength() );
+		img.Store(s);
+
+		int w,h,n;
+
+		// glTexImage2D expects pixel data to start at the BOTTOM LEFT, but
+		// stbi_load functions give us the pixel data starting at the TOP LEFT.
+		// So we need to flip them here!
+		//
+		// ref:	https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
+
+		stbi_set_flip_vertically_on_load(1);
+		unsigned char* data = stbi_load_from_memory( (uint8_t*)s->GetReadHead(), s->BytesLeftForReading(), &w, &h, &n, STBI_rgb_alpha );
+		if ( !data )
+			vsLog( "Failure while loading %s: %s", filename_in, stbi_failure_reason() );
+
+		vsDelete(s);
+		glTexImage2D(GL_TEXTURE_2D,
+				0,
+				GL_RGBA,
+				w, h,
+				0,
+				GL_RGBA,
+				GL_UNSIGNED_INT_8_8_8_8_REV,
+				data);
+		stbi_image_free(data);
+
+		m_width = w;
+		m_height = w;
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+		// m_nearestSampling = false;
+	}
+}
