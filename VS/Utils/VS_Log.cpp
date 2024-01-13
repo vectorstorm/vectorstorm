@@ -86,7 +86,7 @@ void vsLog_(const char* file, int line, const vsString &str)
 {
 	float time = 0.f;
 	if ( vsTimerSystem::Instance() )
-		time = vsTimerSystem::Instance()->GetMicrosecondsSinceLaunch() / 1000000.f;
+		time = vsTimerSystem::Instance()->GetSecondsSinceLaunch();
 
 	for ( const char* ptr = file; *ptr; ++ptr )
 		if ( *ptr == '/' || *ptr == '\\' )
@@ -114,7 +114,7 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 {
 	float time = 0.f;
 	if ( vsTimerSystem::Instance() )
-		time = vsTimerSystem::Instance()->GetMicrosecondsSinceLaunch() / 1000000.f;
+		time = vsTimerSystem::Instance()->GetSecondsSinceLaunch();
 
 	for ( const char* ptr = file; *file; ++ptr )
 		if ( *ptr == '/' || *ptr == '\\' )

@@ -38,8 +38,8 @@ class vsTimerSystem : public coreGameSystem
 {
 	static vsTimerSystem *s_instance;
 
-	uint64_t m_launchTime;
-	uint64_t m_initTime;
+	uint64_t m_launchTimeRaw;
+	uint64_t m_initTimeRaw;
 
 	// we divide our frame into four phases:
 	// "CPU" is our scene update.
@@ -63,6 +63,9 @@ class vsTimerSystem : public coreGameSystem
 #endif // DEBUG_TIMING_BAR
 
 	bool m_firstFrame;
+	uint64_t GetRawTime();
+	uint64_t ConvertRawTimeToMicroseconds(uint64_t raw);
+	uint64_t ConvertRawTimeToMilliseconds(uint64_t raw);
 
 public:
 
@@ -79,6 +82,7 @@ public:
 	uint64_t GetMicroseconds();
 	uint64_t GetMicrosecondsSinceInit();   // time since current game finished initialising
 	uint64_t GetMicrosecondsSinceLaunch(); // time since program launch
+	float GetSecondsSinceLaunch();
 
 	virtual void Update( float timeStep );
 	virtual void PostUpdate(float timeStep);
@@ -89,6 +93,8 @@ public:
 	uint64_t GetCurrentMillis() { return m_startCpu / 1000; }
 	unsigned int GetMissedFrameCount() { return m_missedFrames / 1000; }
 
+	// all of the following are returning MILLISECONDS.
+	// [TODO] Clean up this API to make that more obvious
 	uint64_t GetGPUTime() { return m_gpuTime / 1000; }
 	uint64_t GetRenderTime() { return (m_gatherTime + m_drawTime) / 1000; }
 	uint64_t GetGatherTime() { return m_gatherTime / 1000; }

@@ -149,7 +149,7 @@ vsTimerSystem::vsTimerSystem():
 	m_drawTime(0),
 	m_cpuTime(0)
 {
-	m_launchTime = m_initTime = GetMicroseconds();
+	m_launchTimeRaw = m_initTimeRaw = GetRawTime();
 #if defined(DEBUG_TIMING_BAR)
 	m_sprite = nullptr;
 #endif // DEBUG_TIMING_BAR
@@ -165,7 +165,7 @@ vsTimerSystem::~vsTimerSystem()
 void
 vsTimerSystem::Init()
 {
-	m_initTime = GetMicroseconds();
+	m_initTimeRaw = GetRawTime();
 	//	m_startCpu = SDL_GetTicks();
 	//	m_startGpu = SDL_GetTicks();
 	m_startCpu = GetMicroseconds();
@@ -193,6 +193,24 @@ vsTimerSystem::Deinit()
 }
 
 uint64_t
+vsTimerSystem::GetRawTime()
+{
+	return SDL_GetPerformanceCounter();
+}
+
+uint64_t
+vsTimerSystem::ConvertRawTimeToMicroseconds(uint64_t raw)
+{
+	return (raw * 1000000) / SDL_GetPerformanceFrequency();
+}
+
+uint64_t
+vsTimerSystem::ConvertRawTimeToMilliseconds(uint64_t raw)
+{
+	return (raw * 1000) / SDL_GetPerformanceFrequency();
+}
+
+uint64_t
 vsTimerSystem::GetMicroseconds()
 {
 	uint64_t counter = SDL_GetPerformanceCounter();
@@ -203,13 +221,22 @@ vsTimerSystem::GetMicroseconds()
 uint64_t
 vsTimerSystem::GetMicrosecondsSinceInit()
 {
-	return GetMicroseconds() - m_initTime;
+	return ConvertRawTimeToMicroseconds(GetRawTime() - m_initTimeRaw);
 }
 
 uint64_t
 vsTimerSystem::GetMicrosecondsSinceLaunch()
 {
-	return GetMicroseconds() - m_launchTime;
+	return ConvertRawTimeToMicroseconds(GetRawTime() - m_launchTimeRaw);
+}
+
+float
+vsTimerSystem::GetSecondsSinceLaunch()
+{
+	uint64_t deltaRaw = GetRawTime() - m_launchTimeRaw;
+
+	float t = (float)deltaRaw / (float)SDL_GetPerformanceFrequency();
+	return t;
 }
 
 #define MAX_TIME_PER_FRAME (2.0f/60.0f)		// 60fps.
