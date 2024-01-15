@@ -496,6 +496,7 @@ endif (APPLE )
 if ( VS_TRACY )
 	message("TRACY ENABLED")
 	add_definitions("-DTRACY_ENABLE")
+	add_definitions("-DTRACY_ON_DEMAND")
 	include_directories( tracy )
 	set( SOURCES
 		tracy/TracyClient.cpp

@@ -397,7 +397,7 @@ const vsString	c_controlDirectionString[] =
 
 static ControlDirection ControlDirectionFromString( const vsString& s )
 {
-	for ( int i = 0; i < CT_MAX; i++ )
+	for ( int i = 0; i < CD_MAX; i++ )
 	{
 		if ( s == c_controlDirectionString[i] )
 			return (ControlDirection)i;
