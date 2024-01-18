@@ -221,6 +221,9 @@ bool vsCollideSweptSphereVsTriangle( const vsVector3D &sphereCenter, float spher
 	vsVector3D sideA = (vert1-vert0);
 	vsVector3D sideB = (vert2-vert0);
 	vsVector3D triNormal = (sideB.Normalised()).Cross(sideA.Normalised());
+	if ( triNormal.SqLength() <= 0.f ) // ignore infinitely thin "triangles"
+		return false;
+
 	triNormal.Normalise();
 
 	// first, check if we're moving the wrong direction to hit this triangle.
