@@ -110,7 +110,7 @@ if(WIN32)
 			SET( PRE_LIBRARIES "stdc++" )
 		endif()
 
-		# find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
+		find_file(PHYSFS_DLL libphysfs.dll REQUIRED )
 		if ( USE_SDL_SOUND )
 			find_file(VORBIS_DLL libvorbis-0.dll REQUIRED )
 			find_file(VORBISFILE_DLL libvorbisfile-3.dll REQUIRED )
@@ -124,7 +124,7 @@ if(WIN32)
 	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
 		${ZLIB_DLL} ${SDL2_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
-		# ${PHYSFS_DLL}
+		${PHYSFS_DLL}
 		${OGG_DLL}
 		${DBGHELP_DLL}
 		${DBGCORE_DLL}
