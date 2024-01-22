@@ -29,6 +29,7 @@ public:
 };
 
 class vsScopedLock
+
 {
 	vsMutex& m_mutex;
 public:

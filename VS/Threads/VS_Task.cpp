@@ -7,20 +7,27 @@
 //
 
 #include "VS_Task.h"
+#include "VS_Mutex.h"
 #include <SDL2/SDL_thread.h>
 #include <map>
 
+
 namespace
 {
-	std::map<SDL_threadID, int> s_threadTable;
-	int s_nextId = 0;
+	vsMutex tableLock;
+
+	std::map<SDL_threadID, vsString> s_threadTable;
+	vsString unknownName = "unk";
 };
 
 void vsTask_Init()
 {
 	// register the main thread so we recognise it in future
 	SDL_threadID id = SDL_ThreadID();
-	s_threadTable[id] = s_nextId++;
+
+	tableLock.Lock();
+		s_threadTable[id] = "main";
+	tableLock.Unlock();
 }
 
 int vsTask::DoStartThread(void* arg)
@@ -29,7 +36,11 @@ int vsTask::DoStartThread(void* arg)
 	vsTask *task = (vsTask*)arg;
 
 	SDL_threadID id = SDL_ThreadID();
-	s_threadTable[id] = s_nextId++;
+	{
+		tableLock.Lock();
+		s_threadTable[id] = task->m_name;
+		tableLock.Unlock();
+	}
 
 	task->m_done = false;
 	result = task->Run();
@@ -61,14 +72,14 @@ vsTask::Start()
 	m_thread = SDL_CreateThread( DoStartThread, m_name.c_str(), (void*)this );
 }
 
-int
-vsTask::GetCurrentThreadId()
+const vsString&
+vsTask::GetCurrentThreadName()
 {
 	SDL_threadID id = SDL_ThreadID();
 	if ( s_threadTable.find(id) != s_threadTable.end() )
 	{
 		return s_threadTable[id];
 	}
-	return -1;
+	return unknownName;
 }
 

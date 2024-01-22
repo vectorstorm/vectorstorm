@@ -36,7 +36,7 @@ public:
 	void Start();
 	bool IsDone() { return m_done; }
 
-	static int GetCurrentThreadId();
+	static const vsString& GetCurrentThreadName();
 };
 
 #endif // VS_TASK_H
