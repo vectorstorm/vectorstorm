@@ -193,6 +193,17 @@ public:
 		return 		vsVolatileArrayIterator<T>(this,m_arrayLength);
 	}
 
+	vsVolatileArrayIterator<T>	Front() const
+	{
+		return 		vsVolatileArrayIterator<T>(this,0);
+	}
+
+	vsVolatileArrayIterator<T>	Back() const
+	{
+		return 		vsVolatileArrayIterator<T>(this,m_arrayLength-1);
+	}
+
+
 	T	&GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArray access");

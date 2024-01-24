@@ -210,6 +210,17 @@ public:
 		return 		vsVolatileArrayStoreIterator<T>(this,m_arrayLength);
 	}
 
+	vsVolatileArrayStoreIterator<T>	Front() const
+	{
+		return 		vsVolatileArrayStoreIterator<T>(this,0);
+	}
+
+	vsVolatileArrayStoreIterator<T>	Back() const
+	{
+		return 		vsVolatileArrayStoreIterator<T>(this,m_arrayLength-1);
+	}
+
+
 	T	*GetItem(int id)
 	{
 		vsAssert(id >= 0 && id < m_arrayLength, "Out of bounds vsVolatileArrayStore access");
