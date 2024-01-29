@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <SDL2/SDL_filesystem.h>
 #include "VS_File.h"
-#include "VS_Task.h"
+#include "VS_Thread.h"
 #include "VS_TimerSystem.h"
 #include "VS_Mutex.h"
 
@@ -94,9 +94,9 @@ void vsLog_(const char* file, int line, const vsString &str)
 			file = ptr+1;
 		}
 
-	const vsString& threadName = vsTask::GetCurrentThreadName();
+	const vsString& threadName = vsThread::GetCurrentThreadName();
 	vsString msg( vsFormatString( "%s: %fs - %25s:%4d -- %s\n", threadName, time, file, line, str ) );
-	// int threadId = vsTask::GetCurrentThreadId();
+	// int threadId = vsThread::GetCurrentThreadId();
 	// vsString msg( vsFormatString( "%d: %fs - %25s:%4d -- %s\n", threadId, time, file, line, str ) );
 
 	{
@@ -124,9 +124,9 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 			file = ptr+1;
 		}
 
-	const vsString& threadName = vsTask::GetCurrentThreadName();
+	const vsString& threadName = vsThread::GetCurrentThreadName();
 	vsString msg( vsFormatString( "ERR: %s: %fs - %25s:%4d -- %s\n", threadName, time, file, line, str ) );
-	// int threadId = vsTask::GetCurrentThreadId();
+	// int threadId = vsThread::GetCurrentThreadId();
 	// vsString msg( vsFormatString( "ERR: %d: %fs - %*s:%*d -- %s\n", threadId, time, 25, file, 4,line, str ) );
 
 	{

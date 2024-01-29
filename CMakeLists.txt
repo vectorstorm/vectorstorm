@@ -386,8 +386,8 @@ set(THREADS_SOURCES
 	VS/Threads/VS_Semaphore.h
 	VS/Threads/VS_Spinlock.cpp
 	VS/Threads/VS_Spinlock.h
-	VS/Threads/VS_Task.cpp
-	VS/Threads/VS_Task.h
+	VS/Threads/VS_Thread.cpp
+	VS/Threads/VS_Thread.h
 	)
 set(UTILS_SOURCES
 	VS/Utils/VS_Array.h

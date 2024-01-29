@@ -1,19 +1,19 @@
 //
-//  VS_Task.h
+//  VS_Thread.h
 //  VectorStorm
 //
 //  Created by Trevor Powell on 29/03/11.
 //  Copyright 2011 __MyCompanyName__. All rights reserved.
 //
 
-#ifndef VS_TASK_H
-#define VS_TASK_H
+#ifndef VS_THREAD_H
+#define VS_THREAD_H
 
 struct SDL_Thread;
 
-void vsTask_Init();
+void vsThread_Init();
 
-class vsTask
+class vsThread
 {
 	SDL_Thread *m_thread;
 	vsString m_name;
@@ -30,14 +30,15 @@ public:
 
 	// name is optional, and will be truncated to 16 characters.  In release
 	// builds, it will be fully ignored.
-	vsTask( const vsString& name = vsEmptyString );
-	virtual ~vsTask();
+	vsThread( const vsString& name = vsEmptyString );
+	virtual ~vsThread();
 
 	void Start();
 	bool IsDone() { return m_done; }
 
 	static const vsString& GetCurrentThreadName();
+	static bool IsMainThread();
 };
 
-#endif // VS_TASK_H
+#endif // VS_THREAD_H
 

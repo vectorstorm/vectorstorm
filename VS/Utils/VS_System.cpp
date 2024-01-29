@@ -25,7 +25,7 @@
 #include "VS_ShaderUniformRegistry.h"
 #include "VS_Backtrace.h"
 #include "VS_Config.h"
-#include "VS_Task.h"
+#include "VS_Thread.h"
 #include "VS_Input.h"
 
 #include "VS_OpenGL.h"
@@ -292,7 +292,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 
 	// Perform some basic initialisation
 	vsRandom::Init();
-	vsTask_Init();
+	vsThread_Init();
 
 	vsLog("VectorStorm engine version %s",VS_VERSION);
 
