@@ -185,7 +185,7 @@ vsScene::Update( float timeStep )
 {
 	if ( !IsEnabled() )
 		return;
-	PROFILE("Scene::Update");
+	PROFILE_EXTRA("Scene::Update", m_name.c_str());
 
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )

@@ -57,10 +57,13 @@
 // #define PROFILE_GL(name) TracyGpuZone(name)
 #define PROFILE_GL(name) ZoneScopedN(name);
 
+#define PROFILE_EXTRA(name, extra) ZoneScopedN(name); ZoneText(extra, strlen(extra));
+
 #else
 
 #define PROFILE(name)
 #define PROFILE_GL(name)
+#define PROFILE_EXTRA(name, extra)
 
 #endif // TRACY_ENABLE
 
