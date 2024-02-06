@@ -121,22 +121,22 @@ void handler(int sig) {
 	{
 
 		case SIGABRT:
-			fputs("Caught SIGABRT: usually caused by abort() or assert()\n", stderr);
+			vsLog("Caught SIGABRT: usually caused by abort() or assert()");
 			break;
 		case SIGFPE:
-			fputs("Caught SIGFPE: arithmetic exception, such as divide by zero.\n", stderr);
+			vsLog("Caught SIGFPE: arithmetic exception, such as divide by zero.");
 			break;
 		case SIGILL:
-			fputs("Caugh SIGILL: illegal instruction\n", stderr);
+			vsLog("Caugh SIGILL: illegal instruction");
 			break;
 		case SIGSEGV:
-			fputs("Caught SIGSEGV: segfault\n", stderr);
+			vsLog("Caught SIGSEGV: segfault");
 			break;
 		case SIGTERM:
-			fputs("Caught SIGTERM: a termination request was sent to the program\n", stderr);
+			vsLog("Caught SIGTERM: a termination request was sent to the program");
 			break;
 		default:
-			fprintf(stderr, "Caught %d\n", sig);
+			vsLog("Caught %d\n", sig);
 			break;
 	}
 	// print out all the frames to stderr
