@@ -41,7 +41,9 @@ public:
 
 	~vsPool()
 	{
-		vsAssert(m_count ==  m_unusedCount, "Not all instances returned to the pool before pool shutdown??");
+		vsAssertF(m_count ==  m_unusedCount,
+				"Not all instances returned to the pool before pool shutdown??  %d/%d returned (array of %s)",
+				m_unusedCount, m_count, Demangle( typeid(T).name() ) );
 
 		while ( !m_unusedList.IsEmpty() )
 		{
