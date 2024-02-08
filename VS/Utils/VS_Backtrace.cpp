@@ -142,7 +142,18 @@ void handler(int sig) {
 	// print out all the frames to stderr
 
 	vsBacktrace();
-	exit(1);
+
+	// As per discussion here:  https://forums.developer.apple.com/forums/thread/113742
+	//
+	// We can't legally call exit() from a signal handler.  We *could* call _exit(),
+	// but it's better form to unregister our signal handlers and just return so that
+	// Apple will generate their own crash log.
+	signal(SIGABRT, SIG_DFL);
+	signal(SIGFPE, SIG_DFL);
+	signal(SIGILL, SIG_DFL);
+	signal(SIGSEGV, SIG_DFL);
+	signal(SIGTERM, SIG_DFL);
+	return;
 }
 
 
