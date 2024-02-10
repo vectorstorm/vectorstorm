@@ -152,3 +152,28 @@ vsRenderPipeline::Prepare()
 	}
 }
 
+
+bool
+RenderTargetRegistration::Matches( const RenderTargetRequest& req ) const
+{
+	if ( !request.share )
+		return false;
+
+	if ( request != req )
+		return false;
+
+	// now check whether our *actual* resolution matches
+	if ( request.type == RenderTargetRequest::Type_MipmapLevel )
+	{
+		// we need to check whether this mipmap level gives us an actual
+		// matching size!
+
+		int desiredWidth = vsRenderer::Instance()->GetWidthPixels() >> request.mipmapLevel;
+		int desiredHeight = vsRenderer::Instance()->GetHeightPixels() >> request.mipmapLevel;
+		if ( target->GetWidth() != desiredWidth ||
+				target->GetHeight() != desiredHeight )
+			return false;
+	}
+
+	return true;
+}

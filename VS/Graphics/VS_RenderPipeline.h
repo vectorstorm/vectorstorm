@@ -74,6 +74,11 @@ struct RenderTargetRequest
 			antialias == o.antialias &&
 			share == o.share);
 	}
+
+	bool operator!=(const RenderTargetRequest& o) const
+	{
+		return !operator==(o);
+	}
 };
 
 class RenderTargetRegistration
@@ -103,10 +108,7 @@ public:
 		vsDelete(target);
 	}
 
-	bool Matches( const RenderTargetRequest& req ) const
-	{
-		return request.share && (request == req);
-	}
+	bool Matches( const RenderTargetRequest& req ) const;
 
 	bool IsUsedByStage( vsRenderPipelineStage *stage ) const
 	{
