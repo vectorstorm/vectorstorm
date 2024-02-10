@@ -422,6 +422,9 @@ vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 	PHYSFS_sint64 bytesWritten = PHYSFS_writeBytes( m_file, bytes, bytesToWrite );
 	if ( bytesWritten != (PHYSFS_sint64)bytesToWrite )
 	{
+		vsLog("Tried to write %ld bytes to file, actually wrote %ld bytes",
+				(PHYSFS_sint64)bytesToWrite, bytesWritten);
+
 		PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
 		const char* errStr = PHYSFS_getErrorByCode(code);
 
