@@ -13,7 +13,14 @@
 
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
+#include "VS_Mutex.h"
+#include "VS_VolatileArray.h"
 
+namespace
+{
+	vsMutex m_mutex;
+	vsVolatileArray<unsigned int> m_unusedBufferIDs;
+}
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
@@ -49,8 +56,20 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 #if !TARGET_OS_IPHONE
 	if ( glGenBuffers && m_type != Type_NoVBO )
 	{
-		glGenBuffers(1, (GLuint*)&m_bufferID);
+		m_mutex.Lock();
+
+		if ( m_unusedBufferIDs.IsEmpty() )
+			glGenBuffers(1, (GLuint*)&m_bufferID);
+		else
+		{
+			m_bufferID = *m_unusedBufferIDs.Back();
+			m_unusedBufferIDs.RemoveItem(m_bufferID);
+		}
+
+		m_mutex.Unlock();
+
 		m_vbo = true;
+
 	}
 #endif
 }
@@ -59,7 +78,16 @@ vsRenderBuffer::~vsRenderBuffer()
 {
 	if ( m_vbo )
 	{
-		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+		m_mutex.Lock();
+			// orphan the buffer's data
+			glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+			glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			m_unusedBufferIDs.AddItem( m_bufferID );
+			m_bufferID = 0;
+		m_mutex.Unlock();
+		// glDeleteBuffers( 1, (GLuint*)&m_bufferID );
 	}
 
 	{
