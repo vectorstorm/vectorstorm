@@ -10,6 +10,8 @@
 #ifndef VS_VOLATILEARRAY_H
 #define VS_VOLATILEARRAY_H
 
+#include "VS/Math/VS_Random.h"
+
 /**
  * A vsVolatileArray is very much like a vsArray, except that it has faster
  * support for "Remove()" operations, since it is allowed to rearrange its
