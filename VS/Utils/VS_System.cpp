@@ -524,8 +524,11 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 
 	_FindMods();
 
-	m_mountpoints.AddItem(m_dataDirectory+"VS/");
-	m_mountpoints.AddItem(m_dataDirectory+"VS.zip");
+#ifdef ZIPDATA
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS.zip") );
+#else
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS/") );
+#endif
 	m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
 	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
 
@@ -638,20 +641,16 @@ vsSystem::MountPhysFSVolumes( bool trace )
 		m_mountpoints.AddItem( Mount(activeMods[i]) );
 	}
 
-	std::string d = m_dataDirectory + m_currentGameDirectoryName + "/";
+
+#ifdef ZIPDATA
 	std::string archiveName = m_dataDirectory + m_currentGameDirectoryName + ".zip";
-
-	// allow loose overridden files
-	m_mountpoints.AddItem(d);
 	m_mountpoints.AddItem(archiveName);
-
-
-	// we need the basedir for in case there's a crash report saved there.
-	// m_mountpoints.AddItem( Mount(PHYSFS_getBaseDir()) );
-	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS/") );
 	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS.zip") );
-
-	// No loading loose files from the data directory.
+#else
+	std::string d = m_dataDirectory + m_currentGameDirectoryName + "/";
+	m_mountpoints.AddItem(d);
+	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS/") );
+#endif
 
 	// and finally, last of all, our 'write' directory, which we mount under the 'user' tree.
 	m_mountpoints.AddItem( Mount(PHYSFS_getWriteDir(), "user") );

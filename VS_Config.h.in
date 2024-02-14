@@ -13,3 +13,4 @@
 #cmakedefine VS_TOOL
 #cmakedefine VS_TRACY
 #cmakedefine VS_APPBUNDLE
+#cmakedefine ZIPDATA
