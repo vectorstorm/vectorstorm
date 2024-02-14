@@ -49,6 +49,7 @@ class vsRenderQueue
 	int						m_transformStackLevel;
 
 	float m_fov;
+	bool m_rendering;
 	// bool m_orthographic;
 
 	int				PickStageForMaterial( vsMaterial *material );
