@@ -225,22 +225,22 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				errorFilename = GetFullFilename(filename);
 
 			// Now let's try this thing:
-			try
-			{
-				std::filesystem::file_status fs = std::filesystem::status( errorFilename );
-				std::filesystem::perms perm = fs.permissions();
-				if ( (perm & std::filesystem::perms::owner_read) == std::filesystem::perms::none )
-					vsLog("Readable!");
-			}
-			catch ( std::filesystem::filesystem_error& err )
-			{
-				vsLog("what: %s", err.what());
-				vsLog("path1: %s", err.path1());
-				vsLog("path2: %s", err.path2());
-				vsLog("code().value(): %d", err.code().value());
-				vsLog("code().message(): %s", err.code().message());
-				// vsLog("code().category(): %s", err.code().category().message());
-			}
+			// try
+			// {
+			// 	std::filesystem::file_status fs = std::filesystem::status( errorFilename );
+			// 	std::filesystem::perms perm = fs.permissions();
+			// 	if ( (perm & std::filesystem::perms::owner_read) == std::filesystem::perms::none )
+			// 		vsLog("Readable!");
+			// }
+			// catch ( std::filesystem::filesystem_error& err )
+			// {
+			// 	vsLog("what: %s", err.what());
+			// 	vsLog("path1: %s", err.path1());
+			// 	vsLog("path2: %s", err.path2());
+			// 	vsLog("code().value(): %d", err.code().value());
+			// 	vsLog("code().message(): %s", err.code().message());
+			// 	// vsLog("code().category(): %s", err.code().category().message());
+			// }
 
 			if ( s_openFailureHandler )
 				(*s_openFailureHandler)( errorFilename, errorMsg );
