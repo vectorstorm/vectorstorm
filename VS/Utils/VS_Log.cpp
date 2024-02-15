@@ -39,7 +39,14 @@ void vsLog_Start(const char* companyName, const char* title, const char* profile
 	// I like everything about it except for its silly silly / operator
 	// for concatonating directory components.
 
-	vsString prefPath = SDL_GetPrefPath(companyName, title);
+	int sdlInitResult = SDL_Init(0);
+	vsAssertF( sdlInitResult == 0, "SDL_Init returned %d: %s", sdlInitResult, SDL_GetError());
+
+	char* prefPathChar = SDL_GetPrefPath(companyName, title);
+	vsAssertF(prefPathChar, "vsLogStart: Unable to figure out where to save files: %s", SDL_GetError());
+	vsString prefPath(prefPathChar);
+	SDL_free(prefPathChar);
+	SDL_Quit();
 	std::filesystem::path directory( prefPath );
 	directory /= profile;
 	std::filesystem::path logFile = directory / "log.txt";

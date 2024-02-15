@@ -304,10 +304,6 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 	vsFileCache::Startup();
 	vsShaderCache::Startup();
 	vsShaderUniformRegistry::Startup();
-	InitPhysFS( argc, argv, companyName, title, profileName );
-
-	vsLog("Loading preferences...");
-	m_preferences = new vsSystemPreferences;
 
 #if !TARGET_OS_IPHONE
 
@@ -318,6 +314,12 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 	}
 	atexit(SDL_Quit);
 
+	InitPhysFS( argc, argv, companyName, title, profileName );
+
+	vsLog("Loading preferences...");
+	m_preferences = new vsSystemPreferences;
+
+	vsLog("Initialising SDL subsystems...");
 #if defined( VS_GAMEPADS )
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
@@ -521,7 +523,10 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 {
 	PHYSFS_init(argv[0]);
 
-	vsString writeDir = SDL_GetPrefPath(companyName.c_str(), title.c_str());
+	char* prefPathChar = SDL_GetPrefPath(companyName.c_str(), title.c_str());
+	vsAssertF(prefPathChar, "InitPhysFS: Unable to figure out where to save files: %s", SDL_GetError());
+	vsString writeDir(prefPathChar);
+	SDL_free(prefPathChar);
 	int success = PHYSFS_setWriteDir( writeDir.c_str() );
 	if ( !success )
 	{
@@ -586,14 +591,14 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	vsLog("PhysFS compiled version: %d.%d.%d", compiled.major, compiled.minor, compiled.patch);
 	vsLog("PhysFS linked version: %d.%d.%d", linked.major, linked.minor, linked.patch);
 
-	vsLog("BaseDir: %s", PHYSFS_getBaseDir());
+	vsString baseDirectory = PHYSFS_getBaseDir();
+	vsLog("BaseDir: %s", baseDirectory);
 
 #if defined(__APPLE_CC__) && defined(VS_APPBUNDLE)
 	// loading out of an app bundle, so use that data directory
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Contents/Resources/Data/";
+	m_dataDirectory =  baseDirectory + "Contents/Resources/Data/";
 #elif defined(_DEBUG) && defined(_WIN32)
 
-	vsString baseDirectory = PHYSFS_getBaseDir();
 	// Under Win32, Visual Studio likes to put debug and release builds into a directory
 	// "Release" or "Debug" sitting under the main project directory.  That's convenient,
 	// but it means that the executable location isn't in the same place as our Data
@@ -608,7 +613,7 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 
 #else
 	// generic UNIX.  Assume data directory is right next to the executable.
-	m_dataDirectory =  std::string(PHYSFS_getBaseDir()) + "Data/";
+	m_dataDirectory =  baseDirectory + "Data/";
 #endif
 
 	_FindMods();

@@ -699,11 +699,11 @@ vsFile::MoveDirectory( const vsString& from, const vsString& to )
 		}
 		catch( std::exception &e )
 		{
-			vsLog("Attempt to rename directory into place failed.  Falling back on next method");
+			vsLog("Attempt to rename directory into place failed.  Falling back on manual file move");
 		}
 	}
 
-	if ( CopyDirectory(from, to) )
+	if ( MoveDirectoryContents(from, to) )
 	{
 		DeleteDirectory(from);
 		return true;
@@ -713,15 +713,15 @@ vsFile::MoveDirectory( const vsString& from, const vsString& to )
 }
 
 bool
-vsFile::CopyDirectory( const vsString& from, const vsString& to )
+vsFile::MoveDirectoryContents( const vsString& from, const vsString& to )
 {
-	vsString f = GetFullFilename(from);
-	vsString t = MakeWriteFilename( to ); // make sure we pull out the virtual 'user' folder if any!
+	// We're going to try to move the files inside 'from' to the specified
+	// other directory.  This function is recursive, and will be called on
+	// directories inside the 'from' directory to the 'to' directory,
+	// which we'll do using the ::Move() function above.
 
-	// vsLog("From: %s", GetFullFilename(from));
-	// vsLog("FromPath: %s", fp.string());
-	// vsLog("To: %s", PHYSFS_getWriteDir() + to);
-	// vsLog("ToPath: %s", tp.string());
+	// vsLog("From: %s", from);
+	// vsLog("To: %s", to);
 
 	EnsureWriteDirectoryExists(to);
 
@@ -744,7 +744,7 @@ vsFile::CopyDirectory( const vsString& from, const vsString& to )
 		{
 			vsString directoryFrom = vsFormatString("%s/%s", from, directories[i] );
 			vsString directoryTo = vsFormatString("%s/%s", to, directories[i] );
-			CopyDirectory( directoryFrom, directoryTo );
+			MoveDirectoryContents( directoryFrom, directoryTo );
 		}
 	}
 	return true;
