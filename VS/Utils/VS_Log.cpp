@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstddef>
 #include <SDL2/SDL_filesystem.h>
+#include <sys/stat.h>
 #include "VS_File.h"
 #include "VS_Thread.h"
 #include "VS_TimerSystem.h"
@@ -29,11 +30,20 @@ static vsMutex s_mutex;
 // static PHYSFS_File* s_log = nullptr;
 // static vsFile *s_log = nullptr;
 
-void vsLog_Start(const char* companyName, const char* title)
+void vsLog_Start(const char* companyName, const char* title, const char* profile)
 {
 	prefPath = SDL_GetPrefPath(companyName, title);
-	vsString logFile = prefPath + "log.txt";
-	vsString prevLogFile = prefPath + "log_previous.txt";
+	vsString directory = vsFormatString("%s%s/", prefPath, profile);
+	vsString logFile = directory + "/log.txt";
+	vsString prevLogFile = directory + "log_previous.txt";
+
+	struct stat st = {0};
+	if ( stat(directory.c_str(), &st) == -1 )
+#if defined(_WIN32)
+		mkdir(directory.c_str());
+#else
+		mkdir(directory.c_str(), 0777);
+#endif
 
 	// Now we need to copy this log to a different spot.
 	FILE *logRead = fopen(logFile.c_str(), "rb");
@@ -70,7 +80,8 @@ void vsLog_Start(const char* companyName, const char* title)
 
 void vsLog_End()
 {
-	fclose( s_logFile );
+	if ( s_logFile )
+		fclose( s_logFile );
 }
 
 void vsLog_Show()

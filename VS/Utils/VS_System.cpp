@@ -76,6 +76,11 @@ vsSystem * vsSystem::s_instance = nullptr;
 extern vsHeap *g_globalHeap;	// there exists this global heap;  we need to use this when changing video modes etc.
 
 
+namespace
+{
+	vsArray<vsString> s_migrateDirectories;
+}
+
 
 #define VS_VERSION ("0.0.1")
 
@@ -265,7 +270,7 @@ private:
 #endif
 
 
-vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes, size_t minBuffers):
+vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsString& profileName, int argc, char* argv[], size_t totalMemoryBytes, size_t minBuffers):
 	m_showCursor( true ),
 	m_showCursorOverridden( false ),
 	m_focused( true ),
@@ -299,7 +304,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, int argc,
 	vsFileCache::Startup();
 	vsShaderCache::Startup();
 	vsShaderUniformRegistry::Startup();
-	InitPhysFS( argc, argv, companyName, title );
+	InitPhysFS( argc, argv, companyName, title, profileName );
 
 	vsLog("Loading preferences...");
 	m_preferences = new vsSystemPreferences;
@@ -470,15 +475,99 @@ vsSystem::Deinit()
 }
 
 void
-vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title)
+vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
+{
+	vsLog("====== Migrating existing files to new profile: %s", profile);
+	// when set, we already have our write directory set to the BASE path
+	// outside any profiles.
+	//
+	vsFile::EnsureWriteDirectoryExists(profile);
+
+	m_mountpoints.Clear();
+	m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
+	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
+
+	vsArray<vsString> looseFiles;
+	vsFile::DirectoryFiles(&looseFiles, "user/");
+	for ( int i = 0; i < looseFiles.ItemCount(); i++ )
+	{
+		vsString userfilename = vsFormatString("user/%s", looseFiles[i]);
+		vsString profilefilename = vsFormatString("user/%s/%s", profile, looseFiles[i]);
+
+		if ( looseFiles[i] == "log.txt" ) // don't copy this file;  it'd overwrite the log we're writing out now.
+		{
+			vsFile::Delete( userfilename );
+			continue;
+		}
+
+		if ( vsFile::Exists( userfilename ) )
+			vsFile::Move( userfilename, profilefilename );
+	}
+
+	for ( int i = 0; i < s_migrateDirectories.ItemCount(); i++ )
+	{
+		vsString userfilename = vsFormatString("user/%s", s_migrateDirectories[i]);
+		vsString profilefilename = vsFormatString("user/%s/%s", profile, s_migrateDirectories[i]);
+
+		if ( vsFile::DirectoryExists( userfilename ) )
+			vsFile::MoveDirectory( userfilename, profilefilename );
+	}
+	m_mountpoints.Clear();
+	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
+}
+
+void
+vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title, const vsString& profile)
 {
 	PHYSFS_init(argv[0]);
-	int success = PHYSFS_setWriteDir( SDL_GetPrefPath(companyName.c_str(), title.c_str()) );
-	vsLog("====== Initialising file system");
+
+	vsString writeDir = SDL_GetPrefPath(companyName.c_str(), title.c_str());
+	int success = PHYSFS_setWriteDir( writeDir.c_str() );
 	if ( !success )
 	{
-		vsLog("SetWriteDir failed!", success);
-		exit(1);
+		vsString errorMsg = PHYSFS_getLastErrorString();
+		vsAssertF(success, "SetWriteDir failed!: %s", errorMsg );
+	}
+	if ( profile != vsEmptyString )
+	{
+		m_mountpoints.AddItem( Mount( PHYSFS_getWriteDir(), "user" ) );
+		_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
+
+		bool needsMigrate = false;
+		vsArray<vsString> files, directories;
+		vsFile::DirectoryFiles(&files, "user/");
+		vsFile::DirectoryDirectories(&directories, "user/");
+		if ( !files.IsEmpty() )
+			needsMigrate = true;
+		else
+		{
+			for ( int i = 0; i < directories.ItemCount(); i++ )
+			{
+				if ( s_migrateDirectories.Contains(directories[i]) )
+				{
+					needsMigrate = true;
+					break;
+				}
+			}
+		}
+
+		if ( needsMigrate )
+		{
+			_MigrateFilesToProfileDirectory(profile);
+		}
+
+		vsFile::EnsureWriteDirectoryExists(profile);
+		if ( profile != vsEmptyString )
+			writeDir += profile + "/";
+		success = PHYSFS_setWriteDir( writeDir.c_str() );
+		vsLog("====== Initialising file system");
+		if ( !success )
+		{
+			vsString errorMsg = PHYSFS_getLastErrorString();
+			vsAssertF(success, "SetWriteDir failed!: %s", errorMsg );
+		}
+
+		m_mountpoints.Clear();
 	}
 	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
 	size_t bytes = vsFile::AvailableWriteBytes();
@@ -1536,5 +1625,11 @@ vsSystem::GetOrientationTransform_3D() const
 			break;
 	}
 	return result;
+}
+
+void
+vsSystem::SetMigrateDirectories(const vsArray<vsString>& directories)
+{
+	s_migrateDirectories = directories;
 }
 

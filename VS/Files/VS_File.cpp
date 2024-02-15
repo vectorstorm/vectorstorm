@@ -543,6 +543,27 @@ namespace {
 
 		return true;
 	}
+	bool FallbackDirectoryRename( const vsString& from_in, const vsString& to_in )
+	{
+		vsString filename(from_in);
+		vsString from, to;
+		const char* physDir = PHYSFS_getRealDir( filename.c_str() );
+		if ( physDir )
+		{
+			vsString dir(physDir);
+
+#if defined(_WIN32)
+			from = dir + "\\" + filename;
+			to = dir + "\\" + to_in;
+#else
+			from = dir + "/" + filename;
+			to = dir + "/" + to_in;
+#endif
+			return (0 == rename( from.c_str(), to.c_str() ));
+	}
+
+	return false;
+	}
 }
 
 bool
@@ -674,26 +695,89 @@ vsFile::DeleteDirectory( const vsString &filename )
 }
 
 bool
-vsFile::MoveDirectory( const vsString& from_in, const vsString& to_in )
+vsFile::MoveDirectory( const vsString& from, const vsString& to_in )
 {
-	vsString filename(from_in);
-	vsString from, to;
-	const char* physDir = PHYSFS_getRealDir( filename.c_str() );
-	if ( physDir )
-	{
-		vsString dir(physDir);
+	vsScopedLock lock(s_renameMutex);
 
-#if defined(_WIN32)
-		from = dir + "\\" + filename;
-		to = dir + "\\" + to_in;
+	if ( !vsFile::Exists(from) )
+		return false;
+
+	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
+#ifdef _WIN32
+	// BAH ON BOTH YOUR HOUSES
+
+	// std::filesystem::rename magically wants filepaths to be expressed in
+	// wchar_t UTF-16 on this platform because of course it does.  And
+	// make_preferred() doesn't do that automatically, so we have to do
+	// it ourselves in here in an ifdef.
+
+	std::u16string f = utf8::utf8to16(GetFullFilename(from).c_str());
+	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
+
 #else
-		from = dir + "/" + filename;
-		to = dir + "/" + to_in;
-#endif
-		return (0 == rename( from.c_str(), to.c_str() ));
-	}
+	vsString f = GetFullFilename(from);
+	vsString t = PHYSFS_getWriteDir() + to;
 
-	return false;
+#endif
+
+#if defined(__APPLE_CC__)
+	// For whatever reason, apple has tied C++ features to OS versions, and
+	// we've declared ourselves as only requiring OSX 10.9, which means we
+	// don't have access to std::filesystem.  (We can get it in 10.15, but as
+	// that's only two years old (at time of writing), it feels like a big
+	// ask).  Let's have Mac builds just do our fallback rename for now, rather
+	// than requiring an updated OS just so we can use std::filesystem.  It's
+	// not worth requiring the OS upgrade!
+	//
+	// Let's use POSIX ::rename() and then our fallback, here.  That should be
+	// available everywhere/everywhen on OSX!
+
+	if ( 0 != ::rename(f.c_str(),t.c_str()) )
+	{
+		vsLog("While attempting rename: %s -> %s", f.c_str(), t.c_str());
+		vsLog("::rename error: %d;  doing remove+rename instead", errno);
+		return FallbackRename(from, to_in);
+	}
+	return true;
+#else // !defined(__APPLE_CC__)
+
+
+	std::filesystem::path fp(f);
+	std::filesystem::path tp(t);
+	fp.make_preferred();
+	tp.make_preferred();
+
+	// std::string fps = fp.string();
+
+	// vsLog("From: %s", GetFullFilename(from));
+	// vsLog("FromPath: %s", fp.string());
+	// vsLog("To: %s", PHYSFS_getWriteDir() + to);
+	// vsLog("ToPath: %s", tp.string());
+
+	try
+	{
+		std::filesystem::rename( fp, tp );
+	}
+	catch( std::exception &e )
+	{
+		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
+		// to trying to delete and move.
+		vsLog("While attempting rename: %s -> %s", fp.string(), tp.string());
+		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
+		try
+		{
+			std::filesystem::remove( tp );
+			std::filesystem::rename( fp, tp );
+		}
+		catch( std::exception &ee )
+		{
+			// okay, that failed too for some reason.  Just do a manual copy.
+			vsLog("Remove and rename error: \"%s\"", ee.what());
+			return FallbackDirectoryRename(from, to_in);
+		}
+	}
+	return true;
+#endif // !defined(__APPLE_CC__)
 }
 
 namespace

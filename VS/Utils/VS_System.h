@@ -127,7 +127,7 @@ class vsSystem
 	vsArray<vsString> m_unpackedDataDirectories;
 	vsArray<vsString> m_modDirectories;
 
-	void InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title);
+	void InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title, const vsString& profile);
 	void DeinitPhysFS();
 
 	void _DoRemountConfiguredPhysFSVolumes();
@@ -141,11 +141,12 @@ class vsSystem
 
 	void PrepareModGuard();
 
+	void _MigrateFilesToProfileDirectory(const vsString& profile);
 public:
 
 	static vsSystem *	Instance() { return s_instance; }
 
-	vsSystem( const vsString& companyName, const vsString& title, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64, size_t minBuffers = 1 );
+	vsSystem( const vsString& companyName, const vsString& title, const vsString& profileName, int argc, char* argv[], size_t totalMemoryBytes = 1024*1024*64, size_t minBuffers = 1 );
 	~vsSystem();
 
 	void Init();
@@ -235,6 +236,22 @@ public:
 
 	void			AddMod( const vsString& directory, const vsString& mountPoint );
 	void			Remount();
+
+
+	// ===================================
+	//
+	// If you need to migrate from non-profile-based save directories to
+	// profile-based directories, these functions let your game specify the
+	// directories which might have been in your old save area.  Any directories
+	// *not* specified here will be treated as profile directories and will be
+	// left alone in the root of the write directory.
+	//
+	// This function must be called BEFORE creating a vsSystem object during
+	// game startup!
+	//
+	static void SetMigrateDirectories(const vsArray<vsString>& directories);
+	// ===================================
+
 };
 
 
