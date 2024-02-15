@@ -543,27 +543,6 @@ namespace {
 
 		return true;
 	}
-	bool FallbackDirectoryRename( const vsString& from_in, const vsString& to_in )
-	{
-		vsString filename(from_in);
-		vsString from, to;
-		const char* physDir = PHYSFS_getRealDir( filename.c_str() );
-		if ( physDir )
-		{
-			vsString dir(physDir);
-
-#if defined(_WIN32)
-			from = dir + "\\" + filename;
-			to = dir + "\\" + to_in;
-#else
-			from = dir + "/" + filename;
-			to = dir + "/" + to_in;
-#endif
-			return (0 == rename( from.c_str(), to.c_str() ));
-	}
-
-	return false;
-	}
 }
 
 bool
@@ -695,89 +674,80 @@ vsFile::DeleteDirectory( const vsString &filename )
 }
 
 bool
-vsFile::MoveDirectory( const vsString& from, const vsString& to_in )
+vsFile::MoveDirectory( const vsString& from, const vsString& to )
 {
-	vsScopedLock lock(s_renameMutex);
+	vsString f = GetFullFilename(from);
+	vsString t = MakeWriteFilename( PHYSFS_getWriteDir() + to ); // make sure we pull out the virtual 'user' folder if any!
+
+	std::filesystem::path fp(f);
+	std::filesystem::path tp(t);
+
+	fp.make_preferred();
+	tp.make_preferred();
 
 	if ( !vsFile::Exists(from) )
 		return false;
 
-	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
-#ifdef _WIN32
-	// BAH ON BOTH YOUR HOUSES
-
-	// std::filesystem::rename magically wants filepaths to be expressed in
-	// wchar_t UTF-16 on this platform because of course it does.  And
-	// make_preferred() doesn't do that automatically, so we have to do
-	// it ourselves in here in an ifdef.
-
-	std::u16string f = utf8::utf8to16(GetFullFilename(from).c_str());
-	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
-
-#else
-	vsString f = GetFullFilename(from);
-	vsString t = PHYSFS_getWriteDir() + to;
-
-#endif
-
-#if defined(__APPLE_CC__)
-	// For whatever reason, apple has tied C++ features to OS versions, and
-	// we've declared ourselves as only requiring OSX 10.9, which means we
-	// don't have access to std::filesystem.  (We can get it in 10.15, but as
-	// that's only two years old (at time of writing), it feels like a big
-	// ask).  Let's have Mac builds just do our fallback rename for now, rather
-	// than requiring an updated OS just so we can use std::filesystem.  It's
-	// not worth requiring the OS upgrade!
-	//
-	// Let's use POSIX ::rename() and then our fallback, here.  That should be
-	// available everywhere/everywhen on OSX!
-
-	if ( 0 != ::rename(f.c_str(),t.c_str()) )
+	if ( !std::filesystem::is_directory(tp) )
 	{
-		vsLog("While attempting rename: %s -> %s", f.c_str(), t.c_str());
-		vsLog("::rename error: %d;  doing remove+rename instead", errno);
-		return FallbackRename(from, to_in);
+		// destination directory doesn't exist, so we should be able to just
+		// rename ourselves over there and be done!
+		try
+		{
+			std::filesystem::rename(fp,tp);
+			return true;
+		}
+		catch( std::exception &e )
+		{
+			vsLog("Attempt to rename directory into place failed.  Falling back on next method");
+		}
 	}
-	return true;
-#else // !defined(__APPLE_CC__)
 
+	if ( CopyDirectory(from, to) )
+	{
+		DeleteDirectory(from);
+		return true;
+	}
 
-	std::filesystem::path fp(f);
-	std::filesystem::path tp(t);
-	fp.make_preferred();
-	tp.make_preferred();
+	return false;
+}
 
-	// std::string fps = fp.string();
+bool
+vsFile::CopyDirectory( const vsString& from, const vsString& to )
+{
+	vsString f = GetFullFilename(from);
+	vsString t = MakeWriteFilename( to ); // make sure we pull out the virtual 'user' folder if any!
 
 	// vsLog("From: %s", GetFullFilename(from));
 	// vsLog("FromPath: %s", fp.string());
 	// vsLog("To: %s", PHYSFS_getWriteDir() + to);
 	// vsLog("ToPath: %s", tp.string());
 
-	try
+	EnsureWriteDirectoryExists(to);
+
 	{
-		std::filesystem::rename( fp, tp );
-	}
-	catch( std::exception &e )
-	{
-		// Okay, std::filesystem::rename() has failed for some reason.  Fall back
-		// to trying to delete and move.
-		vsLog("While attempting rename: %s -> %s", fp.string(), tp.string());
-		vsLog("filesystem::rename error: \"%s\";  doing remove+rename instead", e.what());
-		try
+		vsArray<vsString> files, directories;
+		DirectoryFiles(&files, from);
+		DirectoryDirectories(&directories, from);
+
+		for ( int i = 0; i < files.ItemCount(); i++ )
 		{
-			std::filesystem::remove( tp );
-			std::filesystem::rename( fp, tp );
+			// don't move these autocloud files if we find any
+			if ( files[i] != "steam_autocloud.vdf" )
+			{
+				vsString fileFrom = vsFormatString("%s/%s", from, files[i] );
+				vsString fileTo = vsFormatString("%s/%s", to, files[i] );
+				Move( fileFrom, fileTo );
+			}
 		}
-		catch( std::exception &ee )
+		for ( int i = 0; i < directories.ItemCount(); i++ )
 		{
-			// okay, that failed too for some reason.  Just do a manual copy.
-			vsLog("Remove and rename error: \"%s\"", ee.what());
-			return FallbackDirectoryRename(from, to_in);
+			vsString directoryFrom = vsFormatString("%s/%s", from, directories[i] );
+			vsString directoryTo = vsFormatString("%s/%s", to, directories[i] );
+			CopyDirectory( directoryFrom, directoryTo );
 		}
 	}
 	return true;
-#endif // !defined(__APPLE_CC__)
 }
 
 namespace
@@ -1299,7 +1269,10 @@ vsFile::GetFullFilename(const vsString &filename_in)
 	{
 		vsString dir(physDir);
 
-		return dir + "/" + filename;
+		if ( dir.back() == '/' )
+			return dir + filename;
+		else
+			return dir + "/" + filename;
 	}
 	vsAssert(0, vsFormatString( "No such file: %s", filename_in.c_str() ) );
 	return filename;
