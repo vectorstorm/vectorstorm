@@ -45,6 +45,7 @@ private:
 	vsStore *m_compressedStore;
 	vsStore *m_store;
 	struct zipdata *m_zipData;
+	bool m_ok;
 
 	Mode		m_mode;
 
@@ -69,6 +70,8 @@ public:
 
 				vsFile( const vsString &filename, vsFile::Mode mode = MODE_Read );
 	virtual		~vsFile();
+
+	bool		IsOK() { return m_ok; }
 
 	size_t		GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }
@@ -133,7 +136,8 @@ public:
 
 	bool		AtEnd();
 
-	typedef void (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
+	// the open failure handler should return 'true' if we should continue or 'false' if we should assert.
+	typedef bool (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
 	static void SetFileOpenFailureHandler( openFailureHandler handler );
 };
 
