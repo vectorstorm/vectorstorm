@@ -17,6 +17,8 @@
 #include "VS_Screen.h"
 #include "VS_System.h"
 
+#include "VS_LocString.h"
+
 #include "VS_MaterialManager.h" // TEMP:  For triggering material reload.
 #include "VS_TextureManager.h" // TEMP:  For triggering material reload.
 #include "VS_Shader.h" // TEMP:  For triggering shader reload.
@@ -2025,7 +2027,7 @@ vsInput::ValidateString()
 		bool hasDecimalSeparator = false;
 		int codepointsSoFar = 0;
 
-		extern vsString s_decimalSeparator;
+		const vsString& s_decimalSeparator = vsLocString::GetNumberDecimalSeparator();
 
 		for ( int i = 0; i < length; i++ )
 		{

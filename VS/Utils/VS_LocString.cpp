@@ -171,8 +171,11 @@ vsLocString::AsString() const
 #endif // 0
 }
 
-static vsString s_thousandsSeparator(",");
-vsString s_decimalSeparator(".");
+namespace
+{
+	vsString s_thousandsSeparator(",");
+	vsString s_decimalSeparator(".");
+}
 
 static vsString DoFormatNumber( int value )
 {
@@ -227,6 +230,18 @@ void
 vsLocString::SetNumberDecimalSeparator(const vsString& separator)
 {
 	s_decimalSeparator = separator;
+}
+
+const vsString&
+vsLocString::GetNumberThousandsSeparator()
+{
+	return s_thousandsSeparator;
+}
+
+const vsString&
+vsLocString::GetNumberDecimalSeparator()
+{
+	return s_decimalSeparator;
 }
 
 vsString
