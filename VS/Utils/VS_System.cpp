@@ -504,6 +504,7 @@ vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
 
 		if ( vsFile::Exists( userfilename ) )
 		{
+			vsLog("Migrating file: %s", userfilename);
 			if ( !vsFile::Move( userfilename, profilefilename ) )
 			{
 				vsString fullFrom = vsFile::GetFullFilename(userfilename);
@@ -521,6 +522,7 @@ vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
 
 		if ( vsFile::DirectoryExists( userfilename ) )
 		{
+			vsLog("Migrating directory: %s", userfilename);
 			if ( !vsFile::MoveDirectory( userfilename, profilefilename ) )
 			{
 				vsString fullFrom = vsFile::GetFullFilename(userfilename);
