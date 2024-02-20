@@ -546,30 +546,15 @@ namespace {
 }
 
 bool
-vsFile::Move( const vsString &from, const vsString &to_in )
+vsFile::Move( const vsString &user_from, const vsString &user_to )
 {
 	vsScopedLock lock(s_renameMutex);
 
-	if ( !vsFile::Exists(from) )
+	if ( !vsFile::Exists(user_from) )
 		return false;
 
-	vsString to = MakeWriteFilename( to_in ); // make sure we pull out the virtual 'user' folder if any!
-#ifdef _WIN32
-	// BAH ON BOTH YOUR HOUSES
-
-	// std::filesystem::rename magically wants filepaths to be expressed in
-	// wchar_t UTF-16 on this platform because of course it does.  And
-	// make_preferred() doesn't do that automatically, so we have to do
-	// it ourselves in here in an ifdef.
-
-	std::u16string f = utf8::utf8to16(GetFullFilename(from).c_str());
-	std::u16string t = utf8::utf8to16(PHYSFS_getWriteDir() + to);
-
-#else
-	vsString f = GetFullFilename(from);
-	vsString t = PHYSFS_getWriteDir() + to;
-
-#endif
+	std::filesystem::path f = GetFullFilename(user_from);
+	std::filesystem::path t = PHYSFS_getWriteDir() + MakeWriteFilename( user_to ); // make sure we pull out the virtual 'user' folder if any!
 
 #if defined(__APPLE_CC__)
 	// For whatever reason, apple has tied C++ features to OS versions, and
@@ -625,7 +610,7 @@ vsFile::Move( const vsString &from, const vsString &to_in )
 			// okay, that failed too for some reason.  Just do a manual copy.
 			vsLog("Remove and rename error: \"%s\"", ee.what());
 			vsLog("Trying manual copy instead...");
-			return FallbackRename(from, to_in);
+			return FallbackRename(user_from, user_to);
 		}
 	}
 	return true;
@@ -677,7 +662,7 @@ bool
 vsFile::MoveDirectory( const vsString& from, const vsString& to )
 {
 	vsString f = GetFullFilename(from);
-	vsString t = MakeWriteFilename( PHYSFS_getWriteDir() + to ); // make sure we pull out the virtual 'user' folder if any!
+	vsString t = PHYSFS_getWriteDir() + MakeWriteFilename( to ); // make sure we pull out the virtual 'user' folder if any!
 
 	std::filesystem::path fp(f);
 	std::filesystem::path tp(t);

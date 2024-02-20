@@ -503,7 +503,15 @@ vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
 		}
 
 		if ( vsFile::Exists( userfilename ) )
-			vsFile::Move( userfilename, profilefilename );
+		{
+			if ( !vsFile::Move( userfilename, profilefilename ) )
+			{
+				vsString fullFrom = vsFile::GetFullFilename(userfilename);
+				vsString msg = vsFormatString("> Attempted to move the file '%s' into the profile directory '%s' failed.", fullFrom, profile);
+				vsLog("%s", msg);
+				ShowErrorMessageBox("Failed to migrate file", msg);
+			}
+		}
 	}
 
 	for ( int i = 0; i < s_migrateDirectories.ItemCount(); i++ )
@@ -512,7 +520,16 @@ vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
 		vsString profilefilename = vsFormatString("user/%s/%s", profile, s_migrateDirectories[i]);
 
 		if ( vsFile::DirectoryExists( userfilename ) )
-			vsFile::MoveDirectory( userfilename, profilefilename );
+		{
+			if ( !vsFile::MoveDirectory( userfilename, profilefilename ) )
+			{
+				vsString fullFrom = vsFile::GetFullFilename(userfilename);
+				vsString msg = vsFormatString("Attempting to move the file '%s' into the profile directory '%s' failed.", fullFrom, profile);
+				vsLog("%s", msg);
+				ShowErrorMessageBox("Failed to migrate directory", msg);
+
+			}
+		}
 	}
 	m_mountpoints.Clear();
 	_DoRemountConfiguredPhysFSVolumes(); // get our base directory mounted;  we'll remount once a game activates.
