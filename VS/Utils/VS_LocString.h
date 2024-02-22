@@ -36,6 +36,8 @@ public:
 
 	static void SetNumberThousandsSeparator(const vsString& separator);
 	static void SetNumberDecimalSeparator(const vsString& separator);
+	static const vsString& GetNumberThousandsSeparator();
+	static const vsString& GetNumberDecimalSeparator();
 
 	bool operator==(const vsLocString& other) const;
 	bool operator!=(const vsLocString& other) const;

@@ -134,6 +134,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 	m_compressedStore(nullptr),
 	m_store(nullptr),
 	m_zipData(nullptr),
+	m_ok(false),
 	m_mode(mode),
 	m_length(0),
 	m_moveOnDestruction(false)
@@ -158,6 +159,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 		m_store = new vsStore(*c);
 		m_mode = MODE_Read;
 		m_length = m_store->BufferLength();
+		m_ok = true;
 	}
 	else
 	{
@@ -216,6 +218,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 		if ( m_file )
 		{
 			m_length = (size_t)PHYSFS_fileLength(m_file);
+			m_ok = true;
 		}
 		else
 		{
@@ -242,9 +245,11 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			// 	// vsLog("code().category(): %s", err.code().category().message());
 			// }
 
-			if ( s_openFailureHandler )
-				(*s_openFailureHandler)( errorFilename, errorMsg );
-			vsAssert( m_file != nullptr, STR("Error opening file '%s' (trying '%s'):  %s", filename, errorFilename, errorMsg) );
+			if ( !s_openFailureHandler || !(*s_openFailureHandler)( errorFilename, errorMsg ) )
+			{
+				vsAssert( m_file != nullptr, STR("Error opening file '%s' (trying '%s'):  %s", filename, errorFilename, errorMsg) );
+			}
+			m_ok = false;
 		}
 
 		bool shouldCache = (filename.find(".win") != vsString::npos) ||
@@ -292,6 +297,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
+				m_ok = false;
 				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
 				return;
 			}
@@ -325,6 +331,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
+				m_ok = false;
 				vsAssertF( ret == Z_OK, "File '%s': inflateInit error: %d", filename, ret );
 				return;
 			}
@@ -384,6 +391,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
+				m_ok = false;
 				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
 				return;
 			}
