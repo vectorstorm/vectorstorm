@@ -561,33 +561,11 @@ vsFile::Move( const vsString &user_from, const vsString &user_to )
 	if ( !vsFile::Exists(user_from) )
 		return false;
 
-	std::filesystem::path f = GetFullFilename(user_from);
-	std::filesystem::path t = PHYSFS_getWriteDir() + MakeWriteFilename( user_to ); // make sure we pull out the virtual 'user' folder if any!
+	vsString ff = GetFullFilename(user_from);
+	vsString tt = PHYSFS_getWriteDir() + MakeWriteFilename( user_to );
 
-#if defined(__APPLE_CC__)
-	// For whatever reason, apple has tied C++ features to OS versions, and
-	// we've declared ourselves as only requiring OSX 10.9, which means we
-	// don't have access to std::filesystem.  (We can get it in 10.15, but as
-	// that's only two years old (at time of writing), it feels like a big
-	// ask).  Let's have Mac builds just do our fallback rename for now, rather
-	// than requiring an updated OS just so we can use std::filesystem.  It's
-	// not worth requiring the OS upgrade!
-	//
-	// Let's use POSIX ::rename() and then our fallback, here.  That should be
-	// available everywhere/everywhen on OSX!
-
-	if ( 0 != ::rename(f.c_str(),t.c_str()) )
-	{
-		vsLog("While attempting rename: %s -> %s", f.c_str(), t.c_str());
-		vsLog("::rename error: %d;  doing remove+rename instead", errno);
-		return FallbackRename(from, to_in);
-	}
-	return true;
-#else // !defined(__APPLE_CC__)
-
-
-	std::filesystem::path fp(f);
-	std::filesystem::path tp(t);
+	std::filesystem::path fp(ff);
+	std::filesystem::path tp(tt);
 	fp.make_preferred();
 	tp.make_preferred();
 
@@ -622,7 +600,6 @@ vsFile::Move( const vsString &user_from, const vsString &user_to )
 		}
 	}
 	return true;
-#endif // !defined(__APPLE_CC__)
 }
 
 bool
@@ -669,6 +646,9 @@ vsFile::DeleteDirectory( const vsString &filename )
 bool
 vsFile::MoveDirectory( const vsString& from, const vsString& to )
 {
+	if ( !vsFile::DirectoryExists(from) )
+		return false;
+
 	vsString f = GetFullFilename(from);
 	vsString t = PHYSFS_getWriteDir() + MakeWriteFilename( to ); // make sure we pull out the virtual 'user' folder if any!
 
@@ -677,9 +657,6 @@ vsFile::MoveDirectory( const vsString& from, const vsString& to )
 
 	fp.make_preferred();
 	tp.make_preferred();
-
-	if ( !vsFile::Exists(from) )
-		return false;
 
 	if ( !std::filesystem::is_directory(tp) )
 	{
