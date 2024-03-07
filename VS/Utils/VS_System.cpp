@@ -501,6 +501,11 @@ vsSystem::_MigrateFilesToProfileDirectory(const vsString& profile)
 			vsFile::Delete( userfilename );
 			continue;
 		}
+		if ( looseFiles[i] == "steam_autocloud.vdf" ) // don't copy this file!
+		{
+			vsFile::Delete( userfilename );
+			continue;
+		}
 
 		if ( vsFile::Exists( userfilename ) )
 		{
