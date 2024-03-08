@@ -17,9 +17,13 @@
 // to the console.  vsLog_End() closes that file, and stops writing vsLog() messages
 // into it.  vsLog_Show() opens a finder/explorer/etc window in that directory.  We
 // use this when an assert is thrown, so that end-users can more easily find the
-// log file so they can e-mail it to us.  (TODO:  Consider whether we want to set
-// up a system which will cause asserts to submit logs to us anonymously, instead?)
-void vsLog_Start(const char* companyName, const char* title);
+// log file so they can e-mail it to us.
+//
+// [TODO]:  Consider whether we want to set up a system which will cause
+// asserts to submit logs to us anonymously, instead?  (I've already done this
+// in MT2, but maybe I want it to be in the engine itself?)
+
+void vsLog_Start(const char* companyName, const char* title, const char* profile);
 void vsLog_End();
 void vsLog_Show();
 

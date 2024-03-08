@@ -14,6 +14,8 @@
 #include <cstdio>
 #include <cstddef>
 #include <SDL2/SDL_filesystem.h>
+#include <sys/stat.h>
+#include <filesystem>
 #include "VS_File.h"
 #include "VS_Thread.h"
 #include "VS_TimerSystem.h"
@@ -23,54 +25,49 @@
 #define vsprintf vsprintf_s
 #endif
 
-static FILE* s_logFile = nullptr;
-static vsString prefPath;
+static std::FILE* s_logFile = nullptr;
 static vsMutex s_mutex;
 // static PHYSFS_File* s_log = nullptr;
 // static vsFile *s_log = nullptr;
 
-void vsLog_Start(const char* companyName, const char* title)
+void vsLog_Start(const char* companyName, const char* title, const char* profile)
 {
-	prefPath = SDL_GetPrefPath(companyName, title);
-	vsString logFile = prefPath + "log.txt";
-	vsString prevLogFile = prefPath + "log_previous.txt";
+	// std::filesystem::path is neat, converting to whatever the native
+	// OS wants for its filesystem functions when you call c_str() on it,
+	// which means Windows automatically gets its UTF-16 strings that it wants.
+	//
+	// I like everything about it except for its silly silly / operator
+	// for concatonating directory components.
 
-	// Now we need to copy this log to a different spot.
-	FILE *logRead = fopen(logFile.c_str(), "rb");
+	int sdlInitResult = SDL_Init(0);
+	vsAssertF( sdlInitResult == 0, "SDL_Init returned %d: %s", sdlInitResult, SDL_GetError());
 
-	if ( logRead )
-	{
-		FILE *logWrite = fopen(prevLogFile.c_str(), "wb");
-		if ( logWrite )
-		{
-			fseek( logRead, 0L, SEEK_END );
-			long bytes = ftell( logRead );
-			fseek( logRead, 0L, SEEK_SET );
+	char* prefPathChar = SDL_GetPrefPath(companyName, title);
+	vsAssertF(prefPathChar, "vsLogStart: Unable to figure out where to save files: %s", SDL_GetError());
+	vsString prefPath(prefPathChar);
+	SDL_free(prefPathChar);
+	SDL_Quit();
+	std::filesystem::path directory( prefPath );
+	directory /= profile;
+	std::filesystem::path logFile = directory / "log.txt";
+	std::filesystem::path prevLogFile = directory / "log_previous.txt";
 
-			// copy 20kb at a time.
-			const long c_bufferSize = 1024 * 24;
+	if ( !std::filesystem::is_directory(directory) )
+		std::filesystem::create_directory(directory);
+	if ( std::filesystem::exists( logFile ) )
+		std::filesystem::rename( logFile, prevLogFile );
 
-			char buffer[c_bufferSize];
-			while ( bytes > 0 )
-			{
-				long bytesToReadThisTime = vsMin( bytes, c_bufferSize );
-				size_t bb = fread( buffer, 1, bytesToReadThisTime, logRead );
-				vsAssert( bb == (size_t)bytesToReadThisTime, "copying log file failed??" );
-				fwrite( buffer, 1, bytesToReadThisTime, logWrite );
-				bytes -= bytesToReadThisTime;
-			}
-
-			fclose( logWrite );
-		}
-		fclose( logRead );
-	}
-
-	s_logFile = fopen(logFile.c_str(), "w");
+#if defined(_WIN32)
+	s_logFile = _wfopen(logFile.c_str(), L"w");
+#else
+	s_logFile = std::fopen(logFile.c_str(), "w");
+#endif
 }
 
 void vsLog_End()
 {
-	fclose( s_logFile );
+	if ( s_logFile )
+		std::fclose( s_logFile );
 }
 
 void vsLog_Show()
@@ -102,11 +99,11 @@ void vsLog_(const char* file, int line, const vsString &str)
 	{
 		vsScopedLock lock(s_mutex);
 
-		fprintf(stdout, "%s", msg.c_str());
+		std::fprintf(stdout, "%s", msg.c_str());
 		if ( s_logFile )
 		{
-			fprintf( s_logFile, "%s", msg.c_str() );
-			fflush( s_logFile );
+			std::fprintf( s_logFile, "%s", msg.c_str() );
+			std::fflush( s_logFile );
 		}
 	}
 }
@@ -132,11 +129,11 @@ void vsErrorLog_(const char* file, int line, const vsString &str)
 	{
 		vsScopedLock lock(s_mutex);
 
-		fprintf(stderr, "%s\n", str.c_str() );
+		std::fprintf(stderr, "%s\n", str.c_str() );
 		if ( s_logFile )
 		{
-			fprintf( s_logFile, "%s", msg.c_str() );
-			fflush( s_logFile );
+			std::fprintf( s_logFile, "%s", msg.c_str() );
+			std::fflush( s_logFile );
 		}
 	}
 }

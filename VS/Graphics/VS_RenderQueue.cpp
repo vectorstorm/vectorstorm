@@ -655,7 +655,7 @@ vsRenderQueueStage::EndRender()
 
 vsRenderQueue::vsRenderQueue():
 	m_scene(nullptr),
-	m_genericList(new vsDisplayList(1024 * 50, true)),
+	m_genericList(new vsDisplayList(1024 * 100, true)),
 	m_stage(new vsRenderQueueStage[4]),
 	m_stageCount(4),
 	m_transformStack(),

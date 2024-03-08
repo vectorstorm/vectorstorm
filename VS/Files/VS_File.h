@@ -87,6 +87,7 @@ public:
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
+	static bool MoveDirectoryContents( const vsString& from, const vsString& to ); // will copy files from a DIRECTORY from one point in the WRITE DIRECTORY to another.
 
 	static vsString GetExtension( const vsString &filename ); // returns the 'extension' of the listed file or vsEmptyString if there is none.
 	static vsString GetFileName( const vsString &filename );  // returns the full 'file name' of the listed file, including extension but excluding directories.
