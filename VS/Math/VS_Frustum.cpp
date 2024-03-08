@@ -18,7 +18,7 @@ vsFrustum::vsFrustum()
 }
 
 void
-vsFrustum::Set( vsCamera3D *camera )
+vsFrustum::Set( vsCamera3D *camera, const vsVector2D& subrectMin /* = vsVector2D::Zero */, const vsVector2D& subrectMax /* = vsVector2D::One */ )
 {
 	float aspectRatio = camera->GetAspectRatio();
 	if ( camera->GetProjectionType() == vsCamera3D::PT_Perspective )
@@ -45,10 +45,11 @@ vsFrustum::Set( vsCamera3D *camera )
 		float hh = vsTan(camera->GetFOV() * .5f) * camera->GetFarPlane();
 		float hw = hh * aspectRatio;
 
-		vsVector3D farTopLeft = farCenter - (mat.x * hw) + (mat.y * hh);
-		//vsVector3D farTopRight = farCenter + (mat.x * hw) + (mat.y * hh);
-		//vsVector3D farBottomLeft = farCenter - (mat.x * hw) - (mat.y * hh);
-		vsVector3D farBottomRight = farCenter + (mat.x * hw) - (mat.y * hh);
+		// Get the min/max in the range of -1 to 1
+		vsVector2D adjustedMin = subrectMin * 2.0f - vsVector2D::One;
+		vsVector2D adjustedMax = subrectMax * 2.0f - vsVector2D::One;
+		vsVector3D farTopLeft = farCenter + (mat.x * hw * adjustedMin.x) - (mat.y * hh * adjustedMin.y);
+		vsVector3D farBottomRight = farCenter + (mat.x * hw * adjustedMax.x) - (mat.y * hh * adjustedMax.y);
 
 		m_planePoint[0] = camera->GetPosition() + m_planeNormal[0] * camera->GetNearPlane();
 		m_planeNormal[1] = -m_planeNormal[0];				// far plane
