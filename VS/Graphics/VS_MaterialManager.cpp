@@ -47,6 +47,7 @@ vsMaterialManager::ReloadAll()
 	// directly any more.
 	vsShader::ReloadAll();
 
+	vsScopedLock lock( m_mutex );
 	for ( int b = 0; b < m_bucketCount; b++ )
 	{
 		vsCacheEntry< vsMaterialInternal > *bucket = &m_bucket[b];

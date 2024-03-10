@@ -36,6 +36,7 @@ vsTextureManager::ReloadAll()
 	// from memory
 	vsFileCache::Purge();
 
+	vsScopedLock lock( m_mutex );
 	for ( int b = 0; b < m_bucketCount; b++ )
 	{
 		vsCacheEntry< vsTextureInternal > *bucket = &m_bucket[b];
