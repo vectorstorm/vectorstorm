@@ -127,6 +127,11 @@ public:
 
 	vsVector3D	Corner(int i) const;
 
+	// PCorner and NCorner return the corners furthest in the specified direction
+	// (and its opposite, for NCorner)
+	vsVector3D PCorner( const vsVector3D& direction ) const;
+	vsVector3D NCorner( const vsVector3D& direction ) const { return PCorner(-direction); }
+
 	void		Expand( float amt ) { min += -amt * vsVector3D::One; max += amt * vsVector3D::One; }
 	void		Expand( const vsVector3D &amt ) { min -= amt; max += amt; }
 	void		Contract( float amt ) { Expand(-amt); }	// TODO:  Make sure we don't invert ourselves.

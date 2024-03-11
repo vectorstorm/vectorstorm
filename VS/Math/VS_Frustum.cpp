@@ -114,7 +114,7 @@ vsFrustum::IsPointInside( const vsVector3D &position, float radius ) const
 
 // Code structure for the below visibility calculations taken from the
 // Lighthouse 3D OpenGL "View Frustum Culling Tutorial" at
-// http://www.lighthouse3d.com/opengl/viewfrustum/index.php
+// http://www.lighthouse3d.com/tutorials/view-frustum-culling/
 
 bool
 vsFrustum::IsBox3DInside( const vsBox3D &box ) const
@@ -163,44 +163,21 @@ vsFrustum::ClassifyBox3D( const vsBox3D &box ) const
 	if ( sphereClassification != Intersect )
 		return sphereClassification;
 
-	vsVector3D boxVert[8];
-	boxVert[0] = box.GetMin();
-	boxVert[1].Set( box.GetMin().x, box.GetMin().y, box.GetMax().z );
-	boxVert[2].Set( box.GetMin().x, box.GetMax().y, box.GetMin().z );
-	boxVert[3].Set( box.GetMin().x, box.GetMax().y, box.GetMax().z );
-	boxVert[4].Set( box.GetMax().x, box.GetMin().y, box.GetMin().z );
-	boxVert[5].Set( box.GetMax().x, box.GetMin().y, box.GetMax().z );
-	boxVert[6].Set( box.GetMax().x, box.GetMax().y, box.GetMin().z );
-	boxVert[7].Set( box.GetMax().x, box.GetMax().y, box.GetMax().z );
+	Classification result = Inside;
 
-	int out = 0;
 	// for each plane do ...
 	for(int i=0; i < 6; i++) {
 
-		// reset counters for corners in and out
-		int in=0;
-		// for each corner of the box do ...
-		// get out of the cycle as soon as a box has corners
-		// both inside and out of the frustum
-		for (int k = 0; k < 8 && (in==0 || out==0); k++) {
+		vsVector3D pCorner = box.PCorner( m_planeNormal[i] );
+		vsVector3D nCorner = box.NCorner( m_planeNormal[i] );
 
-			// is the corner outside or inside
-			float distance = (boxVert[k]-m_planePoint[i]).Dot(m_planeNormal[i]);
-
-			if (distance < 0)
-				out++;
-			else
-			{
-				in++;
-				break;
-			}
-		}
-		//if all corners are out
-		if (!in)
+		float distance = (pCorner-m_planePoint[i]).Dot(m_planeNormal[i]);
+		if ( distance < 0.f )
 			return Outside;
+		distance = (nCorner-m_planePoint[i]).Dot(m_planeNormal[i]);
+		if ( distance < 0.f )
+			result = Intersect;
 	}
-	if (out == 0)
-		return Inside;
-	return Intersect;
+	return result;
 }
 

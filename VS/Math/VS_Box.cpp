@@ -660,6 +660,20 @@ vsBox3D::OffsetFrom( const vsVector3D &pos ) const
 	return delta;
 }
 
+vsVector3D
+vsBox3D::PCorner( const vsVector3D& direction ) const
+{
+	vsVector3D result = min;
+
+	if ( direction.x >= 0.f )
+		result.x = max.x;
+	if ( direction.y >= 0.f )
+		result.y = max.y;
+	if ( direction.z >= 0.f )
+		result.z = max.z;
+
+	return result;
+}
 
 vsBox3D vsInterpolate( float alpha, const vsBox3D& a, const vsBox3D& b )
 {
@@ -887,5 +901,4 @@ vsOrientedBox3D::ContainsPoint( const vsVector3D& point ) const
 			SAT_Contains( &point, 1, ay ) &&
 			SAT_Contains( &point, 1, az ) );
 }
-
 
