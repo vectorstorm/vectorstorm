@@ -10,6 +10,8 @@
 #ifndef VS_PREFIX_H
 #define VS_PREFIX_H
 
+#define __STDC_FORMAT_MACROS 1
+
 #include "VS_Config.h"
 
 #if defined __APPLE__

@@ -13,6 +13,7 @@
 // #include "VS_HashTable.h"
 #include "VS/Utils/VS_Singleton.h"
 #include "VS/Utils/VS_Debug.h"
+#include "VS/Threads/VS_Mutex.h"
 
 template <typename T> class vsCache;
 
@@ -96,6 +97,7 @@ template <typename T>
 class vsCache : public vsSingleton< vsCache<T> >
 {
 protected:
+	vsMutex m_mutex;
 	vsCacheEntry<T>		*m_bucket;
 	int					m_bucketCount;
 
@@ -105,7 +107,9 @@ protected:
 	// four buckets, we need to shift right by 30 bits.  And so on.
 	int					m_shift;
 
-	uint32_t HashToBucket(uint32_t hash)
+	// Functions with a '_' prefix assume we already have the mutex locked.
+	//
+	uint32_t _HashToBucket(uint32_t hash)
 	{
 		// Fibonocci hash.  We're going to multiply by
 		// (uint32_t::max / golden_ratio) (adjusted to be odd),
@@ -115,10 +119,10 @@ protected:
 		return (hash * factor) >> m_shift;
 	}
 
-	vsCacheEntry<T>*		FindHashEntry( const vsString &key )
+	vsCacheEntry<T>* _FindHashEntry( const vsString &key )
 	{
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = HashToBucket(hash);
+		int bucket = _HashToBucket(hash);
 
 		vsCacheEntry<T> *ent = m_bucket[bucket].m_next;
 		while( ent )
@@ -132,12 +136,23 @@ protected:
 		return nullptr;
 	}
 
+	void _Add( T* item )
+	{
+		const vsString &key = item->GetName();
+		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
+		vsCacheEntry<T> *ent = new vsCacheEntry<T>( item, key, hash );
 
-	void	Remove( T* item )
+		int bucket = _HashToBucket(hash);
+
+		ent->m_next = m_bucket[bucket].m_next;
+		m_bucket[bucket].m_next = ent;
+	}
+
+	void _Remove( T* item )
 	{
 		vsString &key = item->GetName();
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = HashToBucket(hash);
+		int bucket = _HashToBucket(hash);
 
 		vsCacheEntry<T> *ent = &m_bucket[bucket];
 		while( ent->m_next )
@@ -152,9 +167,9 @@ protected:
 		}
 	}
 
-	vsCacheEntry<T> *	Find( const vsString &key )
+	vsCacheEntry<T> *	_Find( const vsString &key )
 	{
-		vsCacheEntry<T> *ent = FindHashEntry(key);
+		vsCacheEntry<T> *ent = _FindHashEntry(key);
 		if ( ent )
 		{
 			return ent;
@@ -164,11 +179,12 @@ protected:
 
 public:
 
-	vsCache(int bucketCount)
+	vsCache(int bucketCount):
+		m_mutex(),
+		m_bucket( nullptr ),
+		m_bucketCount( vsNextPowerOfTwo(bucketCount) )
 	{
-		m_bucketCount = vsNextPowerOfTwo(bucketCount);
 		m_shift = 32 - vsHighBitPosition(m_bucketCount);
-
 		m_bucket = new vsCacheEntry<T>[m_bucketCount];
 	}
 
@@ -189,19 +205,15 @@ public:
 
 	void	Add( T* item )
 	{
-		const vsString &key = item->GetName();
-		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		vsCacheEntry<T> *ent = new vsCacheEntry<T>( item, key, hash );
-
-		int bucket = HashToBucket(hash);
-
-		ent->m_next = m_bucket[bucket].m_next;
-		m_bucket[bucket].m_next = ent;
+		vsScopedLock lock( m_mutex );
+		_Add(item);
 	}
 
 	T *	Get( const vsString &name )
 	{
-		vsCacheEntry<T> *ce = Find( name );
+		vsScopedLock lock( m_mutex );
+
+		vsCacheEntry<T> *ce = _Find( name );
 		if ( ce )
 		{
 			return ce->GetItem();
@@ -217,12 +229,14 @@ public:
 	// returns true if we have this item in the cache, false otherwise.
 	bool Exists( const vsString &name )
 	{
-		return (nullptr != Find( name ));
+		vsScopedLock lock( m_mutex );
+		return (nullptr != _Find( name ));
 	}
 
 	void	Release( T* object )
 	{
-		vsCacheEntry<T> *ce = Find( object->GetName() );
+		vsScopedLock lock( m_mutex );
+		vsCacheEntry<T> *ce = _Find( object->GetName() );
 		vsAssert(ce, "Error:  released object wasn't actually in cache??");
 		if ( ce )
 		{
@@ -231,13 +245,14 @@ public:
 			if ( ce->m_item->IsTransient() &&
 					ce->m_item->GetReferenceCount() == 0 )
 			{
-				Remove( object );
+				_Remove( object );
 			}
 		}
 	}
 
 	void	CollectGarbage()
 	{
+		vsScopedLock lock( m_mutex );
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
 			vsCacheEntry<T> *ent = &m_bucket[i];
@@ -257,15 +272,6 @@ public:
 			}
 		}
 	}
-
-	/*
-	void	Add( T* object )
-	{
-		vsCacheEntry<T> *ce = m_table.FindItem( object->GetName() );
-		vsAssert(!ce, "Error:  released object wasn't actually in cache??");
-
-		m_table.AddItemWithKey( new vsCacheEntry<T>(object), object->GetName() );
-	}*/
 };
 
 #endif // VS_CACHE_H

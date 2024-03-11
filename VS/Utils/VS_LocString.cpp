@@ -9,6 +9,7 @@
 
 #include "VS_LocString.h"
 #include "VS/Utils/VS_LocalisationTable.h"
+#include <inttypes.h>
 
 vsLocString::vsLocString():
 	m_string()
@@ -171,31 +172,40 @@ vsLocString::AsString() const
 #endif // 0
 }
 
-static vsString s_thousandsSeparator(",");
-vsString s_decimalSeparator(".");
-
-static vsString DoFormatNumber( int value )
+namespace
 {
-	// this stupid algorithm doesn't work for negative numbers over 100.
-	// So let's switch to positive and append a '-' sign.
-	if ( value < 0 )
-		return "-" + DoFormatNumber( vsAbs(value) );
+	vsString s_thousandsSeparator(",");
+	vsString s_decimalSeparator(".");
+}
 
-	vsString result = vsFormatString("%d",value);
+static vsString DoFormatNumber( int64_t value )
+{
+	// this stupid algorithm for inserting thousands separators doesn't work
+	// for negative numbers.  So let's switch to positive and prepend a '-'
+	// sign after we add the thousands separators.
+	vsString prefix;
+
+	if ( value < 0 )
+	{
+		if ( value == std::numeric_limits<int64_t>::lowest() )
+			value = std::numeric_limits<int64_t>::max();
+		else
+			value *= -1;
+		prefix = "-";
+	}
+
+	vsString result = vsFormatString("%" PRId64, value);
 	int insertPosition = result.length() - 3;
 	while (insertPosition > 0) {
 		result.insert(insertPosition, s_thousandsSeparator);
 		insertPosition-=3;
 	}
-	return result;
+	return vsFormatString("%s%s", prefix, result);
 }
 
 static vsString DoFormatFloat( float value, int places )
 {
-	int intPart = vsFloor(value);
-	if ( value < 0.f )
-		intPart = vsCeil(value);
-
+	int64_t intPart = (int64_t)(value);
 	value -= intPart;
 
 	int decimalPart = vsAbs( value * pow(10,places+1) );
@@ -227,6 +237,18 @@ void
 vsLocString::SetNumberDecimalSeparator(const vsString& separator)
 {
 	s_decimalSeparator = separator;
+}
+
+const vsString&
+vsLocString::GetNumberThousandsSeparator()
+{
+	return s_thousandsSeparator;
+}
+
+const vsString&
+vsLocString::GetNumberDecimalSeparator()
+{
+	return s_decimalSeparator;
 }
 
 vsString

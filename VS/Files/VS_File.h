@@ -45,6 +45,7 @@ private:
 	vsStore *m_compressedStore;
 	vsStore *m_store;
 	struct zipdata *m_zipData;
+	bool m_ok;
 
 	Mode		m_mode;
 
@@ -70,6 +71,8 @@ public:
 				vsFile( const vsString &filename, vsFile::Mode mode = MODE_Read );
 	virtual		~vsFile();
 
+	bool		IsOK() { return m_ok; }
+
 	size_t		GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }
 
@@ -84,6 +87,7 @@ public:
 	static bool DeleteEmptyDirectory( const vsString &filename ); // will delete a DIRECTORY, but only if it's empty.
 	static bool DeleteDirectory( const vsString &filename ); // will delete a directory, even if it contains files or more directories.
 	static bool MoveDirectory( const vsString& from, const vsString& to ); // will move a DIRECTORY from one point in the WRITE DIRECTORY to another.
+	static bool MoveDirectoryContents( const vsString& from, const vsString& to ); // will copy files from a DIRECTORY from one point in the WRITE DIRECTORY to another.
 
 	static vsString GetExtension( const vsString &filename ); // returns the 'extension' of the listed file or vsEmptyString if there is none.
 	static vsString GetFileName( const vsString &filename );  // returns the full 'file name' of the listed file, including extension but excluding directories.
@@ -133,7 +137,8 @@ public:
 
 	bool		AtEnd();
 
-	typedef void (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
+	// the open failure handler should return 'true' if we should continue or 'false' if we should assert.
+	typedef bool (*openFailureHandler)(const vsString& filename, const vsString& errorMessage);
 	static void SetFileOpenFailureHandler( openFailureHandler handler );
 };
 

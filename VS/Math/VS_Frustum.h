@@ -24,7 +24,7 @@ public:
 
 	vsFrustum();
 
-	void	Set( vsCamera3D *camera );
+	void	Set( vsCamera3D *camera, const vsVector2D& min = vsVector2D::Zero, const vsVector2D& max = vsVector2D::One);
 
 	bool	IsPointInside( const vsVector3D &position, float radius=0.f ) const;
 	bool	IsBox3DInside( const vsBox3D &box ) const;

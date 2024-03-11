@@ -655,17 +655,20 @@ vsRenderQueueStage::EndRender()
 
 vsRenderQueue::vsRenderQueue():
 	m_scene(nullptr),
-	m_genericList(new vsDisplayList(1024 * 50, true)),
+	m_genericList(new vsDisplayList(1024 * 100, true)),
 	m_stage(new vsRenderQueueStage[4]),
 	m_stageCount(4),
 	m_transformStack(),
-	m_transformStackLevel(0)
+	m_transformStackLevel(0),
+	m_rendering(false)
 	// m_orthographic(true)
 {
 }
 
 vsRenderQueue::~vsRenderQueue()
 {
+	vsAssert( !m_rendering, "vsRenderQueue destructor called when already in the middle of a render" );
+
 	vsDeleteArray( m_stage );
 	vsDelete( m_genericList );
 }
@@ -673,6 +676,9 @@ vsRenderQueue::~vsRenderQueue()
 void
 vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 {
+	vsAssert( !m_rendering, "vsRenderQueue::StartRender called when already in the middle of a render" );
+	m_rendering = true;
+
 	m_materialHideFlags = materialHideFlags;
 	m_scene = parent;
 
@@ -690,6 +696,9 @@ vsRenderQueue::StartRender(vsScene *parent, int materialHideFlags)
 void
 vsRenderQueue::StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, const vsBox2D& screenBox, int materialHideFlags )
 {
+	vsAssert( !m_rendering, "vsRenderQueue::StartRender called when already in the middle of a render" );
+	m_rendering = true;
+
 	m_materialHideFlags = materialHideFlags;
 	m_scene = nullptr;
 	m_screenBox = screenBox;
@@ -730,6 +739,7 @@ vsRenderQueue::EndRender()
 		m_stage[i].EndRender();
 	}
 	m_genericList->Clear();
+	m_rendering = false;
 }
 
 void
