@@ -165,12 +165,16 @@ vsTransform3D::ApplyInverseTo( const vsVector3D &v ) const
 const vsTransform3D
 vsTransform3D::ApplyInverseTo( const vsTransform3D &t ) const
 {
-	vsMatrix4x4 resMat = GetMatrix().Inverse() * t.GetMatrix();
-
 	vsTransform3D result;
-	result.m_translation = resMat.w;
-	result.m_quaternion.Set( vsQuaternion( resMat.z, resMat.y ) );
-	result.m_scale = vsVector3D::One * resMat.x.Length(); // doesn't handle non-uniform scales yet
+
+	vsMatrix4x4 resultMat = GetMatrix().Inverse() * t.GetMatrix();
+	result.SetTranslation( resultMat.w );
+	result.SetRotation( vsQuaternion(resultMat.z, resultMat.y) );
+	result.SetScale( vsVector3D(
+				resultMat.x.Length(),
+				resultMat.y.Length(),
+				resultMat.z.Length()
+				) );
 
 	return result;
 }
