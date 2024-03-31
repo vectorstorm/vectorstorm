@@ -138,12 +138,12 @@ public:
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			return RemoveItem( index );
+			return RemoveIndex( index );
 		}
 		return false;
 	}
 
-	bool	RemoveItem( int index )
+	bool	RemoveIndex( int index )
 	{
 		vsAssert(index >= 0 && index < m_arrayLength, "Out of bounds vsVolatileArray access");
 		// move the last element into this position
