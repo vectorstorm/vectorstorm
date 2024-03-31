@@ -274,6 +274,28 @@ vsInput::DefaultBindKey( int cid, int scancode )
 }
 
 void
+vsInput::DefaultBindControlKey( int cid, int scancode )
+{
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
+	if ( !m_axis[cid].isLoaded )
+	{
+		DeviceControl dc;
+		dc.type = CT_Keyboard;
+		dc.id = scancode;
+		dc.keymod = c_shortcutModifierKeys;
+
+		m_axis[cid].positive.AddItem(dc);
+	}
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsInput::DefaultBindControllerButton( int cid, int controllerButton )
 {
 	// Since this function is being called post-initialisation, we need to
@@ -2845,7 +2867,15 @@ DeviceControl::Evaluate(bool hasFocus)
 						// 	doMasking = false;
                         //
 						// if ( !doMasking || ((actual_keymod & keymodsWeCareAbout) == keymod) )
-							value = keys[id] ? 1.0f : 0.0f;
+
+						value = keys[id] ? 1.0f : 0.0f;
+						if ( keymod )
+						{
+							SDL_Keymod modState = SDL_GetModState();
+							if ( modState != keymod )
+								value = 0.f;
+						}
+
 						// else
 						// 	value = 0.0f;
 					}

@@ -34,6 +34,11 @@
 	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->DefaultBindKey(cid, scancode); \
 }
+#define DEFAULT_BIND_CONTROLKEY(cid, description, scancode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
+	vsInput::Instance()->DefaultBindControlKey(cid, scancode); \
+}
 #define DEFAULT_BIND_MOUSE_BUTTON(cid, description, mouseButtonCode) \
 { \
 	vsInput::Instance()->AddAxis(cid, #cid, description); \
@@ -481,6 +486,7 @@ public:
 
 	void AddAxis( int cid, const vsString& name, const vsString& description );
 	void DefaultBindKey( int cid, int scancode );
+	void DefaultBindControlKey( int cid, int scancode );
 	void DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd );
 	void DefaultBindControllerButton( int cid, int controllerButton );
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );
