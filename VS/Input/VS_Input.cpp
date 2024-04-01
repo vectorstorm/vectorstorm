@@ -2676,8 +2676,14 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 			for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 			{
 				if ( axis.positive[j].type == CT_Keyboard &&
-						axis.positive[j].id == event.key.keysym.scancode )
+						axis.positive[j].id == event.key.keysym.scancode &&
+						axis.positive[j].keymod == 0
+						)
 					axis.wasPressed = true;
+
+				// only do this "between frames" press if no modifier key was
+				// required.  We need to figure out how to handle modifier keys
+				// here for between-frame button presses.
 			}
 		}
 	}
@@ -2739,7 +2745,8 @@ vsInput::HandleKeyUp( const SDL_Event& event )
 		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 		{
 			if ( axis.positive[j].type == CT_Keyboard &&
-					axis.positive[j].id == event.key.keysym.scancode )
+					axis.positive[j].id == event.key.keysym.scancode &&
+					axis.positive[j].keymod == 0 )
 				axis.wasReleased = true;
 		}
 	}
@@ -2868,12 +2875,22 @@ DeviceControl::Evaluate(bool hasFocus)
                         //
 						// if ( !doMasking || ((actual_keymod & keymodsWeCareAbout) == keymod) )
 
+						SDL_Keymod modState = SDL_GetModState();
 						value = keys[id] ? 1.0f : 0.0f;
-						if ( keymod )
+						if ( value && keymod )
 						{
-							SDL_Keymod modState = SDL_GetModState();
-							if ( modState != keymod )
-								value = 0.f;
+							if ( keymod == KMOD_CTRL )
+							{
+								if ( 0 == (modState & (KMOD_CTRL|KMOD_LCTRL|KMOD_RCTRL)) )
+								{
+									value = 0.f;
+								}
+							}
+							else
+							{
+								if ( modState != keymod )
+									value = 0.f;
+							}
 						}
 
 						// else
