@@ -456,6 +456,8 @@ vsInput::Load()
 					dc.type = ControlTypeFromString( child->GetToken(0).AsString() );
 					dc.dir = ControlDirectionFromString( child->GetToken(1).AsString() );
 					dc.id = child->GetToken(2).AsInteger();
+					if ( child->GetTokenCount() > 3 ) // old data;  don't load it!
+						dc.keymod = child->GetToken(3).AsInteger();
 
 					axis.positive.AddItem(dc);
 				}
@@ -643,10 +645,11 @@ vsInput::Save()
 			vsRecord *dcr = new vsRecord;
 			dcr->SetLabel( "DeviceControl" );
 
-			dcr->SetTokenCount(3);
+			dcr->SetTokenCount(4);
 			dcr->GetToken(0).SetString( c_controlTypeString[ dc.type ] );
 			dcr->GetToken(1).SetString( c_controlDirectionString[ dc.dir ] );
 			dcr->GetToken(2).SetInteger( dc.id );
+			dcr->GetToken(3).SetInteger( dc.keymod );
 
 			a.AddChild(dcr);
 		}
