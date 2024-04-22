@@ -9,7 +9,7 @@
 #ifndef VS_SPINLOCK_H
 #define VS_SPINLOCK_H
 
-// for the moment, we don't ever actually want to use spinlockes;
+// for the moment, we don't ever actually want to use mutexes;
 // we're a video game!  Let's use spinlocks instead.
 
 #include "SDL2/SDL.h"
