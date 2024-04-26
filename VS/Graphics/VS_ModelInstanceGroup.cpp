@@ -28,8 +28,8 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 
 vsModelInstanceLodGroup::~vsModelInstanceLodGroup()
 {
-	for ( int i = 0; i < m_instance.ItemCount(); i++ )
-		RemoveInstance(m_instance[i]);
+	while ( !m_instance.IsEmpty() )
+		RemoveInstance(m_instance[0]);
 }
 
 vsModelInstance *
