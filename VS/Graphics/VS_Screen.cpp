@@ -185,9 +185,12 @@ void
 vsScreen::BuildDefaultPipeline()
 {
 	vsDelete( m_pipeline );
-	m_pipeline = new vsRenderPipeline(2);
+	m_pipeline = new vsRenderPipeline(3);
 	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
-	m_pipeline->SetStage(1, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
+#if defined(DEBUG_SCENE)
+	m_pipeline->SetStage(1, new vsRenderPipelineStageScenes( GetDebugScene(), m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
+#endif // DEBUG_SCENE
+	m_pipeline->SetStage(2, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 }
 
 vsRenderTarget *
@@ -326,7 +329,6 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 		if ( customOptions )
 			m_fifo->PopShaderOptions();
 	}
-	vsTimerSystem::Instance()->EndGatherTime();
 	m_fifoUsageLastFrame = m_fifo->GetSize();
 	if ( m_fifoUsageLastFrame > m_fifoHighWater )
 	{
@@ -336,11 +338,10 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 		vsLog(" >> New FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
 #endif
 	}
-#ifdef DEBUG_SCENE
-	m_scene[m_sceneCount-1]->Draw(m_fifo);
-#endif
+// #ifdef DEBUG_SCENE
+// 		m_scene[m_sceneCount-1]->Draw(m_fifo);
+// #endif
 	m_renderer->RenderDisplayList(m_fifo);
-	vsTimerSystem::Instance()->EndDrawTime();
 
 	pipeline->PostDraw();
 
@@ -350,7 +351,9 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 void
 vsScreen::Present()
 {
+	vsTimerSystem::Instance()->EndGatherTime();
 	m_renderer->Present();
+	vsTimerSystem::Instance()->EndDrawTime();
 }
 
 vsScene *
