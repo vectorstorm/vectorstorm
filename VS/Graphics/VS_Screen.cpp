@@ -18,7 +18,9 @@
 #include "VS_Scene.h"
 #include "VS_System.h"
 #include "VS_TextureManager.h"
+#include "VS_Thread.h"
 #include "VS_Profile.h"
+#include "VS_Sleep.h"
 
 #include "VS_TimerSystem.h"
 
@@ -235,15 +237,85 @@ vsScreen::Draw()
 	DrawPipeline(m_pipeline);
 }
 
+namespace
+{
+	vsMutex s_pipelineDrawMutex;
+
+	struct QueuedDraw
+	{
+		vsRenderPipeline *pipeline;
+		vsShaderOptions *options;
+	};
+	vsArray<QueuedDraw*> s_draws;
+	vsArray<QueuedDraw*> s_finishedDraws;
+}
+
+void
+vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
+{
+	if ( vsThread::IsMainThread() )
+	{
+		// easy case, we're already on the main thread so just call DrawPipeline!
+		return DrawPipeline(pipeline, customOptions);
+	}
+
+	// Now, we need to lock a mutex to touch the queued draws list.
+	QueuedDraw qd;
+	qd.pipeline = pipeline;
+	qd.options = customOptions;
+
+	s_pipelineDrawMutex.Lock();
+	s_draws.AddItem( &qd );
+	s_pipelineDrawMutex.Unlock();
+
+	bool done = false;
+	do
+	{
+		vsSleep(0);
+
+		s_pipelineDrawMutex.Lock();
+		if ( s_finishedDraws.Contains(&qd) )
+		{
+			s_finishedDraws.RemoveItem(&qd);
+			done = true;
+		}
+		s_pipelineDrawMutex.Unlock();
+	}
+	while( !done );
+
+	return; // and now we're done!
+}
+
 void
 vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
+{
+	{
+		s_pipelineDrawMutex.Lock();
+
+		while ( !s_draws.IsEmpty() )
+		{
+			QueuedDraw *qd = s_draws[0];
+			s_draws.RemoveItem(qd);
+
+			_DrawPipeline( qd->pipeline, qd->options );
+			s_finishedDraws.AddItem(qd);
+		}
+
+		s_pipelineDrawMutex.Unlock();
+	}
+
+	_DrawPipeline( pipeline, customOptions );
+}
+
+void
+vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
 
 	{
-		PROFILE_GL("PreRender");
-		m_renderer->PreRender(m_defaultRenderSettings);
+		PROFILE_GL("ClearState");
+		m_renderer->ClearState();
 	}
 	m_fifo->Clear();
 	{
@@ -269,11 +341,16 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptio
 #endif
 	m_renderer->RenderDisplayList(m_fifo);
 	vsTimerSystem::Instance()->EndDrawTime();
-	m_renderer->PostRender();
 
 	pipeline->PostDraw();
 
 	m_currentSettings = nullptr;
+}
+
+void
+vsScreen::Present()
+{
+	m_renderer->Present();
 }
 
 vsScene *

@@ -948,15 +948,9 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 }
 
 void
-vsRenderer_OpenGL3::PreRender(const Settings &s)
+vsRenderer_OpenGL3::Present()
 {
-	ClearState();
-}
-
-void
-vsRenderer_OpenGL3::PostRender()
-{
-	PROFILE_GL("PostRender");
+	PROFILE_GL("Present");
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
@@ -976,7 +970,7 @@ vsRenderer_OpenGL3::PostRender()
 	}
 
 	{
-		PROFILE_GL("FinishPostRender");
+		PROFILE_GL("FinishPresent");
 
 		ClearState();
 
@@ -991,21 +985,6 @@ vsRenderer_OpenGL3::PostRender()
 
 	vsDynamicBatchManager::Instance()->FrameRendered();
 
-}
-
-void
-vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
-{
-	// ZoneScopedN("RenderDisplayList");
-	PROFILE_GL("RenderDisplayList");
-	GL_CHECK("RenderDisplayList");
-	m_currentMaterial = nullptr;
-	m_currentMaterialInternal = nullptr;
-	m_currentShader = nullptr;
-	m_currentShaderValues = nullptr;
-	RawRenderDisplayList(list);
-
-	GL_CHECK("RenderDisplayList");
 }
 
 void
@@ -1249,9 +1228,15 @@ vsRenderer_OpenGL3::FlushRenderState()
 }
 
 void
-vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
+vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
-	PROFILE("RawRenderDisplayList");
+	PROFILE_GL("RenderDisplayList");
+	GL_CHECK("RenderDisplayList");
+	m_currentMaterial = nullptr;
+	m_currentMaterialInternal = nullptr;
+	m_currentShader = nullptr;
+	m_currentShaderValues = nullptr;
+
 	m_currentCameraPosition = vsVector3D::Zero;
 
 	vsDisplayList::op *op = list->PopOp();

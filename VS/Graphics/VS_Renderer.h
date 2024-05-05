@@ -95,10 +95,9 @@ public:
 	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync) = 0;
 	virtual void	NotifyResized(int width, int height) = 0;
 
-	virtual void	PreRender( const Settings &s ) = 0;
+	virtual void	ClearState() = 0; // clear internal state
 	virtual void	RenderDisplayList( vsDisplayList *list ) = 0;
-	virtual void	RawRenderDisplayList( vsDisplayList *list ) = 0;
-	virtual void	PostRender() = 0;
+	virtual void	Present() = 0; // we're finished with this frame.
 
 	// virtual bool	PreRenderTarget( const vsRenderer::Settings &s, vsRenderTarget *target ) = 0;
 	// virtual bool	PostRenderTarget( vsRenderTarget *target ) = 0;

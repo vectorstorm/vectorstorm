@@ -9,6 +9,7 @@
 
 #include "VS_RenderPipelineStageScenes.h"
 #include "VS_Renderer.h"
+#include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 
 vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera ):
@@ -44,6 +45,9 @@ vsRenderPipelineStageScenes::~vsRenderPipelineStageScenes()
 void
 vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 {
+	if ( m_target )
+		m_target->CreateDeferred();
+
 	list->SetRenderTarget( m_target );
 	if ( m_clear )
 		list->ClearRenderTarget();

@@ -123,7 +123,6 @@ class vsRenderer_OpenGL3: public vsRenderer
 
 	void DetermineRefreshRate();
 	void SetRenderTarget( vsRenderTarget *target );
-	void ClearState();
 
 public:
 
@@ -136,10 +135,9 @@ public:
 	virtual void UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync);
 	virtual void NotifyResized(int width, int height);
 
-	void	PreRender( const Settings &s );
-	void	RenderDisplayList( vsDisplayList *list );
-	void	RawRenderDisplayList( vsDisplayList *list );
-	void	PostRender();
+	virtual void	ClearState();
+	virtual void	RenderDisplayList( vsDisplayList *list );
+	virtual void	Present();
 
 	virtual vsRenderTarget *GetMainRenderTarget() { return m_scene; }
 	virtual vsRenderTarget *GetPresentTarget() { return m_window; }

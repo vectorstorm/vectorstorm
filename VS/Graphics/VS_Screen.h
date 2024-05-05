@@ -54,6 +54,7 @@ class vsScreen
     const vsRenderer::Settings *m_currentSettings;
 
 	void BuildDefaultPipeline();
+	void _DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions );
 
 public:
 
@@ -112,6 +113,13 @@ public:
 	void			Update( float timeStep );
 	void			Draw();
 	void			DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions = nullptr );
+	void			Present();
+
+	// the above 'Draw' and 'Present' calls must only be called from the main
+	// thread.  This 'ThreadSafe' version of DrawPipeline() will marshal the
+	// pipeline over to the main thread and draw it before the next main thread
+	// draw call, blocking the background thread until that has happened.
+	void			DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *customOptions = nullptr );
 
 	vsImage *       Screenshot();
 	vsImage *       Screenshot_Async();
