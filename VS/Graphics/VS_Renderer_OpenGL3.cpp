@@ -972,8 +972,6 @@ vsRenderer_OpenGL3::Present()
 	{
 		PROFILE_GL("FinishPresent");
 
-		ClearState();
-
 		vsTimerSystem::Instance()->EndGPUTime();
 	}
 	// {
@@ -1232,10 +1230,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
 	PROFILE_GL("RenderDisplayList");
 	GL_CHECK("RenderDisplayList");
-	m_currentMaterial = nullptr;
-	m_currentMaterialInternal = nullptr;
-	m_currentShader = nullptr;
-	m_currentShaderValues = nullptr;
+	// m_currentMaterial = nullptr;
+	// m_currentMaterialInternal = nullptr;
+	// m_currentShader = nullptr;
+	// m_currentShaderValues = nullptr;
+	// m_lastShaderId = 0;
 
 	m_currentCameraPosition = vsVector3D::Zero;
 
@@ -1252,7 +1251,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	//bool		recalculateColor = false;	// if true, recalc color even if we don't think it's changed
 
 	//bool		usingVertexArray = false;
-	ClearState();
+	// ClearState();
 
 	while(op)
 	{
@@ -1880,6 +1879,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 			op = list->PopOp();
 		}
 	}
+	ClearState();
 }
 
 void
@@ -2678,6 +2678,7 @@ vsRenderer_OpenGL3::ClearState()
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D,0);
+		currentlyBoundTexture[i] = 0;
 	}
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 	glClearColor(0.0f,0.f,0.f,0.f);

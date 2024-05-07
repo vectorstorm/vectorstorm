@@ -60,6 +60,7 @@ vsRenderBuffer::~vsRenderBuffer()
 	if ( m_vbo )
 	{
 		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+		m_bufferID = -1;
 	}
 
 	{
