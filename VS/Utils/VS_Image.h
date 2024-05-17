@@ -34,7 +34,7 @@ private:
 
 protected:
 
-	void		CopyTo( vsImage *other );
+	void		CopyTo( vsImage *other ) const;
 public:
 
     vsImage();
@@ -77,9 +77,12 @@ public:
 	void			SetRawPixel(unsigned int u, unsigned int v, uint32_t c);
 
 	void			Clear( const vsColor &clearColor );
-	void			Copy( vsImage *other );
+	void			CopyFrom( const vsImage *other );
 
 	vsTexture *		Bake( const vsString& name = vsEmptyString ) const;
+
+	void			BakeJPG(vsStore* output, int quality) const;
+	void			LoadJPG(vsStore* data);
 
 	void			SavePNG(const vsString& filename) const;
 	void			SaveJPG(int quality, const vsString& filename) const; // quality is in [0..100], with higher values being higher quality.

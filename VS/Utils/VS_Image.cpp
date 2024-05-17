@@ -371,11 +371,11 @@ vsImage::Clear( const vsColor &clearColor )
 }
 
 void
-vsImage::CopyTo( vsImage *other )
+vsImage::CopyTo( vsImage *other ) const
 {
 	// in CopyTo, we've already validated that 'other' can contain our data.
 	int bytes = m_width * m_height * sizeof(uint32_t);
-	if ( m_pbo )
+	if ( !m_pixel && m_pbo )
 	{
 		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 		// glGetBufferSubData( GL_PIXEL_PACK_BUFFER, 0, bytes, other->m_pixel );
@@ -426,7 +426,7 @@ vsImage::CreateOpaque()
 }
 
 void
-vsImage::Copy( vsImage *other )
+vsImage::CopyFrom( const vsImage *other )
 {
 	if ( m_width != (unsigned int)other->GetWidth() ||
 			m_height != (unsigned int)other->GetHeight() )
@@ -449,8 +449,22 @@ vsImage::Bake( const vsString& name_in ) const
 	if ( name.empty() )
 		name = vsFormatString("MakerTexture%d", s_textureMakerCount++);
 
-	vsTextureInternal *ti = new vsTextureInternal(name, this);
-	return new vsTexture(ti);
+	if ( vsCache<vsTextureInternal>::Instance()->Exists( name ) )
+	{
+		// texture for this screenshot already exists;  let's just blit over it!
+		vsTextureInternal *texture = vsCache<vsTextureInternal>::Instance()->Get( name );
+		texture->Blit(this, vsVector2D::Zero);
+		vsLog("Blitting new screenshot over existing texture!");
+	}
+	else
+	{
+		vsLog("No existing texture!");
+
+		vsTextureInternal *texture = new vsTextureInternal( name, this );
+		vsCache<vsTextureInternal>::Instance()->Add( texture );
+	}
+
+	return new vsTexture(name);
 }
 
 namespace
@@ -473,7 +487,30 @@ vsImage::SaveJPG(int quality, const vsString& filename) const
 			m_pixel, quality);
 
 	if ( retval == 0 )
-		vsLog("Failed to write jpg '%s'", filename, retval);
+		vsLog("Failed to write jpg '%s': %d", filename, retval);
+}
+
+namespace
+{
+	void vsstore_write_func(void *context, void *data, int size)
+	{
+		vsStore* store = (vsStore*)(context);
+		store->WriteBuffer(data, size);
+	}
+};
+
+void
+vsImage::BakeJPG(vsStore* output, int quality) const
+{
+	output->Clear();
+
+	stbi_flip_vertically_on_write(1);
+	int retval = stbi_write_jpg_to_func(vsstore_write_func, output,
+			m_width, m_height, 4,
+			m_pixel, quality);
+
+	if ( retval == 0 )
+		vsLog("Failed to bake jpg: %d", retval);
 }
 
 void

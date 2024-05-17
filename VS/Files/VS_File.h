@@ -114,8 +114,6 @@ public:
 
 	bool		Record_Binary( vsRecord *record );		// returns true if we found or successfully wrote another record
 
-	int			ShallowRecord_Binary( vsRecord *record );// returns the number of child records inside this record.  Caller is expected to call ShallowRecord_Binary() that many times to get the next records
-
 	void		Rewind();
 
 	void		Store( vsStore *store );		// read/write this raw data directly.  STORE IS REWOUND BEFORE READ/WRITE

@@ -347,7 +347,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 
 
 void
-vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
+vsTextureInternal::Blit( const vsImage *image, const vsVector2D &where)
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexSubImage2D(GL_TEXTURE_2D,
@@ -361,7 +361,7 @@ vsTextureInternal::Blit( vsImage *image, const vsVector2D &where)
 }
 
 void
-vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
+vsTextureInternal::Blit( const vsFloatImage *image, const vsVector2D &where)
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexSubImage2D(GL_TEXTURE_2D,
@@ -375,7 +375,7 @@ vsTextureInternal::Blit( vsFloatImage *image, const vsVector2D &where)
 }
 
 void
-vsTextureInternal::Blit( vsSingleFloatImage *image, const vsVector2D& where)
+vsTextureInternal::Blit( const vsSingleFloatImage *image, const vsVector2D& where)
 {
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexSubImage2D(GL_TEXTURE_2D,

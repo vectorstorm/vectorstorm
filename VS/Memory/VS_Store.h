@@ -91,6 +91,8 @@ public:
 	void	WriteString( const vsString &value );
 	void	WriteBuffer( const void *buffer, size_t bufferLength );
 
+	const char*   GetBuffer() const { return m_buffer; }
+
 	void	WriteVoidStar(void *value);		// WARNING:  DO NOT USE THIS UNLESS YOU REALLY KNOW WHAT YOU'RE DOING!  :)
 
 	int8_t	ReadInt8();
