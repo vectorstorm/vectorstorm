@@ -316,10 +316,6 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
 
-	{
-		PROFILE_GL("ClearState");
-		m_renderer->ClearState();
-	}
 	m_fifo->Clear();
 	{
 		PROFILE("GatherRenderables");
@@ -341,6 +337,10 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 // #ifdef DEBUG_SCENE
 // 		m_scene[m_sceneCount-1]->Draw(m_fifo);
 // #endif
+	{
+		PROFILE_GL("ClearState");
+		m_renderer->ClearState();
+	}
 	m_renderer->RenderDisplayList(m_fifo);
 
 	pipeline->PostDraw();
