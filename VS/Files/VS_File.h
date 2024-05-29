@@ -46,6 +46,7 @@ private:
 	vsStore *m_store;
 	struct zipdata *m_zipData;
 	bool m_ok;
+	vsString m_error;
 
 	Mode		m_mode;
 
@@ -72,6 +73,7 @@ public:
 	virtual		~vsFile();
 
 	bool		IsOK() { return m_ok; }
+	const vsString& GetError() { return m_error; } // if we're not ok, this is an english string explaining why not.  (TODO:  Error codes instead!)
 
 	size_t		GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }

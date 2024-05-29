@@ -123,7 +123,9 @@ namespace
 		}
 		return out;
 	}
+
 };
+
 
 static vsFile::openFailureHandler s_openFailureHandler = nullptr;
 
@@ -297,8 +299,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( ret != Z_OK )
 			{
-				m_ok = false;
-				vsAssert( ret == Z_OK, vsFormatString("inflateInit error: %d", ret) );
+				m_error = vsFormatString("inflateInit error: %d", ret);
+				vsAssert( ret == Z_OK, m_error );
 				return;
 			}
 
@@ -431,6 +433,9 @@ vsFile::~vsFile()
 void
 vsFile::FlushBufferedWrites()
 {
+	if ( !m_ok )
+		return;
+
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
 		if ( m_store && m_store->BytesLeftForReading() )
@@ -838,6 +843,8 @@ bool
 vsFile::PeekRecord( vsRecord *r )
 {
 	vsAssert(r != nullptr, "Called vsFile::Record with a nullptr vsRecord!");
+	if ( !m_ok )
+		return false;
 
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
@@ -868,6 +875,9 @@ bool
 vsFile::Record( vsRecord *r )
 {
 	vsAssert(r != nullptr, "Called vsFile::Record with a nullptr vsRecord!");
+	if ( !m_ok )
+		return false;
+
 
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
@@ -892,6 +902,10 @@ vsFile::Record( vsRecord *r )
 bool
 vsFile::Record_Binary( vsRecord *r )
 {
+	vsAssert(r != nullptr, "Called vsFile::Record_Binary with a nullptr vsRecord!");
+	if ( !m_ok )
+		return false;
+
 	// utility function;  actually, we do this from the Record side.
 	if ( m_mode == MODE_Write || m_mode == MODE_WriteCompressed )
 	{
@@ -977,6 +991,9 @@ vsFile::Rewind()
 void
 vsFile::Store( vsStore *s )
 {
+	if ( !m_ok )
+		return;
+
 	s->Rewind();
 	if ( m_mode == MODE_Write ||
 			m_mode == MODE_WriteCompressed ||
@@ -1027,6 +1044,9 @@ vsFile::Store( vsStore *s )
 void
 vsFile::WriteBytes( const void* data, size_t bytes )
 {
+	if ( !m_ok )
+		return;
+
 	vsAssert( m_mode == MODE_Write ||
 			m_mode == MODE_WriteCompressed ||
 			m_mode == MODE_WriteDirectly, "Tried to write into a file which is in read mode?" );
@@ -1039,6 +1059,8 @@ int
 vsFile::ReadBytes( void* data, size_t bytes )
 {
 	// Return number of bytes read
+	if ( !m_ok )
+		return 0;
 
 	if ( m_mode == MODE_Read )
 	{
@@ -1065,12 +1087,48 @@ vsFile::ReadBytes( void* data, size_t bytes )
 				m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
 
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-				vsAssert(ret != Z_DATA_ERROR, "File is corrupt on disk (zlib reports Z_DATA_ERROR)");
-				vsAssert(ret != Z_MEM_ERROR, "Out of memory loading file (zlib reports Z_MEM_ERROR)");
-				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
-				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-				vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+
+				if ( ret != Z_OK )
+				{
+					if ( ret == Z_STREAM_ERROR )
+					{
+						m_error = "zlib error:  Z_STREAM_ERROR";
+						m_ok = false;
+						return 0;
+					}
+					if ( ret == Z_DATA_ERROR )
+					{
+						m_error = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
+						m_ok = false;
+						return 0;
+					}
+					if ( ret == Z_DATA_ERROR )
+					{
+						m_error = "zlib error:  Z_MEM_ERROR (Out of memory)";
+						m_ok = false;
+						return 0;
+					}
+					// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+					//
+					// DEETS:  "Z_BUF_ERROR" is returned if there isn't enough
+					// INPUT DATA to decompress any more, or if there isn't enough
+					// space in the OUTPUT BUFFER to write any decompressed data.
+					//
+					// In our case, the situation we might hit is "not enough input data",
+					// since we're loading zip data progressively.  Z_BUF_ERROR is okay
+					// in our case because if that happens, we'll hit the spot about 20 lines
+					// down where we load more data into the compressed store, and then the
+					// next attempt to load data will get us some.
+					//
+					// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+					if ( ret == Z_VERSION_ERROR )
+					{
+						m_error = "zlib error:  Z_VERSION_ERROR (incompatible zip data version)";
+						m_ok = false;
+						return 0;
+					}
+					// vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+				}
 
 				uint32_t compressedBytesDecompressed = m_compressedStore->BytesLeftForReading() - m_zipData->m_zipStream.avail_in;
 				uint32_t decompressedBytes = m_store->BytesLeftForWriting() - m_zipData->m_zipStream.avail_out;
@@ -1192,6 +1250,9 @@ vsFile::_PumpCompression( const void* bytes, size_t byteCount, bool finish )
 void
 vsFile::StoreBytes( vsStore *s, size_t bytes )
 {
+	if ( !m_ok )
+		return;
+
 	if ( m_mode == MODE_Write ||
 			m_mode == MODE_WriteCompressed ||
 			m_mode == MODE_WriteDirectly )
@@ -1210,9 +1271,15 @@ vsFile::StoreBytes( vsStore *s, size_t bytes )
 void
 vsFile::PeekBytes( vsStore *s, size_t bytes )
 {
+	if ( !m_ok )
+		return;
+
 	vsAssert( m_mode != MODE_Write &&
 			m_mode != MODE_WriteCompressed &&
 			m_mode != MODE_WriteDirectly, "PeekBytes() called in Write mode?" );
+	vsAssert( m_mode != MODE_ReadCompressed &&
+			m_mode != MODE_ReadCompressed_Progressive ,
+			"PeekBytes() called in Compressed Read mode??" );
 
 	size_t actualBytes = vsMin(bytes, m_store->BytesLeftForReading());
 	s->WriteBuffer( m_store->GetReadHead(), actualBytes );
@@ -1252,6 +1319,9 @@ vsFile::GetFullFilename(const vsString &filename_in)
 bool
 vsFile::AtEnd()
 {
+	if ( !m_ok )
+		return true;
+
 	return m_store->BytesLeftForReading() == 0; // !m_file || PHYSFS_eof( m_file );
 }
 

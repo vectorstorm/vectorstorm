@@ -226,6 +226,12 @@ vsSerialiserReadStream::~vsSerialiserReadStream()
 	vsDelete(m_store);
 }
 
+bool
+vsSerialiserReadStream::IsOK() const
+{
+	return m_file->IsOK();
+}
+
 void
 vsSerialiserReadStream::Ensure(size_t bytes_required)
 {
@@ -246,11 +252,15 @@ vsSerialiserReadStream::Ensure(size_t bytes_required)
 		}
 
 		int bytes = m_file->ReadBytes( m_store->GetWriteHead(), m_store->BytesLeftForWriting() );
-		m_store->AdvanceWriteHead(bytes);
-		// m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
-		// m_store->Clear();
-		// m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
-		vsAssertF(m_store->BytesLeftForReading() >= bytes_required, "Not enough data in file '%s' to fulfill stream?", m_file->GetFilename());
+
+		if ( m_file->IsOK() )
+		{
+			m_store->AdvanceWriteHead(bytes);
+			// m_file->ConsumeBytes( m_store->GetReadHeadPosition() );
+			// m_store->Clear();
+			// m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
+			vsAssertF(m_store->BytesLeftForReading() >= bytes_required, "Not enough data in file '%s' to fulfill stream?", m_file->GetFilename());
+		}
 	}
 }
 
