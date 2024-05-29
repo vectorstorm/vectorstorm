@@ -165,6 +165,8 @@ public:
 	void	Set(ControlType type_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; id = id_in; dir = dir_in; }
 	void	Set(ControlType type_in, int controllerId_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; controllerId = controllerId_in; id = id_in; dir = dir_in; }
 
+	void Validate();
+
 	float	Evaluate(bool hasFocus);
 };
 

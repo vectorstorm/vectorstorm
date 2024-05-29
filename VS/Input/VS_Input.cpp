@@ -288,6 +288,7 @@ vsInput::DefaultBindControlKey_Keycode( int cid, int keycode )
 		dc.type = CT_KeyboardKeycode;
 		dc.id = keycode;
 		dc.control = true;
+		dc.Validate();
 		// dc.keymod = c_controlKeys;
 
 		m_axis[cid].positive.AddItem(dc);
@@ -310,6 +311,7 @@ vsInput::DefaultBindControllerButton( int cid, int controllerButton )
 		DeviceControl dc;
 		dc.type = CT_Button;
 		dc.id = controllerButton;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -332,6 +334,7 @@ vsInput::DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirectio
 		dc.type = CT_Axis;
 		dc.id = controllerAxis;
 		dc.dir = cd;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -353,6 +356,7 @@ vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 		DeviceControl dc;
 		dc.type = CT_MouseButton;
 		dc.id = mouseButtonCode;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -374,6 +378,7 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 		DeviceControl dc;
 		dc.type = CT_MouseWheel;
 		dc.dir = cd;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -460,6 +465,7 @@ vsInput::Load()
 					dc.id = child->GetToken(2).AsInteger();
 					if ( child->GetTokenCount() > 3 ) // old data;  don't load it!
 						dc.control = child->GetToken(3).AsInteger();
+					dc.Validate();
 
 					axis.positive.AddItem(dc);
 				}
@@ -2831,6 +2837,19 @@ vsInput::DestroyController(SDL_GameController *gc)
 		vsDelete( m_controller[i] );
 	}
 #endif // VS_GAMEPADS
+}
+
+void
+DeviceControl::Validate()
+{
+	if ( type == CT_Keyboard )
+	{
+		if ( id == SDL_SCANCODE_LCTRL ||
+				id == SDL_SCANCODE_RCTRL )
+		{
+			control = 1; // control keys DO expect a control modifier, lol
+		}
+	}
 }
 
 float
