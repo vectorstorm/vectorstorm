@@ -48,7 +48,7 @@ vsPerlinOctave::InterpolatedNoise1D(float x)
 	int integer_X		= vsFloor(x);
 	float fractional_X	= x - integer_X;
 
-	vsAssert( !vsIsNaN(x), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with NaN" );
+	vsAssertF( vsIsFinite(x), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with non-finite value %f", x );
 	vsAssertF( fractional_X >= 0.f && fractional_X < 1.f, "Maths error:  fractional_X out of bounds:  input x=%f, fractional_X=%f", x, fractional_X );
 
 	fractional_X = (3.0f * fractional_X * fractional_X) - (2.0f * fractional_X * fractional_X * fractional_X);
@@ -102,8 +102,8 @@ vsPerlinOctave::InterpolatedNoise2D(float x, float y, int wrap)
 	int integer_Y    = vsFloor(y);
 	float fractional_Y = y - integer_Y;
 
-	vsAssert( !vsIsNaN(x), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with NaN" );
-	vsAssert( !vsIsNaN(y), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with NaN" );
+	vsAssertF( vsIsFinite(x), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with non-finite value %f", x );
+	vsAssertF( vsIsFinite(y), "Maths error: vsPerlinOctave::InterpolatedNoise2D called with non-finite value %f", y );
 	vsAssertF( fractional_X >= 0.f && fractional_X < 1.f, "Maths error:  fractional_X out of bounds:  input x=%f, fractional_X=%f", x, fractional_X );
 	vsAssertF( fractional_Y >= 0.f && fractional_Y < 1.f, "Maths error:  fractional_Y out of bounds:  input y=%f, fractional_Y=%f", y, fractional_Y );
 
