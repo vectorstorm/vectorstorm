@@ -267,22 +267,26 @@ int
 vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 {
 	Init();
+	uint32_t childCount = 0;
 
-	m_label.SerialiseBinaryV2(s);
-
-	uint32_t tokenCount = m_token.ItemCount();
-	s->Uint32(tokenCount);
-	m_token.SetArraySize(tokenCount);
-	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	if ( s->IsOK() )
 	{
-		m_token[i].SerialiseBinaryV2(s);
+		m_label.SerialiseBinaryV2(s);
+
+		uint32_t tokenCount = m_token.ItemCount();
+		s->Uint32(tokenCount);
+		m_token.SetArraySize(tokenCount);
+		for ( int i = 0; i < m_token.ItemCount(); i++ )
+		{
+			m_token[i].SerialiseBinaryV2(s);
+		}
+
+		childCount = m_childList.ItemCount();
+		s->Uint32(childCount);
+
+		m_streamMode = true;
+		m_streamModeChildCount = childCount;
 	}
-
-	uint32_t childCount = m_childList.ItemCount();
-	s->Uint32(childCount);
-
-	m_streamMode = true;
-	m_streamModeChildCount = childCount;
 
 	return childCount;
 }
