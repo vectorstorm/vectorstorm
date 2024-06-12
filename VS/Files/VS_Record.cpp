@@ -256,6 +256,8 @@ vsRecord::LoadBinary( vsFile *file )
 bool
 vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
 {
+	if ( !s->IsOK() )
+		return false;
 	vsString identifier("RecordV2");
 	s->String(identifier);
 	vsAssert( identifier == "RecordV2", "Invalid identifier in loadbinary nochildren init?" );
@@ -266,6 +268,8 @@ vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
 int
 vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 {
+	if ( !s->IsOK() )
+		return false;
 	Init();
 	uint32_t childCount = 0;
 

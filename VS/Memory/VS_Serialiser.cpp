@@ -211,7 +211,7 @@ vsSerialiserReadStream::vsSerialiserReadStream(vsFile *file):
 	vsSerialiser(nullptr, Type_Read),
 	m_file(file)
 {
-	m_store = new vsStore(1024 * 2);
+	m_store = new vsStore(1024 * 200);
 	// m_file->PeekBytes(m_store, m_store->BytesLeftForWriting());
 	int bytes = m_file->ReadBytes( m_store->GetWriteHead(), m_store->BytesLeftForWriting() );
 	m_store->AdvanceWriteHead(bytes);
@@ -230,6 +230,12 @@ bool
 vsSerialiserReadStream::IsOK() const
 {
 	return m_file->IsOK();
+}
+
+void
+vsSerialiserReadStream::SetError( const vsString& err )
+{
+	m_file->SetError(err);
 }
 
 void

@@ -305,7 +305,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			}
 
 			uint32_t decompressedSize = 0;
-			const uint32_t zipBufferSize = 1024 * 100;
+			const uint32_t zipBufferSize = 1024;
 			char zipBuffer[zipBufferSize];
 			m_zipData->m_zipStream.avail_in = (uInt)compressedData->BytesLeftForReading();
 			m_zipData->m_zipStream.next_in = (Bytef*)compressedData->GetReadHead();
@@ -314,12 +314,28 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				m_zipData->m_zipStream.avail_out = zipBufferSize;
 				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-				vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered in destructor");
-				vsAssertF(ret != Z_DATA_ERROR, "File '%s' is corrupt on disk (zlib reports Z_DATA_ERROR)", filename);
-				vsAssertF(ret != Z_MEM_ERROR, "Out of memory loading file '%s' (zlib reports Z_MEM_ERROR)", filename);
+				if ( ret == Z_STREAM_ERROR )
+				{
+					m_error = "zlib error:  Z_STREAM_ERROR";
+					m_ok = false;
+				}
+				if ( ret == Z_DATA_ERROR )
+				{
+					m_error = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
+					m_ok = false;
+				}
+				if ( ret == Z_DATA_ERROR )
+				{
+					m_error = "zlib error:  Z_MEM_ERROR (Out of memory)";
+					m_ok = false;
+				}
 				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
 				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-				vsAssertF(ret != Z_VERSION_ERROR, "File '%s' is incompatible (zlib reports Z_VERSION_ERROR)", filename);
+				if ( ret == Z_VERSION_ERROR )
+				{
+					m_error = "zlib error:  Z_VERSION_ERROR (Incompatible version)";
+					m_ok = false;
+				}
 
 				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 				decompressedSize += decompressedBytes;
@@ -384,7 +400,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			m_zipData->m_zipStream.opaque = Z_NULL;
 
 			// Now, we need to set up our zip stream
-			const uint32_t zipBufferSize = 1024 * 100;
+			const uint32_t zipBufferSize = 1024 * 200;
 			m_store = new vsStore( zipBufferSize );
 			m_zipData->m_zipStream.avail_out = (uInt)m_store->BytesLeftForWriting();
 			m_zipData->m_zipStream.next_out = (Bytef*)m_store->GetWriteHead();
@@ -1417,5 +1433,84 @@ vsFile::AvailableWriteBytes()
 	}
 	return std::numeric_limits<size_t>::max();
 #endif
+}
+
+bool
+vsFile::IsCompressedFileValid( const vsString& filename, vsString& outError )
+{
+	PHYSFS_File *file = PHYSFS_openRead( filename.c_str() );
+	if ( !file )
+	{
+		outError = "No file";
+		return false;
+	}
+
+	size_t compressedLength = (size_t)PHYSFS_fileLength(file);
+
+	vsStore compressedData( compressedLength );
+	PHYSFS_sint64 n;
+	n = PHYSFS_readBytes( file, compressedData.GetWriteHead(), compressedData.BufferLength() );
+	compressedData.AdvanceWriteHead(n);
+	if ( n != (ssize_t)compressedLength )
+	{
+		outError = "Unable to read whole file";
+		return false;
+	}
+
+	PHYSFS_close(file);
+
+	z_stream zipStream;
+	zipStream.zalloc = Z_NULL;
+	zipStream.zfree = Z_NULL;
+	zipStream.opaque = Z_NULL;
+	int ret = inflateInit(&zipStream);
+	if ( ret != Z_OK )
+	{
+		outError = vsFormatString("inflateInit error: %d", ret);
+		return false;
+	}
+
+	// uint32_t decompressedSize = 0;
+	const uint32_t zipBufferSize = 1024 * 100;
+	char zipBuffer[zipBufferSize];
+	zipStream.avail_in = (uInt)compressedData.BytesLeftForReading();
+	zipStream.next_in = (Bytef*)compressedData.GetReadHead();
+	do
+	{
+		zipStream.avail_out = zipBufferSize;
+		zipStream.next_out = (Bytef*)zipBuffer;
+		// int ret = inflate(&zipStream, Z_NO_FLUSH);
+		int ret = inflate(&zipStream, Z_SYNC_FLUSH);
+		if ( ret == Z_STREAM_ERROR )
+		{
+			outError = "zlib error:  Z_STREAM_ERROR";
+			return false;
+		}
+		if ( ret == Z_DATA_ERROR )
+		{
+			outError = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
+			return false;
+		}
+		if ( ret == Z_DATA_ERROR )
+		{
+			outError = "zlib error:  Z_MEM_ERROR (Out of memory)";
+			return false;
+		}
+		// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+		// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+		if ( ret == Z_VERSION_ERROR )
+		{
+			outError = "zlib error:  Z_VERSION_ERROR (Incompatible version)";
+			return false;
+		}
+
+		// uint32_t decompressedBytes = zipBufferSize - zipStream.avail_out;
+		// decompressedSize += decompressedBytes;
+
+	}while( ret != Z_STREAM_END );
+	inflateEnd(&zipStream);
+
+
+	return true;
 }
 

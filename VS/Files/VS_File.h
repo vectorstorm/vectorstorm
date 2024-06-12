@@ -73,6 +73,7 @@ public:
 	virtual		~vsFile();
 
 	bool		IsOK() { return m_ok; }
+	void		SetError( const vsString& err ) { m_ok = false; m_error = err; }
 	const vsString& GetError() { return m_error; } // if we're not ok, this is an english string explaining why not.  (TODO:  Error codes instead!)
 
 	size_t		GetLength() { return m_length; }
@@ -95,6 +96,8 @@ public:
 	static vsString GetFileName( const vsString &filename );  // returns the full 'file name' of the listed file, including extension but excluding directories.
 	static vsString GetBaseName( const vsString &filename );  // returns the 'base name' of the listed file (no directory, no extension).
 	static vsString GetDirectory( const vsString &filename ); // returns the 'directory' component of the listed file, or "./" if none.
+															  //
+	static bool IsCompressedFileValid( const vsString& filename, vsString& outError );
 
 	// DirectoryContents returns a list of FILES AND DIRECTORIES inside this
 	// directory.  It is your responsibility to check for each one whether it

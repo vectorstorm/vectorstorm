@@ -44,6 +44,8 @@ public:
 	const vsRecord& Get() const;
 	vsRecord& Get();
 
+	void SetError();
+
 	bool HasNext() const; // is there another record at this level?
 
 	void Next(); // 'next' will skip over a record to the next one at the same level
