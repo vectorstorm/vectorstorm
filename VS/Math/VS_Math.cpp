@@ -41,35 +41,38 @@ float vsATan2(float opp, float adj)
 	return atan2f(opp, adj);
 }
 
-uint32_t vsNextPowerOfTwo( uint32_t value )
+uint32_t vsLowBit( uint32_t n )
 {
-	value--;
-	value |= value >> 1;
-	value |= value >> 2;
-	value |= value >> 4;
-	value |= value >> 8;
-	value |= value >> 16;
-	value++;
-
-	return value;	// it's like magic!
-}
-
-uint8_t vsHighBitPosition( uint32_t n )
-{
-	uint8_t r = 0;
-	while ( n >>= 1 )
-		r++;
-	return r;
+	return n &= -n ;
 }
 
 uint32_t vsHighBit( uint32_t n )
 {
-	n |= (n >> 1);
-	n |= (n >> 2);
-	n |= (n >> 4);
-	n |= (n >> 8);
-	n |= (n >> 16);
-	return n - (n >> 1);
+	n |= (n >>  1);
+    n |= (n >>  2);
+    n |= (n >>  4);
+    n |= (n >>  8);
+    n |= (n >> 16);
+    return n - (n >> 1);
+}
+
+uint32_t vsNextPowerOfTwo( uint32_t value )
+{
+	uint32_t n = vsHighBit(value);
+	return  n << (!!(value ^ n)); // it's over 9000!
+}
+
+
+uint8_t vsHighBitPosition( uint32_t b )
+{
+	static const uint32_t deBruijnMagic = 0x06EB14F9;
+	static const uint8_t deBruijnTable[64] = {
+	     0,  0,  0,  1,  0, 16,  2,  0, 29,  0, 17,  0,  0,  3,  0, 22,
+	    30,  0,  0, 20, 18,  0, 11,  0, 13,  0,  0,  4,  0,  7,  0, 23,
+	    31,  0, 15,  0, 28,  0,  0, 21,  0, 19,  0, 10, 12,  0,  6,  0,
+	     0, 14, 27,  0,  0,  9,  0,  5,  0, 26,  8,  0, 25,  0, 24,  0,
+	 };
+	return deBruijnTable[(vsHighBit(b) * deBruijnMagic) >> 26];
 }
 
 bool vsCollideRayVsTriangle( const vsVector3D &orig, const vsVector3D &dir, const vsVector3D &vert0, const vsVector3D &vert1, const vsVector3D &vert2, float *t, float *u, float *v)
@@ -759,4 +762,3 @@ uint32_t vsCountSetBits( uint32_t i )
 	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
 	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
-
