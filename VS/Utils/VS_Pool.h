@@ -85,6 +85,26 @@ public:
 		vsAssert( m_unusedCount == m_unusedList.ItemCount(), "Out of sync pool counts??" );
 	}
 
+	void AddToPool( T* item )
+	{
+		// this is an item which didn't originally come from our pool;  add us to it!
+		vsAssert(item != nullptr, "Trying to return a nullptr item to the pool???");
+		m_unusedCount++;
+		m_count++;
+
+		m_unusedList.AddItem(item);
+		vsAssert( m_unusedCount == m_unusedList.ItemCount(), "Out of sync pool counts??" );
+	}
+
+	void AddToPool_Borrowed( T* item ) // this item exists and we declare it is owned by this pool, but it's currently in a "Borrowed" state
+	{
+		// this is an item which didn't originally come from our pool;  add us to it!
+		vsAssert(item != nullptr, "Trying to return a nullptr item to the pool???");
+		m_count++;
+		//m_usedList.AddItem(item);
+		vsAssert( m_unusedCount == m_unusedList.ItemCount(), "Out of sync pool counts??" );
+	}
+
 	bool IsEmpty()
 	{
 		return (m_unusedCount == 0 && !m_expandable);
