@@ -53,6 +53,46 @@ namespace
 	{
 		return ++s_tempFileCount;
 	}
+
+
+	bool zlib_is_okay( vsString& err, int ret )
+	{
+		if ( ret == Z_STREAM_ERROR )
+		{
+			err = "zlib error:  Z_STREAM_ERROR";
+			return false;
+		}
+		if ( ret == Z_DATA_ERROR )
+		{
+			err = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
+			return false;
+		}
+		if ( ret == Z_DATA_ERROR )
+		{
+			err = "zlib error:  Z_MEM_ERROR (Out of memory)";
+			return false;
+		}
+					// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+					//
+					// DEETS:  "Z_BUF_ERROR" is returned if there isn't enough
+					// INPUT DATA to decompress any more, or if there isn't enough
+					// space in the OUTPUT BUFFER to write any decompressed data.
+					//
+					// In our case, the situation we might hit is "not enough input data",
+					// since we're loading zip data progressively.  Z_BUF_ERROR is okay
+					// in our case because if that happens, we'll hit the spot about 20 lines
+					// down where we load more data into the compressed store, and then the
+					// next attempt to load data will get us some.
+					//
+					// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+		if ( ret == Z_VERSION_ERROR )
+		{
+			err = "zlib error:  Z_VERSION_ERROR (Incompatible version)";
+			return false;
+		}
+
+		return true;
+	}
 }
 
 // #define PROFILE_FILE_SYSTEM
@@ -197,7 +237,10 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				if ( ret != Z_OK )
 				{
 					vsLog("deflateInit error: %d", ret);
-					mode = MODE_Write;
+					m_error = vsFormatString("deflateInit error: %d", ret);
+					m_ok = false;
+					return;
+					// mode = MODE_Write;
 				}
 
 				// What's more, compressed writing doesn't give us nice uniform
@@ -314,27 +357,11 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				m_zipData->m_zipStream.avail_out = zipBufferSize;
 				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
-				if ( ret == Z_STREAM_ERROR )
+
+				if ( !zlib_is_okay( m_error, ret ) )
 				{
-					m_error = "zlib error:  Z_STREAM_ERROR";
 					m_ok = false;
-				}
-				if ( ret == Z_DATA_ERROR )
-				{
-					m_error = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
-					m_ok = false;
-				}
-				if ( ret == Z_DATA_ERROR )
-				{
-					m_error = "zlib error:  Z_MEM_ERROR (Out of memory)";
-					m_ok = false;
-				}
-				// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
-				// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-				if ( ret == Z_VERSION_ERROR )
-				{
-					m_error = "zlib error:  Z_VERSION_ERROR (Incompatible version)";
-					m_ok = false;
+					return;
 				}
 
 				uint32_t decompressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
@@ -439,10 +466,19 @@ vsFile::~vsFile()
 	vsDelete( m_store );
 	if ( m_file )
 		PHYSFS_close(m_file);
-	if ( m_moveOnDestruction )
+
+	if ( _IsWrite() )
 	{
-		// now we need to move the file we just wrote into its final position.
-		Move( m_tempFilename, m_filename );
+		if ( m_ok && m_moveOnDestruction )
+		{
+			// now we need to move the file we just wrote into its final position.
+			Move( m_tempFilename, m_filename );
+		}
+
+		if ( !m_ok )
+		{
+			Delete( m_moveOnDestruction ? m_tempFilename : m_filename );
+		}
 	}
 }
 
@@ -465,8 +501,12 @@ vsFile::FlushBufferedWrites()
 void
 vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 {
+	if ( !m_ok )
+		return;
+
 	PHYSFS_uint64 bytesToWrite = byteCount;
 	PHYSFS_sint64 bytesWritten = PHYSFS_writeBytes( m_file, bytes, bytesToWrite );
+
 	if ( bytesWritten != (PHYSFS_sint64)bytesToWrite )
 	{
 		vsLog("Tried to write %ld bytes to file, actually wrote %ld bytes",
@@ -475,21 +515,10 @@ vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 		PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
 		const char* errStr = PHYSFS_getErrorByCode(code);
 
-		// this file is truncated;  let's try to delete it rather than let it
-		// live in a partially-written state!
-		// bool successfullyDeleted = false;
+		m_error = errStr;
+		m_ok = false;
 
-		PHYSFS_close(m_file);
-		if ( vsFile::Exists(m_tempFilename) )
-			vsFile::Delete( m_tempFilename );
-		if ( vsFile::Exists(m_filename) )
-			vsFile::Delete( m_filename );
-
-		vsAssertF( bytesWritten == (PHYSFS_sint64)bytesToWrite,
-				"Unable to write file(%s): (%ld) %s",
-				m_filename,
-				code,
-				errStr)
+		// this file is truncated.  We'll delete it when the vsFile is destroyed.
 	}
 }
 
@@ -1104,46 +1133,10 @@ vsFile::ReadBytes( void* data, size_t bytes )
 
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 
-				if ( ret != Z_OK )
+				if ( !zlib_is_okay( m_error, ret ) )
 				{
-					if ( ret == Z_STREAM_ERROR )
-					{
-						m_error = "zlib error:  Z_STREAM_ERROR";
-						m_ok = false;
-						return 0;
-					}
-					if ( ret == Z_DATA_ERROR )
-					{
-						m_error = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
-						m_ok = false;
-						return 0;
-					}
-					if ( ret == Z_DATA_ERROR )
-					{
-						m_error = "zlib error:  Z_MEM_ERROR (Out of memory)";
-						m_ok = false;
-						return 0;
-					}
-					// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
-					//
-					// DEETS:  "Z_BUF_ERROR" is returned if there isn't enough
-					// INPUT DATA to decompress any more, or if there isn't enough
-					// space in the OUTPUT BUFFER to write any decompressed data.
-					//
-					// In our case, the situation we might hit is "not enough input data",
-					// since we're loading zip data progressively.  Z_BUF_ERROR is okay
-					// in our case because if that happens, we'll hit the spot about 20 lines
-					// down where we load more data into the compressed store, and then the
-					// next attempt to load data will get us some.
-					//
-					// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-					if ( ret == Z_VERSION_ERROR )
-					{
-						m_error = "zlib error:  Z_VERSION_ERROR (incompatible zip data version)";
-						m_ok = false;
-						return 0;
-					}
-					// vsAssert(ret != Z_VERSION_ERROR, "File is incompatible (zlib reports Z_VERSION_ERROR)");
+					m_ok = false;
+					return 0;
 				}
 
 				uint32_t compressedBytesDecompressed = m_compressedStore->BytesLeftForReading() - m_zipData->m_zipStream.avail_in;
@@ -1253,7 +1246,11 @@ vsFile::_PumpCompression( const void* bytes, size_t byteCount, bool finish )
 		m_zipData->m_zipStream.avail_out = zipBufferSize;
 		m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 		int ret = deflate(&m_zipData->m_zipStream, finish ? Z_FINISH : Z_NO_FLUSH);
-		vsAssert(ret != Z_STREAM_ERROR, "Zip State not clobbered by deflate()");
+
+		if ( !zlib_is_okay( m_error, ret ) )
+		{
+			m_ok = false;
+		}
 
 		int compressedBytes = zipBufferSize - m_zipData->m_zipStream.avail_out;
 		if ( compressedBytes > 0 )
@@ -1512,5 +1509,13 @@ vsFile::IsCompressedFileValid( const vsString& filename, vsString& outError )
 
 
 	return true;
+}
+
+bool
+vsFile::_IsWrite() const
+{
+	return ( m_mode == MODE_Write ||
+			m_mode == MODE_WriteDirectly ||
+			m_mode == MODE_WriteCompressed );
 }
 

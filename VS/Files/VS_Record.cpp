@@ -299,6 +299,8 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 void
 vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
 {
+	if ( !s->IsOK() )
+		return;
 	vsString identifier("RecordV2");
 	s->String(identifier);
 }
@@ -306,6 +308,9 @@ vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
 void
 vsRecord::WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount )
 {
+	if ( !s->IsOK() )
+		return;
+
 	m_label.SerialiseBinaryV2(s);
 
 	uint32_t tokenCount = m_token.ItemCount();

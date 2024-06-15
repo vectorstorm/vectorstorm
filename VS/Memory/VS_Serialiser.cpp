@@ -408,6 +408,12 @@ vsSerialiserWriteStream::Flush()
 	}
 }
 
+bool
+vsSerialiserWriteStream::IsOK() const
+{
+	return m_file->IsOK();
+}
+
 void
 vsSerialiserWriteStream::Ensure(size_t bytes)
 {

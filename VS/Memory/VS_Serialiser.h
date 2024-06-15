@@ -163,6 +163,9 @@ public:
 
 	void Flush();
 
+	bool IsOK() const;
+	void SetError( const vsString& error );
+
 	virtual void	Bool(bool &value);
 
 	virtual void	Int8(int8_t &value);
