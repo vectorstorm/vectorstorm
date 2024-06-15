@@ -599,7 +599,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		m_mountpoints.Clear();
 	}
 	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
-	size_t bytes = vsFile::AvailableWriteBytes();
+	vsFile::LogDiskStats();
+	size_t bytes = vsFile::DiskStats().availableBytes;
 	if ( bytes < 1024 )
 		vsLog(" [!] Low space available on write drive: %d bytes", bytes );
 	else if ( bytes < 1024 * 1024 )

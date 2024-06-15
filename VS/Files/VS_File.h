@@ -81,7 +81,15 @@ public:
 	size_t		GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }
 
-	static size_t AvailableWriteBytes(); // returns how many bytes we can write into our write directory.
+	struct DiskStats
+	{
+		size_t freeBytes;      // bytes without things stored in them.
+		size_t availableBytes; // bytes which *we* can write into.  (may be lower than 'freeBytes'!)
+		size_t capacityBytes;  // total bytes on the disk.
+	};
+
+	static void LogDiskStats(); // logs information about our disk.
+	static DiskStats GetDiskStats(); // returns how many bytes we can write into our write directory.
 
 	static bool	Exists( const vsString &filename );	// returns true if the specified file exists.
 	static bool	DirectoryExists( const vsString &dirName );	// returns true if the specified directory exists.

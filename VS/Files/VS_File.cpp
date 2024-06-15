@@ -1394,8 +1394,8 @@ vsFile::GetDirectory( const vsString &filename )
 	return vsString("./");
 }
 
-size_t
-vsFile::AvailableWriteBytes()
+void
+vsFile::LogDiskStats()
 {
 	vsString directory( PHYSFS_getWriteDir() );
 #if defined(__APPLE_CC__)
@@ -1411,9 +1411,9 @@ vsFile::AvailableWriteBytes()
 		vsLog("  Total blocks: %d", info.f_blocks);
 		vsLog("  Free blocks:  %d", info.f_bfree);
 
-		return info.f_frsize * info.f_bfree;
+		return;
 	}
-	return std::numeric_limits<size_t>::max();
+	return;
 #else
 	try
 	{
@@ -1422,14 +1422,46 @@ vsFile::AvailableWriteBytes()
 		vsLog("  capacity:   %d", si.capacity);
 		vsLog("  free: %d", si.free);
 		vsLog("  available:  %d", si.available);
-		return si.available;
+		return;
 	}
 	catch(const std::exception& e)
 	{
 		vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
 	}
-	return std::numeric_limits<size_t>::max();
+	return;
 #endif
+}
+
+vsFile::DiskStats
+vsFile::GetDiskStats()
+{
+	vsString directory( PHYSFS_getWriteDir() );
+	DiskStats result;
+	result.freeBytes = std::numeric_limits<size_t>::max();
+	result.availableBytes = std::numeric_limits<size_t>::max();
+	result.capacityBytes = std::numeric_limits<size_t>::max();
+
+#if defined(__APPLE_CC__)
+	struct statvfs info;
+	if ( ::statvfs( directory.c_str(), &info ) == 0 )
+	{
+		result.freeBytes = result.availableBytes = info.f_frsize * info.f_bfree;
+		result.capacityBytes = info.f_frsize * info.f_blocks;
+	}
+#else
+	try
+	{
+		std::filesystem::space_info si = std::filesystem::space(directory);
+		result.freeBytes = si.free;
+		result.availableBytes = si.available;
+		result.capacityBytes = si.capacity;
+	}
+	catch(const std::exception& e)
+	{
+		// vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
+	}
+#endif
+	return result;
 }
 
 bool
