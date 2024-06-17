@@ -59,9 +59,10 @@ namespace
 	{
 		"Ok",
 		"Serialiser",
-		"Other Error",
+		"Phys_OtherError",
 		"Phys_Memory",
 		"Phys_NotInitialised",
+		"Phys_AlreadyInitialised",
 		"Phys_ArgVZeroIsNull",
 		"Phys_Unsupported",
 		"Phys_PastEOF",
@@ -1691,7 +1692,7 @@ vsFile::_LogError( const char* context ) const
 	if ( m_error == vsFile::ERROR_Ok )
 		return;
 
-	vsLog("File '%s':  %s: %s", m_filename, context, s_errorString[m_error]);
+	vsLog("Error with file '%s':  %s: %s", m_filename, context, s_errorString[m_error]);
 }
 
 bool
