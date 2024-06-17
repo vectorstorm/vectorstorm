@@ -126,7 +126,7 @@ public:
 	virtual ~vsSerialiserReadStream();
 
 	bool IsOK() const;
-	void SetError( const vsString& error );
+	void SetError();
 
 	virtual void	Bool(bool &value);
 
@@ -164,7 +164,7 @@ public:
 	void Flush();
 
 	bool IsOK() const;
-	void SetError( const vsString& error );
+	void SetError();
 
 	virtual void	Bool(bool &value);
 

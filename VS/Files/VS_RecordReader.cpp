@@ -49,7 +49,7 @@ vsRecordReader::Get()
 void
 vsRecordReader::SetError()
 {
-	m_stream->SetError("vsRecordReader flagged error");
+	m_stream->SetError();
 }
 
 bool

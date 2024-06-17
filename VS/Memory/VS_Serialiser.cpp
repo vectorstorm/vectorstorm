@@ -233,9 +233,9 @@ vsSerialiserReadStream::IsOK() const
 }
 
 void
-vsSerialiserReadStream::SetError( const vsString& err )
+vsSerialiserReadStream::SetError()
 {
-	m_file->SetError(err);
+	m_file->SetError( vsFile::ERROR_Serialiser );
 }
 
 void

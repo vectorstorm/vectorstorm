@@ -55,23 +55,45 @@ namespace
 	}
 
 
-	bool zlib_is_okay( vsString& err, int ret )
+	const char* s_errorString[] =
 	{
-		if ( ret == Z_STREAM_ERROR )
-		{
-			err = "zlib error:  Z_STREAM_ERROR";
-			return false;
-		}
-		if ( ret == Z_DATA_ERROR )
-		{
-			err = "zlib error:  Z_DATA_ERROR (file is corrupt on disk)";
-			return false;
-		}
-		if ( ret == Z_DATA_ERROR )
-		{
-			err = "zlib error:  Z_MEM_ERROR (Out of memory)";
-			return false;
-		}
+		"Ok",
+		"Serialiser",
+		"Other Error",
+		"Phys_Memory",
+		"Phys_NotInitialised",
+		"Phys_ArgVZeroIsNull",
+		"Phys_Unsupported",
+		"Phys_PastEOF",
+		"Phys_FilesStillOpen",
+		"Phys_InvalidArgument",
+		"Phys_NotMounted",
+		"Phys_NoSuchPath",
+		"Phys_SymlinkForbidden",
+		"Phys_NoWriteDir",
+		"Phys_OpenForReading",
+		"Phys_OpenForWriting",
+		"Phys_NotAFile",
+		"Phys_ReadOnly",
+		"Phys_Corrupt",
+		"Phys_SymlinkLoop",
+		"Phys_IO",
+		"Phys_Permission",
+		"Phys_NoSpace",
+		"Phys_BadFilename",
+		"Phys_Busy",
+		"Phys_DirNotEmpty",
+		"Phys_OS",
+		"ZLib_Stream",
+		"ZLib_Data",
+		"ZLib_Memory",
+		"ZLib_Version"
+	};
+
+	vsFile::Error convert_zlib_error( int error )
+	{
+		vsFile::Error result = vsFile::ERROR_Ok;
+
 					// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
 					//
 					// DEETS:  "Z_BUF_ERROR" is returned if there isn't enough
@@ -85,14 +107,126 @@ namespace
 					// next attempt to load data will get us some.
 					//
 					// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
-		if ( ret == Z_VERSION_ERROR )
+
+		switch ( error )
 		{
-			err = "zlib error:  Z_VERSION_ERROR (Incompatible version)";
-			return false;
+			case Z_STREAM_ERROR:
+				result = vsFile::ERROR_ZLib_Stream;
+				break;
+			case Z_DATA_ERROR:
+				result = vsFile::ERROR_ZLib_Data;
+				break;
+			case Z_MEM_ERROR:
+				result = vsFile::ERROR_ZLib_Memory;
+				break;
+			case Z_VERSION_ERROR:
+				result = vsFile::ERROR_ZLib_Version;
+				break;
 		}
 
-		return true;
+		return result;
 	}
+
+	vsFile::Error convert_physfs_error( int error )
+	{
+		vsFile::Error result = vsFile::ERROR_Ok;
+
+					// [NOTE] Z_BUF_ERROR is not fatal, according to https://www.zlib.net/manual.html
+					//
+					// DEETS:  "Z_BUF_ERROR" is returned if there isn't enough
+					// INPUT DATA to decompress any more, or if there isn't enough
+					// space in the OUTPUT BUFFER to write any decompressed data.
+					//
+					// In our case, the situation we might hit is "not enough input data",
+					// since we're loading zip data progressively.  Z_BUF_ERROR is okay
+					// in our case because if that happens, we'll hit the spot about 20 lines
+					// down where we load more data into the compressed store, and then the
+					// next attempt to load data will get us some.
+					//
+					// vsAssert(ret != Z_BUF_ERROR, "File is corrupt on disk (zlib reports Z_BUF_ERROR)");
+
+		switch ( error )
+		{
+			case PHYSFS_ERR_OTHER_ERROR:
+				result = vsFile::ERROR_Phys_Other;
+				break;
+			case PHYSFS_ERR_OUT_OF_MEMORY:
+				result = vsFile::ERROR_Phys_Memory;
+				break;
+			case PHYSFS_ERR_NOT_INITIALIZED:
+				result = vsFile::ERROR_Phys_NotInitialised;
+				break;
+			case PHYSFS_ERR_IS_INITIALIZED:
+				result = vsFile::ERROR_Phys_AlreadyInitialised;
+				break;
+			case PHYSFS_ERR_ARGV0_IS_NULL:
+				result = vsFile::ERROR_Phys_ArgVZeroIsNull;
+				break;
+			case PHYSFS_ERR_UNSUPPORTED:
+				result = vsFile::ERROR_Phys_Unsupported;
+				break;
+			case PHYSFS_ERR_PAST_EOF:
+				result = vsFile::ERROR_Phys_PastEOF;
+				break;
+			case PHYSFS_ERR_FILES_STILL_OPEN:
+				result = vsFile::ERROR_Phys_FilesStillOpen;
+				break;
+			case PHYSFS_ERR_INVALID_ARGUMENT:
+				result = vsFile::ERROR_Phys_InvalidArgument;
+				break;
+			case PHYSFS_ERR_NOT_MOUNTED:
+				result = vsFile::ERROR_Phys_NotMounted;
+				break;
+			case PHYSFS_ERR_SYMLINK_FORBIDDEN:
+				result = vsFile::ERROR_Phys_SymlinkForbidden;
+				break;
+			case PHYSFS_ERR_NO_WRITE_DIR:
+				result = vsFile::ERROR_Phys_NoWriteDir;
+				break;
+			case PHYSFS_ERR_OPEN_FOR_READING:
+				result = vsFile::ERROR_Phys_OpenForReading;
+				break;
+			case PHYSFS_ERR_OPEN_FOR_WRITING:
+				result = vsFile::ERROR_Phys_OpenForWriting;
+				break;
+			case PHYSFS_ERR_NOT_A_FILE:
+				result = vsFile::ERROR_Phys_NotAFile;
+				break;
+			case PHYSFS_ERR_READ_ONLY:
+				result = vsFile::ERROR_Phys_ReadOnly;
+				break;
+			case PHYSFS_ERR_CORRUPT:
+				result = vsFile::ERROR_Phys_Corrupt;
+				break;
+			case PHYSFS_ERR_SYMLINK_LOOP:
+				result = vsFile::ERROR_Phys_SymlinkLoop;
+				break;
+			case PHYSFS_ERR_IO:
+				result = vsFile::ERROR_Phys_IO;
+				break;
+			case PHYSFS_ERR_PERMISSION:
+				result = vsFile::ERROR_Phys_Permission;
+				break;
+			case PHYSFS_ERR_NO_SPACE:
+				result = vsFile::ERROR_Phys_NoSpace;
+				break;
+			case PHYSFS_ERR_BAD_FILENAME:
+				result = vsFile::ERROR_Phys_BadFilename;
+				break;
+			case PHYSFS_ERR_BUSY:
+				result = vsFile::ERROR_Phys_Busy;
+				break;
+			case PHYSFS_ERR_DIR_NOT_EMPTY:
+				result = vsFile::ERROR_Phys_DirNotEmpty;
+				break;
+			case PHYSFS_ERR_OS_ERROR:
+				result = vsFile::ERROR_Phys_OS;
+				break;
+		}
+
+		return result;
+	}
+
 }
 
 // #define PROFILE_FILE_SYSTEM
@@ -176,7 +310,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 	m_compressedStore(nullptr),
 	m_store(nullptr),
 	m_zipData(nullptr),
-	m_ok(false),
+	m_ok(true),
+	m_error(ERROR_Ok),
 	m_mode(mode),
 	m_length(0),
 	m_moveOnDestruction(false)
@@ -234,10 +369,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				m_zipData->m_zipStream.zfree = Z_NULL;
 				m_zipData->m_zipStream.opaque = Z_NULL;
 				int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
-				if ( ret != Z_OK )
+				if ( !_ZLibIsOkay("deflateInit", ret) )
 				{
-					vsLog("deflateInit error: %d", ret);
-					m_error = vsFormatString("deflateInit error: %d", ret);
 					m_ok = false;
 					return;
 					// mode = MODE_Write;
@@ -340,10 +473,9 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			m_zipData->m_zipStream.zfree = Z_NULL;
 			m_zipData->m_zipStream.opaque = Z_NULL;
 			int ret = inflateInit(&m_zipData->m_zipStream);
-			if ( ret != Z_OK )
+			if ( !_ZLibIsOkay( "inflateInit", ret ) )
 			{
-				m_error = vsFormatString("inflateInit error: %d", ret);
-				vsAssert( ret == Z_OK, m_error );
+				m_ok = false;
 				return;
 			}
 
@@ -358,7 +490,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 
-				if ( !zlib_is_okay( m_error, ret ) )
+				if ( !_ZLibIsOkay( "inflate", ret ) )
 				{
 					m_ok = false;
 					return;
@@ -513,9 +645,11 @@ vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 				(PHYSFS_sint64)bytesToWrite, bytesWritten);
 
 		PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
-		const char* errStr = PHYSFS_getErrorByCode(code);
 
-		m_error = errStr;
+		_PhysFSError("_DoWriteLiteralBytes", code);
+		// const char* errStr = PHYSFS_getErrorByCode(code);
+        //
+		// m_error = errStr;
 		m_ok = false;
 
 		// this file is truncated.  We'll delete it when the vsFile is destroyed.
@@ -1133,7 +1267,7 @@ vsFile::ReadBytes( void* data, size_t bytes )
 
 				int ret = inflate(&m_zipData->m_zipStream, Z_NO_FLUSH);
 
-				if ( !zlib_is_okay( m_error, ret ) )
+				if ( !_ZLibIsOkay( "inflate", ret ) )
 				{
 					m_ok = false;
 					return 0;
@@ -1247,7 +1381,7 @@ vsFile::_PumpCompression( const void* bytes, size_t byteCount, bool finish )
 		m_zipData->m_zipStream.next_out = (Bytef*)zipBuffer;
 		int ret = deflate(&m_zipData->m_zipStream, finish ? Z_FINISH : Z_NO_FLUSH);
 
-		if ( !zlib_is_okay( m_error, ret ) )
+		if ( !_ZLibIsOkay( "deflate", ret ) )
 		{
 			m_ok = false;
 		}
@@ -1550,4 +1684,32 @@ vsFile::_IsWrite() const
 			m_mode == MODE_WriteDirectly ||
 			m_mode == MODE_WriteCompressed );
 }
+
+void
+vsFile::_LogError( const char* context ) const
+{
+	if ( m_error == vsFile::ERROR_Ok )
+		return;
+
+	vsLog("File '%s':  %s: %s", m_filename, context, s_errorString[m_error]);
+}
+
+bool
+vsFile::_ZLibIsOkay( const char* context, int retval )
+{
+	m_error = convert_zlib_error(retval);
+	_LogError(context);
+
+	return ( m_error == vsFile::ERROR_Ok );
+}
+
+bool
+vsFile::_PhysFSError( const char* context, int retval )
+{
+	m_error = convert_physfs_error(retval);
+	_LogError(context);
+
+	return ( m_error == vsFile::ERROR_Ok );
+}
+
 

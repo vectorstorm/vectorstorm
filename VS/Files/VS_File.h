@@ -37,6 +37,43 @@ public:
 		MODE_MAX
 	};
 
+	// NB: If you add a new error code, add a string for it to _LogError() as well!
+	enum Error
+	{
+		ERROR_Ok,
+		ERROR_Serialiser,
+		ERROR_Phys_Other, // unknown other error
+		ERROR_Phys_Memory,
+		ERROR_Phys_NotInitialised,
+		ERROR_Phys_AlreadyInitialised,
+		ERROR_Phys_ArgVZeroIsNull,
+		ERROR_Phys_Unsupported,
+		ERROR_Phys_PastEOF,
+		ERROR_Phys_FilesStillOpen,
+		ERROR_Phys_InvalidArgument,
+		ERROR_Phys_NotMounted,
+		ERROR_Phys_NoSuchPath,
+		ERROR_Phys_SymlinkForbidden,
+		ERROR_Phys_NoWriteDir,
+		ERROR_Phys_OpenForReading,
+		ERROR_Phys_OpenForWriting,
+		ERROR_Phys_NotAFile,
+		ERROR_Phys_ReadOnly,
+		ERROR_Phys_Corrupt,
+		ERROR_Phys_SymlinkLoop,
+		ERROR_Phys_IO,
+		ERROR_Phys_Permission,
+		ERROR_Phys_NoSpace,
+		ERROR_Phys_BadFilename,
+		ERROR_Phys_Busy,
+		ERROR_Phys_DirNotEmpty,
+		ERROR_Phys_OS,
+		ERROR_ZLib_Stream,
+		ERROR_ZLib_Data,
+		ERROR_ZLib_Memory,
+		ERROR_ZLib_Version,
+	};
+
 private:
 	vsString m_filename;
 	vsString m_tempFilename;
@@ -46,7 +83,7 @@ private:
 	vsStore *m_store;
 	struct zipdata *m_zipData;
 	bool m_ok;
-	vsString m_error;
+	Error m_error;
 
 	Mode		m_mode;
 
@@ -63,6 +100,11 @@ private:
 
 	bool _IsWrite() const;
 
+	bool _ZLibIsOkay( const char* context, int retval );
+	bool _PhysFSError( const char* context, int retval );
+
+	void _LogError( const char* context ) const;
+
 public:
 
 			// In general, files should be opened by creating an vsFile;  the vsFile class automatically deals with finding where the file is
@@ -71,14 +113,14 @@ public:
 			// our current platform.
 	static vsString	GetFullFilename(const vsString &filename_in);
 
-				vsFile( const vsString &filename, vsFile::Mode mode = MODE_Read );
-	virtual		~vsFile();
+	vsFile( const vsString &filename, vsFile::Mode mode = MODE_Read );
+	virtual ~vsFile();
 
-	bool		IsOK() { return m_ok; }
-	void		SetError( const vsString& err ) { m_ok = false; m_error = err; }
-	const vsString& GetError() { return m_error; } // if we're not ok, this is an english string explaining why not.  (TODO:  Error codes instead!)
+	bool IsOK() { return m_ok; }
+	void SetError( vsFile::Error err ) { m_ok = false; m_error = err; }
+	Error GetError() { return m_error; } // if we're not ok, this is an english string explaining why not.  (TODO:  Error codes instead!)
 
-	size_t		GetLength() { return m_length; }
+	size_t GetLength() { return m_length; }
 	const vsString& GetFilename() const { return m_filename; }
 
 	struct DiskStats
