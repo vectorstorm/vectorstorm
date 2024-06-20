@@ -587,27 +587,35 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
-#if !defined(__APPLE_CC__)
-	// For some reason, address sanitizer mode is picking up illegal memory
-	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
-	// this call since it isn't particularly important;  can follow-up with
-	// the SDL folks and check for proper fixes once we're all up and working
-	// again!
-	{
-		bool minimizeOnFocusLoss = ( displayCount == 1 );
-		char doit = (minimizeOnFocusLoss) ? 1 : 0;
-		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
-		if ( !retval )
-			vsLog("Trying to set minimize on focus loss hint failed");
-		else
-		{
-			if ( doit )
-				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
-			else
-				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
-		}
-	}
-#endif // __APPLE_CC__
+	// Disable the "minimize on focus loss" hint entirely.
+	//
+	// Old laptops with old graphic drivers often seem to have problems with
+	// minimizing/restoring OpenGL applications, so let's just not
+	// automatically ask them to do that.
+	//
+	//  - Trevor (20/6/2024)
+	//
+// #if !defined(__APPLE_CC__)
+// 	// For some reason, address sanitizer mode is picking up illegal memory
+// 	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
+// 	// this call since it isn't particularly important;  can follow-up with
+// 	// the SDL folks and check for proper fixes once we're all up and working
+// 	// again!
+// 	{
+// 		bool minimizeOnFocusLoss = ( displayCount == 1 );
+// 		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+// 		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+// 		if ( !retval )
+// 			vsLog("Trying to set minimize on focus loss hint failed");
+// 		else
+// 		{
+// 			if ( doit )
+// 				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+// 			else
+// 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+// 		}
+// 	}
+// #endif // __APPLE_CC__
 
 	DetermineRefreshRate();
 #ifdef VS_TRACY
