@@ -125,9 +125,9 @@ public:
 
 	struct DiskStats
 	{
-		size_t freeBytes;      // bytes without things stored in them.
-		size_t availableBytes; // bytes which *we* can write into.  (may be lower than 'freeBytes'!)
-		size_t capacityBytes;  // total bytes on the disk.
+		uintmax_t freeBytes;      // bytes without things stored in them.
+		uintmax_t availableBytes; // bytes which *we* can write into.  (may be lower than 'freeBytes'!)
+		uintmax_t capacityBytes;  // total bytes on the disk.
 	};
 
 	static void LogDiskStats(); // logs information about our disk.

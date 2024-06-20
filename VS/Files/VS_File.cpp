@@ -1532,39 +1532,29 @@ vsFile::GetDirectory( const vsString &filename )
 void
 vsFile::LogDiskStats()
 {
+	vsFile::DiskStats ds = GetDiskStats();
 	vsString directory( PHYSFS_getWriteDir() );
-#if defined(__APPLE_CC__)
-	struct statvfs info;
-	if ( ::statvfs( directory.c_str(), &info ) != 0 )
-	{
-		vsLog("fstatvfs for directory %s failed", directory);
-	}
-	else
-	{
-		vsLog("Directory: %s", directory);
-		vsLog("  Block size:   %d", info.f_frsize);
-		vsLog("  Total blocks: %d", info.f_blocks);
-		vsLog("  Free blocks:  %d", info.f_bfree);
 
-		return;
-	}
-	return;
-#else
-	try
-	{
-		std::filesystem::space_info si = std::filesystem::space(directory);
-		vsLog("Directory: %s", directory);
-		vsLog("  capacity:   %d", si.capacity);
-		vsLog("  free: %d", si.free);
-		vsLog("  available:  %d", si.available);
-		return;
-	}
-	catch(const std::exception& e)
-	{
-		vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
-	}
-	return;
-#endif
+	// I thought that using int rollover was UB, but online references list
+	// this as the correct way to find the "could not determine" value, so here
+	// we go.
+	uintmax_t unknown = static_cast<uintmax_t>(-1);
+
+	vsLog("Directory: %s", directory);
+	if ( ds.capacityBytes == unknown )
+		vsLog("  capacity:   UNKNOWN");
+	else
+		vsLog("  capacity:   %ju", ds.capacityBytes);
+
+	if ( ds.freeBytes == unknown )
+		vsLog("  free:       UNKNOWN");
+	else
+		vsLog("  free:       %ju", ds.freeBytes);
+
+	if ( ds.availableBytes == unknown )
+		vsLog("  available:  UNKNOWN");
+	else
+		vsLog("  available:  %ju", ds.availableBytes);
 }
 
 vsFile::DiskStats
@@ -1572,18 +1562,10 @@ vsFile::GetDiskStats()
 {
 	vsString directory( PHYSFS_getWriteDir() );
 	DiskStats result;
-	result.freeBytes = std::numeric_limits<size_t>::max();
-	result.availableBytes = std::numeric_limits<size_t>::max();
-	result.capacityBytes = std::numeric_limits<size_t>::max();
+	result.freeBytes = std::numeric_limits<uintmax_t>::max();
+	result.availableBytes = std::numeric_limits<uintmax_t>::max();
+	result.capacityBytes = std::numeric_limits<uintmax_t>::max();
 
-#if defined(__APPLE_CC__)
-	struct statvfs info;
-	if ( ::statvfs( directory.c_str(), &info ) == 0 )
-	{
-		result.freeBytes = result.availableBytes = info.f_frsize * info.f_bfree;
-		result.capacityBytes = info.f_frsize * info.f_blocks;
-	}
-#else
 	try
 	{
 		std::filesystem::space_info si = std::filesystem::space(directory);
@@ -1593,9 +1575,8 @@ vsFile::GetDiskStats()
 	}
 	catch(const std::exception& e)
 	{
-		// vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
+		vsLog("Failed to call std::filesystem::space on '%s': %s", directory, e.what());
 	}
-#endif
 	return result;
 }
 
