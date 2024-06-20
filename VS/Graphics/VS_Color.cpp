@@ -221,8 +221,10 @@ vsColor vsInterpolate( float alpha, const vsColor &a, const vsColor &b )
 
 vsColor vsInterpolateHSV( float alpha, const vsColor &a, const vsColor &b )
 {
-	float aHue = a.GetHue();
-	float bHue = b.GetHue();
+	vsColorHSV aHSV(a);
+	vsColorHSV bHSV(b);
+	float aHue = aHSV.h;
+	float bHue = bHSV.h;
 	float hue;
 	if ( fabs(bHue - aHue) < 0.5f )
 	{
@@ -241,9 +243,9 @@ vsColor vsInterpolateHSV( float alpha, const vsColor &a, const vsColor &b )
 		if ( hue < 1.f )
 			hue += 1.f;
 	}
-	float sat = vsInterpolate(alpha, a.GetSaturation(), b.GetSaturation());
-	float val = vsInterpolate(alpha, a.GetValue(), b.GetValue());
-	return vsColor::FromHSV(hue, sat, val);
+	float sat = vsInterpolate(alpha, aHSV.s, bHSV.s);
+	float val = vsInterpolate(alpha, aHSV.v, bHSV.v);
+	return vsColor::FromHSV(hue, sat, val);  // Note: this ignores a and b alpha, and uses new 1.0 alpha
 }
 
 vsColorHSV::vsColorHSV():
