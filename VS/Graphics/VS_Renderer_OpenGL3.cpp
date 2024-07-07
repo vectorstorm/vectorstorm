@@ -631,6 +631,9 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 		vsDelete(m_window);
 		vsDelete(m_scene);
 	}
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &m_vao);
+
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
