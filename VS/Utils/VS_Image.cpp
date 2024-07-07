@@ -327,10 +327,13 @@ vsImage::AsyncMap()
 void
 vsImage::AsyncUnmap()
 {
-	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
-	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
-	m_pixel = nullptr;
+	if ( m_pixel ) // we don't need to unmap if we haven't mapped!
+	{
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+		m_pixel = nullptr;
+	}
 }
 
 uint32_t
