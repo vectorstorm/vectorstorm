@@ -67,7 +67,10 @@ void vsLog_Start(const char* companyName, const char* title, const char* profile
 void vsLog_End()
 {
 	if ( s_logFile )
+	{
 		std::fclose( s_logFile );
+		s_logFile = nullptr;
+	}
 }
 
 void vsLog_Show()
