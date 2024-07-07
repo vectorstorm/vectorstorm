@@ -12,6 +12,7 @@
 struct SDL_Thread;
 
 void vsThread_Init();
+void vsThread_Deinit();
 
 class vsThread
 {

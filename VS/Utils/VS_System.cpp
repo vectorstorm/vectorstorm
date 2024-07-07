@@ -474,6 +474,7 @@ vsSystem::Deinit()
 	// release our own reference
 	m_dropTargetWindows->Release();
 #endif
+	vsThread_Deinit();
 }
 
 void
