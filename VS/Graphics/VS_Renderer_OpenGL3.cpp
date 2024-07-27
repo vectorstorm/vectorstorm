@@ -1055,6 +1055,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		}
 
 		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterialInternal->GetShaderValues() );
 		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
 
 		// only ask for bits that are actually supported by this shader

@@ -48,6 +48,7 @@ vsMaterial::SetupParameters()
 	SetUniformB( "fog", GetResource()->m_fog );
 	BindUniformB( "glow", &GetResource()->m_glow );
 	BindUniformF( "glowFactor", &GetResource()->m_glowFactor );
+	m_values.SetParent( GetResource()->GetShaderValues() );
 }
 
 // int32_t
