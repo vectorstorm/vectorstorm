@@ -180,7 +180,7 @@ vsController::vsController( SDL_GameController *controller, int i )
 		m_axisThrow = new float[m_joystickAxes];
 		for ( int i = 0; i < m_joystickAxes; i++ )
 		{
-			m_axisCenter[i] = ReadAxis_Raw(i);
+			m_axisCenter[i] = 0.f;//ReadAxis_Raw(i);
 			m_axisThrow[i] = 1.0f;
 		}
 	}
