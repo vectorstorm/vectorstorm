@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <limits>
 
-vsRandomSource vsRandom::s_source;
+vsRandomSource vsRandomSource::Default;
 
 vsRandomSource::vsRandomSource()
 {
