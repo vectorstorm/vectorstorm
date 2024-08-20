@@ -587,27 +587,35 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// now set our OpenGL state to our expected defaults.
 	m_state.Force();
 
-#if !defined(__APPLE_CC__)
-	// For some reason, address sanitizer mode is picking up illegal memory
-	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
-	// this call since it isn't particularly important;  can follow-up with
-	// the SDL folks and check for proper fixes once we're all up and working
-	// again!
-	{
-		bool minimizeOnFocusLoss = ( displayCount == 1 );
-		char doit = (minimizeOnFocusLoss) ? 1 : 0;
-		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
-		if ( !retval )
-			vsLog("Trying to set minimize on focus loss hint failed");
-		else
-		{
-			if ( doit )
-				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
-			else
-				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
-		}
-	}
-#endif // __APPLE_CC__
+	// Disable the "minimize on focus loss" hint entirely.
+	//
+	// Old laptops with old graphic drivers often seem to have problems with
+	// minimizing/restoring OpenGL applications, so let's just not
+	// automatically ask them to do that.
+	//
+	//  - Trevor (20/6/2024)
+	//
+// #if !defined(__APPLE_CC__)
+// 	// For some reason, address sanitizer mode is picking up illegal memory
+// 	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
+// 	// this call since it isn't particularly important;  can follow-up with
+// 	// the SDL folks and check for proper fixes once we're all up and working
+// 	// again!
+// 	{
+// 		bool minimizeOnFocusLoss = ( displayCount == 1 );
+// 		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+// 		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+// 		if ( !retval )
+// 			vsLog("Trying to set minimize on focus loss hint failed");
+// 		else
+// 		{
+// 			if ( doit )
+// 				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+// 			else
+// 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+// 		}
+// 	}
+// #endif // __APPLE_CC__
 
 	DetermineRefreshRate();
 #ifdef VS_TRACY
@@ -623,6 +631,9 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 		vsDelete(m_window);
 		vsDelete(m_scene);
 	}
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &m_vao);
+
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
@@ -948,15 +959,9 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 }
 
 void
-vsRenderer_OpenGL3::PreRender(const Settings &s)
+vsRenderer_OpenGL3::Present()
 {
-	ClearState();
-}
-
-void
-vsRenderer_OpenGL3::PostRender()
-{
-	PROFILE_GL("PostRender");
+	PROFILE_GL("Present");
 	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
@@ -976,9 +981,7 @@ vsRenderer_OpenGL3::PostRender()
 	}
 
 	{
-		PROFILE_GL("FinishPostRender");
-
-		ClearState();
+		PROFILE_GL("FinishPresent");
 
 		vsTimerSystem::Instance()->EndGPUTime();
 	}
@@ -991,21 +994,6 @@ vsRenderer_OpenGL3::PostRender()
 
 	vsDynamicBatchManager::Instance()->FrameRendered();
 
-}
-
-void
-vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
-{
-	// ZoneScopedN("RenderDisplayList");
-	PROFILE_GL("RenderDisplayList");
-	GL_CHECK("RenderDisplayList");
-	m_currentMaterial = nullptr;
-	m_currentMaterialInternal = nullptr;
-	m_currentShader = nullptr;
-	m_currentShaderValues = nullptr;
-	RawRenderDisplayList(list);
-
-	GL_CHECK("RenderDisplayList");
 }
 
 void
@@ -1067,6 +1055,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		}
 
 		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
+		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterialInternal->GetShaderValues() );
 		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
 
 		// only ask for bits that are actually supported by this shader
@@ -1249,9 +1238,16 @@ vsRenderer_OpenGL3::FlushRenderState()
 }
 
 void
-vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
+vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
-	PROFILE("RawRenderDisplayList");
+	PROFILE_GL("RenderDisplayList");
+	GL_CHECK("RenderDisplayList");
+	// m_currentMaterial = nullptr;
+	// m_currentMaterialInternal = nullptr;
+	// m_currentShader = nullptr;
+	// m_currentShaderValues = nullptr;
+	// m_lastShaderId = 0;
+
 	m_currentCameraPosition = vsVector3D::Zero;
 
 	vsDisplayList::op *op = list->PopOp();
@@ -1267,7 +1263,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 	//bool		recalculateColor = false;	// if true, recalc color even if we don't think it's changed
 
 	//bool		usingVertexArray = false;
-	ClearState();
+	// ClearState();
 
 	while(op)
 	{
@@ -1895,6 +1891,7 @@ vsRenderer_OpenGL3::RawRenderDisplayList( vsDisplayList *list )
 			op = list->PopOp();
 		}
 	}
+	ClearState();
 }
 
 void
@@ -2693,6 +2690,7 @@ vsRenderer_OpenGL3::ClearState()
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D,0);
+		currentlyBoundTexture[i] = 0;
 	}
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 	glClearColor(0.0f,0.f,0.f,0.f);

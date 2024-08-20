@@ -79,9 +79,9 @@ public:
 
 	void		PrepareToBind(); // called immediately before we're bound for rendering
 
-	void		Blit( vsImage *image, const vsVector2D& where);
-	void		Blit( vsFloatImage *image, const vsVector2D& where);
-	void		Blit( vsSingleFloatImage *image, const vsVector2D& where);
+	void		Blit( const vsImage *image, const vsVector2D& where);
+	void		Blit( const vsFloatImage *image, const vsVector2D& where);
+	void		Blit( const vsSingleFloatImage *image, const vsVector2D& where);
 
 	// void		SetNearestSampling();
 	// void		SetLinearSampling(bool linearMipmaps = true);

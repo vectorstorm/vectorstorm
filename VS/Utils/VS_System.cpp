@@ -308,7 +308,18 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 #if !TARGET_OS_IPHONE
 
 	vsLog("Initialising SDL");
-	if ( SDL_Init(SDL_INIT_VIDEO) < 0 ){
+
+	Uint32 sdlInitFlags = SDL_INIT_VIDEO;
+#if defined( VS_GAMEPADS )
+	sdlInitFlags |= SDL_INIT_JOYSTICK;
+	sdlInitFlags |= SDL_INIT_GAMECONTROLLER;
+#endif // VS_GAMEPADS
+
+#if defined(USE_SDL_SOUND)
+	sdlInitFlags |= SDL_INIT_AUDIO;
+#endif // USE_SDL_SOUND
+
+	if ( SDL_Init(sdlInitFlags) < 0 ){
 		fprintf(stderr, "Couldn't initialise SDL: %s\n", SDL_GetError() );
 		exit(1);
 	}
@@ -319,15 +330,6 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 	vsLog("Loading preferences...");
 	m_preferences = new vsSystemPreferences;
 
-	vsLog("Initialising SDL subsystems...");
-#if defined( VS_GAMEPADS )
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-#endif // VS_GAMEPADS
-
-#if defined(USE_SDL_SOUND)
-	SDL_InitSubSystem(SDL_INIT_AUDIO);
-#endif // USE_SDL_SOUND
 #endif // !TARGET_OS_IPHONE
 
 #if SDL_VERSION_ATLEAST( 2, 0, 22 )
@@ -474,6 +476,7 @@ vsSystem::Deinit()
 	// release our own reference
 	m_dropTargetWindows->Release();
 #endif
+	vsThread_Deinit();
 }
 
 void
@@ -599,7 +602,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 		m_mountpoints.Clear();
 	}
 	vsLog("WriteDir: %s", PHYSFS_getWriteDir());
-	size_t bytes = vsFile::AvailableWriteBytes();
+	vsFile::LogDiskStats();
+	size_t bytes = vsFile::GetDiskStats().availableBytes;
 	if ( bytes < 1024 )
 		vsLog(" [!] Low space available on write drive: %d bytes", bytes );
 	else if ( bytes < 1024 * 1024 )

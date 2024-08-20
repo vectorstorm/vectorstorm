@@ -57,6 +57,8 @@ class vsFile;
 class vsShader;
 class vsShaderRef;
 
+#include "VS/Graphics/VS_ShaderValues.h"
+
 enum CullingType
 {
 	Cull_Front,
@@ -83,7 +85,7 @@ class vsMaterialInternal : public vsResource
 	int			m_textureCount; // used during loading;  NOT set for dynamic materials!
 public:
 
-	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
+	vsShaderValues m_values;
 	vsShader *m_shader;
 	vsShaderRef *m_shaderRef; // we might have a ref instead of a full shader!
 	vsTexture *	m_texture[MAX_TEXTURE_SLOTS];		// what texture do we use?
@@ -112,6 +114,7 @@ public:
 	bool		m_postGeneric;
 	bool		m_hasColor;
 	bool		m_blend;
+	bool		m_shaderIsMine;						// if true, we own this shader and must destroy it.
 
 	int			m_flags;
 
@@ -135,6 +138,8 @@ public:
 	void operator=(const vsMaterialInternal &b);
 	bool operator==(const vsMaterialInternal &b) const { return (m_color==b.m_color && m_drawMode==b.m_drawMode); }
 	bool operator!=(const vsMaterialInternal &b) const { return !((*this)==b); }
+
+	vsShaderValues* GetShaderValues() { return &m_values; }
 
 	friend class vsDynamicMaterial;
 };

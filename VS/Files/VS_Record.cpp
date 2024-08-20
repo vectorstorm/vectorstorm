@@ -256,6 +256,8 @@ vsRecord::LoadBinary( vsFile *file )
 bool
 vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
 {
+	if ( !s->IsOK() )
+		return false;
 	vsString identifier("RecordV2");
 	s->String(identifier);
 	vsAssert( identifier == "RecordV2", "Invalid identifier in loadbinary nochildren init?" );
@@ -266,23 +268,29 @@ vsRecord::LoadBinary_Stream_Init( vsSerialiserReadStream *s )
 int
 vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 {
+	if ( !s->IsOK() )
+		return false;
 	Init();
+	uint32_t childCount = 0;
 
-	m_label.SerialiseBinaryV2(s);
-
-	uint32_t tokenCount = m_token.ItemCount();
-	s->Uint32(tokenCount);
-	m_token.SetArraySize(tokenCount);
-	for ( int i = 0; i < m_token.ItemCount(); i++ )
+	if ( s->IsOK() )
 	{
-		m_token[i].SerialiseBinaryV2(s);
+		m_label.SerialiseBinaryV2(s);
+
+		uint32_t tokenCount = m_token.ItemCount();
+		s->Uint32(tokenCount);
+		m_token.SetArraySize(tokenCount);
+		for ( int i = 0; i < m_token.ItemCount(); i++ )
+		{
+			m_token[i].SerialiseBinaryV2(s);
+		}
+
+		childCount = m_childList.ItemCount();
+		s->Uint32(childCount);
+
+		m_streamMode = true;
+		m_streamModeChildCount = childCount;
 	}
-
-	uint32_t childCount = m_childList.ItemCount();
-	s->Uint32(childCount);
-
-	m_streamMode = true;
-	m_streamModeChildCount = childCount;
 
 	return childCount;
 }
@@ -291,6 +299,8 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 void
 vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
 {
+	if ( !s->IsOK() )
+		return;
 	vsString identifier("RecordV2");
 	s->String(identifier);
 }
@@ -298,6 +308,9 @@ vsRecord::WriteBinary_Stream_Init( vsSerialiserWriteStream *s )
 void
 vsRecord::WriteBinary_Stream( vsSerialiserWriteStream *s, uint32_t childCount )
 {
+	if ( !s->IsOK() )
+		return;
+
 	m_label.SerialiseBinaryV2(s);
 
 	uint32_t tokenCount = m_token.ItemCount();

@@ -34,6 +34,11 @@
 	vsInput::Instance()->AddAxis(cid, #cid, description); \
 	vsInput::Instance()->DefaultBindKey(cid, scancode); \
 }
+#define DEFAULT_BIND_CONTROLKEY_KEYCODE(cid, description, keycode) \
+{ \
+	vsInput::Instance()->AddAxis(cid, #cid, description); \
+	vsInput::Instance()->DefaultBindControlKey_Keycode(cid, keycode); \
+}
 #define DEFAULT_BIND_MOUSE_BUTTON(cid, description, mouseButtonCode) \
 { \
 	vsInput::Instance()->AddAxis(cid, #cid, description); \
@@ -124,6 +129,7 @@ enum ControlType
 	CT_MouseButton,
 	CT_MouseWheel,
 	CT_Keyboard,
+	CT_KeyboardKeycode, // Keycode controls work via press/release events
 	CT_MAX
 };
 
@@ -146,17 +152,20 @@ struct DeviceControl
 public:
 	ControlType		type;
 	// 'id' is the axis/button/hat/etc id.  For 'Keyboard' devices, it is the scancode.
-	// Also for 'Keyboard' devices, 'keymod' is any required keyboard modifiers.  (alt/etc)
+	// Also for 'Keyboard' devices, 'control' tells us if the 'control' key (or OS equivalent)
+	// must be done.
 	int				id;
-	int				keymod;
+	bool			control;
 	// For controller types, 'controllerId' is the controller id value.
 	int				controllerId;
 
 	ControlDirection	dir;	// outputs range from 0..-1, instead of 0..1.  Useful for analog axes.
 
-	DeviceControl() { type = CT_None; id = 0; keymod = 0; controllerId = 0; dir = CD_Positive; }
+	DeviceControl() { type = CT_None; id = 0; control = 0; controllerId = 0; dir = CD_Positive; }
 	void	Set(ControlType type_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; id = id_in; dir = dir_in; }
 	void	Set(ControlType type_in, int controllerId_in, int id_in, ControlDirection dir_in = CD_Positive) { type = type_in; controllerId = controllerId_in; id = id_in; dir = dir_in; }
+
+	void Validate();
 
 	float	Evaluate(bool hasFocus);
 };
@@ -481,6 +490,7 @@ public:
 
 	void AddAxis( int cid, const vsString& name, const vsString& description );
 	void DefaultBindKey( int cid, int scancode );
+	void DefaultBindControlKey_Keycode( int cid, int keycode );
 	void DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirection cd );
 	void DefaultBindControllerButton( int cid, int controllerButton );
 	void DefaultBindMouseButton( int cid, int mouseButtonCode );

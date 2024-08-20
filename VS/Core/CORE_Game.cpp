@@ -219,6 +219,7 @@ void
 coreGame::DrawFrame()
 {
 	vsScreen::Instance()->Draw();
+	vsScreen::Instance()->Present();
 }
 
 vsInput *

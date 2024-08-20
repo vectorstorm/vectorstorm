@@ -73,28 +73,34 @@ vsString vsNumberString(int number)
 
 static bool vsIsWhitespace( const utf8::iterator<std::string::iterator>& it )
 {
+	// N.B.:  In C++20 this type will need to be changed to const char8_t
 	const char *whitespace[] =
 	{
-		"\x09", // tab
-		"\x0a", // line feed
-		"\x0d", // carriage return
-		"\x20", // space
-		"\xc2\xa0", // no-break space
-		"\xe1\x9a\x80", // Ogham space mark
-		"\xe2\x80\x80", // en quad
-		"\xe2\x80\x81", // em quad
-		"\xe2\x80\x82", // en space
-		"\xe2\x80\x83", // em space
-		"\xe2\x80\x84", // three-per-em space
-		"\xe2\x80\x85", // four-per-em space
-		"\xe2\x80\x87", // figure space
-		"\xe2\x80\x88", // punctuation space
-		"\xe2\x80\x89", // thin space
-		"\xe2\x80\x8a", // hair space
-		"\xe2\x80\x8b", // zero width space
-		"\xe2\x80\xaf", // narrow no-break space
-		"\xe2\x81\x9f", // medium mathematical space
-		"\xe3\x80\x80"  // ideographic space
+		u8"\u0009", // tab
+		u8"\u000a", // line feed
+		u8"\u000b", // line tab
+		u8"\u000c", // form feed
+		u8"\u000d", // carriage return
+		u8"\u0020", // space
+		u8"\u0085", // next line
+		u8"\u00a0", // no-break space
+		u8"\u1680", // Ogham space mark
+		u8"\u2000", // en quad
+		u8"\u2001", // em quad
+		u8"\u2002", // en space
+		u8"\u2003", // em space
+		u8"\u2004", // three-per-em space
+		u8"\u2005", // four-per-em space
+		u8"\u2006", // six-per-em space
+		u8"\u2007", // figure space
+		u8"\u2008", // punctuation space
+		u8"\u2009", // thin space
+		u8"\u200a", // hair space
+		u8"\u2028", // line separator
+		u8"\u2029", // paragraph separator
+		u8"\u202f", // narrow no-break space
+		u8"\u205f", // medium mathematical space
+		u8"\u3000"  // ideographic space
 	};
 	const int whitespaceEntries = sizeof(whitespace) / sizeof(char*);
 	for ( int wi = 0; wi < whitespaceEntries; wi++ )

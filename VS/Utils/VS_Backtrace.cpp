@@ -152,7 +152,7 @@ void handler(int sig) {
 	signal(SIGFPE, SIG_DFL);
 	signal(SIGILL, SIG_DFL);
 	signal(SIGSEGV, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
+	// signal(SIGTERM, SIG_DFL);
 	return;
 }
 
@@ -169,8 +169,8 @@ void vsInstallBacktraceHandler()
 	// signal(SIGINT, handler); // SIGINT is a user interruption, like hitting ctrl-c in a terminal process.  Not a crash.
 	vsLog("Hooking SIGSEGV (%d)", SIGSEGV);
 	signal(SIGSEGV, handler);
-	vsLog("Hooking SIGTERM (%d)", SIGTERM);
-	signal(SIGTERM, handler);
+	// vsLog("Hooking SIGTERM (%d)", SIGTERM);
+	// signal(SIGTERM, handler);
 }
 
 #include "VS/Files/VS_File.h"

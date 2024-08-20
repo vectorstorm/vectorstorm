@@ -125,6 +125,9 @@ public:
 	vsSerialiserReadStream(vsFile *file);
 	virtual ~vsSerialiserReadStream();
 
+	bool IsOK() const;
+	void SetError();
+
 	virtual void	Bool(bool &value);
 
 	virtual void	Int8(int8_t &value);
@@ -159,6 +162,9 @@ public:
 	virtual ~vsSerialiserWriteStream();
 
 	void Flush();
+
+	bool IsOK() const;
+	void SetError();
 
 	virtual void	Bool(bool &value);
 

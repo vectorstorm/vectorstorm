@@ -187,9 +187,14 @@ vsScene::Update( float timeStep )
 		return;
 	PROFILE_EXTRA("Scene::Update", m_name.c_str());
 
+	vsAssertF( m_entityList, "scene '%s' has no entity list!", m_name.c_str() );
+
 	vsEntity *entity = m_entityList->GetNext();
 	while ( entity != m_entityList )
 	{
+		vsAssertF( entity, "nullptr entity registered in scene '%s'!", m_name.c_str() );
+
+
 #ifdef DEBUG_UPDATE
 		const char* type = typeid(*entity ).name();
 		if (entity->GetNext() == entity)

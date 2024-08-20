@@ -8,6 +8,7 @@
  */
 
 #include "VS_RecordReader.h"
+#include "VS_Serialiser.h"
 
 #include <stack>
 
@@ -43,6 +44,12 @@ vsRecordReader::Get()
 {
 	vsAssert( m_hasValidRecord, "Tried to get record while in invalid state??" );
 	return m_record;
+}
+
+void
+vsRecordReader::SetError()
+{
+	m_stream->SetError();
 }
 
 bool

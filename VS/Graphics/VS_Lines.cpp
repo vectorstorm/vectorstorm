@@ -1462,11 +1462,13 @@ vsLineBuilder2D::CloseLoops()
 vsFragment *
 vsLineBuilder2D::Bake( const vsString& material, float width )
 {
+	if ( m_strip.IsEmpty() )
+		return nullptr;
+
 	if ( m_strip.ItemCount() == 1 )
 	{
 		return vsLineStrip2D( material, &m_strip[0].vert[0], nullptr, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
 	}
 	return vsLineStrip2D( material, &m_strip[0].vert[0], nullptr, m_strip[0].vert.ItemCount(), width, m_strip[0].loop );
-	return nullptr;
 }
 

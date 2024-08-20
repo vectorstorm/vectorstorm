@@ -47,11 +47,11 @@ namespace
 {
 	// the modifier keys we should check for key combos.
 	// Use L/R GUI on Mac ("command" key), or Control on everything else.
-	const int c_shortcutModifierKeys =
+	const int c_controlKeys =
 #if defined( __APPLE_CC__ )
-		KMOD_LGUI | KMOD_RGUI;
+		KMOD_GUI;
 #else
-		KMOD_LCTRL | KMOD_RCTRL;
+		KMOD_CTRL;
 #endif // defined( __APPLE_CC__ )
 }
 
@@ -180,7 +180,7 @@ vsController::vsController( SDL_GameController *controller, int i )
 		m_axisThrow = new float[m_joystickAxes];
 		for ( int i = 0; i < m_joystickAxes; i++ )
 		{
-			m_axisCenter[i] = ReadAxis_Raw(i);
+			m_axisCenter[i] = 0.f;//ReadAxis_Raw(i);
 			m_axisThrow[i] = 1.0f;
 		}
 	}
@@ -274,6 +274,30 @@ vsInput::DefaultBindKey( int cid, int scancode )
 }
 
 void
+vsInput::DefaultBindControlKey_Keycode( int cid, int keycode )
+{
+	// Since this function is being called post-initialisation, we need to
+	// switch back to our system heap.  (So that potentially adding extra
+	// axes to our array doesn't get charged to the currently active game, and
+	// then treated as a memory leak)
+	vsHeap::Push(g_globalHeap);
+
+	if ( !m_axis[cid].isLoaded )
+	{
+		DeviceControl dc;
+		dc.type = CT_KeyboardKeycode;
+		dc.id = keycode;
+		dc.control = true;
+		dc.Validate();
+		// dc.keymod = c_controlKeys;
+
+		m_axis[cid].positive.AddItem(dc);
+	}
+
+	vsHeap::Pop(g_globalHeap);
+}
+
+void
 vsInput::DefaultBindControllerButton( int cid, int controllerButton )
 {
 	// Since this function is being called post-initialisation, we need to
@@ -287,6 +311,7 @@ vsInput::DefaultBindControllerButton( int cid, int controllerButton )
 		DeviceControl dc;
 		dc.type = CT_Button;
 		dc.id = controllerButton;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -309,6 +334,7 @@ vsInput::DefaultBindControllerAxis( int cid, int controllerAxis, ControlDirectio
 		dc.type = CT_Axis;
 		dc.id = controllerAxis;
 		dc.dir = cd;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -330,6 +356,7 @@ vsInput::DefaultBindMouseButton( int cid, int mouseButtonCode )
 		DeviceControl dc;
 		dc.type = CT_MouseButton;
 		dc.id = mouseButtonCode;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -351,6 +378,7 @@ vsInput::DefaultBindMouseWheel( int cid, ControlDirection cd )
 		DeviceControl dc;
 		dc.type = CT_MouseWheel;
 		dc.dir = cd;
+		dc.Validate();
 
 		m_axis[cid].positive.AddItem(dc);
 	}
@@ -374,7 +402,8 @@ const vsString	c_controlTypeString[] =
 	"CT_Hat",
 	"CT_MouseButton",
 	"CT_MouseWheel",
-	"CT_Keyboard"
+	"CT_Keyboard",
+	"CT_KeyboardKeycode"
 };
 
 static ControlType ControlTypeFromString( const vsString& s )
@@ -434,6 +463,9 @@ vsInput::Load()
 					dc.type = ControlTypeFromString( child->GetToken(0).AsString() );
 					dc.dir = ControlDirectionFromString( child->GetToken(1).AsString() );
 					dc.id = child->GetToken(2).AsInteger();
+					if ( child->GetTokenCount() > 3 ) // old data;  don't load it!
+						dc.control = child->GetToken(3).AsInteger();
+					dc.Validate();
 
 					axis.positive.AddItem(dc);
 				}
@@ -621,10 +653,11 @@ vsInput::Save()
 			vsRecord *dcr = new vsRecord;
 			dcr->SetLabel( "DeviceControl" );
 
-			dcr->SetTokenCount(3);
+			dcr->SetTokenCount(4);
 			dcr->GetToken(0).SetString( c_controlTypeString[ dc.type ] );
 			dcr->GetToken(1).SetString( c_controlDirectionString[ dc.dir ] );
 			dcr->GetToken(2).SetInteger( dc.id );
+			dcr->GetToken(3).SetInteger( dc.control );
 
 			a.AddChild(dcr);
 		}
@@ -2552,7 +2585,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_a:
 			{
 				// select all
-				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				if ( event.key.keysym.mod & c_controlKeys )
 				{
 					SetStringModeSelectAll(true);
 				}
@@ -2561,7 +2594,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_v:
 			{
 				// paste
-				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				if ( event.key.keysym.mod & c_controlKeys )
 				{
 					vsString clipboardText = SDL_GetClipboardText();
 					if ( !clipboardText.empty() )
@@ -2575,7 +2608,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_c:
 			{
 				// copy
-				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				if ( event.key.keysym.mod & c_controlKeys )
 				{
 					// extract the currently selected text
 					vsString sel = GetStringModeSelection();
@@ -2587,7 +2620,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_x:
 			{
 				// cut
-				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				if ( event.key.keysym.mod & c_controlKeys )
 				{
 					// extract the currently selected text
 					StringModeSaveUndoState();
@@ -2601,7 +2634,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_z:
 			{
 				// undo
-				if ( event.key.keysym.mod & c_shortcutModifierKeys )
+				if ( event.key.keysym.mod & c_controlKeys )
 					StringModeUndo();
 				break;
 			}
@@ -2641,6 +2674,13 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 	}
 }
 
+bool _mods_match( const DeviceControl &dc, const int km )
+{
+	bool wantsControl = dc.control;
+	bool hasControl = ((km & c_controlKeys) != 0);
+	return ( wantsControl == hasControl );
+}
+
 void
 vsInput::HandleKeyDown( const SDL_Event& event )
 {
@@ -2654,8 +2694,20 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 			for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 			{
 				if ( axis.positive[j].type == CT_Keyboard &&
-						axis.positive[j].id == event.key.keysym.scancode )
+						axis.positive[j].id == event.key.keysym.scancode &&
+						_mods_match( axis.positive[j], event.key.keysym.mod ))
 					axis.wasPressed = true;
+				if ( axis.positive[j].type == CT_KeyboardKeycode &&
+						axis.positive[j].id == event.key.keysym.sym &&
+						_mods_match( axis.positive[j], event.key.keysym.mod ))
+				{
+					axis.wasPressed = true;
+					axis.currentValue = 1.f;
+				}
+
+				// only do this "between frames" press if no modifier key was
+				// required.  We need to figure out how to handle modifier keys
+				// here for between-frame button presses.
 			}
 		}
 	}
@@ -2717,8 +2769,18 @@ vsInput::HandleKeyUp( const SDL_Event& event )
 		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 		{
 			if ( axis.positive[j].type == CT_Keyboard &&
-					axis.positive[j].id == event.key.keysym.scancode )
+					axis.positive[j].id == event.key.keysym.scancode &&
+					_mods_match( axis.positive[j], event.key.keysym.mod ))
 				axis.wasReleased = true;
+			if ( axis.positive[j].type == CT_KeyboardKeycode &&
+					axis.positive[j].id == event.key.keysym.sym &&
+					axis.currentValue > 0.f )
+			{
+				// we don't need to match keysyms for keyup;  if they let go of
+				// the 'Z', then their 'Ctrl-Z' mapping has been released.
+				axis.wasReleased = true;
+				axis.currentValue = 0.f;
+			}
 		}
 	}
 
@@ -2777,6 +2839,19 @@ vsInput::DestroyController(SDL_GameController *gc)
 #endif // VS_GAMEPADS
 }
 
+void
+DeviceControl::Validate()
+{
+	if ( type == CT_Keyboard )
+	{
+		if ( id == SDL_SCANCODE_LCTRL ||
+				id == SDL_SCANCODE_RCTRL )
+		{
+			control = 1; // control keys DO expect a control modifier, lol
+		}
+	}
+}
+
 float
 DeviceControl::Evaluate(bool hasFocus)
 {
@@ -2784,6 +2859,7 @@ DeviceControl::Evaluate(bool hasFocus)
 	// DO still obey gamepad/joystick controls.
 	if ( !hasFocus &&
 			(type == CT_Keyboard ||
+			type == CT_KeyboardKeycode ||
 			type == CT_MouseButton ||
 			type == CT_MouseWheel )
 	   )
@@ -2845,7 +2921,15 @@ DeviceControl::Evaluate(bool hasFocus)
 						// 	doMasking = false;
                         //
 						// if ( !doMasking || ((actual_keymod & keymodsWeCareAbout) == keymod) )
-							value = keys[id] ? 1.0f : 0.0f;
+
+						SDL_Keymod modState = SDL_GetModState();
+						value = keys[id] ? 1.0f : 0.0f;
+						if ( value )
+						{
+							if ( !_mods_match( *this, modState ) )
+								value = 0.f;
+						}
+
 						// else
 						// 	value = 0.0f;
 					}
@@ -2875,7 +2959,6 @@ void
 vsInputAxis::Update( bool hasFocus, bool hadFocus )
 {
 	lastValue = currentValue;
-	currentValue = 0.0f;
 
 	if ( isCalculated )
 	{
@@ -2884,14 +2967,23 @@ vsInputAxis::Update( bool hasFocus, bool hadFocus )
 	}
 	else
 	{
-		float value;
-		for ( int i = 0; i < positive.ItemCount(); i++ )
+		if ( !positive.IsEmpty() && positive[0].type == CT_KeyboardKeycode )
 		{
-			value = positive[i].Evaluate( hasFocus );
-			currentValue += value;
+			// currentValue remains the same, KeyboardKeycode only changes
+			// value via events!
+		}
+		else
+		{
+			currentValue = 0.f;
+			float value;
+			for ( int i = 0; i < positive.ItemCount(); i++ )
+			{
+				value = positive[i].Evaluate( hasFocus );
+				currentValue += value;
 
-			// value = negative[i].Evaluate();
-			// currentValue -= value;
+				// value = negative[i].Evaluate();
+				// currentValue -= value;
+			}
 		}
 
 		// we go straight to "IsDown", with no "Pressed" in between, if

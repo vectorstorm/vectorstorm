@@ -46,7 +46,6 @@ static std::atomic<int>	s_codeMaterialCount( 0 );
 vsMaterialInternal::vsMaterialInternal():
 	vsResource(vsFormatString("CodeMaterial%02d", s_codeMaterialCount++)),
 	m_textureCount(0),
-	m_shaderIsMine(false),
 	m_shader(nullptr),
 	m_shaderRef(nullptr),
 	m_color(c_white),
@@ -71,6 +70,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_postGeneric(false),
 	m_hasColor(true),
 	m_blend(true),
+	m_shaderIsMine(false),
 	m_flags(0)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
@@ -85,7 +85,6 @@ vsMaterialInternal::vsMaterialInternal():
 vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	vsResource(name),
 	m_textureCount(0),
-	m_shaderIsMine(false),
 	m_shader(nullptr),
 	m_shaderRef(nullptr),
 	m_color(c_white),
@@ -109,6 +108,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_postGeneric(false),
 	m_hasColor(true),
 	m_blend(true),
+	m_shaderIsMine(false),
 	m_flags(0)
 {
 	for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
@@ -349,6 +349,20 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "stencilWrite" )
 				{
 					m_stencilWrite = sr->Bool();
+				}
+				else if ( label == "uniformColor" )
+				{
+					vsString label = sr->GetToken(0).AsString();
+
+					if ( sr->GetTokenCount() == 5 )
+					{
+						vsColor c( sr->GetToken(1).AsFloat(),
+								sr->GetToken(2).AsFloat(),
+								sr->GetToken(3).AsFloat(),
+								sr->GetToken(4).AsFloat() );
+
+						m_values.SetUniformColor( label, c );
+					}
 				}
 			}
 			break;

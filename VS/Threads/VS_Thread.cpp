@@ -32,6 +32,13 @@ void vsThread_Init()
 	tableLock.Unlock();
 }
 
+void vsThread_Deinit()
+{
+	tableLock.Lock();
+		s_threadTable.clear();
+	tableLock.Unlock();
+}
+
 int vsThread::DoStartThread(void* arg)
 {
 	int result = 0;
@@ -47,7 +54,6 @@ int vsThread::DoStartThread(void* arg)
 	thread->m_done = false;
 	result = thread->Run();
 	thread->m_done = true;
-	thread->m_thread = 0L;
 
 	return result;
 }
@@ -61,9 +67,12 @@ vsThread::vsThread( const vsString& name ):
 
 vsThread::~vsThread()
 {
-	if ( !m_done && m_thread != 0 )
+	if ( m_thread != 0 )
 	{
-		SDL_DetachThread(m_thread);
+		// SDL_DetachThread(m_thread);
+		int status = 0;
+		SDL_WaitThread(m_thread, &status);
+		vsLog("SDL_WaitThread: status %d", status);
 		m_thread = 0;
 	}
 }

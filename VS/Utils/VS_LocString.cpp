@@ -205,22 +205,13 @@ static vsString DoFormatNumber( int64_t value )
 
 static vsString DoFormatFloat( float value, int places )
 {
+	float factor = pow(10,places);
+	value = round( value * factor ) / factor;
+
 	int64_t intPart = (int64_t)(value);
 	value -= intPart;
 
-	int decimalPart = vsAbs( value * pow(10,places+1) );
-	// handle rounding
-
-	int factor = (int)pow(10,places);
-
-	if ( decimalPart % factor >= 5 )
-		decimalPart += factor;
-	decimalPart /= factor;
-	if ( decimalPart >= factor ) // rollover!  Increment the integer!
-	{
-		decimalPart -= factor;
-		intPart++;
-	}
+	int decimalPart = vsAbs( value * pow(10,places) );
 
 	vsString result = DoFormatNumber(intPart);
 	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);

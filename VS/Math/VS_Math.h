@@ -18,6 +18,7 @@
 #define vsSquared(a) (a*a)
 
 inline bool	vsIsNaN(float x) { volatile float o_x = x; return (x != o_x); }	// NaN != NaN.  Any number which doesn't equal itself must be NaN!
+inline bool	vsIsFinite(float x) { return ::isfinite(x); }	// this floating point number is neither NaN nor INF nor -INF.  ::isfinite() exists since C99 and entered C++ at the C++11 specification.
 inline int vsAbs( int in ) { return (in >= 0.f)?in:-in; }
 inline float vsFabs( float in ) { return (in >= 0.f)?in:-in; }
 inline float vsSqrt( float in ) { return sqrtf(in); }
