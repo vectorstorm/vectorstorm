@@ -1529,6 +1529,28 @@ vsFile::GetDirectory( const vsString &filename )
 	return vsString("./");
 }
 
+namespace
+{
+	vsString FormatKB(float kb)
+	{
+		if ( kb < 1024 )
+			return vsFormatString("%0.2f KB", kb);
+		else if ( kb < 1024 * 1024 )
+		{
+			float mb = kb / (1024.f );
+			return vsFormatString("%0.2f MB", (float)mb);
+		}
+
+		float gb = kb / (1024.f * 1024.f );
+		return vsFormatString("%0.2f GB", (float)gb);
+	}
+	vsString FormatBytes(uint64_t bytes)
+	{
+		float kb = (float)bytes / 1024.f;
+		return FormatKB(kb);
+	}
+};
+
 void
 vsFile::LogDiskStats()
 {
@@ -1544,17 +1566,17 @@ vsFile::LogDiskStats()
 	if ( ds.capacityBytes == unknown )
 		vsLog("  capacity:   UNKNOWN");
 	else
-		vsLog("  capacity:   %ju", ds.capacityBytes);
+		vsLog("  capacity:   %s", FormatBytes(ds.capacityBytes));
 
 	if ( ds.freeBytes == unknown )
 		vsLog("  free:       UNKNOWN");
 	else
-		vsLog("  free:       %ju", ds.freeBytes);
+		vsLog("  free:       %s", FormatBytes(ds.freeBytes));
 
 	if ( ds.availableBytes == unknown )
 		vsLog("  available:  UNKNOWN");
 	else
-		vsLog("  available:  %ju", ds.availableBytes);
+		vsLog("  available:  %s", FormatBytes(ds.availableBytes));
 }
 
 vsFile::DiskStats

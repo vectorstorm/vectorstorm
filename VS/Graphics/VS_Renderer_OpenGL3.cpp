@@ -164,6 +164,28 @@ void vsOpenGLDebugMessage( GLenum source,
 	}
 }
 
+namespace
+{
+	vsString FormatKB(float kb)
+	{
+		if ( kb < 1024 )
+			return vsFormatString("%0.2f KB", kb);
+		else if ( kb < 1024 * 1024 )
+		{
+			float mb = kb / (1024.f );
+			return vsFormatString("%0.2f MB", (float)mb);
+		}
+
+		float gb = kb / (1024.f * 1024.f );
+		return vsFormatString("%0.2f GB", (float)gb);
+	}
+	// vsString FormatBytes(uint64_t bytes)
+	// {
+	// 	float kb = (float)bytes / 1024.f;
+	// 	return FormatKB(kb);
+	// }
+};
+
 static void printAttributes ()
 {
 #if !TARGET_OS_IPHONE
@@ -234,7 +256,11 @@ static void printAttributes ()
 	for (int i = 0; i < nAttr; i++)
 	{
 		glGetIntegerv( a[i].name, &value );
-		vsLog("%s: %d", a[i].label, value );
+
+		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX )
+			vsLog("%s: %s", a[i].label, FormatKB(value) );
+		else
+			vsLog("%s: %d", a[i].label, value );
 	}
 
 	// now clear the GL error state;  one of the texture memory stats will

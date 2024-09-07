@@ -10,15 +10,29 @@
 #include "VS_MemoryProfiler.h"
 #include <inttypes.h>
 
+#include "VS_OpenGL.h"
+
 namespace
 {
 	uint64_t m_used[vsMemoryProfiler::Type_MAX];
 
-	vsString Format(uint64_t v)
+	vsString FormatKB(float kb)
 	{
-		float megabytes = v / (1024 * 1024);
+		if ( kb < 1024 )
+			return vsFormatString("%0.2f KB", kb);
+		else if ( kb < 1024 * 1024 )
+		{
+			float mb = kb / (1024.f );
+			return vsFormatString("%0.2f MB", (float)mb);
+		}
 
-		return vsFormatString("%0.2f", megabytes);
+		float gb = kb / (1024.f * 1024.f );
+		return vsFormatString("%0.2f GB", (float)gb);
+	}
+	vsString Format(uint64_t bytes)
+	{
+		float kb = (float)bytes / 1024.f;
+		return FormatKB(kb);
 	}
 };
 
@@ -53,10 +67,20 @@ void
 vsMemoryProfiler::Trace()
 {
 	vsLog("== vsMemoryProfiler Data");
-	vsLog("  Main Framebuffer: %" PRIu64 " MB", Format(m_used[vsMemoryProfiler::Type_MainFramebuffer]));
-	vsLog("           Buffers: %" PRIu64 " MB", Format(m_used[vsMemoryProfiler::Type_Buffer]));
-	vsLog("    Render Targets: %" PRIu64 " MB", Format(m_used[vsMemoryProfiler::Type_RenderTarget]));
-	vsLog("          Textures: %" PRIu64 " MB", Format(m_used[vsMemoryProfiler::Type_Texture]));
+	vsLog("  Main Framebuffer: %s", Format(m_used[vsMemoryProfiler::Type_MainFramebuffer]));
+	vsLog("           Buffers: %s", Format(m_used[vsMemoryProfiler::Type_Buffer]));
+	vsLog("    Render Targets: %s", Format(m_used[vsMemoryProfiler::Type_RenderTarget]));
+	vsLog("          Textures: %s", Format(m_used[vsMemoryProfiler::Type_Texture]));
 	vsLog("== END vsMemoryProfiler Data");
+
+	// int value = 0;
+	// this value gets returned in KB
+		// glGetIntegerv( GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &value );
+		// vsLog("Dedicated MB: %s", FormatKB(value) );
+		// // glGetIntegerv( GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_VIDMEM_NVX, &value );
+		// // vsLog("Total MB: %d", Format(value*1024) );
+		// glGetIntegerv( GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &value );
+		// vsLog("Available MB: %s", FormatKB(value) );
+
 }
 
