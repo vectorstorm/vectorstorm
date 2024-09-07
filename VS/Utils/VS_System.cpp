@@ -27,6 +27,7 @@
 #include "VS_Config.h"
 #include "VS_Thread.h"
 #include "VS_Input.h"
+#include "VS_MemoryProfiler.h"
 
 #include "VS_OpenGL.h"
 #include "Core.h"
@@ -296,6 +297,7 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 	new vsSingletonManager;
 
 	// Perform some basic initialisation
+	vsMemoryProfiler::Startup();
 	vsRandom::Init();
 	vsThread_Init();
 
@@ -360,6 +362,7 @@ vsSystem::~vsSystem()
 	vsShaderUniformRegistry::Shutdown();
 	vsShaderCache::Shutdown();
 	vsFileCache::Shutdown();
+	vsMemoryProfiler::Shutdown();
 
 #if !TARGET_OS_IPHONE
 	SDL_Quit();

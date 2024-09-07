@@ -23,6 +23,8 @@
 
 #include "VS_OpenGL.h"
 
+#include "VS_MemoryProfiler.h"
+
 #include "stb_image.h"
 
 namespace
@@ -75,6 +77,7 @@ vsTextureInternal::vsTextureInternal( const vsString &filename_in ):
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	GLuint t;
@@ -93,6 +96,7 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	GLuint t;
@@ -120,6 +124,8 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 				GL_RGBA,
 				GL_UNSIGNED_INT_8_8_8_8_REV,
 				image.RawData());
+
+		_UseMemory( w * h * sizeof(uint32_t) );
 	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -145,6 +151,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	int w = image->GetWidth();
@@ -170,6 +177,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	// m_nearestSampling = false;
+	_UseMemory( w * h * sizeof(uint32_t));
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *image ):
@@ -181,6 +189,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	int w = image->GetWidth();
@@ -206,6 +215,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 			image->RawData());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	// m_nearestSampling = false;
+	_UseMemory( w * h * sizeof(float) );
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage *image ):
@@ -217,6 +227,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	int w = image->GetWidth();
@@ -242,6 +253,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage
 			GL_UNSIGNED_SHORT,
 			image->RawData());
 	// m_nearestSampling = false;
+	_UseMemory( w * h * sizeof(uint16_t) * 4 );
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatImage *image ):
@@ -253,6 +265,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatIma
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	int w = image->GetWidth();
@@ -278,6 +291,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatIma
 			GL_HALF_FLOAT,
 			image->RawData());
 	// m_nearestSampling = false;
+	_UseMemory( w * h * sizeof(uint16_t) * 4 );
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, const vsSingleFloatImage *image ):
@@ -289,6 +303,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsSingleFloatI
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	int w = image->GetWidth();
@@ -314,6 +329,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsSingleFloatI
 			GL_FLOAT,
 			image->RawData());
 	// m_nearestSampling = false;
+	_UseMemory( w * h * sizeof(float) );
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buffer ):
@@ -324,6 +340,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderBuffer *buff
 	m_tbo(buffer),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	GLuint t;
@@ -340,6 +357,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, uint32_t glTextureId
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	// m_nearestSampling = false;
@@ -400,6 +418,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *rend
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
 	m_state(0)
 {
 	if ( renderTarget && renderTarget->GetTextureSurface() )
@@ -415,9 +434,17 @@ vsTextureInternal::~vsTextureInternal()
 	glDeleteTextures(1, &t);
 	m_texture = 0;
 
+	vsMemoryProfiler::Remove( vsMemoryProfiler::Type_Texture, m_memoryUsage );
 
 	vsDelete( m_tbo );
 	m_renderTarget = nullptr; // this doesn't belong to us;  don't destroy it!
+}
+
+void
+vsTextureInternal::_UseMemory( uint64_t amt )
+{
+	m_memoryUsage += amt;
+	vsMemoryProfiler::Add( vsMemoryProfiler::Type_Texture, amt );
 }
 
 // void
@@ -563,6 +590,8 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 
 				glGenerateMipmap(GL_TEXTURE_2D);
 				success = true;
+
+				_UseMemory( w * h * sizeof(uint32_t) );
 			}
 		}
 	}

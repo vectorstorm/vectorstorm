@@ -13,6 +13,7 @@
 
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
+#include "VS_MemoryProfiler.h"
 
 
 #define POS_ATTRIBUTE (0)
@@ -59,6 +60,7 @@ vsRenderBuffer::~vsRenderBuffer()
 {
 	if ( m_vbo )
 	{
+		vsMemoryProfiler::Remove( vsMemoryProfiler::Type_Buffer, m_glArrayBytes );
 		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
 		m_bufferID = -1;
 	}
@@ -134,6 +136,8 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		if ( size > m_glArrayBytes )
 		{
 			glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
+
+			vsMemoryProfiler::Add( vsMemoryProfiler::Type_Buffer, size-m_glArrayBytes );
 			m_glArrayBytes = size;
 		}
 		else

@@ -44,6 +44,7 @@ class vsTextureInternal : public vsResource
 
 	// bool		m_nearestSampling;
 
+	uint64_t m_memoryUsage;
 	enum
 	{
 		State_ClampU = BIT(0),
@@ -54,6 +55,7 @@ class vsTextureInternal : public vsResource
 	uint8_t m_state;
 
 	void _SimpleLoadFilename( const vsString &filename );
+	void _UseMemory( uint64_t amt );
 
 public:
 

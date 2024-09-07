@@ -11,6 +11,7 @@
 #include "VS_Color.h"
 #include "VS_OpenGL.h"
 #include "VS_RendererState.h"
+#include "VS_MemoryProfiler.h"
 #include <atomic>
 
 namespace
@@ -458,6 +459,64 @@ static void CheckFBO()
 #undef GL_CHECK
 #define GL_CHECK(s) CheckGLError(s);
 
+namespace
+{
+	int _BytesPerPixel( const vsSurface::Settings::Buffer& sb )
+	{
+		int baseBytesPerComponent = 0;
+		switch ( sb.format )
+		{
+			case vsSurface::Format_Byte:
+			case vsSurface::Format_SByte:
+				baseBytesPerComponent = 1;
+				break;
+			case vsSurface::Format_Int16:
+			case vsSurface::Format_SInt16:
+			case vsSurface::Format_HalfFloat:
+				baseBytesPerComponent = 2;
+				break;
+			case vsSurface::Format_Float:
+				baseBytesPerComponent = 4;
+				break;
+		}
+
+		int componentCount = 0;
+		switch ( sb.channels )
+		{
+			case vsSurface::Channels_R:
+				componentCount = 1;
+				break;
+			case vsSurface::Channels_RG:
+				componentCount = 2;
+				break;
+			case vsSurface::Channels_RGB:
+				componentCount = 3;
+				break;
+			case vsSurface::Channels_RGBA:
+				componentCount = 4;
+				break;
+		}
+
+		int bytesPerPixel = componentCount * baseBytesPerComponent;
+
+		return bytesPerPixel;
+	}
+
+	int _BytesPerPixel( const vsSurface::Settings& s )
+	{
+		int result = 0;
+		for ( int i = 0; i < s.buffers; i++ )
+		{
+			result += _BytesPerPixel( s.bufferSettings[i] );
+		}
+
+		if ( s.depth || s.stencil )
+			result += 4;
+
+		return result;
+	}
+}
+
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(-1),
@@ -480,6 +539,10 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 
 vsSurface::~vsSurface()
 {
+	int bytesPerPixel = _BytesPerPixel( m_settings );
+	int pixels = m_width * m_height;
+	vsMemoryProfiler::Remove( vsMemoryProfiler::Type_RenderTarget, pixels * bytesPerPixel );
+
 	GL_CHECK_SCOPED("vsSurface destructor");
 	for ( int i = 0; i < m_textureCount; i++ )
 	{
@@ -643,8 +706,16 @@ void
 vsSurface::Resize( int width, int height )
 {
 	GL_CHECK_SCOPED("vsSurface");
+
 	if ( m_width == width && m_height == height )
 		return;
+
+	int bytesPerPixel = _BytesPerPixel( m_settings );
+
+	int pixelsBefore = m_width * m_height;
+	int pixelsAfter = width * height;
+
+	vsMemoryProfiler::Add( vsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 
 	if ( m_fbo != 0 )
 	{
