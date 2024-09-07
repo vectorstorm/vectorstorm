@@ -109,6 +109,7 @@ public:
 	bool	m_multisample;
 	bool	m_depthCompare;
 	bool	m_isDepthOnly;
+	bool    m_isFramebuffer;
 
 	Settings m_settings;
 

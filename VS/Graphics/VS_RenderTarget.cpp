@@ -415,49 +415,6 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
 
-vsSurface::vsSurface( int width, int height ):
-	m_width(width),
-	m_height(height),
-	m_texture(0),
-	m_textureCount(1),
-	m_depth(0),
-	m_stencil(0),
-	m_fbo(0),
-	m_isRenderbuffer(false),
-	m_multisample(false),
-	m_depthCompare(false)
-{
-	m_texture = new GLuint[1];
-	m_texture[0] = 0;
-}
-
-
-const char c_enums[][30] =
-{
-	"attachment",         // GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT........... All framebuffer attachment points are 'framebuffer attachment complete'.
-	"missing attachment", // GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT....There is at least one image attached to the framebuffer.
-	"duplicate attachment",// GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT
-	"dimensions",         // GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS............All attached images have the same width and height.
-	"formats",            // GL_FRAMEBUFFER_INCOMPLETE_FORMATS...............All images attached to the attachment points COLOR_ATTACHMENT0 through COLOR_ATTACHMENTn must have the same internal format.
-	"draw buffer",        // GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER...........The value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for any color attachment point(s) named by DRAW_BUFFERi.
-	"read buffer",        // GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER...........If READ_BUFFER is not NONE, then the value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for the color attachment point named by READ_BUFFER.
-	"unsupported format"  // GL_FRAMEBUFFER_UNSUPPORTED......................The combination of internal formats of the attached images does not violate an implementation-dependent set of restrictions.
-};
-
-static void CheckFBO()
-{
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status == GL_FRAMEBUFFER_COMPLETE)
-		return;
-
-	status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
-	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
-}
-
-#undef GL_CHECK_SCOPED
-#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
-#undef GL_CHECK
-#define GL_CHECK(s) CheckGLError(s);
 
 namespace
 {
@@ -518,6 +475,56 @@ namespace
 }
 
 
+vsSurface::vsSurface( int width, int height ):
+	m_width(width),
+	m_height(height),
+	m_texture(0),
+	m_textureCount(1),
+	m_depth(0),
+	m_stencil(0),
+	m_fbo(0),
+	m_isRenderbuffer(false),
+	m_multisample(false),
+	m_depthCompare(false),
+	m_isDepthOnly(false),
+	m_isFramebuffer(true)
+{
+	m_texture = new GLuint[1];
+	m_texture[0] = 0;
+
+	int bytesPerPixel = _BytesPerPixel( m_settings );
+	vsMemoryProfiler::Add( vsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (width * height) );
+}
+
+
+const char c_enums[][30] =
+{
+	"attachment",         // GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT........... All framebuffer attachment points are 'framebuffer attachment complete'.
+	"missing attachment", // GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT....There is at least one image attached to the framebuffer.
+	"duplicate attachment",// GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT
+	"dimensions",         // GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS............All attached images have the same width and height.
+	"formats",            // GL_FRAMEBUFFER_INCOMPLETE_FORMATS...............All images attached to the attachment points COLOR_ATTACHMENT0 through COLOR_ATTACHMENTn must have the same internal format.
+	"draw buffer",        // GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER...........The value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for any color attachment point(s) named by DRAW_BUFFERi.
+	"read buffer",        // GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER...........If READ_BUFFER is not NONE, then the value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for the color attachment point named by READ_BUFFER.
+	"unsupported format"  // GL_FRAMEBUFFER_UNSUPPORTED......................The combination of internal formats of the attached images does not violate an implementation-dependent set of restrictions.
+};
+
+static void CheckFBO()
+{
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status == GL_FRAMEBUFFER_COMPLETE)
+		return;
+
+	status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
+}
+
+#undef GL_CHECK_SCOPED
+#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
+#undef GL_CHECK
+#define GL_CHECK(s) CheckGLError(s);
+
+
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(-1),
 	m_height(-1),
@@ -530,6 +537,7 @@ vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample
 	m_multisample(multisample),
 	m_depthCompare(depthCompare),
 	m_isDepthOnly(depthOnly),
+	m_isFramebuffer(false),
 	m_settings(settings)
 {
 	m_texture = new GLuint[m_textureCount];
@@ -541,7 +549,10 @@ vsSurface::~vsSurface()
 {
 	int bytesPerPixel = _BytesPerPixel( m_settings );
 	int pixels = m_width * m_height;
-	vsMemoryProfiler::Remove( vsMemoryProfiler::Type_RenderTarget, pixels * bytesPerPixel );
+	if (m_isFramebuffer)
+		vsMemoryProfiler::Remove( vsMemoryProfiler::Type_MainFramebuffer, pixels * bytesPerPixel );
+	else
+		vsMemoryProfiler::Remove( vsMemoryProfiler::Type_RenderTarget, pixels * bytesPerPixel );
 
 	GL_CHECK_SCOPED("vsSurface destructor");
 	for ( int i = 0; i < m_textureCount; i++ )
@@ -583,6 +594,10 @@ vsRenderTarget::Resize( int width, int height )
 	{
 		m_textureSurface->m_width = width;
 		m_textureSurface->m_height = height;
+		if ( m_renderBufferSurface )
+			m_renderBufferSurface->Resize(width, height);
+		if ( m_textureSurface )
+			m_textureSurface->Resize(width, height);
 	}
 	else
 	{
@@ -712,10 +727,13 @@ vsSurface::Resize( int width, int height )
 
 	int bytesPerPixel = _BytesPerPixel( m_settings );
 
-	int pixelsBefore = m_width * m_height;
+	int pixelsBefore = m_width < 0 ? 0 : m_width * m_height;
 	int pixelsAfter = width * height;
 
-	vsMemoryProfiler::Add( vsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+	if (m_isFramebuffer)
+		vsMemoryProfiler::Add( vsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+	else
+		vsMemoryProfiler::Add( vsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 
 	if ( m_fbo != 0 )
 	{

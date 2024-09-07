@@ -9,12 +9,13 @@
 
 #include "VS_MemoryProfiler.h"
 #include <inttypes.h>
+#include <atomic>
 
 #include "VS_OpenGL.h"
 
 namespace
 {
-	uint64_t m_used[vsMemoryProfiler::Type_MAX];
+	std::atomic<uint64_t> m_used[vsMemoryProfiler::Type_MAX];
 
 	vsString FormatKB(float kb)
 	{
