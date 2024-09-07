@@ -1,5 +1,5 @@
 /*
- *  VS_MemoryProfiler.h
+ *  VS_GRAPHICSMEMORYPROFILER.h
  *  VectorStorm
  *
  *  Created by Trevor Powell on 07/09/2024
@@ -7,10 +7,10 @@
  *
  */
 
-#ifndef VS_MEMORYPROFILER_H
-#define VS_MEMORYPROFILER_H
+#ifndef VS_GRAPHICSMEMORYPROFILER_H
+#define VS_GRAPHICSMEMORYPROFILER_H
 
-namespace vsMemoryProfiler
+namespace vsGraphicsMemoryProfiler
 {
 	enum Type
 	{
@@ -30,5 +30,5 @@ namespace vsMemoryProfiler
 	void Trace();
 };
 
-#endif // VS_MEMORYPROFILER_H
+#endif // VS_GRAPHICSMEMORYPROFILER_H
 

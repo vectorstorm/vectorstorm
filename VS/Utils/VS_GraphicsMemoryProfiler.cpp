@@ -1,5 +1,5 @@
 /*
- *  VS_MemoryProfiler.cpp
+ *  VS_GraphicsMemoryProfiler.cpp
  *  VectorStorm
  *
  *  Created by Trevor Powell on 07/09/2024
@@ -7,7 +7,7 @@
  *
  */
 
-#include "VS_MemoryProfiler.h"
+#include "VS_GraphicsMemoryProfiler.h"
 #include <inttypes.h>
 #include <atomic>
 
@@ -15,7 +15,7 @@
 
 namespace
 {
-	std::atomic<uint64_t> m_used[vsMemoryProfiler::Type_MAX];
+	std::atomic<uint64_t> m_used[vsGraphicsMemoryProfiler::Type_MAX];
 
 	vsString FormatKB(float kb)
 	{
@@ -38,41 +38,41 @@ namespace
 };
 
 
-void vsMemoryProfiler::Startup()
+void vsGraphicsMemoryProfiler::Startup()
 {
 	for ( int i = 0; i < Type_MAX; i++ )
 		m_used[i] = 0L;
 }
 
-void vsMemoryProfiler::Shutdown()
+void vsGraphicsMemoryProfiler::Shutdown()
 {
 	for ( int i = 0; i < Type_MAX; i++ )
 		m_used[i] = 0L;
 }
 
 void
-vsMemoryProfiler::Add( Type t, uint64_t amt )
+vsGraphicsMemoryProfiler::Add( Type t, uint64_t amt )
 {
 	m_used[t] += amt;
 }
 
 void
-vsMemoryProfiler::Remove( Type t, uint64_t amt )
+vsGraphicsMemoryProfiler::Remove( Type t, uint64_t amt )
 {
-	vsAssert( m_used[t] >= amt, "Removing too much memory from vsMemoryProfiler" );
+	vsAssert( m_used[t] >= amt, "Removing too much memory from vsGraphicsMemoryProfiler" );
 	m_used[t] -= amt;
 }
 
 
 void
-vsMemoryProfiler::Trace()
+vsGraphicsMemoryProfiler::Trace()
 {
-	vsLog("== vsMemoryProfiler Data");
-	vsLog("  Main Framebuffer: %s", Format(m_used[vsMemoryProfiler::Type_MainFramebuffer]));
-	vsLog("           Buffers: %s", Format(m_used[vsMemoryProfiler::Type_Buffer]));
-	vsLog("    Render Targets: %s", Format(m_used[vsMemoryProfiler::Type_RenderTarget]));
-	vsLog("          Textures: %s", Format(m_used[vsMemoryProfiler::Type_Texture]));
-	vsLog("== END vsMemoryProfiler Data");
+	vsLog("== vsGraphicsMemoryProfiler Data");
+	vsLog("  Main Framebuffer: %s", Format(m_used[vsGraphicsMemoryProfiler::Type_MainFramebuffer]));
+	vsLog("           Buffers: %s", Format(m_used[vsGraphicsMemoryProfiler::Type_Buffer]));
+	vsLog("    Render Targets: %s", Format(m_used[vsGraphicsMemoryProfiler::Type_RenderTarget]));
+	vsLog("          Textures: %s", Format(m_used[vsGraphicsMemoryProfiler::Type_Texture]));
+	vsLog("== END vsGraphicsMemoryProfiler Data");
 
 	// int value = 0;
 	// this value gets returned in KB

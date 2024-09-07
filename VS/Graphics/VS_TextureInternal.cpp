@@ -23,7 +23,7 @@
 
 #include "VS_OpenGL.h"
 
-#include "VS_MemoryProfiler.h"
+#include "VS_GraphicsMemoryProfiler.h"
 
 #include "stb_image.h"
 
@@ -434,7 +434,7 @@ vsTextureInternal::~vsTextureInternal()
 	glDeleteTextures(1, &t);
 	m_texture = 0;
 
-	vsMemoryProfiler::Remove( vsMemoryProfiler::Type_Texture, m_memoryUsage );
+	vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_Texture, m_memoryUsage );
 
 	vsDelete( m_tbo );
 	m_renderTarget = nullptr; // this doesn't belong to us;  don't destroy it!
@@ -444,7 +444,7 @@ void
 vsTextureInternal::_UseMemory( uint64_t amt )
 {
 	m_memoryUsage += amt;
-	vsMemoryProfiler::Add( vsMemoryProfiler::Type_Texture, amt );
+	vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_Texture, amt );
 }
 
 // void

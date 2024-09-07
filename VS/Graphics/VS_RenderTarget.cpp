@@ -11,7 +11,7 @@
 #include "VS_Color.h"
 #include "VS_OpenGL.h"
 #include "VS_RendererState.h"
-#include "VS_MemoryProfiler.h"
+#include "VS_GraphicsMemoryProfiler.h"
 #include <atomic>
 
 namespace
@@ -493,7 +493,7 @@ vsSurface::vsSurface( int width, int height ):
 	m_texture[0] = 0;
 
 	int bytesPerPixel = _BytesPerPixel( m_settings );
-	vsMemoryProfiler::Add( vsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (width * height) );
+	vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (width * height) );
 }
 
 
@@ -550,9 +550,9 @@ vsSurface::~vsSurface()
 	int bytesPerPixel = _BytesPerPixel( m_settings );
 	int pixels = m_width * m_height;
 	if (m_isFramebuffer)
-		vsMemoryProfiler::Remove( vsMemoryProfiler::Type_MainFramebuffer, pixels * bytesPerPixel );
+		vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_MainFramebuffer, pixels * bytesPerPixel );
 	else
-		vsMemoryProfiler::Remove( vsMemoryProfiler::Type_RenderTarget, pixels * bytesPerPixel );
+		vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_RenderTarget, pixels * bytesPerPixel );
 
 	GL_CHECK_SCOPED("vsSurface destructor");
 	for ( int i = 0; i < m_textureCount; i++ )
@@ -731,9 +731,9 @@ vsSurface::Resize( int width, int height )
 	int pixelsAfter = width * height;
 
 	if (m_isFramebuffer)
-		vsMemoryProfiler::Add( vsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 	else
-		vsMemoryProfiler::Add( vsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 
 	if ( m_fbo != 0 )
 	{
