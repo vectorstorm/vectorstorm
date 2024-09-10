@@ -13,7 +13,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstddef>
-#include <SDL2/SDL_filesystem.h>
+#include <SDL3/SDL_filesystem.h>
 #include <sys/stat.h>
 #include <filesystem>
 #include "VS_File.h"
@@ -40,7 +40,7 @@ void vsLog_Start(const char* companyName, const char* title, const char* profile
 	// for concatonating directory components.
 
 	int sdlInitResult = SDL_Init(0);
-	vsAssertF( sdlInitResult == 0, "SDL_Init returned %d: %s", sdlInitResult, SDL_GetError());
+	vsAssertF( sdlInitResult == 1, "SDL_Init returned %d: %s", sdlInitResult, SDL_GetError());
 
 	char* prefPathChar = SDL_GetPrefPath(companyName, title);
 	vsAssertF(prefPathChar, "vsLogStart: Unable to figure out where to save files: %s", SDL_GetError());

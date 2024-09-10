@@ -21,19 +21,19 @@ vsSpinlock::~vsSpinlock()
 void
 vsSpinlock::Lock()
 {
-	SDL_AtomicLock(&m_lock);
+	SDL_LockSpinlock(&m_lock);
 }
 
 void
 vsSpinlock::Unlock()
 {
-	SDL_AtomicUnlock(&m_lock);
+	SDL_UnlockSpinlock(&m_lock);
 }
 
 
 bool
 vsSpinlock::TryLock()
 {
-	return SDL_TRUE == SDL_AtomicTryLock(&m_lock);
+	return SDL_TRUE == SDL_TryLockSpinlock(&m_lock);
 }
 

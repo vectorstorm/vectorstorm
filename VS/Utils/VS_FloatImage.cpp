@@ -342,21 +342,9 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 	int w = source->w;
 	int h = source->h;
 
-	SDL_Surface *image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
+	SDL_Surface *image = SDL_CreateSurface(
 			w, h,
-			32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
-			0x000000FF,
-			0x0000FF00,
-			0x00FF0000,
-			0xFF000000
-#else
-			0xFF000000,
-			0x00FF0000,
-			0x0000FF00,
-			0x000000FF
-#endif
+			SDL_PIXELFORMAT_RGBA8888
 			);
 	vsAssert(image, "Error??");
 
@@ -395,7 +383,7 @@ vsFloatImage::LoadFromSurface( SDL_Surface *source )
 		}
 	}
 
-	SDL_FreeSurface(image); /* No longer needed */
+	SDL_DestroySurface(image); /* No longer needed */
 #endif // TARGET_OS_IPHONE
 }
 

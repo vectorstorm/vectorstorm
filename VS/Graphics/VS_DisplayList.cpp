@@ -23,7 +23,7 @@
 #include "VS_TextureManager.h"
 
 #if !TARGET_OS_IPHONE
-#include "SDL2/SDL_opengl.h"
+#include "SDL3/SDL_opengl.h"
 #endif
 
 static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =

@@ -38,7 +38,7 @@
 #if TARGET_OS_IPHONE
 #include "Wedge.h"
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 extern SDL_Window *g_sdlWindow;
@@ -49,9 +49,9 @@ namespace
 	// Use L/R GUI on Mac ("command" key), or Control on everything else.
 	const int c_controlKeys =
 #if defined( __APPLE_CC__ )
-		KMOD_GUI;
+		SDL_KMOD_GUI;
 #else
-		KMOD_CTRL;
+		SDL_KMOD_CTRL;
 #endif // defined( __APPLE_CC__ )
 }
 
@@ -82,10 +82,10 @@ vsInput::Init()
 	// but at least in the current OSX build, it actually starts enabled.  So during
 	// startup, let's just check and see if it's turned on, and if so, turn it off
 	// explicitly.
-	if ( SDL_IsTextInputActive() )
+	if ( SDL_TextInputActive(g_sdlWindow) )
 	{
 		vsLog("TextInput was enabled by default; turning it off until we need it!");
-		SDL_StopTextInput();
+		SDL_StopTextInput(g_sdlWindow);
 	}
 
 	// Ability to turn off "simulated mouse events" for touch events was added
@@ -117,7 +117,7 @@ vsInput::Init()
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
 		m_controller[i] = nullptr;
 
-	// SDL_GameControllerAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
+	// SDL_GamepadAddMapping("030000005e040000a102000000010000,Xbox 360 Wireless Receiver,a:b1,b:b2,y:b3,x:b0,leftx:a0,lefty:a1");
 	// int joystickCount = SDL_NumJoysticks();
     //
 	// if ( joystickCount )
@@ -137,7 +137,7 @@ vsInput::Init()
 	// 	{
 	// 		if ( SDL_IsGameController(i) )
 	// 		{
-	// 			SDL_GameController *gc = SDL_GameControllerOpen(i);
+	// 			SDL_Gamepad *gc = SDL_GamepadOpen(i);
 	// 			if ( gc )
 	// 				m_controller[i] = new vsController(gc, i);
 	// 		}
@@ -157,24 +157,24 @@ vsInput::Init()
 #endif
 }
 
-vsController::vsController( SDL_GameController *controller, int i )
+vsController::vsController( SDL_Gamepad *controller, int i )
 {
 	m_controller = controller;
 
-	const char *name = SDL_GameControllerNameForIndex(i);
+	const char *name = SDL_GetGamepadNameForID(i);
 	vsLog("Game controller %d found: %s", i, name);
 
-	m_joystick = SDL_GameControllerGetJoystick(m_controller);
+	m_joystick = SDL_GetGamepadJoystick(m_controller);
 	if ( m_joystick )
 	{
-		m_joystickAxes = SDL_JoystickNumAxes(m_joystick);
-		m_joystickButtons = SDL_JoystickNumButtons(m_joystick);
-		m_joystickHats = SDL_JoystickNumHats(m_joystick);
+		m_joystickAxes = SDL_GetNumJoystickAxes(m_joystick);
+		m_joystickButtons = SDL_GetNumJoystickButtons(m_joystick);
+		m_joystickHats = SDL_GetNumJoystickHats(m_joystick);
 		vsLog("Device has %d axes, %d buttons, %d hats, %d balls",
-				SDL_JoystickNumAxes(m_joystick),
-				SDL_JoystickNumButtons(m_joystick),
-				SDL_JoystickNumHats(m_joystick),
-				SDL_JoystickNumBalls(m_joystick));
+				m_joystickAxes,
+				m_joystickButtons,
+				m_joystickHats,
+				SDL_GetNumJoystickBalls(m_joystick));
 
 		m_axisCenter = new float[m_joystickAxes];
 		m_axisThrow = new float[m_joystickAxes];
@@ -188,7 +188,7 @@ vsController::vsController( SDL_GameController *controller, int i )
 
 vsController::~vsController()
 {
-	SDL_GameControllerClose( m_controller );
+	SDL_CloseGamepad( m_controller );
 	vsDeleteArray( m_axisCenter );
 	vsDeleteArray( m_axisThrow );
 }
@@ -540,13 +540,13 @@ vsInput::Load()
 		m_controlMapping[CID_B].Set( CT_Button, SDL_CONTROLLER_BUTTON_B );
 		m_controlMapping[CID_X].Set( CT_Button, SDL_CONTROLLER_BUTTON_X );
 		m_controlMapping[CID_Y].Set( CT_Button, SDL_CONTROLLER_BUTTON_Y );
-		// int aButton = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_A);
-		// int bButton = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_B);
+		// int aButton = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_A);
+		// int bButton = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_B);
 		//
-		// // int hatUp = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
-		// // int hatDown = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-		// // int hatLeft = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-		// // int hatRight = SDL_GameControllerGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+		// // int hatUp = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
+		// // int hatDown = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+		// // int hatLeft = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+		// // int hatRight = SDL_GamepadGetButton(m_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 	}
 	else
 	{
@@ -718,7 +718,7 @@ vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationT
 	{
 		if ( mode )
 		{
-			SDL_StartTextInput();
+			SDL_StartTextInput(g_sdlWindow);
 			m_stringMode = true;
 			m_stringModeIsMultiline = multiline;
 			m_stringModePaused = false;
@@ -733,14 +733,14 @@ vsInput::SetStringMode(bool mode, int maxLength, const vsBox2D& box, ValidationT
 			rect.w = box.Width();
 			rect.h = box.Height();
 
-			SDL_SetTextInputRect(&rect);
+			SDL_SetTextInputArea(g_sdlWindow, &rect, 0);
 
 			// bool hasScreenInput = SDL_HasScreenKeyboardSupport();
 			// vsLog("Has screen input: %s", hasScreenInput ? "true" : "false");
 		}
 		else
 		{
-			SDL_StopTextInput();
+			SDL_StopTextInput(g_sdlWindow);
 			m_stringMode = false;
 			m_stringModePaused = false;
 			m_stringModeClearing = true;
@@ -980,17 +980,17 @@ vsInput::Update(float timeStep)
 		//		int i, j;
 		while( SDL_PollEvent( &event ) ){
 			switch( event.type ){
-				case SDL_APP_DIDENTERBACKGROUND:
+				case SDL_EVENT_DID_ENTER_BACKGROUND:
 					{
 						vsSystem::Instance()->SetAppHasFocus(false);
 					}
 					break;
-				case SDL_APP_DIDENTERFOREGROUND:
+				case SDL_EVENT_DID_ENTER_FOREGROUND:
 					{
 						vsSystem::Instance()->SetAppHasFocus(true);
 					}
 					break;
-				case SDL_CONTROLLERDEVICEADDED:
+				case SDL_EVENT_GAMEPAD_ADDED:
 					{
 						// WARNING:  'which' tells us the device_index of the
 						// controller which has been added in the 'Added' event,
@@ -1006,7 +1006,7 @@ vsInput::Update(float timeStep)
 						InitController(event.cdevice.which);
 						break;
 					}
-				case SDL_CONTROLLERDEVICEREMOVED:
+				case SDL_EVENT_GAMEPAD_REMOVED:
 					{
 						// WARNING:  'which' tells us the device_index of the
 						// controller which has been added in the 'Added' event,
@@ -1014,17 +1014,17 @@ vsInput::Update(float timeStep)
 						// events.  Don't get confused about that!
 						//
 						// Best thing I can find to do with the instance_id is to
-						// convert it into an SDL_GameController object, and use
+						// convert it into an SDL_Gamepad object, and use
 						// that to figure out which vsController is associated
 						// with it!  Then go destroy that vsController.
 
 						vsLog("Controller instance removed: %d", event.cdevice.which);
-						SDL_GameController *gc = SDL_GameControllerFromInstanceID( event.cdevice.which );
+						SDL_Gamepad *gc = SDL_GetGamepadFromID( event.cdevice.which );
 						if ( gc )
 							DestroyController(gc);
 						break;
 					}
-				case SDL_CONTROLLERDEVICEREMAPPED:
+				case SDL_EVENT_GAMEPAD_REMAPPED:
 					{
 						// WARNING:  'which' tells us the device_index of the
 						// controller which has been added in the 'Added' event,
@@ -1043,7 +1043,7 @@ vsInput::Update(float timeStep)
 						vsLog("Controller remap event received, ignored: %d", event.cdevice.which);
 						break;
 					}
-				case SDL_CONTROLLERAXISMOTION:
+				case SDL_EVENT_GAMEPAD_AXIS_MOTION:
 					{
 						// vsLog("Controller joystickId %d, axis %d: %d",
 						// 		event.caxis.which,
@@ -1051,7 +1051,7 @@ vsInput::Update(float timeStep)
 						// 		event.caxis.value);
 						break;
 					}
-				case SDL_CONTROLLERBUTTONDOWN:
+				case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
 					{
 						// vsLog("Controller joystickId %d, button %d: %d",
 						// 		event.cbutton.which,
@@ -1059,7 +1059,7 @@ vsInput::Update(float timeStep)
 						// 		event.cbutton.state);
 						break;
 					}
-				case SDL_TEXTINPUT:
+				case SDL_EVENT_TEXT_INPUT:
 					{
 						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModePaused )
@@ -1067,7 +1067,7 @@ vsInput::Update(float timeStep)
 						break;
 					}
 					break;
-				case SDL_TEXTEDITING:
+				case SDL_EVENT_TEXT_EDITING:
 					m_timeSinceAnyInput = 0.f;
 
 					// vsLog("TextEditing: '%s', pos %d len %d",
@@ -1083,15 +1083,15 @@ vsInput::Update(float timeStep)
 					//m_stringModeCursorPosition = event.edit.start;
 					//m_stringModeSelectionLength = event.edit.length;
 					break;
-				case SDL_FINGERDOWN:
+				case SDL_EVENT_FINGER_DOWN:
 					m_fingersDown++;
 					break;
-				case SDL_FINGERUP:
+				case SDL_EVENT_FINGER_UP:
 					m_fingersDown--;
 					break;
-				case SDL_FINGERMOTION:
+				case SDL_EVENT_FINGER_MOTION:
 					break;
-				case SDL_MOUSEWHEEL:
+				case SDL_EVENT_MOUSE_WHEEL:
 					{
 						m_timeSinceAnyInput = 0.f;
 						// TODO:  FIX!
@@ -1108,7 +1108,7 @@ vsInput::Update(float timeStep)
 						m_wheelValue = wheelAmt;
 						break;
 					}
-				case SDL_MOUSEMOTION:
+				case SDL_EVENT_MOUSE_MOTION:
 					{
 						m_timeSinceAnyInput = 0.f;
 						if ( event.motion.which == SDL_TOUCH_MOUSEID ) // touch event;  ignore!
@@ -1135,7 +1135,7 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_KEYDOWN:
+				case SDL_EVENT_KEY_DOWN:
 					{
 						m_timeSinceAnyInput = 0.f;
 						if ( !m_stringModeClearing )
@@ -1150,20 +1150,20 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_KEYUP:
+				case SDL_EVENT_KEY_UP:
 					{
 						m_timeSinceAnyInput = 0.f;
 						HandleKeyUp(event);
 						break;
 					}
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				case SDL_EVENT_MOUSE_BUTTON_UP:
 					{
 						m_timeSinceAnyInput = 0.f;
 						HandleMouseButtonEvent(event);
 						break;
 					}
-				case SDL_DROPBEGIN:
+				case SDL_EVENT_DROP_BEGIN:
 					{
 						vsLog("drop begins");
 						if ( m_dropHandler )
@@ -1172,7 +1172,7 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_DROPCOMPLETE:
+				case SDL_EVENT_DROP_COMPLETE:
 					{
 						vsLog("Filedrop complete");
 						if ( m_dropHandler )
@@ -1181,12 +1181,12 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_DROPTEXT:
+				case SDL_EVENT_DROP_TEXT:
 					{
-						vsLog("Text dropped on window: %s", event.drop.file);
+						vsLog("Text dropped on window: %s", event.drop.data);
 						if ( m_dropHandler )
 						{
-							m_dropHandler->Text(event.drop.file);
+							m_dropHandler->Text(event.drop.data);
 						}
 						else
 						{
@@ -1194,139 +1194,124 @@ vsInput::Update(float timeStep)
 						}
 						break;
 					}
-				case SDL_DROPFILE:
+				case SDL_EVENT_DROP_FILE:
 					{
-						vsLog("File dropped on window: %s", event.drop.file);
+						vsLog("File dropped on window: %s", event.drop.data);
 
 						if ( m_dropHandler )
 						{
-							m_dropHandler->File( event.drop.file );
+							m_dropHandler->File( event.drop.data );
 						}
 						else
 						{
 							vsLog("No file drop handler installed");
 						}
 
-						SDL_free(event.drop.file); // bah, SDL shouldn't require this.
+						// SDL_free(event.drop.data); // bah, SDL shouldn't require this.
 						break;
 					}
-				case SDL_WINDOWEVENT:
-					switch (event.window.event)
+					// we only have one window, so a close event means quit!
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					core::SetExit();
+					break;
+				case SDL_EVENT_WINDOW_EXPOSED:
+					// vsLog("Exposed");
+					break;
+				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 					{
-						// we only have one window, so a close event means quit!
-						case SDL_WINDOWEVENT_CLOSE:
-							core::SetExit();
-							break;
-						case SDL_WINDOWEVENT_EXPOSED:
-							// vsLog("Exposed");
-							break;
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							{
-								// in ppractice, we seem to be receiving this event
-								// when alt-tabbing into a fullscreen window.  In
-								// theory, this happens after the window size changes
-								// for any reason.  If that reason was due to the OS,
-								// then we'll get a SDL_WINDOWEVENT_SIZE_CHANGED
-								// event right afterward.  In the alt-tabbing case,
-								// though, we don't seem to receive the
-								// SDL_WINDOWEVENT_RESIZED event.
-								vsLog("SizeChanged EVENT:  %d, %d", event.window.data1, event.window.data2);
-								vsSystem::Instance()->CheckVideoMode();
-								break;
-							}
-						case SDL_WINDOWEVENT_RESIZED:
-							{
-								if ( m_suppressResizeEvent )
-									m_suppressResizeEvent = false;
-								else
-								{
-									vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
-									// vsSystem::Instance()->CheckVideoMode();
-									int windowWidth = event.window.data1;
-									int windowHeight = event.window.data2;
-									vsSystem::Instance()->NotifyResized(windowWidth, windowHeight);
-								}
-								break;
-							}
-						case SDL_WINDOWEVENT_SHOWN:
-							// vsLog("Shown");
-							vsSystem::Instance()->SetAppIsVisible( true );
-							break;
-						case SDL_WINDOWEVENT_HIDDEN:
-							// vsLog("Hidden");
-							vsSystem::Instance()->SetAppIsVisible( false );
-							break;
-						case SDL_WINDOWEVENT_MOVED:
-							// check video mode, in case we've been moved to a
-							// display with a different DPI.
-							vsSystem::Instance()->CheckVideoMode();
-							break;
-						case SDL_WINDOWEVENT_FOCUS_LOST:
-							vsSystem::Instance()->SetAppHasFocus( false );
-							m_hasFocus = false;
-							break;
-						case SDL_WINDOWEVENT_FOCUS_GAINED:
-							vsSystem::Instance()->SetAppHasFocus( true );
-							m_hasFocus = true;
-							break;
-						case SDL_WINDOWEVENT_ENTER:
-							m_mouseIsInWindow = true;
-							break;
-						case SDL_WINDOWEVENT_LEAVE:
-							m_mouseIsInWindow = false;
-							break;
-						case SDL_WINDOWEVENT_MINIMIZED:
-							vsLog("Minimized");
-							break;
-						case SDL_WINDOWEVENT_MAXIMIZED:
-							vsLog("Maximized");
-							break;
-						case SDL_WINDOWEVENT_RESTORED:
-							vsLog("Restored");
-							break;
-							/*
-						case SDL_WINDOWEVENT_TAKE_FOCUS:
-							break;
-						case SDL_WINDOWEVENT_HIT_TEST:
-							break;
-							*/
+						// in ppractice, we seem to be receiving this event
+						// when alt-tabbing into a fullscreen window.  In
+						// theory, this happens after the window size changes
+						// for any reason.  If that reason was due to the OS,
+						// then we'll get a SDL_WINDOWEVENT_SIZE_CHANGED
+						// event right afterward.  In the alt-tabbing case,
+						// though, we don't seem to receive the
+						// SDL_WINDOWEVENT_RESIZED event.
+						vsLog("SizeChanged EVENT:  %d, %d", event.window.data1, event.window.data2);
+						vsSystem::Instance()->CheckVideoMode();
+						break;
+					}
+				case SDL_EVENT_WINDOW_RESIZED:
+					{
+						if ( m_suppressResizeEvent )
+							m_suppressResizeEvent = false;
+						else
+						{
+							vsLog("RESIZE EVENT:  %d, %d", event.window.data1, event.window.data2);
+							// vsSystem::Instance()->CheckVideoMode();
+							int windowWidth = event.window.data1;
+							int windowHeight = event.window.data2;
+							vsSystem::Instance()->NotifyResized(windowWidth, windowHeight);
+						}
+						break;
+					}
+				case SDL_EVENT_WINDOW_SHOWN:
+					// vsLog("Shown");
+					vsSystem::Instance()->SetAppIsVisible( true );
+					break;
+				case SDL_EVENT_WINDOW_HIDDEN:
+					// vsLog("Hidden");
+					vsSystem::Instance()->SetAppIsVisible( false );
+					break;
+				case SDL_EVENT_WINDOW_MOVED:
+					// check video mode, in case we've been moved to a
+					// display with a different DPI.
+					vsSystem::Instance()->CheckVideoMode();
+					break;
+				case SDL_EVENT_WINDOW_FOCUS_LOST:
+					vsSystem::Instance()->SetAppHasFocus( false );
+					m_hasFocus = false;
+					break;
+				case SDL_EVENT_WINDOW_FOCUS_GAINED:
+					vsSystem::Instance()->SetAppHasFocus( true );
+					m_hasFocus = true;
+					break;
+				case SDL_EVENT_WINDOW_MOUSE_ENTER:
+					m_mouseIsInWindow = true;
+					break;
+				case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+					m_mouseIsInWindow = false;
+					break;
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					vsLog("Minimized");
+					break;
+				case SDL_EVENT_WINDOW_MAXIMIZED:
+					vsLog("Maximized");
+					break;
+				case SDL_EVENT_WINDOW_RESTORED:
+					vsLog("Restored");
+					break;
+					/*
+					   case SDL_EVENT_WINDOW_TAKE_FOCUS:
+					   break;
+					   case SDL_EVENT_WINDOW_HIT_TEST:
+					   break;
+					   */
 #if SDL_VERSION_ATLEAST( 2, 0, 5 ) // new window events added in SDL 2.0.5
-						case SDL_WINDOWEVENT_TAKE_FOCUS:
-							// On Linux, Window Manager is asking us whether
-							// we want to take focus.  We don't;  the window
-							// manager will give focus to us if it wants to;
-							// we don't need to demand it.
-							//
-							// Also, in all my tests so far, we don't receive
-							// this event until after the window manager has
-							// already given us focus anyhow.
-							break;
-						case SDL_WINDOWEVENT_HIT_TEST:
-							// window had a hit test that wasn't
-							// SDL_HITTEST_NORMAL.  That is, we've swallowed
-							// a mouse event because it didn't hit the window
-							// content, but instead hit a window resize control
-							// or something in the title bar.  Not sure why
-							// we care about that, but this fix came from
-							// the nice Unreal folks, so they presumably had an
-							// issue around this somewhere.
-							break;
+				case SDL_EVENT_WINDOW_HIT_TEST:
+					// window had a hit test that wasn't
+					// SDL_HITTEST_NORMAL.  That is, we've swallowed
+					// a mouse event because it didn't hit the window
+					// content, but instead hit a window resize control
+					// or something in the title bar.  Not sure why
+					// we care about that, but this fix came from
+					// the nice Unreal folks, so they presumably had an
+					// issue around this somewhere.
+					break;
 #endif
 #if SDL_VERSION_ATLEAST( 2, 0, 18 ) // new window events added in SDL 2.0.18
-						case SDL_WINDOWEVENT_ICCPROF_CHANGED:
-							// vsLog("Window ICC profile changed!  (do we care?  no we do not, right now.)");
-							break;
-						case SDL_WINDOWEVENT_DISPLAY_CHANGED:
-							// vsLog("Window has changed which display it's centered on.  (do we care?  no we do not.)");
-							break;
-#endif
-						default:
-							vsLog("Unhandled window event:  %d", event.window.event);
-							break;
-					}
+				case SDL_EVENT_WINDOW_ICCPROF_CHANGED:
+					// vsLog("Window ICC profile changed!  (do we care?  no we do not, right now.)");
 					break;
-				case SDL_QUIT:
+				case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+					// vsLog("Window has changed which display it's centered on.  (do we care?  no we do not.)");
+					break;
+#endif
+				case SDL_EVENT_QUIT:
 					core::SetExit();
+					break;
+				default:
+					vsLog("Unhandled event:  %d", event.type);
 					break;
 			}
 		}
@@ -1515,7 +1500,7 @@ vsInput::Update(float timeStep)
 		bool found = false;
 
 		int keyCount;
-		const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+		const SDL_bool* keys = SDL_GetKeyboardState(&keyCount);
 
 		// TODO:  It'd probably be *heaps* faster to check this four or eight
 		// bytes at a time, instead of key-by-key.  But then you have to cope
@@ -1638,9 +1623,9 @@ vsController::ReadAxis_Raw( int axisID )
 #if !TARGET_OS_IPHONE && defined(VS_GAMEPADS)
 	float axisValue;
 	if ( m_controller )
-		axisValue = SDL_GameControllerGetAxis(m_controller, (SDL_GameControllerAxis)axisID) / 32767.0f;
+		axisValue = SDL_GetGamepadAxis(m_controller, (SDL_GamepadAxis)axisID) / 32767.0f;
 	else
-		axisValue = SDL_JoystickGetAxis(m_joystick, axisID) / 32767.0f;
+		axisValue = SDL_GetJoystickAxis(m_joystick, axisID) / 32767.0f;
 #else
 	float axisValue = 0.0f;
 #endif
@@ -1694,7 +1679,7 @@ vsController::ReadHat(int hatID, ControlDirection dir)
 {
 #if !TARGET_OS_IPHONE
 	float result = 0.f;
-	uint8_t sdlDir = SDL_JoystickGetHat(m_joystick, hatID);
+	uint8_t sdlDir = SDL_GetJoystickHat(m_joystick, hatID);
 
 	if ( sdlDir != SDL_HAT_CENTERED )
 	{
@@ -1734,9 +1719,9 @@ vsController::ReadButton( int buttonID )
 #if !TARGET_OS_IPHONE && defined(VS_GAMEPADS)
 	bool buttonDown = false;
 	if ( m_controller )
-		buttonDown = !!SDL_GameControllerGetButton(m_controller, (SDL_GameControllerButton)buttonID);
+		buttonDown = !!SDL_GetGamepadButton(m_controller, (SDL_GamepadButton)buttonID);
 	else
-		buttonDown = !!SDL_JoystickGetButton(m_joystick, buttonID);
+		buttonDown = !!SDL_GetJoystickButton(m_joystick, buttonID);
 
 	if ( buttonDown )
 		result = 1.0f;
@@ -1945,14 +1930,14 @@ vsInput::CaptureMouse( bool capture )
 		{
 			SDL_GetMouseState(&m_capturedMouseX,&m_capturedMouseY);
 
-			SDL_SetRelativeMouseMode(SDL_TRUE);
+			SDL_SetWindowRelativeMouseMode(g_sdlWindow, SDL_TRUE);
 			m_mousePos = vsVector2D::Zero;
 			m_mouseMotion = vsVector2D::Zero;
 			m_suppressFirstMotion = true;
 		}
 		else
 		{
-			SDL_SetRelativeMouseMode(SDL_FALSE);
+			SDL_SetWindowRelativeMouseMode(g_sdlWindow, SDL_FALSE);
 // #ifndef _WIN32
 			// Bug in SDL2 on OSX:  Relative mouse mode moves the cursor to the
 			// middle of the window, even though the function documentation says
@@ -2264,7 +2249,7 @@ vsInput::StringModeUndo()
 void
 vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 {
-	switch( event.key.keysym.sym )
+	switch( event.key.key )
 	{
 		case SDLK_BACKSPACE:
 			if ( m_stringMode && m_stringModeString.length() != 0 )
@@ -2384,7 +2369,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				CursorPos newPosition = CursorPos::LineByte(0,0);
 				{
-					if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+					if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 					{
 						if ( m_cursorHandler )
 							newPosition = m_cursorHandler->Up( m_stringModeCursorFloating );
@@ -2405,7 +2390,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				int len = m_stringModeString.size();
 				CursorPos newPosition = CursorPos::Byte(len);
-				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 				{
 					if ( m_cursorHandler )
 						newPosition = m_cursorHandler->Down( m_stringModeCursorFloating );
@@ -2425,7 +2410,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 			{
 				CursorPos newPosition = CursorPos::Byte(0);
 
-				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 				{
 					if ( m_cursorHandler )
 						newPosition = m_cursorHandler->Home( m_stringModeCursorFloating );
@@ -2442,7 +2427,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 		case SDLK_END:
 			{
 				CursorPos newPosition = CursorPos::Byte(m_stringModeString.size());
-				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 				{
 					if ( m_cursorHandler )
 						newPosition = m_cursorHandler->End( m_stringModeCursorFloating );
@@ -2484,7 +2469,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 
 				// now we need to move back to the previous grapheme break
 
-				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 				{
 					// shift is held down;  move the floating codepoint, but not the anchor codepoint!
 					SetStringModeCursor( m_stringModeCursorAnchor, nextFloatingPosition, Opt_EndEdit );
@@ -2511,7 +2496,7 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				uni::breaks::grapheme::utf8 begin{m_stringModeString.cbegin(), m_stringModeString.cend()};
 				uni::breaks::grapheme::utf8 end{m_stringModeString.cend(), m_stringModeString.cend()};
 
-				if ( event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT) )
+				if ( event.key.mod & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) )
 				{
 					CursorPos nextFloatingPosition = m_stringModeCursorFloating;
 					if ( m_cursorHandler )
@@ -2582,19 +2567,19 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 			}
 			break;
-		case SDLK_a:
+		case SDLK_A:
 			{
 				// select all
-				if ( event.key.keysym.mod & c_controlKeys )
+				if ( event.key.mod & c_controlKeys )
 				{
 					SetStringModeSelectAll(true);
 				}
 				break;
 			}
-		case SDLK_v:
+		case SDLK_V:
 			{
 				// paste
-				if ( event.key.keysym.mod & c_controlKeys )
+				if ( event.key.mod & c_controlKeys )
 				{
 					vsString clipboardText = SDL_GetClipboardText();
 					if ( !clipboardText.empty() )
@@ -2605,10 +2590,10 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				break;
 			}
-		case SDLK_c:
+		case SDLK_C:
 			{
 				// copy
-				if ( event.key.keysym.mod & c_controlKeys )
+				if ( event.key.mod & c_controlKeys )
 				{
 					// extract the currently selected text
 					vsString sel = GetStringModeSelection();
@@ -2617,10 +2602,10 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				break;
 			}
-		case SDLK_x:
+		case SDLK_X:
 			{
 				// cut
-				if ( event.key.keysym.mod & c_controlKeys )
+				if ( event.key.mod & c_controlKeys )
 				{
 					// extract the currently selected text
 					StringModeSaveUndoState();
@@ -2631,10 +2616,10 @@ vsInput::HandleStringModeKeyDown( const SDL_Event& event )
 				}
 				break;
 			}
-		case SDLK_z:
+		case SDLK_Z:
 			{
 				// undo
-				if ( event.key.keysym.mod & c_controlKeys )
+				if ( event.key.mod & c_controlKeys )
 					StringModeUndo();
 				break;
 			}
@@ -2694,12 +2679,12 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 			for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 			{
 				if ( axis.positive[j].type == CT_Keyboard &&
-						axis.positive[j].id == event.key.keysym.scancode &&
-						_mods_match( axis.positive[j], event.key.keysym.mod ))
+						axis.positive[j].id == event.key.scancode &&
+						_mods_match( axis.positive[j], event.key.mod ))
 					axis.wasPressed = true;
 				if ( axis.positive[j].type == CT_KeyboardKeycode &&
-						axis.positive[j].id == event.key.keysym.sym &&
-						_mods_match( axis.positive[j], event.key.keysym.mod ))
+						axis.positive[j].id == (int)event.key.key &&
+						_mods_match( axis.positive[j], event.key.mod ))
 				{
 					axis.wasPressed = true;
 					axis.currentValue = 1.f;
@@ -2712,7 +2697,7 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 		}
 	}
 
-	switch( event.key.keysym.scancode )
+	switch( event.key.scancode )
 	{
 		case SDL_SCANCODE_Q:
 			if ( vsSystem::Instance()->IsExitGameKeyEnabled() )
@@ -2733,7 +2718,7 @@ vsInput::HandleKeyDown( const SDL_Event& event )
 				// if ( m_keyControlState[CID_Start] == 0.0f )
 				{
 					SDL_Keymod keymod = SDL_GetModState();
-					if ( keymod & KMOD_LALT )
+					if ( keymod & SDL_KMOD_LALT )
 					{
 						// alt-enter means toggle fullscreen!
 						vsSystem::Instance()->ToggleFullscreen();
@@ -2769,11 +2754,11 @@ vsInput::HandleKeyUp( const SDL_Event& event )
 		for ( int j = 0; j < axis.positive.ItemCount(); j++ )
 		{
 			if ( axis.positive[j].type == CT_Keyboard &&
-					axis.positive[j].id == event.key.keysym.scancode &&
-					_mods_match( axis.positive[j], event.key.keysym.mod ))
+					axis.positive[j].id == event.key.scancode &&
+					_mods_match( axis.positive[j], event.key.mod ))
 				axis.wasReleased = true;
 			if ( axis.positive[j].type == CT_KeyboardKeycode &&
-					axis.positive[j].id == event.key.keysym.sym &&
+					axis.positive[j].id == (int)event.key.key &&
 					axis.currentValue > 0.f )
 			{
 				// we don't need to match keysyms for keyup;  if they let go of
@@ -2784,7 +2769,7 @@ vsInput::HandleKeyUp( const SDL_Event& event )
 		}
 	}
 
-	switch( event.key.keysym.scancode ){
+	switch( event.key.scancode ){
 		default:
 			break;
 	}
@@ -2801,7 +2786,7 @@ vsInput::HandleMouseButtonEvent( const SDL_Event& event )
 			if ( axis.positive[j].type == CT_MouseButton &&
 					axis.positive[j].id == event.button.button )
 			{
-				if ( event.type == SDL_MOUSEBUTTONDOWN )
+				if ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN )
 					axis.wasPressed = true;
 				else
 					axis.wasReleased = true;
@@ -2814,7 +2799,7 @@ void
 vsInput::InitController(int i)
 {
 #if defined(VS_GAMEPADS)
-	SDL_GameController *gc = SDL_GameControllerOpen(i);
+	SDL_Gamepad *gc = SDL_OpenGamepad(i);
 	if ( gc && i < MAX_JOYSTICKS )
 	{
 		vsDelete( m_controller[i] );
@@ -2828,7 +2813,7 @@ vsInput::InitController(int i)
 }
 
 void
-vsInput::DestroyController(SDL_GameController *gc)
+vsInput::DestroyController(SDL_Gamepad *gc)
 {
 #if defined(VS_GAMEPADS)
 	for ( int i = 0; i < MAX_JOYSTICKS; i++ )
@@ -2908,7 +2893,7 @@ DeviceControl::Evaluate(bool hasFocus)
 				else
 				{
 					int keyCount;
-					const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+					const SDL_bool* keys = SDL_GetKeyboardState(&keyCount);
 					if ( id < keyCount )
 					{
 						// SDL_Keymod actual_keymod = SDL_GetModState();
@@ -3076,7 +3061,7 @@ vsInput::GetBindDescription( const DeviceControl& dc )
 			// return SDL_GetScancodeName( (SDL_Scancode)dc.id );
 
 			{
-				SDL_Keycode keycode = SDL_GetKeyFromScancode( (SDL_Scancode)dc.id );
+				SDL_Keycode keycode = SDL_GetKeyFromScancode( (SDL_Scancode)dc.id, SDL_KMOD_NONE, SDL_FALSE );
 				return SDL_GetKeyName( keycode );
 			}
 
@@ -3116,7 +3101,7 @@ vsInput::AnythingIsDown()
 
 	// For right now, let's just check for keyboard.
 	int keyCount;
-	const Uint8* keys = SDL_GetKeyboardState(&keyCount);
+	const SDL_bool* keys = SDL_GetKeyboardState(&keyCount);
 
 	// TODO:  It'd probably be *heaps* faster to check this four or eight
 	// bytes at a time, instead of key-by-key.  But then you have to cope

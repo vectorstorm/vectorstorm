@@ -26,7 +26,7 @@
 #define ENFORCE_FPS_MAXIMUM (1)
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 vsTimerSystem *	vsTimerSystem::s_instance = nullptr;

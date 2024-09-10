@@ -33,7 +33,7 @@
 #include "Core.h"
 
 #include <time.h>
-#include <SDL2/SDL_filesystem.h>
+#include <SDL3/SDL_filesystem.h>
 
 #if defined(MSVC)
 // MSVC
@@ -66,9 +66,9 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL_mouse.h>
+#include <SDL3/SDL_mouse.h>
 #endif
-#include <SDL2/SDL_messagebox.h>
+#include <SDL3/SDL_messagebox.h>
 
 #include "Files/VS_PhysFS.h"
 
@@ -132,7 +132,7 @@ bool win32_SetProcessDpiAware(void) {
 
 #ifdef _WIN32
 #include <ole2.h>
-#include <SDL2/SDL_syswm.h>
+#include <SDL3/SDL_syswm.h>
 #include <shlobj.h>
 
 class DropTargetWindows : public IDropTarget
@@ -314,14 +314,14 @@ vsSystem::vsSystem(const vsString& companyName, const vsString& title, const vsS
 	Uint32 sdlInitFlags = SDL_INIT_VIDEO;
 #if defined( VS_GAMEPADS )
 	sdlInitFlags |= SDL_INIT_JOYSTICK;
-	sdlInitFlags |= SDL_INIT_GAMECONTROLLER;
+	sdlInitFlags |= SDL_INIT_GAMEPAD;
 #endif // VS_GAMEPADS
 
 #if defined(USE_SDL_SOUND)
 	sdlInitFlags |= SDL_INIT_AUDIO;
 #endif // USE_SDL_SOUND
 
-	if ( SDL_Init(sdlInitFlags) < 0 ){
+	if ( !SDL_Init(sdlInitFlags) ){
 		fprintf(stderr, "Couldn't initialise SDL: %s\n", SDL_GetError() );
 		exit(1);
 	}
@@ -373,10 +373,10 @@ vsSystem::~vsSystem()
 void
 vsSystem::Init()
 {
-	m_cursor[CursorStyle_Arrow] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_ARROW );
-	m_cursor[CursorStyle_IBeam] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_IBEAM );
+	m_cursor[CursorStyle_Arrow] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_DEFAULT );
+	m_cursor[CursorStyle_IBeam] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_TEXT );
 	m_cursor[CursorStyle_Wait] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_WAIT );
-	m_cursor[CursorStyle_Hand] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_HAND );
+	m_cursor[CursorStyle_Hand] = SDL_CreateSystemCursor( SDL_SYSTEM_CURSOR_POINTER );
 
 	m_preferences->CheckResolutions();
 	int width, height;
@@ -402,7 +402,10 @@ vsSystem::Init()
 
 #if !TARGET_OS_IPHONE
 	m_showCursor = !m_preferences->GetFullscreen();
-	SDL_ShowCursor( m_showCursor );
+	if ( m_showCursor )
+		SDL_ShowCursor();
+	else
+		SDL_HideCursor();
 #endif
 	// Set requested GL context attributes
 	//initAttributes ();
@@ -470,7 +473,7 @@ vsSystem::Deinit()
 	vsDelete( m_textureManager );
 
 	for ( int i = 0; i < CursorStyle_MAX; i++ )
-		SDL_FreeCursor( m_cursor[i] );
+		SDL_DestroyCursor( m_cursor[i] );
 
 #if defined(_WIN32)
 	// remove the strong lock
@@ -840,7 +843,10 @@ vsSystem::ShowCursor(bool show)
 	m_showCursor = show;
 	m_showCursorOverridden = true;
 #if !TARGET_OS_IPHONE
-	SDL_ShowCursor( m_showCursor );
+	if ( m_showCursor )
+		SDL_ShowCursor( );
+	else
+		SDL_HideCursor( );
 #endif //TARGET_OS_IPHONE
 }
 
@@ -914,7 +920,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 		m_showCursor = !m_preferences->GetFullscreen();
 	}
 #if !TARGET_OS_IPHONE
-	SDL_ShowCursor( m_showCursor );
+	if ( m_showCursor )
+		SDL_ShowCursor( );
+	else
+		SDL_HideCursor( );
 #endif
 	int bufferCount = 1;
 	if ( m_preferences->GetBloom() )
@@ -1105,18 +1114,13 @@ vsSystemPreferences::CheckResolutions()
 #if !TARGET_OS_IPHONE
 	vsLog("Checking supported resolutions...");
 
-	SDL_DisplayMode *modes;
+	SDL_DisplayMode **modes;
 	int modeCount;
 	int maxWidth = 0;
 	int maxHeight = 0;
 	/* Get available fullscreen/hardware modes */
-	modeCount = SDL_GetNumDisplayModes(0);
-	modes = new SDL_DisplayMode[modeCount];
-
-	for ( int i = 0; i < modeCount; i++ )
-	{
-		SDL_GetDisplayMode(0, i, &modes[i]);
-	}
+	SDL_DisplayID primary = SDL_GetPrimaryDisplay();
+	modes = SDL_GetFullscreenDisplayModes(primary, &modeCount);
 
 	/* Check if there are any modes available */
 	if(modeCount <= 0){
@@ -1139,8 +1143,8 @@ vsSystemPreferences::CheckResolutions()
 			bool alreadyAdded = false;
 			for ( int j = 0; j < actualModeCount; j++ )
 			{
-				if ( modes[i].w == m_supportedResolution[j].width &&
-						modes[i].h == m_supportedResolution[j].height )
+				if ( modes[i]->w == m_supportedResolution[j].width &&
+						modes[i]->h == m_supportedResolution[j].height )
 				{
 					alreadyAdded = true;
 					break;
@@ -1148,8 +1152,8 @@ vsSystemPreferences::CheckResolutions()
 			}
 			if ( !alreadyAdded )
 			{
-				m_supportedResolution[actualModeCount].width = modes[i].w;
-				m_supportedResolution[actualModeCount].height = modes[i].h;
+				m_supportedResolution[actualModeCount].width = modes[i]->w;
+				m_supportedResolution[actualModeCount].height = modes[i]->h;
 				maxWidth = vsMax( maxWidth, m_supportedResolution[actualModeCount].width );
 				maxHeight = vsMax( maxHeight, m_supportedResolution[actualModeCount].height );
 				actualModeCount++;
@@ -1207,7 +1211,7 @@ vsSystemPreferences::CheckResolutions()
 	m_resolutionX->m_value = m_supportedResolution[selectedResolution].width;
 	m_resolutionY->m_value = m_supportedResolution[selectedResolution].height;
 	m_resolution = selectedResolution;
-	delete [] modes;
+	SDL_free( modes );
 }
 
 vsString

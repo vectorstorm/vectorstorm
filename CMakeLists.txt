@@ -32,14 +32,14 @@ endif()
 #
 set( OpenGL_GL_PREFERENCE "GLVND" )
 find_package(OpenGL REQUIRED)
-find_library(SDL_LIBRARY SDL2 REQUIRED)
+find_library(SDL_LIBRARY SDL3 REQUIRED)
 find_package(ZLIB)
 # find_library(ZLIB_LIBRARY zlib REQUIRED)
 
 if ( USE_SDL_SOUND )
 	find_library(SDL_MIXER_LIBRARY SDL2_mixer REQUIRED )
 endif()
-find_path(SDL_INCLUDE_DIR SDL2/SDL.h REQUIRED HINTS ${SDL_LIBRARY}/Headers)
+find_path(SDL_INCLUDE_DIR SDL3/SDL.h REQUIRED HINTS ${SDL_LIBRARY}/Headers)
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 	add_definitions("-D IS_64BIT")
@@ -83,7 +83,7 @@ if(WIN32)
 	find_file(ZLIB_DLL zlib1.dll REQUIRED)
 	find_file(PNG_DLL libpng16-16.dll REQUIRED)
 	find_file(JPEG_DLL libjpeg-9.dll REQUIRED)
-	find_file(SDL2_DLL SDL2.dll REQUIRED)
+	find_file(SDL3_DLL SDL3.dll REQUIRED)
 	if ( USE_SDL_SOUND )
 		find_file(SDL2_MIXER_DLL SDL2_mixer.dll REQUIRED)
 	endif()
@@ -123,7 +123,7 @@ if(WIN32)
 	endif()
 
 	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
-		${ZLIB_DLL} ${SDL2_DLL}
+		${ZLIB_DLL} ${SDL3_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
 		${PHYSFS_DLL}
 		${OGG_DLL}

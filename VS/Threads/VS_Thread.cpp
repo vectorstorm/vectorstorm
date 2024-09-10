@@ -8,7 +8,7 @@
 
 #include "VS_Thread.h"
 #include "VS_Mutex.h"
-#include <SDL2/SDL_thread.h>
+#include <SDL3/SDL_thread.h>
 #include <map>
 
 
@@ -16,15 +16,15 @@ namespace
 {
 	vsMutex tableLock;
 
-	SDL_threadID s_mainThread;
-	std::map<SDL_threadID, vsString> s_threadTable;
+	SDL_ThreadID s_mainThread;
+	std::map<SDL_ThreadID, vsString> s_threadTable;
 	vsString unknownName = "unk";
 };
 
 void vsThread_Init()
 {
 	// register the main thread so we recognise it in future
-	SDL_threadID id = SDL_ThreadID();
+	SDL_ThreadID id = SDL_GetCurrentThreadID();
 	s_mainThread = id;
 
 	tableLock.Lock();
@@ -44,7 +44,7 @@ int vsThread::DoStartThread(void* arg)
 	int result = 0;
 	vsThread *thread = (vsThread*)arg;
 
-	SDL_threadID id = SDL_ThreadID();
+	SDL_ThreadID id = SDL_GetCurrentThreadID();
 	{
 		tableLock.Lock();
 		s_threadTable[id] = thread->m_name;
@@ -86,7 +86,7 @@ vsThread::Start()
 const vsString&
 vsThread::GetCurrentThreadName()
 {
-	SDL_threadID id = SDL_ThreadID();
+	SDL_ThreadID id = SDL_GetCurrentThreadID();
 	if ( s_threadTable.find(id) != s_threadTable.end() )
 	{
 		return s_threadTable[id];
@@ -97,7 +97,7 @@ vsThread::GetCurrentThreadName()
 bool
 vsThread::IsMainThread()
 {
-	SDL_threadID id = SDL_ThreadID();
+	SDL_ThreadID id = SDL_GetCurrentThreadID();
 	return (id == s_mainThread);
 }
 

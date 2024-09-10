@@ -12,8 +12,8 @@
 // for the moment, we don't ever actually want to use mutexes;
 // we're a video game!  Let's use spinlocks instead.
 
-#include "SDL2/SDL.h"
-typedef SDL_mutex* mutex_t;
+#include "SDL3/SDL.h"
+typedef SDL_Mutex* mutex_t;
 
 class vsMutex
 {

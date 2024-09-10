@@ -26,7 +26,7 @@
 #include <sys/statvfs.h>
 #endif // UNIX
 
-#include <SDL2/SDL_filesystem.h>
+#include <SDL3/SDL_filesystem.h>
 
 #include <atomic>
 #include <errno.h>

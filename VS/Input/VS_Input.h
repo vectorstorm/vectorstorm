@@ -22,7 +22,7 @@
 #endif
 
 #if !TARGET_OS_IPHONE
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 // Macros for defining custom axes to watch.  See vsInput::Load() for
@@ -197,7 +197,7 @@ class vsController
 {
 #if !TARGET_OS_IPHONE
 	SDL_Joystick	*m_joystick;
-	SDL_GameController *m_controller;
+	SDL_Gamepad *m_controller;
 #endif
 	int				m_joystickAxes;
 	int				m_joystickButtons;
@@ -207,10 +207,10 @@ class vsController
 	float			*m_axisThrow;		// how far can this control go from center?
 
 public:
-	vsController( SDL_GameController *controller, int index );
+	vsController( SDL_Gamepad *controller, int index );
 	~vsController();
 
-	bool			Matches( SDL_GameController *gc ) { return m_controller == gc; }
+	bool			Matches( SDL_Gamepad *gc ) { return m_controller == gc; }
 
 	float			ReadHat(int hatID, ControlDirection dir);
 
@@ -247,8 +247,8 @@ class vsInput : public coreGameSystem, public vsSingleton<vsInput>
 	bool			m_captureMouse;
 	bool			m_suppressFirstMotion;			// suppress our first motion amount after warping, just to be safe.
 	bool			m_suppressResizeEvent;			// suppress our next resize event after a window mode change, just to be safe.
-	int				m_capturedMouseX;
-	int				m_capturedMouseY;
+	float			m_capturedMouseX;
+	float			m_capturedMouseY;
 	int				m_fingersDown;
 	float			m_fingersDownTimer;
 
@@ -401,7 +401,7 @@ private:
 	void StringModeCancel();
 
 	void InitController(int i);
-	void DestroyController(SDL_GameController *gc);
+	void DestroyController(SDL_Gamepad *gc);
 
 public:
 
