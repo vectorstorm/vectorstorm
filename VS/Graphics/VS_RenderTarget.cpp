@@ -592,8 +592,6 @@ vsRenderTarget::Resize( int width, int height )
 
 	if ( m_type == Type_Window )
 	{
-		m_textureSurface->m_width = width;
-		m_textureSurface->m_height = height;
 		if ( m_renderBufferSurface )
 			m_renderBufferSurface->Resize(width, height);
 		if ( m_textureSurface )
@@ -729,9 +727,17 @@ vsSurface::Resize( int width, int height )
 
 	int pixelsBefore = m_width < 0 ? 0 : m_width * m_height;
 	int pixelsAfter = width * height;
+	m_width = width;
+	m_height = height;
+	m_settings.width = width;
+	m_settings.height = height;
+
 
 	if (m_isFramebuffer)
+	{
 		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+		return; // [INFO] we don't actually need to do any of the stuff below for our main framebuffer.
+	}
 	else
 		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 
@@ -756,11 +762,6 @@ vsSurface::Resize( int width, int height )
 		}
 		glDeleteFramebuffers(1, &m_fbo);
 	}
-
-	m_width = width;
-	m_height = height;
-	m_settings.width = width;
-	m_settings.height = height;
 
 	GLint maxSamples = 0;
 	if ( m_multisample )

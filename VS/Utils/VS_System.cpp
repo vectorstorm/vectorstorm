@@ -902,7 +902,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 	vsString type = m_preferences->GetFullscreenWindow() ? "fullscreen window" :
 		m_preferences->GetFullscreen() ? "fullscreen" : "windowed";
 
-	vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
+	if ( m_preferences->GetFullscreenWindow() )
+		vsLog("Changing resolution to (%s)...", type);
+	else
+		vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
 
 	if ( !m_preferences->GetFullscreen() )
 	{
