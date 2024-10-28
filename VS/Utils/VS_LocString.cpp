@@ -211,7 +211,7 @@ static vsString DoFormatFloat( float value, int places )
 	int64_t intPart = (int64_t)(value);
 	value -= intPart;
 
-	int decimalPart = vsAbs( value * pow(10,places) );
+	int decimalPart = vsAbs( std::round(value * pow(10,places)) );
 
 	vsString result = DoFormatNumber(intPart);
 	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);
