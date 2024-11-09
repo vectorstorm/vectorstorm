@@ -299,6 +299,27 @@ vsLocString::operator!=(const vsLocString& other) const
 	return !(*this==other);
 }
 
+void
+vsLocString::operator+=(const char* s)
+{
+	m_string += vsString(s);
+}
+
+void
+vsLocString::operator+=(const vsString& s)
+{
+	m_string += s;
+}
+
+void
+vsLocString::operator+=(const vsLocString& s)
+{
+	vsString tag = vsFormatString("autoconcat_%d", m_args.size());
+	m_args.push_back( vsLocArg( tag, s ) );
+	m_string += vsFormatString("{%s}", tag);
+}
+
+
 bool
 vsLocArg::operator==(const vsLocArg& other) const
 {

@@ -41,6 +41,10 @@ public:
 
 	bool operator==(const vsLocString& other) const;
 	bool operator!=(const vsLocString& other) const;
+
+	void operator+=(const char* s);
+	void operator+=(const vsString& s);
+	void operator+=(const vsLocString& ls);
 };
 
 struct vsLocArg
