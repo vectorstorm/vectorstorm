@@ -196,8 +196,8 @@ vsEntity::RegisterOnScene(int sceneId)
 void
 vsEntity::RegisterOnScene(vsScene *scene)
 {
-	m_registeredScene = scene;
 	scene->RegisterEntityOnTop(this);
+	m_registeredScene = scene;
 }
 
 vsEntity *
