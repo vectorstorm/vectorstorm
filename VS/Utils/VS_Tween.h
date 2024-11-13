@@ -25,7 +25,7 @@ class vsTween
 
 public:
 
-	vsTween<T>(const T &value, bool smooth = true)
+	vsTween(const T &value, bool smooth = true)
 	{
 		m_smoothTween = smooth;
 		m_acceleratedSmoothTween = false;
