@@ -41,22 +41,24 @@ class vsTimerSystem : public coreGameSystem
 	uint64_t m_launchTimeRaw;
 	uint64_t m_initTimeRaw;
 
-	// we divide our frame into four phases:
-	// "CPU" is our scene update.
-	// "Gather" is the time we take collecting draw commands.
+	// we divide our frame into three buckets:
+	// "Update" is our scene update.
 	// "Draw" is the time we spend processing the list of draw commands.
-	// "GPU" is the time we spend blocked after submitting our last draw command,
-	// waiting for permission to start the next frame. (This time is often vsync)
-	uint64_t m_startCpu;
-	uint64_t m_startGather;
+	// "Present" is the time we spend blocked while presenting our draw.
+	//
+	uint64_t m_startFrame;
 	uint64_t m_startDraw;
-	uint64_t m_startGpu;
-	unsigned int m_missedFrames;
+	uint64_t m_startPresent;
 
-	uint64_t m_gpuTime;
-	uint64_t m_gatherTime;
-	uint64_t m_drawTime;
-	uint64_t m_cpuTime;
+	uint64_t m_cpuMicroseconds;
+	uint64_t m_drawMicroseconds;
+	uint64_t m_presentMicroseconds;
+	uint64_t m_sleepMicroseconds;
+
+	uint64_t m_drawAccumulator;
+	uint64_t m_presentAccumulator;
+
+	unsigned int m_missedFrames;
 
 #if defined(DEBUG_TIMING_BAR)
 	vsTimerSystemSprite * m_sprite;
@@ -75,6 +77,11 @@ public:
 	virtual void Init();
 	virtual void Deinit();
 
+	void BeginDraw();
+	void EndDraw();
+	void BeginPresent();
+	void EndPresent();
+
 	// this maximum FPS rate is automatically set by the renderer, and tells us
 	// how many FPS we're allowed to render at.
 	void SetMaxFPS( int fps );
@@ -85,25 +92,21 @@ public:
 	float GetSecondsSinceLaunch();
 
 	virtual void Update( float timeStep );
-	virtual void PostUpdate(float timeStep);
-	virtual void EndGatherTime(); // we've finished building our display lists
-	virtual void EndDrawTime(); // we've finished processing our display lists
-	virtual void EndGPUTime(); // OpenGL has returned control to our app
 
-	uint64_t GetCurrentMillis() { return m_startCpu / 1000; }
+	uint64_t GetCurrentMillis() { return m_startFrame / 1000; }
 	unsigned int GetMissedFrameCount() { return m_missedFrames / 1000; }
 
 	// all of the following are returning MILLISECONDS.
 	// [TODO] Clean up this API to make that more obvious
-	uint64_t GetGPUTime() { return m_gpuTime / 1000; }
-	uint64_t GetRenderTime() { return (m_gatherTime + m_drawTime) / 1000; }
-	uint64_t GetGatherTime() { return m_gatherTime / 1000; }
-	uint64_t GetDrawTime() { return m_drawTime / 1000; }
-	uint64_t GetCPUTime() { return m_cpuTime / 1000; }
+	uint64_t GetCPUMilliseconds() { return m_cpuMicroseconds / 1000; }
+	uint64_t GetDrawMilliseconds() { return m_drawMicroseconds / 1000; }
+	uint64_t GetPresentMilliseconds() { return m_presentMicroseconds / 1000; }
+	uint64_t GetSleepMilliseconds() { return m_sleepMicroseconds / 1000; }
 
 	void ShowTimingBars(bool show);
 
 	static vsTimerSystem * Instance() { return s_instance; }
 };
+
 
 #endif // SYS_FRAMERATECAP_H

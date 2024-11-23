@@ -1009,7 +1009,7 @@ vsRenderer_OpenGL3::Present()
 	{
 		PROFILE_GL("FinishPresent");
 
-		vsTimerSystem::Instance()->EndGPUTime();
+		// vsTimerSystem::Instance()->EndGPUTime();
 	}
 	// {
 	// 	int nowWidth, nowHeight;

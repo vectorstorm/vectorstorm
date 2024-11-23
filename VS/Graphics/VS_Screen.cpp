@@ -313,6 +313,8 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptio
 void
 vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
+	vsTimerSystem::Instance()->BeginDraw();
+
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
 
@@ -346,14 +348,15 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 	pipeline->PostDraw();
 
 	m_currentSettings = nullptr;
+	vsTimerSystem::Instance()->EndDraw();
 }
 
 void
 vsScreen::Present()
 {
-	vsTimerSystem::Instance()->EndGatherTime();
+	vsTimerSystem::Instance()->BeginPresent();
 	m_renderer->Present();
-	vsTimerSystem::Instance()->EndDrawTime();
+	vsTimerSystem::Instance()->EndPresent();
 }
 
 vsScene *
