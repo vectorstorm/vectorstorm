@@ -38,6 +38,9 @@ class vsRenderQueue
 	vsBox2D					m_screenBox;
 	vsDisplayList *			m_genericList;
 
+	int						m_pixelX; // the pixel dimensions of the render target we're drawing into
+	int						m_pixelY; // N.B. these get set during Scene::Draw, so if something *inside* a scene draw changes render target, we won't notice!
+
 	vsRenderQueueStage *	m_stage;
 	int						m_stageCount;
 
@@ -65,6 +68,10 @@ public:
 	void			StartRender( const vsMatrix4x4& projection, const vsMatrix4x4& worldToView, const vsMatrix4x4& iniMatrix, const vsBox2D& screenBox, int materialHideFlags = 0);
 	void			Draw( vsDisplayList *list );	// write our queue contents into here.  Called internally.
 	void			EndRender();
+
+	void SetPixelDimensions( int width, int height ) { m_pixelX = width; m_pixelY = height; }
+	int GetPixelsX() { return m_pixelX; }
+	int GetPixelsY() { return m_pixelY; }
 
 	const vsMatrix4x4& PushMatrix( const vsMatrix4x4 &matrix );
     const vsMatrix4x4& PushTransform2D( const vsTransform2D &transform );

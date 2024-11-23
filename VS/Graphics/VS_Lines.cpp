@@ -1014,7 +1014,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
 	int startOfStripVertexCursor = m_vertexCursor;
 	float fullFov = queue->GetFOV();
-	float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
+	// float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
+	float fovPerPixel = fullFov / queue->GetPixelsY();
 	float tanHalfFovPerPixel = 2.f * vsTan( 0.5f * fovPerPixel );
 
 	// vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();

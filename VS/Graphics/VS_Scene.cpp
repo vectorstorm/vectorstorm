@@ -13,6 +13,7 @@
 #include "VS_DisplayList.h"
 #include "VS_Entity.h"
 #include "VS_RenderQueue.h"
+#include "VS_RenderTarget.h"
 #include "VS_Screen.h"
 #include "VS_System.h"
 #include "VS_Profile.h"
@@ -242,7 +243,7 @@ vsScene::Update( float timeStep )
 }
 
 void
-vsScene::Draw( vsDisplayList *list, int flags )
+vsScene::Draw( vsDisplayList *list, vsRenderTarget *target, int flags )
 {
 	if ( !IsEnabled() )
 		return;
@@ -262,6 +263,10 @@ vsScene::Draw( vsDisplayList *list, int flags )
 	}
 
 	s_renderQueue.StartRender(this, flags);
+	if ( target )
+		s_renderQueue.SetPixelDimensions( target->GetWidth(), target->GetHeight() );
+	else
+		s_renderQueue.SetPixelDimensions( vsScreen::Instance()->GetWidth(), vsScreen::Instance()->GetHeight() );
 
 	if ( m_clearDepth )
 		list->ClearDepth();

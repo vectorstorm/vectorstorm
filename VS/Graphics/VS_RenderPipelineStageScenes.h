@@ -25,11 +25,14 @@ class vsRenderPipelineStageScenes: public vsRenderPipelineStage
 	vsRenderTarget *m_target;
 	vsRenderer::Settings m_settings;
 	vsCamera3D *m_customCamera;
+	vsColor m_clearColor;
 	bool m_clear;
 public:
 	vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = nullptr );
 	vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera = nullptr );
 	virtual ~vsRenderPipelineStageScenes();
+
+	void SetClearColor( const vsColor& c ) { m_clearColor = c; }
 
 	virtual void Draw( vsDisplayList *list );
 };
