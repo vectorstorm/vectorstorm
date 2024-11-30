@@ -61,7 +61,7 @@ class vsColorPacked
 public:
 	uint8_t r, g, b, a;
 
-	vsColorPacked(uint8_t red=0, uint8_t green=0, uint8_t blue=0, uint8_t alpha=1) { r=red; g=green; b=blue; a=alpha; }
+	vsColorPacked(uint8_t red=0, uint8_t green=0, uint8_t blue=0, uint8_t alpha=255) { r=red; g=green; b=blue; a=alpha; }
 	vsColorPacked(const vsColor& c);
 	vsColorPacked(const vsColorHSV& hsv);
 
