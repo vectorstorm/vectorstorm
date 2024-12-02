@@ -290,14 +290,14 @@ vsTimerSystem::Update( float timeStep )
 
 	m_startFrame = now;
 
-	if ( vsScreen::Instance()->Resized() )
-	{
-#if defined(DEBUG_TIMING_BAR)
-		PROFILE("PositionTimingBar");
-		vsVector2D bl = vsScreen::Instance()->GetDebugScene()->GetBottomLeftCorner();
-		m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
-#endif // DEBUG_TIMING_BAR
-	}
+// 	if ( vsScreen::Instance()->Resized() )
+// 	{
+// #if defined(DEBUG_TIMING_BAR)
+// 		PROFILE("PositionTimingBar");
+// 		vsVector2D bl = vsScreen::Instance()->GetDebugScene()->GetBottomLeftCorner();
+// 		m_sprite->SetPosition( bl + vsVector2D(10.0f, -120.f) );
+// #endif // DEBUG_TIMING_BAR
+// 	}
 
 }
 
