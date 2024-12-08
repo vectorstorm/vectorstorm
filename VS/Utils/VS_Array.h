@@ -109,17 +109,14 @@ public:
 
 	void	AddItem( const T &item )
 	{
-		if ( m_arrayLength < m_arrayStorage )
-		{
-			m_array[ m_arrayLength++ ] = item;
-		}
-		else
+		if ( m_arrayLength >= m_arrayStorage )
 		{
 			// reallocate our array and copy data into it.
-			int newSize = vsMax( 4, m_arrayStorage * 2 );
+			int newSize = vsMax( 4, m_arrayLength * 2 );
 			Reserve(newSize);
-			return AddItem( item );
 		}
+
+		m_array[ m_arrayLength++ ] = item;
 	}
 
 	void	Append( const vsArray<T> &o )
