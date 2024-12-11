@@ -19,6 +19,7 @@ class vsImage;
 class vsHalfIntImage;
 class vsHalfFloatImage;
 class vsSingleFloatImage;
+class vsRawImage;
 class vsRenderBuffer;
 class vsRenderTarget;
 class vsSurface;
@@ -66,6 +67,7 @@ public:
 	vsTextureInternal( const vsString &name, const vsHalfFloatImage *image );
 	vsTextureInternal( const vsString &name, const vsSingleFloatImage *image );
 	vsTextureInternal( const vsString &name, const vsHalfIntImage *image );
+	vsTextureInternal( const vsString &name, const vsRawImage *image );
 	vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer=0, bool depth=false );
 	vsTextureInternal( const vsString &name, vsRenderBuffer *buffer );
 

@@ -15,6 +15,7 @@
 #include "VS_HalfIntImage.h"
 #include "VS_HalfFloatImage.h"
 #include "VS_SingleFloatImage.h"
+#include "VS_RawImage.h"
 #include "VS_RenderTarget.h"
 #include "VS_RenderBuffer.h"
 
@@ -112,7 +113,7 @@ vsTextureInternal::vsTextureInternal( const vsString&name, const vsArray<vsStrin
 		int h = image.GetHeight();
 
 		m_width = w;
-		m_height = w;
+		m_height = h;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -158,7 +159,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 	int h = image->GetHeight();
 
 	m_width = w;
-	m_height = w;
+	m_height = h;
 
 	GLuint t;
 	glGenTextures(1, &t);
@@ -196,7 +197,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 	int h = image->GetHeight();
 
 	m_width = w;
-	m_height = w;
+	m_height = h;
 
 	GLuint t;
 	glGenTextures(1, &t);
@@ -234,7 +235,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage
 	int h = image->GetHeight();
 
 	m_width = w;
-	m_height = w;
+	m_height = h;
 
 	GLuint t;
 	glGenTextures(1, &t);
@@ -254,6 +255,49 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfIntImage
 			image->RawData());
 	// m_nearestSampling = false;
 	_UseMemory( w * h * sizeof(uint16_t) * 4 );
+}
+
+vsTextureInternal::vsTextureInternal( const vsString &name, const vsRawImage *image ):
+	vsResource(name),
+	m_texture(0),
+	m_depth(false),
+	m_premultipliedAlpha(false),
+	m_lockedSampling(true),
+	m_tbo(nullptr),
+	m_renderTarget(nullptr),
+	m_surfaceBuffer(0),
+	m_memoryUsage(0L),
+	m_state(0)
+{
+	int w = image->GetWidth();
+	int h = image->GetHeight();
+
+	m_width = w;
+	m_height = h;
+
+	GLuint t;
+	glGenTextures(1, &t);
+	m_texture = t;
+
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+	int internalFormat = GL_RG16UI;
+	int glFormat = GL_RG_INTEGER;
+	int glType = GL_UNSIGNED_SHORT;
+
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			internalFormat,
+			w, h,
+			0,
+			glFormat,
+			glType,
+			image->RawData());
+	// m_nearestSampling = false;
+	_UseMemory( image->GetLength() );
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, const vsHalfFloatImage *image ):

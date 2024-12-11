@@ -420,6 +420,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_HalfIntImage.h
 	VS/Utils/VS_Image.cpp
 	VS/Utils/VS_Image.h
+	VS/Utils/VS_RawImage.cpp
+	VS/Utils/VS_RawImage.h
 	VS/Utils/VS_LinkedList.h
 	VS/Utils/VS_LinkedListStore.h
 	VS/Utils/VS_LocalisationTable.cpp
