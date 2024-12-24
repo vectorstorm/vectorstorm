@@ -600,17 +600,23 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 
 				if ( e->list )
 					list->Append( *e->list );
-				else if ( e->vbo && e->ibo )
+				else
 				{
-					list->BindBuffer( e->vbo );
-					if ( e->simpleType == vsFragment::SimpleType_TriangleList )
-						list->TriangleListBuffer( e->ibo );
-					else if ( e->simpleType == vsFragment::SimpleType_TriangleFan )
-						list->TriangleFanBuffer( e->ibo );
-					else if ( e->simpleType == vsFragment::SimpleType_TriangleStrip )
-						list->TriangleStripBuffer( e->ibo );
-					list->ClearArrays();
+					if ( e->ibo )
+					{
+						if ( e->vbo )
+							list->BindBuffer( e->vbo );
+
+						if ( e->simpleType == vsFragment::SimpleType_TriangleList )
+							list->TriangleListBuffer( e->ibo );
+						else if ( e->simpleType == vsFragment::SimpleType_TriangleFan )
+							list->TriangleFanBuffer( e->ibo );
+						else if ( e->simpleType == vsFragment::SimpleType_TriangleStrip )
+							list->TriangleStripBuffer( e->ibo );
+					}
 				}
+				list->ClearArrays();
+
 				if ( e->shaderOptions )
 					list->PopShaderOptions();
 				if ( e->shaderValues )
