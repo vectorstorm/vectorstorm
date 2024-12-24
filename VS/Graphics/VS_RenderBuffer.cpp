@@ -39,6 +39,7 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_glArrayBytes(0),
     m_activeBytes(0),
     m_type(type),
+	m_useRestart(false),
     m_contentType(ContentType_Custom),
     m_bufferID(-1),
     m_vbo(false),

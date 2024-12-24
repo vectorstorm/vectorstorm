@@ -121,7 +121,9 @@ public:
 		Bool_ScissorTest,
 		//Bool_Smooth,
 		//Bool_Texture2D,
+		Bool_PrimitiveRestartFixedIndex,
 		Bool_DepthMask,
+
 		ClientBool_VertexArray,
 		ClientBool_NormalArray,
 		ClientBool_ColorArray,

@@ -144,6 +144,7 @@ vsRendererState::vsRendererState()
 	//m_boolState[Bool_Smooth] =			new glEnableSetter( GL_SMOOTH, false );
 	//m_boolState[Bool_Texture2D] =		new glEnableSetter( GL_TEXTURE_2D, false );
 
+	m_boolState[Bool_PrimitiveRestartFixedIndex] = new glEnableSetter( GL_PRIMITIVE_RESTART_FIXED_INDEX, false );
 	m_boolState[Bool_DepthMask] =		new glDepthMaskSetter( false );
 
 	m_boolState[ClientBool_VertexArray] =				new glClientStateSetter( 0, false );
