@@ -1337,6 +1337,19 @@ vsSystem::LogSystemDetails()
 	vsLog("CPU:  %s", CPUDescription().c_str());
 	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
 	vsLog("System RAM:  %0.2f gb", GetTotalSystemMemory() / (1024.f*1024.f*1024.f));
+
+#if defined(_WIN32)
+#elif defined(__APPLE_CC__)
+#else
+	// linux
+	const char* type = getenv("XDG_SESSION_TYPE");
+	const char* wayDisplay = getenv("WAYLAND_DISPLAY");
+	const char* xDisplay = getenv("DISPLAY");
+
+	vsLog("XDG Session Type: %s", type ? type : "None!");
+	vsLog("Wayland Display: %s", wayDisplay ? wayDisplay : "None!");
+	vsLog("X11 Display: %s", xDisplay ? xDisplay : "None!");
+#endif
 }
 
 Resolution *
