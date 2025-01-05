@@ -2621,14 +2621,35 @@ vsRenderer_OpenGL3::FenceLoadingContext()
 {
 	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+	if ( fenceId == 0 )
+	{
+		vsLog("Error:  glFenceSync() returned '0' as a fence name!  Misbehaviour will probably follow since I can't wait for a '0' fence to complete.");
+		return;
+	}
 	GLenum result;
 	int waitedSeconds = 0;
-	while(true)
+	bool fenceCleared = false;
+	while(!fenceCleared)
 	{
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
-		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
-		waitedSeconds += 5;
-		vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
+		switch( result )
+		{
+			case GL_TIMEOUT_EXPIRED:
+				waitedSeconds += 5;
+				vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
+				break;
+			case GL_WAIT_FAILED:
+				vsLog("ERROR:  GL_WAIT_FAILED returned from glClientWaitSync()!");
+				break;
+			case GL_ALREADY_SIGNALED:
+				// you had me at hello
+				fenceCleared = true;
+				break;
+			case GL_CONDITION_SATISFIED:
+				// we waited a bit but now we're done!
+				fenceCleared = true;
+				break;
+		}
 	}
 	glDeleteSync(fenceId);
 }
