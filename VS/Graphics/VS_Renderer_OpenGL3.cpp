@@ -2619,6 +2619,8 @@ vsRenderer_OpenGL3::IsLoadingContext()
 void
 vsRenderer_OpenGL3::FenceLoadingContext()
 {
+	vsLog("> GL fencing");
+
 	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 	if ( fenceId == 0 )
@@ -2649,9 +2651,14 @@ vsRenderer_OpenGL3::FenceLoadingContext()
 				// we waited a bit but now we're done!
 				fenceCleared = true;
 				break;
+			default:
+				vsLog("Unknown result value '%u' returned from glClientWaitSync", result);
+				fenceCleared = true;
+				break;
 		}
 	}
 	glDeleteSync(fenceId);
+	vsLog("> GL fence completed");
 }
 
 vsShader*
