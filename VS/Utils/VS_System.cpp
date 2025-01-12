@@ -553,6 +553,16 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 {
 	PHYSFS_init(argv[0]);
 
+	bool allowMods = true;
+	for ( int i = 0; i < argc; i++ )
+	{
+		if ( vsString(argv[i]) == "--no-mods" )
+		{
+			vsLog("No-Mods mode enabled");
+			allowMods = false;
+		}
+	}
+
 	char* prefPathChar = SDL_GetPrefPath(companyName.c_str(), title.c_str());
 	vsAssertF(prefPathChar, "InitPhysFS: Unable to figure out where to save files: %s", SDL_GetError());
 	vsString writeDir(prefPathChar);
@@ -647,7 +657,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  baseDirectory + "Data/";
 #endif
 
-	_FindMods();
+	if ( allowMods )
+		_FindMods();
 
 #ifdef ZIPDATA
 	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS.zip") );
