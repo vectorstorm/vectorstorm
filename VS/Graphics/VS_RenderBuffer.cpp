@@ -375,7 +375,7 @@ vsRenderBuffer::BindAsAttribute( int attributeId )
 	}
 	else
 	{
-		vsAssert(0, "Not yet implemented");
+		vsAssertF(0, "vsRenderBuffer::BindAsAttribute(): ContentType: %d, VBO: %s not implemented?", m_contentType, m_vbo ? "TRUE" : "FALSE");
 	}
 }
 
