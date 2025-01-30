@@ -199,6 +199,13 @@ vsBuiltInFont::Init()
 	}
 }
 
+void
+vsBuiltInFont::Deinit()
+{
+	vsDelete(s_P);
+	vsDeleteArray(s_I);
+}
+
 
 static const float c_kerningFactor = 0.6f;
 static const float c_spaceKerning = 0.8f;	// space width, compared to a regular character

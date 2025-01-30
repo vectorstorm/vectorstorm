@@ -464,6 +464,7 @@ vsSystem::DeinitGameData()
 void
 vsSystem::Deinit()
 {
+	vsBuiltInFont::Deinit();
 	m_preferences->Save();
 
 	m_screen->Deinit();

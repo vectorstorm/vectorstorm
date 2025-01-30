@@ -25,6 +25,7 @@ class vsBuiltInFont
 public:
 
 	static void				Init();	// called internally
+	static void				Deinit();	// called internally
 
 	static void				CreateStringInDisplayList(vsDisplayList *list, const vsString &string, float size, float capSize=-1.f, JustificationType j = Justification_Left, float maxWidth = -1.f);
 
