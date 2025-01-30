@@ -17,6 +17,7 @@ class vsStore;
 
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_String.h"
+#include <cstdint>
 
 struct zipdata;
 
