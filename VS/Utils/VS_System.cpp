@@ -466,8 +466,9 @@ vsSystem::Deinit()
 {
 	m_preferences->Save();
 
+	m_screen->Deinit();
+	vsDelete( m_textureManager ); // we need to destroy the texture manager BEFORE the renderer.  (as we can't call into OpenGL to release textures after the renderer is down!)
 	vsDelete( m_screen );
-	vsDelete( m_textureManager );
 
 	for ( int i = 0; i < CursorStyle_MAX; i++ )
 		SDL_FreeCursor( m_cursor[i] );

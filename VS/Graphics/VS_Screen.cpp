@@ -77,8 +77,13 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 vsScreen::~vsScreen()
 {
 	vsLog(" >> FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
-	DestroyScenes();
 	vsDelete( m_renderer );
+}
+
+void
+vsScreen::Deinit()
+{
+	DestroyScenes();
 	vsDelete( m_fifo );
 	s_instance = nullptr;
 }
