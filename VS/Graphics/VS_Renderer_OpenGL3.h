@@ -39,7 +39,7 @@ struct SDL_Surface;
 class vsRenderer_OpenGL3: public vsRenderer
 {
 	int					m_flags;
-	vsShaderSuite		m_defaultShaderSuite;
+	vsShaderSuite		*m_defaultShaderSuite;
 
 	vsVector3D           m_currentCameraPosition;
 	Settings             m_currentSettings;

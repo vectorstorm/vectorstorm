@@ -597,7 +597,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 	GL_CHECK("Initialising OpenGL rendering");
 
-	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
+	m_defaultShaderSuite = new vsShaderSuite;
+	m_defaultShaderSuite->InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	GL_CHECK("Initialising OpenGL rendering");
 
 
@@ -659,6 +660,8 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	}
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &m_vao);
+
+	vsDelete( m_defaultShaderSuite );
 
 	SDL_GL_DeleteContext( m_sdlGlContext );
 	SDL_GL_DeleteContext( m_loadingGlContext );
@@ -2033,14 +2036,14 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::NormalTex);
 					}
 					else
 					{
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::Normal);
 					}
 					break;
 				case DrawMode_Lit:
@@ -2049,14 +2052,14 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::LitTex);
 					}
 					else
 					{
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::Lit);
 					}
 					break;
 				default:
@@ -2675,15 +2678,15 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 		case DrawMode_PremultipliedAlpha:
 		case DrawMode_Absolute:
 			if ( mat->m_texture[0] )
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::NormalTex);
 			else
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::Normal);
 			break;
 		case DrawMode_Lit:
 			if ( mat->m_texture[0] )
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::LitTex);
 			else
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::Lit);
 			break;
 		default:
 			vsAssert(0,"Unknown drawmode??");
