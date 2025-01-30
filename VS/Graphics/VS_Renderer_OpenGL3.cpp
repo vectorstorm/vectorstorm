@@ -653,11 +653,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
-	{
-		GL_CHECK_SCOPED("vsRenderer_OpenGL3 destructor");
-		vsDelete(m_window);
-		vsDelete(m_scene);
-	}
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &m_vao);
 
@@ -667,6 +662,15 @@ vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 	SDL_GL_DeleteContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = nullptr;
+}
+
+void
+vsRenderer_OpenGL3::Deinit()
+{
+	// we need to destroy our render targets here, so this can be called
+	// before the texture manager is shut down.
+	vsDelete(m_window);
+	vsDelete(m_scene);
 }
 
 void
@@ -1297,6 +1301,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 
 	while(op)
 	{
+		GL_CHECK("ProcOp");
 // #define LOG_OPS
 #ifdef LOG_OPS
 		vsLog("%s", vsDisplayList::GetOpCodeString(op->type).c_str());

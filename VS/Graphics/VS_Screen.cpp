@@ -85,6 +85,7 @@ vsScreen::Deinit()
 {
 	DestroyScenes();
 	vsDelete( m_fifo );
+	m_renderer->Deinit();
 	s_instance = nullptr;
 }
 

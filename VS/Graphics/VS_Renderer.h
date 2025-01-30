@@ -90,6 +90,7 @@ public:
 	};
 	vsRenderer(int width, int height, int depth, int flags);
 	virtual ~vsRenderer();
+	virtual void Deinit() = 0; // called before the destructor.
 
 	virtual bool	CheckVideoMode() = 0;
 	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync) = 0;

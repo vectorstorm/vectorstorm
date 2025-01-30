@@ -128,6 +128,7 @@ public:
 
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
+	void Deinit() override; // we're about to shut down
 
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
