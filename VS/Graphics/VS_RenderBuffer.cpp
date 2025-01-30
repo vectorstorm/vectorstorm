@@ -41,7 +41,7 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_type(type),
 	m_useRestart(false),
     m_contentType(ContentType_Custom),
-    m_bufferID(-1),
+    m_bufferID(0),
     m_vbo(false),
     m_bindType(BindType_Array)
 {
@@ -51,7 +51,6 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 #if !TARGET_OS_IPHONE
 	if ( glGenBuffers && m_type != Type_NoVBO )
 	{
-		glGenBuffers(1, (GLuint*)&m_bufferID);
 		m_vbo = true;
 	}
 #endif
@@ -63,7 +62,7 @@ vsRenderBuffer::~vsRenderBuffer()
 	{
 		vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_Buffer, m_glArrayBytes );
 		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
-		m_bufferID = -1;
+		m_bufferID = 0;
 	}
 
 	{
@@ -118,6 +117,7 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
+		GL_CHECK("RenderBuffer::SetArray");
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
 
 	int bindPoints[BindType_MAX] =
@@ -132,6 +132,9 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 
 	if ( m_vbo )
 	{
+		if ( m_bufferID <= 0 ) // we haven't allocated a VBO name yet, so let's do so now!
+			glGenBuffers(1, (GLuint*)&m_bufferID);
+
 		glBindBuffer(bindPoint, m_bufferID);
 
 		if ( size > m_glArrayBytes )
@@ -143,15 +146,16 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		}
 		else
 		{
+			glBufferSubData(bindPoint, 0, size, data);
 			// glBufferData(bindPoint, size, nullptr, s_glBufferType[m_type]);
 			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
-			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-			if ( ptr )
-			{
-				memcpy(ptr, data, size);
-				glUnmapBuffer(bindPoint);
-			}
+			// void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+            //
+			// if ( ptr )
+			// {
+			// 	memcpy(ptr, data, size);
+			// 	glUnmapBuffer(bindPoint);
+			// }
 		}
 
 #ifdef VS_PRISTINE_BINDINGS
@@ -526,6 +530,7 @@ vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
 void
 vsRenderBuffer::Bind( vsRendererState *state )
 {
+	GL_CHECK_SCOPED("Bind");
 	switch( m_contentType )
 	{
 		case ContentType_P:
@@ -1092,6 +1097,7 @@ vsRenderBuffer::GetColor(int i) const
 void
 vsRenderBuffer::TriStripBuffer(int instanceCount)
 {
+	GL_CHECK_SCOPED("TriStripBuffer");
 	if ( m_vbo )
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
@@ -1112,6 +1118,7 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 void
 vsRenderBuffer::TriListBuffer(int instanceCount)
 {
+	GL_CHECK_SCOPED("TriListBuffer");
 	if ( m_vbo )
 	{
 		int elements = m_activeBytes/sizeof(uint16_t);
