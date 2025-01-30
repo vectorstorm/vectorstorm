@@ -387,7 +387,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // VS_GL_DEBUG
 
-	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
 	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
 	g_sdlWindow = SDL_CreateWindow("", x, y, width, height, videoFlags);
@@ -453,6 +452,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
 	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_loadingGlContext )
 	{
@@ -461,6 +461,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		exit(1);
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
 	{
@@ -2356,7 +2357,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 {
 	GLuint vertShader = -1;
 	GLuint fragShader = -1;
-	GLchar buf[256];
+	GLchar buf[1024] = "\0";
 	GLint success = true;
 
 	vertShader = glCreateShader(GL_VERTEX_SHADER);
@@ -2368,12 +2369,17 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 	glShaderSource(vertShader, 1, &vert, nullptr);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-	if (!success)
+	// if (!success)
 	{
-		PrintAnnotatedSource(vert);
 		// vsLog("%s", vert);
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-		vsLog("%s",buf);
+		if ( buf[0] != 0 )
+		{
+#ifdef _DEBUG
+			PrintAnnotatedSource(vert);
+#endif
+			vsLog("%s",buf);
+		}
 
 		vsAssert(success || !requireSuccess,"Unable to compile vertex shader.\n");
 	}
@@ -2383,11 +2389,16 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 		glShaderSource(fragShader, 1, &frag, nullptr);
 		glCompileShader(fragShader);
 		glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-		if (!success)
+		// if (!success)
 		{
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-			PrintAnnotatedSource(frag);
-			vsLog("%s",buf);
+			if ( buf[0] != 0 )
+			{
+#ifdef _DEBUG
+				PrintAnnotatedSource(frag);
+#endif
+				vsLog("%s",buf);
+			}
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
 		}
 	}
