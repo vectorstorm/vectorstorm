@@ -61,8 +61,11 @@ vsRenderBuffer::~vsRenderBuffer()
 	if ( m_vbo )
 	{
 		vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_Buffer, m_glArrayBytes );
-		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
-		m_bufferID = 0;
+		if ( m_bufferID != 0 )
+		{
+			glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+			m_bufferID = 0;
+		}
 	}
 
 	{
@@ -134,6 +137,8 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 	{
 		if ( m_bufferID <= 0 ) // we haven't allocated a VBO name yet, so let's do so now!
 			glGenBuffers(1, (GLuint*)&m_bufferID);
+
+		vsAssert( m_bufferID != 0, "0 bufferID" );
 
 		glBindBuffer(bindPoint, m_bufferID);
 
@@ -1202,17 +1207,18 @@ vsRenderBuffer::LineListBuffer(int instanceCount)
 }
 
 #define VBO_SIZE (1024 * 1024)
-static GLuint g_vbo = 0xffffffff;
+static GLuint g_vbo = 0;
 static int g_vboCursor = VBO_SIZE;
 
 void
 vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount )
 {
 	vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
-	if ( g_vbo == 0xffffffff )
+	if ( g_vbo == 0 )
 	{
 		glGenBuffers(1, &g_vbo);
 	}
+	vsAssert( g_vbo != 0, "0 g_vbo id" );
 
 	glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
 
@@ -1243,7 +1249,7 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 	if ( g_vboCursor + bufferSize >= VBO_SIZE )
 	{
 		vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
-		if ( g_vbo == 0xffffffff )
+		if ( g_vbo == 0 )
 		{
 			glGenBuffers(1, &g_vbo);
 		}
@@ -1286,17 +1292,20 @@ vsRenderBuffer::BindNormalArray( vsRendererState *state, void* buffer, int count
 }
 
 #define EVBO_SIZE (1024 * 1024)
-static GLuint g_evbo = 0xffffffff;
+static GLuint g_evbo = 0;
 static int g_evboCursor = EVBO_SIZE;
 
 void
 vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int instanceCount )
 {
 	int bufferSize = count * sizeof(uint16_t);
-	if ( g_evbo == 0xffffffff )
+	if ( g_evbo == 0 )
 	{
 		glGenBuffers(1, &g_evbo);
 	}
+	vsAssert( g_evbo  != 0, "0 evbo ID" );
+
+
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
 
