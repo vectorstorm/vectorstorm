@@ -997,6 +997,10 @@ vsRenderer_OpenGL3::Present()
 {
 	PROFILE_GL("Present");
 	{
+		PROFILE_GL("Flush");
+		glFlush();
+	}
+	{
 	PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
 #ifdef __apple_cc__

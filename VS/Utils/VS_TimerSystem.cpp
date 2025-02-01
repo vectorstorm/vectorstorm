@@ -23,7 +23,7 @@
 // set to 1 to explicitly insert delays between frames,
 // if the user has disabled vsync, in order to try to
 // render just at 60fps.
-#define ENFORCE_FPS_MAXIMUM (1)
+#define ENFORCE_FPS_MAXIMUM (0)
 
 #if !TARGET_OS_IPHONE
 #include <SDL2/SDL.h>

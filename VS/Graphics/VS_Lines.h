@@ -91,8 +91,14 @@ class vsLines3D: public vsModel
 	float m_texScale;
 	bool m_widthInScreenspace;
 
-	vsRenderBuffer m_vertices;
-	vsRenderBuffer m_indices;
+	vsRenderBuffer *m_vertices;
+	vsRenderBuffer *m_indices;
+
+	vsRenderBuffer m_av;
+	vsRenderBuffer m_ai;
+	vsRenderBuffer m_bv;
+	vsRenderBuffer m_bi;
+
 	int m_vertexCursor;
 	int m_indexCursor;
 

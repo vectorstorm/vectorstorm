@@ -89,6 +89,7 @@ vsRenderBuffer::SetActiveSize( int size )
 void
 vsRenderBuffer::SetArraySize_Internal( int size )
 {
+	PROFILE("vsRenderBuffer::SetArraySize_Internal");
 	if ( m_array && size > m_arrayBytes )
 	{
 		vsDeleteArray( m_array );
@@ -105,6 +106,7 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 void
 vsRenderBuffer::ResizeArray_Internal( int size )
 {
+	PROFILE("vsRenderBuffer::ResizeArray_Internal");
 	if ( m_array && size > m_arrayBytes )
 	{
 		char* newArray = new char[size];
@@ -120,10 +122,11 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
-		GL_CHECK("RenderBuffer::SetArray");
+	PROFILE("vsRenderBuffer::SetArray_Internal");
+	GL_CHECK("RenderBuffer::SetArray");
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
 
-	int bindPoints[BindType_MAX] =
+	const int bindPoints[BindType_MAX] =
 	{
 		GL_ARRAY_BUFFER,
 		GL_ELEMENT_ARRAY_BUFFER,
@@ -136,14 +139,21 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 	if ( m_vbo )
 	{
 		if ( m_bufferID <= 0 ) // we haven't allocated a VBO name yet, so let's do so now!
+		{
+			PROFILE("genbuffers");
 			glGenBuffers(1, (GLuint*)&m_bufferID);
+		}
 
 		vsAssert( m_bufferID != 0, "0 bufferID" );
 
-		glBindBuffer(bindPoint, m_bufferID);
+		{
+			PROFILE("glBindBuffer");
+			glBindBuffer(bindPoint, m_bufferID);
+		}
 
 		if ( size > m_glArrayBytes )
 		{
+			PROFILE("Larger, glBufferData");
 			glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 
 			vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_Buffer, size-m_glArrayBytes );
@@ -151,8 +161,9 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		}
 		else
 		{
+			PROFILE("Smaller, glBufferSubData");
 			glBufferSubData(bindPoint, 0, size, data);
-			// glBufferData(bindPoint, size, nullptr, s_glBufferType[m_type]);
+			// glBufferData(bindPoint, m_glArrayBytes, nullptr, s_glBufferType[m_type]);
 			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 			// void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
             //
@@ -164,13 +175,17 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		}
 
 #ifdef VS_PRISTINE_BINDINGS
+		{
+			PROFILE("Unbind");
 		glBindBuffer(bindPoint, 0);
+		}
 #endif
 	}
 	m_activeBytes = size;
 
 	if ( data != m_array )
 	{
+		PROFILE("Copying to internal array");
 		SetArraySize_Internal( size );
 		memcpy(m_array,data,size);
 	}
