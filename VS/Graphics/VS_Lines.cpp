@@ -1002,11 +1002,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 	// m_colors.BakeArray();
 	m_indices.BakeArray();
 
-	vsDisplayList *	list = queue->MakeTemporaryBatchList( GetMaterial(), queue->GetMatrix(), 1024 );
-	list->BindBuffer(&m_vertices);
-	// list->ColorBuffer(&m_colors);
-	list->TriangleListBuffer(&m_indices);
-	list->ClearBuffers();
+	queue->AddSimpleBatch( GetMaterial(), queue->GetMatrix(), &m_vertices, &m_indices, vsFragment::SimpleType_TriangleList);
 }
 
 void

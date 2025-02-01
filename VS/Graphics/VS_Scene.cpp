@@ -247,7 +247,7 @@ vsScene::Draw( vsDisplayList *list, vsRenderTarget *target, int flags )
 {
 	if ( !IsEnabled() )
 		return;
-	PROFILE("Scene::Draw");
+	PROFILE_EXTRA("Scene::Draw", m_name.c_str());
 	// if ( m_flatShading )
 	// {
 	// 	list->FlatShading();
