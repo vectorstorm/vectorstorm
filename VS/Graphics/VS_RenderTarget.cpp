@@ -511,12 +511,14 @@ const char c_enums[][30] =
 
 static void CheckFBO()
 {
+#if defined(VS_GL_DEBUG)
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status == GL_FRAMEBUFFER_COMPLETE)
 		return;
 
 	status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
+#endif
 }
 
 #undef GL_CHECK_SCOPED

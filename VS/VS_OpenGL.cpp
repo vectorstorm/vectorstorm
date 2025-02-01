@@ -10,6 +10,8 @@
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
 
+#ifdef VS_GL_DEBUG
+
 void ReportGLError( GLenum errcode, const char* string )
 {
 	if (errcode == GL_NO_ERROR)
@@ -62,4 +64,18 @@ vsGLContext::~vsGLContext()
 		ReportGLError(errcode, s.c_str());
 	}
 }
+#else
 
+void CheckGLError(const char* string)
+{
+}
+
+vsGLContext::vsGLContext( const char* string, const char* file, int line )
+{
+}
+
+vsGLContext::~vsGLContext()
+{
+}
+
+#endif

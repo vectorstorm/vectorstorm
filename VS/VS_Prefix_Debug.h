@@ -11,7 +11,7 @@
 #define _DEBUG
 #endif // _DEBUG
 
-#define VS_GL_DEBUG // enable OpenGL debugging
+// #define VS_GL_DEBUG // enable OpenGL debugging
 
 #include "VS_Prefix.h"
 
