@@ -9,26 +9,13 @@
 #ifndef VS_SEMAPHORE_H
 #define VS_SEMAPHORE_H
 
-#ifdef UNIX
-#include "VS_Mutex.h"
-#include <pthread.h>
-struct semaphore_t
-{
-	pthread_mutex_t	mutex;
-	pthread_cond_t	cond;
-};
-#else
-#include <windows.h>
-typedef HANDLE semaphore_t;
-#undef PlaySound  // yay, Windows.
-
-#endif
+#include "SDL2/SDL.h"
+typedef SDL_sem* semaphore_t;
 
 class vsSemaphore
 {
-	semaphore_t		m_semaphore;
-	int				m_value;
-	bool			m_released;
+	SDL_sem*		m_semaphore;
+	bool m_released;
 public:
 
 	vsSemaphore(unsigned int initialValue);

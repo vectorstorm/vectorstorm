@@ -8,25 +8,15 @@
 
 #include "VS_Semaphore.h"
 
-#ifdef UNIX
-// unix version of semaphore
-vsSemaphore::vsSemaphore(unsigned int initialValue)
+vsSemaphore::vsSemaphore(unsigned int initialValue):
+	m_semaphore( SDL_CreateSemaphore(initialValue) ),
+	m_released( false )
 {
-	pthread_mutex_init( &m_semaphore.mutex, nullptr );
-	pthread_mutex_lock( &m_semaphore.mutex );
-    pthread_cond_init( &m_semaphore.cond, nullptr );
-	m_value = initialValue;
-	m_released = false;
-	pthread_mutex_unlock( &m_semaphore.mutex );
 }
 
 vsSemaphore::~vsSemaphore()
 {
-	vsAssert(m_released, "Semaphore destroyed without being released?");
-	pthread_mutex_lock(&m_semaphore.mutex);
-	pthread_cond_destroy( &m_semaphore.cond );
-	pthread_mutex_unlock(&m_semaphore.mutex);
-	pthread_mutex_destroy( &m_semaphore.mutex );
+	SDL_DestroySemaphore(m_semaphore);
 }
 
 bool
@@ -35,74 +25,29 @@ vsSemaphore::Wait()
 	if ( m_released )
 		return false;
 
-	pthread_mutex_lock(&m_semaphore.mutex);
-	while ( m_value == 0 && !m_released )
-	{
-		pthread_cond_wait( &m_semaphore.cond, &m_semaphore.mutex );
-	}
-	if ( !m_released )
-	{
-		m_value--;
-	}
+	if ( 0 == SDL_SemWait( m_semaphore ) )
+		return true;
 
-	pthread_mutex_unlock(&m_semaphore.mutex);
-
-	return !m_released;
+	vsLog("Semaphore wait failed??");
+	return false;
 }
 
 void
 vsSemaphore::Post()
 {
-	pthread_mutex_lock(&m_semaphore.mutex);
-	m_value++;
-	pthread_cond_signal( &m_semaphore.cond );
-	pthread_mutex_unlock(&m_semaphore.mutex);
+	int result = SDL_SemPost( m_semaphore );
+
+	if ( 0 != result )
+		vsLog("Error in SDL_SemPost!");
 }
 
 void
 vsSemaphore::Release()
 {
-	if ( !m_released )
-	{
-		m_released = true;
-		pthread_cond_broadcast(&m_semaphore.cond);
-	}
-}
-
-#else
-
-vsSemaphore::vsSemaphore(unsigned int initialValue)
-{
-	m_semaphore = CreateSemaphore( nullptr, initialValue, 100000, nullptr );
-	m_released = false;
-}
-
-vsSemaphore::~vsSemaphore()
-{
-	CloseHandle( m_semaphore );
-}
-
-bool
-vsSemaphore::Wait()
-{
-	if ( m_released )
-		return false;
-	WaitForSingleObject( m_semaphore, INFINITE );
-	return !m_released;
-}
-
-void
-vsSemaphore::Post()
-{
-	ReleaseSemaphore( m_semaphore, 1, nullptr );
-}
-
-void
-vsSemaphore::Release()
-{
+	// bah.  I wish it was possible to tell it to increment the semaphore value
+	// by a constant amount instead of having to do it one by one.
 	m_released = true;
-	ReleaseSemaphore( m_semaphore, 1000, nullptr );
+	for ( int i = 0; i < 1000; i++ )
+		SDL_SemPost( m_semaphore );
 }
 
-
-#endif
