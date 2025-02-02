@@ -521,12 +521,6 @@ static void CheckFBO()
 #endif
 }
 
-#undef GL_CHECK_SCOPED
-#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
-#undef GL_CHECK
-#define GL_CHECK(s) CheckGLError(s);
-
-
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(-1),
 	m_height(-1),

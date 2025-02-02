@@ -26,6 +26,11 @@
 #endif
 
 
+#ifdef VS_GL_DEBUG
+
+#define GL_CHECK(s) CheckGLError(s);
+#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
+
 // create a vsGLContext and it will check for GL errors both when it's created
 // and when it's destroyed.
 class vsGLContext
@@ -40,10 +45,6 @@ public:
 void CheckGLError(const char* string);
 
 
-#ifdef VS_GL_DEBUG
-
-#define GL_CHECK(s) CheckGLError(s);
-#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
 
 #else
 #define GL_CHECK(s) {}
