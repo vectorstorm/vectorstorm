@@ -317,6 +317,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 	m_length(0),
 	m_moveOnDestruction(false)
 {
+	PROFILE("vsFile::vsFile");
 	vsString filename(filename_in);
 
 	if ( mode == MODE_Write || mode == MODE_WriteDirectly || mode == MODE_WriteCompressed )
@@ -582,6 +583,7 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 
 vsFile::~vsFile()
 {
+	PROFILE("vsFile::~vsFile");
 	if ( m_mode == MODE_WriteCompressed )
 	{
 		_PumpCompression( nullptr, 0, true );
@@ -618,6 +620,7 @@ vsFile::~vsFile()
 void
 vsFile::FlushBufferedWrites()
 {
+	PROFILE("vsFile::FlushBufferedWrites");
 	if ( !m_ok )
 		return;
 
@@ -634,6 +637,7 @@ vsFile::FlushBufferedWrites()
 void
 vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 {
+	PROFILE("vsFile::_DoWriteLiteralBytes");
 	if ( !m_ok )
 		return;
 
@@ -660,6 +664,7 @@ vsFile::_DoWriteLiteralBytes( const void* bytes, size_t byteCount )
 bool
 vsFile::Exists( const vsString &filename ) // static method
 {
+	PROFILE("vsFile::Exists");
 	PHYSFS_Stat stat;
 	if ( PHYSFS_stat(filename.c_str(), &stat) )
 	{
@@ -681,6 +686,7 @@ vsFile::Exists( const vsString &filename ) // static method
 bool
 vsFile::DirectoryExists( const vsString &filename ) // static method
 {
+	PROFILE("vsFile::DirectoryExists");
 	// Caution:  PHYSFS_stat is *super* slow on Windows!  Often multiple
 	// milliseconds, even off an SSD.
 	//
@@ -693,6 +699,7 @@ vsFile::DirectoryExists( const vsString &filename ) // static method
 bool
 vsFile::Delete( const vsString &filename ) // static method
 {
+	PROFILE("vsFile::Delete");
 	if ( DirectoryExists(filename) ) // This file is a directory, don't delete it!
 		return false;
 
@@ -702,6 +709,7 @@ vsFile::Delete( const vsString &filename ) // static method
 bool
 vsFile::Copy( const vsString &from, const vsString &to )
 {
+	PROFILE("vsFile::Copy");
 	if ( !vsFile::Exists(from) )
 		return false;
 
@@ -741,6 +749,7 @@ namespace {
 bool
 vsFile::Move( const vsString &user_from, const vsString &user_to )
 {
+	PROFILE("vsFile::Move");
 	vsScopedLock lock(s_renameMutex);
 
 	if ( !vsFile::Exists(user_from) )
@@ -803,6 +812,7 @@ vsFile::DeleteEmptyDirectory( const vsString &filename )
 bool
 vsFile::DeleteDirectory( const vsString &filename )
 {
+	PROFILE("vsFile::DeleteDirectory");
 	if ( DirectoryExists(filename) ) // This directory exists?
 	{
 		vsArray<vsString> files;
@@ -831,6 +841,7 @@ vsFile::DeleteDirectory( const vsString &filename )
 bool
 vsFile::MoveDirectory( const vsString& from, const vsString& to )
 {
+	PROFILE("vsFile::MoveDirectory");
 	if ( !vsFile::DirectoryExists(from) )
 		return false;
 
@@ -870,6 +881,7 @@ vsFile::MoveDirectory( const vsString& from, const vsString& to )
 bool
 vsFile::MoveDirectoryContents( const vsString& from, const vsString& to )
 {
+	PROFILE("vsFile::MoveDirectoryContents");
 	// We're going to try to move the files inside 'from' to the specified
 	// other directory.  This function is recursive, and will be called on
 	// directories inside the 'from' directory to the 'to' directory,
@@ -949,6 +961,7 @@ namespace
 int
 vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
+	PROFILE("vsFile::DirectoryContents");
     result->Clear();
 	char **files = PHYSFS_enumerateFiles(dirName.c_str());
 	if ( !files ) // error!
@@ -977,6 +990,7 @@ vsFile::DirectoryContents( vsArray<vsString>* result, const vsString &dirName ) 
 int
 vsFile::DirectoryFiles( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
+	PROFILE("vsFile::DirectoryFiles");
 	result->Clear();
 	vsArray<vsString> all;
 	DirectoryContents(&all, dirName);
@@ -994,6 +1008,7 @@ vsFile::DirectoryFiles( vsArray<vsString>* result, const vsString &dirName ) // 
 int
 vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName ) // static method
 {
+	PROFILE("vsFile::DirectoryDirectories");
     result->Clear();
 	vsArray<vsString> all;
 	DirectoryContents(&all, dirName);
@@ -1011,6 +1026,7 @@ vsFile::DirectoryDirectories( vsArray<vsString>* result, const vsString &dirName
 void
 vsFile::EnsureWriteDirectoryExists( const vsString &directoryName ) // static method
 {
+	PROFILE("vsFile::EnsureWriteDirectoryExists");
 	if ( !DirectoryExists(directoryName) )
 	{
 		int mkdirResult = PHYSFS_mkdir( MakeWriteFilename(directoryName).c_str() );

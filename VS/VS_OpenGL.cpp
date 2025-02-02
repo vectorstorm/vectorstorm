@@ -64,18 +64,5 @@ vsGLContext::~vsGLContext()
 		ReportGLError(errcode, s.c_str());
 	}
 }
-#else
-
-void CheckGLError(const char* string)
-{
-}
-
-vsGLContext::vsGLContext( const char* string, const char* file, int line )
-{
-}
-
-vsGLContext::~vsGLContext()
-{
-}
-
 #endif
+

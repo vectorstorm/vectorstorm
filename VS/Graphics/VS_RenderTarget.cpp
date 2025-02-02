@@ -497,6 +497,7 @@ vsSurface::vsSurface( int width, int height ):
 }
 
 
+#if defined(VS_GL_DEBUG)
 const char c_enums[][30] =
 {
 	"attachment",         // GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT........... All framebuffer attachment points are 'framebuffer attachment complete'.
@@ -508,6 +509,7 @@ const char c_enums[][30] =
 	"read buffer",        // GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER...........If READ_BUFFER is not NONE, then the value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for the color attachment point named by READ_BUFFER.
 	"unsupported format"  // GL_FRAMEBUFFER_UNSUPPORTED......................The combination of internal formats of the attached images does not violate an implementation-dependent set of restrictions.
 };
+#endif
 
 static void CheckFBO()
 {
@@ -784,6 +786,7 @@ vsSurface::Resize( int width, int height )
 	{
 		for ( int i = 0; i < m_textureCount; i++ )
 		{
+#ifdef VS_GL_DEBUG
 			const char* checkString[] = {
 				"vsSurface texture0",
 				"vsSurface texture1",
@@ -792,6 +795,7 @@ vsSurface::Resize( int width, int height )
 				"vsSurface texture+",
 			};
 			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
+#endif // VS_GL_DEBUG
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
 			GLenum format = ChannelsToGLBaseFormat( settings.channels );
