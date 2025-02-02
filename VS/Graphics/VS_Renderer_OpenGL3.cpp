@@ -1169,8 +1169,8 @@ vsRenderer_OpenGL3::FlushRenderState()
 								glBindTexture( GL_TEXTURE_2D, tval);
 								const bool clampU = t->GetClampU();
 								const bool clampV = t->GetClampV();
-								const bool linearSampling = t->GetLinearSampling();
-								const bool mipmap = t->GetUseMipmap();
+								// const bool linearSampling = t->GetLinearSampling();
+								// const bool mipmap = t->GetUseMipmap();
 
 								if ( !t->GetResource()->IsSamplingLocked() )
 								{
@@ -1184,25 +1184,25 @@ vsRenderer_OpenGL3::FlushRenderState()
 										glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 										t->GetResource()->SetClampedV(clampV);
 									}
-									if ( linearSampling != t->GetResource()->IsLinearSampling() ||
-											mipmap != t->GetResource()->IsUseMipmap() )
-									{
-										if ( linearSampling )
-										{
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-											if ( mipmap )
-												glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-											else
-												glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-										}
-										else
-										{
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-										}
-										t->GetResource()->SetLinearSampling(linearSampling);
-										t->SetUseMipmap(mipmap);
-									}
+									// if ( linearSampling != t->GetResource()->IsLinearSampling() ||
+									// 		mipmap != t->GetResource()->IsUseMipmap() )
+									// {
+									// 	if ( linearSampling )
+									// 	{
+									// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+									// 		if ( mipmap )
+									// 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+									// 		else
+									// 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+									// 	}
+									// 	else
+									// 	{
+									// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+									// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+									// 	}
+									// 	t->GetResource()->SetLinearSampling(linearSampling);
+									// 	t->SetUseMipmap(mipmap);
+									// }
 								}
 
 								// if ( m_currentMaterialInternal->m_clampU )

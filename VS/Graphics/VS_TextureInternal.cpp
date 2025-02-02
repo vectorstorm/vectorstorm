@@ -165,6 +165,8 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 	glGenTextures(1, &t);
 	m_texture = t;
 
+	SetUseMipmap(true);
+
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -176,7 +178,10 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
 			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// probably an image?  Set to use mipmap!
+	if ( IsUseMipmap() )
+		glGenerateMipmap(GL_TEXTURE_2D);
 	// m_nearestSampling = false;
 	_UseMemory( w * h * sizeof(uint32_t));
 }
@@ -205,7 +210,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,
 			0,
 			GL_RGBA32F,
@@ -214,7 +219,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 			GL_RGBA,
 			GL_FLOAT,
 			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+
+	if ( IsUseMipmap() )
+		glGenerateMipmap(GL_TEXTURE_2D);
 	// m_nearestSampling = false;
 	_UseMemory( w * h * sizeof(float) );
 }
@@ -419,7 +426,9 @@ vsTextureInternal::Blit( const vsImage *image, const vsVector2D &where)
 			GL_RGBA,
 			GL_UNSIGNED_INT_8_8_8_8_REV,
 			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+
+	if ( IsUseMipmap() )
+		glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void
@@ -433,7 +442,9 @@ vsTextureInternal::Blit( const vsFloatImage *image, const vsVector2D &where)
 			GL_RGBA,
 			GL_FLOAT,
 			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+
+	if ( IsUseMipmap() )
+		glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void
@@ -447,7 +458,8 @@ vsTextureInternal::Blit( const vsSingleFloatImage *image, const vsVector2D& wher
 			GL_RED,
 			GL_FLOAT,
 			image->RawData());
-	glGenerateMipmap(GL_TEXTURE_2D);
+	if ( IsUseMipmap() )
+		glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer, bool depth ):
@@ -592,6 +604,8 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 	bool success = false;
 	if ( vsFile::Exists(filename_in) )
 	{
+		SetUseMipmap(true);
+
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -632,7 +646,8 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 				m_width = w;
 				m_height = w;
 
-				glGenerateMipmap(GL_TEXTURE_2D);
+				if ( IsUseMipmap() )
+					glGenerateMipmap(GL_TEXTURE_2D);
 				success = true;
 
 				_UseMemory( w * h * sizeof(uint32_t) );
@@ -655,6 +670,21 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 				GL_UNSIGNED_INT_8_8_8_8_REV,
 				s_missingImage.RawData());
 		m_width = m_height = 1;
-		glGenerateMipmap(GL_TEXTURE_2D);
+		if ( IsUseMipmap() )
+			glGenerateMipmap(GL_TEXTURE_2D);
 	}
+}
+
+void
+vsTextureInternal::SetUseMipmap(bool mipmap)
+{
+	if ( mipmap )
+	{
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		m_state |= State_Mipmap;
+	}
+	else
+		m_state &= ~State_Mipmap;
 }

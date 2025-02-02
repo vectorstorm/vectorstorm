@@ -114,7 +114,7 @@ public:
 	void SetLinearSampling(bool linear) { if ( linear ) m_state |= State_LinearSampling; else m_state &= ~State_LinearSampling; }
 
 	bool IsUseMipmap() const { return (m_state & State_Mipmap) != 0; }
-	void SetUseMipmap(bool mipmap) { if ( mipmap ) m_state |= State_Mipmap; else m_state &= ~State_Mipmap; }
+	void SetUseMipmap(bool mipmap);
 	// ===============================================================================
 
 	// void	ApplyClampUV( bool u, bool v );
