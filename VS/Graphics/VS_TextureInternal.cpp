@@ -475,6 +475,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *rend
 	m_height(0),
 	m_depth(depth),
 	m_premultipliedAlpha(true),
+	m_lockedSampling(false),
 	m_tbo(nullptr),
 	m_renderTarget(nullptr),
 	m_surfaceBuffer(0),

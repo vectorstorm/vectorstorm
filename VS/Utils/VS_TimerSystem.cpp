@@ -84,36 +84,36 @@ vsTimerSystemSprite::~vsTimerSystemSprite()
 void
 vsTimerSystemSprite::Update( float timeStep )
 {
-	const float offsetPerMilli = 10.f;
+	const float c_offsetPerMilli = 10.f;
 	const int c_vertexCount = 16;
 	vsRenderBuffer::PC verts[c_vertexCount];
 
 	vsTimerSystem *ts = vsTimerSystem::Instance();
 
 	verts[0].position.Set(0.f,0.f,0.f);
-	verts[1].position.Set(offsetPerMilli * ts->GetCPUMilliseconds(), 0.f, 0.f);
+	verts[1].position.Set(c_offsetPerMilli * ts->GetCPUMilliseconds(), 0.f, 0.f);
 	verts[0].color = c_blue;
 	verts[1].color = c_blue;
 
 	verts[2].position = verts[1].position;
-	verts[3].position = verts[2].position + vsVector2D(offsetPerMilli * ts->GetDrawMilliseconds(), 0.f);
+	verts[3].position = verts[2].position + vsVector2D(c_offsetPerMilli * ts->GetDrawMilliseconds(), 0.f);
 	verts[2].color = c_green;
 	verts[3].color = c_green;
 
 	verts[4].position = verts[3].position;
-	verts[5].position = verts[4].position + vsVector2D(offsetPerMilli * ts->GetPresentMilliseconds(), 0.f);
+	verts[5].position = verts[4].position + vsVector2D(c_offsetPerMilli * ts->GetPresentMilliseconds(), 0.f);
 	verts[4].color = c_yellow;
 	verts[5].color = c_yellow;
 
 	verts[6].position = verts[5].position;
-	verts[7].position = verts[6].position + vsVector2D(offsetPerMilli * ts->GetSleepMilliseconds(), 0.f);
+	verts[7].position = verts[6].position + vsVector2D(c_offsetPerMilli * ts->GetSleepMilliseconds(), 0.f);
 	verts[6].color = c_red;
 	verts[7].color = c_red;
 
-	verts[8].position.Set( offsetPerMilli * 16.666f, -10.f, 0.f );
-	verts[9].position.Set( offsetPerMilli * 16.666f, 10.f, 0.f );
-	verts[10].position.Set( offsetPerMilli * 33.333f, -10.f, 0.f );
-	verts[11].position.Set( offsetPerMilli * 33.333f, 10.f, 0.f );
+	verts[8].position.Set( c_offsetPerMilli * 16.666f, -10.f, 0.f );
+	verts[9].position.Set( c_offsetPerMilli * 16.666f, 10.f, 0.f );
+	verts[10].position.Set( c_offsetPerMilli * 33.333f, -10.f, 0.f );
+	verts[11].position.Set( c_offsetPerMilli * 33.333f, 10.f, 0.f );
 	for (int i = 8; i < 12; i++ )
 		verts[i].color = c_blue;
 
@@ -127,6 +127,8 @@ vsTimerSystem::vsTimerSystem():
 	m_cpuMicroseconds(0),
 	m_drawMicroseconds(0),
 	m_presentMicroseconds(0),
+	m_drawAccumulator(0),
+	m_presentAccumulator(0),
 	m_missedFrames(0)
 {
 	m_launchTimeRaw = m_initTimeRaw = GetRawTime();

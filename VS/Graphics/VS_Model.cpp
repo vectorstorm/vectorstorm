@@ -395,6 +395,10 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(nullptr),
+	m_boundingBox(),
+	m_lowBoundingBox(),
+	m_boundingRadius(0.f),
+	m_lodLevel(0),
 	m_instanceGroup(nullptr),
 	m_displayList(list)
 {

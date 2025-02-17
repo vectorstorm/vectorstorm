@@ -370,6 +370,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 				m_zipData->m_zipStream.zalloc = Z_NULL;
 				m_zipData->m_zipStream.zfree = Z_NULL;
 				m_zipData->m_zipStream.opaque = Z_NULL;
+				m_zipData->m_zipStream.avail_in = 0;
+				m_zipData->m_zipStream.next_in = Z_NULL;
 				int ret = deflateInit(&m_zipData->m_zipStream, Z_DEFAULT_COMPRESSION);
 				if ( !_ZLibIsOkay("deflateInit", ret) )
 				{
@@ -474,6 +476,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			m_zipData->m_zipStream.zalloc = Z_NULL;
 			m_zipData->m_zipStream.zfree = Z_NULL;
 			m_zipData->m_zipStream.opaque = Z_NULL;
+			m_zipData->m_zipStream.avail_in = 0;
+			m_zipData->m_zipStream.next_in = Z_NULL;
 			int ret = inflateInit(&m_zipData->m_zipStream);
 			if ( !_ZLibIsOkay( "inflateInit", ret ) )
 			{
@@ -559,6 +563,8 @@ vsFile::vsFile( const vsString &filename_in, vsFile::Mode mode ):
 			m_zipData->m_zipStream.zalloc = Z_NULL;
 			m_zipData->m_zipStream.zfree = Z_NULL;
 			m_zipData->m_zipStream.opaque = Z_NULL;
+			m_zipData->m_zipStream.avail_in = 0;
+			m_zipData->m_zipStream.next_in = Z_NULL;
 
 			// Now, we need to set up our zip stream
 			const uint32_t zipBufferSize = 1024 * 200;
