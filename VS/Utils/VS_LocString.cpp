@@ -64,6 +64,12 @@ vsLocString::SubVars( vsString& str ) const
 			vsAssertF(startVar == -1, "Nested '{' in locstring??  %s", str);
 			startVar = scan;
 		}
+		if ( str[scan] == '#' && startVar != -1 ) // # inside a {} block
+		{
+			vsAssertF(startVar+1 == (int)scan, "# appears in {} block?? %s", str);
+			// {#ANYTHING} is ignored, as that's a text formatting directive to the Slug library.
+			startVar = -1;
+		}
 		if ( str[scan] == ':' )
 		{
 			if ( startVar != -1 )
@@ -71,8 +77,9 @@ vsLocString::SubVars( vsString& str ) const
 		}
 		if ( str[scan] == '}' )
 		{
-			vsAssertF(startVar != -1, "'}' in locstring without matching '{': %s", str);
-			endVar = scan;
+			// vsAssertF(startVar != -1, "'}' in locstring without matching '{': %s", str);
+			if ( startVar != -1 )
+				endVar = scan;
 		}
 
 		if ( endVar != -1 )
