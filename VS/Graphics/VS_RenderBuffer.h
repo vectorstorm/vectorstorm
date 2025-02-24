@@ -82,7 +82,7 @@ private:
 	int				m_activeBytes;
 
 	Type	        m_type;
-	bool			m_useRestart;
+	// bool			m_useRestart;
 
 	ContentType		m_contentType;
 
@@ -264,9 +264,13 @@ public:
 	void	LineStripBuffer(int instanceCount);
 	void	LineListBuffer(int instanceCount);
 
-	void	EnablePrimitiveRestart(bool e = true) { m_useRestart = e; }
-	bool	UsesPrimitiveRestart() const { return m_useRestart; }
-	uint16_t PrimitiveRestartValue() const { return 65535; }
+	// Primitive Restart is disabled, as it requires OpenGL 4.3.  Since wwe want
+	// to support Mac clients and Macs only go up to OpenGL 4.1, this feature isn't
+	// available to us.
+	//
+	// void	EnablePrimitiveRestart(bool e = true) { m_useRestart = e; }
+	// bool	UsesPrimitiveRestart() const { return m_useRestart; }
+	// uint16_t PrimitiveRestartValue() const { return 65535; }
 
 	bool IsVBO() const { return m_vbo; }
 

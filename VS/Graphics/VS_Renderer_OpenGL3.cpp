@@ -1718,11 +1718,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					PROFILE("TriangleStripBuffer");
 
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					if ( ib->UsesPrimitiveRestart() )
-						m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
+					// if ( ib->UsesPrimitiveRestart() )
+					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
 					FlushRenderState();
 					ib->TriStripBuffer(m_currentLocalToWorldCount);
-					m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
+					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
@@ -1739,11 +1739,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					PROFILE("TriangleFanBuffer");
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					if ( ib->UsesPrimitiveRestart() )
-						m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
+					// if ( ib->UsesPrimitiveRestart() )
+					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
 					FlushRenderState();
 					ib->TriFanBuffer(m_currentLocalToWorldCount);
-					m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
+					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
 				}
 			case vsDisplayList::OpCode_LineListBuffer:
