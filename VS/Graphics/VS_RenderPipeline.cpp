@@ -63,9 +63,13 @@ vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRen
 		settings.height = vsRenderer::Instance()->GetHeightPixels() >> request.mipmapLevel;
 	}
 	settings.depth = request.depth;
-	settings.bufferSettings[0].linear = request.linear;
-	settings.bufferSettings[0].channels = request.channels;
-	settings.bufferSettings[0].format = request.format;
+	settings.buffers = request.buffers;
+	for ( int i = 0; i < request.buffers; i++ )
+	{
+		settings.bufferSettings[i].linear = request.linear;
+		settings.bufferSettings[i].channels = request.channels;
+		settings.bufferSettings[i].format = request.format;
+	}
 	settings.mipMaps = request.mipmaps;
 	settings.stencil = request.stencil;
 	vsRenderTarget::Type type = vsRenderTarget::Type_Texture;
