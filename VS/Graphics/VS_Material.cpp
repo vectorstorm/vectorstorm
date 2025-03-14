@@ -212,6 +212,13 @@ vsMaterial::BindUniformColor( const vsString& name, const vsColor* value )
 }
 
 bool
+vsMaterial::BindUniformVec2( const vsString& name, const vsVector2D* value )
+{
+	m_values.BindUniformVec2(name,value);
+	return true;
+}
+
+bool
 vsMaterial::BindUniformVec3( const vsString& name, const vsVector3D* value )
 {
 	m_values.BindUniformVec3(name,value);

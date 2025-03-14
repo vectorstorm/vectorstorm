@@ -74,6 +74,7 @@ public:
 	bool BindUniformB( const vsString& name, const bool* value );
 	bool BindUniformI( const vsString& name, const int* value );
 	bool BindUniformColor( const vsString& name, const vsColor* value );
+	bool BindUniformVec2( const vsString& name, const vsVector2D* value );
 	bool BindUniformVec3( const vsString& name, const vsVector3D* value );
 	bool BindUniformVec4( const vsString& name, const vsVector4D* value );
 	bool BindUniformMat4( const vsString& name, const vsMatrix4x4* value );
