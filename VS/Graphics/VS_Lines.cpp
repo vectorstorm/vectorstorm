@@ -986,7 +986,7 @@ vsLines3D::GetFinalIndexCount()
 void
 vsLines3D::DynamicDraw( vsRenderQueue *queue )
 {
-	PROFILE("vsLines3D::DynamicDraw");
+	// PROFILE("vsLines3D::DynamicDraw");
 	m_vertexCursor = 0;
 	m_indexCursor = 0;
 
@@ -1015,7 +1015,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 	}
 
 	{
-		PROFILE("vsLines3D::DynamicDraw_Finalising");
+		// PROFILE("vsLines3D::DynamicDraw_Finalising");
 		m_vertices->SetArray( m_vertices->GetPCTArray(), vertexCount );
 		// m_vertices.BakeArray();
 		// m_colors.BakeArray();
@@ -1028,7 +1028,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 void
 vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
-	PROFILE("vsLines3D::DrawStrip");
+	// PROFILE("vsLines3D::DrawStrip");
 	int startOfStripVertexCursor = m_vertexCursor;
 	float fullFov = queue->GetFOV();
 	// float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
