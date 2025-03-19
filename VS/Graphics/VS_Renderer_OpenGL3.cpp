@@ -69,9 +69,9 @@ namespace
 	vsMaterial *s_previousMaterial = nullptr;
 	vsShaderValues *s_previousShaderValues = nullptr;
 
-	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
 
 }
+	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
 
 
 SDL_Window *g_sdlWindow = nullptr;
@@ -1184,6 +1184,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 										glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 										t->GetResource()->SetClampedV(clampV);
 									}
+									// if ( mipmap != t->GetResource()->
 									// if ( linearSampling != t->GetResource()->IsLinearSampling() ||
 									// 		mipmap != t->GetResource()->IsUseMipmap() )
 									// {

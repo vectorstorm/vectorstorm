@@ -74,7 +74,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 			m_texture[i]->SetLinearSampling();
 		else
 			m_texture[i]->SetNearestSampling();
-		m_texture[i]->SetUseMipmap(settings.mipMaps);
+		m_texture[i]->GetResource()->SetUseMipmap(settings.mipMaps);
 	}
 
 	if ( settings.depth && !isDepth )
@@ -186,6 +186,8 @@ vsRenderTarget::ResolveDepth()
 	// return nullptr;
 }
 
+extern uint32_t currentlyBoundTexture[];
+
 vsTexture *
 vsRenderTarget::Resolve(int id)
 {
@@ -245,9 +247,11 @@ vsRenderTarget::Resolve(int id)
 		{
 			for ( int i = 0; i < m_bufferCount; i++ )
 			{
+				int current = currentlyBoundTexture[0];
+
 				glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
 				glGenerateMipmap(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, 0);
+				glBindTexture(GL_TEXTURE_2D, current);
 			}
 		}
 #endif // 0
