@@ -18,6 +18,8 @@
 #include "VS/Utils/VS_Array.h"
 #include "VS/Utils/VS_ArrayStore.h"
 
+#include "VS/Threads/VS_Mutex.h"
+
 class vsModel;
 struct vsModelInstance;
 class vsModelInstanceGroup;
@@ -28,6 +30,7 @@ class vsShaderOptions;
 
 class vsModelInstanceLodGroup : public vsEntity
 {
+	vsMutex m_mutex;
 	vsModelInstanceGroup *m_group; // what group am a part of
 	vsModel *m_model;
 	size_t m_lodLevel;

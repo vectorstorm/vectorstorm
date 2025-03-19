@@ -57,6 +57,7 @@ vsModelInstanceLodGroup::TakeInstancesFromGroup( vsModelInstanceLodGroup *otherG
 void
 vsModelInstanceLodGroup::UpdateInstance( vsModelInstance *inst, bool show )
 {
+	m_mutex.Lock();
 	vsAssert(inst->lodGroup == this, "Wrong group??");
 
 	if ( show )
@@ -104,11 +105,13 @@ vsModelInstanceLodGroup::UpdateInstance( vsModelInstance *inst, bool show )
 		m_bufferIsDirty = true;
 #endif
 	}
+	m_mutex.Unlock();
 }
 
 void
 vsModelInstanceLodGroup::AddInstance( vsModelInstance *inst )
 {
+	m_mutex.Lock();
 	bool wasVisible = inst->visible;
 	inst->group = m_group;
 	inst->lodGroup = this;
@@ -125,6 +128,7 @@ vsModelInstanceLodGroup::AddInstance( vsModelInstance *inst )
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
 	m_bufferIsDirty = true;
 #endif
+	m_mutex.Unlock();
 }
 
 bool
@@ -149,6 +153,7 @@ vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 	// NOW, I want to swap this instance into last position in the instance
 	// array.
 
+	m_mutex.Lock();
 	// Check whether I'm already in last position.
 	int lastIndex = m_instance.ItemCount()-1;
 	if ( inst->index != lastIndex )
@@ -177,6 +182,7 @@ vsModelInstanceLodGroup::RemoveInstance( vsModelInstance *inst )
 
 	inst->group = nullptr;
 	inst->lodGroup = nullptr;
+	m_mutex.Unlock();
 }
 
 void
