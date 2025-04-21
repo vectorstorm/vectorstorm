@@ -19,6 +19,7 @@
 #include "VS_TimerSystem.h"
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderBuffer.h"
+#include "VS_Profile.h"
 
 static bool m_localToWorldAttribIsActive = false;
 static bool m_colorAttribIsActive = false;
@@ -214,6 +215,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_cameraPositionLoc = glGetUniformLocation(m_shader, "cameraPosition");
 	m_cameraDirectionLoc = glGetUniformLocation(m_shader, "cameraDirection");
 
+
 	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
 
 	// for ( int i = 0; i < 4; i++ )
@@ -253,7 +255,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_uniform = new vsShader::Uniform[m_uniformCount];
 
 	int nextUniform = 0;
-	int defaultSamplerBinding = 0;
+	// int defaultSamplerBinding = 0;
 	for ( GLint i = 0; i < activeUniformCount; i++ )
 	{
 		GL_CHECK("Shader::Uniform");
@@ -281,7 +283,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			m_uniform[ui].loc = glGetUniformLocation(m_shader, name.c_str());
 			m_uniform[ui].type = type;
 			m_uniform[ui].arraySize = arraySize;
-			m_uniform[ui].b = false;
+			m_uniform[ui].i32 = 0;
 			m_uniform[ui].u32 = 0;
 			m_uniform[ui].f32 = 0.f;
 
@@ -290,7 +292,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			{
 				case GL_BOOL:
 				case GL_INT:
-					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].b );
+					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].i32 );
 					break;
 				case GL_UNSIGNED_INT:
 					glGetUniformuiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].u32 );
@@ -299,19 +301,18 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].f32 );
 					break;
 				case GL_FLOAT_VEC3:
-					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
+					glGetUniformfv( m_shader, m_uniform[ui].loc, m_uniform[ui].vec4 );
 					break;
 				case GL_FLOAT_VEC4:
-					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
+					glGetUniformfv( m_shader, m_uniform[ui].loc, m_uniform[ui].vec4 );
 					break;
 				case GL_SAMPLER_2D:
 				case GL_UNSIGNED_INT_SAMPLER_2D:
-					m_uniform[ui].b = defaultSamplerBinding;
-					defaultSamplerBinding += m_uniform[ui].arraySize;
-					break;
 				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 				case GL_INT_SAMPLER_BUFFER:
 				case GL_SAMPLER_BUFFER:
+					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].i32 );
+					break;
 					// we're still by default binding buffer textures to slot 9.
 					//
 					// Really what we want is to look at the material's texture slots
@@ -329,8 +330,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 					// But for right now, stick with hardcoded 9, since that's still
 					// hardcoded on the vsDynamicMaterial.
 					//
-					m_uniform[ui].b = 9;
-					// m_uniform[ui].b = defaultSamplerBinding;
+					// m_uniform[ui].i32 = -1;
+					// m_uniform[ui].i32 = defaultSamplerBinding;
 					// defaultSamplerBinding += m_uniform[ui].arraySize;
 					break;
 				default:
@@ -377,6 +378,7 @@ vsShaderVariant::~vsShaderVariant()
 void
 vsShaderVariant::Reload( const vsString& vertexShader, const vsString &fragmentShader )
 {
+	PROFILE("vsShaderVariant::Reload");
 	// system-owned shader;  don't reload it!
 	if ( m_system )
 		return;
@@ -413,7 +415,7 @@ vsShaderVariant::SetColor( const vsColor& color )
 {
 	if ( m_colorLoc >= 0 )
 	{
-		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
+		SetUniformValueVec4( m_colorLoc, color );
 	}
 	// this is vertex color;  don't set that!
 	glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
@@ -422,8 +424,9 @@ vsShaderVariant::SetColor( const vsColor& color )
 void
 vsShaderVariant::SetInstanceColors( vsRenderBuffer *colors )
 {
+	PROFILE("vsShaderVariant::SetInstanceColors (buffer)");
 	if ( m_hasInstanceColorsLoc >= 0 )
-		glUniform1i( m_hasInstanceColorsLoc, true );
+		SetUniformValueB( m_hasInstanceColorsLoc, true );
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
 		if ( !m_colorAttribIsActive )
@@ -442,7 +445,7 @@ void
 vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 {
 	if ( m_hasInstanceColorsLoc >= 0 )
-		glUniform1i( m_hasInstanceColorsLoc, ( matCount >= 2 ) );
+		SetUniformValueB( m_hasInstanceColorsLoc, (matCount >= 2) );
 	if ( matCount <= 0 )
 		return;
 	// GL_CHECK("SetInstanceColors");
@@ -466,6 +469,7 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 		}
 		else
 		{
+			PROFILE("vsShaderVariant::SetInstanceColors (immediate)");
 			if ( !m_colorAttribIsActive )
 			{
 				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
@@ -510,13 +514,19 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 void
 vsShaderVariant::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
-	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
-	//
 	if ( m_textureLoc >= 0 )
 	{
 		const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 		glUniform1iv( m_textureLoc, 8, value );
 	}
+
+	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
+	//
+	// if ( m_textureLoc >= 0 )
+	// {
+	// 	const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	// 	glUniform1iv( m_textureLoc, 8, value );
+	// }
 	// if ( m_shadowTextureLoc >= 0 )
 	// {
 	// 	glUniform1i( m_shadowTextureLoc, 8 );
@@ -555,12 +565,12 @@ vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount 
 	if ( m_localToWorldLoc >= 0 )
 	{
  		if ( matCount == 1 )
-			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
+			SetUniformValueMat4( m_localToWorldLoc, *localToWorld );
 		else
 		{
 			vsMatrix4x4 inv;
 			inv.x.x = -2.f;
-			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&inv );
+			SetUniformValueMat4( m_localToWorldLoc, inv );
 		}
 	}
 	if ( m_localToWorldAttributeLoc >= 0 )
@@ -636,18 +646,18 @@ vsShaderVariant::SetWorldToView( const vsMatrix4x4& worldToView )
 {
 	if ( m_worldToViewLoc >= 0 )
 	{
-		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
+		SetUniformValueMat4( m_worldToViewLoc, worldToView );
 	}
 	// assume no scaling.
 	if ( m_cameraPositionLoc >= 0 )
 	{
 		vsVector3D t = worldToView.Inverse().w;
-		glUniform3fv(m_cameraPositionLoc, 1, (GLfloat*)&t);
+		SetUniformValueVec3( m_cameraPositionLoc, t );
 	}
 	if ( m_cameraDirectionLoc >= 0 )
 	{
 		vsVector3D dir = worldToView.Inverse().z;
-		glUniform3fv(m_cameraDirectionLoc, 1, (GLfloat*)&dir);
+		SetUniformValueVec3( m_cameraDirectionLoc, dir );
 	}
 }
 
@@ -656,7 +666,7 @@ vsShaderVariant::SetViewToProjection( const vsMatrix4x4& projection )
 {
 	if ( m_viewToProjectionLoc >= 0 )
 	{
-		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
+		SetUniformValueMat4( m_viewToProjectionLoc, projection );
 	}
 }
 
@@ -665,7 +675,7 @@ vsShaderVariant::SetViewport( const vsVector2D& viewportDims )
 {
 	if ( m_viewportLoc >= 0 )
 	{
-		glUniform2fv(m_viewportLoc, 1, (GLfloat*)&viewportDims);
+		SetUniformValueVec2( m_viewportLoc, viewportDims );
 	}
 }
 
@@ -689,82 +699,96 @@ vsShaderVariant::SetLight( int id, const vsColor& ambient, const vsColor& diffus
 		return;
 	if ( m_lightAmbientLoc >= 0 )
 	{
-		glUniform4fv( m_lightAmbientLoc, 1, (GLfloat*)&ambient );
+		SetUniformValueVec4( m_lightAmbientLoc, ambient );
 	}
 	if ( m_lightDiffuseLoc >= 0 )
 	{
-		glUniform4fv( m_lightDiffuseLoc, 1, (GLfloat*)&diffuse );
+		SetUniformValueVec4( m_lightDiffuseLoc, diffuse );
 	}
 	if ( m_lightSpecularLoc >= 0 )
 	{
-		glUniform4fv( m_lightSpecularLoc, 1, (GLfloat*)&specular );
+		SetUniformValueVec4( m_lightSpecularLoc, specular );
 	}
 	if ( m_lightPositionLoc >= 0 )
 	{
-		glUniform3fv( m_lightPositionLoc, 1, (GLfloat*)&position );
+		SetUniformValueVec3( m_lightPositionLoc, position );
 	}
 	if ( m_lightHalfVectorLoc >= 0 )
 	{
-		glUniform3fv( m_lightHalfVectorLoc, 1, (GLfloat*)&halfVector );
+		SetUniformValueVec3( m_lightHalfVectorLoc, halfVector );
 	}
 }
 
 void
 vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRenderTarget *target )
 {
+	PROFILE("vsShaderVariant::Prepare");
 	// GLint current;
 	// glGetIntegerv(GL_CURRENT_PROGRAM, &current);
 	// vsAssert( current == (GLint)m_shader, "This shader isn't currently active??" );
+
+	vsShaderValues *matValues = material->GetShaderValues();
+	{
+		PROFILE("Setting shader values");
+
+		bool bb;
+		int b;
+		float f;
+		vsVector4D v;
+		vsMatrix4x4 m;
+
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
-		switch( m_uniform[i].type )
+		const vsShader::Uniform& u = m_uniform[i];
+
+		switch( u.type )
 		{
 			case GL_BOOL:
 				{
-					bool b = false;
-					if ( !values || !values->UniformB( m_uniform[i].uid, b ) )
-						 material->GetShaderValues()->UniformB( m_uniform[i].uid, b );
-					SetUniformValueB( i, b );
+					bb = 0;
+					if ( !values || !values->UniformB( u.uid, bb ) )
+						 matValues->UniformB( u.uid, bb );
+					SetUniformValueB( i, bb );
 					break;
 				}
 			case GL_FLOAT:
 				{
-					float f = 0.f;
-					if ( !values || !values->UniformF( m_uniform[i].uid, f ) )
-						material->GetShaderValues()->UniformF( m_uniform[i].uid, f );
+					f = 0.f;
+					if ( !values || !values->UniformF( u.uid, f ) )
+						matValues->UniformF( u.uid, f );
 					SetUniformValueF( i, f );
 					break;
 				}
 			case GL_FLOAT_VEC2:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec2( i, vsVector2D(v.x,v.y) );
 					break;
 				}
 			case GL_FLOAT_VEC3:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec3( i, v );
 					break;
 				}
 			case GL_FLOAT_VEC4:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec4( i, v );
 					break;
 				}
 			case GL_FLOAT_MAT4:
 				{
-					vsMatrix4x4 v;
-					if ( !values || !values->UniformMat4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformMat4( m_uniform[i].uid, v );
-					SetUniformValueMat4( i, v );
+					m = vsMatrix4x4::Identity;
+					if ( !values || !values->UniformMat4( u.uid, m ) )
+						matValues->UniformMat4( u.uid, m );
+					SetUniformValueMat4( i, m );
 					break;
 				}
 			case GL_INT:
@@ -775,18 +799,17 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				{
-					int b = 0;
-					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
-						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					b = 0;
+					if ( !values || !values->UniformI( u.uid, b ) )
+						matValues->UniformI( u.uid, b);
 					SetUniformValueI( i, b );
 					break;
 				}
 			case GL_UNSIGNED_INT:
 				{
-					GL_CHECK_SCOPED("UnsignedInt");
-					int b = 0;
-					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
-						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					b = 0;
+					if ( !values || !values->UniformI( u.uid, b ) )
+						matValues->UniformI( u.uid, b);
 					uint32_t ui = (uint32_t)b; // [TODO] make less horrible
 					SetUniformValueUI( i, ui );
 					break;
@@ -798,11 +821,15 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 		}
 	}
 
+	}
+	{
+		PROFILE("Setting explicit variables");
+
 	if ( m_resolutionLoc >= 0 )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
 		int yRes = vsScreen::Instance()->GetHeight();
-		glUniform2f( m_resolutionLoc, (float)xRes, (float)yRes );
+		SetUniformValueVec2( m_resolutionLoc, vsVector2D(xRes, yRes) );
 	}
 	if ( m_globalTimeUniformId >= 0 ||
 			m_globalSecondsUniformId >= 0 ||
@@ -831,12 +858,14 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 	if ( m_mouseLoc >= 0 )
 	{
 		vsVector2D mousePos = vsInput::Instance()->GetWindowMousePosition();
-		glUniform2f( m_mouseLoc, mousePos.x, mousePos.y );
+		SetUniformValueVec2( m_mouseLoc, vsVector2D(mousePos.x, mousePos.y) );
 	}
 	if ( m_depthOnlyLoc >= 0 )
 	{
-		glUniform1i( m_depthOnlyLoc, target->IsDepthOnly() );
+		SetUniformValueB( m_depthOnlyLoc, target->IsDepthOnly() );
 	}
+	}
+
 }
 
 void
@@ -852,67 +881,104 @@ vsShaderVariant::SetUniformValueF( int i, float value )
 void
 vsShaderVariant::SetUniformValueB( int i, bool value )
 {
-	if ( value != m_uniform[i].b )
+	if ( value != m_uniform[i].i32 )
 	{
 		glUniform1i( m_uniform[i].loc, value );
-		m_uniform[i].b = value;
+		m_uniform[i].i32 = value;
 	}
 }
 
 void
 vsShaderVariant::SetUniformValueUI( int i, unsigned int value )
 {
-	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-	// {
+	if ( value != m_uniform[i].u32 )
+	{
 		glUniform1ui( m_uniform[i].loc, value );
 		m_uniform[i].u32 = value;
-	// }
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueI( int i, int value )
 {
-	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-	// {
+	if ( value != m_uniform[i].i32 )
+	{
 		glUniform1i( m_uniform[i].loc, value );
-	// }
+		m_uniform[i].i32 = value;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec2( int i, const vsVector2D& value )
 {
-	glUniform2f( m_uniform[i].loc, value.x, value.y );
-	m_uniform[i].vec4.x = value.x;
-	m_uniform[i].vec4.y = value.y;
+	if ( value.x != m_uniform[i].vec4[0] ||
+			value.y != m_uniform[i].vec4[1] )
+	{
+		glUniform2f( m_uniform[i].loc, value.x, value.y );
+		m_uniform[i].vec4[0] = value.x;
+		m_uniform[i].vec4[1] = value.y;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec3( int i, const vsVector3D& value )
 {
-	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
-	m_uniform[i].vec4 = value;
+	if ( value.x != m_uniform[i].vec4[0] ||
+			value.y != m_uniform[i].vec4[1] ||
+			value.z != m_uniform[i].vec4[2] )
+	{
+		glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
+		m_uniform[i].vec4[0] = value.x;
+		m_uniform[i].vec4[1] = value.y;
+		m_uniform[i].vec4[2] = value.z;
+	}
 }
 
 
 void
 vsShaderVariant::SetUniformValueVec3( int i, const vsColor& value )
 {
-	glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
-	m_uniform[i].vec4.Set(value.r, value.g, value.b, 0.f);
+	if ( value.r != m_uniform[i].vec4[0] ||
+			value.b != m_uniform[i].vec4[1] ||
+			value.g != m_uniform[i].vec4[2] )
+	{
+		glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
+		m_uniform[i].vec4[0] = value.r;
+		m_uniform[i].vec4[1] = value.g;
+		m_uniform[i].vec4[2] = value.b;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsVector4D& value )
 {
-	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
-	m_uniform[i].vec4 = value;
+	if ( value.x != m_uniform[i].vec4[0] ||
+			value.y != m_uniform[i].vec4[1] ||
+			value.z != m_uniform[i].vec4[2] ||
+			value.w != m_uniform[i].vec4[3] )
+	{
+		glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
+		m_uniform[i].vec4[0] = value.x;
+		m_uniform[i].vec4[1] = value.y;
+		m_uniform[i].vec4[2] = value.z;
+		m_uniform[i].vec4[3] = value.w;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsColor& value )
 {
-	glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
-	m_uniform[i].vec4.Set(value.r, value.g, value.b, value.a);
+	if ( value.r != m_uniform[i].vec4[0] ||
+			value.g != m_uniform[i].vec4[1] ||
+			value.b != m_uniform[i].vec4[2] ||
+			value.a != m_uniform[i].vec4[3] )
+	{
+		glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
+		m_uniform[i].vec4[0] = value.r;
+		m_uniform[i].vec4[1] = value.g;
+		m_uniform[i].vec4[2] = value.b;
+		m_uniform[i].vec4[3] = value.a;
+	}
 }
 
 void
