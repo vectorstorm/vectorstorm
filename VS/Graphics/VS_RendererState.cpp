@@ -9,111 +9,6 @@
 #include "VS_RendererState.h"
 #include "VS_OpenGL.h"
 
-class glEnableSetter : public StateSetter<bool>
-{
-	int m_type;
-public:
-	glEnableSetter( int type, const bool &initialValue ):
-		StateSetter<bool>(initialValue),
-		m_type(type)
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		if ( m_value )
-		{
-			glEnable(m_type);
-		}
-		else
-		{
-			glDisable(m_type);
-		}
-	}
-};
-
-class glClientStateSetter : public StateSetter<bool>
-{
-	int m_type;
-public:
-	glClientStateSetter( int type, const bool &initialValue ):
-		StateSetter<bool>(initialValue),
-		m_type(type)
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		if ( m_value )
-		{
-			// glEnableClientState(m_type);
-			glEnableVertexAttribArray(m_type);
-		}
-		else
-		{
-			// glDisableClientState(m_type);
-			glDisableVertexAttribArray(m_type);
-		}
-	}
-};
-
-
-class glDepthMaskSetter : public StateSetter<bool>
-{
-public:
-	glDepthMaskSetter( const bool &initialValue ):
-	StateSetter<bool>( initialValue )
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		glDepthMask( m_value ) ;
-	}
-};
-
-class glAlphaThreshSetter : public StateSetter<float>
-{
-public:
-	glAlphaThreshSetter( const float &initialValue ):
-		StateSetter<float>( initialValue )
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		glAlphaFunc( GL_GREATER, m_value ) ;
-	}
-};
-
-class glPolygonOffsetUnitsSetter : public StateSetter2<float,float>
-{
-public:
-	glPolygonOffsetUnitsSetter( const float &initialValueA, const float &initialValueB ):
-		StateSetter2<float,float>( initialValueA, initialValueB )
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		glPolygonOffset( m_valueB, m_valueA ) ;
-	}
-};
-
-class glCullFaceSetter : public StateSetter<int>
-{
-public:
-	glCullFaceSetter( const int &initialValue ):
-	StateSetter<int>( initialValue )
-	{
-	}
-
-	virtual void DoFlush()
-	{
-		glCullFace( m_value ) ;
-	}
-};
-
 namespace
 {
 	vsRendererState *s_instance = nullptr;
@@ -130,55 +25,22 @@ vsRendererState::vsRendererState()
 	vsAssert( s_instance == nullptr, "More than one renderer state created??" );
 	s_instance = this;
 
-	// m_boolState[Bool_AlphaTest] =		new glEnableSetter( GL_ALPHA_TEST, false );
-	m_boolState[Bool_Blend] =			new glEnableSetter( GL_BLEND, false );
-	// m_boolState[Bool_ColorMaterial] =	new glEnableSetter( GL_COLOR_MATERIAL, false );
-	m_boolState[Bool_CullFace] =		new glEnableSetter( GL_CULL_FACE, false );
-	m_boolState[Bool_DepthTest] =		new glEnableSetter( GL_DEPTH_TEST, false );
-	m_boolState[Bool_StencilTest] =		new glEnableSetter( GL_STENCIL_TEST, false );
-	m_boolState[Bool_ScissorTest] =		new glEnableSetter( GL_SCISSOR_TEST, false );
-	// m_boolState[Bool_Fog] =				new glEnableSetter( GL_FOG, false );
-	// m_boolState[Bool_Lighting] =		new glEnableSetter( GL_LIGHTING, false );
-	m_boolState[Bool_Multisample] =		new glEnableSetter( GL_MULTISAMPLE, false );
-	m_boolState[Bool_PolygonOffsetFill] = new glEnableSetter( GL_POLYGON_OFFSET_FILL, false );
-	//m_boolState[Bool_Smooth] =			new glEnableSetter( GL_SMOOTH, false );
-	//m_boolState[Bool_Texture2D] =		new glEnableSetter( GL_TEXTURE_2D, false );
-
-	// m_boolState[Bool_PrimitiveRestartFixedIndex] = new glEnableSetter( GL_PRIMITIVE_RESTART_FIXED_INDEX, false );
-	m_boolState[Bool_DepthMask] =		new glDepthMaskSetter( false );
-
-	m_boolState[ClientBool_VertexArray] =				new glClientStateSetter( 0, false );
-	m_boolState[ClientBool_TextureCoordinateArray] =	new glClientStateSetter( 1, false );
-	m_boolState[ClientBool_NormalArray] =				new glClientStateSetter( 2, false );
-	m_boolState[ClientBool_ColorArray] =				new glClientStateSetter( 3, false );
-	m_boolState[ClientBool_OtherArray] =				new glClientStateSetter( 4, false );
-
-	// m_floatState[Float_AlphaThreshhold] = new glAlphaThreshSetter( 0.f );
-	m_float2State[Float2_PolygonOffsetConstantAndFactor] = new glPolygonOffsetUnitsSetter( 0.f, 0.f );
-
-	m_intState[Int_CullFace] = new glCullFaceSetter( GL_BACK );
+	for ( int i = 0; i < BOOL_COUNT; i++ )
+		m_boolState[i].SetType( (Bool)i );
+	for ( int i = 0; i < INT_COUNT; i++ )
+		m_intState[i].SetType( (Int)i );
+	for ( int i = 0; i < FLOAT2_COUNT; i++ )
+		m_float2State[i].SetType( (Float2)i );
 }
 
 vsRendererState::~vsRendererState()
 {
-	for ( int i = 0; i < BOOL_COUNT; i++ )
-	{
-		delete m_boolState[i];
-	}
-    for ( int i = 0; i < INT_COUNT; i++ )
-    {
-        delete m_intState[i];
-    }
-	for ( int i = 0; i < FLOAT2_COUNT; i++ )
-	{
-		delete m_float2State[i];
-	}
 }
 
 void
 vsRendererState::SetBool( vsRendererState::Bool key, bool value )
 {
-	m_boolState[key]->Set(value);
+	m_boolState[key].Set(value);
 
 	//Flush();
 }
@@ -186,7 +48,7 @@ vsRendererState::SetBool( vsRendererState::Bool key, bool value )
 bool
 vsRendererState::GetBool( vsRendererState::Bool key ) const
 {
-	return m_boolState[key]->Get();
+	return m_boolState[key].Get();
 }
 
 /*void
@@ -200,13 +62,13 @@ vsRendererState::SetFloat( vsRendererState::Float key, float value )
 void
 vsRendererState::SetFloat2( vsRendererState::Float2 key, float valueA, float valueB )
 {
-	m_float2State[key]->Set(valueA, valueB);
+	m_float2State[key].Set( vsVector2D(valueA, valueB) );
 }
 
 void
 vsRendererState::SetInt( vsRendererState::Int key, int value )
 {
-	m_intState[key]->Set(value);
+	m_intState[key].Set(value);
 
 	//Flush();
 }
@@ -216,11 +78,11 @@ vsRendererState::Flush()
 {
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
-		m_boolState[i]->Flush();
+		m_boolState[i].Flush();
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
-        m_intState[i]->Flush();
+        m_intState[i].Flush();
     }
 	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
@@ -228,7 +90,7 @@ vsRendererState::Flush()
 	}*/
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
-		m_float2State[i]->Flush();
+		m_float2State[i].Flush();
 	}
 }
 
@@ -238,15 +100,15 @@ vsRendererState::Force()
 {
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
-		m_boolState[i]->Force();
+		m_boolState[i].Force();
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
-        m_intState[i]->Force();
+        m_intState[i].Force();
     }
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 	{
-		m_float2State[i]->Force();
+		m_float2State[i].Force();
 	}
 	/*for ( int i = 0; i < FLOAT_COUNT; i++ )
 	{
@@ -260,15 +122,15 @@ vsRendererState::StateBlock() const
 	vsRendererStateBlock result;
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
-		result.m_boolState[i] = m_boolState[i]->Get();
+		result.m_boolState[i] = m_boolState[i].Get();
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
-		result.m_intState[i] = m_intState[i]->Get();
+		result.m_intState[i] = m_intState[i].Get();
     }
     for ( int i = 0; i < FLOAT2_COUNT; i++ )
     {
-		result.m_float2State[i].Set( m_float2State[i]->GetFirst(), m_float2State[i]->GetSecond() );
+		result.m_float2State[i] = m_float2State[i].Get();
     }
 	return result;
 }
@@ -278,15 +140,225 @@ vsRendererState::Apply( const vsRendererStateBlock& block )
 {
 	for ( int i = 0; i < BOOL_COUNT; i++ )
 	{
-		m_boolState[i]->Set( block.m_boolState[i] );
+		m_boolState[i].Set( block.m_boolState[i] );
 	}
     for ( int i = 0; i < INT_COUNT; i++ )
     {
-		m_intState[i]->Set( block.m_intState[i] );
+		m_intState[i].Set( block.m_intState[i] );
     }
     for ( int i = 0; i < FLOAT2_COUNT; i++ )
     {
-		m_float2State[i]->Set( block.m_float2State[i].x, block.m_float2State[i].y );
+		m_float2State[i].Set( block.m_float2State[i] );
     }
+}
+
+void glEnableDisable( int tag, bool enable )
+{
+	if ( enable )
+		glEnable(tag);
+	else
+		glDisable(tag);
+}
+void glClientStateSetter( int attribute, bool enable )
+{
+	if ( enable )
+		glEnableVertexAttribArray(attribute);
+	else
+		glDisableVertexAttribArray(attribute);
+}
+
+vsRendererState::SimpleBoolStateSetter::SimpleBoolStateSetter()
+{
+	m_type = BOOL_COUNT;
+	m_value = m_nextValue = false;
+}
+
+void
+vsRendererState::SimpleBoolStateSetter::SetType( Bool type ) { m_type = type; }
+
+void
+vsRendererState::SimpleBoolStateSetter::Set( bool newValue )
+{
+	m_nextValue = newValue;
+}
+
+bool
+vsRendererState::SimpleBoolStateSetter::Get() const
+{
+	return m_nextValue;
+}
+
+void
+vsRendererState::SimpleBoolStateSetter::Flush()
+{
+	if ( m_nextValue != m_value )
+	{
+		m_value = m_nextValue;
+		DoFlush();
+	}
+}
+
+void
+vsRendererState::SimpleBoolStateSetter::Force()
+{
+	m_value = m_nextValue;
+	DoFlush();
+}
+
+void
+vsRendererState::SimpleBoolStateSetter::DoFlush()
+{
+	switch( m_type )
+	{
+		case Bool_Blend:
+			glEnableDisable(GL_BLEND, m_value);
+			break;
+		case Bool_CullFace:
+			glEnableDisable(GL_CULL_FACE, m_value);
+			break;
+		case Bool_DepthTest:
+			glEnableDisable(GL_DEPTH_TEST, m_value);
+			break;
+		case Bool_Multisample:
+			glEnableDisable(GL_MULTISAMPLE, m_value);
+			break;
+		case Bool_PolygonOffsetFill:
+			glEnableDisable(GL_POLYGON_OFFSET_FILL, m_value);
+			break;
+		case Bool_StencilTest:
+			glEnableDisable(GL_STENCIL_TEST, m_value);
+			break;
+		case Bool_ScissorTest:
+			glEnableDisable(GL_SCISSOR_TEST, m_value);
+			break;
+		case Bool_DepthMask:
+			glDepthMask( m_value );
+			break;
+		case ClientBool_VertexArray:
+			glClientStateSetter( 0, m_value );
+			break;
+		case ClientBool_TextureCoordinateArray:
+			glClientStateSetter( 1, m_value );
+			break;
+		case ClientBool_NormalArray:
+			glClientStateSetter( 2, m_value );
+			break;
+		case ClientBool_ColorArray:
+			glClientStateSetter( 3, m_value );
+			break;
+		case ClientBool_OtherArray:
+			glClientStateSetter( 4, m_value );
+			break;
+		case BOOL_COUNT:
+			break;
+	}
+}
+
+vsRendererState::SimpleIntStateSetter::SimpleIntStateSetter()
+{
+	m_type = INT_COUNT;
+	m_value = m_nextValue = false;
+}
+
+void
+vsRendererState::SimpleIntStateSetter::SetType( Int type )
+{
+	m_type = type;
+}
+
+void
+vsRendererState::SimpleIntStateSetter::Set( int newValue )
+{
+	m_nextValue = newValue;
+}
+
+int
+vsRendererState::SimpleIntStateSetter::Get() const
+{
+	return m_nextValue;
+}
+
+void
+vsRendererState::SimpleIntStateSetter::Flush()
+{
+	if ( m_nextValue != m_value )
+	{
+		m_value = m_nextValue;
+		DoFlush();
+	}
+}
+
+void
+vsRendererState::SimpleIntStateSetter::Force()
+{
+	m_value = m_nextValue;
+	DoFlush();
+}
+
+void
+vsRendererState::SimpleIntStateSetter::DoFlush()
+{
+	switch( m_type )
+	{
+		case Int_CullFace:
+			glCullFace( m_value ) ;
+			break;
+		case INT_COUNT:
+			break;
+	}
+}
+
+vsRendererState::SimpleFloat2StateSetter::SimpleFloat2StateSetter()
+{
+	m_type = FLOAT2_COUNT;
+	m_value = m_nextValue = vsVector2D::Zero;
+}
+
+void
+vsRendererState::SimpleFloat2StateSetter::SetType( Float2 type )
+{
+	m_type = type;
+}
+
+void
+vsRendererState::SimpleFloat2StateSetter::Set( const vsVector2D& newValue )
+{
+	m_nextValue = newValue;
+}
+
+const vsVector2D&
+vsRendererState::SimpleFloat2StateSetter::Get() const
+{
+	return m_nextValue;
+}
+
+void
+vsRendererState::SimpleFloat2StateSetter::Flush()
+{
+	if ( m_nextValue != m_value )
+	{
+		m_value = m_nextValue;
+		DoFlush();
+	}
+}
+
+void
+vsRendererState::SimpleFloat2StateSetter::Force()
+{
+	m_value = m_nextValue;
+	DoFlush();
+}
+
+void
+vsRendererState::SimpleFloat2StateSetter::DoFlush()
+{
+	switch( m_type )
+	{
+		case Float2_PolygonOffsetConstantAndFactor:
+			glPolygonOffset( m_value.y, m_value.x ) ;
+			break;
+		case FLOAT2_COUNT:
+			break;
+	}
 }
 
