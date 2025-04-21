@@ -124,7 +124,7 @@ vsShader::FigureOutAvailableVariants( const vsString& s_in )
 				variant.erase(variant.size()-1);
 				//variantPos++;
 			}
-			
+
 			s.erase(variantPos, nextNewLine-variantPos);
 
 			for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )

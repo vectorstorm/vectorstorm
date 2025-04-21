@@ -1046,6 +1046,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 	// have space for all the data, then bind it all at once!
 	if ( m_currentColorArray || m_currentNormalArray || m_currentTexelArray || m_currentVertexArray )
 	{
+		PROFILE_GL("ImmediateStyleArray");
 		vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal(
 			m_currentVertexArrayCount,
 			m_currentColorArrayCount,
@@ -1055,30 +1056,38 @@ vsRenderer_OpenGL3::FlushRenderState()
 	}
 	if ( m_currentColorArray )
 	{
+		PROFILE_GL("BindColorArray");
 		vsRenderBuffer::BindColorArray( &m_state, m_currentColorArray, m_currentColorArrayCount );
 		m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
 	}
 	if ( m_currentNormalArray )
 	{
+		PROFILE_GL("BindNormalArray");
 		vsRenderBuffer::BindNormalArray( &m_state, m_currentNormalArray, m_currentNormalArrayCount );
 		m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 	}
 	if ( m_currentTexelArray )
 	{
+		PROFILE_GL("BindTextureArray");
 		vsRenderBuffer::BindTexelArray( &m_state, m_currentTexelArray, m_currentTexelArrayCount );
 		m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 	}
 	if ( m_currentVertexArray )
 	{
+		PROFILE_GL("BindVertexArray");
 		vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
 		m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
 	}
 	// GL_CHECK("EnsureSpaceForVertex");
 	// GL_CHECK("PreFlush");
-	m_state.Flush();
+	{
+		PROFILE_GL("StateFlush");
+		m_state.Flush();
+	}
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
+		PROFILE_GL("Shader");
 		bool needsReset = false;
 
 		uint32_t shaderOptionsValue = m_currentMaterial->GetShaderOptions()->value &
@@ -1106,6 +1115,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		if ( needsReset )
 		{
+			PROFILE_GL("ShaderNeedsReset");
 			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
@@ -1114,6 +1124,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
+			PROFILE_GL("ShaderPrepare");
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
@@ -1122,6 +1133,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		// bind our textures now, using any overridden ones from the vsShaderValues object!
 		{
+			PROFILE_GL("BindTextures");
 			for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 			{
 				vsTexture *t = nullptr;
@@ -1226,6 +1238,8 @@ vsRenderer_OpenGL3::FlushRenderState()
 			}
 		}
 
+		{
+			PROFILE_GL("ShaderValues");
 		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 		if ( m_currentLocalToWorldBuffer )
@@ -1262,6 +1276,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					m_lightStatus[i].specular, m_lightStatus[i].position,
 					halfVector);
 		}
+		}
 		m_currentShader->ValidateCache( m_currentMaterial );
 	}
 	else
@@ -1272,6 +1287,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 	if ( m_currentRenderTarget )
 	{
+		PROFILE_GL("InvalidateResolve");
 		m_currentRenderTarget->InvalidateResolve();
 	}
 	// glPrimitiveRestartIndex(65535);
