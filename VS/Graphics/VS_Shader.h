@@ -44,13 +44,13 @@ public:
 	{
 		vsString name;
 		uint32_t uid;
-		// struct
-		// {
-			int b;
+		union
+		{
+			int32_t i32;
 			uint32_t u32;
 			float f32;
-			vsVector4D vec4; // for vectors of up to 4 floats
-		// };
+			float vec4[4]; // for vectors of up to 4 floats
+		};
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
