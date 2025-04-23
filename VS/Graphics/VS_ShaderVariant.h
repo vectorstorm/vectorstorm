@@ -12,6 +12,8 @@
 
 #include "VS_Shader.h"
 
+class vsVertexArrayObject;
+
 class vsShaderVariant
 {
 public:
@@ -90,12 +92,12 @@ public:
 	// uint32_t GetAvailableVariantBits() const { return m_availableVariantBits; }
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
-	void SetColor( const vsColor& color );
+	void SetColor( vsVertexArrayObject *vao, const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
-	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
-	void SetInstanceColors( vsRenderBuffer *colors );
-	void SetInstanceColors( const vsColor* color, int matCount );
-	void SetLocalToWorld( vsRenderBuffer* buffer );
+	void SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount );
+	void SetInstanceColors( vsVertexArrayObject *vao, vsRenderBuffer *colors );
+	void SetInstanceColors( vsVertexArrayObject *vao, const vsColor* color, int matCount );
+	void SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 	void SetViewport( const vsVector2D& viewportDims );

@@ -317,21 +317,21 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 }
 
 void
-vsShader::SetColor( const vsColor& color )
+vsShader::SetColor( vsVertexArrayObject* vao, const vsColor& color )
 {
-	m_current->SetColor(color);
+	m_current->SetColor( vao, color);
 }
 
 void
-vsShader::SetInstanceColors( vsRenderBuffer *colors )
+vsShader::SetInstanceColors( vsVertexArrayObject *vao, vsRenderBuffer *colors )
 {
-	m_current->SetInstanceColors(colors);
+	m_current->SetInstanceColors(vao, colors);
 }
 
 void
-vsShader::SetInstanceColors( const vsColor* color, int matCount )
+vsShader::SetInstanceColors( vsVertexArrayObject *vao, const vsColor* color, int matCount )
 {
-	m_current->SetInstanceColors(color, matCount);
+	m_current->SetInstanceColors(vao, color, matCount);
 }
 
 void
@@ -341,15 +341,15 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
-vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
+vsShader::SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer )
 {
-	m_current->SetLocalToWorld(buffer);
+	m_current->SetLocalToWorld(vao, buffer);
 }
 
 void
-vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
+vsShader::SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount )
 {
-	m_current->SetLocalToWorld(localToWorld,matCount);
+	m_current->SetLocalToWorld(vao, localToWorld,matCount);
 }
 
 void

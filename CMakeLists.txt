@@ -316,6 +316,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_TextureInternalIPhone.h
 	VS/Graphics/VS_TextureManager.cpp
 	VS/Graphics/VS_TextureManager.h
+	VS/Graphics/VS_VertexArrayObject.cpp
+	VS/Graphics/VS_VertexArrayObject.h
 	)
 set(INPUT_SOURCES
 	VS/Input/VS_Input.cpp

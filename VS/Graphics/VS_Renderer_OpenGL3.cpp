@@ -145,18 +145,18 @@ void vsOpenGLDebugMessage( GLenum source,
 		const GLvoid *userParam)
 {
 	// NVidia debug message spam.
-	if (id == 0x00020071) return; // memory usage
-								  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
-	if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
-	if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
-	if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
-	if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
-
-	// Intel debug message spam.
-	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
-
-	// Program/shader being recompiled spam.
-	if (id == 0x00020092) return;
+	// if (id == 0x00020071) return; // memory usage
+	// 							  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
+	// if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
+	// if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
+	// if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
+	// if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
+    //
+	// // Intel debug message spam.
+	// if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
+    //
+	// // Program/shader being recompiled spam.
+	// if (id == 0x00020092) return;
 
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
 
@@ -1057,33 +1057,25 @@ vsRenderer_OpenGL3::FlushRenderState()
 	if ( m_currentColorArray )
 	{
 		PROFILE_GL("BindColorArray");
-		vsRenderBuffer::BindColorArray( &m_state, m_currentColorArray, m_currentColorArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+		vsRenderBuffer::BindColorArray( m_currentVAO, m_currentColorArray, m_currentColorArrayCount );
 	}
 	if ( m_currentNormalArray )
 	{
 		PROFILE_GL("BindNormalArray");
-		vsRenderBuffer::BindNormalArray( &m_state, m_currentNormalArray, m_currentNormalArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+		vsRenderBuffer::BindNormalArray( m_currentVAO, m_currentNormalArray, m_currentNormalArrayCount );
 	}
 	if ( m_currentTexelArray )
 	{
 		PROFILE_GL("BindTextureArray");
-		vsRenderBuffer::BindTexelArray( &m_state, m_currentTexelArray, m_currentTexelArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+		vsRenderBuffer::BindTexelArray( m_currentVAO, m_currentTexelArray, m_currentTexelArrayCount );
 	}
 	if ( m_currentVertexArray )
 	{
 		PROFILE_GL("BindVertexArray");
-		vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
+		vsRenderBuffer::BindVertexArray( m_currentVAO, m_currentVertexArray, m_currentVertexArrayCount );
 	}
 	// GL_CHECK("EnsureSpaceForVertex");
 	// GL_CHECK("PreFlush");
-	{
-		PROFILE_GL("StateFlush");
-		m_state.Flush();
-	}
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
@@ -1228,11 +1220,11 @@ vsRenderer_OpenGL3::FlushRenderState()
 			m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
 			m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
 			if ( m_currentLocalToWorldBuffer )
-				m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
+				m_currentShader->SetLocalToWorld( m_currentVAO, m_currentLocalToWorldBuffer );
 			else if ( m_currentLocalToWorldCount > 0 )
-				m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
+				m_currentShader->SetLocalToWorld( m_currentVAO, m_currentLocalToWorld, m_currentLocalToWorldCount );
 			else
-				m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
+				m_currentShader->SetLocalToWorld( m_currentVAO, &m_transformStack[0], 1 );
 
 			if ( m_currentMaterial->GetResource()->m_glow )
 			{
@@ -1243,13 +1235,13 @@ vsRenderer_OpenGL3::FlushRenderState()
 				// vsLog("CurrentColors: %s", m_currentColors ? "TRUE" : "FALSE");
 			}
 
-			m_currentShader->SetColor( m_currentColor );
+			m_currentShader->SetColor( m_currentVAO, m_currentColor );
 			if ( m_currentColorsBuffer )
-				m_currentShader->SetInstanceColors( m_currentColorsBuffer );
+				m_currentShader->SetInstanceColors( m_currentVAO, m_currentColorsBuffer );
 			else if ( m_currentColors )
-				m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
+				m_currentShader->SetInstanceColors( m_currentVAO, m_currentColors, m_currentLocalToWorldCount );
 			else
-				m_currentShader->SetInstanceColors( &c_white, 1 );
+				m_currentShader->SetInstanceColors( m_currentVAO, &c_white, 1 );
 			m_currentShader->SetWorldToView( m_currentWorldToView );
 			m_currentShader->SetViewToProjection( m_currentViewToProjection );
 			m_currentShader->SetViewport( m_currentViewportPixels.Extents() );
@@ -1268,6 +1260,12 @@ vsRenderer_OpenGL3::FlushRenderState()
 	{
 		vsAssert(0, "Trying to flush render state with no shader set?");
 		glUseProgram( 0 );
+	}
+
+	{
+		PROFILE_GL("StateFlush");
+		m_state.Flush();
+		m_currentVAO->Flush();
 	}
 
 	if ( m_currentRenderTarget )
@@ -1571,7 +1569,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_currentVertexBuffer->BindVertexBuffer( &m_state );
+					m_currentVertexBuffer->BindVertexBuffer( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalArray:
@@ -1583,10 +1581,9 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_NormalBuffer:
 				{
 					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentNormalBuffer->BindNormalBuffer( &m_state );
+					m_currentNormalBuffer->BindNormalBuffer( m_currentVAO );
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
@@ -1594,7 +1591,6 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = nullptr;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearNormalArray:
@@ -1602,15 +1598,13 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentNormalBuffer = nullptr;
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelArray:
 				{
 					m_currentTexelArray = (vsVector2D*)op->data.p;
 					m_currentTexelArrayCount = op->data.i;
-					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					vsRenderBuffer::BindTexelArray( m_currentVAO, op->data.p, op->data.i );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelBuffer:
@@ -1618,12 +1612,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
-					m_currentTexelBuffer->BindTexelBuffer( &m_state );
+					m_currentTexelBuffer->BindTexelBuffer( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
 				{
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorArray:
@@ -1635,7 +1628,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ColorBuffer:
 				{
 					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentColorBuffer->BindColorBuffer( &m_state );
+					m_currentColorBuffer->BindColorBuffer( m_currentVAO );
 					m_currentColorArray = 0;
 					m_currentColorArrayCount = 0;
 					break;
@@ -1649,7 +1642,6 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					}
 					m_currentColorArray = nullptr;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearArrays:
@@ -1657,28 +1649,27 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentColorArray = nullptr;
 					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 
 					m_currentTexelBuffer = nullptr;
 					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 
 					m_currentNormalBuffer = nullptr;
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 
 					m_currentVertexBuffer = nullptr;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
+
+					m_currentVAO->UnbindAll();
+
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
 				{
 					PROFILE_GL("BindBuffer");
+					m_currentVAO->UnbindAll(); // this is really very wrong
 					m_currentColorArray = nullptr;
 					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
@@ -1693,14 +1684,14 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexArrayCount = 0;
 
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-					buffer->Bind( &m_state );
+					buffer->Bind( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_UnbindBuffer:
 				{
 					PROFILE_GL("UnbindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-					buffer->Unbind( &m_state );
+					buffer->Unbind( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_LineListArray:
@@ -2800,10 +2791,6 @@ vsRenderer_OpenGL3::ClearState()
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 	m_state.Flush();
 
 	m_currentColor = c_white;
@@ -2832,6 +2819,9 @@ vsRenderer_OpenGL3::ClearState()
 	m_lightCount = 0;
 	m_usingNormalArray = false;
 	m_usingTexelArray = false;
+
+	m_currentVAO = &m_defaultVAO;
+	m_currentVAO->Enter();
 
 	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 

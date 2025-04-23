@@ -20,9 +20,10 @@
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderBuffer.h"
 #include "VS_Profile.h"
+#include "VS_VertexArrayObject.h"
 
-static bool m_localToWorldAttribIsActive = false;
-static bool m_colorAttribIsActive = false;
+// static bool m_localToWorldAttribIsActive = false;
+// static bool m_colorAttribIsActive = false;
 
 	extern vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
 
@@ -419,38 +420,36 @@ vsShaderVariant::SetFog( bool fog, const vsColor& color, float density )
 }
 
 void
-vsShaderVariant::SetColor( const vsColor& color )
+vsShaderVariant::SetColor( vsVertexArrayObject *vao, const vsColor& color )
 {
 	if ( m_colorUniformId >= 0 )
 	{
 		SetUniformValueVec4( m_colorUniformId, color );
 	}
 	// this is vertex color;  don't set that!
-	glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
+	if ( !vao->IsSet(3) )
+		vao->SetStaticAttribute4F( 3, vsVector4D(1,1,1,1) );
+	// glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
+
 }
 
 void
-vsShaderVariant::SetInstanceColors( vsRenderBuffer *colors )
+vsShaderVariant::SetInstanceColors( vsVertexArrayObject* vao, vsRenderBuffer *colors )
 {
 	PROFILE("vsShaderVariant::SetInstanceColors (buffer)");
 	if ( m_hasInstanceColorsUniformId >= 0 )
 		SetUniformValueB( m_hasInstanceColorsUniformId, true );
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
-		if ( !m_colorAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-			glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-			m_colorAttribIsActive = true;
-		}
+		vao->SetAttributeDivisor(m_instanceColorAttributeLoc,1);
 
-		colors->BindAsAttribute( m_instanceColorAttributeLoc );
+		colors->BindAsAttribute( vao, m_instanceColorAttributeLoc );
 	}
 	// GL_CHECK("SetColors");
 }
 
 void
-vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
+vsShaderVariant::SetInstanceColors( vsVertexArrayObject* vao, const vsColor* color, int matCount )
 {
 	if ( m_hasInstanceColorsUniformId >= 0 )
 		SetUniformValueB( m_hasInstanceColorsUniformId, (matCount >= 2) );
@@ -467,22 +466,25 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_colorAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_instanceColorAttributeLoc);
-				m_colorAttribIsActive = false;
-			}
-
-			glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
+			// if ( m_colorAttribIsActive )
+			// {
+			// 	// vao->UnbindAttribute(m_instanceColorAttributeLoc);
+			// 	m_colorAttribIsActive = false;
+			// }
+			vao->SetStaticAttribute4F(m_instanceColorAttributeLoc, vsVector4D(
+						color[0].r, color[0].g, color[0].b, color[0].a
+						) );
+			// glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
 		}
 		else
 		{
 			PROFILE("vsShaderVariant::SetInstanceColors (immediate)");
-			if ( !m_colorAttribIsActive )
+			// if ( !m_colorAttribIsActive )
 			{
-				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-				m_colorAttribIsActive = true;
+				vao->SetAttributeDivisor(m_instanceColorAttributeLoc, 1);
+				// glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+				// glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+				// m_colorAttribIsActive = true;
 			}
 
 			GLuint size = sizeof(vsColor)*matCount;
@@ -509,7 +511,8 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 					glUnmapBuffer(GL_ARRAY_BUFFER);
 				}
 			}
-			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+			vao->BindAttribute(m_instanceColorAttributeLoc, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0);
+			// glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
 #ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -526,29 +529,25 @@ vsShaderVariant::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
-vsShaderVariant::SetLocalToWorld( vsRenderBuffer* buffer )
+vsShaderVariant::SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer )
 {
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
-		if ( !m_localToWorldAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-			m_localToWorldAttribIsActive = true;
-		}
+		// if ( !m_localToWorldAttribIsActive )
+		// {
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+1, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+2, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+3, 1);
+		// 	m_localToWorldAttribIsActive = true;
+		// }
 
-		buffer->BindAsAttribute( m_localToWorldAttributeLoc );
+		buffer->BindAsAttribute( vao, m_localToWorldAttributeLoc );
 	}
 }
 
 void
-vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
+vsShaderVariant::SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount )
 {
 	if ( m_localToWorldUniformId >= 0 )
 	{
@@ -565,33 +564,25 @@ vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount 
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_localToWorldAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				m_localToWorldAttribIsActive = false;
-			}
-
-			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
+			// if ( m_localToWorldAttribIsActive )
+			// {
+			// 	m_localToWorldAttribIsActive = false;
+			// }
+            //
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc, localToWorld->x);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+1, localToWorld->y);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+2, localToWorld->z);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+3, localToWorld->w);
 		}
 		else
 		{
-			if ( !m_localToWorldAttribIsActive )
+			// if ( !m_localToWorldAttribIsActive )
 			{
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-				m_localToWorldAttribIsActive = true;
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+1, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+2, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+3, 1);
+				// m_localToWorldAttribIsActive = true;
 			}
 
 			static GLuint g_vbo = 0xffffffff;
@@ -618,10 +609,15 @@ vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount 
 				}
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+
+			vao->BindAttribute(m_localToWorldAttributeLoc, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)0);
+			vao->BindAttribute(m_localToWorldAttributeLoc+1, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)16);
+			vao->BindAttribute(m_localToWorldAttributeLoc+2, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)32);
+			vao->BindAttribute(m_localToWorldAttributeLoc+3, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)48);
 #ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
