@@ -51,6 +51,7 @@ public:
 			float f32;
 		};
 		vsVector4D vec4; // for vectors of up to 4 floats
+		vsMatrix4x4 mat;
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
