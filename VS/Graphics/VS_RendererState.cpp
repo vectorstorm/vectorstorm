@@ -159,13 +159,13 @@ void glEnableDisable( int tag, bool enable )
 	else
 		glDisable(tag);
 }
-void glClientStateSetter( int attribute, bool enable )
-{
-	if ( enable )
-		glEnableVertexAttribArray(attribute);
-	else
-		glDisableVertexAttribArray(attribute);
-}
+// void glClientStateSetter( int attribute, bool enable )
+// {
+// 	if ( enable )
+// 		glEnableVertexAttribArray(attribute);
+// 	else
+// 		glDisableVertexAttribArray(attribute);
+// }
 
 vsRendererState::SimpleBoolStateSetter::SimpleBoolStateSetter()
 {
@@ -234,21 +234,21 @@ vsRendererState::SimpleBoolStateSetter::DoFlush()
 		case Bool_DepthMask:
 			glDepthMask( m_value );
 			break;
-		case ClientBool_VertexArray:
-			glClientStateSetter( 0, m_value );
-			break;
-		case ClientBool_TextureCoordinateArray:
-			glClientStateSetter( 1, m_value );
-			break;
-		case ClientBool_NormalArray:
-			glClientStateSetter( 2, m_value );
-			break;
-		case ClientBool_ColorArray:
-			glClientStateSetter( 3, m_value );
-			break;
-		case ClientBool_OtherArray:
-			glClientStateSetter( 4, m_value );
-			break;
+		// case ClientBool_VertexArray:
+		// 	glClientStateSetter( 0, m_value );
+		// 	break;
+		// case ClientBool_TextureCoordinateArray:
+		// 	glClientStateSetter( 1, m_value );
+		// 	break;
+		// case ClientBool_NormalArray:
+		// 	glClientStateSetter( 2, m_value );
+		// 	break;
+		// case ClientBool_ColorArray:
+		// 	glClientStateSetter( 3, m_value );
+		// 	break;
+		// case ClientBool_OtherArray:
+		// 	glClientStateSetter( 4, m_value );
+		// 	break;
 		case BOOL_COUNT:
 			break;
 	}

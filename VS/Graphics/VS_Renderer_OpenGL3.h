@@ -22,6 +22,7 @@
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
+#include "VS_VertexArrayObject.h"
 
 class vsCamera2D;
 class vsDisplayList;
@@ -61,6 +62,9 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsRenderTarget *     m_currentRenderTarget;
 
     vsRendererState      m_state;
+	vsVertexArrayObject *m_currentVAO;
+
+	vsVertexArrayObject m_defaultVAO;
 
 	vsMaterial *         m_currentMaterial;
 	vsMaterialInternal * m_currentMaterialInternal;

@@ -34,11 +34,11 @@ public:
 		// Bool_PrimitiveRestartFixedIndex,
 		Bool_DepthMask,
 
-		ClientBool_VertexArray,
-		ClientBool_NormalArray,
-		ClientBool_ColorArray,
-		ClientBool_TextureCoordinateArray,
-		ClientBool_OtherArray,
+		// ClientBool_VertexArray,
+		// ClientBool_NormalArray,
+		// ClientBool_ColorArray,
+		// ClientBool_TextureCoordinateArray,
+		// ClientBool_OtherArray,
 		BOOL_COUNT
 	};
 	enum Float
