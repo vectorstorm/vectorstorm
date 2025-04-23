@@ -66,7 +66,6 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsMaterialInternal * m_currentMaterialInternal;
 	vsShader *           m_currentShader;
 	vsShaderValues *     m_currentShaderValues;
-	bool                 m_invalidateMaterial;
 
 	vsVector3D *         m_currentVertexArray;
 	vsVector3D *         m_currentNormalArray;

@@ -48,10 +48,11 @@ class vsTextureInternal : public vsResource
 	uint64_t m_memoryUsage;
 	enum
 	{
-		State_ClampU = BIT(0),
-		State_ClampV = BIT(1),
-		State_LinearSampling = BIT(2),
-		State_Mipmap = BIT(3)
+		State_Dirty = BIT(0),
+		State_ClampU = BIT(1),
+		State_ClampV = BIT(2),
+		State_LinearSampling = BIT(3),
+		State_Mipmap = BIT(4)
 	};
 	uint8_t m_state;
 
@@ -104,11 +105,31 @@ public:
 	// ===============================================================================
 	// used as a cache during rendering, so we can remember what render state
 	// is set on this texture.
+	bool IsStateDirty() const { return (m_state & State_Dirty) != 0; }
+	void ClearDirtyFlag() { m_state &= ~State_Dirty; }
+
 	bool IsClampedU() const { return (m_state & State_ClampU) != 0; }
 	bool IsClampedV() const { return (m_state & State_ClampV) != 0; }
 
-	void SetClampedU(bool c) { if ( c ) m_state |= State_ClampU; else m_state &= ~State_ClampU; }
-	void SetClampedV(bool c) { if ( c ) m_state |= State_ClampV; else m_state &= ~State_ClampV; }
+	void SetClampedU(bool c) {
+		if ( c == IsClampedU() )
+			return;
+		if ( c )
+			m_state |= State_ClampU;
+		else
+			m_state &= ~State_ClampU;
+		m_state |= State_Dirty;
+	}
+	void SetClampedV(bool c) {
+		if ( c == IsClampedV() )
+			return;
+		if ( c )
+			m_state |= State_ClampV;
+		else
+			m_state &= ~State_ClampV;
+
+		m_state |= State_Dirty;
+	}
 
 	bool IsLinearSampling() const { return (m_state & State_LinearSampling) != 0; }
 	void SetLinearSampling(bool linear) { if ( linear ) m_state |= State_LinearSampling; else m_state &= ~State_LinearSampling; }

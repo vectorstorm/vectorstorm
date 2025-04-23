@@ -306,6 +306,9 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 				case GL_FLOAT_VEC4:
 					glGetUniformfv( m_shader, m_uniform[ui].loc, m_uniform[ui].vec4 );
 					break;
+				case GL_FLOAT_MAT4:
+					glGetUniformfv( m_shader, m_uniform[ui].loc, (GLfloat*)&(m_uniform[ui].mat.x.x) );
+					break;
 				case GL_SAMPLER_2D:
 				case GL_UNSIGNED_INT_SAMPLER_2D:
 				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
@@ -984,6 +987,14 @@ vsShaderVariant::SetUniformValueVec4( int i, const vsColor& value )
 void
 vsShaderVariant::SetUniformValueMat4( int i, const vsMatrix4x4& value )
 {
-	glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value );
+	if ( value != m_uniform[i].mat )
+	{
+		glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value );
+		m_uniform[i].mat = value;
+	}
+	// else
+	// {
+	// 	vsLog("Woo, avoided re-setting a mat4 uniform value!");
+	// }
 }
 
