@@ -31,6 +31,8 @@ public:
 		ComponentType_Float
 	};
 
+	void _DoFlush();
+
 private:
 	uint32_t m_id;
 	bool m_set;
@@ -53,7 +55,21 @@ private:
 		// bool dirty;
 		bool operator==(const Attribute& o) const
 		{
-			return (memcmp(this, &o, sizeof(Attribute)) == 0);
+			if ( id != o.id ||
+					isExplicit != o.isExplicit )
+				return false;
+			if ( isExplicit )
+			{
+				return explicitValues == o.explicitValues;
+			}
+
+			return (vbo==o.vbo &&
+				componentCount==o.componentCount &&
+				type==o.type &&
+				saturate==o.saturate &&
+				stride==o.stride &&
+				offset==o.offset &&
+				divisor==o.divisor);
 		}
 		bool operator!=(const Attribute& o) const
 		{
@@ -64,11 +80,15 @@ private:
 	Attribute m_attribute[MAX_ATTRIBS];
 	// bool m_anyDirty;
 
+	int m_elementBuffer;
+	int m_lastElementBuffer;
+
+	bool m_generic;
 	bool m_in;
 
 public:
 
-	vsVertexArrayObject();
+	vsVertexArrayObject( bool generic = false );
 	~vsVertexArrayObject();
 
 	void Enter();
@@ -83,6 +103,9 @@ public:
 	void SetAttributeDivisor( int attributeId, int divisor );
 	void UnbindAttribute( int attributeId );
 	void UnbindAll();
+
+	void SetElementBuffer( int vbo );
+	void UnbindElementBuffer();
 
 };
 

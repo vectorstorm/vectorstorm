@@ -231,38 +231,38 @@ public:
 	ContentType	GetContentType() const { return m_contentType; }
 	void	SetContentType(ContentType ct) { m_contentType = ct; }
 
-	void	BindAsAttribute( vsVertexArrayObject *state, int attributeId );
+	void	BindAsAttribute( vsVertexArrayObject *vao, int attributeId );
 	void	BindAsTexture();
 
-	void	BindVertexBuffer( vsVertexArrayObject *state );
-	void	UnbindVertexBuffer( vsVertexArrayObject *state );
+	void	BindVertexBuffer( vsVertexArrayObject *vao );
+	void	UnbindVertexBuffer( vsVertexArrayObject *vao );
 
-	void	BindNormalBuffer( vsVertexArrayObject *state );
-	void	UnbindNormalBuffer( vsVertexArrayObject *state );
+	void	BindNormalBuffer( vsVertexArrayObject *vao );
+	void	UnbindNormalBuffer( vsVertexArrayObject *vao );
 
-	void	BindTexelBuffer( vsVertexArrayObject *state );
-	void	UnbindTexelBuffer( vsVertexArrayObject *state );
+	void	BindTexelBuffer( vsVertexArrayObject *vao );
+	void	UnbindTexelBuffer( vsVertexArrayObject *vao );
 
-	void	BindColorBuffer( vsVertexArrayObject *state );
-	void	UnbindColorBuffer( vsVertexArrayObject *state );
+	void	BindColorBuffer( vsVertexArrayObject *vao );
+	void	UnbindColorBuffer( vsVertexArrayObject *vao );
 
-	void	Bind( vsVertexArrayObject *state );		// for non-custom types
-	void	Unbind( vsVertexArrayObject *state );	// for non-custom types
+	void	Bind( vsVertexArrayObject *vao );		// for non-custom types
+	void	Unbind( vsVertexArrayObject *vao );	// for non-custom types
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
-	static void BindArrayToAttribute( vsVertexArrayObject *state, void* buffer, size_t bufferSize, int attribute, int elementCount );
-	static void BindVertexArray( vsVertexArrayObject *state, void* buffer, int vertexCount );
-	static void BindColorArray( vsVertexArrayObject *state, void* buffer, int vertexCount );
-	static void BindTexelArray( vsVertexArrayObject *state, void* buffer, int vertexCount );
-	static void BindNormalArray( vsVertexArrayObject *state, void* buffer, int vertexCount );
+	static void BindArrayToAttribute( vsVertexArrayObject *vao, void* buffer, size_t bufferSize, int attribute, int elementCount );
+	static void BindVertexArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindColorArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindTexelArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindNormalArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
 
-	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
+	static void DrawElementsImmediate( vsVertexArrayObject *vao, int type, void* buffer, int count, int instanceCount );
 
-	void	TriStripBuffer(int instanceCount);
-	void	TriListBuffer(int instanceCount);
-	void	TriFanBuffer(int instanceCount);
-	void	LineStripBuffer(int instanceCount);
-	void	LineListBuffer(int instanceCount);
+	void	TriStripBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	TriListBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	TriFanBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	LineStripBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	LineListBuffer( vsVertexArrayObject *vao, int instanceCount);
 
 	// Primitive Restart is disabled, as it requires OpenGL 4.3.  Since wwe want
 	// to support Mac clients and Macs only go up to OpenGL 4.1, this feature isn't

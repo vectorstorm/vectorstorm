@@ -12,10 +12,13 @@
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
 
-vsVertexArrayObject::vsVertexArrayObject():
+vsVertexArrayObject::vsVertexArrayObject( bool generic ):
 	m_id(0),
 	m_set(false),
 	m_attribute(),
+	m_elementBuffer(0),
+	m_lastElementBuffer(0),
+	m_generic(generic),
 	m_in(false)
 {
 }
@@ -64,12 +67,25 @@ vsVertexArrayObject::IsSet( int id ) const
 void
 vsVertexArrayObject::Flush()
 {
-	PROFILE("vsVertexArrayObject::Flush");
 	vsAssert(m_in, "vsVertexArrayObject::Flush called when we're not in it??");
+	if ( m_generic )
+	{
+		PROFILE("vsVertexArrayObject::GenericFlush");
+		_DoFlush();
+	}
+	else
+	{
+		PROFILE("vsVertexArrayObject::Flush");
+		_DoFlush();
+	}
 
+}
+void
+vsVertexArrayObject::_DoFlush()
+{
 	// if ( m_anyDirty )
 	{
-		PROFILE("vsVertexArrayObject::Flush - DIRTY");
+		// PROFILE("vsVertexArrayObject::Flush - DIRTY");
 		// m_anyDirty = false;
 
 		for ( int i = 0; i < MAX_ATTRIBS; i++ )
@@ -136,6 +152,13 @@ vsVertexArrayObject::Flush()
 					glVertexAttribDivisor( i, a.divisor );
 				}
 			}
+		}
+
+		if ( m_elementBuffer != m_lastElementBuffer )
+		{
+			m_lastElementBuffer = m_elementBuffer;
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBuffer);
 		}
 	}
 }
@@ -216,4 +239,15 @@ vsVertexArrayObject::UnbindAll()
 	}
 }
 
+void
+vsVertexArrayObject::SetElementBuffer( int bufferId )
+{
+	m_elementBuffer = bufferId;
+}
+
+void
+vsVertexArrayObject::UnbindElementBuffer()
+{
+	m_elementBuffer = 0;
+}
 

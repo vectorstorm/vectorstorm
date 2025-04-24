@@ -9,8 +9,6 @@
 
 #include "VS_RenderBuffer.h"
 
-#include "VS_RendererState.h"
-
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
 #include "VS_GraphicsMemoryProfiler.h"
@@ -370,22 +368,22 @@ vsRenderBuffer::BakeIndexArray()
 }
 
 void
-vsRenderBuffer::BindAsAttribute( vsVertexArrayObject *state, int attributeId )
+vsRenderBuffer::BindAsAttribute( vsVertexArrayObject *vao, int attributeId )
 {
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
-		state->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, 0);
-		state->BindAttribute(attributeId+1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)16);
-		state->BindAttribute(attributeId+2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)32);
-		state->BindAttribute(attributeId+3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)48);
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, 0);
+		vao->BindAttribute(attributeId+1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)16);
+		vao->BindAttribute(attributeId+2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)32);
+		vao->BindAttribute(attributeId+3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)48);
 	}
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
-		state->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0);
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0);
 	}
 	else if ( m_contentType == ContentType_ColorPacked && m_vbo )
 	{
-		state->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, 0, 0);
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, 0, 0);
 	}
 	else
 	{
@@ -436,13 +434,13 @@ vsRenderBuffer::BindAsTexture()
 }
 
 void
-vsRenderBuffer::BindVertexBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::BindVertexBuffer( vsVertexArrayObject *vao )
 {
-	// state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, true );
+	// vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, true );
 
 	if ( m_vbo )
 	{
-		state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
+		vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 // 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 // 		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 // #ifdef VS_PRISTINE_BINDINGS
@@ -451,78 +449,78 @@ vsRenderBuffer::BindVertexBuffer( vsVertexArrayObject *state )
 	}
 	else
 	{
-		vsRenderBuffer::BindVertexArray( state, m_array, m_activeBytes/sizeof(vsVector3D) );
+		vsRenderBuffer::BindVertexArray( vao, m_array, m_activeBytes/sizeof(vsVector3D) );
 		// glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindVertexBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::UnbindVertexBuffer( vsVertexArrayObject *vao )
 {
-	// state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, BindType_ElementArray );
-	state->UnbindAttribute( POS_ATTRIBUTE );
+	// vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, BindType_ElementArray );
+	vao->UnbindAttribute( POS_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindNormalBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::BindNormalBuffer( vsVertexArrayObject *vao )
 {
 	if ( m_vbo )
 	{
-		state->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
+		vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		state->BindAttribute( NORMAL_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
+		vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindNormalBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::UnbindNormalBuffer( vsVertexArrayObject *vao )
 {
-	state->UnbindAttribute( NORMAL_ATTRIBUTE );
+	vao->UnbindAttribute( NORMAL_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindTexelBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::BindTexelBuffer( vsVertexArrayObject *vao )
 {
 	if ( m_vbo )
 	{
-		state->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
+		vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		BindTexelArray( state, m_array, m_activeBytes / sizeof(vsVector2D) );
+		BindTexelArray( vao, m_array, m_activeBytes / sizeof(vsVector2D) );
 		// glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindTexelBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::UnbindTexelBuffer( vsVertexArrayObject *vao )
 {
-	state->UnbindAttribute( TEXCOORD_ATTRIBUTE );
+	vao->UnbindAttribute( TEXCOORD_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindColorBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::BindColorBuffer( vsVertexArrayObject *vao )
 {
 	if ( m_vbo )
 	{
-		state->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
+		vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		state->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
+		vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindColorBuffer( vsVertexArrayObject *state )
+vsRenderBuffer::UnbindColorBuffer( vsVertexArrayObject *vao )
 {
-	state->UnbindAttribute( COLOR_ATTRIBUTE );
+	vao->UnbindAttribute( COLOR_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::Bind( vsVertexArrayObject *state )
+vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 {
 	GL_CHECK_SCOPED("Bind");
 	switch( m_contentType )
@@ -532,9 +530,9 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 			int stride = sizeof(P);
 
 			if ( m_vbo )
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
 			else
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
 			break;
 		}
 		case ContentType_PC:
@@ -545,13 +543,13 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PC*)m_array)[0].color );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PC*)m_array)[0].color );
 			}
 			break;
 		}
@@ -563,13 +561,13 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PT*)m_array)[0].texel );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -581,13 +579,13 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PN*)m_array)[0].normal );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PN*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -601,15 +599,15 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PNT*)m_array)[0].normal );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PNT*)m_array)[0].texel );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PNT*)m_array)[0].normal );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PNT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -625,17 +623,17 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
-				state->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCNT*)m_array)[0].color );
-				state->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PCNT*)m_array)[0].normal );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCNT*)m_array)[0].texel );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCNT*)m_array)[0].color );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PCNT*)m_array)[0].normal );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCNT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -649,15 +647,15 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
-				state->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCN*)m_array)[0].color );
-				state->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, false, stride, &((PCN*)m_array)[0].normal );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCN*)m_array)[0].color );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, false, stride, &((PCN*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -671,15 +669,15 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				state->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				state->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				state->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCT*)m_array)[0].color );
-				state->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCT*)m_array)[0].texel );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCT*)m_array)[0].color );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -689,22 +687,22 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 
 			if ( m_vbo )
 			{
-				state->BindAttribute( 0, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)0 );
-				state->BindAttribute( 1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)16 );
-				state->BindAttribute( 2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)32 );
-				state->BindAttribute( 3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)48 );
-				state->BindAttribute( 4, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, (void*)64 );
-				// state->SetAttributeDivisor( 4, 0 );
+				vao->BindAttribute( 0, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)0 );
+				vao->BindAttribute( 1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)16 );
+				vao->BindAttribute( 2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)32 );
+				vao->BindAttribute( 3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)48 );
+				vao->BindAttribute( 4, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, (void*)64 );
+				// vao->SetAttributeDivisor( 4, 0 );
 			}
 			else
 			{
 				Slug *array = reinterpret_cast<Slug*>(m_array);
-				state->BindAttribute( 0, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, array );
-				state->BindAttribute( 1, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].texel );
-				state->BindAttribute( 2, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].jacobian );
-				state->BindAttribute( 3, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].banding );
-				state->BindAttribute( 4, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &array[0].color );
-				// state->SetAttributeDivisor( 4, 0 );
+				vao->BindAttribute( 0, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, array );
+				vao->BindAttribute( 1, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].texel );
+				vao->BindAttribute( 2, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].jacobian );
+				vao->BindAttribute( 3, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].banding );
+				vao->BindAttribute( 4, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &array[0].color );
+				// vao->SetAttributeDivisor( 4, 0 );
 			}
 			break;
 		}
@@ -722,52 +720,52 @@ vsRenderBuffer::Bind( vsVertexArrayObject *state )
 }
 
 void
-vsRenderBuffer::Unbind( vsVertexArrayObject *state )
+vsRenderBuffer::Unbind( vsVertexArrayObject *vao )
 {
 	// switch( m_contentType )
 	// {
     //     case ContentType_P:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
     //         break;
     //     case ContentType_PC:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
     //         break;
     //     case ContentType_PT:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
     //         break;
     //     case ContentType_PN:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
     //         break;
     //     case ContentType_PNT:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
     //         break;
     //     case ContentType_PCN:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
     //         break;
     //     case ContentType_PCT:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
     //         break;
     //     case ContentType_PCNT:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
     //         break;
 	// 	case ContentType_Slug:
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
-	// 		state->SetBool( vsVertexArrayObject::ClientBool_OtherArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_OtherArray, false );
 	// 		break;
     //     default:
     //         vsAssert(0, "Unknown content type!");
@@ -990,12 +988,13 @@ vsRenderBuffer::GetColor(int i) const
 
 
 void
-vsRenderBuffer::TriStripBuffer(int instanceCount)
+vsRenderBuffer::TriStripBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	GL_CHECK_SCOPED("TriStripBuffer");
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
 
@@ -1010,12 +1009,12 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 	else
 	{
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::TriListBuffer(int instanceCount)
+vsRenderBuffer::TriListBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	GL_CHECK_SCOPED("TriListBuffer");
 	if ( m_vbo )
@@ -1030,7 +1029,8 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 		// {
 		// PROFILE_GL(prf);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		if ( instanceCount == 1 )
 		{
 			if ( m_contentType == ContentType_UInt32 )
@@ -1064,56 +1064,56 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 	else
 	{
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::TriFanBuffer(int instanceCount)
+vsRenderBuffer::TriFanBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLE_FAN, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLE_FAN, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::LineStripBuffer(int instanceCount)
+vsRenderBuffer::LineStripBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		glDrawElementsInstanced(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_LINE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_LINE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::LineListBuffer(int instanceCount)
+vsRenderBuffer::LineListBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		glDrawElementsInstanced(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_LINES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_LINES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
@@ -1122,7 +1122,7 @@ static GLuint g_vbo = 0;
 static size_t g_vboCursor = VBO_SIZE;
 
 void
-vsRenderBuffer::BindArrayToAttribute( vsVertexArrayObject *state, void* buffer, size_t bufferSize, int attribute, int elementCount )
+vsRenderBuffer::BindArrayToAttribute( vsVertexArrayObject *vao, void* buffer, size_t bufferSize, int attribute, int elementCount )
 {
 	vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
 	if ( g_vbo == 0 )
@@ -1144,7 +1144,7 @@ vsRenderBuffer::BindArrayToAttribute( vsVertexArrayObject *state, void* buffer, 
 	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
 
 	void* curs = reinterpret_cast<void*>(g_vboCursor);
-	state->BindAttribute(attribute, g_vbo, elementCount, vsVertexArrayObject::ComponentType_Float, false, 0, curs);
+	vao->BindAttribute(attribute, g_vbo, elementCount, vsVertexArrayObject::ComponentType_Float, false, 0, curs);
 
 #ifdef VS_PRISTINE_BINDINGS
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -1179,31 +1179,31 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 }
 
 void
-vsRenderBuffer::BindVertexArray( vsVertexArrayObject *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindVertexArray( vsVertexArrayObject *vao, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsVector3D);
-	BindArrayToAttribute(state, buffer,bufferSize,POS_ATTRIBUTE,3);
+	BindArrayToAttribute(vao, buffer,bufferSize,POS_ATTRIBUTE,3);
 }
 
 void
-vsRenderBuffer::BindColorArray( vsVertexArrayObject *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindColorArray( vsVertexArrayObject *vao, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsColor);
-	BindArrayToAttribute(state, buffer,bufferSize,COLOR_ATTRIBUTE,4);
+	BindArrayToAttribute(vao, buffer,bufferSize,COLOR_ATTRIBUTE,4);
 }
 
 void
-vsRenderBuffer::BindTexelArray( vsVertexArrayObject *state, void* buffer, int count )
+vsRenderBuffer::BindTexelArray( vsVertexArrayObject *vao, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector2D);
-	BindArrayToAttribute(state, buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
+	BindArrayToAttribute(vao, buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 
 void
-vsRenderBuffer::BindNormalArray( vsVertexArrayObject *state, void* buffer, int count )
+vsRenderBuffer::BindNormalArray( vsVertexArrayObject *vao, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector3D);
-	BindArrayToAttribute(state, buffer,bufferSize,NORMAL_ATTRIBUTE,3);
+	BindArrayToAttribute(vao, buffer,bufferSize,NORMAL_ATTRIBUTE,3);
 }
 
 #define EVBO_SIZE (1024 * 1024)
@@ -1211,7 +1211,7 @@ static GLuint g_evbo = 0;
 static int g_evboCursor = EVBO_SIZE;
 
 void
-vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int instanceCount )
+vsRenderBuffer::DrawElementsImmediate( vsVertexArrayObject *vao, int type, void* buffer, int count, int instanceCount )
 {
 	int bufferSize = count * sizeof(uint16_t);
 	if ( g_evbo == 0 )
@@ -1222,7 +1222,8 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 
 
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
+	vao->SetElementBuffer(g_evbo);
+	vao->Flush();
 
 	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
 	{
@@ -1232,10 +1233,6 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
 
 	glDrawElementsInstanced(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor), instanceCount );
-
-#ifdef VS_PRISTINE_BINDINGS
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
 
 	g_evboCursor += bufferSize;
 }

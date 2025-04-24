@@ -1222,6 +1222,11 @@ vsFile::Store( vsStore *s )
 				vsLog("Error code: %d", errorCode);
 				vsLog("Error string: %s", PHYSFS_getErrorByCode(errorCode));
 
+				// we're going to crash below when we cast 'n' (which is
+				// negative) to a size_t.  So lets not do that!
+
+				m_ok = false;
+				return;
 			}
 			else if ( s->BufferLength() < (size_t)n )
 			{
@@ -1232,6 +1237,9 @@ vsFile::Store( vsStore *s )
 				vsLog("File:  %s", m_filename);
 				vsLog("Bytes read: %d", n);
 				vsLog("Space to store them: %d", s->BufferLength());
+
+				m_ok = false;
+				return;
 			}
 			s->SetLength((size_t)n);
 		}

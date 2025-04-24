@@ -31,6 +31,7 @@ class vsLight;
 class vsMaterial;
 class vsBox3D;
 class vsShaderValues;
+class vsVertexArrayObject;
 
 #define MAX_OWNED_MATERIALS (10)
 
@@ -128,6 +129,9 @@ public:
 		OpCode_PopShaderOptions,  // pop shader options off the stack
 
 		OpCode_SetLinear,  // set that draw calls will be outputting linear colors which need to be handled by OpenGL
+
+		OpCode_SetVertexArrayObject,
+		OpCode_ClearVertexArrayObject,
 
 		OpCode_Debug,
 
@@ -302,6 +306,9 @@ public:
 
 	void	Fog( const vsFog &light );
 	void	ClearFog();
+
+	void SetVertexArrayObject( vsVertexArrayObject *vao );
+	void ClearVertexArrayObject();
 
 	void	FlatShading();
 	void	SmoothShading();

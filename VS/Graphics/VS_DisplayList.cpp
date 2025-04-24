@@ -112,6 +112,9 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 
 	"SetLinear",
 
+	"SetVertexArrayObject",
+	"ClearVertexArrayObject",
+
 	"Debug"
 };
 
@@ -842,6 +845,19 @@ vsDisplayList::UnbindBuffer( vsRenderBuffer *buffer )
 	m_fifo->WriteVoidStar( buffer );
 }
 
+
+void
+vsDisplayList::SetVertexArrayObject( vsVertexArrayObject *vao )
+{
+	m_fifo->WriteUint8( OpCode_SetVertexArrayObject );
+	m_fifo->WriteVoidStar( vao );
+}
+
+void
+vsDisplayList::ClearVertexArrayObject()
+{
+	m_fifo->WriteUint8( OpCode_ClearVertexArrayObject );
+}
 void
 vsDisplayList::SetLinear( bool linear )
 {
@@ -1243,6 +1259,7 @@ vsDisplayList::PopOp()
 			case OpCode_ColorBuffer:
 			case OpCode_BindBuffer:
 			case OpCode_UnbindBuffer:
+			case OpCode_SetVertexArrayObject:
 			{
 				m_currentOp.data.SetPointer( (char *)m_fifo->ReadVoidStar() );
 				break;
@@ -1397,6 +1414,7 @@ vsDisplayList::PopOp()
 			case OpCode_ClearDepth:
 			case OpCode_ClearViewport:
 			case OpCode_PopShaderOptions:
+			case OpCode_ClearVertexArrayObject:
 			default:
 				break;
 		}
