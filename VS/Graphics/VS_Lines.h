@@ -14,6 +14,7 @@
 #include "VS/Math/VS_Vector.h"
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Model.h"
+class vsVertexArrayObject;
 
 class vsLineBuilder2D
 {
@@ -93,11 +94,15 @@ class vsLines3D: public vsModel
 
 	vsRenderBuffer *m_vertices;
 	vsRenderBuffer *m_indices;
+	vsVertexArrayObject *m_vao;
 
 	vsRenderBuffer m_av;
 	vsRenderBuffer m_ai;
 	vsRenderBuffer m_bv;
 	vsRenderBuffer m_bi;
+
+	vsVertexArrayObject *m_avao;
+	vsVertexArrayObject *m_bvao;
 
 	int m_vertexCursor;
 	int m_indexCursor;

@@ -10,22 +10,44 @@
 #include "VS_Fragment.h"
 
 #include "VS_DisplayList.h"
+#include "VS_VertexArrayObject.h"
 
 #include "VS/Files/VS_Record.h"
+
+namespace
+{
+	vsArray<vsVertexArrayObject*> s_unusedVao;
+}
 
 vsFragment::vsFragment():
 	m_material(nullptr),
 	m_displayList(nullptr),
+	m_vao(nullptr),
 	m_visible(true),
 	m_simpleVbo(nullptr),
 	m_simpleIbo(nullptr)
 {
+	if ( !s_unusedVao.IsEmpty() )
+	{
+		m_vao = *s_unusedVao.Back();
+		s_unusedVao.PopBack();
+
+		m_vao->UnbindAll();
+	}
+	else
+	{
+		m_vao = new vsVertexArrayObject;
+	}
 }
 
 vsFragment::~vsFragment()
 {
 	vsDelete( m_material );
 	vsDelete( m_displayList );
+
+	if ( m_vao )
+		s_unusedVao.AddItem(m_vao);
+	// vsDelete( m_vao );
 }
 
 vsFragment *

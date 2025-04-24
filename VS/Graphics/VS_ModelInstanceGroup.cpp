@@ -16,7 +16,7 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 	m_group(group),
 	m_model(model),
 	m_lodLevel(lodLevel),
-	m_vao(nullptr),
+	// m_vao(nullptr),
 	m_values(nullptr),
 	m_options(nullptr)
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
@@ -26,7 +26,7 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 	m_bufferIsDirty(false)
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 {
-	m_vao = new vsVertexArrayObject;
+	// m_vao = new vsVertexArrayObject;
 }
 
 vsModelInstanceLodGroup::~vsModelInstanceLodGroup()
@@ -34,7 +34,7 @@ vsModelInstanceLodGroup::~vsModelInstanceLodGroup()
 	while ( !m_instance.IsEmpty() )
 		RemoveInstance(m_instance[0]);
 
-	vsDelete( m_vao );
+	// vsDelete( m_vao );
 }
 
 vsModelInstance *
@@ -200,7 +200,7 @@ vsModelInstanceLodGroup::Draw( vsRenderQueue *queue )
 		m_colorBuffer.SetArray(&m_color[0], m_color.ItemCount() );
 		m_bufferIsDirty = false;
 	}
-	m_model->DrawInstanced( queue, m_vao, &m_matrixBuffer, &m_colorBuffer, m_values, m_options, m_lodLevel );
+	m_model->DrawInstanced( queue, &m_matrixBuffer, &m_colorBuffer, m_values, m_options, m_lodLevel );
 #else
 	m_model->DrawInstanced( queue, &m_matrix[0], &m_color[0], m_matrix.ItemCount(), m_values, m_options, m_lodLevel );
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER

@@ -12,6 +12,7 @@
 
 class vsRecord;
 class vsDisplayList;
+class vsVertexArrayObject;
 
 #include "VS/Graphics/VS_RenderBuffer.h"
 #include "VS/Graphics/VS_Material.h"
@@ -32,6 +33,7 @@ private:
 
 	vsMaterial *					m_material;
 	vsDisplayList *					m_displayList;
+	vsVertexArrayObject *			m_vao;
 
 	vsArrayStore<vsRenderBuffer>	m_bufferList;
 	bool m_visible;
@@ -61,6 +63,8 @@ public:
 	void	SetDisplayList( vsDisplayList *list ) { m_displayList = list; m_simpleVbo = nullptr; m_simpleIbo = nullptr; }
 	void	AddBuffer( vsRenderBuffer *buffer );
 	void	Clear();
+
+	vsVertexArrayObject *GetVAO() { return m_vao; }
 
 	// A "Simple" fragment has no display list;  it just binds the vbo and
 	// draws the ibo as a triangle list.

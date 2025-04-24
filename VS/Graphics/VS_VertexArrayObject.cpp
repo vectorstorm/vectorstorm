@@ -92,24 +92,25 @@ vsVertexArrayObject::_DoFlush()
 		{
 			Attribute &p = m_lastAttribute[i];
 			Attribute &a = m_attribute[i];
+
+			if ( a.vbo == 0 && a.isExplicit )
+			{
+				// explicit values don't get saved in the VAO;  we have to re-set them each frame!
+				glVertexAttrib4f( i, a.explicitValues.x, a.explicitValues.y, a.explicitValues.z, a.explicitValues.w );
+			}
+
 			if ( p != a )
 			{
 				p = a;
 
 				// a.dirty = false;
 
-				if ( a.vbo < 0 ) // disabled, move to the next one!
+				if ( a.vbo <= 0 ) // disabled, move to the next one!
 				{
 					glDisableVertexAttribArray( i );
 					continue;
 				}
 
-				if ( a.isExplicit )
-				{
-					glDisableVertexAttribArray( i );
-					glVertexAttrib4f( i, a.explicitValues.x, a.explicitValues.y, a.explicitValues.z, a.explicitValues.w );
-				}
-				else
 				{
 					glEnableVertexAttribArray( i );
 
@@ -236,7 +237,9 @@ vsVertexArrayObject::UnbindAll()
 	{
 		m_attribute[i].vbo = -1;
 		m_attribute[i].divisor = 0;
+		m_attribute[i].isExplicit = false;
 	}
+	m_elementBuffer = 0;
 }
 
 void

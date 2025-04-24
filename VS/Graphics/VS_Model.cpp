@@ -580,7 +580,7 @@ vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRe
 	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
 	{
 		if ( iter->IsVisible() )
-			queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues, options );
+			queue->AddFragmentInstanceBatch( *iter, iter->GetVAO(), matrixBuffer, colorBuffer, shaderValues, options );
 	}
 }
 
