@@ -56,7 +56,9 @@ public:
 
 	// Add a batch to this stage
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
+	void			AddBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsDisplayList *batch );
 	void			AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type );
+	void			AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType type );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
@@ -245,6 +247,12 @@ vsRenderQueueStage::FindBatch( vsMaterial *material )
 void
 vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
 {
+	AddBatch( material, nullptr, matrix, batchList );
+}
+
+void
+vsRenderQueueStage::AddBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
+{
 	Batch *batch = FindBatch(material);
 
 	if ( !m_batchElementPool )
@@ -259,6 +267,7 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 	element->material = material;
 	element->matrix = matrix;
 	element->list = batchList;
+	element->vao = vao;
 	element->instanceMatrix = nullptr;
 	element->instanceMatrixBuffer = nullptr;
 	element->instanceColorBuffer = nullptr;
@@ -269,6 +278,12 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 
 void
 vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType)
+{
+	AddSimpleBatch( material, nullptr, matrix, vbo, ibo, simpleType );
+}
+
+void
+vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType)
 {
 	Batch *batch = FindBatch(material);
 
@@ -365,6 +380,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 	element->material = material;
 	element->matrix = matrix;
 	element->list = nullptr;
+	element->vao = vao;
 	element->vbo = vbo;
 	element->ibo = ibo;
 	element->simpleType = simpleType;
@@ -850,6 +866,17 @@ vsRenderQueue::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, 
 }
 
 void
+vsRenderQueue::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsFragment::SimpleType simpleType )
+{
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
+	int stageId = PickStageForMaterial( material );
+
+	m_stage[stageId].AddSimpleBatch( material, vao, matrix, vbo, ibo, simpleType );
+}
+
+void
 vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch )
 {
 	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
@@ -857,7 +884,18 @@ vsRenderQueue::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisp
 
 	int stageId = PickStageForMaterial( material );
 
-	m_stage[stageId].AddBatch( material, matrix, batch );
+	m_stage[stageId].AddBatch( material, nullptr, matrix, batch );
+}
+
+void
+vsRenderQueue::AddBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsDisplayList *batch )
+{
+	if ( (material->GetResource()->m_flags & m_materialHideFlags) != 0 )
+		return; // don't draw!
+
+	int stageId = PickStageForMaterial( material );
+
+	m_stage[stageId].AddBatch( material, vao, matrix, batch );
 }
 
 void
@@ -944,9 +982,9 @@ void
 vsRenderQueue::AddFragmentBatch( vsFragment *fragment )
 {
 	if ( fragment->IsSimple() )
-		AddSimpleBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetSimpleVBO(), fragment->GetSimpleIBO(), fragment->GetSimpleType() );
+		AddSimpleBatch( fragment->GetMaterial(), fragment->GetVAO(), GetMatrix(), fragment->GetSimpleVBO(), fragment->GetSimpleIBO(), fragment->GetSimpleType() );
 	else
-		AddBatch( fragment->GetMaterial(), GetMatrix(), fragment->GetDisplayList() );
+		AddBatch( fragment->GetMaterial(), fragment->GetVAO(), GetMatrix(), fragment->GetDisplayList() );
 }
 
 void
@@ -971,9 +1009,9 @@ void
 vsRenderQueue::AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsShaderValues *values, vsShaderOptions *options )
 {
 	if ( fragment->IsSimple() )
-		AddSimpleInstanceBatch( fragment->GetMaterial(), matrixBuffer, colorBuffer, fragment->GetSimpleVBO(), fragment->GetSimpleIBO(), fragment->GetSimpleType(), values, options );
+		AddSimpleInstanceBatch( fragment->GetMaterial(), fragment->GetVAO(), matrixBuffer, colorBuffer, fragment->GetSimpleVBO(), fragment->GetSimpleIBO(), fragment->GetSimpleType(), values, options );
 	else
-		AddInstanceBatch( fragment->GetMaterial(), matrixBuffer, colorBuffer, fragment->GetDisplayList(), values, options );
+		AddInstanceBatch( fragment->GetMaterial(), fragment->GetVAO(), matrixBuffer, colorBuffer, fragment->GetDisplayList(), values, options );
 }
 
 void

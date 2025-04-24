@@ -93,13 +93,16 @@ public:
 	vsScene *		GetScene() { return m_scene; }
 
 	// Usual way to add a batch
+	void			AddBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsDisplayList *batch );
 	void			AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsDisplayList *batch );
 
 	// Identity-matrix batches.
-	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, vsMatrix4x4::Identity, batch ); }
+	void			AddBatch( vsMaterial *material, vsDisplayList *batch )  { AddBatch( material, nullptr, vsMatrix4x4::Identity, batch ); }
+	void			AddBatch( vsMaterial *material, vsVertexArrayObject *vao, vsDisplayList *batch )  { AddBatch( material, vao, vsMatrix4x4::Identity, batch ); }
 
 	// Simple batch with no display list
 	void			AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &matrix, vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsFragment::SimpleType simpleType );
+	void			AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsFragment::SimpleType simpleType );
 
 	// batches which will draw in multiple places.
 	// Note that the passed array of matrices must exist until the Draw phase ends!
