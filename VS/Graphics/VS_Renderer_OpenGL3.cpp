@@ -293,6 +293,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_window(nullptr),
 	m_scene(nullptr),
 	m_currentRenderTarget(nullptr),
+	m_currentVAO(nullptr),
+	m_defaultVAO(true),
 	m_currentMaterial(nullptr),
 	m_currentMaterialInternal(nullptr),
 	m_currentShader(nullptr),
@@ -1265,7 +1267,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 	{
 		PROFILE_GL("StateFlush");
 		m_state.Flush();
-		m_currentVAO->Flush();
 	}
 
 	if ( m_currentRenderTarget )
@@ -1293,6 +1294,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	int instanceCount = 0;
 	int materialInternalSets = 0;
 	int duppedMaterialInternals = 0;
+	int vaoDrawCount = 0;
 	std::unordered_set<vsMaterialInternal*> materialInternalsUsed;
 #endif // VS_TRACY
 	m_currentCameraPosition = vsVector3D::Zero;
@@ -1321,6 +1323,21 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 #endif // LOG_OPS
 		switch( op->type )
 		{
+			case vsDisplayList::OpCode_SetVertexArrayObject:
+				{
+					m_currentVAO->Exit();
+					m_currentVAO = (vsVertexArrayObject*)op->data.p;
+					m_currentVAO->Enter();
+
+					break;
+				}
+			case vsDisplayList::OpCode_ClearVertexArrayObject:
+				{
+					m_currentVAO->Exit();
+					m_currentVAO = &m_defaultVAO;
+					m_currentVAO->Enter();
+					break;
+				}
 			case vsDisplayList::OpCode_SetLinear:
 				{
 					if ( op->data.i )
@@ -1698,7 +1715,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					PROFILE("LineListArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1709,7 +1726,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					PROFILE("LineStripArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1721,8 +1738,8 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleListArray");
 					PROFILE("TriangleListArray");
 					FlushRenderState();
-
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1734,7 +1751,8 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleStripArray");
 					PROFILE("TriangleStripArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1749,10 +1767,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// if ( ib->UsesPrimitiveRestart() )
 					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
 					FlushRenderState();
-					ib->TriStripBuffer(m_currentLocalToWorldCount);
+					ib->TriStripBuffer(m_currentVAO, m_currentLocalToWorldCount);
 #ifdef VS_TRACY
 					drawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
 #endif
 					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
@@ -1763,10 +1783,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriListBuffer(m_currentLocalToWorldCount);
+					ib->TriListBuffer(m_currentVAO, m_currentLocalToWorldCount);
 #ifdef VS_TRACY
 					drawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
 #endif
 					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
@@ -1778,10 +1800,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// if ( ib->UsesPrimitiveRestart() )
 					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
 					FlushRenderState();
-					ib->TriFanBuffer(m_currentLocalToWorldCount);
+					ib->TriFanBuffer(m_currentVAO, m_currentLocalToWorldCount);
 #ifdef VS_TRACY
 					drawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
 #endif
 					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
@@ -1791,10 +1815,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					PROFILE("LineListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineListBuffer(m_currentLocalToWorldCount);
+					ib->LineListBuffer(m_currentVAO, m_currentLocalToWorldCount);
 #ifdef VS_TRACY
 					drawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
 #endif
 					break;
 				}
@@ -1803,10 +1829,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					PROFILE("LineStripBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineStripBuffer(m_currentLocalToWorldCount);
+					ib->LineStripBuffer(m_currentVAO, m_currentLocalToWorldCount);
 #ifdef VS_TRACY
 					drawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
 #endif
 					break;
 				}
@@ -1814,7 +1842,8 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					PROFILE("TriangleFanArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1825,7 +1854,8 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					PROFILE("PointsArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
 #ifdef VS_TRACY
 					immediateDrawCount++;
 					instanceCount+= m_currentLocalToWorldCount;
@@ -1997,6 +2027,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 #ifdef VS_TRACY
 	TracyPlot("draws", int64_t(drawCount + immediateDrawCount));
 	TracyPlot("instances", int64_t(instanceCount));
+	TracyPlot("vaoDraws", int64_t(vaoDrawCount));
 	TracyPlot("materialSets", int64_t(materialInternalSets));
 	TracyPlot("dupMaterialSets", int64_t(duppedMaterialInternals));
 #endif

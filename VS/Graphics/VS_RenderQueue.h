@@ -106,9 +106,11 @@ public:
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 	void			AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int instanceCount, vsDisplayList *batch );
 	void			AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr  );
+	void			AddInstanceBatch( vsMaterial *material, vsVertexArrayObject *vao, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsDisplayList *batch, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr  );
 	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, const vsColor *color, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 	void			AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType );
 	void			AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
+	void			AddSimpleInstanceBatch( vsMaterial *material, vsVertexArrayObject *vao, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr );
 
 
 	// ultra-convenience for fragments.
@@ -118,6 +120,8 @@ public:
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, const vsColor *color, int instanceCount, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr);
 	void			AddFragmentInstanceBatch( vsFragment *fragment, const vsMatrix4x4 *matrix, int instanceCount );
 	void			AddFragmentInstanceBatch( vsFragment *fragment, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer = nullptr, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr);
+
+	void AddFragmentInstanceBatch( vsFragment *fragment, vsVertexArrayObject *vao, vsRenderBuffer *matrixBuffer, vsRenderBuffer *colorBuffer = nullptr, vsShaderValues *values = nullptr, vsShaderOptions *options = nullptr);
 
 	// For stuff which really doesn't want to keep its display list around, call this to get a temporary display list.
 	vsDisplayList *	MakeTemporaryBatchList( vsMaterial *material, int size );

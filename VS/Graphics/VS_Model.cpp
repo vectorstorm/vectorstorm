@@ -585,6 +585,17 @@ vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRe
 }
 
 void
+vsModel::DrawInstanced( vsRenderQueue *queue, vsVertexArrayObject* vao, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
+{
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
+	{
+		if ( iter->IsVisible() )
+			queue->AddFragmentInstanceBatch( *iter, vao, matrixBuffer, colorBuffer, shaderValues, options );
+	}
+}
+
+void
 vsModel::Draw( vsRenderQueue *queue )
 {
 	if ( GetVisible() )
