@@ -299,3 +299,50 @@ const vsVector4D vsInterpolate( float alpha, const vsVector4D &a, const vsVector
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
+vsNormalPacked::vsNormalPacked():
+	m_value(0)
+{
+}
+
+vsNormalPacked::vsNormalPacked(float x, float y, float z)
+{
+	_Store( vsVector3D(x,y,z) );
+}
+
+vsNormalPacked::vsNormalPacked(const vsVector3D &normal)
+{
+	_Store(normal);
+}
+
+void
+vsNormalPacked::_Store( const vsVector3D& v )
+{
+	// 10 bits each for x, y, and z.  That gives us a range of [-32..31]
+	int x = v.x * 31;
+	int y = v.y * 31;
+	int z = v.z * 31;
+	m_value = z << 20 | y << 10 | x << 0;
+}
+
+vsVector3D
+vsNormalPacked::_Extract()
+{
+	float x = (m_value & 0x1f)/31.f;
+	float y = ((m_value >> 10) & 0x1f)/31.f;
+	float z = ((m_value >> 20) & 0x1f)/31.f;
+
+	return vsVector3D(x,y,z);
+}
+
+void
+vsNormalPacked::Set( const vsVector3D &normal )
+{
+	_Store(normal);
+}
+
+void
+vsNormalPacked::Set( float x, float y, float z )
+{
+	_Store(vsVector3D(x,y,z));
+}
+

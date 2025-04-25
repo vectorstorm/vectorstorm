@@ -109,7 +109,7 @@ vsFragment::Load( vsRecord *record )
 					vsRecord *s = sr->GetChild(id);
 					vsAssert( s->GetTokenCount() == 6, "Wrong number of tokens in PN buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
-					va[id].normal.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
+					va[id].normal = vsVector3D(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
 				}
 
 				buffer->SetArray(va, arrayCount);
@@ -160,8 +160,11 @@ vsFragment::Load( vsRecord *record )
 					vsRecord *s = sr->GetChild(id);
 					vsAssert( s->GetTokenCount() == 8, "Wrong number of tokens in PNT buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
-					va[id].normal.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
-					va[id].texel.Set(s->GetToken(6).AsFloat(), s->GetToken(7).AsFloat());
+
+					vsVector3D n(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
+					vsVector2D t(s->GetToken(6).AsFloat(), s->GetToken(7).AsFloat());
+					va[id].normal = n;
+					va[id].texel = t;
 				}
 
 				buffer->SetArray(va, arrayCount);
@@ -187,7 +190,8 @@ vsFragment::Load( vsRecord *record )
 					vsAssert( s->GetTokenCount() == 10, "Wrong number of tokens in PCNT buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
 					va[id].color.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat(), s->GetToken(6).AsFloat());
-					va[id].normal.Set(s->GetToken(7).AsFloat(), s->GetToken(8).AsFloat(), s->GetToken(9).AsFloat());
+					vsVector3D n(s->GetToken(7).AsFloat(), s->GetToken(8).AsFloat(), s->GetToken(9).AsFloat());
+					va[id].normal.Set(n);
 				}
 
 				buffer->SetArray(va, arrayCount);
