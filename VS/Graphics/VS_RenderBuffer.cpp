@@ -575,9 +575,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PC:
 		{
-			PC dummyArray[2];
 			int stride = sizeof(PC);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t cStart = offsetof(PC,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 
 			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
@@ -602,7 +601,6 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PT:
 		{
-			PT dummyArray[2];
 			int stride = sizeof(PT);
 			size_t tStart = offsetof(PT,texel);
 			GLvoid* tStartPtr = (GLvoid*)tStart;
@@ -629,7 +627,6 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PN:
 		{
-			PN dummyArray[2];
 			int stride = sizeof(PN);
 			size_t nStart = offsetof(PN, normal);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
@@ -657,7 +654,6 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PNT:
 		{
-			PNT dummyArray[2];
 			int stride = sizeof(PNT);
 			size_t nStart = offsetof(PNT,normal);
 			size_t tStart = offsetof(PT,texel);
@@ -690,11 +686,10 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PCNT:
 		{
-			PCNT dummyArray[2];
 			int stride = sizeof(PCNT);
 			size_t nStart = offsetof(PCNT,normal);
 			size_t tStart = offsetof(PCNT,texel);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t cStart = offsetof(PCNT,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
@@ -728,10 +723,9 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PCN:
 		{
-			PCN dummyArray[2];
 			int stride = sizeof(PCN);
 			size_t nStart = offsetof(PCN,normal);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t cStart = offsetof(PCN,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
@@ -761,9 +755,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		}
 		case ContentType_PCT:
 		{
-			PCT dummyArray[2];
 			int stride = sizeof(PCT);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t cStart = offsetof(PCT,color);
 			size_t tStart = offsetof(PCT,texel);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
