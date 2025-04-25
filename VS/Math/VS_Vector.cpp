@@ -318,18 +318,18 @@ void
 vsNormalPacked::_Store( const vsVector3D& v )
 {
 	// 10 bits each for x, y, and z.  That gives us a range of [-32..31]
-	int x = v.x * 31;
-	int y = v.y * 31;
-	int z = v.z * 31;
+	int x = (1.f + v.x) * 15;
+	int y = (1.f + v.y) * 15;
+	int z = (1.f + v.z) * 15;
 	m_value = z << 20 | y << 10 | x << 0;
 }
 
 vsVector3D
 vsNormalPacked::_Extract()
 {
-	float x = (m_value & 0x1f)/31.f;
-	float y = ((m_value >> 10) & 0x1f)/31.f;
-	float z = ((m_value >> 20) & 0x1f)/31.f;
+	float x = -1 + (m_value & 0x1f)/15.f;
+	float y = -1 + ((m_value >> 10) & 0x1f)/15.f;
+	float z = -1 + ((m_value >> 20) & 0x1f)/15.f;
 
 	return vsVector3D(x,y,z);
 }
@@ -344,5 +344,50 @@ void
 vsNormalPacked::Set( float x, float y, float z )
 {
 	_Store(vsVector3D(x,y,z));
+}
+
+vsTexelPacked::vsTexelPacked():
+	m_x(0),
+	m_y(0)
+{
+}
+
+vsTexelPacked::vsTexelPacked(float x, float y)
+{
+	_Store( vsVector2D(x,y) );
+}
+
+vsTexelPacked::vsTexelPacked(const vsVector2D &texel)
+{
+	_Store(texel);
+}
+
+void
+vsTexelPacked::_Store( const vsVector2D& v )
+{
+	// 8 bits each for x, y, and z.  That gives us a range of [-255..255]
+	m_x = v.x * 255.f;
+	m_y = v.y * 255.f;
+}
+
+vsVector2D
+vsTexelPacked::_Extract()
+{
+	float x = m_x / 255.f;
+	float y = m_y / 255.f;
+
+	return vsVector2D(x,y);
+}
+
+void
+vsTexelPacked::Set( const vsVector2D &texel )
+{
+	_Store(texel);
+}
+
+void
+vsTexelPacked::Set( float x, float y )
+{
+	_Store(vsVector2D(x,y));
 }
 
