@@ -100,7 +100,7 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
 		{
 			o[oo].position = mat.ApplyTo( i[ii].position );
-			o[oo].normal = mat.ApplyRotationTo( i[ii].normal );
+			o[oo].normal = mat.ApplyRotationTo( vsVector3D(i[ii].normal) );
 			oo++;
 		}
 	}
