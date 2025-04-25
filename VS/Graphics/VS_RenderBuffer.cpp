@@ -1123,7 +1123,11 @@ vsRenderBuffer::TriStripBuffer(int instanceCount)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
-		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
+
+		if ( m_contentType == ContentType_UInt32 )
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint32_t), GL_UNSIGNED_INT, 0, instanceCount);
+		else
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 #ifdef VS_PRISTINE_BINDINGS
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -1141,7 +1145,6 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 	GL_CHECK_SCOPED("TriListBuffer");
 	if ( m_vbo )
 	{
-		int elements = m_activeBytes/sizeof(uint16_t);
 		// vsString prf;// = "TriListBuffer";
 		// if ( elements <= 6 )
 		// 	prf = "TriListBufferTiny";
@@ -1155,11 +1158,29 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
 		if ( instanceCount == 1 )
 		{
-			glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0);
+			if ( m_contentType == ContentType_UInt32 )
+			{
+				int elements = m_activeBytes/sizeof(uint32_t);
+				glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, 0);
+			}
+			else
+			{
+				int elements = m_activeBytes/sizeof(uint16_t);
+				glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0);
+			}
 		}
 		else
 		{
-			glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
+			if ( m_contentType == ContentType_UInt32 )
+			{
+				int elements = m_activeBytes/sizeof(uint32_t);
+				glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_INT, 0, instanceCount);
+			}
+			else
+			{
+				int elements = m_activeBytes/sizeof(uint16_t);
+				glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
+			}
 		}
 		// }
 		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
