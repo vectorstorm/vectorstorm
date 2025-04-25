@@ -126,11 +126,31 @@ public:
 	const vsVector2D XZ() const { return vsVector2D(x,z); }
 };
 
+class vsNormalPacked
+{
+	int32_t m_value;
+
+	void _Store( const vsVector3D& v );
+	vsVector3D _Extract();
+public:
+
+	vsNormalPacked();
+	vsNormalPacked(float x, float y, float z);
+	vsNormalPacked(const vsVector3D &normal);
+
+	void Set( const vsVector3D &normal );
+	void Set( float x, float y, float z );
+
+	void operator=( const vsVector3D& o ) { return Set(o); }
+	operator vsVector3D() { return _Extract(); }
+};
+
 class vsPosition3D
 {
 	int32_t	m_x;
 	int32_t	m_y;
 	int32_t	m_z;
+
 public:
 
 	vsPosition3D();
