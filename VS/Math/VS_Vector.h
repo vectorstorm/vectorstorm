@@ -67,6 +67,27 @@ public:
 	vsVector2D YY() const { return vsVector2D(y,y); }
 };
 
+class vsTexelPacked
+{
+	uint8_t m_x;
+	uint8_t m_y;
+
+	void _Store( const vsVector2D& v );
+	vsVector2D _Extract();
+public:
+
+	vsTexelPacked();
+	vsTexelPacked(float x, float y);
+	vsTexelPacked(const vsVector2D &normal);
+
+	void Set( const vsVector2D &normal );
+	void Set( float x, float y);
+
+	void operator=( const vsVector2D& o ) { return Set(o); }
+	operator vsVector2D() { return _Extract(); }
+};
+
+
 
 
 // VectorStorm is a 2D game engine, but if you have some strange need for a 3D
