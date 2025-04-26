@@ -614,7 +614,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, tStartPtr );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 #ifdef VS_PRISTINE_BINDINGS
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -622,7 +622,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -670,7 +670,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, tStartPtr );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, nStartPtr );
 
 #ifdef VS_PRISTINE_BINDINGS
@@ -680,7 +680,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PN*)m_array)[0].normal );
 			}
 			break;
@@ -705,7 +705,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, tStartPtr );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, nStartPtr );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
@@ -716,7 +716,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
 				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PN*)m_array)[0].normal );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCNT*)m_array)[0].color );
 			}
@@ -771,7 +771,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
 
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, tStartPtr );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
 
 #ifdef VS_PRISTINE_BINDINGS
@@ -781,7 +781,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
 			}
 			break;
