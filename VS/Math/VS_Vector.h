@@ -149,7 +149,7 @@ public:
 
 class vsNormalPacked
 {
-	int32_t m_value;
+	uint32_t m_value;
 
 	void _Store( const vsVector3D& v );
 	vsVector3D _Extract();
