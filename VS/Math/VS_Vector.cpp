@@ -318,18 +318,18 @@ void
 vsNormalPacked::_Store( const vsVector3D& v )
 {
 	// 10 bits each for x, y, and z.  That gives us a range of [-32..31]
-	int x = (1.f + v.x) * 15;
-	int y = (1.f + v.y) * 15;
-	int z = (1.f + v.z) * 15;
+	int x = (1.f + v.x) * 16;
+	int y = (1.f + v.y) * 16;
+	int z = (1.f + v.z) * 16;
 	m_value = z << 20 | y << 10 | x << 0;
 }
 
 vsVector3D
 vsNormalPacked::_Extract()
 {
-	float x = -1 + (m_value & 0x1f)/15.f;
-	float y = -1 + ((m_value >> 10) & 0x1f)/15.f;
-	float z = -1 + ((m_value >> 20) & 0x1f)/15.f;
+	float x = -1 + (m_value & 0x1f)/16.f;
+	float y = -1 + ((m_value >> 10) & 0x1f)/16.f;
+	float z = -1 + ((m_value >> 20) & 0x1f)/16.f;
 
 	return vsVector3D(x,y,z);
 }
@@ -389,5 +389,54 @@ void
 vsTexelPacked::Set( float x, float y )
 {
 	_Store(vsVector2D(x,y));
+}
+
+vsNormal4DPacked::vsNormal4DPacked():
+	m_value(0)
+{
+}
+
+vsNormal4DPacked::vsNormal4DPacked(float x, float y, float z, float w)
+{
+	_Store( vsVector4D(x,y,z,w) );
+}
+
+vsNormal4DPacked::vsNormal4DPacked(const vsVector4D &normal)
+{
+	_Store(normal);
+}
+
+void
+vsNormal4DPacked::_Store( const vsVector4D& v )
+{
+	// 10 bits each for x, y, and z.  That gives us a range of [-32..31]
+	int x = (1.f + v.x) * 16;
+	int y = (1.f + v.y) * 16;
+	int z = (1.f + v.z) * 16;
+	int w = (1.f + v.w) * 2;
+	m_value = w << 30 | z << 20 | y << 10 | x << 0;
+}
+
+vsVector4D
+vsNormal4DPacked::_Extract()
+{
+	float x = -1 + (m_value & 0x1f)/16.f;
+	float y = -1 + ((m_value >> 10) & 0x1f)/16.f;
+	float z = -1 + ((m_value >> 20) & 0x1f)/16.f;
+	float w = -1 + ((m_value >> 30) & 0x03)/2.f;
+
+	return vsVector4D(x,y,z,w);
+}
+
+void
+vsNormal4DPacked::Set( const vsVector4D &normal )
+{
+	_Store(normal);
+}
+
+void
+vsNormal4DPacked::Set( float x, float y, float z, float w )
+{
+	_Store(vsVector4D(x,y,z,w));
 }
 
