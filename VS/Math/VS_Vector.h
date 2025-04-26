@@ -225,6 +225,28 @@ public:
 	void	Set(float x_in, float y_in, float z_in, float w_in) {x=x_in; y=y_in;z=z_in;w=w_in;}
 };
 
+// a Normal4DPacked gives us packed storage for a vsVector4D with all values
+// between [0..1] and with a 'w' component that is either 0 or 1.
+class vsNormal4DPacked
+{
+	int32_t m_value;
+
+	void _Store( const vsVector4D& v );
+	vsVector4D _Extract();
+public:
+
+	vsNormal4DPacked();
+	vsNormal4DPacked(float x, float y, float z, float w);
+	vsNormal4DPacked(const vsVector4D &normal);
+
+	void Set( const vsVector4D &normal );
+	void Set( float x, float y, float z, float w );
+
+	void operator=( const vsVector4D& o ) { return Set(o); }
+	operator vsVector4D() { return _Extract(); }
+};
+
+
 
 
 
