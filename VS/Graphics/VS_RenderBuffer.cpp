@@ -679,8 +679,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PN*)m_array)[0].normal );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PNT*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -715,8 +715,8 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PN*)m_array)[0].normal );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
+				glVertexAttribPointer( NORMAL_ATTRIBUTE, 4, GL_INT_2_10_10_10_REV, GL_TRUE, stride, &((PCNT*)m_array)[0].normal );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCNT*)m_array)[0].color );
 			}
 			break;
@@ -780,7 +780,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 			else
 			{
 				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
+				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
 				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
 			}
 			break;
