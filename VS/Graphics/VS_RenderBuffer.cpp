@@ -656,7 +656,7 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			int stride = sizeof(PNT);
 			size_t nStart = offsetof(PNT,normal);
-			size_t tStart = offsetof(PT,texel);
+			size_t tStart = offsetof(PNT,texel);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
