@@ -135,6 +135,7 @@ struct vsRenderQueueStage::Batch
 {
 	vsMaterialInternal*	material;
 	BatchElement*		elementList;
+	vsVertexArrayObject *vao;
 	Batch*				next;
 
 	Batch();
@@ -654,6 +655,8 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 			{
 				if ( e->vao )
 					list->SetVertexArrayObject( e->vao );
+				else
+					list->ClearVertexArrayObject();
 
 				if ( e->instanceMatrixBuffer )
 					list->SetMatrices4x4Buffer( e->instanceMatrixBuffer );
@@ -700,9 +703,6 @@ vsRenderQueueStage::Draw( vsDisplayList *list )
 				if ( e->shaderValues )
 					list->ClearShaderValues();
 				list->PopTransform();
-
-				if ( e->vao )
-					list->ClearVertexArrayObject();
 			}
 		}
 	}

@@ -16,7 +16,7 @@
 
 namespace
 {
-	vsArray<vsVertexArrayObject*> s_unusedVao;
+	// vsArray<vsVertexArrayObject*> s_unusedVao;
 }
 
 vsFragment::vsFragment():
@@ -27,27 +27,12 @@ vsFragment::vsFragment():
 	m_simpleVbo(nullptr),
 	m_simpleIbo(nullptr)
 {
-	if ( !s_unusedVao.IsEmpty() )
-	{
-		m_vao = *s_unusedVao.Back();
-		s_unusedVao.PopBack();
-
-		m_vao->UnbindAll();
-	}
-	else
-	{
-		m_vao = new vsVertexArrayObject;
-	}
 }
 
 vsFragment::~vsFragment()
 {
 	vsDelete( m_material );
 	vsDelete( m_displayList );
-
-	if ( m_vao )
-		s_unusedVao.AddItem(m_vao);
-	// vsDelete( m_vao );
 }
 
 vsFragment *
@@ -382,6 +367,10 @@ vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type
 	m_simpleType = type;
 	m_simpleVbo = vbo;
 	m_simpleIbo = ibo;
+
+	// Uncomment the next two lines to use vertex-format VAOs for fragments.
+	// if ( vbo )
+	// 	m_vao = vbo->GetVAO();
 
 	if ( ownershipType & Owned_VBO )
 		AddBuffer(vbo);

@@ -868,13 +868,10 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_widthInScreenspace( screenspace ),
 	m_vertices(nullptr),
 	m_indices(nullptr),
-	m_vao(nullptr),
 	m_av( vsRenderBuffer::Type_Stream ),
 	m_ai( vsRenderBuffer::Type_Stream ),
 	m_bv( vsRenderBuffer::Type_Stream ),
 	m_bi( vsRenderBuffer::Type_Stream ),
-	m_avao(nullptr),
-	m_bvao(nullptr),
 	m_constantViewDirection(),
 	m_useConstantViewDirection(false)
 {
@@ -888,16 +885,12 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 		m_leftWidth *= 0.707f;
 		m_rightWidth *= 0.707f;
 	}
-	m_avao = new vsVertexArrayObject;
-	m_bvao = new vsVertexArrayObject;
 }
 
 vsLines3D::~vsLines3D()
 {
 	Clear();
 	vsDeleteArray( m_strip );
-	vsDelete( m_avao );
-	vsDelete( m_bvao );
 }
 
 void
@@ -1003,13 +996,11 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 	{
 		m_vertices = &m_bv;
 		m_indices = &m_bi;
-		m_vao = m_bvao;
 	}
 	else
 	{
 		m_vertices = &m_av;
 		m_indices = &m_ai;
-		m_vao = m_avao;
 	}
 
 	size_t vertexCount = GetFinalVertexCount();
@@ -1032,7 +1023,7 @@ vsLines3D::DynamicDraw( vsRenderQueue *queue )
 		// m_colors.BakeArray();
 		m_indices->BakeArray();
 
-		queue->AddSimpleBatch( GetMaterial(), m_vao, queue->GetMatrix(), m_vertices, m_indices, vsFragment::SimpleType_TriangleList);
+		queue->AddSimpleBatch( GetMaterial(), queue->GetMatrix(), m_vertices, m_indices, vsFragment::SimpleType_TriangleList);
 	}
 }
 

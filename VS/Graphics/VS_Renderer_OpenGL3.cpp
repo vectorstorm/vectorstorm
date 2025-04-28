@@ -606,8 +606,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 
 	// TEMP VAO IMPLEMENTATION
-	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
+	// glGenVertexArrays(1, &m_vao);
+	// glBindVertexArray(m_vao);
 	GL_CHECK("Initialising OpenGL rendering");
 
 	ResizeRenderTargetsToMatchWindow();
@@ -657,7 +657,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
 	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &m_vao);
+	// glDeleteVertexArrays(1, &m_vao);
 
 	vsDelete( m_defaultShaderSuite );
 
@@ -1040,6 +1040,8 @@ void
 vsRenderer_OpenGL3::FlushRenderState()
 {
 	PROFILE_GL("FlushRenderState");
+
+
 	// For these immediate-mode style "arrays embedded directly in the display list"
 	// situations, we need to make sure that we have enough space to push all the
 	// data directly;  that we won't run out partway through.  This means that we
@@ -1295,6 +1297,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	int materialInternalSets = 0;
 	int duppedMaterialInternals = 0;
 	int vaoDrawCount = 0;
+	int vaoSets = 0;
 	std::unordered_set<vsMaterialInternal*> materialInternalsUsed;
 #endif // VS_TRACY
 	m_currentCameraPosition = vsVector3D::Zero;
@@ -1325,17 +1328,30 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 		{
 			case vsDisplayList::OpCode_SetVertexArrayObject:
 				{
-					m_currentVAO->Exit();
-					m_currentVAO = (vsVertexArrayObject*)op->data.p;
-					m_currentVAO->Enter();
-
+					m_nextVAO = (vsVertexArrayObject*)op->data.p;
+					if ( m_nextVAO != m_currentVAO )
+					{
+						m_currentVAO->Exit();
+						m_nextVAO->Enter();
+						m_currentVAO = m_nextVAO;
+#ifdef VS_TRACY
+						vaoSets++;
+#endif
+					}
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArrayObject:
 				{
-					m_currentVAO->Exit();
-					m_currentVAO = &m_defaultVAO;
-					m_currentVAO->Enter();
+					m_nextVAO = &m_defaultVAO;
+					if ( m_nextVAO != m_currentVAO )
+					{
+						m_currentVAO->Exit();
+						m_nextVAO->Enter();
+						m_currentVAO = m_nextVAO;
+#ifdef VS_TRACY
+						vaoSets++;
+#endif
+					}
 					break;
 				}
 			case vsDisplayList::OpCode_SetLinear:
@@ -2028,6 +2044,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	TracyPlot("draws", int64_t(drawCount + immediateDrawCount));
 	TracyPlot("instances", int64_t(instanceCount));
 	TracyPlot("vaoDraws", int64_t(vaoDrawCount));
+	TracyPlot("vaoSets", int64_t(vaoSets));
 	TracyPlot("materialSets", int64_t(materialInternalSets));
 	TracyPlot("dupMaterialSets", int64_t(duppedMaterialInternals));
 #endif
@@ -2853,6 +2870,7 @@ vsRenderer_OpenGL3::ClearState()
 
 	m_currentVAO = &m_defaultVAO;
 	m_currentVAO->Enter();
+	m_nextVAO = m_currentVAO;
 
 	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 
