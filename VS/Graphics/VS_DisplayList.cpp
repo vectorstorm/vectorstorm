@@ -858,6 +858,7 @@ vsDisplayList::ClearVertexArrayObject()
 {
 	m_fifo->WriteUint8( OpCode_ClearVertexArrayObject );
 }
+
 void
 vsDisplayList::SetLinear( bool linear )
 {

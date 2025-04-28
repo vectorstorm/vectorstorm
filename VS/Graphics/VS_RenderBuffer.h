@@ -162,6 +162,8 @@ public:
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();
 
+	vsVertexArrayObject *GetVAO();
+
 	// used by renderer to handle binding
 	uint32_t GetBufferID() { return m_bufferID; }
 

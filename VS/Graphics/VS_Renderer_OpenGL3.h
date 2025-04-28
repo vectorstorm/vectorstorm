@@ -63,6 +63,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 
     vsRendererState      m_state;
 	vsVertexArrayObject *m_currentVAO;
+	vsVertexArrayObject *m_nextVAO;
 
 	vsVertexArrayObject m_defaultVAO;
 

@@ -16,6 +16,10 @@
 
 #include "VS/Graphics/VS_VertexArrayObject.h"
 
+namespace
+{
+	vsVertexArrayObject *s_vao[vsRenderBuffer::ContentType_PCNT+1] = {0};
+};
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
@@ -72,6 +76,19 @@ vsRenderBuffer::~vsRenderBuffer()
 	{
 		vsDeleteArray( m_array );
 	}
+}
+
+vsVertexArrayObject *
+vsRenderBuffer::GetVAO()
+{
+	vsVertexArrayObject *result = nullptr;
+	if ( m_contentType >= ContentType_P && m_contentType <= ContentType_PCNT )
+	{
+		if ( s_vao[m_contentType] == nullptr )
+			s_vao[m_contentType] = new vsVertexArrayObject;
+		result = s_vao[m_contentType];
+	}
+	return result;
 }
 
 void
