@@ -13,6 +13,7 @@
 
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
+#include "VS_Transform.h"
 #include "VS_GraphicsMemoryProfiler.h"
 
 
@@ -1374,4 +1375,21 @@ vsRenderBuffer::UnbindRange( void* ptr )
 #endif // VS_PRISTINE_BINDINGS
 	}
 	// nothing to do, if no VBO.
+}
+
+void
+vsRenderBuffer::Transform( const vsTransform3D& t )
+{
+	vsAssert(  m_contentType == ContentType_PCN, "Unsupported content type for ::Transform??" );
+	if ( m_contentType == ContentType_PCN )
+	{
+		PCN *pcn = GetPCNArray();
+
+		for ( int i = 0; i < GetPositionCount(); i++ )
+		{
+			pcn[i].position = t.ApplyTo(pcn[i].position);
+			pcn[i].normal = t.GetRotation().ApplyTo(pcn[i].normal);
+		}
+		BakeArray();
+	}
 }
