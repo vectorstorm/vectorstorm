@@ -316,19 +316,24 @@ vsNormalPacked::vsNormalPacked(const vsVector3D &normal)
 
 static uint16_t pack_into_signed_10bit(float v)
 {
-	uint8_t sign_bit = ( v < 0.f );
-	uint16_t int_value = vsClamp(0,v,1) * 511;
+	uint16_t sign_bit = ( v < 0.f );
+	uint16_t int_value = (uint32_t)(v * 0x1ff + (sign_bit << 9)) & 0x1ff;
+	// return sign_bit << 9 | int_value;
+
 	return sign_bit << 9 | int_value;
 }
 
-static uint16_t unpack_from_signed_10bit(uint16_t v)
+static float unpack_from_signed_10bit(uint16_t v)
 {
-	uint8_t sign_bit = ( v >> 9 ) & 0x1;
-	float value = (v & 0x1FF) / 511.f;
-
+	uint16_t sign_bit = ( v >> 9 ) & 0x1;
+	uint16_t int_value = (v & 0x1FF);
 	if ( sign_bit )
-		value *= -1.f;
-	return value;
+		int_value ^= 0x1ff;
+
+	float result = int_value / 511.f;
+	if ( sign_bit )
+		result *= -1.f;
+	return result;
 }
 
 void
@@ -336,8 +341,8 @@ vsNormalPacked::_Store( const vsVector3D& v )
 {
 	// 10 bits each for x, y, and z.  That gives us a range of [0..1024]
 	m_value = pack_into_signed_10bit(v.x) |
-		pack_into_signed_10bit(v.y) << 10 |
-		pack_into_signed_10bit(v.z) << 20;
+		(pack_into_signed_10bit(v.y) << 10) |
+		(pack_into_signed_10bit(v.z) << 20);
 }
 
 vsVector3D
