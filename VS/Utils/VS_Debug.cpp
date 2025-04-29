@@ -19,6 +19,8 @@
 
 #include <assert.h>
 
+extern bool g_bStopMainThread;
+
 #if defined(_WIN32)
 	#include <windows.h>
 	#define __thread
@@ -62,6 +64,7 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 	{
 		// failed assertion..  trace out some information and then crash.
 		bAsserted = true;
+		g_bStopMainThread = true;
 		vsString trimmedFile(file);
 		size_t pos = trimmedFile.rfind('/');
 		if ( pos )
@@ -75,14 +78,14 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 		vsLog_End();
 
 		{
-#if defined(_DEBUG)
-			DEBUG_BREAK;
-#else
+// #if defined(_DEBUG)
+// 			DEBUG_BREAK;
+// #else
+			vsBacktrace();
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now close;  when you restart the game we'll report the problem automatically!", msg, conditionStr, trimmedFile.c_str(), line);
 			vsSystem::Instance()->ShowErrorMessageBox("Failed assertion", mbString.c_str());
-			vsBacktrace();
 			exit(1); //
-#endif
+// #endif
 			// CRASH; // Crash;  to catch the exception handler.
 		}
 	}
