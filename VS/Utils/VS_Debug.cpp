@@ -78,14 +78,14 @@ void vsFailedAssert( const char* conditionStr, const char* msg, const char *file
 		vsLog_End();
 
 		{
-// #if defined(_DEBUG)
-// 			DEBUG_BREAK;
-// #else
+#if defined(_DEBUG)
+			DEBUG_BREAK;
+#else
 			vsBacktrace();
 			vsString mbString = vsFormatString("Failed assertion:  %s\nFailed condition: (%s)\nat %s:%d.\n\nThe game will now close;  when you restart the game we'll report the problem automatically!", msg, conditionStr, trimmedFile.c_str(), line);
 			vsSystem::Instance()->ShowErrorMessageBox("Failed assertion", mbString.c_str());
 			exit(1); //
-// #endif
+#endif
 			// CRASH; // Crash;  to catch the exception handler.
 		}
 	}

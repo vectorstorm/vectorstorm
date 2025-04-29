@@ -27,7 +27,6 @@
 #include "VS_Texture.h"
 #include "VS_TextureInternal.h"
 #include "VS_Profile.h"
-#include "Utils/VS_Sleep.h"
 
 #include "VS_Mutex.h"
 
@@ -45,8 +44,6 @@
 #if SDL_VERSION_ATLEAST(2,0,5)
 #define HAS_SDL_SET_RESIZABLE
 #endif
-
-bool g_bStopMainThread = false;
 
 
 #if TARGET_OS_IPHONE
@@ -1283,11 +1280,6 @@ vsRenderer_OpenGL3::FlushRenderState()
 void
 vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 {
-	while ( g_bStopMainThread )
-	{
-		vsSleep(1000);
-	}
-
 	PROFILE_GL("RenderDisplayList");
 	GL_CHECK("RenderDisplayList");
 	// m_currentMaterial = nullptr;
