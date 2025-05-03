@@ -80,6 +80,17 @@ public:
 		}
 	}
 
+	vsArray( std::initializer_list<T> initializer )
+	{
+		m_array = new T[initializer.size()];
+		m_arrayStorage = initializer.size();
+		m_arrayLength = 0;
+		for (const T&i : initializer)
+		{
+			AddItem(i);
+		}
+	}
+
 	explicit vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
