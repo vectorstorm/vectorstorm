@@ -16,6 +16,8 @@
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
 class vsVertexArrayObject;
+class vsRendererState;
+class vsTransform3D;
 
 struct vsVector4D_i32
 {
@@ -276,6 +278,8 @@ public:
 
 	bool IsVBO() const { return m_vbo; }
 
+	// NO, don't do this.
+	void Transform( const vsTransform3D& t );
 
 	// Advanced interface;  TODO is to figure out whether there's a nicer
 	// way to provide this kind of functionality.
