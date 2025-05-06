@@ -606,8 +606,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 
 	// TEMP VAO IMPLEMENTATION
-	// glGenVertexArrays(1, &m_vao);
-	// glBindVertexArray(m_vao);
 	GL_CHECK("Initialising OpenGL rendering");
 
 	ResizeRenderTargetsToMatchWindow();
@@ -657,7 +655,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
 	glBindVertexArray(0);
-	// glDeleteVertexArrays(1, &m_vao);
 
 	vsDelete( m_defaultShaderSuite );
 
