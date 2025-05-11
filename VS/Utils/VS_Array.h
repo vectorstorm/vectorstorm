@@ -101,6 +101,8 @@ public:
 	virtual ~vsArray()
 	{
 		vsDeleteArray( m_array );
+		m_arrayLength = 0;
+		m_arrayStorage = 0;
 	}
 
 	T&		Get( const vsArrayIterator<T> &iter ) const

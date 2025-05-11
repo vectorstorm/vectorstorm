@@ -83,6 +83,8 @@ public:
 			vsDelete( m_array[i] );
 		}
 		vsDeleteArray( m_array );
+		m_arrayLength = 0;
+		m_arrayStorage = 0;
 	}
 
 	// take the elements from that other store, including transferring
