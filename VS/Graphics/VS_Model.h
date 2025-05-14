@@ -106,6 +106,7 @@ public:
 	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
+	vsDisplayList*	GetDisplayList() { return m_displayList; }
 	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			DestroyFragment( vsFragment *fragment );
 	void			ClearFragments();
@@ -131,6 +132,7 @@ public:
 	bool		CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 
 	void SaveOBJ( const vsString& filename );
+	void SaveBinary( const vsString &filename );
 };
 
 #endif // VS_MODEL_H
