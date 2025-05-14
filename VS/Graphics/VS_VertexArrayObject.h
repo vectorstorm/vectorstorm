@@ -105,6 +105,7 @@ public:
 	void UnbindAll();
 
 	void SetElementBuffer( int vbo );
+	int GetElementBuffer() const { return m_elementBuffer; }
 	void UnbindElementBuffer();
 
 };

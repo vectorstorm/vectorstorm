@@ -12,6 +12,7 @@
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
 
+
 vsVertexArrayObject::vsVertexArrayObject( bool generic ):
 	m_id(0),
 	m_set(false),
@@ -155,7 +156,35 @@ vsVertexArrayObject::_DoFlush()
 			}
 		}
 
-		if ( m_elementBuffer != m_lastElementBuffer )
+		// [INFO]
+		//
+		// Okay, this is awkward.  VAOs are context-local objects, not shared between
+		// shared OpenGL contexts.  And so this object must *only* be used on the same
+		// thread that created it (which is generally the main rendering thread).
+		//
+		// BUT.  We do want to load data into render buffers and this happens BOTH from
+		// the rendering thread and also from the OpenGL shared thread.  And so if
+		// it happens on the main thread that somebody changes a triangle list or
+		// other list of indices, then vsRenderBuffer will happily stomp all over
+		// our GL_ELEMENT_ARRAY_BUFFER mapping and so if we try to draw the same
+		// thing twice in a row but the vsRenderBuffer is called between them, we
+		// might not set the GL_ELEMENT_ARRAY_BUFFER back to the correct value on
+		// the second draw because we're not aware it got stomped.
+		//
+		// But ALSO, we can't have the vsRenderBuffer just *tell us* it's stomped
+		// our data because if it does it from a background thread, we're totally
+		// invalid for it to be thinking about!
+		//
+		// SO.  For right now, the workaround is to just always reset the element
+		// array buffer binding.
+		//
+		// A *proper* fix would probably be for the vsRenderBuffer to NOT go
+		// talking to OpenGL on its own and instead have it do everything on the
+		// CPU side, and only sync its data to OpenGL in a more controlled
+		// manner from specifically one thread or the other, which knows about
+		// its requirements re: VAO objects.
+		//
+		// if ( m_elementBuffer != m_lastElementBuffer )
 		{
 			m_lastElementBuffer = m_elementBuffer;
 

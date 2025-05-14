@@ -151,7 +151,6 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		GL_TEXTURE_BUFFER
 	};
 	int bindPoint = bindPoints[bindType];
-
 	m_bindType = bindType;
 
 	if ( m_vbo )
@@ -1020,9 +1019,6 @@ vsRenderBuffer::TriStripBuffer(vsVertexArrayObject* vao, int instanceCount)
 			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint32_t), GL_UNSIGNED_INT, 0, instanceCount);
 		else
 			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
 	}
 	else
 	{
@@ -1075,9 +1071,6 @@ vsRenderBuffer::TriListBuffer(vsVertexArrayObject* vao, int instanceCount)
 				glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
 			}
 		}
-		// }
-		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
