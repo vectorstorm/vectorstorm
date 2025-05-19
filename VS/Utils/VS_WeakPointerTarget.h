@@ -1,76 +1,62 @@
 #ifndef MIX_TYPES_POINTERS_WEAKPOINTERTARGET_H
 #define MIX_TYPES_POINTERS_WEAKPOINTERTARGET_H
 
-class vsWeakPointerTarget;
-
-/** Base class for weak pointer implementations.
- *
- *\ingroup qcl_types_pointers
- */
-class vsWeakPointerBase
-{
-public:
-	vsWeakPointerBase();
-	virtual void Clear() = 0;
-	vsWeakPointerBase   *m_previousWeakPointer;
-	vsWeakPointerBase   *m_nextWeakPointer;
-};
-
-/** Parent class for objects that want to be pointed at by a weak pointer.
- *
- *  Weak pointers do not keep an instance alive like strong pointers do.
- *
- *  They notice when the object they are pointing at is destroyed, and
- *  will take on a different value when that happens.
- *  For example, a standard vsWeakPointer becomes nullptr when the object being pointed at is destroyed.
- *
- *\ingroup qcl_types_pointers
- */
+#include <atomic>
 
 class vsWeakPointerTarget
 {
+	template<class T> friend class vsWeakPointer;
+	class Proxy
+	{
+		vsWeakPointerTarget *m_target;
+		std::atomic<int> m_refCount;
+	public:
+
+		Proxy( vsWeakPointerTarget *target ):
+			m_target(target),
+			m_refCount(0)
+		{
+		}
+
+		~Proxy()
+		{
+			if ( m_target )
+				m_target->Detach();
+			m_target = nullptr;
+		}
+
+		vsWeakPointerTarget *Get() { return m_target; }
+		const vsWeakPointerTarget *Get() const { return m_target; }
+
+		void Detach() { m_target = nullptr; if ( m_refCount == 0 ) delete this; }
+		void IncRef() { m_refCount++; }
+		void DecRef() { if ( --m_refCount <= 0 && !m_target ) delete this; }
+	};
+
+	Proxy *m_proxy;
+
 public:
 	vsWeakPointerTarget();
 			///< Initialize the reference count to 0.
 
-	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { UNUSED(otherCount); m_referenceCount = 0; m_firstWeakPointer = nullptr; }
-			///< Copy constructor. Note that this initialize the reference count to 0!
-
-	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { UNUSED(otherCount); return *this; }
-			///< Assignment operator.
+	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { Detach(); }
+	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { Detach(); return *this; }
 
 	virtual ~vsWeakPointerTarget();
 
-	int AddReference( vsWeakPointerBase *newReference ) const;		// todo make this private
-	int ReleaseReference( vsWeakPointerBase *oldReference ) const;	// todo make this private
-	int GetReferenceCount() const { assert( m_referenceCount >= 0 ); return m_referenceCount; }
-			///< Returns the reference count (obscure!)
-
+	void	Detach();
 	void	BreakAllReferences();
-			///< All existing weak pointers to this object will magically become nullptr.
-			///  The object itself is unaffected.
 
-private:
-	mutable int m_referenceCount;
-	mutable vsWeakPointerBase *m_firstWeakPointer;
+	Proxy*	GetProxy();
 };
 
 
 #include "VS_WeakPointer.h"
 
 inline
-vsWeakPointerBase::vsWeakPointerBase()
+vsWeakPointerTarget::vsWeakPointerTarget():
+	m_proxy(nullptr)
 {
-	m_previousWeakPointer = nullptr;
-	m_nextWeakPointer = nullptr;
-}
-
-
-inline
-vsWeakPointerTarget::vsWeakPointerTarget()
-{
-	m_referenceCount = 0;
-	m_firstWeakPointer = nullptr;
 }
 
 
@@ -90,67 +76,27 @@ inline
 void
 vsWeakPointerTarget::BreakAllReferences()
 {
-	while( m_firstWeakPointer )
+	if ( m_proxy )
 	{
-		ReleaseReference( m_firstWeakPointer );
+		m_proxy->Detach();
+		m_proxy = nullptr;
 	}
 }
 
-
-/** Adds a reference, returns the new reference count.
- */
-
 inline
-int
-vsWeakPointerTarget::AddReference( vsWeakPointerBase *newReference ) const
+void
+vsWeakPointerTarget::Detach()
 {
-	assert( newReference != nullptr );
-
-	newReference->m_previousWeakPointer = nullptr;
-	newReference->m_nextWeakPointer = m_firstWeakPointer;
-
-	m_firstWeakPointer = newReference;
-
-	if( newReference->m_nextWeakPointer )
-	{
-		newReference->m_nextWeakPointer->m_previousWeakPointer = newReference;
-	}
-
-	return ++m_referenceCount;
+	BreakAllReferences();
 }
 
-
-/**< Releases a reference, returns the new reference count.
- */
-
 inline
-int
-vsWeakPointerTarget::ReleaseReference( vsWeakPointerBase *oldReference ) const
+vsWeakPointerTarget::Proxy*
+vsWeakPointerTarget::GetProxy()
 {
-	assert( oldReference != nullptr );
-
-	if( oldReference->m_previousWeakPointer )
-	{
-		oldReference->m_previousWeakPointer->m_nextWeakPointer = oldReference->m_nextWeakPointer;
-	}
-	else
-	{
-		assert( oldReference == m_firstWeakPointer );
-		m_firstWeakPointer = oldReference->m_nextWeakPointer;
-	}
-
-	if( oldReference->m_nextWeakPointer )
-	{
-		oldReference->m_nextWeakPointer->m_previousWeakPointer = oldReference->m_previousWeakPointer;
-	}
-
-	oldReference->Clear();
-	oldReference->m_previousWeakPointer = nullptr;
-	oldReference->m_nextWeakPointer = nullptr;
-
-	m_referenceCount--;
-
-	return m_referenceCount;
+	if ( !m_proxy )
+		m_proxy = new Proxy(this);
+	return m_proxy;
 }
 
 
