@@ -39,8 +39,8 @@ public:
 	vsWeakPointerTarget();
 			///< Initialize the reference count to 0.
 
-	vsWeakPointerTarget( const vsWeakPointerTarget &otherCount ) { Detach(); }
-	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &otherCount ) { Detach(); return *this; }
+	vsWeakPointerTarget( const vsWeakPointerTarget &other );
+	vsWeakPointerTarget &operator=( const vsWeakPointerTarget &other );
 
 	virtual ~vsWeakPointerTarget();
 
@@ -57,6 +57,20 @@ inline
 vsWeakPointerTarget::vsWeakPointerTarget():
 	m_proxy(nullptr)
 {
+}
+
+inline
+vsWeakPointerTarget::vsWeakPointerTarget( const vsWeakPointerTarget &other ):
+	vsWeakPointerTarget()
+{
+}
+
+inline
+vsWeakPointerTarget &
+vsWeakPointerTarget::operator=( const vsWeakPointerTarget &other )
+{
+	// nothing to copy, and we probably don't need to detach pointers to us.
+	return *this;
 }
 
 
