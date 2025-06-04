@@ -58,16 +58,16 @@ private:
 
 	bool m_system; // system shader;  should not be reloaded!
 
-	void SetUniformValueF( int i, float value );
-	void SetUniformValueB( int i, bool value );
-	void SetUniformValueI( int i, int value );
-	void SetUniformValueUI( int i, unsigned int value );
-	void SetUniformValueVec2( int i, const vsVector2D& value );
-	void SetUniformValueVec3( int i, const vsVector3D& value );
-	void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
-	void SetUniformValueVec4( int i, const vsVector4D& value );
-	void SetUniformValueVec4( int i, const vsColor& value );
-	void SetUniformValueMat4( int i, const vsMatrix4x4& value );
+	inline void SetUniformValueF( int i, float value );
+	inline void SetUniformValueB( int i, bool value );
+	inline void SetUniformValueI( int i, int value );
+	inline void SetUniformValueUI( int i, unsigned int value );
+	inline void SetUniformValueVec2( int i, const vsVector2D& value );
+	inline void SetUniformValueVec3( int i, const vsVector3D& value );
+	inline void SetUniformValueVec3( int i, const vsColor& value ); // only rgb channels used
+	inline void SetUniformValueVec4( int i, const vsVector4D& value );
+	inline void SetUniformValueVec4( int i, const vsColor& value );
+	inline void SetUniformValueMat4( int i, const vsMatrix4x4& value );
 
 	void Compile( const vsString &vertexShader, const vsString &fragmentShader, bool lit, bool texture, uint32_t variantBits );
 

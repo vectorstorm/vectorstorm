@@ -299,3 +299,165 @@ const vsVector4D vsInterpolate( float alpha, const vsVector4D &a, const vsVector
 	return ((1.0f-alpha)*a) + (alpha*b);
 }
 
+vsNormalPacked::vsNormalPacked():
+	m_value(0)
+{
+}
+
+vsNormalPacked::vsNormalPacked(float x, float y, float z)
+{
+	_Store( vsVector3D(x,y,z) );
+}
+
+vsNormalPacked::vsNormalPacked(const vsVector3D &normal)
+{
+	_Store(normal);
+}
+
+static uint16_t pack_into_signed_10bit(float v)
+{
+	uint16_t sign_bit = ( v < 0.f );
+	uint16_t int_value = (uint32_t)(v * 0x1ff + (sign_bit << 9)) & 0x1ff;
+	// return sign_bit << 9 | int_value;
+
+	return sign_bit << 9 | int_value;
+}
+
+static float unpack_from_signed_10bit(uint16_t v)
+{
+	uint16_t sign_bit = ( v >> 9 ) & 0x1;
+	uint16_t int_value = (v & 0x1FF);
+	if ( sign_bit )
+		int_value ^= 0x1ff;
+
+	float result = int_value / 511.f;
+	if ( sign_bit )
+		result *= -1.f;
+	return result;
+}
+
+void
+vsNormalPacked::_Store( const vsVector3D& v )
+{
+	// 10 bits each for x, y, and z.  That gives us a range of [0..1024]
+	m_value = pack_into_signed_10bit(v.x) |
+		(pack_into_signed_10bit(v.y) << 10) |
+		(pack_into_signed_10bit(v.z) << 20);
+}
+
+vsVector3D
+vsNormalPacked::_Extract()
+{
+	return vsVector3D(
+			unpack_from_signed_10bit( m_value ),
+			unpack_from_signed_10bit( m_value >> 10 ),
+			unpack_from_signed_10bit( m_value >> 20 )
+			);
+}
+
+void
+vsNormalPacked::Set( const vsVector3D &normal )
+{
+	_Store(normal);
+}
+
+void
+vsNormalPacked::Set( float x, float y, float z )
+{
+	_Store(vsVector3D(x,y,z));
+}
+
+vsTexelPacked::vsTexelPacked():
+	m_x(0),
+	m_y(0)
+{
+}
+
+vsTexelPacked::vsTexelPacked(float x, float y)
+{
+	_Store( vsVector2D(x,y) );
+}
+
+vsTexelPacked::vsTexelPacked(const vsVector2D &texel)
+{
+	_Store(texel);
+}
+
+void
+vsTexelPacked::_Store( const vsVector2D& v )
+{
+	// 8 bits each for x, y, and z.  That gives us a range of [-255..255]
+	m_x = v.x * 255.f;
+	m_y = v.y * 255.f;
+}
+
+vsVector2D
+vsTexelPacked::_Extract()
+{
+	float x = m_x / 255.f;
+	float y = m_y / 255.f;
+
+	return vsVector2D(x,y);
+}
+
+void
+vsTexelPacked::Set( const vsVector2D &texel )
+{
+	_Store(texel);
+}
+
+void
+vsTexelPacked::Set( float x, float y )
+{
+	_Store(vsVector2D(x,y));
+}
+
+vsNormal4DPacked::vsNormal4DPacked():
+	m_value(0)
+{
+}
+
+vsNormal4DPacked::vsNormal4DPacked(float x, float y, float z, float w)
+{
+	_Store( vsVector4D(x,y,z,w) );
+}
+
+vsNormal4DPacked::vsNormal4DPacked(const vsVector4D &normal)
+{
+	_Store(normal);
+}
+
+void
+vsNormal4DPacked::_Store( const vsVector4D& v )
+{
+	// 10 bits each for x, y, and z.  That gives us a range of [-32..31]
+	int x = (1.f + v.x) * 16;
+	int y = (1.f + v.y) * 16;
+	int z = (1.f + v.z) * 16;
+	int w = (1.f + v.w) * 2;
+	m_value = w << 30 | z << 20 | y << 10 | x << 0;
+}
+
+vsVector4D
+vsNormal4DPacked::_Extract()
+{
+	float x = -1 + (m_value & 0x1f)/16.f;
+	float y = -1 + ((m_value >> 10) & 0x1f)/16.f;
+	float z = -1 + ((m_value >> 20) & 0x1f)/16.f;
+	float w = -1 + ((m_value >> 30) & 0x03)/2.f;
+
+	return vsVector4D(x,y,z,w);
+}
+
+void
+vsNormal4DPacked::Set( const vsVector4D &normal )
+{
+	_Store(normal);
+}
+
+void
+vsNormal4DPacked::Set( float x, float y, float z, float w )
+{
+	_Store(vsVector4D(x,y,z,w));
+}
+

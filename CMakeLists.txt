@@ -163,6 +163,13 @@ include_directories(
 	#/usr/local/include
 	)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	# disable the 'missing override' warning that Clang now issues by default.
+	# I like this and want to get into compliance with it eventually, but we're
+	# not there yet.
+	set(CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override ${CMAKE_CXX_FLAGS}")
+endif ()
+
 if(APPLE)
 	# Set this value (perhaps as env variable?) to do a 32-64 build
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )

@@ -117,14 +117,14 @@ public:
 	struct PN
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24 bytes
+		vsNormalPacked	normal;			// quantised to 2 bytes, 14
 	};
 
 	struct PNT
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsVector2D		texel;			// total:  32 bytes.
+		vsVector3D		position;		// 12
+		vsNormalPacked	normal;			// quantised to 2 bytes, 14
+		vsVector2D		texel;			// total:  22 bytes
 	};
 
 	struct PCT
@@ -137,16 +137,16 @@ public:
 	struct PCN
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24
-		vsColorPacked	color;			// 28
+		vsNormalPacked	normal;			// quantised to 2 bytes, 14
+		vsColorPacked	color;			// 22
 	};
 
 	struct PCNT
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24
-		vsColorPacked	color;			// 28
-		vsVector2D		texel;			// 36
+		vsNormalPacked	normal;			// 16 // 4 bytes
+		vsColorPacked	color;			// 20 // 4 bytes
+		vsVector2D		texel;			// 28 // 8 bytes
 	};
 
 	struct Slug

@@ -71,8 +71,12 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector3D(buffer[i].normal);
-				r.Vector2D(buffer[i].texel);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -86,7 +90,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector3D(buffer[i].normal);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -100,7 +106,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsVector3D n;
 				r.Vector3D(n);
 				buffer[i].normal = n;
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -114,7 +122,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -138,7 +148,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			for ( int32_t i = 0; i < vertexCount; i++ )
 			{
 				r.Vector3D(buffer[i].position);
-				r.Vector3D(buffer[i].normal);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -149,7 +161,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			for ( int32_t i = 0; i < vertexCount; i++ )
 			{
 				r.Vector3D(buffer[i].position);
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
