@@ -145,18 +145,18 @@ void vsOpenGLDebugMessage( GLenum source,
 		const GLvoid *userParam)
 {
 	// NVidia debug message spam.
-	// if (id == 0x00020071) return; // memory usage
-	// 							  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
-	// if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
-	// if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
-	// if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
-	// if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
+	if (id == 0x00020071) return; // memory usage
+								  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
+	if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
+	if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
+	if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
+	if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
     //
 	// // Intel debug message spam.
-	// if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
+	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
     //
 	// // Program/shader being recompiled spam.
-	// if (id == 0x00020092) return;
+	if (id == 0x00020092) return;
 
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
 
@@ -1147,7 +1147,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					if ( t->GetResource()->IsTextureBuffer() )
 					{
 						vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-						if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
+						// if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
 						{
 							glActiveTexture(GL_TEXTURE0 + i);
 							currentlyBoundTexture[i] = buffer->GetBufferID();
@@ -1161,7 +1161,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					{
 						uint32_t tval = t->GetResource()->GetTexture();
 						t->GetResource()->PrepareToBind();
-						if ( currentlyBoundTexture[i] != tval )
+						// if ( currentlyBoundTexture[i] != tval )
 						{
 							glActiveTexture(GL_TEXTURE0 + i);
 							currentlyBoundTexture[i] = tval;
@@ -1206,7 +1206,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 				}
 				else
 				{
-					if ( currentlyBoundTexture[i] != 0 )
+					// if ( currentlyBoundTexture[i] != 0 )
 					{
 						currentlyBoundTexture[i] = 0;
 						glActiveTexture(GL_TEXTURE0 + i);
@@ -2182,99 +2182,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			}
 		}
 
-		/*static bool debugWireframe = false;
-		  if ( debugWireframe )
-		  {
-		  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		  }
-		  else
-		  {
-		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		  }*/
-
-		// let's do this texture binding late, so disabling it here!  We'll
-		// do it when we're handling shader values instead!
-
-		// for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-		// {
-		// 	vsTexture *t = material->GetTexture(i);
-		// 	if ( t )
-		// 	{
-		// 		// glEnable(GL_TEXTURE_2D);
-		// 		if ( t->GetResource()->IsTextureBuffer() )
-		// 		{
-		// 			vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-		// 			if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
-		// 			{
-		// 				glActiveTexture(GL_TEXTURE0 + i);
-		// 				currentlyBoundTexture[i] = buffer->GetBufferID();
-		// 				GL_CHECK_SCOPED("BufferTexture");
-		// 				t->GetResource()->PrepareToBind();
-		// 				glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
-		// 				buffer->BindAsTexture();
-		// 			}
-		// 		}
-		// 		else
-		// 		{
-		// 			uint32_t tval = t->GetResource()->GetTexture();
-		// 			if ( currentlyBoundTexture[i] != tval )
-		// 			{
-		// 				glActiveTexture(GL_TEXTURE0 + i);
-		// 				currentlyBoundTexture[i] = tval;
-		// 				if ( tval == 0 )
-		// 				{
-		// 					// [TODO] Have a replacement blank or checkerboard texture here.
-		// 					glBindTexture( GL_TEXTURE_2D, 0 );
-		// 					vsLog("Tried to bind invalid texture.");
-		// 					vsLog("Material: %s", material->GetName() );
-		// 					vsLog("Texture slot %d", i);
-		// 					vsLog("Texture name %s", t->GetResource()->GetName());
-		// 					// vsAssert( tval != 0, "0 texture??" );
-		// 				}
-		// 				else
-		// 				{
-		// 					t->GetResource()->PrepareToBind();
-		// 					glBindTexture( GL_TEXTURE_2D, tval);
-		// 					if ( material->m_clampU )
-		// 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		// 					if ( material->m_clampV )
-		// 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// 	else
-		// 	{
-		// 		if ( currentlyBoundTexture[i] != 0 )
-		// 		{
-		// 			currentlyBoundTexture[i] = 0;
-		// 			glActiveTexture(GL_TEXTURE0 + i);
-		// 			glBindTexture( GL_TEXTURE_2D, 0);
-		// 		}
-		// 	}
-		// }
-
-		// vsTexture *st = material->GetShadowTexture();
-		// if ( st )
-		// {
-		// 	glActiveTexture(GL_TEXTURE0+8);
-		// 	glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
-		// }
-		// vsTexture *bt = material->GetBufferTexture();
-		// if ( bt )
-		// {
-		// 	GL_CHECK_SCOPED("BufferTexture");
-		// 	glActiveTexture(GL_TEXTURE0+9);
-		// 	glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
-		// 	vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
-		// 	buffer->BindAsTexture();
-		// }
-
-		if ( material->m_alphaTest )
-		{
-			// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
-		}
-
 		if ( material->m_zRead || material->m_zWrite )
 		{
 			m_state.SetBool( vsRendererState::Bool_DepthTest, true );
@@ -2302,9 +2209,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
 			m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
 		}
-
-		// m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
-		// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
 
 		if ( material->m_cullingType == Cull_None )
 		{
@@ -2403,15 +2307,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-					// 				m_state.SetBool( vsRendererState::Bool_Lighting, true );
-					// 				m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
-					// #if !TARGET_OS_IPHONE
-					// 				glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
-					// #endif
-					// 				float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
-					//
-					// 				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
-					// 				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
 					break;
 				}
 			default:
@@ -2421,14 +2316,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		if ( material->m_hasColor )
 		{
 			m_currentColor = material->m_color;
-			// const vsColor &c = material->m_color;
-			// glColor4f( c.r, c.g, c.b, c.a );
-
-			if ( material->m_drawMode == DrawMode_Lit )
-			{
-				// const vsColor &specColor = material->m_specularColor;
-				// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
-			}
 		}
 		else
 		{
