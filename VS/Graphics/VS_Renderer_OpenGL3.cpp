@@ -2435,9 +2435,9 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
 		if ( buf[0] != 0 )
 		{
-#ifdef _DEBUG
+// #ifdef _DEBUG
 			PrintAnnotatedSource(vert);
-#endif
+// #endif
 			vsLog("%s",buf);
 		}
 
@@ -2454,9 +2454,9 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
 			if ( buf[0] != 0 )
 			{
-#ifdef _DEBUG
+// #ifdef _DEBUG
 				PrintAnnotatedSource(frag);
-#endif
+// #endif
 				vsLog("%s",buf);
 			}
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
