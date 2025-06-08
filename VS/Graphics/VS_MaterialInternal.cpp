@@ -294,6 +294,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 								m_texture[m_textureCount]->SetClampUV(true);
 						}
 					}
+
 					m_textureCount++;
 				}
 				else if ( label == "shader" )

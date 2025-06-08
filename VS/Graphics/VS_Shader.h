@@ -49,11 +49,12 @@ public:
 			int32_t i32;
 			uint32_t u32;
 			float f32;
-			float vec4[4]; // for vectors of up to 4 floats
 		};
+		vsVector4D vec4; // for vectors of up to 4 floats
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
+		int32_t def;
 	};
 	struct Attribute
 	{

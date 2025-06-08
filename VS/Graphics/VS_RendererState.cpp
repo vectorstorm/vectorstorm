@@ -31,6 +31,8 @@ vsRendererState::vsRendererState()
 		m_intState[i].SetType( (Int)i );
 	for ( int i = 0; i < FLOAT2_COUNT; i++ )
 		m_float2State[i].SetType( (Float2)i );
+
+	m_intState[Int_CullFace].Set( GL_FRONT );
 }
 
 vsRendererState::~vsRendererState()

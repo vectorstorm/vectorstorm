@@ -255,7 +255,6 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_uniform = new vsShader::Uniform[m_uniformCount];
 
 	int nextUniform = 0;
-	// int defaultSamplerBinding = 0;
 	for ( GLint i = 0; i < activeUniformCount; i++ )
 	{
 		GL_CHECK("Shader::Uniform");
@@ -274,8 +273,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			vsString name(baseName);
 			if ( arraySize > 1 && arrayPos != vsString::npos)
 			{
-				name.replace( arrayPos, 3, vsFormatString("[%d]", arrayIndex) );
-				// name += vsFormatString("[%d]", arrayIndex);
+				baseName.erase(arrayPos);
+				name = vsFormatString("%s[%d]", baseName, arrayIndex);
 			}
 
 			m_uniform[ui].name = name;
@@ -286,6 +285,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			m_uniform[ui].i32 = 0;
 			m_uniform[ui].u32 = 0;
 			m_uniform[ui].f32 = 0.f;
+			if ( baseName == "textures" )
+				m_uniform[ui].def = arrayIndex;
 
 			// initialise to random values, so we definitely set them at least once.
 			switch ( m_uniform[ui].type )
@@ -301,10 +302,10 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].f32 );
 					break;
 				case GL_FLOAT_VEC3:
-					glGetUniformfv( m_shader, m_uniform[ui].loc, m_uniform[ui].vec4 );
+					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
 					break;
 				case GL_FLOAT_VEC4:
-					glGetUniformfv( m_shader, m_uniform[ui].loc, m_uniform[ui].vec4 );
+					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
 					break;
 				case GL_SAMPLER_2D:
 				case GL_UNSIGNED_INT_SAMPLER_2D:
@@ -362,6 +363,7 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_globalMicrosecondsUniformId = GetUniformId("globalMicroseconds");
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
+
 
 	vsDeleteArray( oldUniform );
 	vsDeleteArray( oldAttribute );
@@ -514,14 +516,7 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 void
 vsShaderVariant::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
-	if ( m_textureLoc >= 0 )
-	{
-		const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-		glUniform1iv( m_textureLoc, 8, value );
-	}
-
-	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
-	//
+	// [TODO]  Get rid of this and set these values by default somewhere!
 	// if ( m_textureLoc >= 0 )
 	// {
 	// 	const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -801,7 +796,11 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 				{
 					b = 0;
 					if ( !values || !values->UniformI( u.uid, b ) )
-						matValues->UniformI( u.uid, b);
+						if ( !matValues->UniformI( u.uid, b) )
+						{
+							// for textures named "textures", we have a default automatic binding.
+							b = u.def;
+						}
 					SetUniformValueI( i, b );
 					break;
 				}
@@ -938,52 +937,41 @@ vsShaderVariant::SetUniformValueVec3( int i, const vsVector3D& value )
 void
 vsShaderVariant::SetUniformValueVec3( int i, const vsColor& value )
 {
-	if ( value.r != m_uniform[i].vec4[0] ||
-			value.b != m_uniform[i].vec4[1] ||
-			value.g != m_uniform[i].vec4[2] )
+	if ( value.r != m_uniform[i].vec4.x ||
+			value.g != m_uniform[i].vec4.y ||
+			value.b != m_uniform[i].vec4.z )
 	{
 		glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
-		m_uniform[i].vec4[0] = value.r;
-		m_uniform[i].vec4[1] = value.g;
-		m_uniform[i].vec4[2] = value.b;
+		m_uniform[i].vec4.Set( value.r, value.g, value.b, 1.f );
 	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsVector4D& value )
 {
-	if ( value.x != m_uniform[i].vec4[0] ||
-			value.y != m_uniform[i].vec4[1] ||
-			value.z != m_uniform[i].vec4[2] ||
-			value.w != m_uniform[i].vec4[3] )
+	if ( value != m_uniform[i].vec4 )
 	{
 		glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
-		m_uniform[i].vec4[0] = value.x;
-		m_uniform[i].vec4[1] = value.y;
-		m_uniform[i].vec4[2] = value.z;
-		m_uniform[i].vec4[3] = value.w;
+		m_uniform[i].vec4 = value;
 	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsColor& value )
 {
-	if ( value.r != m_uniform[i].vec4[0] ||
-			value.g != m_uniform[i].vec4[1] ||
-			value.b != m_uniform[i].vec4[2] ||
-			value.a != m_uniform[i].vec4[3] )
+	if ( value.r != m_uniform[i].vec4.x ||
+			value.g != m_uniform[i].vec4.y ||
+			value.b != m_uniform[i].vec4.z ||
+			value.a != m_uniform[i].vec4.w )
 	{
 		glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
-		m_uniform[i].vec4[0] = value.r;
-		m_uniform[i].vec4[1] = value.g;
-		m_uniform[i].vec4[2] = value.b;
-		m_uniform[i].vec4[3] = value.a;
+		m_uniform[i].vec4.Set( value.r, value.g, value.b, value.a );
 	}
 }
 
 void
 vsShaderVariant::SetUniformValueMat4( int i, const vsMatrix4x4& value )
 {
-	glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value );
+	glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, &value.x.x );
 }
 
