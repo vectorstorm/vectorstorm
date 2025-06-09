@@ -368,6 +368,8 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	CreateDeferred();
 	other->CreateDeferred();
 
+	Resolve(0);
+
 	vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
 	vsRendererState::Instance()->SetBool(vsRendererState::Bool_Blend,false);
@@ -375,11 +377,11 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
 	vsRendererState::Instance()->Flush();
 
-	if ( m_renderBufferSurface )
-	{
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
-	}
-	else
+	// if ( m_renderBufferSurface )
+	// {
+	// 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+	// }
+	// else
 	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
@@ -402,7 +404,6 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
-
 
 		glBlitFramebuffer(src.GetMin().x, src.GetMin().y,
 				src.GetMax().x, src.GetMax().y,
