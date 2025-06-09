@@ -17,31 +17,31 @@ class vsShaderVariant
 public:
 
 private:
-	int32_t m_colorLoc;
+	int32_t m_colorUniformId;
 	int32_t m_instanceColorAttributeLoc;
-	int32_t m_hasInstanceColorsLoc;
-	int32_t m_resolutionLoc;
-	int32_t m_mouseLoc;
+	int32_t m_hasInstanceColorsUniformId;
+	int32_t m_resolutionUniformId;
+	int32_t m_mouseUniformId;
 	int32_t m_fogColorId;
 	int32_t m_fogDensityId;
-	int32_t m_textureLoc;
-	int32_t m_shadowTextureLoc;
-	int32_t m_bufferTextureLoc;
-	int32_t m_localToWorldLoc;
+	int32_t m_textureUniformId;
+	int32_t m_shadowTextureUniformId;
+	int32_t m_bufferTextureUniformId;
+	int32_t m_localToWorldUniformId;
 	int32_t m_localToWorldAttributeLoc;
-	int32_t m_worldToViewLoc;
-	int32_t m_cameraPositionLoc;
-	int32_t m_cameraDirectionLoc;
-	int32_t m_viewToProjectionLoc;
-	int32_t m_viewportLoc;
+	int32_t m_worldToViewUniformId;
+	int32_t m_cameraPositionUniformId;
+	int32_t m_cameraDirectionUniformId;
+	int32_t m_viewToProjectionUniformId;
+	int32_t m_viewportUniformId;
 
-	int32_t m_lightAmbientLoc;
-	int32_t m_lightDiffuseLoc;
-	int32_t m_lightSpecularLoc;
-	int32_t m_lightPositionLoc;
-	int32_t m_lightHalfVectorLoc;
+	int32_t m_lightAmbientUniformId;
+	int32_t m_lightDiffuseUniformId;
+	int32_t m_lightSpecularUniformId;
+	int32_t m_lightPositionUniformId;
+	int32_t m_lightHalfVectorUniformId;
 
-	int32_t m_depthOnlyLoc;
+	int32_t m_depthOnlyUniformId;
 
 	vsShader::Uniform *m_uniform;
 	vsShader::Attribute *m_attribute;
