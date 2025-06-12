@@ -1147,7 +1147,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					if ( t->GetResource()->IsTextureBuffer() )
 					{
 						vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-						// if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
+						if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
 						{
 							glActiveTexture(GL_TEXTURE0 + i);
 							currentlyBoundTexture[i] = buffer->GetBufferID();
@@ -1161,7 +1161,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 					{
 						uint32_t tval = t->GetResource()->GetTexture();
 						t->GetResource()->PrepareToBind();
-						// if ( currentlyBoundTexture[i] != tval )
+						if ( currentlyBoundTexture[i] != tval )
 						{
 							glActiveTexture(GL_TEXTURE0 + i);
 							currentlyBoundTexture[i] = tval;
@@ -1206,7 +1206,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 				}
 				else
 				{
-					// if ( currentlyBoundTexture[i] != 0 )
+					if ( currentlyBoundTexture[i] != 0 )
 					{
 						currentlyBoundTexture[i] = 0;
 						glActiveTexture(GL_TEXTURE0 + i);
