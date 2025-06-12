@@ -256,6 +256,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			m_uniform[ui].f32 = 0.f;
 			if ( baseName == "textures" )
 				m_uniform[ui].def = arrayIndex;
+			else
+				m_uniform[ui].def = 0;
 
 			// initialise to random values, so we definitely set them at least once.
 			switch ( m_uniform[ui].type )
