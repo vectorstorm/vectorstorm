@@ -219,9 +219,14 @@ static vsString DoFormatFloat( float value, int places )
 	value -= intPart;
 
 	int decimalPart = vsAbs( std::round(value * pow(10,places)) );
+	bool negative = (value < 0.f);
 
-	vsString result = DoFormatNumber(intPart);
-	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);
+	vsString intPartString = DoFormatNumber( vsAbs(intPart) );
+	vsString pattern = vsFormatString("%%s%%s%%s%%0.%dd", places);
+
+	vsString prefix = negative ? "-" : "";
+
+	vsString result = vsFormatString(pattern, prefix, intPartString, s_decimalSeparator, decimalPart);
 	return result;
 }
 
