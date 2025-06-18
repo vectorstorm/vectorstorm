@@ -321,7 +321,7 @@ static uint16_t pack_into_signed_10bit(float v)
 
 	if ( is_negative )
 		int_value = ~int_value;
-	return int_value;
+	return (int_value & 0x3ff);
 }
 
 static float unpack_from_signed_10bit(uint16_t v)
