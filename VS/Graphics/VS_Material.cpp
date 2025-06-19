@@ -13,6 +13,7 @@
 
 #include "VS_Texture.h"
 #include "VS_OpenGL.h"
+#include "VS_Profile.h"
 
 vsMaterial *vsMaterial::White = nullptr;
 
@@ -294,6 +295,8 @@ vsMaterial::BindUniformMat4( const vsString& name, const vsMatrix4x4* value )
 bool
 vsMaterial::MatchesForBatching( vsMaterial *other ) const
 {
+	PROFILE("vsMaterial::MatchesForBatching");
+
 	if ( GetResource() != other->GetResource() )
 		return false;
 

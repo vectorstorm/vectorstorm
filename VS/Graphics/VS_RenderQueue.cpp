@@ -187,6 +187,8 @@ vsRenderQueueStage::~vsRenderQueueStage()
 vsRenderQueueStage::Batch *
 vsRenderQueueStage::FindBatch( vsMaterial *material )
 {
+	PROFILE("RenderQueueStage::FindBatch");
+
 	std::map<vsMaterialInternal*, vsRenderQueueStage::Batch*>::iterator it = m_batchMap->map.find(material->GetResource());
 	if ( it != m_batchMap->map.end() )
 	{
@@ -254,6 +256,7 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, const vsMatrix4x4 &matrix, v
 void
 vsRenderQueueStage::AddBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsDisplayList *batchList )
 {
+	PROFILE("AddBatch");
 	Batch *batch = FindBatch(material);
 
 	if ( !m_batchElementPool )
@@ -286,12 +289,13 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, const vsMatrix4x4 &mat
 void
 vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *vao, const vsMatrix4x4 &matrix, vsRenderBuffer* vbo, vsRenderBuffer* ibo, vsFragment::SimpleType simpleType)
 {
+	PROFILE("AddSimpleBatch");
 	Batch *batch = FindBatch(material);
 
 	if ( vsSystem::Instance()->GetPreferences()->GetDynamicBatching() )
 	{
-		// Check for compatible simple BatchElements
-		// in this batch.  If I find one, we'll merge together.
+		// Check for compatible simple BatchElements in this batch.  If I find
+		// one, we'll merge together.
 		//
 		// "Compatible" means:  VBO is the same format and simpleType is the same.
 		// And no instance data;  batching doesn't work with instanced draws!
@@ -307,28 +311,24 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *v
 		// But with PCNT, you only get 225.)  I could do something like that, I guess?
 
 		BatchElement *mergeCandidate = nullptr;
-		if ( vsDynamicBatch::Supports( vbo->GetContentType() ) &&
-				vbo->GetPositionCount() < 200 ) // don't even try to merge things that are too big.
+		// don't even try to merge things that are too big.
+		if ( vbo->GetPositionCount() < 100 &&
+				vsDynamicBatch::Supports( vbo->GetContentType() ) )
 		{
+			PROFILE("Finding merge candidate");
 			mergeCandidate = batch->elementList;
 			while(mergeCandidate)
 			{
 				// [TODO] I should also be checking whether there's space in the
 				// mergeCandidate's buffer to merge with it.
-				//
-				// Also, we really don't want to merge into a renderbuffer *every*
-				// time, because each time it would initiate a transfer to the GPU.
-				// Instead, we want to be doing these merges into CPU-side memory
-				// and only push into a GPU buffer once we're *done* merging!
 				if ( mergeCandidate->instanceMatrix == nullptr &&
 						mergeCandidate->vbo &&
 						mergeCandidate->vbo->GetContentType() == vbo->GetContentType() &&
 						mergeCandidate->material->MatchesForBatching( material ) )
 				{
-					// break;
 					if ( mergeCandidate->batch == nullptr )
 					{
-						if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 300 )
+						if ( mergeCandidate->vbo->GetPositionCount() + vbo->GetPositionCount() < 100 )
 							break;
 					}
 					else
@@ -343,6 +343,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *v
 
 		if (mergeCandidate)
 		{
+			PROFILE("Doing merge");
 			// vsLog("Found merge candidate!");
 			// Okay.  So what we're going to do is this:
 			//
