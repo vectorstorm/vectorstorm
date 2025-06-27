@@ -18,6 +18,15 @@
 class vsTransform3D;
 class vsVertexArrayObject;
 
+
+// #define PPACKED_NORMALS
+#ifdef PACKED_NORMALS
+#define normal_t vsNormalPacked;
+#else
+#define normal_t vsVector3D;
+#endif
+
+
 struct vsVector4D_i32
 {
 	int32_t x;
@@ -117,13 +126,13 @@ public:
 	struct PN
 	{
 		vsVector3D		position;		// 12
-		vsNormalPacked	normal;			// quantised to 2 bytes, 14
+		vsVector3D	normal;			// quantised to 2 bytes, 14
 	};
 
 	struct PNT
 	{
 		vsVector3D		position;		// 12
-		vsNormalPacked	normal;			// quantised to 2 bytes, 14
+		vsVector3D	normal;			// quantised to 2 bytes, 14
 		vsVector2D		texel;			// total:  22 bytes
 	};
 
@@ -137,14 +146,14 @@ public:
 	struct PCN
 	{
 		vsVector3D		position;		// 12
-		vsNormalPacked	normal;			// quantised to 2 bytes, 14
+		vsVector3D	normal;			// quantised to 2 bytes, 14
 		vsColorPacked	color;			// 22
 	};
 
 	struct PCNT
 	{
 		vsVector3D		position;		// 12
-		vsNormalPacked	normal;			// 16 // 4 bytes
+		vsVector3D	normal;			// 16 // 4 bytes
 		vsColorPacked	color;			// 20 // 4 bytes
 		vsVector2D		texel;			// 28 // 8 bytes
 	};

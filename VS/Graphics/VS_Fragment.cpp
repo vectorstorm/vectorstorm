@@ -197,8 +197,7 @@ vsFragment::Load( vsRecord *record )
 					vsAssert( s->GetTokenCount() == 10, "Wrong number of tokens in PCNT buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
 					va[id].color.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat(), s->GetToken(6).AsFloat());
-					vsVector3D n(s->GetToken(7).AsFloat(), s->GetToken(8).AsFloat(), s->GetToken(9).AsFloat());
-					va[id].normal.Set(n);
+					va[id].normal.Set(s->GetToken(7).AsFloat(), s->GetToken(8).AsFloat(), s->GetToken(9).AsFloat());
 				}
 
 				buffer->SetArray(va, arrayCount);

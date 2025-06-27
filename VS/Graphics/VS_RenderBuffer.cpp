@@ -19,12 +19,28 @@
 namespace
 {
 	vsVertexArrayObject *s_vao[vsRenderBuffer::ContentType_PCNT+1] = {0};
+
+#ifdef PACKED_NORMALS
+	// this packed integer format requires us to tell OpenGL that we have 4
+	// components or else it's an error.
+	const int c_normal_components = 4;
+	const vsVertexArrayObject::ComponentType c_normal_component_type =
+		vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV;
+#else
+	// actually we're only sending three floads, with unpacked normals.
+	const int c_normal_components = 3;
+	const vsVertexArrayObject::ComponentType c_normal_component_type =
+		vsVertexArrayObject::ComponentType_Float;
+#endif
+
+
 };
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
 #define NORMAL_ATTRIBUTE (2)
 #define COLOR_ATTRIBUTE (3)
+
 
 static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 {
@@ -597,12 +613,12 @@ vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 			if ( m_vbo )
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 			}
 			else
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PN*)m_array)[0].normal );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PN*)m_array)[0].normal );
 			}
 			break;
 		}
@@ -617,13 +633,13 @@ vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 			if ( m_vbo )
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PNT*)m_array)[0].normal );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PNT*)m_array)[0].normal );
 				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PNT*)m_array)[0].texel );
 			}
 			break;
@@ -642,14 +658,14 @@ vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
 				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
 				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCNT*)m_array)[0].color );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, &((PCNT*)m_array)[0].normal );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PCNT*)m_array)[0].normal );
 				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCNT*)m_array)[0].texel );
 			}
 			break;
@@ -666,13 +682,13 @@ vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
 				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, true, stride, nStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 			}
 			else
 			{
 				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
 				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCN*)m_array)[0].color );
-				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV, false, stride, &((PCN*)m_array)[0].normal );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, false, stride, &((PCN*)m_array)[0].normal );
 			}
 			break;
 		}
