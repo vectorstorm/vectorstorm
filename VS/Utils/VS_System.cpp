@@ -1560,6 +1560,12 @@ vsSystem::GetWriteDirectory() const
 	return PHYSFS_getWriteDir();
 }
 
+vsString
+vsSystem::GetModsDirectory() const
+{
+	return vsFormatString( "%s/mod/", PHYSFS_getWriteDir() );
+}
+
 void
 vsSystem::MountBaseDirectory()
 {
@@ -1627,6 +1633,18 @@ vsSystem::TraceMods() const
 			vsLog(">");
 		}
 	}
+}
+
+vsArray<vsString>
+vsSystem::GetUnpackedDataDirectories() const
+{
+	return m_unpackedDataDirectories;
+}
+
+vsArray<vsString>
+vsSystem::GetMods() const
+{
+	return m_modDirectories;
 }
 
 void

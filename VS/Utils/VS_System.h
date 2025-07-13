@@ -197,6 +197,7 @@ public:
 	void LogSystemDetails();
 
 	vsString GetWriteDirectory() const; // returns filesystem path to the write directory
+	vsString GetModsDirectory() const; // returns filesystem path to the mods directory
 
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
 	vsSystemPreferences *	GetPreferences() { return m_preferences; }
@@ -224,6 +225,8 @@ public:
 	// other purpose)
 	int IsDataPristine() const { return m_dataIsPristine; }
 	void TraceMods() const;
+	vsArray<vsString> GetUnpackedDataDirectories() const;
+	vsArray<vsString> GetMods() const;
 
 	// by default, we *don't* mount our base directory for reading, but we can
 	// do so if the game needs it for some reason (for example, MT2's Windows
