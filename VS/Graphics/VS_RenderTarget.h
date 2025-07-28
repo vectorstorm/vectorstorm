@@ -200,8 +200,8 @@ public:
 
 	void		BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst );
 
-	GLsizei GetWidth() { return m_textureSurface->m_width; }
-	GLsizei GetHeight() { return m_textureSurface->m_height; }
+	GLsizei GetWidth() { return m_settings.width; }
+	GLsizei GetHeight() { return m_settings.height; }
 	GLsizei GetViewportWidth() { return m_viewportWidth; }
 	GLsizei GetViewportHeight() { return m_viewportHeight; }
 
