@@ -267,6 +267,12 @@ vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *
 		// easy case, we're already on the main thread so just call DrawPipeline!
 		return DrawPipeline(pipeline, customOptions);
 	}
+	if ( vsRenderer_OpenGL3::Instance()->IsLoadingContext() )
+	{
+		// ensure everything above has reached the main thread before we
+		// try to draw our map!
+		vsRenderer_OpenGL3::Instance()->FenceLoadingContext();
+	}
 
 	// Now, we need to lock a mutex to touch the queued draws list.
 	QueuedDraw qd;
