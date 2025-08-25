@@ -27,6 +27,7 @@ static const vsString s_modeString[DRAWMODE_MAX] =
 {
 	"absolute",	//DrawMode_Absolute,
 	"normal",	//DrawMode_Normal,
+	"preserveAlpha", //DrawMode_PreserveAlpha
 	"premultiplied",	//DrawMode_Normal,
 	"lit",		//DrawMode_Lit,
 	"add",		//DrawMode_Add,

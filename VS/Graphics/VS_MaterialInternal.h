@@ -21,6 +21,7 @@ enum vsDrawMode
 {
 	DrawMode_Absolute,
 	DrawMode_Normal,
+	DrawMode_PreserveAlpha, // Normal blend, but our alpha channel doesn't get written
 	DrawMode_PremultipliedAlpha,
 	DrawMode_Lit,
 	DrawMode_Add,

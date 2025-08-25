@@ -2292,6 +2292,13 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 					break;
 				}
+			case DrawMode_PreserveAlpha:
+				{
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);	// opaque
+																												// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					break;
+				}
 			case DrawMode_PremultipliedAlpha:
 				{
 					glBlendEquation(GL_FUNC_ADD);
