@@ -39,6 +39,7 @@ public:
 	void SetFog( bool fog );
 	void SetZRead( bool zRead );
 	void SetZWrite( bool zWrite );
+	void SetZSort( bool zSort );
 	void SetGlow( bool glow );
 	void SetPostGlow( bool postGlow );
 	void SetHasColor( bool hasColor );

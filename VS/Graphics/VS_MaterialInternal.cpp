@@ -65,6 +65,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
+	m_zSort(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -103,6 +104,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
+	m_zSort(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -224,6 +226,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				else if ( label == "zwrite" )
 				{
 					m_zWrite = sr->Bool();
+				}
+				else if ( label == "zsort" )
+				{
+					m_zSort = sr->Bool();
 				}
 				else if ( label == "glow" )
 				{

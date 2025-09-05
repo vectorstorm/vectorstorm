@@ -107,6 +107,7 @@ public:
 	bool		m_fog;
 	bool		m_zRead;
 	bool		m_zWrite;
+	bool		m_zSort;
 	// bool		m_clampU; // We no longer store these on the vsMaterialInternal.  Instead, "clampU" and "clampV" are taken as directives for how to set up textures which will be added after these directives.
 	// bool		m_clampV;
 	bool		m_glow;

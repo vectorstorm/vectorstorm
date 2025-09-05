@@ -32,6 +32,7 @@ public:
 	struct BatchElement;
 	struct Batch;
 private:
+	vsMatrix4x4			m_worldToView;
 
 	BatchMap*			m_batchMap;
 	Batch*				m_batch;
@@ -44,11 +45,14 @@ private:
 
 	Batch *			FindBatch( vsMaterial *material );
 
+	inline void _AddElementToBatch( vsRenderQueueStage::BatchElement *element, vsRenderQueueStage::Batch *batch );
 
 public:
 
 	vsRenderQueueStage();
 	~vsRenderQueueStage();
+
+	void			SetWorldToView( const vsMatrix4x4& wtv ) { m_worldToView = wtv; }
 
 	void			StartRender();
 	void			Draw( vsDisplayList *list );	// write our batches into here.
@@ -92,6 +96,8 @@ struct vsRenderQueueStage::BatchElement
 	vsFragment::SimpleType simpleType;
 	BatchElement *	next;
 
+	float           sortValue;
+
 	vsDynamicBatch * batch;
 
 	BatchElement():
@@ -108,6 +114,7 @@ struct vsRenderQueueStage::BatchElement
 		vbo(nullptr),
 		ibo(nullptr),
 		next(nullptr),
+		sortValue(0.f),
 		batch(nullptr)
 	{
 	}
@@ -126,6 +133,7 @@ struct vsRenderQueueStage::BatchElement
 		vao = nullptr;
 		vbo = nullptr;
 		ibo = nullptr;
+		sortValue = 0.f;
 		batch = nullptr;
 	}
 
@@ -146,6 +154,7 @@ struct vsRenderQueueStage::BatchMap
 {
 	std::map<vsMaterialInternal*,vsRenderQueueStage::Batch*> map;
 };
+
 
 vsRenderQueueStage::Batch::Batch():
 	material(nullptr),
@@ -183,6 +192,64 @@ vsRenderQueueStage::~vsRenderQueueStage()
 		vsDelete(e);
 	}
 }
+
+void
+vsRenderQueueStage::_AddElementToBatch( vsRenderQueueStage::BatchElement *element, vsRenderQueueStage::Batch *batch )
+{
+	// check if sorting is enabled.
+
+	if ( batch->material->m_zSort )
+	{
+		// okay, we need to insert this batch somewhere in our list according to our
+		// zSort.
+
+		// how can I figure out my sort value?
+		vsVector4D viewPos = m_worldToView.ApplyTo( element->matrix.w );
+		float sortVal = viewPos.z;
+
+		element->sortValue = sortVal;
+		// now, we insert into this batch's element list.
+
+		if ( !batch->elementList || batch->elementList->sortValue < element->sortValue )
+		{
+			element->next = batch->elementList;
+			batch->elementList = element;
+			return;
+		}
+		else
+		{
+			BatchElement *next = batch->elementList;
+			// if ( !next->next && next->sortValue < element->sortValue )
+			// {
+			// 	// we go BEFORE the first thing in the list now!
+            //
+			// 	element->next = batch->elementList;
+			// 	batch->elementList = element;
+			// 	return;
+			// }
+
+			while ( next )
+			{
+				if ( !next->next || next->next->sortValue < element->sortValue )
+				{
+					element->next = next->next;
+					next->next = element;
+					return;
+				}
+				else
+				{
+					next = next->next;
+				}
+			}
+		}
+	}
+	else
+	{
+		element->next = batch->elementList;
+		batch->elementList = element;
+	}
+}
+
 
 vsRenderQueueStage::Batch *
 vsRenderQueueStage::FindBatch( vsMaterial *material )
@@ -276,8 +343,7 @@ vsRenderQueueStage::AddBatch( vsMaterial *material, vsVertexArrayObject *vao, co
 	element->instanceMatrixBuffer = nullptr;
 	element->instanceColorBuffer = nullptr;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -390,8 +456,7 @@ vsRenderQueueStage::AddSimpleBatch( vsMaterial *material, vsVertexArrayObject *v
 	element->instanceMatrixBuffer = nullptr;
 	element->instanceColorBuffer = nullptr;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -414,8 +479,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	element->instanceColorBuffer = nullptr;
 	element->list = batchList;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -439,8 +503,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsRenderBuffer *matr
 	element->instanceColorBuffer = colorBuffer;
 	element->list = batchList;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -465,8 +528,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, vsVertexArrayObject 
 	element->instanceColorBuffer = colorBuffer;
 	element->list = batchList;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -491,8 +553,7 @@ vsRenderQueueStage::AddInstanceBatch( vsMaterial *material, const vsMatrix4x4 *m
 	element->instanceColor = color;
 	element->list = batchList;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 void
 vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix4x4 *matrix, int matrixCount, vsRenderBuffer *vbo, vsRenderBuffer *ibo, vsFragment::SimpleType simpleType )
@@ -516,8 +577,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix
 	element->ibo = ibo;
 	element->simpleType = simpleType;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -543,8 +603,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, vsRenderBuffer
 	element->ibo = ibo;
 	element->simpleType = simpleType;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -571,8 +630,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, vsVertexArrayO
 	element->ibo = ibo;
 	element->simpleType = simpleType;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 void
@@ -599,8 +657,7 @@ vsRenderQueueStage::AddSimpleInstanceBatch( vsMaterial *material, const vsMatrix
 	element->ibo = ibo;
 	element->simpleType = simpleType;
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 }
 
 vsDisplayList *
@@ -621,8 +678,7 @@ vsRenderQueueStage::MakeTemporaryBatchList( vsMaterial *material, const vsMatrix
 	element->matrix = matrix;
 	element->list = new vsDisplayList(size);
 
-	element->next = batch->elementList;
-	batch->elementList = element;
+	_AddElementToBatch( element, batch );
 	m_temporaryLists.AddItem(element->list);
 
 	return element->list;
@@ -836,6 +892,9 @@ vsRenderQueue::InitialiseTransformStack()
 	m_worldToView = m_scene->CalculateWorldToViewMatrix();
 	m_transformStack[0] = vsMatrix4x4::Identity;
 	m_transformStackLevel = 1;
+
+	for ( int i = 0; i < m_stageCount; i++ )
+		m_stage[i].SetWorldToView( m_worldToView );
 }
 
 bool
