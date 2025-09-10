@@ -214,12 +214,12 @@ static vsString DoFormatFloat( float value, int places )
 {
 	float factor = pow(10,places);
 	value = round( value * factor ) / factor;
+	bool negative = (value < 0.f);
 
 	int64_t intPart = (int64_t)(value);
 	value -= intPart;
 
 	int decimalPart = vsAbs( std::round(value * pow(10,places)) );
-	bool negative = (value < 0.f);
 
 	vsString intPartString = DoFormatNumber( vsAbs(intPart) );
 	vsString pattern = vsFormatString("%%s%%s%%s%%0.%dd", places);
