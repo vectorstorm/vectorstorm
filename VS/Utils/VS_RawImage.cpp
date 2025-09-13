@@ -57,6 +57,8 @@ vsRawImage::Bake( const vsString& name_in ) const
 
 	if ( vsCache<vsTextureInternal>::Instance()->Exists( name ) )
 	{
+		vsLog("Trying to re-bake a vsRawImage: %s", name_in);
+		vsLog("We don't support doing that, right now!");
 		// [TODO] Implement this
 		//
 		// texture for this screenshot already exists;  let's just blit over it!
@@ -66,7 +68,7 @@ vsRawImage::Bake( const vsString& name_in ) const
 	}
 	else
 	{
-		vsLog("No existing texture!");
+		// vsLog("No existing texture!");
 
 		vsTextureInternal *texture = new vsTextureInternal( name, this );
 		vsCache<vsTextureInternal>::Instance()->Add( texture );
