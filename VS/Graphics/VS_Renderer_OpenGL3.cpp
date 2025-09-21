@@ -1138,6 +1138,8 @@ vsRenderer_OpenGL3::FlushRenderState()
 				vsTexture *t = nullptr;
 				if ( m_currentShaderValues && m_currentShaderValues->HasTextureOverride(i) )
 					t = m_currentShaderValues->GetTextureOverride(i);
+				else if ( m_currentMaterial->GetShaderValues()->HasTextureOverride(i) )
+					t = m_currentMaterial->GetShaderValues()->GetTextureOverride(i);
 				else
 					t = m_currentMaterialInternal->GetTexture(i);
 
