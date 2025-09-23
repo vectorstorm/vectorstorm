@@ -163,6 +163,11 @@ public:
 	vsRenderTarget( Type t, const vsSurface::Settings &settings, bool deferred = false );
 	~vsRenderTarget();
 
+	// detaches a texture so we won't destroy them when we're destroyed.
+	// This is useful if we're rendering into them to set their contents
+	// initially, but then won't render into them again.
+	vsTexture* Detach( int id );
+
 	// if deferred, create us now!  Only to be called from the render thread!
 	// This is basically here to let games untangle complex render target
 	// dependencies for targets which were created in a deferred fashion from a

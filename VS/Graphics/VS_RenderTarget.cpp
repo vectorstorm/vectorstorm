@@ -142,6 +142,17 @@ vsRenderTarget::~vsRenderTarget()
 	m_bufferCount = 0;
 }
 
+vsTexture*
+vsRenderTarget::Detach( int id )
+{
+	vsTexture *result = Resolve(id);
+	result->GetResource()->m_renderTarget = nullptr;
+
+	m_texture[id] = nullptr;
+
+	return result;
+}
+
 vsTexture *
 vsRenderTarget::ResolveDepth()
 {
