@@ -85,10 +85,7 @@ void SysPower::ScanDirectory( const char* path, int parent )
                 FILE* f = fopen( tmp, "r" );
                 if( f )
                 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-                    int val = fscanf( f, "%" PRIu64, &maxRange );
-#pragma GCC diagnostic pop
+                    (void)fscanf( f, "%" PRIu64, &maxRange );
                     fclose( f );
                 }
             }
