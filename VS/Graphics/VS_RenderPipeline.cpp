@@ -12,6 +12,8 @@
 #include "VS_RenderTarget.h"
 #include "VS_Renderer.h"
 
+#include "VS_Thread.h"
+
 vsRenderPipeline::vsRenderPipeline( int maxStageCount ):
 	m_stage( new vsRenderPipelineStage*[maxStageCount] ),
 	m_stageCount(maxStageCount)
@@ -75,7 +77,10 @@ vsRenderPipeline::RequestRenderTarget( const RenderTargetRequest& request, vsRen
 	vsRenderTarget::Type type = vsRenderTarget::Type_Texture;
 	if ( request.antialias )
 		type = vsRenderTarget::Type_Multisample;
-	vsRenderTarget *newTarget = new vsRenderTarget(type, settings);
+
+	bool defer = !vsThread::IsMainThread();
+
+	vsRenderTarget *newTarget = new vsRenderTarget(type, settings, defer);
 
 	RenderTargetRegistration *reg = new RenderTargetRegistration(newTarget, request);
 	reg->SetUsedByStage( stage );
