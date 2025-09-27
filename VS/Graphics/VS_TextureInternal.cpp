@@ -491,6 +491,12 @@ vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *rend
 
 vsTextureInternal::~vsTextureInternal()
 {
+	// [TODO]  Bah.  This m_texture could be either a texture that we generated ourself
+	// (in which case we should destroy it, maybe by talking to the renderer so it can
+	// clean up the current rendering state in case it thinks it's bound at the moment),
+	// or else it could also currently belong to a vsRenderTarget and it might be EITHER
+	// an opengl texture name OR an opengl renderbuffer name (for multisample and depth
+	// textures).  We need to track this better and clean up better!
 	GLuint t = m_texture;
 	glDeleteTextures(1, &t);
 	m_texture = 0;
