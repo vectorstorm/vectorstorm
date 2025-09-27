@@ -124,8 +124,6 @@ vsRenderTarget::Create()
 	}
 	if ( m_depthTexture )
 		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
-
-	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
