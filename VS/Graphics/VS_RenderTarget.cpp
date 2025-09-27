@@ -12,6 +12,7 @@
 #include "VS_OpenGL.h"
 #include "VS_RendererState.h"
 #include "VS_GraphicsMemoryProfiler.h"
+#include "VS_Thread.h"
 #include <atomic>
 
 namespace
@@ -124,7 +125,7 @@ vsRenderTarget::Create()
 	if ( m_depthTexture )
 		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
 
-	// Clear();
+	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
@@ -315,6 +316,8 @@ vsRenderTarget::Bind()
 void
 vsRenderTarget::Clear()
 {
+	vsAssert( vsThread::IsMainThread(), "Should only get into here on the main thread." );
+
 	Bind();
 	GL_CHECK_SCOPED("vsRenderTarget::Clear");
 
