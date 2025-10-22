@@ -298,14 +298,6 @@ vsMeshMaker::AddTriangle( const vsMeshMakerTriangle &triangle_in )
 
 	vsMeshMakerTriangle triangle = triangle_in;
 
-	if ( triangle.m_vertex[0].GetPosition() == vsVector3D::Zero )
-		vsLog("Zero");
-	if ( triangle.m_vertex[1].GetPosition() == vsVector3D::Zero )
-		vsLog("Zero");
-	if ( triangle.m_vertex[2].GetPosition() == vsVector3D::Zero )
-		vsLog("Zero");
-
-
 	vsVector3D ab = triangle.m_vertex[1].GetPosition() - triangle.m_vertex[0].GetPosition();
 	vsVector3D ac = triangle.m_vertex[2].GetPosition() - triangle.m_vertex[0].GetPosition();
 	triangle.m_faceNormal = ac.Cross(ab);
