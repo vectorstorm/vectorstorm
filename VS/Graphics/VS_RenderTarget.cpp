@@ -380,7 +380,8 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	CreateDeferred();
 	other->CreateDeferred();
 
-	Resolve(0);
+	for ( int i = 0; i < vsMin( m_bufferCount, other->m_bufferCount ); i++ )
+		Resolve(i);
 
 	vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
