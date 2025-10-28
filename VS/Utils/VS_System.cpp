@@ -697,7 +697,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 
 	for ( int i = 0; i < m_mountpoints.ItemCount(); i++ )
 	{
-		if ( _DoMount( m_mountpoints[i], true ) )
+		if ( _DoMount( m_mountpoints[i] ) )
 		{
 			m_mountedpoints.AddItem( m_mountpoints[i] );
 		}
@@ -706,7 +706,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 }
 
 bool
-vsSystem::_DoMount( const Mount& m, bool trace )
+vsSystem::_DoMount( const Mount& m ) const
 {
 	bool success = PHYSFS_mount( m.filepath.c_str(), m.mount.c_str(), m.mod ? 0 : 1 );
 	if ( !success )
@@ -720,7 +720,7 @@ vsSystem::_DoMount( const Mount& m, bool trace )
 }
 
 bool
-vsSystem::_DoUnmount( const Mount& m )
+vsSystem::_DoUnmount( const Mount& m ) const
 {
 	bool success = PHYSFS_unmount( m.filepath.c_str() );
 	if ( !success )
@@ -776,7 +776,7 @@ vsSystem::MountPhysFSVolumes( bool trace )
 	m_mountpoints.Clear();
 	for ( int i = 0; i < activeMods.ItemCount(); i++ )
 	{
-		m_mountpoints.AddItem( Mount(activeMods[i]) );
+		AddMod( activeMods[i], "/" );
 	}
 
 
@@ -1569,7 +1569,7 @@ vsSystem::GetModsDirectory() const
 void
 vsSystem::MountBaseDirectory()
 {
-	_DoMount( Mount(PHYSFS_getBaseDir(), "base/"), false );
+	_DoMount( Mount(PHYSFS_getBaseDir(), "base/") );
 }
 
 void
@@ -1608,8 +1608,43 @@ vsSystem::_FindMods()
 }
 
 void
+vsSystem::_TraceModFilesInDirectory( const vsString& mod, const vsString& directory ) const
+{
+	vsArray<vsString> directories, files;
+
+	vsString modDir = vsFormatString( "user/mod/%s/", mod );
+
+	vsString thisModDir = vsFormatString("%s%s", modDir, directory);
+
+	vsFile::DirectoryDirectories(&directories, thisModDir);
+	vsFile::DirectoryFiles(&files, thisModDir);
+
+	for ( int i = 0; i < files.ItemCount(); i++ )
+	{
+		vsString filename = vsFormatString("/%s%s", directory, files[i]);
+		// vsLog( ">     [] %s", filename );
+		vsString modString = "add";
+		if ( vsFile::Exists(filename) )
+			modString = "mod";
+		vsLog( ">     [%s] %s", modString, filename );
+	}
+	for ( int i = 0; i < directories.ItemCount(); i++ )
+	{
+		vsString childDir = vsFormatString("%s%s/", directory, directories[i]);
+		_TraceModFilesInDirectory( mod, childDir );
+	}
+}
+
+void
 vsSystem::TraceMods() const
 {
+	// temporarily disable mods so we can check what they're changing.
+	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
+	{
+		if ( m_mountedpoints[i].mod )
+			_DoUnmount( m_mountedpoints[i] );
+	}
+
 	if ( m_unpackedDataDirectories.IsEmpty() && m_modDirectories.IsEmpty() )
 	{
 		vsLog("Pristine Data:  YES");
@@ -1627,11 +1662,33 @@ vsSystem::TraceMods() const
 		}
 		if ( !m_modDirectories.IsEmpty() )
 		{
+			// PHYSFS_mount(m_dataDirectory.c_str(), "probedata/", 1);
+			// bool success = PHYSFS_mount(PHYSFS_getWriteDir(), "probeuser/", 1);
+			// if ( !success )
+			// {
+			// 	PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
+			// 	vsLog(">  not mounting %s to %s: %s (%d)", PHYSFS_getWriteDir(), "probeuser/", PHYSFS_getErrorByCode(ec), ec );
+			// }
+
 			vsLog("> Mods:");
 			for ( int i = 0; i < m_modDirectories.ItemCount(); i++ )
+			{
 				vsLog(">   + %s", m_modDirectories[i]);
+				_TraceModFilesInDirectory( m_modDirectories[i], "" );
+			}
 			vsLog(">");
+
+			// and unmount the paths we mounted before
+			// PHYSFS_unmount(m_dataDirectory.c_str());
+			// PHYSFS_unmount(PHYSFS_getWriteDir());
 		}
+	}
+
+	// re-enable mods so they function
+	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
+	{
+		if ( m_mountedpoints[i].mod )
+			_DoMount( m_mountedpoints[i] );
 	}
 }
 

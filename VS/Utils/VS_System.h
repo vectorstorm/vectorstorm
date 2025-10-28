@@ -131,8 +131,8 @@ class vsSystem
 	void DeinitPhysFS();
 
 	void _DoRemountConfiguredPhysFSVolumes();
-	bool _DoMount( const Mount& m, bool trace );
-	bool _DoUnmount( const Mount& m );
+	bool _DoMount( const Mount& m ) const;
+	bool _DoUnmount( const Mount& m ) const;
 	void _FindMods();
 
 	void SetCurrentGameName( const vsString& game, bool trace );
@@ -142,6 +142,8 @@ class vsSystem
 	void PrepareModGuard();
 
 	void _MigrateFilesToProfileDirectory(const vsString& profile);
+
+	void _TraceModFilesInDirectory( const vsString& mod, const vsString& directory ) const;
 public:
 
 	static vsSystem *	Instance() { return s_instance; }
