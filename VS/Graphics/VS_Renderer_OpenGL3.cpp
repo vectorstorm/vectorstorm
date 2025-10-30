@@ -259,7 +259,8 @@ static void printAttributes ()
 	{
 		glGetIntegerv( a[i].name, &value );
 
-		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX )
+		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX ||
+				a[i].name == GL_TEXTURE_FREE_MEMORY_ATI )
 			vsLog("%s: %s", a[i].label, FormatKB(value) );
 		else
 			vsLog("%s: %d", a[i].label, value );
