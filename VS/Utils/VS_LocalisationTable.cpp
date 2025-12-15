@@ -89,9 +89,9 @@ vsLocalisationTable::SetKey( const vsString& key, const vsString& translation )
 }
 
 vsString
-vsLocalisationTable::GetTranslation( const vsString &key )
+vsLocalisationTable::GetTranslation( const vsString &key ) const
 {
-	vsString *str = s_localisationTable->FindItem(key);
+	const vsString *str = s_localisationTable->FindItem(key);
 
 	if ( str )
 	{
@@ -103,6 +103,16 @@ vsLocalisationTable::GetTranslation( const vsString &key )
 		if ( str )
 			return vsFormatString("$%s$", *str);
 	}
+	return vsFormatString("<<%s>>", key.c_str());
+}
+
+vsString
+vsLocalisationTable::GetEnglish( const vsString &key ) const
+{
+	const vsString *str = s_fallbackLocalisationTable->FindItem(key);
+	if ( str )
+		return *str;
+
 	return vsFormatString("<<%s>>", key.c_str());
 }
 

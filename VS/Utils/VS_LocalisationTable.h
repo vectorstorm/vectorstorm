@@ -26,13 +26,15 @@ public:
 
 	void SetKey( const vsString& key, const vsString& translation );
 
-	vsString	GetTranslation( const vsString &key );
+	vsString	GetTranslation( const vsString &key ) const;
+	vsString	GetEnglish( const vsString &key ) const;
 };
 
 // Ease-of-use macro to fetch a localisation value
 #define vsLoc(x) ( vsLocalisationTable::Instance()->GetTranslation(x) )
 #define vsLocP(x,postfix) ( vsLocalisationTable::Instance()->GetTranslation( vsFormatString("%s_%s",x,postfix) ) )
 
+#define vsLocEnglish(x) ( vsLocalisationTable::Instance()->GetEnglish(x) )
 
 #endif // VS_LOCALISATION_TABLE_H
 
