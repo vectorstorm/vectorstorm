@@ -10,9 +10,9 @@
 #ifndef VS_ANGLE_H
 #define VS_ANGLE_H
 
-#define PI				(3.141593f)
-#define TWOPI			(PI * 2.0f)
-#define HALFPI			(PI * 0.5f)
+static const float PI(3.141593f);
+static const float TWOPI(PI * 2.0f);
+static const float HALFPI(PI * 0.5f);
 #define DEGREES(x)		((x) * (PI/180.0f))
 #define TO_DEGREES(x)	((x) * (180.0f/PI))
 
