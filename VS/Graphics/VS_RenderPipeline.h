@@ -141,20 +141,19 @@ public:
 
 class vsRenderPipeline
 {
-	vsRenderPipelineStage ** m_stage;
-	int m_stageCount;
-
+	vsArrayStore<vsRenderPipelineStage> m_stage;
 	vsArrayStore<RenderTargetRegistration> m_target;
 
 public:
 
-	vsRenderPipeline( int maxStageCount );
+	vsRenderPipeline( int expectedStageCount );
 	~vsRenderPipeline();
 
 	vsRenderTarget *RequestRenderTarget( const RenderTargetRequest& request, vsRenderPipelineStage *stage );
 	void ReleaseRenderTarget( vsRenderTarget *target, vsRenderPipelineStage *stage );
 
-	void SetStage( int stageId, vsRenderPipelineStage *stage );
+	// void SetStage( int stageId, vsRenderPipelineStage *stage );
+	void AddStage( vsRenderPipelineStage *stage );
 	void Draw( vsDisplayList *list );
 	void PostDraw(); // called after everything is submitted to GPU
 

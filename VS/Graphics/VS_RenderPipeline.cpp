@@ -14,19 +14,13 @@
 
 #include "VS_Thread.h"
 
-vsRenderPipeline::vsRenderPipeline( int maxStageCount ):
-	m_stage( new vsRenderPipelineStage*[maxStageCount] ),
-	m_stageCount(maxStageCount)
+vsRenderPipeline::vsRenderPipeline( int expectedStageCount ):
+	m_stage( expectedStageCount )
 {
-	for ( int i = 0; i < m_stageCount; i++ )
-		m_stage[i] = nullptr;
 }
 
 vsRenderPipeline::~vsRenderPipeline()
 {
-	for ( int i = 0; i < m_stageCount; i++ )
-		vsDelete(m_stage[i]);
-	vsDeleteArray(m_stage);
 }
 
 vsRenderTarget *
@@ -105,24 +99,31 @@ vsRenderPipeline::ReleaseRenderTarget( vsRenderTarget *target, vsRenderPipelineS
 	}
 }
 
+// void
+// vsRenderPipeline::SetStage( int stageId, vsRenderPipelineStage *stage )
+// {
+// 	// [TODO] Support changing stages.  The only bit not handled right now is
+// 	// cleaning up no-longer-in-use render targets so that they can be reused
+// 	// or deallocated.  Fixing this will probably involve setting up reference
+// 	// counting so the pipeline can figure out which stages are using which
+// 	// render targets.
+// 	vsAssert( m_stage[stageId] == nullptr, "Resetting a pipeline stage isn't supported" );
+// 	m_stage[stageId] = stage;
+//
+// 	stage->PreparePipeline(this);
+// }
+//
 void
-vsRenderPipeline::SetStage( int stageId, vsRenderPipelineStage *stage )
+vsRenderPipeline::AddStage( vsRenderPipelineStage *stage )
 {
-	// TODO:  Support changing stages.  The only bit not handled right now is
-	// cleaning up no-longer-in-use render targets so that they can be reused
-	// or deallocated.  Fixing this will probably involve setting up reference
-	// counting so the pipeline can figure out which stages are using which
-	// render targets.
-	vsAssert( m_stage[stageId] == nullptr, "Resetting a pipeline stage isn't supported" );
-	m_stage[stageId] = stage;
-
+	m_stage.AddItem( stage );
 	stage->PreparePipeline(this);
 }
 
 void
 vsRenderPipeline::Draw( vsDisplayList *list )
 {
-	for ( int i = 0; i < m_stageCount; i++ )
+	for ( int i = 0; i < m_stage.ItemCount(); i++ )
 	{
 		if ( m_stage[i] && m_stage[i]->IsEnabled() )
 			m_stage[i]->Draw(list);
@@ -132,7 +133,7 @@ vsRenderPipeline::Draw( vsDisplayList *list )
 void
 vsRenderPipeline::PostDraw()
 {
-	for ( int i = 0; i < m_stageCount; i++ )
+	for ( int i = 0; i < m_stage.ItemCount(); i++ )
 	{
 		if ( m_stage[i] && m_stage[i]->IsEnabled() )
 			m_stage[i]->PostDraw();
@@ -142,9 +143,9 @@ vsRenderPipeline::PostDraw()
 void
 vsRenderPipeline::Prepare()
 {
-	for ( int i = 0; i < m_stageCount; i++ )
+	for ( int i = 0; i < m_stage.ItemCount(); i++ )
 	{
-		if ( m_stage[i] )
+		if ( m_stage[i] && m_stage[i]->IsEnabled() )
 			m_stage[i]->PreparePipeline(this);
 	}
 
