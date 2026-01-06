@@ -671,11 +671,12 @@ bool
 vsFile::Exists( const vsString &filename ) // static method
 {
 	PROFILE("vsFile::Exists");
-	PHYSFS_Stat stat;
-	if ( PHYSFS_stat(filename.c_str(), &stat) )
-	{
-		return true; // exists!
-	}
+	return (0 != PHYSFS_exists(filename.c_str()) );
+	// PHYSFS_Stat stat;
+	// if ( PHYSFS_stat(filename.c_str(), &stat) )
+	// {
+	// 	return true; // exists!
+	// }
 	// PHYSFS_ErrorCode code = PHYSFS_getLastErrorCode();
 	// const char* str = PHYSFS_getErrorByCode(code);
 	// vsLog( "vsFile::Exists(%s) failed: (%d) %s", filename, code, str );
@@ -693,8 +694,12 @@ bool
 vsFile::DirectoryExists( const vsString &filename ) // static method
 {
 	PROFILE("vsFile::DirectoryExists");
-	// Caution:  PHYSFS_stat is *super* slow on Windows!  Often multiple
+	// [WARN]  PHYSFS_stat seems *super* slow on Windows!  Often multiple
 	// milliseconds, even off an SSD.
+	//
+	// Note that PhysFS has a deprecated function PHYSFS_isDirectory.
+	// Documentation says to just call PHYSFS_stat instead (which is
+	// apparently what PHYSFS_isDirectory does internally anyway)
 	//
 	PHYSFS_Stat stat;
 	if ( PHYSFS_stat(filename.c_str(), &stat) )
