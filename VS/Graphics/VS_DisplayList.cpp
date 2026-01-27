@@ -110,6 +110,9 @@ static vsString g_opCodeName[vsDisplayList::OpCode_MAX] =
 	"PushShaderOptions",
 	"PopShaderOptions",
 
+	"SetChannelMask",
+	"ClearChannelMask",
+
 	"SetLinear",
 
 	"SetVertexArrayObject",
@@ -719,6 +722,26 @@ vsDisplayList::PopShaderOptions()
 }
 
 void
+vsDisplayList::SetChannelMask( bool red, bool green, bool blue, bool alpha, bool depth )
+{
+	int channels =
+		red << 0 |
+		green << 1 |
+		blue << 2 |
+		alpha << 3 |
+		depth << 4;
+
+	m_fifo->WriteUint8( OpCode_SetChannelMask );
+	m_fifo->WriteUint8(channels);
+}
+
+void
+vsDisplayList::ClearChannelMask()
+{
+	m_fifo->WriteUint8( OpCode_ClearChannelMask );
+}
+
+void
 vsDisplayList::SetWorldToViewMatrix4x4( const vsMatrix4x4 &m )
 {
 	m_fifo->WriteUint8( OpCode_SetWorldToViewMatrix4x4 );
@@ -1214,6 +1237,7 @@ vsDisplayList::PopOp()
 				m_fifo->ReadColor(&m_currentOp.data.color);
 				break;
 			case OpCode_SetLinear:
+			case OpCode_SetChannelMask:
 				{
 					m_currentOp.data.i = m_fifo->ReadUint8();
 				}
@@ -1416,6 +1440,7 @@ vsDisplayList::PopOp()
 			case OpCode_ClearViewport:
 			case OpCode_PopShaderOptions:
 			case OpCode_ClearVertexArrayObject:
+			case OpCode_ClearChannelMask:
 			default:
 				break;
 		}

@@ -12,11 +12,10 @@
 #include "VS_RenderTarget.h"
 #include "VS_Scene.h"
 
-vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera ):
+vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene *scene, vsRenderTarget *target, bool clear, vsCamera3D *customCamera ):
 	m_scene(new vsScene*[1]),
 	m_sceneCount(1),
 	m_target(target),
-	m_settings(settings),
 	m_customCamera(customCamera),
 	m_clearColor(0,0,0,0),
 	m_clear(clear)
@@ -24,11 +23,10 @@ vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene *scene, vsRend
 	m_scene[0] = scene;
 }
 
-vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, const vsRenderer::Settings& settings, bool clear, vsCamera3D *customCamera ):
+vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene **scenes, int sceneCount, vsRenderTarget *target, bool clear, vsCamera3D *customCamera ):
 	m_scene(new vsScene*[sceneCount]),
 	m_sceneCount(sceneCount),
 	m_target(target),
-	m_settings(settings),
 	m_customCamera(customCamera),
 	m_clearColor(0,0,0,0),
 	m_clear(clear)

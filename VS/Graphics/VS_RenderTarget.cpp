@@ -601,38 +601,38 @@ vsRenderTarget::Resize( int width, int height )
 	GL_CHECK_SCOPED("vsRenderTarget::Resize");
 	if ( m_settings.width == width && m_settings.height == height )
 		return;
-	m_viewportWidth = width;
-	m_viewportHeight = height;
-	m_settings.width = width;
-	m_settings.height = height;
-
-	if ( m_type == Type_Window )
-	{
-		if ( m_renderBufferSurface )
-			m_renderBufferSurface->Resize(width, height);
-		if ( m_textureSurface )
-			m_textureSurface->Resize(width, height);
-	}
-	else
-	{
-		if ( m_renderBufferSurface )
-			m_renderBufferSurface->Resize(width, height);
-		if ( m_textureSurface )
-			m_textureSurface->Resize(width, height);
-
-		for ( int i = 0; i < m_bufferCount; i++ )
-		{
-			m_texture[i]->GetResource()->m_width = m_settings.width;
-			m_texture[i]->GetResource()->m_height = m_settings.height;
-		}
-		for ( int i = 0; i < m_bufferCount; i++ )
-		{
-			bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
-			m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
-		}
-		if ( m_depthTexture )
-			m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
-	}
+	// m_viewportWidth = width;
+	// m_viewportHeight = height;
+	// m_settings.width = width;
+	// m_settings.height = height;
+    //
+	// if ( m_type == Type_Window )
+	// {
+	// 	if ( m_renderBufferSurface )
+	// 		m_renderBufferSurface->Resize(width, height);
+	// 	if ( m_textureSurface )
+	// 		m_textureSurface->Resize(width, height);
+	// }
+	// else
+	// {
+	// 	if ( m_renderBufferSurface )
+	// 		m_renderBufferSurface->Resize(width, height);
+	// 	if ( m_textureSurface )
+	// 		m_textureSurface->Resize(width, height);
+    //
+	// 	for ( int i = 0; i < m_bufferCount; i++ )
+	// 	{
+	// 		m_texture[i]->GetResource()->m_width = m_settings.width;
+	// 		m_texture[i]->GetResource()->m_height = m_settings.height;
+	// 	}
+	// 	for ( int i = 0; i < m_bufferCount; i++ )
+	// 	{
+	// 		bool isDepth = ( m_type == Type_Depth || m_type == Type_DepthCompare );
+	// 		m_texture[i]->GetResource()->SetRenderTarget(this, i, isDepth);
+	// 	}
+	// 	if ( m_depthTexture )
+	// 		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
+	// }
 }
 
 GLenum ChannelsToGLBaseFormat( vsSurface::Channels c )

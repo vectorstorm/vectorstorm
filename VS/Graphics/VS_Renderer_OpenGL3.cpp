@@ -2140,22 +2140,22 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		PROFILE_GL("SetMaterial");
 		m_currentMaterialInternal = material;
 
-		if ( m_currentSettings.writeColor )
+		// if ( m_currentSettings.writeColor )
 		{
 			glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 		}
-		else
-		{
-			glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-		}
-		if ( m_currentSettings.writeDepth )
+		// else
+		// {
+		// 	glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+		// }
+		// if ( m_currentSettings.writeDepth )
 		{
 			m_state.SetBool( vsRendererState::Bool_DepthMask, material->m_zWrite );
 		}
-		else
-		{
-			m_state.SetBool( vsRendererState::Bool_DepthMask, false );
-		}
+		// else
+		// {
+		// 	m_state.SetBool( vsRendererState::Bool_DepthMask, false );
+		// }
 
 		if ( material->m_stencilRead || material->m_stencilWrite )
 		{

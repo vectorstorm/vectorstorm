@@ -34,14 +34,18 @@ class vsRenderer
 {
 public:
 
+	// [TODO] This 'Settings' struct is old and probably should go away?
+	// There's no way for the outside world to set it any more as a lot of this
+	// functionality has moved into cameras and display list commands (or just
+	// entirely gone away)
 	struct Settings
 	{
 		vsShaderSuite *shaderSuite;	// must be cleaned up by someone else;  this settings object does NOT own shaders!
         float aspectRatio;
 		float polygonOffsetUnits;
         bool useCustomAspectRatio;
-		bool writeColor;
-		bool writeDepth;
+		// bool writeColor;
+		// bool writeDepth;
 		bool invertCull;
 
 		Settings();
