@@ -16,8 +16,8 @@ vsRenderer::Settings::Settings():
     aspectRatio(1.f),
 	polygonOffsetUnits(0.f),
     useCustomAspectRatio(false),
-	writeColor(true),
-	writeDepth(true),
+	// writeColor(true),
+	// writeDepth(true),
 	invertCull(false)
 {
 }

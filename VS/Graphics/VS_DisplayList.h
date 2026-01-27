@@ -128,6 +128,9 @@ public:
 		OpCode_PushShaderOptions, // push supplementary shader options onto the stack
 		OpCode_PopShaderOptions,  // pop shader options off the stack
 
+		OpCode_SetChannelMask,  // RGBADepth as 5 bits in the parameter.
+		OpCode_ClearChannelMask,
+
 		OpCode_SetLinear,  // set that draw calls will be outputting linear colors which need to be handled by OpenGL
 
 		OpCode_SetVertexArrayObject,
@@ -250,6 +253,10 @@ public:
 	void	ClearShaderValues();
 	void	PushShaderOptions( const vsShaderOptions &options );
 	void	PopShaderOptions();
+	void	SetColorMask( bool red, bool green, bool blue, bool alpha );
+	void	ClearColorMask();
+	void	SetDepthMask( bool red, bool green, bool blue, bool alpha );
+	void	ClearDepthMask();
 	void	SetWorldToViewMatrix4x4( const vsMatrix4x4 &m );
 	void	PopTransform();
 	void	SetCameraTransform( const vsTransform2D &t );	// no stack of camera transforms;  they an only be set absolutely!
