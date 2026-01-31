@@ -27,7 +27,7 @@
 const int c_fifoSize = 1024 * 4000;		// 4mb for our FIFO display list
 vsScreen *	vsScreen::s_instance = nullptr;
 
-vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias,bool highDPI):
+vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool vsync, bool antialias, bool highDPI, bool borderless):
 	m_renderer(nullptr),
 	m_pipeline(nullptr),
 	m_scene(nullptr),
@@ -41,6 +41,7 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 	m_windowType(windowType),
 	m_antialias(antialias),
 	m_vsync(vsync),
+	m_borderless(borderless),
 	m_resized(false),
 	m_currentRenderTarget(nullptr),
 	m_currentSettings(nullptr)
@@ -54,6 +55,8 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 		flags |= vsRenderer::Flag_FullscreenWindow;
 	if ( vsync )
 		flags |= vsRenderer::Flag_VSync;
+	if ( borderless )
+		flags |= vsRenderer::Flag_Borderless;
 	if ( antialias )
 		flags |= vsRenderer::Flag_Antialias;
 	if ( highDPI )
@@ -113,7 +116,7 @@ vsScreen::NotifyResized(int width, int height)
 }
 
 void
-vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync)
+vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync, bool borderless)
 {
 	if ( width == m_width &&
 			height == m_height &&
@@ -121,7 +124,8 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 			windowType == m_windowType &&
 			bufferCount == m_bufferCount &&
 			antialias == m_antialias &&
-			vsync == m_vsync )
+			vsync == m_vsync &&
+			borderless == m_borderless )
 		return;
 
 	m_bufferCount = bufferCount;
@@ -130,7 +134,8 @@ vsScreen::UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowTy
 	m_windowType = windowType;
 	m_antialias = antialias;
 	m_vsync = vsync;
-	m_renderer->UpdateVideoMode(width, height, depth, m_windowType, bufferCount, antialias, vsync);
+	m_borderless = borderless;
+	m_renderer->UpdateVideoMode(width, height, depth, m_windowType, bufferCount, antialias, vsync, borderless);
 
 	m_width = m_renderer->GetWidth();
 	m_height = m_renderer->GetHeight();

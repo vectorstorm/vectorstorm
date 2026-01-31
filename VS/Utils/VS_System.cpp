@@ -421,7 +421,7 @@ vsSystem::Init()
 		else
 			wt = vsRenderer::WindowType_Fullscreen;
 	}
-	m_screen = new vsScreen( width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI() );
+	m_screen = new vsScreen( width, height, 32, wt, vsMax(m_minBuffers, m_preferences->GetBloom() ? 2 : 1), m_preferences->GetVSync(), m_preferences->GetAntialias(), m_preferences->GetHighDPI(), m_preferences->GetBorderless() );
 #endif
 	LogSystemDetails();
 
@@ -951,7 +951,8 @@ vsSystem::UpdateVideoMode(int width, int height)
 			wt,
 			bufferCount,
 			m_preferences->GetAntialias(),
-			m_preferences->GetVSync()
+			m_preferences->GetVSync(),
+			m_preferences->GetBorderless()
 			);
 	//vsTextureManager::Instance()->CollectGarbage(); // flush any render target textures now
 
@@ -1089,6 +1090,7 @@ vsSystemPreferences::vsSystemPreferences()
 	m_resolution = 0;	// can't get this one until we can actually check what SDL supports, later on.
 	m_fullscreen = m_preferences->GetPreference("Fullscreen", 1, 0, 1);
 	m_fullscreenWindow = m_preferences->GetPreference("FullscreenWindow", 1, 0, 1);
+	m_borderless = m_preferences->GetPreference("Borderless", 0, 0, 1);
 	m_vsync = m_preferences->GetPreference("VSync", 1, 0, 1);
 	m_bloom = m_preferences->GetPreference("Bloom", 1, 0, 1);
 	m_dynamicBatching = m_preferences->GetPreference("DynamicBatching", 1, 0, 1);
@@ -1467,6 +1469,18 @@ void
 vsSystemPreferences::SetFullscreen(bool fullscreen)
 {
 	m_fullscreen->m_value = fullscreen;
+}
+
+bool
+vsSystemPreferences::GetBorderless()
+{
+	return m_borderless->m_value;
+}
+
+void
+vsSystemPreferences::SetBorderless(bool borderless)
+{
+	m_borderless->m_value = borderless;
 }
 
 int

@@ -76,10 +76,11 @@ public:
 	{
 		Flag_Fullscreen = BIT(0),
 		Flag_FullscreenWindow = BIT(1),
-		Flag_VSync = BIT(2),
-		Flag_Resizable = BIT(3),
-		Flag_Antialias = BIT(4),
-		Flag_HighDPI = BIT(5)
+		Flag_Borderless = BIT(2),
+		Flag_VSync = BIT(3),
+		Flag_Resizable = BIT(4),
+		Flag_Antialias = BIT(5),
+		Flag_HighDPI = BIT(6)
 	};
 
 	enum WindowType
@@ -93,7 +94,7 @@ public:
 	virtual void Deinit() = 0; // called before the destructor.
 
 	virtual bool	CheckVideoMode() = 0;
-	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync) = 0;
+	virtual void	UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync, bool borderless) = 0;
 	virtual void	NotifyResized(int width, int height) = 0;
 
 	virtual void	ClearState() = 0; // clear internal state

@@ -111,6 +111,7 @@ class vsRenderer_OpenGL3: public vsRenderer
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
 	bool                 m_vsync;
+	bool                 m_borderless;
 
 	WindowType m_windowType;
 
@@ -133,7 +134,7 @@ public:
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 
 	bool	CheckVideoMode();
-	virtual void UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync);
+	virtual void UpdateVideoMode(int width, int height, int depth, WindowType type, int bufferCount, bool antialias, bool vsync, bool borderless) override;
 	virtual void NotifyResized(int width, int height);
 
 	virtual void	ClearState();

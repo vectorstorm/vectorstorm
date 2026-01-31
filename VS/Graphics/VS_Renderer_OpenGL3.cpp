@@ -353,6 +353,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		if ( flags & Flag_FullscreenWindow )
 		{
 			videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+			videoFlags |= SDL_WINDOW_BORDERLESS;
 			m_windowType = WindowType_FullscreenWindow;
 			vsLog("videoFlag added: Fullscreen Desktop");
 		}
@@ -368,6 +369,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		m_windowType = WindowType_Window;
 		videoFlags |= SDL_WINDOW_RESIZABLE;
 		vsLog("videoFlag added: Resizable");
+
+		if ( flags & Flag_Borderless )
+			videoFlags |= SDL_WINDOW_BORDERLESS;
 	}
 
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
@@ -413,6 +417,23 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	{
 		// with FullscreenWindow, we don't use the specified width/height values,
 		// but instead SET them based upon window we created
+
+		if ( flags & Flag_Borderless )
+		{
+			vsLog("Setting NOT bordered window");
+			SDL_SetWindowBordered( g_sdlWindow, SDL_FALSE );
+		}
+		else
+		{
+			vsLog("Setting YES bordered window");
+			SDL_SetWindowBordered( g_sdlWindow, SDL_TRUE );
+		}
+
+		uint32_t flags = SDL_GetWindowFlags( g_sdlWindow );
+		if ( flags & SDL_WINDOW_BORDERLESS )
+			vsLog("BORDERLESS");
+		else
+			vsLog("BORDERED");
 
 		SDL_GetWindowSize( g_sdlWindow, &width, &height );
 		// SDL_SetWindowSize( g_sdlWindow, width, height );
@@ -538,6 +559,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 	m_antialias = (flags & Flag_Antialias) != 0;
 	m_vsync = (flags & Flag_VSync) != 0;
+	m_borderless = (flags & Flag_Borderless) != 0;
 
 	if ( SDL_GL_SetSwapInterval(flags & Flag_VSync ? 1 : 0) == -1 )
 		vsLog("Couldn't set vsync");
@@ -820,7 +842,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 		SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidthPixels, &nowHeightPixels);
 		if ( nowWidthPixels != m_widthPixels || nowHeightPixels != m_heightPixels )
 		{
-			UpdateVideoMode( m_width, m_height, true, m_windowType, m_bufferCount, m_antialias, m_vsync );
+			UpdateVideoMode( m_width, m_height, true, m_windowType, m_bufferCount, m_antialias, m_vsync, m_borderless );
 			return true;
 		}
 	}
@@ -829,7 +851,7 @@ vsRenderer_OpenGL3::CheckVideoMode()
 }
 
 void
-vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType windowType, int bufferCount, bool antialias, bool vsync)
+vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType windowType, int bufferCount, bool antialias, bool vsync, bool borderless)
 {
 	vsLog("UPDATE VIDEO MODE:  %dx%dx%d, windowType %d", width, height, depth, windowType);
 	UNUSED(depth);
@@ -845,8 +867,9 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 		// 'm_scene' no longer matches the requested format;  rebuild it!
 		vsDelete( m_scene );
 	}
+	bool changedWindowType = (m_windowType != windowType) || m_borderless != borderless;
 	m_vsync = vsync;
-	bool changedWindowType = (m_windowType != windowType);
+	m_borderless = borderless;
 
 	// first, set window type.
 	// if ( changedWindowType )
@@ -856,6 +879,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 			case WindowType_Window:
 				SDL_SetWindowFullscreen(g_sdlWindow, 0);
 				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
+				SDL_SetWindowBordered(g_sdlWindow,borderless ? SDL_FALSE : SDL_TRUE);
 #ifdef HAS_SDL_SET_RESIZABLE
 				if ( m_flags & Flag_Resizable )
 				{
@@ -866,6 +890,27 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 				SDL_SetWindowSize(g_sdlWindow, width, height);
 				if ( changedWindowType )
 					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+
+				if ( borderless )
+				{
+					vsLog("Setting borderLESS window");
+					SDL_SetWindowBordered( g_sdlWindow, SDL_FALSE );
+				}
+				else
+				{
+					vsLog("Setting borderED window");
+					SDL_SetWindowBordered( g_sdlWindow, SDL_TRUE );
+				}
+
+				{
+					uint32_t flags = SDL_GetWindowFlags( g_sdlWindow );
+					if ( flags & SDL_WINDOW_BORDERLESS )
+						vsLog("BORDERLESS");
+					else
+						vsLog("BORDERED");
+				}
+
 				break;
 			case WindowType_Fullscreen:
 				{
@@ -897,6 +942,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					m_viewportHeight = m_height = closest.h;
 					SDL_SetWindowSize(g_sdlWindow, m_width, m_height);
 					SDL_SetWindowPosition(g_sdlWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+					SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 
 					SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
 					SDL_SetWindowGrab(g_sdlWindow,SDL_TRUE);
@@ -905,6 +951,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 			case WindowType_FullscreenWindow:
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
 				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
+				SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 
 				int nowWidth, nowHeight;
 				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);

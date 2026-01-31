@@ -281,6 +281,7 @@ class vsSystemPreferences
 	vsPreferenceObject *	m_windowResolutionY;
 	vsPreferenceObject *	m_fullscreen;
 	vsPreferenceObject *	m_fullscreenWindow; // when fullscreen, use 'fullscreen window' mode.
+	vsPreferenceObject *	m_borderless; // when windowed, use a borderless window
 	vsPreferenceObject *	m_vsync;
 	vsPreferenceObject *	m_bloom;
 	vsPreferenceObject *	m_dynamicBatching;
@@ -322,6 +323,9 @@ public:
 
 	bool			GetFullscreenWindow();
 	void			SetFullscreenWindow(bool fullscreen);
+
+	bool			GetBorderless();
+	void			SetBorderless(bool borderless);
 
 	void			ToggleFullscreen();
 

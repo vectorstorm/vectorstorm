@@ -47,6 +47,7 @@ class vsScreen
 	vsRenderer::WindowType	m_windowType;
 	bool				m_antialias;
 	bool				m_vsync;
+	bool				m_borderless;
 
 	bool				m_resized;
 
@@ -60,7 +61,7 @@ public:
 
 	static vsScreen *	Instance() { return s_instance; }
 
-	vsScreen(int width, int height, int depth, vsRenderer::WindowType type, int bufferCount, bool vsync, bool antialias, bool highDPI);
+	vsScreen(int width, int height, int depth, vsRenderer::WindowType type, int bufferCount, bool vsync, bool antialias, bool highDPI, bool borderless);
 	~vsScreen();
 
 	void Deinit();
@@ -68,7 +69,7 @@ public:
 	vsRenderTarget *	GetMainRenderTarget();
 	vsRenderTarget *	GetPresentTarget();
 
-	void			UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync);
+	void			UpdateVideoMode(int width, int height, int depth, vsRenderer::WindowType windowType, int bufferCount, bool antialias, bool vsync, bool borderless);
 	void			NotifyResized(int width, int height);
 	void			CheckVideoMode();
 
