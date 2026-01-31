@@ -172,6 +172,12 @@ vsDynamicMaterial::SetZWrite( bool zWrite )
 }
 
 void
+vsDynamicMaterial::SetZSort( bool zSort )
+{
+	GetResource()->m_zSort = zSort;
+}
+
+void
 vsDynamicMaterial::SetGlow( bool glow )
 {
 	GetResource()->m_glow = glow;

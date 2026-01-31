@@ -18,6 +18,7 @@ vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene *scene, vsRend
 	m_target(target),
 	m_settings(settings),
 	m_customCamera(customCamera),
+	m_clearColor(0,0,0,0),
 	m_clear(clear)
 {
 	m_scene[0] = scene;
@@ -29,6 +30,7 @@ vsRenderPipelineStageScenes::vsRenderPipelineStageScenes( vsScene **scenes, int 
 	m_target(target),
 	m_settings(settings),
 	m_customCamera(customCamera),
+	m_clearColor(0,0,0,0),
 	m_clear(clear)
 {
 	for ( int i = 0; i < sceneCount; i++ )
@@ -50,7 +52,7 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 
 	list->SetRenderTarget( m_target );
 	if ( m_clear )
-		list->ClearRenderTarget();
+		list->ClearRenderTargetColor(m_clearColor);
 	for ( int i = 0; i < m_sceneCount; i++ )
 	{
 		if ( m_scene[i] )
@@ -62,12 +64,12 @@ vsRenderPipelineStageScenes::Draw( vsDisplayList *list )
 				cam = m_scene[i]->GetCamera3D();
 				reference = m_scene[i]->CameraIsReference();
 				m_scene[i]->SetCamera3D(m_customCamera);
-				m_scene[i]->Draw( list );
+				m_scene[i]->Draw( list, m_target );
 				m_scene[i]->SetCamera3D(cam, reference);
 			}
 			else
 			{
-				m_scene[i]->Draw( list );
+				m_scene[i]->Draw( list, m_target );
 			}
 		}
 	}

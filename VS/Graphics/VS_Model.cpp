@@ -71,8 +71,12 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector3D(buffer[i].normal);
-				r.Vector2D(buffer[i].texel);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -86,7 +90,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector3D(buffer[i].normal);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -100,7 +106,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsVector3D n;
 				r.Vector3D(n);
 				buffer[i].normal = n;
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -114,7 +122,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 				vsColor c;
 				r.Color(c);
 				buffer[i].color = c;
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -138,7 +148,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			for ( int32_t i = 0; i < vertexCount; i++ )
 			{
 				r.Vector3D(buffer[i].position);
-				r.Vector3D(buffer[i].normal);
+				vsVector3D n;
+				r.Vector3D(n);
+				buffer[i].normal = n;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -149,7 +161,9 @@ vsModel::LoadFragment_Internal( vsSerialiserRead& r )
 			for ( int32_t i = 0; i < vertexCount; i++ )
 			{
 				r.Vector3D(buffer[i].position);
-				r.Vector2D(buffer[i].texel);
+				vsVector2D t;
+				r.Vector2D(t);
+				buffer[i].texel = t;
 			}
 			vbo->SetArray(buffer, vertexCount);
 			vsDeleteArray(buffer);
@@ -287,6 +301,8 @@ vsModel::LoadModel_Internal( vsSerialiserRead& r )
 	return result;
 }
 
+
+
 vsModel *
 vsModel::LoadBinary( const vsString &filename )
 {
@@ -395,6 +411,10 @@ vsModel::LoadFrom( vsRecord *record )
 
 vsModel::vsModel( vsDisplayList *list ):
 	m_material(nullptr),
+	m_boundingBox(),
+	m_lowBoundingBox(),
+	m_boundingRadius(0.f),
+	m_lodLevel(0),
 	m_instanceGroup(nullptr),
 	m_displayList(list)
 {
@@ -563,6 +583,17 @@ vsModel::DrawInstanced( vsRenderQueue *queue, vsRenderBuffer* matrixBuffer, vsRe
 	{
 		if ( iter->IsVisible() )
 			queue->AddFragmentInstanceBatch( *iter, matrixBuffer, colorBuffer, shaderValues, options );
+	}
+}
+
+void
+vsModel::DrawInstanced( vsRenderQueue *queue, vsVertexArrayObject* vao, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *shaderValues, vsShaderOptions *options, int lodLevel )
+{
+	vsAssert( lodLevel < m_lod.ItemCount(), "Invalid lod level set?");
+	for( vsArrayStoreIterator<vsFragment> iter = m_lod[lodLevel]->fragment.Begin(); iter != m_lod[lodLevel]->fragment.End(); iter++ )
+	{
+		if ( iter->IsVisible() )
+			queue->AddFragmentInstanceBatch( *iter, vao, matrixBuffer, colorBuffer, shaderValues, options );
 	}
 }
 
@@ -764,3 +795,211 @@ vsModel::SaveOBJ( const vsString& filename )
 
 }
 
+void SaveFragment_Internal( vsFragment *f, vsSerialiserWriteStream& r );
+
+void
+vsModel::SaveBinary( const vsString &filename )
+{
+	vsFile file(filename, vsFile::MODE_Write);
+	vsStore store( 1000 * 1024 ); // arbitrary large should really make this stream
+	file.Store(&store);
+	vsSerialiserWriteStream r(&file);
+
+	vsString tag = "ModelV2";
+	r.String(tag);
+
+	r.String(m_name);
+
+	vsVector3D trans = GetPosition();
+	vsVector3D scale = GetScale();
+	vsVector4D rot(GetOrientation().x, GetOrientation().y, GetOrientation().z, GetOrientation().w);
+
+	r.Vector3D(trans);
+	r.Vector4D(rot);
+	r.Vector3D(scale);
+
+	int32_t lodCount = GetLodCount();
+	r.Int32(lodCount);
+
+	for ( int l = 0; l < lodCount; l++ )
+	{
+		int32_t meshCount = GetLodFragmentCount(l);
+		r.Int32(meshCount);
+
+		for ( int i = 0; i < meshCount; i++ )
+		{
+			SaveFragment_Internal( GetLodFragment(l,i), r );
+		}
+	}
+
+	int32_t childCount = 0;
+	r.Int32(childCount);
+
+	// for ( int32_t i = 0; i < childCount; i++ )
+	// {
+	// 	vsModel *child = LoadModel_Internal(r);
+	// 	result->AddChild(child);
+	// }
+	// return result;
+}
+
+void SaveFragment_Internal( vsFragment *f, vsSerialiserWriteStream& r )
+{
+	vsString tag = "Fragment";
+	r.String(tag);
+	{
+		vsString materialName = f->GetMaterial()->GetName();
+		r.String(materialName);
+		vsString format;
+		switch ( f->GetSimpleVBO()->GetContentType() )
+		{
+			case vsRenderBuffer::ContentType_P:
+				{
+					format = "P";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PC:
+				{
+					format = "PC";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PT:
+				{
+					format = "PT";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PN:
+				{
+					format = "PN";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PCN:
+				{
+					format = "PCN";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PCT:
+				{
+					format = "PCT";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PNT:
+				{
+					format = "PNT";
+					break;
+				}
+			case vsRenderBuffer::ContentType_PCNT:
+				{
+					format = "PCNT";
+					break;
+				}
+			default:
+				vsAssert(0, "Unsupported save render buffer format!!");
+		}
+
+		r.String(format);
+		int32_t vertexCount = f->GetSimpleVBO()->GetPositionCount();
+		r.Int32(vertexCount);
+
+		if ( format == "PCNT" )
+		{
+			vsRenderBuffer::PCNT *buffer = f->GetSimpleVBO()->GetPCNTArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsColor c = buffer[i].color;
+				r.Color(c);
+				vsVector3D normal = buffer[i].normal;
+				r.Vector3D(normal);
+				r.Vector2D(buffer[i].texel);
+			}
+		}
+		else if ( format == "PCN" )
+		{
+			vsRenderBuffer::PCN *buffer = f->GetSimpleVBO()->GetPCNArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsColor c = buffer[i].color;
+				r.Color(c);
+				vsVector3D normal = buffer[i].normal;
+				r.Vector3D(normal);
+			}
+		}
+		else if ( format == "PNT" )
+		{
+			vsRenderBuffer::PNT *buffer = f->GetSimpleVBO()->GetPNTArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsVector3D normal = buffer[i].normal;
+				r.Vector3D(normal);
+				r.Vector2D(buffer[i].texel);
+			}
+		}
+		else if ( format == "PCT" )
+		{
+			vsRenderBuffer::PCT *buffer = f->GetSimpleVBO()->GetPCTArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsColor c = buffer[i].color;
+				r.Color(c);
+				r.Vector2D(buffer[i].texel);
+			}
+		}
+		else if ( format == "PC" )
+		{
+			vsRenderBuffer::PC *buffer = f->GetSimpleVBO()->GetPCArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsColor c = buffer[i].color;
+				r.Color(c);
+			}
+		}
+		else if ( format == "PN" )
+		{
+			vsRenderBuffer::PN *buffer = f->GetSimpleVBO()->GetPNArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				vsVector3D normal = buffer[i].normal;
+				r.Vector3D(normal);
+			}
+		}
+		else if ( format == "PT" )
+		{
+			vsRenderBuffer::PT *buffer = f->GetSimpleVBO()->GetPTArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+				r.Vector2D(buffer[i].texel);
+			}
+		}
+		else if ( format == "P" )
+		{
+			vsRenderBuffer::P *buffer = f->GetSimpleVBO()->GetPArray();
+			for ( int32_t i = 0; i < vertexCount; i++ )
+			{
+				r.Vector3D(buffer[i].position);
+			}
+		}
+		else
+		{
+			vsAssert(0, vsFormatString("Unsupported vertex format: %s", format) );
+		}
+
+		tag = "IndexBuffer";
+		r.String(tag);
+		vsAssert( tag == "IndexBuffer", "Not matching up??" );
+
+		int32_t indexCount = f->GetSimpleIBO()->GetIntArraySize();
+		r.Int32(indexCount);
+		for ( int i = 0; i < indexCount; i++ )
+		{
+			int32_t ind = f->GetSimpleIBO()->GetIntArray()[i];
+			r.Int32(ind);
+		}
+	}
+}

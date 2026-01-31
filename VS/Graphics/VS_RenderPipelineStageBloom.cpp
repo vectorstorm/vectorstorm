@@ -24,23 +24,23 @@ static bool kernel_normalised = false;
 
 class vsBloomBlurShader: public vsShader
 {
-	GLint m_locCoefficients;//, m_locOffsetX, m_locOffsetY;
+	// GLint m_locCoefficients;//, m_locOffsetX, m_locOffsetY;
 public:
 	vsBloomBlurShader():
 		vsShader(row3v, row3f, false, false)
 	{
-		m_locCoefficients = glGetUniformLocation(GetShaderId(), "coefficients");
+		// m_locCoefficients = glGetUniformLocation(GetShaderId(), "coefficients");
 		// m_locOffsetX = glGetUniformLocation(m_shader, "offsetx");
 		// m_locOffsetY = glGetUniformLocation(m_shader, "offsety");
 	}
 
-	virtual void Prepare( vsMaterial *mat, vsShaderValues *values, vsRenderTarget *target )
-	{
-		vsShader::Prepare( mat, values, target );
-		// glUniform1f(m_locOffsetX, m_offset.x);
-		// glUniform1f(m_locOffsetY, m_offset.y);
-		glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
-	}
+	// virtual void Prepare( vsMaterial *mat, vsShaderValues *values, vsRenderTarget *target )
+	// {
+	// 	vsShader::Prepare( mat, values, target );
+	// 	// glUniform1f(m_locOffsetX, m_offset.x);
+	// 	// glUniform1f(m_locOffsetY, m_offset.y);
+	// 	glUniform1fv(m_locCoefficients, KERNEL_SIZE, kernel);
+	// }
 };
 
 class vsBloomCombineShader: public vsShader
@@ -162,6 +162,9 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_horizontalBlurMaterial->GetResource()->m_shaderIsMine = false;
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsetx", offsetx);
 		m_passes[i].m_horizontalBlurMaterial->SetUniformF("offsety", 0.f);
+		m_passes[i].m_horizontalBlurMaterial->SetUniformF("coefficients[0]", kernel[0]);
+		m_passes[i].m_horizontalBlurMaterial->SetUniformF("coefficients[1]", kernel[1]);
+		m_passes[i].m_horizontalBlurMaterial->SetUniformF("coefficients[2]", kernel[2]);
 
 		if ( !m_passes[i].m_verticalBlurMaterial )
 			m_passes[i].m_verticalBlurMaterial = new vsDynamicMaterial;
@@ -171,6 +174,9 @@ vsRenderPipelineStageBloom::PreparePipeline( vsRenderPipeline *pipeline )
 		m_passes[i].m_verticalBlurMaterial->GetResource()->m_shaderIsMine = false;
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsetx", 0.f);
 		m_passes[i].m_verticalBlurMaterial->SetUniformF("offsety", offsety);
+		m_passes[i].m_verticalBlurMaterial->SetUniformF("coefficients[0]", kernel[0]);
+		m_passes[i].m_verticalBlurMaterial->SetUniformF("coefficients[1]", kernel[1]);
+		m_passes[i].m_verticalBlurMaterial->SetUniformF("coefficients[2]", kernel[2]);
 
 		if ( !m_passes[i].m_combinePassMaterial )
 			m_passes[i].m_combinePassMaterial = new vsDynamicMaterial;

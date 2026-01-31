@@ -28,6 +28,7 @@
 #include "VS_Profile.h"
 
 #include "VS_Preferences.h"
+#include "VS_Sleep.h"
 #include "Utils/utfcpp/utf8.h"
 #include "Utils/uni-algo/src/cpp_uni_break_grapheme.h"
 #include <iterator>
@@ -42,6 +43,7 @@
 #endif
 
 extern SDL_Window *g_sdlWindow;
+bool g_bStopMainThread = false;
 
 namespace
 {
@@ -975,6 +977,14 @@ vsInput::Update(float timeStep)
 	m_mousePos = Correct2DInputForOrientation( m_mousePos );
 #else
 	SDL_Event event;
+
+
+	while ( g_bStopMainThread )
+	{
+		vsSleep(1000);
+		while( SDL_PollEvent( &event ) ){
+		}
+	}
 
 	{
 		//		int i, j;

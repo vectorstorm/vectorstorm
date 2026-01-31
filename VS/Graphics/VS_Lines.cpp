@@ -11,6 +11,9 @@
 #include "VS_RenderQueue.h"
 #include "VS_Scene.h"
 #include "VS_Camera.h"
+#include "VS_Profile.h"
+
+#include "VS_VertexArrayObject.h"
 
 float vsLines3D::s_widthFactor = 1.f;
 
@@ -863,8 +866,12 @@ vsLines3D::vsLines3D( int maxStrips, float width, bool screenspace ):
 	m_rightWidth( width * 0.5f ),
 	m_texScale( 1.0f ),
 	m_widthInScreenspace( screenspace ),
-	m_vertices( vsRenderBuffer::Type_Stream ),
-	m_indices( vsRenderBuffer::Type_Stream ),
+	m_vertices(nullptr),
+	m_indices(nullptr),
+	m_av( vsRenderBuffer::Type_Stream ),
+	m_ai( vsRenderBuffer::Type_Stream ),
+	m_bv( vsRenderBuffer::Type_Stream ),
+	m_bi( vsRenderBuffer::Type_Stream ),
 	m_constantViewDirection(),
 	m_useConstantViewDirection(false)
 {
@@ -981,40 +988,53 @@ vsLines3D::GetFinalIndexCount()
 void
 vsLines3D::DynamicDraw( vsRenderQueue *queue )
 {
+	// PROFILE("vsLines3D::DynamicDraw");
 	m_vertexCursor = 0;
 	m_indexCursor = 0;
+
+	if ( m_vertices == &m_av )
+	{
+		m_vertices = &m_bv;
+		m_indices = &m_bi;
+	}
+	else
+	{
+		m_vertices = &m_av;
+		m_indices = &m_ai;
+	}
 
 	size_t vertexCount = GetFinalVertexCount();
 	size_t indexCount = GetFinalIndexCount();
 	if ( vertexCount == 0 || indexCount == 0 )
 		return;
 
-	m_vertices.ResizeArray( sizeof(vsRenderBuffer::PCT) * vertexCount );
-	m_indices.ResizeArray( sizeof(uint16_t) * indexCount );
+	m_vertices->ResizeArray( sizeof(vsRenderBuffer::PCT) * vertexCount );
+	m_indices->ResizeArray( sizeof(uint16_t) * indexCount );
 
 	for ( int i = 0; i < m_stripCount; i++ )
 	{
 		DrawStrip( queue, m_strip[i] );
 	}
 
-	m_vertices.SetArray( m_vertices.GetPCTArray(), vertexCount );
-	// m_vertices.BakeArray();
-	// m_colors.BakeArray();
-	m_indices.BakeArray();
+	{
+		// PROFILE("vsLines3D::DynamicDraw_Finalising");
+		m_vertices->SetArray( m_vertices->GetPCTArray(), vertexCount );
+		// m_vertices.BakeArray();
+		// m_colors.BakeArray();
+		m_indices->BakeArray();
 
-	vsDisplayList *	list = queue->MakeTemporaryBatchList( GetMaterial(), queue->GetMatrix(), 1024 );
-	list->BindBuffer(&m_vertices);
-	// list->ColorBuffer(&m_colors);
-	list->TriangleListBuffer(&m_indices);
-	list->ClearBuffers();
+		queue->AddSimpleBatch( GetMaterial(), queue->GetMatrix(), m_vertices, m_indices, vsFragment::SimpleType_TriangleList);
+	}
 }
 
 void
 vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 {
+	// PROFILE("vsLines3D::DrawStrip");
 	int startOfStripVertexCursor = m_vertexCursor;
 	float fullFov = queue->GetFOV();
-	float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
+	// float fovPerPixel = fullFov / vsScreen::Instance()->GetHeight();
+	float fovPerPixel = fullFov / queue->GetPixelsY();
 	float tanHalfFovPerPixel = 2.f * vsTan( 0.5f * fovPerPixel );
 
 	// vsMatrix4x4 localToView = queue->GetMatrix() * queue->GetWorldToViewMatrix();
@@ -1022,8 +1042,8 @@ vsLines3D::DrawStrip( vsRenderQueue *queue, Strip *strip )
 	vsMatrix4x4 viewToLocal = localToView.Inverse();
 	vsVector3D camPos = viewToLocal.ApplyTo(vsVector3D::Zero);
 
-	vsRenderBuffer::PCT *va = m_vertices.GetPCTArray();
-	uint16_t *ia = m_indices.GetIntArray();
+	vsRenderBuffer::PCT *va = m_vertices->GetPCTArray();
+	uint16_t *ia = m_indices->GetIntArray();
 	float distance = 0.0f;
 
 	for ( int i = 0; i < strip->m_length; i++ )

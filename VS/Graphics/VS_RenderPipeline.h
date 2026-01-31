@@ -30,6 +30,8 @@ struct RenderTargetRequest
 	int width;
 	int height;
 
+	int buffers; // right now, we need to request the same channels/format for all buffers.
+
 	// mipmaplevel fields
 	int mipmapLevel; // 0 == same dimensions as main render buffer.  1 == half dimensions, etc.
 
@@ -47,6 +49,7 @@ struct RenderTargetRequest
 		type(Type_AbsoluteSize),
 		width(128),
 		height(128),
+		buffers(1),
 		mipmapLevel(0),
 		depth(false),
 		stencil(false),
@@ -64,6 +67,7 @@ struct RenderTargetRequest
 		return (type == o.type &&
 			width == o.width &&
 			height == o.height &&
+			buffers == o.buffers &&
 			mipmapLevel == o.mipmapLevel &&
 			depth == o.depth &&
 			stencil == o.stencil &&
@@ -137,20 +141,19 @@ public:
 
 class vsRenderPipeline
 {
-	vsRenderPipelineStage ** m_stage;
-	int m_stageCount;
-
+	vsArrayStore<vsRenderPipelineStage> m_stage;
 	vsArrayStore<RenderTargetRegistration> m_target;
 
 public:
 
-	vsRenderPipeline( int maxStageCount );
+	vsRenderPipeline( int expectedStageCount );
 	~vsRenderPipeline();
 
 	vsRenderTarget *RequestRenderTarget( const RenderTargetRequest& request, vsRenderPipelineStage *stage );
 	void ReleaseRenderTarget( vsRenderTarget *target, vsRenderPipelineStage *stage );
 
-	void SetStage( int stageId, vsRenderPipelineStage *stage );
+	// void SetStage( int stageId, vsRenderPipelineStage *stage );
+	void AddStage( vsRenderPipelineStage *stage );
 	void Draw( vsDisplayList *list );
 	void PostDraw(); // called after everything is submitted to GPU
 

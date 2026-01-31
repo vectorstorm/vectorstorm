@@ -131,8 +131,8 @@ class vsSystem
 	void DeinitPhysFS();
 
 	void _DoRemountConfiguredPhysFSVolumes();
-	bool _DoMount( const Mount& m, bool trace );
-	bool _DoUnmount( const Mount& m );
+	bool _DoMount( const Mount& m ) const;
+	bool _DoUnmount( const Mount& m ) const;
 	void _FindMods();
 
 	void SetCurrentGameName( const vsString& game, bool trace );
@@ -142,6 +142,8 @@ class vsSystem
 	void PrepareModGuard();
 
 	void _MigrateFilesToProfileDirectory(const vsString& profile);
+
+	void _TraceModFilesInDirectory( const vsString& mod, const vsString& directory ) const;
 public:
 
 	static vsSystem *	Instance() { return s_instance; }
@@ -197,6 +199,7 @@ public:
 	void LogSystemDetails();
 
 	vsString GetWriteDirectory() const; // returns filesystem path to the write directory
+	vsString GetModsDirectory() const; // returns filesystem path to the mods directory
 
 	static vsScreen *		GetScreen() { return Instance()->m_screen; }
 	vsSystemPreferences *	GetPreferences() { return m_preferences; }
@@ -224,6 +227,8 @@ public:
 	// other purpose)
 	int IsDataPristine() const { return m_dataIsPristine; }
 	void TraceMods() const;
+	vsArray<vsString> GetUnpackedDataDirectories() const;
+	vsArray<vsString> GetMods() const;
 
 	// by default, we *don't* mount our base directory for reading, but we can
 	// do so if the game needs it for some reason (for example, MT2's Windows

@@ -80,6 +80,17 @@ public:
 		}
 	}
 
+	vsArray( std::initializer_list<T> initializer )
+	{
+		m_array = new T[initializer.size()];
+		m_arrayStorage = initializer.size();
+		m_arrayLength = 0;
+		for (const T&i : initializer)
+		{
+			AddItem(i);
+		}
+	}
+
 	explicit vsArray( int initialStorage = 4 )
 	{
 		m_array = new T[ initialStorage ];
@@ -90,6 +101,8 @@ public:
 	virtual ~vsArray()
 	{
 		vsDeleteArray( m_array );
+		m_arrayLength = 0;
+		m_arrayStorage = 0;
 	}
 
 	T&		Get( const vsArrayIterator<T> &iter ) const
@@ -109,17 +122,14 @@ public:
 
 	void	AddItem( const T &item )
 	{
-		if ( m_arrayLength < m_arrayStorage )
-		{
-			m_array[ m_arrayLength++ ] = item;
-		}
-		else
+		if ( m_arrayLength >= m_arrayStorage )
 		{
 			// reallocate our array and copy data into it.
-			int newSize = vsMax( 4, m_arrayStorage * 2 );
+			int newSize = vsMax( 4, m_arrayLength * 2 );
 			Reserve(newSize);
-			return AddItem( item );
 		}
+
+		m_array[ m_arrayLength++ ] = item;
 	}
 
 	void	Append( const vsArray<T> &o )

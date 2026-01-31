@@ -12,6 +12,7 @@
 #include "VS_OpenGL.h"
 #include "VS_RendererState.h"
 #include "VS_GraphicsMemoryProfiler.h"
+#include "VS_Thread.h"
 #include <atomic>
 
 namespace
@@ -74,7 +75,7 @@ vsRenderTarget::vsRenderTarget( Type t, const vsSurface::Settings &settings, boo
 			m_texture[i]->SetLinearSampling();
 		else
 			m_texture[i]->SetNearestSampling();
-		m_texture[i]->SetUseMipmap(settings.mipMaps);
+		m_texture[i]->GetResource()->SetUseMipmap(settings.mipMaps);
 	}
 
 	if ( settings.depth && !isDepth )
@@ -123,8 +124,6 @@ vsRenderTarget::Create()
 	}
 	if ( m_depthTexture )
 		m_depthTexture->GetResource()->SetRenderTarget( this, 0, true );
-
-	Clear();
 }
 
 vsRenderTarget::~vsRenderTarget()
@@ -140,6 +139,17 @@ vsRenderTarget::~vsRenderTarget()
 	vsDelete( m_textureSurface );
 	vsDelete( m_renderBufferSurface );
 	m_bufferCount = 0;
+}
+
+vsTexture*
+vsRenderTarget::Detach( int id )
+{
+	vsTexture *result = Resolve(id);
+	result->GetResource()->m_renderTarget = nullptr;
+
+	m_texture[id] = nullptr;
+
+	return result;
 }
 
 vsTexture *
@@ -185,6 +195,8 @@ vsRenderTarget::ResolveDepth()
 	return m_depthTexture;
 	// return nullptr;
 }
+
+extern uint32_t currentlyBoundTexture[];
 
 vsTexture *
 vsRenderTarget::Resolve(int id)
@@ -245,9 +257,11 @@ vsRenderTarget::Resolve(int id)
 		{
 			for ( int i = 0; i < m_bufferCount; i++ )
 			{
+				int current = currentlyBoundTexture[0];
+
 				glBindTexture(GL_TEXTURE_2D, m_textureSurface->m_texture[i]);
 				glGenerateMipmap(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, 0);
+				glBindTexture(GL_TEXTURE_2D, current);
 			}
 		}
 #endif // 0
@@ -300,6 +314,8 @@ vsRenderTarget::Bind()
 void
 vsRenderTarget::Clear()
 {
+	vsAssert( vsThread::IsMainThread(), "Should only get into here on the main thread." );
+
 	Bind();
 	GL_CHECK_SCOPED("vsRenderTarget::Clear");
 
@@ -364,6 +380,9 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	CreateDeferred();
 	other->CreateDeferred();
 
+	for ( int i = 0; i < vsMin( m_bufferCount, other->m_bufferCount ); i++ )
+		Resolve(i);
+
 	vsRendererStateBlock backup = vsRendererState::Instance()->StateBlock();
 
 	vsRendererState::Instance()->SetBool(vsRendererState::Bool_Blend,false);
@@ -371,11 +390,11 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	vsRendererState::Instance()->SetBool(vsRendererState::Bool_StencilTest,false);
 	vsRendererState::Instance()->Flush();
 
-	if ( m_renderBufferSurface )
-	{
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
-	}
-	else
+	// if ( m_renderBufferSurface )
+	// {
+	// 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderBufferSurface->m_fbo);
+	// }
+	// else
 	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_textureSurface->m_fbo);
 	}
@@ -398,7 +417,6 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 			glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
-
 
 		glBlitFramebuffer(src.GetMin().x, src.GetMin().y,
 				src.GetMax().x, src.GetMax().y,
@@ -497,6 +515,7 @@ vsSurface::vsSurface( int width, int height ):
 }
 
 
+#if defined(VS_GL_DEBUG)
 const char c_enums[][30] =
 {
 	"attachment",         // GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT........... All framebuffer attachment points are 'framebuffer attachment complete'.
@@ -508,22 +527,19 @@ const char c_enums[][30] =
 	"read buffer",        // GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER...........If READ_BUFFER is not NONE, then the value of FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE must not be NONE for the color attachment point named by READ_BUFFER.
 	"unsupported format"  // GL_FRAMEBUFFER_UNSUPPORTED......................The combination of internal formats of the attached images does not violate an implementation-dependent set of restrictions.
 };
+#endif
 
 static void CheckFBO()
 {
+#if defined(VS_GL_DEBUG)
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status == GL_FRAMEBUFFER_COMPLETE)
 		return;
 
 	status -= GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 	vsAssert(status == GL_FRAMEBUFFER_COMPLETE,vsFormatString("incomplete framebuffer object due to %s", c_enums[status]));
+#endif
 }
-
-#undef GL_CHECK_SCOPED
-#define GL_CHECK_SCOPED(s) vsGLContext glContextTester(s, __FILE__, __LINE__);
-#undef GL_CHECK
-#define GL_CHECK(s) CheckGLError(s);
-
 
 vsSurface::vsSurface( const Settings& settings, bool depthOnly, bool multisample, bool depthCompare ):
 	m_width(-1),
@@ -592,8 +608,6 @@ vsRenderTarget::Resize( int width, int height )
 
 	if ( m_type == Type_Window )
 	{
-		m_textureSurface->m_width = width;
-		m_textureSurface->m_height = height;
 		if ( m_renderBufferSurface )
 			m_renderBufferSurface->Resize(width, height);
 		if ( m_textureSurface )
@@ -729,9 +743,17 @@ vsSurface::Resize( int width, int height )
 
 	int pixelsBefore = m_width < 0 ? 0 : m_width * m_height;
 	int pixelsAfter = width * height;
+	m_width = width;
+	m_height = height;
+	m_settings.width = width;
+	m_settings.height = height;
+
 
 	if (m_isFramebuffer)
+	{
 		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_MainFramebuffer, bytesPerPixel * (pixelsAfter - pixelsBefore) );
+		return; // [INFO] we don't actually need to do any of the stuff below for our main framebuffer.
+	}
 	else
 		vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_RenderTarget, bytesPerPixel * (pixelsAfter - pixelsBefore) );
 
@@ -756,11 +778,6 @@ vsSurface::Resize( int width, int height )
 		}
 		glDeleteFramebuffers(1, &m_fbo);
 	}
-
-	m_width = width;
-	m_height = height;
-	m_settings.width = width;
-	m_settings.height = height;
 
 	GLint maxSamples = 0;
 	if ( m_multisample )
@@ -787,6 +804,7 @@ vsSurface::Resize( int width, int height )
 	{
 		for ( int i = 0; i < m_textureCount; i++ )
 		{
+#ifdef VS_GL_DEBUG
 			const char* checkString[] = {
 				"vsSurface texture0",
 				"vsSurface texture1",
@@ -795,6 +813,7 @@ vsSurface::Resize( int width, int height )
 				"vsSurface texture+",
 			};
 			GL_CHECK_SCOPED( i > 3 ? checkString[4] : checkString[i] );
+#endif // VS_GL_DEBUG
 			const Settings::Buffer& settings = m_settings.bufferSettings[i];
 
 			GLenum format = ChannelsToGLBaseFormat( settings.channels );

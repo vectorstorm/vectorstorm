@@ -12,6 +12,7 @@
 #include "VS_ShaderUniformRegistry.h"
 #include "VS_OpenGL.h"
 #include "VS_Matrix.h"
+#include "VS_Profile.h"
 
 vsShaderValues::vsShaderValues():
 	m_parent(nullptr),
@@ -456,6 +457,8 @@ vsShaderValues::operator=( const vsShaderValues& other )
 bool
 vsShaderValues::operator==( const vsShaderValues& other ) const
 {
+	PROFILE("vsShaderValues::operator==");
+
 	if ( m_parent != other.m_parent )
 		return false;
 

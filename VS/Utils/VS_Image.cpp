@@ -461,8 +461,6 @@ vsImage::Bake( const vsString& name_in ) const
 	}
 	else
 	{
-		vsLog("No existing texture!");
-
 		vsTextureInternal *texture = new vsTextureInternal( name, this );
 		vsCache<vsTextureInternal>::Instance()->Add( texture );
 	}

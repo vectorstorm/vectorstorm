@@ -45,6 +45,8 @@
 #define HAS_SDL_SET_RESIZABLE
 #endif
 
+#include <unordered_set>
+
 
 #if TARGET_OS_IPHONE
 
@@ -69,9 +71,9 @@ namespace
 	vsMaterial *s_previousMaterial = nullptr;
 	vsShaderValues *s_previousShaderValues = nullptr;
 
-	uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
 
 }
+uint32_t currentlyBoundTexture[MAX_TEXTURE_SLOTS] = {0};
 
 
 SDL_Window *g_sdlWindow = nullptr;
@@ -135,25 +137,25 @@ static const char * desc_debug_severity(GLenum severity)
 }
 
 void vsOpenGLDebugMessage( GLenum source,
-			GLenum type,
-			GLuint id,
-			GLenum severity,
-			GLsizei length,
-			const GLchar *message,
-			const GLvoid *userParam)
+		GLenum type,
+		GLuint id,
+		GLenum severity,
+		GLsizei length,
+		const GLchar *message,
+		const GLvoid *userParam)
 {
 	// NVidia debug message spam.
 	if (id == 0x00020071) return; // memory usage
-	// if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
+								  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
 	if (id == 0x00020061) return; // Framebuffer detailed info: The driver allocated storage for renderbuffer 1.
 	if (id == 0x00020004) return; // Usage warning: Generic vertex attribute array ... uses a pointer with a small value (...). Is this intended to be used as an offset into a buffer object?
 	if (id == 0x00020072) return; // Buffer performance warning: Buffer object ... (bound to ..., usage hint is GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory.
 	if (id == 0x00020074) return; // Buffer usage warning: Analysis of buffer object ... (bound to ...) usage indicates that the GPU is the primary producer and consumer of data for this buffer object.  The usage hint s upplied with this buffer object, GL_STATIC_DRAW, is inconsistent with this usage pattern.  Try using GL_STREAM_COPY_ARB, GL_STATIC_COPY_ARB, or GL_DYNAMIC_COPY_ARB instead.
-
-	// Intel debug message spam.
+    //
+	// // Intel debug message spam.
 	if (id == 0x00000008) return; // API_ID_REDUNDANT_FBO performance warning has been generated. Redundant state change in glBindFramebuffer API call, FBO 0, "", already bound.
-
-	// Program/shader being recompiled spam.
+    //
+	// // Program/shader being recompiled spam.
 	if (id == 0x00020092) return;
 
 	vsLog("GL: id 0x%x, source: %s, type: %s, severity %s, %s", id, desc_debug_source(source), desc_debug_type(type), desc_debug_severity(severity), message);
@@ -189,7 +191,7 @@ namespace
 static void printAttributes ()
 {
 #if !TARGET_OS_IPHONE
-    // Print out attributes of the context we created
+	// Print out attributes of the context we created
 
 	vsLog("OpenGL Context:");
 	vsLog("  Vendor: %s", glGetString(GL_VENDOR));
@@ -257,7 +259,8 @@ static void printAttributes ()
 	{
 		glGetIntegerv( a[i].name, &value );
 
-		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX )
+		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX ||
+				a[i].name == GL_TEXTURE_FREE_MEMORY_ATI )
 			vsLog("%s: %s", a[i].label, FormatKB(value) );
 		else
 			vsLog("%s: %d", a[i].label, value );
@@ -291,6 +294,8 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	m_window(nullptr),
 	m_scene(nullptr),
 	m_currentRenderTarget(nullptr),
+	m_currentVAO(nullptr),
+	m_defaultVAO(true),
 	m_currentMaterial(nullptr),
 	m_currentMaterialInternal(nullptr),
 	m_currentShader(nullptr),
@@ -330,8 +335,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	// int x = SDL_WINDOWPOS_UNDEFINED;
 	// int y = SDL_WINDOWPOS_UNDEFINED;
 
-	m_invalidateMaterial = false;
-
 #if !TARGET_OS_IPHONE
 	//const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
 	int videoFlags;
@@ -350,7 +353,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		if ( flags & Flag_FullscreenWindow )
 		{
 			// videoFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-			videoFlags |= SDL_WINDOW_FULLSCREEN;
+			videoFlags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
 			m_windowType = WindowType_FullscreenWindow;
 			vsLog("videoFlag added: Fullscreen Desktop");
 		}
@@ -388,7 +391,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif // VS_GL_DEBUG
 
-	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	// int shareVal;
 	vsLog("SDL_CreateWindow %dx%dx%d video mode, flags %d", width, height, depth, videoFlags);
 	g_sdlWindow = SDL_CreateWindow("", width, height, videoFlags);
@@ -413,6 +415,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		// with FullscreenWindow, we don't use the specified width/height values,
 		// but instead SET them based upon window we created
 
+		SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 		SDL_GetWindowSize( g_sdlWindow, &width, &height );
 		// SDL_SetWindowSize( g_sdlWindow, width, height );
 
@@ -422,13 +425,13 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index)
 		// 		);
 
-// lets check which display we're on.
+		// lets check which display we're on.
 		// if ( displayCount > 1 )
 		// {
 		// 	// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
 		// 	// object, maybe?  Or alternately, the host game could tell us where to
 		// 	// put the window, maybe?
-        //
+		//
 		// 	flags |= Flag_Fullscreen;
 		// 	x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
 		// 	y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
@@ -443,7 +446,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		// 		height = bounds.h;
 		// 	}
 		// }
-// #endif
+		// #endif
 	}
 
 
@@ -454,6 +457,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		SDL_SetWindowMouseGrab(g_sdlWindow,SDL_TRUE);
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
 	m_loadingGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_loadingGlContext )
 	{
@@ -462,6 +466,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		exit(1);
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 	m_sdlGlContext = SDL_GL_CreateContext(g_sdlWindow);
 	if ( !m_sdlGlContext )
 	{
@@ -602,13 +607,12 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	glViewport( 0, 0, (GLsizei)m_widthPixels, (GLsizei)m_heightPixels );
 	GL_CHECK("Initialising OpenGL rendering");
 
-	m_defaultShaderSuite.InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
+	m_defaultShaderSuite = new vsShaderSuite;
+	m_defaultShaderSuite->InitShaders("default_v.glsl", "default_f.glsl", vsShaderSuite::OwnerType_System);
 	GL_CHECK("Initialising OpenGL rendering");
 
 
 	// TEMP VAO IMPLEMENTATION
-	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
 	GL_CHECK("Initialising OpenGL rendering");
 
 	ResizeRenderTargetsToMatchWindow();
@@ -626,27 +630,27 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	//
 	//  - Trevor (20/6/2024)
 	//
-// #if !defined(__APPLE_CC__)
-// 	// For some reason, address sanitizer mode is picking up illegal memory
-// 	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
-// 	// this call since it isn't particularly important;  can follow-up with
-// 	// the SDL folks and check for proper fixes once we're all up and working
-// 	// again!
-// 	{
-// 		bool minimizeOnFocusLoss = ( displayCount == 1 );
-// 		char doit = (minimizeOnFocusLoss) ? 1 : 0;
-// 		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
-// 		if ( !retval )
-// 			vsLog("Trying to set minimize on focus loss hint failed");
-// 		else
-// 		{
-// 			if ( doit )
-// 				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
-// 			else
-// 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
-// 		}
-// 	}
-// #endif // __APPLE_CC__
+	// #if !defined(__APPLE_CC__)
+	// 	// For some reason, address sanitizer mode is picking up illegal memory
+	// 	// accesses from inside SDL_SetHint on OSX.  For now, let's just disable
+	// 	// this call since it isn't particularly important;  can follow-up with
+	// 	// the SDL folks and check for proper fixes once we're all up and working
+	// 	// again!
+	// 	{
+	// 		bool minimizeOnFocusLoss = ( displayCount == 1 );
+	// 		char doit = (minimizeOnFocusLoss) ? 1 : 0;
+	// 		SDL_bool retval = SDL_SetHint( SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, &doit );
+	// 		if ( !retval )
+	// 			vsLog("Trying to set minimize on focus loss hint failed");
+	// 		else
+	// 		{
+	// 			if ( doit )
+	// 				vsLog("Hinted minimise on focus loss: TRUE (as there is only one monitor)");
+	// 			else
+	// 				vsLog("Hinted minimise on focus loss: FALSE (as there are %d monitors)", displayCount);
+	// 		}
+	// 	}
+	// #endif // __APPLE_CC__
 
 	DetermineRefreshRate();
 #ifdef VS_TRACY
@@ -657,18 +661,23 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 
 vsRenderer_OpenGL3::~vsRenderer_OpenGL3()
 {
-	{
-		GL_CHECK_SCOPED("vsRenderer_OpenGL3 destructor");
-		vsDelete(m_window);
-		vsDelete(m_scene);
-	}
 	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &m_vao);
+
+	vsDelete( m_defaultShaderSuite );
 
 	SDL_GL_DestroyContext( m_sdlGlContext );
 	SDL_GL_DestroyContext( m_loadingGlContext );
 	SDL_DestroyWindow( g_sdlWindow );
 	g_sdlWindow = nullptr;
+}
+
+void
+vsRenderer_OpenGL3::Deinit()
+{
+	// we need to destroy our render targets here, so this can be called
+	// before the texture manager is shut down.
+	vsDelete(m_window);
+	vsDelete(m_scene);
 }
 
 void
@@ -780,13 +789,13 @@ vsRenderer_OpenGL3::CheckVideoMode()
 	// {
 	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_FALSE); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
 	// 	SDL_Delay(1);
-    //
+	//
 	// 	int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
 	// 	SDL_SetWindowPosition( g_sdlWindow,
 	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index),
 	// 			SDL_WINDOWPOS_CENTERED_DISPLAY(index)
 	// 			);
-    //
+	//
 	// 	// SDL_Rect bounds;
 	// 	// if ( SDL_GetDisplayBounds(index, &bounds) == 0 )
 	// 	// {
@@ -796,21 +805,21 @@ vsRenderer_OpenGL3::CheckVideoMode()
 	// 	// }
 	// 	SDL_SetWindowFullscreen(g_sdlWindow,SDL_WINDOW_FULLSCREEN_DESKTOP); // swap out of fullscreen for a moment;  Linux builds don't swap cleanly.
 	// }
-// 	int nowWidth, nowHeight;
-// 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
-//
-// 	if ( nowWidth != m_width || nowHeight != m_height )
-// 	{
-// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
-// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
-// #ifdef HIGHDPI_SUPPORTED
-// 		if ( m_flags & Flag_HighDPI )
-// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
-// #endif
-// 		m_viewportWidthPixels = m_widthPixels;
-// 		m_viewportHeightPixels = m_heightPixels;
-// 		ResizeRenderTargetsToMatchWindow();
-// 	}
+	// 	int nowWidth, nowHeight;
+	// 	SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+	//
+	// 	if ( nowWidth != m_width || nowHeight != m_height )
+	// 	{
+	// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+	// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+	// #ifdef HIGHDPI_SUPPORTED
+	// 		if ( m_flags & Flag_HighDPI )
+	// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+	// #endif
+	// 		m_viewportWidthPixels = m_widthPixels;
+	// 		m_viewportHeightPixels = m_heightPixels;
+	// 		ResizeRenderTargetsToMatchWindow();
+	// 	}
 #ifdef HIGHDPI_SUPPORTED
 	if ( m_flags & Flag_HighDPI )
 	{
@@ -898,6 +907,7 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 			case WindowType_FullscreenWindow:
 				SDL_SetWindowFullscreenMode(g_sdlWindow, nullptr);
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN);
+				SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 				SDL_SetWindowMouseGrab(g_sdlWindow,SDL_FALSE);
 
 				int nowWidth, nowHeight;
@@ -934,26 +944,28 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 	// 	vsInput::Instance()->Update(0.f);
 	// 	vsLog("After input pump");
 	// }
-    //
+	//
 	// now, set SIZE.
 
 	m_windowType = windowType;
 
-// 	{
-// 		int nowWidth, nowHeight;
-// 		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
-// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
-// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+	// 	{
+	// 		int nowWidth, nowHeight;
+	// 		SDL_GetWindowSize(g_sdlWindow, &nowWidth, &nowHeight);
+	// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+	// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
 #ifdef HIGHDPI_SUPPORTED
-		if ( m_flags & Flag_HighDPI )
-			SDL_GetWindowSizeInPixels(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+	if ( m_flags & Flag_HighDPI )
+		SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
 #endif
-		m_viewportWidthPixels = m_widthPixels;
-		m_viewportHeightPixels = m_heightPixels;
-// 		ResizeRenderTargetsToMatchWindow();
-// 	}
-	if ( !SDL_GL_SetSwapInterval(vsync ? 1 : 0) )
-		vsLog("Couldn't set vsync");
+	m_viewportWidthPixels = m_widthPixels;
+	m_viewportHeightPixels = m_heightPixels;
+	// 		ResizeRenderTargetsToMatchWindow();
+	// 	}
+	if ( SDL_GL_SetSwapInterval(vsync ? 1 : 0) )
+	{
+		vsLog("Couldn't set vsync: %s", SDL_GetError());
+	}
 
 	NotifyResized( m_width, m_height );
 }
@@ -973,12 +985,12 @@ vsRenderer_OpenGL3::NotifyResized( int width, int height )
 		// vsLog("SDL window resize event showing window size as %dx%d, SDL_GetWindowSize() shows size as %dx%d", width, height, nowWidth, nowHeight);
 		// vsAssert( width == nowWidth && height == nowHeight, "Whaa?" );
 
-// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
-// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
-// #ifdef HIGHDPI_SUPPORTED
-// 		if ( m_flags & Flag_HighDPI )
-// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
-// #endif
+		// 		m_viewportWidth = m_width = m_widthPixels = nowWidth;
+		// 		m_viewportHeight = m_height = m_heightPixels = nowHeight;
+		// #ifdef HIGHDPI_SUPPORTED
+		// 		if ( m_flags & Flag_HighDPI )
+		// 			SDL_GL_GetDrawableSize(g_sdlWindow, &m_widthPixels, &m_heightPixels);
+		// #endif
 		m_viewportWidthPixels = m_widthPixels;
 		m_viewportHeightPixels = m_heightPixels;
 		ResizeRenderTargetsToMatchWindow();
@@ -991,27 +1003,31 @@ vsRenderer_OpenGL3::Present()
 {
 	PROFILE_GL("Present");
 	{
-	PROFILE_GL("Swap");
+		PROFILE_GL("Flush");
+		glFlush();
+	}
+	{
+		PROFILE_GL("Swap");
 #if !TARGET_OS_IPHONE
 #ifdef __apple_cc__
-	// on OSX we must explicitly set the draw framebuffer to 0 before swap.
-	// Ref:
-	// http://renderingpipeline.com/2012/05/nsopenglcontext-flushbuffer-might-not-do-what-you-think/
-	m_window->Bind();
+		// on OSX we must explicitly set the draw framebuffer to 0 before swap.
+		// Ref:
+		// http://renderingpipeline.com/2012/05/nsopenglcontext-flushbuffer-might-not-do-what-you-think/
+		m_window->Bind();
 #endif
-	SDL_GL_SwapWindow(g_sdlWindow);
+		SDL_GL_SwapWindow(g_sdlWindow);
 #endif
 
 #ifdef VS_TRACY
-	// TracyGpuCollect;
-	FrameMark;
+		// TracyGpuCollect;
+		FrameMark;
 #endif
 	}
 
 	{
 		PROFILE_GL("FinishPresent");
 
-		vsTimerSystem::Instance()->EndGPUTime();
+		// vsTimerSystem::Instance()->EndGPUTime();
 	}
 	// {
 	// 	int nowWidth, nowHeight;
@@ -1028,6 +1044,8 @@ void
 vsRenderer_OpenGL3::FlushRenderState()
 {
 	PROFILE_GL("FlushRenderState");
+
+
 	// For these immediate-mode style "arrays embedded directly in the display list"
 	// situations, we need to make sure that we have enough space to push all the
 	// data directly;  that we won't run out partway through.  This means that we
@@ -1036,55 +1054,62 @@ vsRenderer_OpenGL3::FlushRenderState()
 	// have space for all the data, then bind it all at once!
 	if ( m_currentColorArray || m_currentNormalArray || m_currentTexelArray || m_currentVertexArray )
 	{
+		PROFILE_GL("ImmediateStyleArray");
 		vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal(
-			m_currentVertexArrayCount,
-			m_currentColorArrayCount,
-			m_currentTexelArrayCount,
-			m_currentNormalArrayCount
-			);
+				m_currentVertexArrayCount,
+				m_currentColorArrayCount,
+				m_currentTexelArrayCount,
+				m_currentNormalArrayCount
+				);
 	}
 	if ( m_currentColorArray )
 	{
-		vsRenderBuffer::BindColorArray( &m_state, m_currentColorArray, m_currentColorArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_ColorArray, true );
+		PROFILE_GL("BindColorArray");
+		vsRenderBuffer::BindColorArray( m_currentVAO, m_currentColorArray, m_currentColorArrayCount );
 	}
 	if ( m_currentNormalArray )
 	{
-		vsRenderBuffer::BindNormalArray( &m_state, m_currentNormalArray, m_currentNormalArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
+		PROFILE_GL("BindNormalArray");
+		vsRenderBuffer::BindNormalArray( m_currentVAO, m_currentNormalArray, m_currentNormalArrayCount );
 	}
 	if ( m_currentTexelArray )
 	{
-		vsRenderBuffer::BindTexelArray( &m_state, m_currentTexelArray, m_currentTexelArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+		PROFILE_GL("BindTextureArray");
+		vsRenderBuffer::BindTexelArray( m_currentVAO, m_currentTexelArray, m_currentTexelArrayCount );
 	}
 	if ( m_currentVertexArray )
 	{
-		vsRenderBuffer::BindVertexArray( &m_state, m_currentVertexArray, m_currentVertexArrayCount );
-		m_state.SetBool( vsRendererState::ClientBool_VertexArray, true );
+		PROFILE_GL("BindVertexArray");
+		vsRenderBuffer::BindVertexArray( m_currentVAO, m_currentVertexArray, m_currentVertexArrayCount );
 	}
 	// GL_CHECK("EnsureSpaceForVertex");
 	// GL_CHECK("PreFlush");
-	m_state.Flush();
 	// GL_CHECK("PostStateFlush");
 	if ( m_currentShader )
 	{
+		PROFILE_GL("Shader");
 		bool needsReset = false;
 
 		uint32_t shaderOptionsValue = m_currentMaterial->GetShaderOptions()->value &
 			m_currentMaterial->GetShaderOptions()->mask;
-		uint32_t shaderOptionsSet = 0;
-		for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
 		{
-			const vsShaderOptions &s = m_optionsStack[i];
+			PROFILE("ShaderOptions");
+			uint32_t shaderOptionsSet = 0;
+			for( int i = m_optionsStack.ItemCount()-1; i >= 0; i-- )
+			{
+				const vsShaderOptions &s = m_optionsStack[i];
 
-			shaderOptionsValue |= s.value & s.mask & ~shaderOptionsSet;
-			shaderOptionsSet |= s.mask;
+				shaderOptionsValue |= s.value & s.mask & ~shaderOptionsSet;
+				shaderOptionsSet |= s.mask;
+			}
+
+			{
+				PROFILE("VariantBits");
+				shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
+				shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterialInternal->GetShaderValues() );
+				shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
+			}
 		}
-
-		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterial->GetShaderValues() );
-		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentMaterialInternal->GetShaderValues() );
-		shaderOptionsValue |= vsShader::GetVariantBitsFor( m_currentShaderValues );
 
 		// only ask for bits that are actually supported by this shader
 		shaderOptionsValue &= m_currentShader->GetVariantBitsSupported();
@@ -1096,6 +1121,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		if ( needsReset )
 		{
+			PROFILE_GL("ShaderNeedsReset");
 			m_currentShader->SetForVariantBits( shaderOptionsValue );
 			glUseProgram( m_currentShader->GetShaderId() );
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
@@ -1104,6 +1130,7 @@ vsRenderer_OpenGL3::FlushRenderState()
 		}
 		else if ( m_currentMaterial != s_previousMaterial || m_currentShaderValues != s_previousShaderValues )
 		{
+			PROFILE_GL("ShaderPrepare");
 			m_currentShader->Prepare( m_currentMaterial, m_currentShaderValues, m_currentRenderTarget );
 			s_previousMaterial = m_currentMaterial;
 			s_previousShaderValues = m_currentShaderValues;
@@ -1112,11 +1139,14 @@ vsRenderer_OpenGL3::FlushRenderState()
 
 		// bind our textures now, using any overridden ones from the vsShaderValues object!
 		{
+			PROFILE_GL("BindTextures");
 			for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
 			{
 				vsTexture *t = nullptr;
 				if ( m_currentShaderValues && m_currentShaderValues->HasTextureOverride(i) )
 					t = m_currentShaderValues->GetTextureOverride(i);
+				else if ( m_currentMaterial->GetShaderValues()->HasTextureOverride(i) )
+					t = m_currentMaterial->GetShaderValues()->GetTextureOverride(i);
 				else
 					t = m_currentMaterialInternal->GetTexture(i);
 
@@ -1156,50 +1186,30 @@ vsRenderer_OpenGL3::FlushRenderState()
 							}
 							else
 							{
-								glBindTexture( GL_TEXTURE_2D, tval);
-								const bool clampU = t->GetClampU();
-								const bool clampV = t->GetClampV();
-								const bool linearSampling = t->GetLinearSampling();
-								const bool mipmap = t->GetUseMipmap();
-
-								if ( !t->GetResource()->IsSamplingLocked() )
-								{
-									if ( clampU != t->GetResource()->IsClampedU() )
-									{
-										glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-										t->GetResource()->SetClampedU(clampU);
-									}
-									if ( clampV != t->GetResource()->IsClampedV() )
-									{
-										glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-										t->GetResource()->SetClampedV(clampV);
-									}
-									if ( linearSampling != t->GetResource()->IsLinearSampling() ||
-											mipmap != t->GetResource()->IsUseMipmap() )
-									{
-										if ( linearSampling )
-										{
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-											if ( mipmap )
-												glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-											else
-												glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-										}
-										else
-										{
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-											glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-										}
-										t->GetResource()->SetLinearSampling(linearSampling);
-										t->SetUseMipmap(mipmap);
-									}
-								}
-
-								// if ( m_currentMaterialInternal->m_clampU )
-								// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_currentMaterialInternal->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-								// if ( m_currentMaterialInternal->m_clampV )
-								// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_currentMaterialInternal->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+								glBindTexture( GL_TEXTURE_2D, tval );
 							}
+
+							const bool clampU = t->GetClampU();
+							const bool clampV = t->GetClampV();
+							// const bool linearSampling = t->GetLinearSampling();
+							// const bool mipmap = t->GetUseMipmap();
+							t->GetResource()->SetClampedU( clampU );
+							t->GetResource()->SetClampedV( clampV );
+
+							if ( t->GetResource()->IsStateDirty() )
+							{
+								// if ( !t->GetResource()->IsSamplingLocked() )
+								// {
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+								glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+								// }
+								t->GetResource()->ClearDirtyFlag();
+							}
+
+							// if ( m_currentMaterialInternal->m_clampU )
+							// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_currentMaterialInternal->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
+							// if ( m_currentMaterialInternal->m_clampV )
+							// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_currentMaterialInternal->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
 						}
 					}
 				}
@@ -1215,43 +1225,46 @@ vsRenderer_OpenGL3::FlushRenderState()
 			}
 		}
 
-		m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
-		m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
-		if ( m_currentLocalToWorldBuffer )
-			m_currentShader->SetLocalToWorld( m_currentLocalToWorldBuffer );
-		else if ( m_currentLocalToWorldCount > 0 )
-			m_currentShader->SetLocalToWorld( m_currentLocalToWorld, m_currentLocalToWorldCount );
-		else
-			m_currentShader->SetLocalToWorld( &m_transformStack[0], 1 );
-
-		if ( m_currentMaterial->GetResource()->m_glow )
 		{
-			// debugging!
-			// vsLog("DEBUGGING GLOW RENDER:");
-			// vsLog("CurrentColor: %f,%f,%f,%f", m_currentColor.r, m_currentColor.g, m_currentColor.b, m_currentColor.a);
-			// vsLog("CurrentColorsBuffer: %s", m_currentColorsBuffer ? "TRUE" : "FALSE");
-			// vsLog("CurrentColors: %s", m_currentColors ? "TRUE" : "FALSE");
-		}
+			PROFILE_GL("ShaderValues");
+			m_currentShader->SetFog( m_currentMaterialInternal->m_fog, m_currentFogColor, m_currentFogDensity );
+			m_currentShader->SetTextures( m_currentMaterialInternal->m_texture );
+			if ( m_currentLocalToWorldBuffer )
+				m_currentShader->SetLocalToWorld( m_currentVAO, m_currentLocalToWorldBuffer );
+			else if ( m_currentLocalToWorldCount > 0 )
+				m_currentShader->SetLocalToWorld( m_currentVAO, m_currentLocalToWorld, m_currentLocalToWorldCount );
+			else
+				m_currentShader->SetLocalToWorld( m_currentVAO, &m_transformStack[0], 1 );
 
-		m_currentShader->SetColor( m_currentColor );
-		if ( m_currentColorsBuffer )
-			m_currentShader->SetInstanceColors( m_currentColorsBuffer );
-		else if ( m_currentColors )
-			m_currentShader->SetInstanceColors( m_currentColors, m_currentLocalToWorldCount );
-		else
-			m_currentShader->SetInstanceColors( &c_white, 1 );
-		m_currentShader->SetWorldToView( m_currentWorldToView );
-		m_currentShader->SetViewToProjection( m_currentViewToProjection );
-		m_currentShader->SetViewport( m_currentViewportPixels.Extents() );
-		int i = 0;
-		// for ( int i = 0; i < MAX_LIGHTS; i++ )
-		{
-			vsVector3D halfVector;
-			m_currentShader->SetLight( i, m_lightStatus[i].ambient, m_lightStatus[i].diffuse,
-					m_lightStatus[i].specular, m_lightStatus[i].position,
-					halfVector);
+			if ( m_currentMaterial->GetResource()->m_glow )
+			{
+				// debugging!
+				// vsLog("DEBUGGING GLOW RENDER:");
+				// vsLog("CurrentColor: %f,%f,%f,%f", m_currentColor.r, m_currentColor.g, m_currentColor.b, m_currentColor.a);
+				// vsLog("CurrentColorsBuffer: %s", m_currentColorsBuffer ? "TRUE" : "FALSE");
+				// vsLog("CurrentColors: %s", m_currentColors ? "TRUE" : "FALSE");
+			}
+
+			m_currentShader->SetColor( m_currentVAO, m_currentColor );
+			if ( m_currentColorsBuffer )
+				m_currentShader->SetInstanceColors( m_currentVAO, m_currentColorsBuffer );
+			else if ( m_currentColors )
+				m_currentShader->SetInstanceColors( m_currentVAO, m_currentColors, m_currentLocalToWorldCount );
+			else
+				m_currentShader->SetInstanceColors( m_currentVAO, &c_white, 1 );
+			m_currentShader->SetWorldToView( m_currentWorldToView );
+			m_currentShader->SetViewToProjection( m_currentViewToProjection );
+			m_currentShader->SetViewport( m_currentViewportPixels.Extents() );
+			int i = 0;
+			// for ( int i = 0; i < MAX_LIGHTS; i++ )
+			{
+				vsVector3D halfVector;
+				m_currentShader->SetLight( i, m_lightStatus[i].ambient, m_lightStatus[i].diffuse,
+						m_lightStatus[i].specular, m_lightStatus[i].position,
+						halfVector);
+			}
+			m_currentShader->ValidateCache( m_currentMaterial );
 		}
-		m_currentShader->ValidateCache( m_currentMaterial );
 	}
 	else
 	{
@@ -1259,10 +1272,17 @@ vsRenderer_OpenGL3::FlushRenderState()
 		glUseProgram( 0 );
 	}
 
+	{
+		PROFILE_GL("StateFlush");
+		m_state.Flush();
+	}
+
 	if ( m_currentRenderTarget )
 	{
+		PROFILE_GL("InvalidateResolve");
 		m_currentRenderTarget->InvalidateResolve();
 	}
+	// glPrimitiveRestartIndex(65535);
 }
 
 void
@@ -1276,6 +1296,16 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 	// m_currentShaderValues = nullptr;
 	// m_lastShaderId = 0;
 
+#ifdef VS_TRACY
+	int drawCount = 0;
+	int immediateDrawCount = 0;
+	int instanceCount = 0;
+	int materialInternalSets = 0;
+	int duppedMaterialInternals = 0;
+	int vaoDrawCount = 0;
+	int vaoSets = 0;
+	std::unordered_set<vsMaterialInternal*> materialInternalsUsed;
+#endif // VS_TRACY
 	m_currentCameraPosition = vsVector3D::Zero;
 
 	vsDisplayList::op *op = list->PopOp();
@@ -1295,12 +1325,41 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 
 	while(op)
 	{
+		GL_CHECK("ProcOp");
 // #define LOG_OPS
 #ifdef LOG_OPS
 		vsLog("%s", vsDisplayList::GetOpCodeString(op->type).c_str());
 #endif // LOG_OPS
 		switch( op->type )
 		{
+			case vsDisplayList::OpCode_SetVertexArrayObject:
+				{
+					m_nextVAO = (vsVertexArrayObject*)op->data.p;
+					if ( m_nextVAO != m_currentVAO )
+					{
+						m_currentVAO->Exit();
+						m_nextVAO->Enter();
+						m_currentVAO = m_nextVAO;
+#ifdef VS_TRACY
+						vaoSets++;
+#endif
+					}
+					break;
+				}
+			case vsDisplayList::OpCode_ClearVertexArrayObject:
+				{
+					m_nextVAO = &m_defaultVAO;
+					if ( m_nextVAO != m_currentVAO )
+					{
+						m_currentVAO->Exit();
+						m_nextVAO->Enter();
+						m_currentVAO = m_nextVAO;
+#ifdef VS_TRACY
+						vaoSets++;
+#endif
+					}
+					break;
+				}
 			case vsDisplayList::OpCode_SetLinear:
 				{
 					if ( op->data.i )
@@ -1334,7 +1393,18 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 				{
 					vsMaterial *material = (vsMaterial *)op->data.p;
 					vsAssert(material, "SetMaterial called with no material?");
-					SetMaterialInternal( material->GetResource() );
+					if ( m_currentMaterialInternal != material->GetResource() )
+					{
+#ifdef VS_TRACY
+						if ( materialInternalsUsed.find( material->GetResource() ) != materialInternalsUsed.end() )
+							duppedMaterialInternals++;
+						else
+							materialInternalsUsed.insert( material->GetResource() );
+
+						materialInternalSets++;
+#endif // VS_TRACY
+						SetMaterialInternal( material->GetResource() );
+					}
 					SetMaterial( material );
 					m_currentColors = nullptr;
 					m_currentColorsBuffer = nullptr;
@@ -1369,19 +1439,19 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentRenderTarget->ClearColor( op->data.color );
 					break;
 				};
-			// case vsDisplayList::OpCode_ResolveRenderTarget:
-			// 	{
-			// 		PROFILE_GL("ResolveRenderTarget");
-			// 		// Since resolving a render target can involve a blit,
-			// 		// flush render state first.
-			// 		m_state.Flush();
-			// 		// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
-			// 		// if ( target )
-			// 		// 	target->Resolve();
-			// 		// else // nullptr target means main render target.
-			// 		// 	m_scene->Resolve();
-			// 		break;
-			// 	}
+				// case vsDisplayList::OpCode_ResolveRenderTarget:
+				// 	{
+				// 		PROFILE_GL("ResolveRenderTarget");
+				// 		// Since resolving a render target can involve a blit,
+				// 		// flush render state first.
+				// 		m_state.Flush();
+				// 		// vsRenderTarget *target = (vsRenderTarget*)op->data.p;
+				// 		// if ( target )
+				// 		// 	target->Resolve();
+				// 		// else // nullptr target means main render target.
+				// 		// 	m_scene->Resolve();
+				// 		break;
+				// 	}
 			case vsDisplayList::OpCode_BlitRenderTarget:
 				{
 					PROFILE_GL("Blit");
@@ -1538,7 +1608,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_currentVertexBuffer->BindVertexBuffer( &m_state );
+					m_currentVertexBuffer->BindVertexBuffer( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_NormalArray:
@@ -1550,10 +1620,9 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_NormalBuffer:
 				{
 					m_currentNormalBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentNormalBuffer->BindNormalBuffer( &m_state );
+					m_currentNormalBuffer->BindNormalBuffer( m_currentVAO );
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, true );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearVertexArray:
@@ -1561,7 +1630,6 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexBuffer = nullptr;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearNormalArray:
@@ -1569,15 +1637,13 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentNormalBuffer = nullptr;
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelArray:
 				{
 					m_currentTexelArray = (vsVector2D*)op->data.p;
 					m_currentTexelArrayCount = op->data.i;
-					vsRenderBuffer::BindTexelArray( &m_state, op->data.p, op->data.i );
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
+					vsRenderBuffer::BindTexelArray( m_currentVAO, op->data.p, op->data.i );
 					break;
 				}
 			case vsDisplayList::OpCode_TexelBuffer:
@@ -1585,12 +1651,11 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentTexelBuffer = (vsRenderBuffer *)op->data.p;
 					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
-					m_currentTexelBuffer->BindTexelBuffer( &m_state );
+					m_currentTexelBuffer->BindTexelBuffer( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearTexelArray:
 				{
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ColorArray:
@@ -1602,7 +1667,7 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 			case vsDisplayList::OpCode_ColorBuffer:
 				{
 					m_currentColorBuffer = (vsRenderBuffer *)op->data.p;
-					m_currentColorBuffer->BindColorBuffer( &m_state );
+					m_currentColorBuffer->BindColorBuffer( m_currentVAO );
 					m_currentColorArray = 0;
 					m_currentColorArrayCount = 0;
 					break;
@@ -1616,7 +1681,6 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					}
 					m_currentColorArray = nullptr;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 					break;
 				}
 			case vsDisplayList::OpCode_ClearArrays:
@@ -1624,28 +1688,27 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentColorArray = nullptr;
 					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
 
 					m_currentTexelBuffer = nullptr;
 					m_currentTexelArray = nullptr;
 					m_currentTexelArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 
 					m_currentNormalBuffer = nullptr;
 					m_currentNormalArray = nullptr;
 					m_currentNormalArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
 
 					m_currentVertexBuffer = nullptr;
 					m_currentVertexArray = nullptr;
 					m_currentVertexArrayCount = 0;
-					m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-					m_state.SetBool( vsRendererState::ClientBool_OtherArray, false );
+
+					m_currentVAO->UnbindAll();
+
 					break;
 				}
 			case vsDisplayList::OpCode_BindBuffer:
 				{
 					PROFILE_GL("BindBuffer");
+					m_currentVAO->UnbindAll(); // this is really very wrong
 					m_currentColorArray = nullptr;
 					m_currentColorBuffer = nullptr;
 					m_currentColorArrayCount = 0;
@@ -1660,28 +1723,36 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					m_currentVertexArrayCount = 0;
 
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-					buffer->Bind( &m_state );
+					buffer->Bind( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_UnbindBuffer:
 				{
 					PROFILE_GL("UnbindBuffer");
 					vsRenderBuffer *buffer = (vsRenderBuffer *)op->data.p;
-					buffer->Unbind( &m_state );
+					buffer->Unbind( m_currentVAO );
 					break;
 				}
 			case vsDisplayList::OpCode_LineListArray:
 				{
 					PROFILE("LineListArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_LINES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripArray:
 				{
 					PROFILE("LineStripArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_LINE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListArray:
@@ -1689,8 +1760,12 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleListArray");
 					PROFILE("TriangleListArray");
 					FlushRenderState();
-
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLES, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripArray:
@@ -1698,15 +1773,30 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleStripArray");
 					PROFILE("TriangleStripArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLE_STRIP, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleStripBuffer:
 				{
 					PROFILE("TriangleStripBuffer");
-					FlushRenderState();
+
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriStripBuffer(m_currentLocalToWorldCount);
+					// if ( ib->UsesPrimitiveRestart() )
+					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
+					FlushRenderState();
+					ib->TriStripBuffer(m_currentVAO, m_currentLocalToWorldCount);
+#ifdef VS_TRACY
+					drawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
+#endif
+					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleListBuffer:
@@ -1715,16 +1805,31 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					// PROFILE_GL("TriangleListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriListBuffer(m_currentLocalToWorldCount);
+					ib->TriListBuffer(m_currentVAO, m_currentLocalToWorldCount);
+#ifdef VS_TRACY
+					drawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
+#endif
 					// m_currentShader->ValidateCache( m_currentMaterial );
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanBuffer:
 				{
 					PROFILE("TriangleFanBuffer");
-					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->TriFanBuffer(m_currentLocalToWorldCount);
+					// if ( ib->UsesPrimitiveRestart() )
+					// 	m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,true);
+					FlushRenderState();
+					ib->TriFanBuffer(m_currentVAO, m_currentLocalToWorldCount);
+#ifdef VS_TRACY
+					drawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
+#endif
+					// m_state.SetBool(vsRendererState::Bool_PrimitiveRestartFixedIndex,false);
 					break;
 				}
 			case vsDisplayList::OpCode_LineListBuffer:
@@ -1732,7 +1837,13 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					PROFILE("LineListBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineListBuffer(m_currentLocalToWorldCount);
+					ib->LineListBuffer(m_currentVAO, m_currentLocalToWorldCount);
+#ifdef VS_TRACY
+					drawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_LineStripBuffer:
@@ -1740,23 +1851,37 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 					PROFILE("LineStripBuffer");
 					FlushRenderState();
 					vsRenderBuffer *ib = (vsRenderBuffer *)op->data.p;
-					ib->LineStripBuffer(m_currentLocalToWorldCount);
+					ib->LineStripBuffer(m_currentVAO, m_currentLocalToWorldCount);
+#ifdef VS_TRACY
+					drawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+					if ( m_currentVAO != &m_defaultVAO )
+						vaoDrawCount++;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_TriangleFanArray:
 				{
 					PROFILE("TriangleFanArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
-					// glDrawElements( GL_TRIANGLE_FAN, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_TRIANGLE_FAN, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_PointsArray:
 				{
 					PROFILE("PointsArray");
 					FlushRenderState();
-					vsRenderBuffer::DrawElementsImmediate( GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
-					// glDrawElements( GL_POINTS, op->data.GetUInt(), GL_UNSIGNED_SHORT, op->data.p );
+					m_currentVAO->Flush();
+					vsRenderBuffer::DrawElementsImmediate( m_currentVAO, GL_POINTS, op->data.p, op->data.GetUInt(), m_currentLocalToWorldCount );
+#ifdef VS_TRACY
+					immediateDrawCount++;
+					instanceCount+= m_currentLocalToWorldCount;
+#endif
 					break;
 				}
 			case vsDisplayList::OpCode_Light:
@@ -1876,8 +2001,8 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 
 						const vsBox2D& box = op->data.box2D;
 						m_currentViewportPixels.Set(
-									vsVector2D( box.GetMin().x * currentTargetWidth, box.GetMin().y * currentTargetHeight ),
-									vsVector2D( box.GetMax().x * currentTargetWidth, box.GetMax().y * currentTargetHeight )
+								vsVector2D( box.GetMin().x * currentTargetWidth, box.GetMin().y * currentTargetHeight ),
+								vsVector2D( box.GetMax().x * currentTargetWidth, box.GetMax().y * currentTargetHeight )
 								);
 
 						glViewport( (GLsizei)( m_currentViewportPixels.GetMin().x ),
@@ -1920,6 +2045,15 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 		}
 	}
 	ClearState();
+
+#ifdef VS_TRACY
+	TracyPlot("draws", int64_t(drawCount + immediateDrawCount));
+	TracyPlot("instances", int64_t(instanceCount));
+	TracyPlot("vaoDraws", int64_t(vaoDrawCount));
+	TracyPlot("vaoSets", int64_t(vaoSets));
+	TracyPlot("materialSets", int64_t(materialInternalSets));
+	TracyPlot("dupMaterialSets", int64_t(duppedMaterialInternals));
+#endif
 }
 
 void
@@ -1933,14 +2067,13 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 {
 	PROFILE("SetMaterialInternal");
 	vsAssert( material, "SetMaterialInternal called with nullptr material?" );
-	if ( !m_invalidateMaterial && (material == m_currentMaterialInternal) )
+	if ( material == m_currentMaterialInternal )
 	{
 		return;
 	}
 	else
 	{
 		PROFILE_GL("SetMaterial");
-		m_invalidateMaterial = false;
 		m_currentMaterialInternal = material;
 
 		if ( m_currentSettings.writeColor )
@@ -2027,14 +2160,14 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::NormalTex);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::NormalTex);
 					}
 					else
 					{
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Normal);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::Normal);
 					}
 					break;
 				case DrawMode_Lit:
@@ -2043,112 +2176,19 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::LitTex);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::LitTex);
 					}
 					else
 					{
 						if ( m_currentSettings.shaderSuite && m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit) )
 							m_currentShader = m_currentSettings.shaderSuite->GetShader(vsShaderSuite::Lit);
 						else
-							m_currentShader = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+							m_currentShader = m_defaultShaderSuite->GetShader(vsShaderSuite::Lit);
 					}
 					break;
 				default:
 					vsAssert(0,"Unknown drawmode??");
 			}
-		}
-
-		/*static bool debugWireframe = false;
-		  if ( debugWireframe )
-		  {
-		  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		  }
-		  else
-		  {
-		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		  }*/
-
-		// let's do this texture binding late, so disabling it here!  We'll
-		// do it when we're handling shader values instead!
-
-		// for ( int i = 0; i < MAX_TEXTURE_SLOTS; i++ )
-		// {
-		// 	vsTexture *t = material->GetTexture(i);
-		// 	if ( t )
-		// 	{
-		// 		// glEnable(GL_TEXTURE_2D);
-		// 		if ( t->GetResource()->IsTextureBuffer() )
-		// 		{
-		// 			vsRenderBuffer * buffer = t->GetResource()->GetTextureBuffer();
-		// 			if ( currentlyBoundTexture[i] != buffer->GetBufferID() )
-		// 			{
-		// 				glActiveTexture(GL_TEXTURE0 + i);
-		// 				currentlyBoundTexture[i] = buffer->GetBufferID();
-		// 				GL_CHECK_SCOPED("BufferTexture");
-		// 				t->GetResource()->PrepareToBind();
-		// 				glBindTexture( GL_TEXTURE_BUFFER, t->GetResource()->GetTexture() );
-		// 				buffer->BindAsTexture();
-		// 			}
-		// 		}
-		// 		else
-		// 		{
-		// 			uint32_t tval = t->GetResource()->GetTexture();
-		// 			if ( currentlyBoundTexture[i] != tval )
-		// 			{
-		// 				glActiveTexture(GL_TEXTURE0 + i);
-		// 				currentlyBoundTexture[i] = tval;
-		// 				if ( tval == 0 )
-		// 				{
-		// 					// [TODO] Have a replacement blank or checkerboard texture here.
-		// 					glBindTexture( GL_TEXTURE_2D, 0 );
-		// 					vsLog("Tried to bind invalid texture.");
-		// 					vsLog("Material: %s", material->GetName() );
-		// 					vsLog("Texture slot %d", i);
-		// 					vsLog("Texture name %s", t->GetResource()->GetName());
-		// 					// vsAssert( tval != 0, "0 texture??" );
-		// 				}
-		// 				else
-		// 				{
-		// 					t->GetResource()->PrepareToBind();
-		// 					glBindTexture( GL_TEXTURE_2D, tval);
-		// 					if ( material->m_clampU )
-		// 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, material->m_clampU ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		// 					if ( material->m_clampV )
-		// 						glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, material->m_clampV ? GL_CLAMP_TO_EDGE : GL_REPEAT );
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// 	else
-		// 	{
-		// 		if ( currentlyBoundTexture[i] != 0 )
-		// 		{
-		// 			currentlyBoundTexture[i] = 0;
-		// 			glActiveTexture(GL_TEXTURE0 + i);
-		// 			glBindTexture( GL_TEXTURE_2D, 0);
-		// 		}
-		// 	}
-		// }
-
-		// vsTexture *st = material->GetShadowTexture();
-		// if ( st )
-		// {
-		// 	glActiveTexture(GL_TEXTURE0+8);
-		// 	glBindTexture( GL_TEXTURE_2D, st->GetResource()->GetTexture() );
-		// }
-		// vsTexture *bt = material->GetBufferTexture();
-		// if ( bt )
-		// {
-		// 	GL_CHECK_SCOPED("BufferTexture");
-		// 	glActiveTexture(GL_TEXTURE0+9);
-		// 	glBindTexture( GL_TEXTURE_BUFFER, bt->GetResource()->GetTexture() );
-		// 	vsRenderBuffer * buffer = bt->GetResource()->GetTextureBuffer();
-		// 	buffer->BindAsTexture();
-		// }
-
-		if ( material->m_alphaTest )
-		{
-			// m_state.SetFloat( vsRendererState::Float_AlphaThreshhold, material->m_alphaRef );
 		}
 
 		if ( material->m_zRead || material->m_zWrite )
@@ -2178,9 +2218,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 			m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, true );
 			m_state.SetFloat2( vsRendererState::Float2_PolygonOffsetConstantAndFactor, material->m_depthBiasConstant, material->m_depthBiasFactor );
 		}
-
-		// m_state.SetBool( vsRendererState::Bool_AlphaTest, material->m_alphaTest );
-		// m_state.SetBool( vsRendererState::Bool_Fog, material->m_fog );
 
 		if ( material->m_cullingType == Cull_None )
 		{
@@ -2216,8 +2253,8 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 #endif
 					// glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// additive
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
-					// m_state.SetBool( vsRendererState::Bool_Lighting, false );
-					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
+																								// m_state.SetBool( vsRendererState::Bool_Lighting, false );
+																								// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 					break;
 				}
 			case DrawMode_Subtract:
@@ -2256,7 +2293,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					glBlendEquation(GL_FUNC_ADD);
 					// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
-					// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+																												// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
@@ -2264,11 +2301,18 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 					// m_state.SetBool( vsRendererState::Bool_ColorMaterial, false );
 					break;
 				}
+			case DrawMode_PreserveAlpha:
+				{
+					glBlendEquation(GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);	// opaque
+																												// glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+					break;
+				}
 			case DrawMode_PremultipliedAlpha:
 				{
 					glBlendEquation(GL_FUNC_ADD);
 					glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
-					// glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
+																											// glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);	// opaque
 					break;
 				}
 			case DrawMode_Lit:
@@ -2279,15 +2323,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 #else
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);	// opaque
 #endif
-					// 				m_state.SetBool( vsRendererState::Bool_Lighting, true );
-					// 				m_state.SetBool( vsRendererState::Bool_ColorMaterial, true );
-					// #if !TARGET_OS_IPHONE
-					// 				glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
-					// #endif
-					// 				float materialAmbient[4] = {0.f, 0.f, 0.f, 1.f};
-					//
-					// 				glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 50.f );
-					// 				glLightModelfv( GL_LIGHT_MODEL_AMBIENT, materialAmbient);
 					break;
 				}
 			default:
@@ -2297,14 +2332,6 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 		if ( material->m_hasColor )
 		{
 			m_currentColor = material->m_color;
-			// const vsColor &c = material->m_color;
-			// glColor4f( c.r, c.g, c.b, c.a );
-
-			if ( material->m_drawMode == DrawMode_Lit )
-			{
-				// const vsColor &specColor = material->m_specularColor;
-				// glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&specColor );
-			}
 		}
 		else
 		{
@@ -2342,7 +2369,7 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 {
 	GLuint vertShader = -1;
 	GLuint fragShader = -1;
-	GLchar buf[256];
+	GLchar buf[1024] = "\0";
 	GLint success = true;
 
 	vertShader = glCreateShader(GL_VERTEX_SHADER);
@@ -2354,12 +2381,17 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 	glShaderSource(vertShader, 1, &vert, nullptr);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-	if (!success)
+	// if (!success)
 	{
-		PrintAnnotatedSource(vert);
 		// vsLog("%s", vert);
 		glGetShaderInfoLog(vertShader, sizeof(buf), 0, buf);
-		vsLog("%s",buf);
+		if ( buf[0] != 0 )
+		{
+#ifdef _DEBUG
+			PrintAnnotatedSource(vert);
+#endif
+			vsLog("%s",buf);
+		}
 
 		vsAssert(success || !requireSuccess,"Unable to compile vertex shader.\n");
 	}
@@ -2369,11 +2401,16 @@ vsRenderer_OpenGL3::Compile(GLuint program, const vsString &vert_in, const vsStr
 		glShaderSource(fragShader, 1, &frag, nullptr);
 		glCompileShader(fragShader);
 		glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-		if (!success)
+		// if (!success)
 		{
 			glGetShaderInfoLog(fragShader, sizeof(buf), 0, buf);
-			PrintAnnotatedSource(frag);
-			vsLog("%s",buf);
+			if ( buf[0] != 0 )
+			{
+#ifdef _DEBUG
+				PrintAnnotatedSource(frag);
+#endif
+				vsLog("%s",buf);
+			}
 			vsAssert(success || !requireSuccess,"Unable to compile fragment shader.\n");
 		}
 	}
@@ -2613,18 +2650,46 @@ vsRenderer_OpenGL3::IsLoadingContext()
 void
 vsRenderer_OpenGL3::FenceLoadingContext()
 {
+	vsLog("> GL fencing");
+
 	GL_CHECK("ClearLoadingContext");
 	GLsync fenceId = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+	if ( fenceId == 0 )
+	{
+		vsLog("Error:  glFenceSync() returned '0' as a fence name!  Misbehaviour will probably follow since I can't wait for a '0' fence to complete.");
+		return;
+	}
 	GLenum result;
 	int waitedSeconds = 0;
-	while(true)
+	bool fenceCleared = false;
+	while(!fenceCleared)
 	{
 		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
-		if(result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
-		waitedSeconds += 5;
-		vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
+		switch( result )
+		{
+			case GL_TIMEOUT_EXPIRED:
+				waitedSeconds += 5;
+				vsLog("Waiting on GL fence timed out after %d seconds.  Resuming wait...", waitedSeconds);
+				break;
+			case GL_WAIT_FAILED:
+				vsLog("ERROR:  GL_WAIT_FAILED returned from glClientWaitSync()!");
+				break;
+			case GL_ALREADY_SIGNALED:
+				// you had me at hello
+				fenceCleared = true;
+				break;
+			case GL_CONDITION_SATISFIED:
+				// we waited a bit but now we're done!
+				fenceCleared = true;
+				break;
+			default:
+				vsLog("Unknown result value '%u' returned from glClientWaitSync", result);
+				fenceCleared = true;
+				break;
+		}
 	}
 	glDeleteSync(fenceId);
+	vsLog("> GL fence completed");
 }
 
 vsShader*
@@ -2641,15 +2706,15 @@ vsRenderer_OpenGL3::DefaultShaderFor( vsMaterialInternal *mat )
 		case DrawMode_PremultipliedAlpha:
 		case DrawMode_Absolute:
 			if ( mat->m_texture[0] )
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::NormalTex);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::NormalTex);
 			else
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Normal);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::Normal);
 			break;
 		case DrawMode_Lit:
 			if ( mat->m_texture[0] )
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::LitTex);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::LitTex);
 			else
-				result = m_defaultShaderSuite.GetShader(vsShaderSuite::Lit);
+				result = m_defaultShaderSuite->GetShader(vsShaderSuite::Lit);
 			break;
 		default:
 			vsAssert(0,"Unknown drawmode??");
@@ -2674,10 +2739,6 @@ vsRenderer_OpenGL3::ClearState()
 	m_state.SetBool( vsRendererState::Bool_PolygonOffsetFill, false );
 	m_state.SetBool( vsRendererState::Bool_StencilTest, false );
 	m_state.SetBool( vsRendererState::Bool_ScissorTest, false );
-	m_state.SetBool( vsRendererState::ClientBool_VertexArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_NormalArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_ColorArray, false );
-	m_state.SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
 	m_state.Flush();
 
 	m_currentColor = c_white;
@@ -2703,10 +2764,13 @@ vsRenderer_OpenGL3::ClearState()
 	m_currentTexelArrayCount = 0;
 	m_currentNormalArrayCount = 0;
 	m_currentVertexBuffer = nullptr;
-	m_invalidateMaterial = true;
 	m_lightCount = 0;
 	m_usingNormalArray = false;
 	m_usingTexelArray = false;
+
+	m_currentVAO = &m_defaultVAO;
+	m_currentVAO->Enter();
+	m_nextVAO = m_currentVAO;
 
 	m_transformStack[m_currentTransformStackLevel] = vsMatrix4x4::Identity;
 

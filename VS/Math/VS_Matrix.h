@@ -97,5 +97,14 @@ public:
 	bool operator!=( const vsMatrix4x4 &o ) const { return !((*this)==o); }
 };
 
+class vsMatrix4x4Packed
+{
+public:
+	vsNormal4DPacked x;
+	vsNormal4DPacked y;
+	vsNormal4DPacked z;
+	vsVector4D w;
+};
+
 #endif // VS_MATRIX_H
 

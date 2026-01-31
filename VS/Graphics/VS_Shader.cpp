@@ -124,7 +124,7 @@ vsShader::FigureOutAvailableVariants( const vsString& s_in )
 				variant.erase(variant.size()-1);
 				//variantPos++;
 			}
-			
+
 			s.erase(variantPos, nextNewLine-variantPos);
 
 			for ( int i = 0; i < g_shaderVariantDefinitions.ItemCount(); i++ )
@@ -317,21 +317,21 @@ vsShader::SetFog( bool fog, const vsColor& color, float density )
 }
 
 void
-vsShader::SetColor( const vsColor& color )
+vsShader::SetColor( vsVertexArrayObject* vao, const vsColor& color )
 {
-	m_current->SetColor(color);
+	m_current->SetColor( vao, color);
 }
 
 void
-vsShader::SetInstanceColors( vsRenderBuffer *colors )
+vsShader::SetInstanceColors( vsVertexArrayObject *vao, vsRenderBuffer *colors )
 {
-	m_current->SetInstanceColors(colors);
+	m_current->SetInstanceColors(vao, colors);
 }
 
 void
-vsShader::SetInstanceColors( const vsColor* color, int matCount )
+vsShader::SetInstanceColors( vsVertexArrayObject *vao, const vsColor* color, int matCount )
 {
-	m_current->SetInstanceColors(color, matCount);
+	m_current->SetInstanceColors(vao, color, matCount);
 }
 
 void
@@ -341,15 +341,15 @@ vsShader::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 }
 
 void
-vsShader::SetLocalToWorld( vsRenderBuffer* buffer )
+vsShader::SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer )
 {
-	m_current->SetLocalToWorld(buffer);
+	m_current->SetLocalToWorld(vao, buffer);
 }
 
 void
-vsShader::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
+vsShader::SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount )
 {
-	m_current->SetLocalToWorld(localToWorld,matCount);
+	m_current->SetLocalToWorld(vao, localToWorld,matCount);
 }
 
 void
@@ -401,28 +401,6 @@ vsShader::SetLight( int id, const vsColor& ambient, const vsColor& diffuse,
 			const vsVector3D& halfVector )
 {
 	return m_current->SetLight(id, ambient, diffuse, specular, position, halfVector);
-	// if ( id != 0 )
-	// 	return;
-	// if ( m_lightAmbientLoc >= 0 )
-	// {
-	// 	glUniform4fv( m_lightAmbientLoc, 1, (GLfloat*)&ambient );
-	// }
-	// if ( m_lightDiffuseLoc >= 0 )
-	// {
-	// 	glUniform4fv( m_lightDiffuseLoc, 1, (GLfloat*)&diffuse );
-	// }
-	// if ( m_lightSpecularLoc >= 0 )
-	// {
-	// 	glUniform4fv( m_lightSpecularLoc, 1, (GLfloat*)&specular );
-	// }
-	// if ( m_lightPositionLoc >= 0 )
-	// {
-	// 	glUniform3fv( m_lightPositionLoc, 1, (GLfloat*)&position );
-	// }
-	// if ( m_lightHalfVectorLoc >= 0 )
-	// {
-	// 	glUniform3fv( m_lightHalfVectorLoc, 1, (GLfloat*)&halfVector );
-	// }
 }
 
 void
@@ -466,75 +444,3 @@ vsShader::ValidateCache( vsMaterial *activeMaterial )
 	*/
 }
 
-// void
-// vsShader::SetUniformValueF( int i, float value )
-// {
-// 	if ( value != m_uniform[i].f32 )
-// 	{
-// 		glUniform1f( m_uniform[i].loc, value );
-// 		m_uniform[i].f32 = value;
-// 	}
-// }
-//
-// void
-// vsShader::SetUniformValueB( int i, bool value )
-// {
-// 	if ( value != m_uniform[i].b )
-// 	{
-// 		glUniform1i( m_uniform[i].loc, value );
-// 		m_uniform[i].b = value;
-// 	}
-// }
-//
-// void
-// vsShader::SetUniformValueI( int i, int value )
-// {
-// 	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-// 	// {
-// 		glUniform1i( m_uniform[i].loc, value );
-// 	// }
-// }
-//
-// void
-// vsShader::SetUniformValueVec2( int i, const vsVector2D& value )
-// {
-// 	glUniform2f( m_uniform[i].loc, value.x, value.y );
-// 	m_uniform[i].vec4.x = value.x;
-// 	m_uniform[i].vec4.y = value.y;
-// }
-//
-// void
-// vsShader::SetUniformValueVec3( int i, const vsVector3D& value )
-// {
-// 	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
-// 	m_uniform[i].vec4 = value;
-// }
-//
-//
-// void
-// vsShader::SetUniformValueVec3( int i, const vsColor& value )
-// {
-// 	glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
-// 	m_uniform[i].vec4.Set(value.r, value.g, value.b, 0.f);
-// }
-//
-// void
-// vsShader::SetUniformValueVec4( int i, const vsVector4D& value )
-// {
-// 	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
-// 	m_uniform[i].vec4 = value;
-// }
-//
-// void
-// vsShader::SetUniformValueVec4( int i, const vsColor& value )
-// {
-// 	glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
-// 	m_uniform[i].vec4.Set(value.r, value.g, value.b, value.a);
-// }
-//
-// void
-// vsShader::SetUniformValueMat4( int i, const vsMatrix4x4& value )
-// {
-// 	glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value );
-// }
-//

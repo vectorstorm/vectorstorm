@@ -16,6 +16,7 @@ class vsMatrix4x4;
 class vsShaderValues;
 class vsShaderVariant;
 class vsMaterial;
+class vsVertexArrayObject;
 
 #include "VS_Color.h"
 #include "VS/Math/VS_Vector.h"
@@ -44,16 +45,18 @@ public:
 	{
 		vsString name;
 		uint32_t uid;
-		// struct
-		// {
-			int b;
+		union
+		{
+			int32_t i32;
 			uint32_t u32;
 			float f32;
-			vsVector4D vec4; // for vectors of up to 4 floats
-		// };
+		};
+		vsVector4D vec4; // for vectors of up to 4 floats
+		vsMatrix4x4 mat;
 		int32_t loc;
 		int32_t type;
 		int32_t arraySize;
+		int32_t def;
 	};
 	struct Attribute
 	{
@@ -98,12 +101,12 @@ public:
 	static uint32_t GetVariantBitsFor( const vsShaderValues *values );
 
 	void SetFog( bool fog, const vsColor& color, float fogDensity );
-	void SetColor( const vsColor& color );
+	void SetColor( vsVertexArrayObject *vao, const vsColor& color );
 	void SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] );
-	void SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount );
-	void SetInstanceColors( vsRenderBuffer *colors );
-	void SetInstanceColors( const vsColor* color, int matCount );
-	void SetLocalToWorld( vsRenderBuffer* buffer );
+	void SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount );
+	void SetInstanceColors( vsVertexArrayObject *vao, vsRenderBuffer *colors );
+	void SetInstanceColors( vsVertexArrayObject *vao, const vsColor* color, int matCount );
+	void SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer );
 	void SetWorldToView( const vsMatrix4x4& worldToView );
 	void SetViewToProjection( const vsMatrix4x4& projection );
 	void SetViewport( const vsVector2D& dims );

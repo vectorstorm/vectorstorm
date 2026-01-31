@@ -467,10 +467,12 @@ vsSystem::DeinitGameData()
 void
 vsSystem::Deinit()
 {
+	vsBuiltInFont::Deinit();
 	m_preferences->Save();
 
+	m_screen->Deinit();
+	vsDelete( m_textureManager ); // we need to destroy the texture manager BEFORE the renderer.  (as we can't call into OpenGL to release textures after the renderer is down!)
 	vsDelete( m_screen );
-	vsDelete( m_textureManager );
 
 	for ( int i = 0; i < CursorStyle_MAX; i++ )
 		SDL_DestroyCursor( m_cursor[i] );
@@ -555,6 +557,16 @@ void
 vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const vsString& title, const vsString& profile)
 {
 	PHYSFS_init(argv[0]);
+
+	bool allowMods = true;
+	for ( int i = 0; i < argc; i++ )
+	{
+		if ( vsString(argv[i]) == "--no-mods" )
+		{
+			vsLog("No-Mods mode enabled");
+			allowMods = false;
+		}
+	}
 
 	char* prefPathChar = SDL_GetPrefPath(companyName.c_str(), title.c_str());
 	vsAssertF(prefPathChar, "InitPhysFS: Unable to figure out where to save files: %s", SDL_GetError());
@@ -650,7 +662,8 @@ vsSystem::InitPhysFS(int argc, char* argv[], const vsString& companyName, const 
 	m_dataDirectory =  baseDirectory + "Data/";
 #endif
 
-	_FindMods();
+	if ( allowMods )
+		_FindMods();
 
 #ifdef ZIPDATA
 	m_mountpoints.AddItem( Mount(m_dataDirectory+"VS.zip") );
@@ -687,7 +700,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 
 	for ( int i = 0; i < m_mountpoints.ItemCount(); i++ )
 	{
-		if ( _DoMount( m_mountpoints[i], true ) )
+		if ( _DoMount( m_mountpoints[i] ) )
 		{
 			m_mountedpoints.AddItem( m_mountpoints[i] );
 		}
@@ -696,7 +709,7 @@ vsSystem::_DoRemountConfiguredPhysFSVolumes()
 }
 
 bool
-vsSystem::_DoMount( const Mount& m, bool trace )
+vsSystem::_DoMount( const Mount& m ) const
 {
 	bool success = PHYSFS_mount( m.filepath.c_str(), m.mount.c_str(), m.mod ? 0 : 1 );
 	if ( !success )
@@ -710,7 +723,7 @@ vsSystem::_DoMount( const Mount& m, bool trace )
 }
 
 bool
-vsSystem::_DoUnmount( const Mount& m )
+vsSystem::_DoUnmount( const Mount& m ) const
 {
 	bool success = PHYSFS_unmount( m.filepath.c_str() );
 	if ( !success )
@@ -766,7 +779,7 @@ vsSystem::MountPhysFSVolumes( bool trace )
 	m_mountpoints.Clear();
 	for ( int i = 0; i < activeMods.ItemCount(); i++ )
 	{
-		m_mountpoints.AddItem( Mount(activeMods[i]) );
+		AddMod( activeMods[i], "/" );
 	}
 
 
@@ -908,7 +921,10 @@ vsSystem::UpdateVideoMode(int width, int height)
 	vsString type = m_preferences->GetFullscreenWindow() ? "fullscreen window" :
 		m_preferences->GetFullscreen() ? "fullscreen" : "windowed";
 
-	vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
+	if ( m_preferences->GetFullscreenWindow() )
+		vsLog("Changing resolution to (%s)...", type);
+	else
+		vsLog("Changing resolution to [%dx%d] (%s)...", width, height, type);
 
 	if ( !m_preferences->GetFullscreen() )
 	{
@@ -1338,6 +1354,19 @@ vsSystem::LogSystemDetails()
 	vsLog("CPU:  %s", CPUDescription().c_str());
 	vsLog("Number of hardware cores:  %d", GetNumberOfCores());
 	vsLog("System RAM:  %0.2f gb", GetTotalSystemMemory() / (1024.f*1024.f*1024.f));
+
+#if defined(_WIN32)
+#elif defined(__APPLE_CC__)
+#else
+	// linux
+	const char* type = getenv("XDG_SESSION_TYPE");
+	const char* wayDisplay = getenv("WAYLAND_DISPLAY");
+	const char* xDisplay = getenv("DISPLAY");
+
+	vsLog("XDG Session Type: %s", type ? type : "None!");
+	vsLog("Wayland Display: %s", wayDisplay ? wayDisplay : "None!");
+	vsLog("X11 Display: %s", xDisplay ? xDisplay : "None!");
+#endif
 }
 
 Resolution *
@@ -1535,10 +1564,16 @@ vsSystem::GetWriteDirectory() const
 	return PHYSFS_getWriteDir();
 }
 
+vsString
+vsSystem::GetModsDirectory() const
+{
+	return vsFormatString( "%s/mod/", PHYSFS_getWriteDir() );
+}
+
 void
 vsSystem::MountBaseDirectory()
 {
-	_DoMount( Mount(PHYSFS_getBaseDir(), "base/"), false );
+	_DoMount( Mount(PHYSFS_getBaseDir(), "base/") );
 }
 
 void
@@ -1577,8 +1612,43 @@ vsSystem::_FindMods()
 }
 
 void
+vsSystem::_TraceModFilesInDirectory( const vsString& mod, const vsString& directory ) const
+{
+	vsArray<vsString> directories, files;
+
+	vsString modDir = vsFormatString( "user/mod/%s/", mod );
+
+	vsString thisModDir = vsFormatString("%s%s", modDir, directory);
+
+	vsFile::DirectoryDirectories(&directories, thisModDir);
+	vsFile::DirectoryFiles(&files, thisModDir);
+
+	for ( int i = 0; i < files.ItemCount(); i++ )
+	{
+		vsString filename = vsFormatString("/%s%s", directory, files[i]);
+		// vsLog( ">     [] %s", filename );
+		vsString modString = "add";
+		if ( vsFile::Exists(filename) )
+			modString = "mod";
+		vsLog( ">     [%s] %s", modString, filename );
+	}
+	for ( int i = 0; i < directories.ItemCount(); i++ )
+	{
+		vsString childDir = vsFormatString("%s%s/", directory, directories[i]);
+		_TraceModFilesInDirectory( mod, childDir );
+	}
+}
+
+void
 vsSystem::TraceMods() const
 {
+	// temporarily disable mods so we can check what they're changing.
+	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
+	{
+		if ( m_mountedpoints[i].mod )
+			_DoUnmount( m_mountedpoints[i] );
+	}
+
 	if ( m_unpackedDataDirectories.IsEmpty() && m_modDirectories.IsEmpty() )
 	{
 		vsLog("Pristine Data:  YES");
@@ -1596,12 +1666,46 @@ vsSystem::TraceMods() const
 		}
 		if ( !m_modDirectories.IsEmpty() )
 		{
+			// PHYSFS_mount(m_dataDirectory.c_str(), "probedata/", 1);
+			// bool success = PHYSFS_mount(PHYSFS_getWriteDir(), "probeuser/", 1);
+			// if ( !success )
+			// {
+			// 	PHYSFS_ErrorCode ec = PHYSFS_getLastErrorCode();
+			// 	vsLog(">  not mounting %s to %s: %s (%d)", PHYSFS_getWriteDir(), "probeuser/", PHYSFS_getErrorByCode(ec), ec );
+			// }
+
 			vsLog("> Mods:");
 			for ( int i = 0; i < m_modDirectories.ItemCount(); i++ )
+			{
 				vsLog(">   + %s", m_modDirectories[i]);
+				_TraceModFilesInDirectory( m_modDirectories[i], "" );
+			}
 			vsLog(">");
+
+			// and unmount the paths we mounted before
+			// PHYSFS_unmount(m_dataDirectory.c_str());
+			// PHYSFS_unmount(PHYSFS_getWriteDir());
 		}
 	}
+
+	// re-enable mods so they function
+	for ( int i = 0; i < m_mountedpoints.ItemCount(); i++ )
+	{
+		if ( m_mountedpoints[i].mod )
+			_DoMount( m_mountedpoints[i] );
+	}
+}
+
+vsArray<vsString>
+vsSystem::GetUnpackedDataDirectories() const
+{
+	return m_unpackedDataDirectories;
+}
+
+vsArray<vsString>
+vsSystem::GetMods() const
+{
+	return m_modDirectories;
 }
 
 void

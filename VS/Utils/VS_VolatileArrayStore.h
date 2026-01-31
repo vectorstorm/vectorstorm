@@ -75,6 +75,8 @@ public:
 			vsDelete( m_array[i] );
 		}
 		vsDeleteArray( m_array );
+		m_arrayLength = 0;
+		m_arrayStorage = 0;
 	}
 
 	void Reserve( int newSize )

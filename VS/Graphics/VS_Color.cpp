@@ -387,6 +387,14 @@ vsColorHSL::ChromaToSaturation(float chroma, float lightness)
 	return saturation;
 }
 
+vsColorPacked::vsColorPacked(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha):
+	r(red),
+	g(green),
+	b(blue),
+	a(alpha)
+{
+}
+
 vsColorPacked::vsColorPacked(const vsColor& c):
 	r(c.r * 255),
 	g(c.g * 255),

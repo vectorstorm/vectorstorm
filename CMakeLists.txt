@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.5 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.18 FATAL_ERROR )
 if (DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel")
 else()
@@ -163,6 +163,13 @@ include_directories(
 	#/usr/local/include
 	)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	# disable the 'missing override' warning that Clang now issues by default.
+	# I like this and want to get into compliance with it eventually, but we're
+	# not there yet.
+	set(CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override ${CMAKE_CXX_FLAGS}")
+endif ()
+
 if(APPLE)
 	# Set this value (perhaps as env variable?) to do a 32-64 build
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )
@@ -309,6 +316,8 @@ set(GRAPHICS_SOURCES
 	VS/Graphics/VS_TextureInternalIPhone.h
 	VS/Graphics/VS_TextureManager.cpp
 	VS/Graphics/VS_TextureManager.h
+	VS/Graphics/VS_VertexArrayObject.cpp
+	VS/Graphics/VS_VertexArrayObject.h
 	)
 set(INPUT_SOURCES
 	VS/Input/VS_Input.cpp
@@ -420,6 +429,8 @@ set(UTILS_SOURCES
 	VS/Utils/VS_HalfIntImage.h
 	VS/Utils/VS_Image.cpp
 	VS/Utils/VS_Image.h
+	VS/Utils/VS_RawImage.cpp
+	VS/Utils/VS_RawImage.h
 	VS/Utils/VS_LinkedList.h
 	VS/Utils/VS_LinkedListStore.h
 	VS/Utils/VS_LocalisationTable.cpp

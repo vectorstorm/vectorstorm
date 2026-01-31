@@ -13,6 +13,7 @@
 
 #include "VS_Texture.h"
 #include "VS_OpenGL.h"
+#include "VS_Profile.h"
 
 vsMaterial *vsMaterial::White = nullptr;
 
@@ -212,6 +213,13 @@ vsMaterial::BindUniformColor( const vsString& name, const vsColor* value )
 }
 
 bool
+vsMaterial::BindUniformVec2( const vsString& name, const vsVector2D* value )
+{
+	m_values.BindUniformVec2(name,value);
+	return true;
+}
+
+bool
 vsMaterial::BindUniformVec3( const vsString& name, const vsVector3D* value )
 {
 	m_values.BindUniformVec3(name,value);
@@ -287,6 +295,8 @@ vsMaterial::BindUniformMat4( const vsString& name, const vsMatrix4x4* value )
 bool
 vsMaterial::MatchesForBatching( vsMaterial *other ) const
 {
+	PROFILE("vsMaterial::MatchesForBatching");
+
 	if ( GetResource() != other->GetResource() )
 		return false;
 

@@ -10,6 +10,7 @@
 #include "VS_DynamicBatch.h"
 #include "VS_DisplayList.h"
 #include "VS_Fragment.h"
+#include "VS_Profile.h"
 
 vsDynamicBatch::vsDynamicBatch():
 	m_vbo(vsRenderBuffer::Type_Stream),
@@ -44,7 +45,7 @@ vsDynamicBatch::Supports( vsRenderBuffer::ContentType type )
 bool
 vsDynamicBatch::CanFitVertices( int vertexCount ) const
 {
-	return (m_vbo.GetPositionCount() + vertexCount) <= 300;
+	return (m_vbo.GetPositionCount() + vertexCount) <= 200;
 }
 
 void
@@ -62,6 +63,7 @@ vsDynamicBatch::AddToBatch( vsRenderBuffer *vbo, vsRenderBuffer *ibo, const vsMa
 void
 vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo, const vsMatrix4x4& mat, vsFragment::SimpleType simpleType, bool first )
 {
+	PROFILE("vsDynamicBatch::AddToBatch_Internal");
 	vsAssert( Supports(fvbo->GetContentType()), "Unsupported content type" );
 
 	// Okay.  So.  In here we need to do a few things.  FIRST:
@@ -100,7 +102,7 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 		for (int ii = 0; ii < fvbo->GetPositionCount(); ii++)
 		{
 			o[oo].position = mat.ApplyTo( i[ii].position );
-			o[oo].normal = mat.ApplyRotationTo( i[ii].normal );
+			o[oo].normal = mat.ApplyRotationTo( vsVector3D(i[ii].normal) );
 			oo++;
 		}
 	}
@@ -277,6 +279,8 @@ vsDynamicBatch::AddToBatch_Internal( vsRenderBuffer *fvbo, vsRenderBuffer *fibo,
 void
 vsDynamicBatch::Draw( vsDisplayList * list )
 {
+	PROFILE("vsDynamicBatch::Draw");
+
 	m_vbo.BakeArray();
 	m_ibo.BakeIndexArray();
 	// if there are any indices (there will be!)...

@@ -10,11 +10,13 @@
 #include "VS_ModelInstanceGroup.h"
 #include "VS_ModelInstance.h"
 #include "VS_Model.h"
+#include "VS_VertexArrayObject.h"
 
 vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, vsModel *model, size_t lodLevel ):
 	m_group(group),
 	m_model(model),
 	m_lodLevel(lodLevel),
+	// m_vao(nullptr),
 	m_values(nullptr),
 	m_options(nullptr)
 #ifdef INSTANCED_MODEL_USES_LOCAL_BUFFER
@@ -24,12 +26,15 @@ vsModelInstanceLodGroup::vsModelInstanceLodGroup( vsModelInstanceGroup *group, v
 	m_bufferIsDirty(false)
 #endif // INSTANCED_MODEL_USES_LOCAL_BUFFER
 {
+	// m_vao = new vsVertexArrayObject;
 }
 
 vsModelInstanceLodGroup::~vsModelInstanceLodGroup()
 {
 	while ( !m_instance.IsEmpty() )
 		RemoveInstance(m_instance[0]);
+
+	// vsDelete( m_vao );
 }
 
 vsModelInstance *

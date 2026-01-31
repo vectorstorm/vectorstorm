@@ -15,7 +15,17 @@
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Utils/VS_AutomaticInstanceList.h"
 
-class vsRendererState;
+class vsTransform3D;
+class vsVertexArrayObject;
+
+
+// #define PPACKED_NORMALS
+#ifdef PACKED_NORMALS
+#define normal_t vsNormalPacked;
+#else
+#define normal_t vsVector3D;
+#endif
+
 
 struct vsVector4D_i32
 {
@@ -82,6 +92,7 @@ private:
 	int				m_activeBytes;
 
 	Type	        m_type;
+	// bool			m_useRestart;
 
 	ContentType		m_contentType;
 
@@ -115,14 +126,14 @@ public:
 	struct PN
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24 bytes
+		vsVector3D	normal;			// quantised to 2 bytes, 14
 	};
 
 	struct PNT
 	{
-		vsVector3D		position;
-		vsVector3D		normal;
-		vsVector2D		texel;			// total:  32 bytes.
+		vsVector3D		position;		// 12
+		vsVector3D	normal;			// quantised to 2 bytes, 14
+		vsVector2D		texel;			// total:  22 bytes
 	};
 
 	struct PCT
@@ -135,16 +146,16 @@ public:
 	struct PCN
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24
-		vsColorPacked	color;			// 28
+		vsVector3D	normal;			// quantised to 2 bytes, 14
+		vsColorPacked	color;			// 22
 	};
 
 	struct PCNT
 	{
 		vsVector3D		position;		// 12
-		vsVector3D		normal;			// 24
-		vsColorPacked	color;			// 28
-		vsVector2D		texel;			// 36
+		vsVector3D	normal;			// 16 // 4 bytes
+		vsColorPacked	color;			// 20 // 4 bytes
+		vsVector2D		texel;			// 28 // 8 bytes
 	};
 
 	struct Slug
@@ -159,6 +170,8 @@ public:
 
 	vsRenderBuffer(Type type = Type_Static);
 	~vsRenderBuffer();
+
+	vsVertexArrayObject *GetVAO();
 
 	// used by renderer to handle binding
 	uint32_t GetBufferID() { return m_bufferID; }
@@ -230,41 +243,51 @@ public:
 	ContentType	GetContentType() const { return m_contentType; }
 	void	SetContentType(ContentType ct) { m_contentType = ct; }
 
-	void	BindAsAttribute( int attributeId );
+	void	BindAsAttribute( vsVertexArrayObject *vao, int attributeId );
 	void	BindAsTexture();
 
-	void	BindVertexBuffer( vsRendererState *state );
-	void	UnbindVertexBuffer( vsRendererState *state );
+	void	BindVertexBuffer( vsVertexArrayObject *vao );
+	void	UnbindVertexBuffer( vsVertexArrayObject *vao );
 
-	void	BindNormalBuffer( vsRendererState *state );
-	void	UnbindNormalBuffer( vsRendererState *state );
+	void	BindNormalBuffer( vsVertexArrayObject *vao );
+	void	UnbindNormalBuffer( vsVertexArrayObject *vao );
 
-	void	BindTexelBuffer( vsRendererState *state );
-	void	UnbindTexelBuffer( vsRendererState *state );
+	void	BindTexelBuffer( vsVertexArrayObject *vao );
+	void	UnbindTexelBuffer( vsVertexArrayObject *vao );
 
-	void	BindColorBuffer( vsRendererState *state );
-	void	UnbindColorBuffer( vsRendererState *state );
+	void	BindColorBuffer( vsVertexArrayObject *vao );
+	void	UnbindColorBuffer( vsVertexArrayObject *vao );
 
-	void	Bind( vsRendererState *state );		// for non-custom types
-	void	Unbind( vsRendererState *state );	// for non-custom types
+	void	Bind( vsVertexArrayObject *vao );		// for non-custom types
+	void	Unbind( vsVertexArrayObject *vao );	// for non-custom types
 
 	static void EnsureSpaceForVertexColorTexelNormal( int vertexCount, int colorCount, int texelCount, int normalCount );
-	static void BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount );
-	static void BindVertexArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindColorArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindTexelArray( vsRendererState *state, void* buffer, int vertexCount );
-	static void BindNormalArray( vsRendererState *state, void* buffer, int vertexCount );
+	static void BindArrayToAttribute( vsVertexArrayObject *vao, void* buffer, size_t bufferSize, int attribute, int elementCount );
+	static void BindVertexArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindColorArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindTexelArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
+	static void BindNormalArray( vsVertexArrayObject *vao, void* buffer, int vertexCount );
 
-	static void DrawElementsImmediate( int type, void* buffer, int count, int instanceCount );
+	static void DrawElementsImmediate( vsVertexArrayObject *vao, int type, void* buffer, int count, int instanceCount );
 
-	void	TriStripBuffer(int instanceCount);
-	void	TriListBuffer(int instanceCount);
-	void	TriFanBuffer(int instanceCount);
-	void	LineStripBuffer(int instanceCount);
-	void	LineListBuffer(int instanceCount);
+	void	TriStripBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	TriListBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	TriFanBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	LineStripBuffer( vsVertexArrayObject *vao, int instanceCount);
+	void	LineListBuffer( vsVertexArrayObject *vao, int instanceCount);
+
+	// Primitive Restart is disabled, as it requires OpenGL 4.3.  Since wwe want
+	// to support Mac clients and Macs only go up to OpenGL 4.1, this feature isn't
+	// available to us.
+	//
+	// void	EnablePrimitiveRestart(bool e = true) { m_useRestart = e; }
+	// bool	UsesPrimitiveRestart() const { return m_useRestart; }
+	// uint16_t PrimitiveRestartValue() const { return 65535; }
 
 	bool IsVBO() const { return m_vbo; }
 
+	// NO, don't do this.
+	void Transform( const vsTransform3D& t );
 
 	// Advanced interface;  TODO is to figure out whether there's a nicer
 	// way to provide this kind of functionality.

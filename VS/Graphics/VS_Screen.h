@@ -63,6 +63,8 @@ public:
 	vsScreen(int width, int height, int depth, vsRenderer::WindowType type, int bufferCount, bool vsync, bool antialias, bool highDPI);
 	~vsScreen();
 
+	void Deinit();
+
 	vsRenderTarget *	GetMainRenderTarget();
 	vsRenderTarget *	GetPresentTarget();
 

@@ -23,6 +23,7 @@ struct vsModelInstance;
 class vsModelInstanceGroup;
 class vsShaderValues;
 class vsShaderOptions;
+class vsVertexArrayObject;
 
 #define INSTANCED_MODEL_USES_LOCAL_BUFFER
 
@@ -31,6 +32,7 @@ class vsModelInstanceLodGroup : public vsEntity
 	vsModelInstanceGroup *m_group; // what group am a part of
 	vsModel *m_model;
 	size_t m_lodLevel;
+	// vsVertexArrayObject *m_vao;
 	vsShaderValues *m_values; // NOT OWNED BY US.  Custom shader values for while drawing this group
 	vsShaderOptions *m_options; // NOT OWNED BY US.  Custom shader options for while drawing this group
 	vsArray<vsMatrix4x4> m_matrix;

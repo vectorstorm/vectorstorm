@@ -21,6 +21,7 @@ enum vsDrawMode
 {
 	DrawMode_Absolute,
 	DrawMode_Normal,
+	DrawMode_PreserveAlpha, // Normal blend, but our alpha channel doesn't get written
 	DrawMode_PremultipliedAlpha,
 	DrawMode_Lit,
 	DrawMode_Add,
@@ -106,6 +107,7 @@ public:
 	bool		m_fog;
 	bool		m_zRead;
 	bool		m_zWrite;
+	bool		m_zSort;
 	// bool		m_clampU; // We no longer store these on the vsMaterialInternal.  Instead, "clampU" and "clampV" are taken as directives for how to set up textures which will be added after these directives.
 	// bool		m_clampV;
 	bool		m_glow;

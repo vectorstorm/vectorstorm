@@ -22,6 +22,7 @@
 #include "VS_Texture.h"
 #include "Math/VS_Transform.h"
 #include "VS_OpenGL.h"
+#include "VS_VertexArrayObject.h"
 
 class vsCamera2D;
 class vsDisplayList;
@@ -39,7 +40,7 @@ struct SDL_Surface;
 class vsRenderer_OpenGL3: public vsRenderer
 {
 	int					m_flags;
-	vsShaderSuite		m_defaultShaderSuite;
+	vsShaderSuite		*m_defaultShaderSuite;
 
 	vsVector3D           m_currentCameraPosition;
 	Settings             m_currentSettings;
@@ -61,12 +62,15 @@ class vsRenderer_OpenGL3: public vsRenderer
 	vsRenderTarget *     m_currentRenderTarget;
 
     vsRendererState      m_state;
+	vsVertexArrayObject *m_currentVAO;
+	vsVertexArrayObject *m_nextVAO;
+
+	vsVertexArrayObject m_defaultVAO;
 
 	vsMaterial *         m_currentMaterial;
 	vsMaterialInternal * m_currentMaterialInternal;
 	vsShader *           m_currentShader;
 	vsShaderValues *     m_currentShaderValues;
-	bool                 m_invalidateMaterial;
 
 	vsVector3D *         m_currentVertexArray;
 	vsVector3D *         m_currentNormalArray;
@@ -107,10 +111,6 @@ class vsRenderer_OpenGL3: public vsRenderer
 	bool                 m_usingTexelArray;
 	bool                 m_antialias;
 	bool                 m_vsync;
-	uint32_t			m_vao;	// temporary -- for our global VAO.
-	// VAOs should really be integrated more nicely somewhere, but for now,
-	// we'll treat our rendering like OpenGL2 and just continually reconfigure
-	// a single global Vertex Array Object..
 
 	WindowType m_windowType;
 
@@ -128,6 +128,7 @@ public:
 
 	vsRenderer_OpenGL3(int width, int height, int depth, int flags, int bufferCount);
 	virtual ~vsRenderer_OpenGL3();
+	void Deinit() override; // we're about to shut down
 
 	static vsRenderer_OpenGL3* Instance() { return static_cast<vsRenderer_OpenGL3*>(vsRenderer::Instance()); }
 

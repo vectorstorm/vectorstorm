@@ -67,6 +67,27 @@ public:
 	vsVector2D YY() const { return vsVector2D(y,y); }
 };
 
+class vsTexelPacked
+{
+	uint8_t m_x;
+	uint8_t m_y;
+
+	void _Store( const vsVector2D& v );
+	vsVector2D _Extract();
+public:
+
+	vsTexelPacked();
+	vsTexelPacked(float x, float y);
+	vsTexelPacked(const vsVector2D &normal);
+
+	void Set( const vsVector2D &normal );
+	void Set( float x, float y);
+
+	void operator=( const vsVector2D& o ) { return Set(o); }
+	operator vsVector2D() { return _Extract(); }
+};
+
+
 
 
 // VectorStorm is a 2D game engine, but if you have some strange need for a 3D
@@ -126,11 +147,31 @@ public:
 	const vsVector2D XZ() const { return vsVector2D(x,z); }
 };
 
+class vsNormalPacked
+{
+	uint32_t m_value;
+
+	void _Store( const vsVector3D& v );
+	vsVector3D _Extract();
+public:
+
+	vsNormalPacked();
+	vsNormalPacked(float x, float y, float z);
+	vsNormalPacked(const vsVector3D &normal);
+
+	void Set( const vsVector3D &normal );
+	void Set( float x, float y, float z );
+
+	void operator=( const vsVector3D& o ) { return Set(o); }
+	operator vsVector3D() { return _Extract(); }
+};
+
 class vsPosition3D
 {
 	int32_t	m_x;
 	int32_t	m_y;
 	int32_t	m_z;
+
 public:
 
 	vsPosition3D();
@@ -183,6 +224,28 @@ public:
 
 	void	Set(float x_in, float y_in, float z_in, float w_in) {x=x_in; y=y_in;z=z_in;w=w_in;}
 };
+
+// a Normal4DPacked gives us packed storage for a vsVector4D with all values
+// between [0..1] and with a 'w' component that is either 0 or 1.
+class vsNormal4DPacked
+{
+	int32_t m_value;
+
+	void _Store( const vsVector4D& v );
+	vsVector4D _Extract();
+public:
+
+	vsNormal4DPacked();
+	vsNormal4DPacked(float x, float y, float z, float w);
+	vsNormal4DPacked(const vsVector4D &normal);
+
+	void Set( const vsVector4D &normal );
+	void Set( float x, float y, float z, float w );
+
+	void operator=( const vsVector4D& o ) { return Set(o); }
+	operator vsVector4D() { return _Extract(); }
+};
+
 
 
 

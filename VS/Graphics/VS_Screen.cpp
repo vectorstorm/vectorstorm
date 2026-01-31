@@ -77,9 +77,15 @@ vsScreen::vsScreen(int width, int height, int depth, vsRenderer::WindowType wind
 vsScreen::~vsScreen()
 {
 	vsLog(" >> FIFO High water mark:  %d of %d (%0.2f%% usage)", m_fifoHighWater, c_fifoSize, 100.f * (float)m_fifoHighWater / c_fifoSize);
-	DestroyScenes();
 	vsDelete( m_renderer );
+}
+
+void
+vsScreen::Deinit()
+{
+	DestroyScenes();
 	vsDelete( m_fifo );
+	m_renderer->Deinit();
 	s_instance = nullptr;
 }
 
@@ -186,11 +192,11 @@ vsScreen::BuildDefaultPipeline()
 {
 	vsDelete( m_pipeline );
 	m_pipeline = new vsRenderPipeline(3);
-	m_pipeline->SetStage(0, new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
+	m_pipeline->AddStage(new vsRenderPipelineStageScenes( m_scene, m_sceneCount, m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
 #if defined(DEBUG_SCENE)
-	m_pipeline->SetStage(1, new vsRenderPipelineStageScenes( GetDebugScene(), m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
+	m_pipeline->AddStage(new vsRenderPipelineStageScenes( GetDebugScene(), m_renderer->GetMainRenderTarget(), m_defaultRenderSettings, true ));
 #endif // DEBUG_SCENE
-	m_pipeline->SetStage(2, new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
+	m_pipeline->AddStage(new vsRenderPipelineStageBlit( m_renderer->GetMainRenderTarget(), m_renderer->GetPresentTarget() ));
 }
 
 vsRenderTarget *
@@ -261,6 +267,12 @@ vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *
 		// easy case, we're already on the main thread so just call DrawPipeline!
 		return DrawPipeline(pipeline, customOptions);
 	}
+	if ( vsRenderer_OpenGL3::Instance()->IsLoadingContext() )
+	{
+		// ensure everything above has reached the main thread before we
+		// try to draw our map!
+		vsRenderer_OpenGL3::Instance()->FenceLoadingContext();
+	}
 
 	// Now, we need to lock a mutex to touch the queued draws list.
 	QueuedDraw qd;
@@ -313,6 +325,8 @@ vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptio
 void
 vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
+	vsTimerSystem::Instance()->BeginDraw();
+
 	PROFILE_GL("DrawPipeline");
 	m_currentSettings = &m_defaultRenderSettings;
 
@@ -346,14 +360,15 @@ vsScreen::_DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOpti
 	pipeline->PostDraw();
 
 	m_currentSettings = nullptr;
+	vsTimerSystem::Instance()->EndDraw();
 }
 
 void
 vsScreen::Present()
 {
-	vsTimerSystem::Instance()->EndGatherTime();
+	vsTimerSystem::Instance()->BeginPresent();
 	m_renderer->Present();
-	vsTimerSystem::Instance()->EndDrawTime();
+	vsTimerSystem::Instance()->EndPresent();
 }
 
 vsScene *

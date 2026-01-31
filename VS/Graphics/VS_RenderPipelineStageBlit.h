@@ -20,6 +20,8 @@ class vsRenderPipelineStageBlit: public vsRenderPipelineStage
 	vsRenderTarget *m_to;
 public:
 	vsRenderPipelineStageBlit( vsRenderTarget *from, vsRenderTarget *to );
+	void SetFrom( vsRenderTarget *from ) { m_from = from; }
+	void SetTo( vsRenderTarget *to ) { m_to = to; }
 
 	virtual void Draw( vsDisplayList *list );
 };

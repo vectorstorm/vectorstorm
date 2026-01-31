@@ -406,7 +406,7 @@ vsMeshMaker::BakeTriangleVertex( vsMeshMakerTriangleVertex &vertex, const vsVect
 			{
 				if ( *other == vertex )
 				{
-					return i;
+					return other->m_index;
 				}
 			}
 		}

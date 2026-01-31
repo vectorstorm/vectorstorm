@@ -27,6 +27,7 @@ static const vsString s_modeString[DRAWMODE_MAX] =
 {
 	"absolute",	//DrawMode_Absolute,
 	"normal",	//DrawMode_Normal,
+	"preserveAlpha", //DrawMode_PreserveAlpha
 	"premultiplied",	//DrawMode_Normal,
 	"lit",		//DrawMode_Lit,
 	"add",		//DrawMode_Add,
@@ -64,6 +65,7 @@ vsMaterialInternal::vsMaterialInternal():
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
+	m_zSort(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -102,6 +104,7 @@ vsMaterialInternal::vsMaterialInternal( const vsString &name ):
 	m_fog(false),
 	m_zRead(true),
 	m_zWrite(true),
+	m_zSort(false),
 	m_glow(false),
 	m_preGlow(false),
 	m_postGlow(false),
@@ -224,6 +227,10 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 				{
 					m_zWrite = sr->Bool();
 				}
+				else if ( label == "zsort" )
+				{
+					m_zSort = sr->Bool();
+				}
 				else if ( label == "glow" )
 				{
 					m_glow = sr->Bool();
@@ -294,6 +301,7 @@ vsMaterialInternal::LoadFromFile( vsFile *materialFile )
 								m_texture[m_textureCount]->SetClampUV(true);
 						}
 					}
+
 					m_textureCount++;
 				}
 				else if ( label == "shader" )

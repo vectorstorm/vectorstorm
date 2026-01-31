@@ -85,8 +85,7 @@ void SysPower::ScanDirectory( const char* path, int parent )
                 FILE* f = fopen( tmp, "r" );
                 if( f )
                 {
-                    int val = fscanf( f, "%" PRIu64, &maxRange );
-					val = val; // [vectorstorm] hack in a workaround for "ignoring return value of fscanf" build warning
+                    (void)fscanf( f, "%" PRIu64, &maxRange );
                     fclose( f );
                 }
             }

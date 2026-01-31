@@ -9,17 +9,38 @@
 
 #include "VS_RenderBuffer.h"
 
-#include "VS_RendererState.h"
-
 #include "VS_OpenGL.h"
 #include "VS_Profile.h"
+#include "VS_Transform.h"
 #include "VS_GraphicsMemoryProfiler.h"
 
+#include "VS/Graphics/VS_VertexArrayObject.h"
+
+namespace
+{
+	vsVertexArrayObject *s_vao[vsRenderBuffer::ContentType_PCNT+1] = {0};
+
+#ifdef PACKED_NORMALS
+	// this packed integer format requires us to tell OpenGL that we have 4
+	// components or else it's an error.
+	const int c_normal_components = 4;
+	const vsVertexArrayObject::ComponentType c_normal_component_type =
+		vsVertexArrayObject::ComponentType_Int_2_10_10_10_REV;
+#else
+	// actually we're only sending three floads, with unpacked normals.
+	const int c_normal_components = 3;
+	const vsVertexArrayObject::ComponentType c_normal_component_type =
+		vsVertexArrayObject::ComponentType_Float;
+#endif
+
+
+};
 
 #define POS_ATTRIBUTE (0)
 #define TEXCOORD_ATTRIBUTE (1)
 #define NORMAL_ATTRIBUTE (2)
 #define COLOR_ATTRIBUTE (3)
+
 
 static int s_glBufferType[vsRenderBuffer::TYPE_MAX] =
 {
@@ -39,8 +60,9 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
     m_glArrayBytes(0),
     m_activeBytes(0),
     m_type(type),
+	// m_useRestart(false),
     m_contentType(ContentType_Custom),
-    m_bufferID(-1),
+    m_bufferID(0),
     m_vbo(false),
     m_bindType(BindType_Array)
 {
@@ -50,7 +72,6 @@ vsRenderBuffer::vsRenderBuffer(vsRenderBuffer::Type type):
 #if !TARGET_OS_IPHONE
 	if ( glGenBuffers && m_type != Type_NoVBO )
 	{
-		glGenBuffers(1, (GLuint*)&m_bufferID);
 		m_vbo = true;
 	}
 #endif
@@ -61,13 +82,29 @@ vsRenderBuffer::~vsRenderBuffer()
 	if ( m_vbo )
 	{
 		vsGraphicsMemoryProfiler::Remove( vsGraphicsMemoryProfiler::Type_Buffer, m_glArrayBytes );
-		glDeleteBuffers( 1, (GLuint*)&m_bufferID );
-		m_bufferID = -1;
+		if ( m_bufferID != 0 )
+		{
+			glDeleteBuffers( 1, (GLuint*)&m_bufferID );
+			m_bufferID = 0;
+		}
 	}
 
 	{
 		vsDeleteArray( m_array );
 	}
+}
+
+vsVertexArrayObject *
+vsRenderBuffer::GetVAO()
+{
+	vsVertexArrayObject *result = nullptr;
+	if ( m_contentType >= ContentType_P && m_contentType <= ContentType_PCNT )
+	{
+		if ( s_vao[m_contentType] == nullptr )
+			s_vao[m_contentType] = new vsVertexArrayObject;
+		result = s_vao[m_contentType];
+	}
+	return result;
 }
 
 void
@@ -86,6 +123,7 @@ vsRenderBuffer::SetActiveSize( int size )
 void
 vsRenderBuffer::SetArraySize_Internal( int size )
 {
+	PROFILE("vsRenderBuffer::SetArraySize_Internal");
 	if ( m_array && size > m_arrayBytes )
 	{
 		vsDeleteArray( m_array );
@@ -102,6 +140,7 @@ vsRenderBuffer::SetArraySize_Internal( int size )
 void
 vsRenderBuffer::ResizeArray_Internal( int size )
 {
+	PROFILE("vsRenderBuffer::ResizeArray_Internal");
 	if ( m_array && size > m_arrayBytes )
 	{
 		char* newArray = new char[size];
@@ -117,24 +156,37 @@ vsRenderBuffer::ResizeArray_Internal( int size )
 void
 vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindType bindType )
 {
+	PROFILE("vsRenderBuffer::SetArray_Internal");
+	GL_CHECK("RenderBuffer::SetArray");
 	vsAssert( size, "Error:  Tried to set a zero-length GPU buffer!" );
 
-	int bindPoints[BindType_MAX] =
+	const int bindPoints[BindType_MAX] =
 	{
 		GL_ARRAY_BUFFER,
 		GL_ELEMENT_ARRAY_BUFFER,
 		GL_TEXTURE_BUFFER
 	};
 	int bindPoint = bindPoints[bindType];
-
 	m_bindType = bindType;
 
 	if ( m_vbo )
 	{
-		glBindBuffer(bindPoint, m_bufferID);
+		if ( m_bufferID <= 0 ) // we haven't allocated a VBO name yet, so let's do so now!
+		{
+			PROFILE("genbuffers");
+			glGenBuffers(1, (GLuint*)&m_bufferID);
+		}
+
+		vsAssert( m_bufferID != 0, "0 bufferID" );
+
+		{
+			PROFILE("glBindBuffer");
+			glBindBuffer(bindPoint, m_bufferID);
+		}
 
 		if ( size > m_glArrayBytes )
 		{
+			PROFILE("Larger, glBufferData");
 			glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
 
 			vsGraphicsMemoryProfiler::Add( vsGraphicsMemoryProfiler::Type_Buffer, size-m_glArrayBytes );
@@ -142,25 +194,31 @@ vsRenderBuffer::SetArray_Internal( char *data, int size, vsRenderBuffer::BindTyp
 		}
 		else
 		{
-			// glBufferData(bindPoint, size, nullptr, s_glBufferType[m_type]);
+			PROFILE("Smaller, glBufferSubData");
+			glBufferSubData(bindPoint, 0, size, data);
+			// glBufferData(bindPoint, m_glArrayBytes, nullptr, s_glBufferType[m_type]);
 			// glBufferData(bindPoint, size, data, s_glBufferType[m_type]);
-			void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-			if ( ptr )
-			{
-				memcpy(ptr, data, size);
-				glUnmapBuffer(bindPoint);
-			}
+			// void *ptr = glMapBufferRange(bindPoint, 0, m_glArrayBytes, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+            //
+			// if ( ptr )
+			// {
+			// 	memcpy(ptr, data, size);
+			// 	glUnmapBuffer(bindPoint);
+			// }
 		}
 
 #ifdef VS_PRISTINE_BINDINGS
+		{
+			PROFILE("Unbind");
 		glBindBuffer(bindPoint, 0);
+		}
 #endif
 	}
 	m_activeBytes = size;
 
 	if ( data != m_array )
 	{
+		PROFILE("Copying to internal array");
 		SetArraySize_Internal( size );
 		memcpy(m_array,data,size);
 	}
@@ -343,38 +401,26 @@ vsRenderBuffer::BakeIndexArray()
 }
 
 void
-vsRenderBuffer::BindAsAttribute( int attributeId )
+vsRenderBuffer::BindAsAttribute( vsVertexArrayObject *vao, int attributeId )
 {
 	if ( m_contentType == ContentType_Matrix && m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 64, 0);
-		glVertexAttribPointer(attributeId+1, 4, GL_FLOAT, GL_FALSE, 64, (void*)16);
-		glVertexAttribPointer(attributeId+2, 4, GL_FLOAT, GL_FALSE, 64, (void*)32);
-		glVertexAttribPointer(attributeId+3, 4, GL_FLOAT, GL_FALSE, 64, (void*)48);
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, 0);
+		vao->BindAttribute(attributeId+1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)16);
+		vao->BindAttribute(attributeId+2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)32);
+		vao->BindAttribute(attributeId+3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)48);
 	}
 	else if ( m_contentType == ContentType_Color && m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_FLOAT, GL_FALSE, 0, 0);
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0 );
-#endif
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0);
 	}
 	else if ( m_contentType == ContentType_ColorPacked && m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer(attributeId, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0 );
-#endif
+		vao->BindAttribute(attributeId, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, 0, 0);
 	}
 	else
 	{
-		vsAssert(0, "Not yet implemented");
+		vsAssertF(0, "vsRenderBuffer::BindAsAttribute(): ContentType: %d, VBO: %s not implemented?", m_contentType, m_vbo ? "TRUE" : "FALSE");
 	}
 }
 
@@ -421,348 +467,250 @@ vsRenderBuffer::BindAsTexture()
 }
 
 void
-vsRenderBuffer::BindVertexBuffer( vsRendererState *state )
+vsRenderBuffer::BindVertexBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, true );
+	// vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, true );
 
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif
+		vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
+// 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
+// 		glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+// #ifdef VS_PRISTINE_BINDINGS
+// 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+// #endif
 	}
 	else
 	{
-		vsRenderBuffer::BindVertexArray( state, m_array, m_activeBytes/sizeof(vsVector3D) );
+		vsRenderBuffer::BindVertexArray( vao, m_array, m_activeBytes/sizeof(vsVector3D) );
 		// glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindVertexBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindVertexBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_VertexArray, BindType_ElementArray );
+	// vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, BindType_ElementArray );
+	vao->UnbindAttribute( POS_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindNormalBuffer( vsRendererState *state )
+vsRenderBuffer::BindNormalBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif //VS_PRISTINE_BINDINGS
+		vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, 0, m_array );
+		vao->BindAttribute( NORMAL_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindNormalBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindNormalBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_NormalArray, false );
+	vao->UnbindAttribute( NORMAL_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindTexelBuffer( vsRendererState *state )
+vsRenderBuffer::BindTexelBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+		vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		BindTexelArray( state, m_array, m_activeBytes / sizeof(vsVector2D) );
+		BindTexelArray( vao, m_array, m_activeBytes / sizeof(vsVector2D) );
 		// glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindTexelBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindTexelBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
+	vao->UnbindAttribute( TEXCOORD_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::BindColorBuffer( vsRendererState *state )
+vsRenderBuffer::BindColorBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, 0 );
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+		vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0 );
 	}
 	else
 	{
-		glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_FLOAT, GL_FALSE, 0, m_array );
+		vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_Float, false, 0, m_array );
 	}
 }
 
 void
-vsRenderBuffer::UnbindColorBuffer( vsRendererState *state )
+vsRenderBuffer::UnbindColorBuffer( vsVertexArrayObject *vao )
 {
-	state->SetBool( vsRendererState::ClientBool_ColorArray, false );
+	vao->UnbindAttribute( COLOR_ATTRIBUTE );
 }
 
 void
-vsRenderBuffer::Bind( vsRendererState *state )
+vsRenderBuffer::Bind( vsVertexArrayObject *vao )
 {
+	GL_CHECK_SCOPED("Bind");
 	switch( m_contentType )
 	{
 		case ContentType_P:
 		{
 			int stride = sizeof(P);
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-
 			if ( m_vbo )
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
-			}
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
 			else
-			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-			}
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
 			break;
 		}
 		case ContentType_PC:
 		{
-			PC dummyArray[2];
 			int stride = sizeof(PC);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t cStart = offsetof(PC,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
-
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PC*)m_array)[0].color );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PC*)m_array)[0].color );
 			}
 			break;
 		}
 		case ContentType_PT:
 		{
-			PT dummyArray[2];
 			int stride = sizeof(PT);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t tStart = offsetof(PT,texel);
 			GLvoid* tStartPtr = (GLvoid*)tStart;
-
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PT*)m_array)[0].texel );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PT*)m_array)[0].texel );
 			}
 			break;
 		}
 		case ContentType_PN:
 		{
-			PN dummyArray[2];
 			int stride = sizeof(PN);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t nStart = offsetof(PN, normal);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
-
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
 
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PN*)m_array)[0].normal );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PN*)m_array)[0].normal );
 			}
 			break;
 		}
 		case ContentType_PNT:
 		{
-			PNT dummyArray[2];
 			int stride = sizeof(PNT);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t nStart = offsetof(PNT,normal);
+			size_t tStart = offsetof(PNT,texel);
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PNT*)m_array)[0].normal );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PNT*)m_array)[0].normal );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PNT*)m_array)[0].texel );
 			}
 			break;
 		}
 		case ContentType_PCNT:
 		{
-			PCNT dummyArray[2];
 			int stride = sizeof(PCNT);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t nStart = offsetof(PCNT,normal);
+			size_t tStart = offsetof(PCNT,texel);
+			size_t cStart = offsetof(PCNT,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].texel );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCNT*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCNT*)m_array)[0].color );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCNT*)m_array)[0].color );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, true, stride, &((PCNT*)m_array)[0].normal );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCNT*)m_array)[0].texel );
 			}
 			break;
 		}
 		case ContentType_PCN:
 		{
-			PCN dummyArray[2];
 			int stride = sizeof(PCN);
-			size_t nStart = (&dummyArray[0].normal.x - &dummyArray[0].position.x) * sizeof(float);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
+			size_t nStart = offsetof(PCN,normal);
+			size_t cStart = offsetof(PCN,color);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* nStartPtr = (GLvoid*)nStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, nStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, m_bufferID, c_normal_components, c_normal_component_type, true, stride, nStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( NORMAL_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, &((PCN*)m_array)[0].normal );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCN*)m_array)[0].color );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCN*)m_array)[0].color );
+				vao->BindAttribute( NORMAL_ATTRIBUTE, 0, c_normal_components, c_normal_component_type, false, stride, &((PCN*)m_array)[0].normal );
 			}
 			break;
 		}
 		case ContentType_PCT:
 		{
-			PCT dummyArray[2];
 			int stride = sizeof(PCT);
-			size_t cStart = ((char*)&dummyArray[0].color.r - (char*)&dummyArray[0].position.x);
-			size_t tStart = (&dummyArray[0].texel.x - &dummyArray[0].position.x) * sizeof(float);
+			size_t cStart = offsetof(PCT,color);
+			size_t tStart = offsetof(PCT,texel);
 			GLvoid* cStartPtr = (GLvoid*)cStart;
 			GLvoid* tStartPtr = (GLvoid*)tStart;
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, tStartPtr );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, cStartPtr );
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( POS_ATTRIBUTE, m_bufferID, 3, vsVertexArrayObject::ComponentType_Float, false, stride, 0 );
+				vao->BindAttribute( COLOR_ATTRIBUTE, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, cStartPtr );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, m_bufferID, 2, vsVertexArrayObject::ComponentType_Float, false, stride, tStartPtr );
 			}
 			else
 			{
-				glVertexAttribPointer( POS_ATTRIBUTE, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				glVertexAttribPointer( TEXCOORD_ATTRIBUTE, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
-				glVertexAttribPointer( COLOR_ATTRIBUTE, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
+				vao->BindAttribute( POS_ATTRIBUTE, 0, 3, vsVertexArrayObject::ComponentType_Float, false, stride, m_array );
+				vao->BindAttribute( COLOR_ATTRIBUTE, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &((PCT*)m_array)[0].color );
+				vao->BindAttribute( TEXCOORD_ATTRIBUTE, 0, 2, vsVertexArrayObject::ComponentType_Float, false, stride, &((PCT*)m_array)[0].texel );
 			}
 			break;
 		}
@@ -770,40 +718,24 @@ vsRenderBuffer::Bind( vsRendererState *state )
 		{
 			const int stride = sizeof(Slug);
 
-			state->SetBool( vsRendererState::ClientBool_VertexArray, true );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, true );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, true );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, true );
-			state->SetBool( vsRendererState::ClientBool_OtherArray, true );
-
 			if ( m_vbo )
 			{
-				glBindBuffer(GL_ARRAY_BUFFER, m_bufferID);
-
-				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, 0 );
-				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, (char*)16 );
-				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, (char*)32 );
-				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, (char*)48 );
-				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (char*)64 );
-
-				glVertexAttribDivisor(4, 0);
-
-#ifdef VS_PRISTINE_BINDINGS
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+				vao->BindAttribute( 0, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)0 );
+				vao->BindAttribute( 1, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)16 );
+				vao->BindAttribute( 2, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)32 );
+				vao->BindAttribute( 3, m_bufferID, 4, vsVertexArrayObject::ComponentType_Float, false, stride, (void*)48 );
+				vao->BindAttribute( 4, m_bufferID, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, (void*)64 );
+				// vao->SetAttributeDivisor( 4, 0 );
 			}
 			else
 			{
 				Slug *array = reinterpret_cast<Slug*>(m_array);
-				glVertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, stride, array );
-				glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, stride, &array[0].texel );
-				glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, stride, &array[0].jacobian );
-				glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, stride, &array[0].banding );
-				glVertexAttribPointer( 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &array[0].color );
-
-				// glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, m_array );
-				// glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, &((PCT*)m_array)[0].texel );
-				// glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, &((PCT*)m_array)[0].color );
+				vao->BindAttribute( 0, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, array );
+				vao->BindAttribute( 1, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].texel );
+				vao->BindAttribute( 2, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].jacobian );
+				vao->BindAttribute( 3, 0, 4, vsVertexArrayObject::ComponentType_Float, false, stride, &array[0].banding );
+				vao->BindAttribute( 4, 0, 4, vsVertexArrayObject::ComponentType_UByte, true, stride, &array[0].color );
+				// vao->SetAttributeDivisor( 4, 0 );
 			}
 			break;
 		}
@@ -821,56 +753,56 @@ vsRenderBuffer::Bind( vsRendererState *state )
 }
 
 void
-vsRenderBuffer::Unbind( vsRendererState *state )
+vsRenderBuffer::Unbind( vsVertexArrayObject *vao )
 {
-	switch( m_contentType )
-	{
-        case ContentType_P:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-            break;
-        case ContentType_PC:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-            break;
-        case ContentType_PNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCN:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-            break;
-        case ContentType_PCT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-        case ContentType_PCNT:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-            break;
-		case ContentType_Slug:
-			state->SetBool( vsRendererState::ClientBool_VertexArray, false );
-			state->SetBool( vsRendererState::ClientBool_NormalArray, false );
-			state->SetBool( vsRendererState::ClientBool_ColorArray, false );
-			state->SetBool( vsRendererState::ClientBool_TextureCoordinateArray, false );
-			state->SetBool( vsRendererState::ClientBool_OtherArray, false );
-			break;
-        default:
-            vsAssert(0, "Unknown content type!");
-	}
+	// switch( m_contentType )
+	// {
+    //     case ContentType_P:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+    //         break;
+    //     case ContentType_PC:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+    //         break;
+    //     case ContentType_PT:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+    //         break;
+    //     case ContentType_PN:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+    //         break;
+    //     case ContentType_PNT:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+    //         break;
+    //     case ContentType_PCN:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+    //         break;
+    //     case ContentType_PCT:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+    //         break;
+    //     case ContentType_PCNT:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+    //         break;
+	// 	case ContentType_Slug:
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_VertexArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_NormalArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_ColorArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_TextureCoordinateArray, false );
+	// 		vao->SetBool( vsVertexArrayObject::ClientBool_OtherArray, false );
+	// 		break;
+    //     default:
+    //         vsAssert(0, "Unknown content type!");
+	// }
 }
 
 int
@@ -1089,31 +1021,34 @@ vsRenderBuffer::GetColor(int i) const
 
 
 void
-vsRenderBuffer::TriStripBuffer(int instanceCount)
+vsRenderBuffer::TriStripBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
+	GL_CHECK_SCOPED("TriStripBuffer");
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		//glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(int), GL_UNSIGNED_INT, 0);
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0 );
-		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-#ifdef VS_PRISTINE_BINDINGS
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
+
+		if ( m_contentType == ContentType_UInt32 )
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint32_t), GL_UNSIGNED_INT, 0, instanceCount);
+		else
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
 	}
 	else
 	{
 		// glDrawElements(GL_TRIANGLE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::TriListBuffer(int instanceCount)
+vsRenderBuffer::TriListBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
+	GL_CHECK_SCOPED("TriListBuffer");
 	if ( m_vbo )
 	{
-		int elements = m_activeBytes/sizeof(uint16_t);
 		// vsString prf;// = "TriListBuffer";
 		// if ( elements <= 6 )
 		// 	prf = "TriListBufferTiny";
@@ -1124,87 +1059,104 @@ vsRenderBuffer::TriListBuffer(int instanceCount)
 		// {
 		// PROFILE_GL(prf);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		if ( instanceCount == 1 )
 		{
-			glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0);
+			if ( m_contentType == ContentType_UInt32 )
+			{
+				int elements = m_activeBytes/sizeof(uint32_t);
+				glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, 0);
+			}
+			else
+			{
+				int elements = m_activeBytes/sizeof(uint16_t);
+				glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0);
+			}
 		}
 		else
 		{
-			glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
+			if ( m_contentType == ContentType_UInt32 )
+			{
+				int elements = m_activeBytes/sizeof(uint32_t);
+				glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_INT, 0, instanceCount);
+			}
+			else
+			{
+				int elements = m_activeBytes/sizeof(uint16_t);
+				glDrawElementsInstanced(GL_TRIANGLES, elements, GL_UNSIGNED_SHORT, 0, instanceCount);
+			}
 		}
-		// }
-		//glDrawRangeElements(GL_TRIANGLES, 0, m_activeBytes/sizeof(uint16_t), m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
-		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_TRIANGLES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::TriFanBuffer(int instanceCount)
+vsRenderBuffer::TriFanBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0);
 		glDrawElementsInstanced(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_TRIANGLE_FAN, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_TRIANGLE_FAN, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_TRIANGLE_FAN, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::LineStripBuffer(int instanceCount)
+vsRenderBuffer::LineStripBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		glDrawElementsInstanced(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_LINE_STRIP, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_LINE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_LINE_STRIP, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 void
-vsRenderBuffer::LineListBuffer(int instanceCount)
+vsRenderBuffer::LineListBuffer(vsVertexArrayObject* vao, int instanceCount)
 {
 	if ( m_vbo )
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufferID);
+		vao->SetElementBuffer( m_bufferID );
+		vao->Flush();
 		glDrawElementsInstanced(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, 0, instanceCount);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else
 	{
 		// glDrawElements(GL_LINES, m_activeBytes/sizeof(uint16_t), GL_UNSIGNED_SHORT, m_array );
-		DrawElementsImmediate( GL_LINES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
+		DrawElementsImmediate( vao, GL_LINES, m_array, m_activeBytes/sizeof(uint16_t), instanceCount );
 	}
 }
 
 #define VBO_SIZE (1024 * 1024)
-static GLuint g_vbo = 0xffffffff;
-static int g_vboCursor = VBO_SIZE;
+static GLuint g_vbo = 0;
+static size_t g_vboCursor = VBO_SIZE;
 
 void
-vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attribute, int elementCount )
+vsRenderBuffer::BindArrayToAttribute( vsVertexArrayObject *vao, void* buffer, size_t bufferSize, int attribute, int elementCount )
 {
 	vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
-	if ( g_vbo == 0xffffffff )
+	if ( g_vbo == 0 )
 	{
 		glGenBuffers(1, &g_vbo);
 	}
+	vsAssert( g_vbo != 0, "0 g_vbo id" );
 
 	glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
 
@@ -1218,8 +1170,12 @@ vsRenderBuffer::BindArrayToAttribute( void* buffer, size_t bufferSize, int attri
 	}
 	glBufferSubData(GL_ARRAY_BUFFER, g_vboCursor, bufferSize, buffer);
 
-	glVertexAttribPointer( attribute, elementCount, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid*>(g_vboCursor) );
+	void* curs = reinterpret_cast<void*>(g_vboCursor);
+	vao->BindAttribute(attribute, g_vbo, elementCount, vsVertexArrayObject::ComponentType_Float, false, 0, curs);
+
+#ifdef VS_PRISTINE_BINDINGS
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // VS_PRISTINE_BINDINGS
 
 	g_vboCursor += bufferSize;
 }
@@ -1235,7 +1191,7 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 	if ( g_vboCursor + bufferSize >= VBO_SIZE )
 	{
 		vsAssert(bufferSize < VBO_SIZE, "Tried to bind too large an array for VBO_SIZE?");
-		if ( g_vbo == 0xffffffff )
+		if ( g_vbo == 0 )
 		{
 			glGenBuffers(1, &g_vbo);
 		}
@@ -1250,47 +1206,51 @@ vsRenderBuffer::EnsureSpaceForVertexColorTexelNormal( int vertexCount, int color
 }
 
 void
-vsRenderBuffer::BindVertexArray( vsRendererState *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindVertexArray( vsVertexArrayObject *vao, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsVector3D);
-	BindArrayToAttribute(buffer,bufferSize,POS_ATTRIBUTE,3);
+	BindArrayToAttribute(vao, buffer,bufferSize,POS_ATTRIBUTE,3);
 }
 
 void
-vsRenderBuffer::BindColorArray( vsRendererState *state, void* buffer, int vertexCount )
+vsRenderBuffer::BindColorArray( vsVertexArrayObject *vao, void* buffer, int vertexCount )
 {
 	int bufferSize = vertexCount * sizeof(vsColor);
-	BindArrayToAttribute(buffer,bufferSize,COLOR_ATTRIBUTE,4);
+	BindArrayToAttribute(vao, buffer,bufferSize,COLOR_ATTRIBUTE,4);
 }
 
 void
-vsRenderBuffer::BindTexelArray( vsRendererState *state, void* buffer, int count )
+vsRenderBuffer::BindTexelArray( vsVertexArrayObject *vao, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector2D);
-	BindArrayToAttribute(buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
+	BindArrayToAttribute(vao, buffer,bufferSize,TEXCOORD_ATTRIBUTE,2);
 }
 
 void
-vsRenderBuffer::BindNormalArray( vsRendererState *state, void* buffer, int count )
+vsRenderBuffer::BindNormalArray( vsVertexArrayObject *vao, void* buffer, int count )
 {
 	int bufferSize = count * sizeof(vsVector3D);
-	BindArrayToAttribute(buffer,bufferSize,NORMAL_ATTRIBUTE,3);
+	BindArrayToAttribute(vao, buffer,bufferSize,NORMAL_ATTRIBUTE,3);
 }
 
 #define EVBO_SIZE (1024 * 1024)
-static GLuint g_evbo = 0xffffffff;
+static GLuint g_evbo = 0;
 static int g_evboCursor = EVBO_SIZE;
 
 void
-vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int instanceCount )
+vsRenderBuffer::DrawElementsImmediate( vsVertexArrayObject *vao, int type, void* buffer, int count, int instanceCount )
 {
 	int bufferSize = count * sizeof(uint16_t);
-	if ( g_evbo == 0xffffffff )
+	if ( g_evbo == 0 )
 	{
 		glGenBuffers(1, &g_evbo);
 	}
+	vsAssert( g_evbo  != 0, "0 evbo ID" );
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_evbo);
+
+
+	vao->SetElementBuffer(g_evbo);
+	vao->Flush();
 
 	if ( g_evboCursor + bufferSize >= EVBO_SIZE )
 	{
@@ -1300,10 +1260,6 @@ vsRenderBuffer::DrawElementsImmediate( int type, void* buffer, int count, int in
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, g_evboCursor, bufferSize, buffer);
 
 	glDrawElementsInstanced(type, count, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid*>(g_evboCursor), instanceCount );
-
-#ifdef VS_PRISTINE_BINDINGS
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif // VS_PRISTINE_BINDINGS
 
 	g_evboCursor += bufferSize;
 }
@@ -1342,4 +1298,21 @@ vsRenderBuffer::UnbindRange( void* ptr )
 #endif // VS_PRISTINE_BINDINGS
 	}
 	// nothing to do, if no VBO.
+}
+
+void
+vsRenderBuffer::Transform( const vsTransform3D& t )
+{
+	vsAssert(  m_contentType == ContentType_PCN, "Unsupported content type for ::Transform??" );
+	if ( m_contentType == ContentType_PCN )
+	{
+		PCN *pcn = GetPCNArray();
+
+		for ( int i = 0; i < GetPositionCount(); i++ )
+		{
+			pcn[i].position = t.ApplyTo(pcn[i].position);
+			pcn[i].normal = t.GetRotation().ApplyTo(pcn[i].normal);
+		}
+		BakeArray();
+	}
 }

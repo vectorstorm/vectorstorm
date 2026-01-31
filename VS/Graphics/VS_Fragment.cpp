@@ -10,15 +10,22 @@
 #include "VS_Fragment.h"
 
 #include "VS_DisplayList.h"
+#include "VS_VertexArrayObject.h"
 
 #include "VS/Files/VS_Record.h"
+
+namespace
+{
+	// vsArray<vsVertexArrayObject*> s_unusedVao;
+}
 
 vsFragment::vsFragment():
 	m_material(nullptr),
 	m_displayList(nullptr),
+	m_vao(nullptr),
 	m_visible(true),
-	m_vbo(nullptr),
-	m_ibo(nullptr)
+	m_simpleVbo(nullptr),
+	m_simpleIbo(nullptr)
 {
 }
 
@@ -109,7 +116,7 @@ vsFragment::Load( vsRecord *record )
 					vsRecord *s = sr->GetChild(id);
 					vsAssert( s->GetTokenCount() == 6, "Wrong number of tokens in PN buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
-					va[id].normal.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
+					va[id].normal = vsVector3D(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
 				}
 
 				buffer->SetArray(va, arrayCount);
@@ -160,8 +167,11 @@ vsFragment::Load( vsRecord *record )
 					vsRecord *s = sr->GetChild(id);
 					vsAssert( s->GetTokenCount() == 8, "Wrong number of tokens in PNT buffer" );
 					va[id].position.Set(s->GetToken(0).AsFloat(), s->GetToken(1).AsFloat(), s->GetToken(2).AsFloat());
-					va[id].normal.Set(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
-					va[id].texel.Set(s->GetToken(6).AsFloat(), s->GetToken(7).AsFloat());
+
+					vsVector3D n(s->GetToken(3).AsFloat(), s->GetToken(4).AsFloat(), s->GetToken(5).AsFloat());
+					vsVector2D t(s->GetToken(6).AsFloat(), s->GetToken(7).AsFloat());
+					va[id].normal = n;
+					va[id].texel = t;
 				}
 
 				buffer->SetArray(va, arrayCount);
@@ -354,8 +364,12 @@ vsFragment::SetSimple( vsRenderBuffer *vbo, vsRenderBuffer *ibo, SimpleType type
 {
 	m_displayList = nullptr;
 	m_simpleType = type;
-	m_vbo = vbo;
-	m_ibo = ibo;
+	m_simpleVbo = vbo;
+	m_simpleIbo = ibo;
+
+	// Uncomment the next two lines to use vertex-format VAOs for fragments.
+	// if ( vbo )
+	// 	m_vao = vbo->GetVAO();
 
 	if ( ownershipType & Owned_VBO )
 		AddBuffer(vbo);
@@ -374,7 +388,7 @@ vsFragment::Clear()
 {
 	vsDelete(m_material);
 	vsDelete(m_displayList);
-	m_vbo = m_ibo = nullptr;
+	m_simpleVbo = m_simpleIbo = nullptr;
 	m_bufferList.Clear();
 }
 
@@ -393,8 +407,8 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 {
 	if ( IsSimple() )
 	{
-		uint16_t *index = m_ibo->GetIntArray();
-		int ic = m_ibo->GetIntArraySize();
+		uint16_t *index = m_simpleIbo->GetIntArray();
+		int ic = m_simpleIbo->GetIntArraySize();
 
 		if ( m_simpleType == SimpleType_TriangleList )
 		{
@@ -404,9 +418,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vertex[0] = m_vbo->GetPosition(index0);
-				t.vertex[1] = m_vbo->GetPosition(index1);
-				t.vertex[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_simpleVbo->GetPosition(index0);
+				t.vertex[1] = m_simpleVbo->GetPosition(index1);
+				t.vertex[2] = m_simpleVbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}
@@ -418,9 +432,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vertex[0] = m_vbo->GetPosition(index0);
-				t.vertex[1] = m_vbo->GetPosition(index1);
-				t.vertex[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_simpleVbo->GetPosition(index0);
+				t.vertex[1] = m_simpleVbo->GetPosition(index1);
+				t.vertex[2] = m_simpleVbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}
@@ -432,9 +446,9 @@ vsFragment::GetTriangles(vsArray<struct vsDisplayList::Triangle>& result) const
 				uint16_t index1 = index[i-1];
 				uint16_t index2 = index[i];
 				vsDisplayList::Triangle t;
-				t.vertex[0] = m_vbo->GetPosition(index0);
-				t.vertex[1] = m_vbo->GetPosition(index1);
-				t.vertex[2] = m_vbo->GetPosition(index2);
+				t.vertex[0] = m_simpleVbo->GetPosition(index0);
+				t.vertex[1] = m_simpleVbo->GetPosition(index1);
+				t.vertex[2] = m_simpleVbo->GetPosition(index2);
 				result.AddItem(t);
 			}
 		}
@@ -452,9 +466,9 @@ vsFragment::GetBoundingBox() const
 {
 	vsBox3D result;
 
-	for ( int i = 0; i < m_vbo->GetPositionCount(); i++ )
+	for ( int i = 0; i < m_simpleVbo->GetPositionCount(); i++ )
 	{
-		result.ExpandToInclude( m_vbo->GetPosition(i) );
+		result.ExpandToInclude( m_simpleVbo->GetPosition(i) );
 	}
 
 	return result;

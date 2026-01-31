@@ -19,9 +19,11 @@
 #include "VS_TimerSystem.h"
 #include "VS_Renderer_OpenGL3.h"
 #include "VS_RenderBuffer.h"
+#include "VS_Profile.h"
+#include "VS_VertexArrayObject.h"
 
-static bool m_localToWorldAttribIsActive = false;
-static bool m_colorAttribIsActive = false;
+// static bool m_localToWorldAttribIsActive = false;
+// static bool m_colorAttribIsActive = false;
 
 	extern vsArray<vsShaderVariantDefinition> g_shaderVariantDefinitions;
 
@@ -198,37 +200,6 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	// vsLog("Created shader %d", m_shader);
 #endif // TARGET_OS_IPHONE
 
-	m_colorLoc = glGetUniformLocation(m_shader, "universal_color");
-	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
-	m_hasInstanceColorsLoc = glGetUniformLocation(m_shader, "hasInstanceColors");
-	m_resolutionLoc = glGetUniformLocation(m_shader, "resolution");
-	m_mouseLoc = glGetUniformLocation(m_shader, "mouse");
-	// m_fogLoc = glGetUniformLocation(m_shader, "fog");
-	m_textureLoc = glGetUniformLocation(m_shader, "textures");
-	m_shadowTextureLoc = glGetUniformLocation(m_shader, "shadowTexture");
-	m_bufferTextureLoc = glGetUniformLocation(m_shader, "bufferTexture");
-	m_localToWorldLoc = glGetUniformLocation(m_shader, "localToWorld");
-	m_worldToViewLoc = glGetUniformLocation(m_shader, "worldToView");
-	m_viewToProjectionLoc = glGetUniformLocation(m_shader, "viewToProjection");
-	m_viewportLoc = glGetUniformLocation(m_shader, "viewport");
-	m_cameraPositionLoc = glGetUniformLocation(m_shader, "cameraPosition");
-	m_cameraDirectionLoc = glGetUniformLocation(m_shader, "cameraDirection");
-
-	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
-
-	// for ( int i = 0; i < 4; i++ )
-	// {
-	// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
-	// m_lightSourceLoc[i] = glGetUniformLocation(m_shader, vsFormatString("lightSource[%d]", i).c_str());
-	// }
-	m_lightAmbientLoc = glGetUniformLocation(m_shader, "lightSource[0].ambient");
-	m_lightDiffuseLoc = glGetUniformLocation(m_shader, "lightSource[0].diffuse");;
-	m_lightSpecularLoc = glGetUniformLocation(m_shader, "lightSource[0].specular");;
-	m_lightPositionLoc = glGetUniformLocation(m_shader, "lightSource[0].position");;
-	m_lightHalfVectorLoc = glGetUniformLocation(m_shader, "lightSource[0].halfVector");;
-
-	m_depthOnlyLoc = glGetUniformLocation(m_shader, "depthOnly");
-
 	int activeUniformCount = 0;
 	glGetProgramiv( m_shader, GL_ACTIVE_UNIFORMS, &activeUniformCount );
 	glGetProgramiv( m_shader, GL_ACTIVE_ATTRIBUTES, &m_attributeCount );
@@ -253,7 +224,6 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_uniform = new vsShader::Uniform[m_uniformCount];
 
 	int nextUniform = 0;
-	int defaultSamplerBinding = 0;
 	for ( GLint i = 0; i < activeUniformCount; i++ )
 	{
 		GL_CHECK("Shader::Uniform");
@@ -272,8 +242,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			vsString name(baseName);
 			if ( arraySize > 1 && arrayPos != vsString::npos)
 			{
-				name.replace( arrayPos, 3, vsFormatString("[%d]", arrayIndex) );
-				// name += vsFormatString("[%d]", arrayIndex);
+				baseName.erase(arrayPos);
+				name = vsFormatString("%s[%d]", baseName, arrayIndex);
 			}
 
 			m_uniform[ui].name = name;
@@ -281,16 +251,20 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 			m_uniform[ui].loc = glGetUniformLocation(m_shader, name.c_str());
 			m_uniform[ui].type = type;
 			m_uniform[ui].arraySize = arraySize;
-			m_uniform[ui].b = false;
+			m_uniform[ui].i32 = 0;
 			m_uniform[ui].u32 = 0;
 			m_uniform[ui].f32 = 0.f;
+			if ( baseName == "textures" )
+				m_uniform[ui].def = arrayIndex;
+			else
+				m_uniform[ui].def = 0;
 
 			// initialise to random values, so we definitely set them at least once.
 			switch ( m_uniform[ui].type )
 			{
 				case GL_BOOL:
 				case GL_INT:
-					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].b );
+					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].i32 );
 					break;
 				case GL_UNSIGNED_INT:
 					glGetUniformuiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].u32 );
@@ -304,14 +278,16 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 				case GL_FLOAT_VEC4:
 					glGetUniformfv( m_shader, m_uniform[ui].loc, &m_uniform[ui].vec4.x );
 					break;
+				case GL_FLOAT_MAT4:
+					glGetUniformfv( m_shader, m_uniform[ui].loc, (GLfloat*)&(m_uniform[ui].mat.x.x) );
+					break;
 				case GL_SAMPLER_2D:
 				case GL_UNSIGNED_INT_SAMPLER_2D:
-					m_uniform[ui].b = defaultSamplerBinding;
-					defaultSamplerBinding += m_uniform[ui].arraySize;
-					break;
 				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
 				case GL_INT_SAMPLER_BUFFER:
 				case GL_SAMPLER_BUFFER:
+					glGetUniformiv( m_shader, m_uniform[ui].loc, &m_uniform[ui].i32 );
+					break;
 					// we're still by default binding buffer textures to slot 9.
 					//
 					// Really what we want is to look at the material's texture slots
@@ -329,8 +305,8 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 					// But for right now, stick with hardcoded 9, since that's still
 					// hardcoded on the vsDynamicMaterial.
 					//
-					m_uniform[ui].b = 9;
-					// m_uniform[ui].b = defaultSamplerBinding;
+					// m_uniform[ui].i32 = -1;
+					// m_uniform[ui].i32 = defaultSamplerBinding;
 					// defaultSamplerBinding += m_uniform[ui].arraySize;
 					break;
 				default:
@@ -362,6 +338,42 @@ vsShaderVariant::Compile( const vsString &vertexShader, const vsString &fragment
 	m_fogDensityId = GetUniformId("fogDensity");
 	m_fogColorId = GetUniformId("fogColor");
 
+	// Caution, raw loc here!
+	m_instanceColorAttributeLoc = glGetAttribLocation(m_shader, "instanceColorAttrib");
+
+	m_colorUniformId = GetUniformId("universal_color");
+	m_hasInstanceColorsUniformId = GetUniformId("hasInstanceColors");
+	m_resolutionUniformId = GetUniformId("resolution");
+	m_mouseUniformId = GetUniformId("mouse");
+	// m_fogUniformId = GetUniformId("fog");
+	m_textureUniformId = GetUniformId("textures");
+	m_shadowTextureUniformId = GetUniformId("shadowTexture");
+	m_bufferTextureUniformId = GetUniformId("bufferTexture");
+	m_localToWorldUniformId = GetUniformId("localToWorld");
+	m_worldToViewUniformId = GetUniformId("worldToView");
+	m_viewToProjectionUniformId = GetUniformId("viewToProjection");
+	m_viewportUniformId = GetUniformId("viewport");
+	m_cameraPositionUniformId = GetUniformId("cameraPosition");
+	m_cameraDirectionUniformId = GetUniformId("cameraDirection");
+
+
+	m_localToWorldAttributeLoc = glGetAttribLocation(m_shader, "localToWorldAttrib");
+
+	// for ( int i = 0; i < 4; i++ )
+	// {
+	// m_lightSourceLoc[i] = GetUniformId(vsFormatString("lightSource[%d]", i).c_str());
+	// m_lightSourceLoc[i] = GetUniformId(vsFormatString("lightSource[%d]", i).c_str());
+	// }
+	m_lightAmbientUniformId = GetUniformId("lightSource[0].ambient");
+	m_lightDiffuseUniformId = GetUniformId("lightSource[0].diffuse");;
+	m_lightSpecularUniformId = GetUniformId("lightSource[0].specular");;
+	m_lightPositionUniformId = GetUniformId("lightSource[0].position");;
+	m_lightHalfVectorUniformId = GetUniformId("lightSource[0].halfVector");;
+
+	m_depthOnlyUniformId = GetUniformId("depthOnly");
+
+
+
 	vsDeleteArray( oldUniform );
 	vsDeleteArray( oldAttribute );
 }
@@ -377,6 +389,7 @@ vsShaderVariant::~vsShaderVariant()
 void
 vsShaderVariant::Reload( const vsString& vertexShader, const vsString &fragmentShader )
 {
+	PROFILE("vsShaderVariant::Reload");
 	// system-owned shader;  don't reload it!
 	if ( m_system )
 		return;
@@ -409,40 +422,39 @@ vsShaderVariant::SetFog( bool fog, const vsColor& color, float density )
 }
 
 void
-vsShaderVariant::SetColor( const vsColor& color )
+vsShaderVariant::SetColor( vsVertexArrayObject *vao, const vsColor& color )
 {
-	if ( m_colorLoc >= 0 )
+	if ( m_colorUniformId >= 0 )
 	{
-		glUniform4f( m_colorLoc, color.r, color.g, color.b, color.a );
+		SetUniformValueVec4( m_colorUniformId, color );
 	}
 	// this is vertex color;  don't set that!
-	glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
+	if ( !vao->IsSet(3) )
+		vao->SetStaticAttribute4F( 3, vsVector4D(1,1,1,1) );
+	// glVertexAttrib4f( 3, 1.f, 1.f, 1.f, 1.f );
+
 }
 
 void
-vsShaderVariant::SetInstanceColors( vsRenderBuffer *colors )
+vsShaderVariant::SetInstanceColors( vsVertexArrayObject* vao, vsRenderBuffer *colors )
 {
-	if ( m_hasInstanceColorsLoc >= 0 )
-		glUniform1i( m_hasInstanceColorsLoc, true );
+	PROFILE("vsShaderVariant::SetInstanceColors (buffer)");
+	if ( m_hasInstanceColorsUniformId >= 0 )
+		SetUniformValueB( m_hasInstanceColorsUniformId, true );
 	if ( m_instanceColorAttributeLoc >= 0 )
 	{
-		if ( !m_colorAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-			glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-			m_colorAttribIsActive = true;
-		}
+		vao->SetAttributeDivisor(m_instanceColorAttributeLoc,1);
 
-		colors->BindAsAttribute( m_instanceColorAttributeLoc );
+		colors->BindAsAttribute( vao, m_instanceColorAttributeLoc );
 	}
 	// GL_CHECK("SetColors");
 }
 
 void
-vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
+vsShaderVariant::SetInstanceColors( vsVertexArrayObject* vao, const vsColor* color, int matCount )
 {
-	if ( m_hasInstanceColorsLoc >= 0 )
-		glUniform1i( m_hasInstanceColorsLoc, ( matCount >= 2 ) );
+	if ( m_hasInstanceColorsUniformId >= 0 )
+		SetUniformValueB( m_hasInstanceColorsUniformId, (matCount >= 2) );
 	if ( matCount <= 0 )
 		return;
 	// GL_CHECK("SetInstanceColors");
@@ -456,21 +468,25 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_colorAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_instanceColorAttributeLoc);
-				m_colorAttribIsActive = false;
-			}
-
-			glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
+			// if ( m_colorAttribIsActive )
+			// {
+			// 	// vao->UnbindAttribute(m_instanceColorAttributeLoc);
+			// 	m_colorAttribIsActive = false;
+			// }
+			vao->SetStaticAttribute4F(m_instanceColorAttributeLoc, vsVector4D(
+						color[0].r, color[0].g, color[0].b, color[0].a
+						) );
+			// glVertexAttrib4f(m_instanceColorAttributeLoc, color[0].r, color[0].g, color[0].b, color[0].a);
 		}
 		else
 		{
-			if ( !m_colorAttribIsActive )
+			PROFILE("vsShaderVariant::SetInstanceColors (immediate)");
+			// if ( !m_colorAttribIsActive )
 			{
-				glEnableVertexAttribArray(m_instanceColorAttributeLoc);
-				glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
-				m_colorAttribIsActive = true;
+				vao->SetAttributeDivisor(m_instanceColorAttributeLoc, 1);
+				// glEnableVertexAttribArray(m_instanceColorAttributeLoc);
+				// glVertexAttribDivisor(m_instanceColorAttributeLoc, 1);
+				// m_colorAttribIsActive = true;
 			}
 
 			GLuint size = sizeof(vsColor)*matCount;
@@ -497,7 +513,8 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 					glUnmapBuffer(GL_ARRAY_BUFFER);
 				}
 			}
-			glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
+			vao->BindAttribute(m_instanceColorAttributeLoc, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 0, 0);
+			// glVertexAttribPointer(m_instanceColorAttributeLoc, 4, GL_FLOAT, 0, 0, 0);
 #ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -510,90 +527,64 @@ vsShaderVariant::SetInstanceColors( const vsColor* color, int matCount )
 void
 vsShaderVariant::SetTextures( vsTexture *texture[MAX_TEXTURE_SLOTS] )
 {
-	// NO NEED TO DO THIS ANY MORE:  TEXTURES ARE NOW BEING BOUND GENERICALLY.
-	//
-	if ( m_textureLoc >= 0 )
-	{
-		const GLint value[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-		glUniform1iv( m_textureLoc, 8, value );
-	}
-	// if ( m_shadowTextureLoc >= 0 )
-	// {
-	// 	glUniform1i( m_shadowTextureLoc, 8 );
-	// }
-	// if ( m_bufferTextureLoc >= 0 )
-	// {
-	// 	glUniform1i( m_bufferTextureLoc, 9 );
-	// }
+	// not needed any more!  We do this generically as part of uniform binding now
 }
 
 void
-vsShaderVariant::SetLocalToWorld( vsRenderBuffer* buffer )
+vsShaderVariant::SetLocalToWorld( vsVertexArrayObject *vao, vsRenderBuffer* buffer )
 {
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
-		if ( !m_localToWorldAttribIsActive )
-		{
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-			glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-			glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-			m_localToWorldAttribIsActive = true;
-		}
+		// if ( !m_localToWorldAttribIsActive )
+		// {
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+1, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+2, 1);
+			vao->SetAttributeDivisor(m_localToWorldAttributeLoc+3, 1);
+		// 	m_localToWorldAttribIsActive = true;
+		// }
 
-		buffer->BindAsAttribute( m_localToWorldAttributeLoc );
+		buffer->BindAsAttribute( vao, m_localToWorldAttributeLoc );
 	}
 }
 
 void
-vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount )
+vsShaderVariant::SetLocalToWorld( vsVertexArrayObject *vao, const vsMatrix4x4* localToWorld, int matCount )
 {
-	if ( m_localToWorldLoc >= 0 )
+	if ( m_localToWorldUniformId >= 0 )
 	{
  		if ( matCount == 1 )
-			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)localToWorld );
+			SetUniformValueMat4( m_localToWorldUniformId, *localToWorld );
 		else
 		{
 			vsMatrix4x4 inv;
 			inv.x.x = -2.f;
-			glUniformMatrix4fv( m_localToWorldLoc, 1, false, (GLfloat*)&inv );
+			SetUniformValueMat4( m_localToWorldUniformId, inv );
 		}
 	}
 	if ( m_localToWorldAttributeLoc >= 0 )
 	{
 		if ( matCount == 1 )
 		{
-			if ( m_localToWorldAttribIsActive )
-			{
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glDisableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				m_localToWorldAttribIsActive = false;
-			}
-
-			glVertexAttrib4f(m_localToWorldAttributeLoc, localToWorld->x.x, localToWorld->x.y, localToWorld->x.z, localToWorld->x.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+1, localToWorld->y.x, localToWorld->y.y, localToWorld->y.z, localToWorld->y.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+2, localToWorld->z.x, localToWorld->z.y, localToWorld->z.z, localToWorld->z.w );
-			glVertexAttrib4f(m_localToWorldAttributeLoc+3, localToWorld->w.x, localToWorld->w.y, localToWorld->w.z, localToWorld->w.w );
+			// if ( m_localToWorldAttribIsActive )
+			// {
+			// 	m_localToWorldAttribIsActive = false;
+			// }
+            //
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc, localToWorld->x);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+1, localToWorld->y);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+2, localToWorld->z);
+			vao->SetStaticAttribute4F(m_localToWorldAttributeLoc+3, localToWorld->w);
 		}
 		else
 		{
-			if ( !m_localToWorldAttribIsActive )
+			// if ( !m_localToWorldAttribIsActive )
 			{
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+1);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+2);
-				glEnableVertexAttribArray(m_localToWorldAttributeLoc+3);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+1, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+2, 1);
-				glVertexAttribDivisor(m_localToWorldAttributeLoc+3, 1);
-				m_localToWorldAttribIsActive = true;
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+1, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+2, 1);
+				vao->SetAttributeDivisor(m_localToWorldAttributeLoc+3, 1);
+				// m_localToWorldAttribIsActive = true;
 			}
 
 			static GLuint g_vbo = 0xffffffff;
@@ -620,10 +611,15 @@ vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount 
 				}
 			}
 			vsAssert( sizeof(vsMatrix4x4) == 64, "Whaa?" );
-			glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
-			glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc, 4, GL_FLOAT, 0, 64, 0);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+1, 4, GL_FLOAT, 0, 64, (void*)16);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+2, 4, GL_FLOAT, 0, 64, (void*)32);
+			// glVertexAttribPointer(m_localToWorldAttributeLoc+3, 4, GL_FLOAT, 0, 64, (void*)48);
+
+			vao->BindAttribute(m_localToWorldAttributeLoc, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)0);
+			vao->BindAttribute(m_localToWorldAttributeLoc+1, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)16);
+			vao->BindAttribute(m_localToWorldAttributeLoc+2, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)32);
+			vao->BindAttribute(m_localToWorldAttributeLoc+3, g_vbo, 4, vsVertexArrayObject::ComponentType_Float, false, 64, (void*)48);
 #ifdef VS_PRISTINE_BINDINGS
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif // VS_PRISTINE_BINDINGS
@@ -634,38 +630,38 @@ vsShaderVariant::SetLocalToWorld( const vsMatrix4x4* localToWorld, int matCount 
 void
 vsShaderVariant::SetWorldToView( const vsMatrix4x4& worldToView )
 {
-	if ( m_worldToViewLoc >= 0 )
+	if ( m_worldToViewUniformId >= 0 )
 	{
-		glUniformMatrix4fv( m_worldToViewLoc, 1, false, (GLfloat*)&worldToView );
+		SetUniformValueMat4( m_worldToViewUniformId, worldToView );
 	}
 	// assume no scaling.
-	if ( m_cameraPositionLoc >= 0 )
+	if ( m_cameraPositionUniformId >= 0 )
 	{
 		vsVector3D t = worldToView.Inverse().w;
-		glUniform3fv(m_cameraPositionLoc, 1, (GLfloat*)&t);
+		SetUniformValueVec3( m_cameraPositionUniformId, t );
 	}
-	if ( m_cameraDirectionLoc >= 0 )
+	if ( m_cameraDirectionUniformId >= 0 )
 	{
 		vsVector3D dir = worldToView.Inverse().z;
-		glUniform3fv(m_cameraDirectionLoc, 1, (GLfloat*)&dir);
+		SetUniformValueVec3( m_cameraDirectionUniformId, dir );
 	}
 }
 
 void
 vsShaderVariant::SetViewToProjection( const vsMatrix4x4& projection )
 {
-	if ( m_viewToProjectionLoc >= 0 )
+	if ( m_viewToProjectionUniformId >= 0 )
 	{
-		glUniformMatrix4fv( m_viewToProjectionLoc, 1, false, (GLfloat*)&projection );
+		SetUniformValueMat4( m_viewToProjectionUniformId, projection );
 	}
 }
 
 void
 vsShaderVariant::SetViewport( const vsVector2D& viewportDims )
 {
-	if ( m_viewportLoc >= 0 )
+	if ( m_viewportUniformId >= 0 )
 	{
-		glUniform2fv(m_viewportLoc, 1, (GLfloat*)&viewportDims);
+		SetUniformValueVec2( m_viewportUniformId, viewportDims );
 	}
 }
 
@@ -687,84 +683,98 @@ vsShaderVariant::SetLight( int id, const vsColor& ambient, const vsColor& diffus
 {
 	if ( id != 0 )
 		return;
-	if ( m_lightAmbientLoc >= 0 )
+	if ( m_lightAmbientUniformId >= 0 )
 	{
-		glUniform4fv( m_lightAmbientLoc, 1, (GLfloat*)&ambient );
+		SetUniformValueVec4( m_lightAmbientUniformId, ambient );
 	}
-	if ( m_lightDiffuseLoc >= 0 )
+	if ( m_lightDiffuseUniformId >= 0 )
 	{
-		glUniform4fv( m_lightDiffuseLoc, 1, (GLfloat*)&diffuse );
+		SetUniformValueVec4( m_lightDiffuseUniformId, diffuse );
 	}
-	if ( m_lightSpecularLoc >= 0 )
+	if ( m_lightSpecularUniformId >= 0 )
 	{
-		glUniform4fv( m_lightSpecularLoc, 1, (GLfloat*)&specular );
+		SetUniformValueVec4( m_lightSpecularUniformId, specular );
 	}
-	if ( m_lightPositionLoc >= 0 )
+	if ( m_lightPositionUniformId >= 0 )
 	{
-		glUniform3fv( m_lightPositionLoc, 1, (GLfloat*)&position );
+		SetUniformValueVec3( m_lightPositionUniformId, position );
 	}
-	if ( m_lightHalfVectorLoc >= 0 )
+	if ( m_lightHalfVectorUniformId >= 0 )
 	{
-		glUniform3fv( m_lightHalfVectorLoc, 1, (GLfloat*)&halfVector );
+		SetUniformValueVec3( m_lightHalfVectorUniformId, halfVector );
 	}
 }
 
 void
 vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRenderTarget *target )
 {
+	PROFILE("vsShaderVariant::Prepare");
 	// GLint current;
 	// glGetIntegerv(GL_CURRENT_PROGRAM, &current);
 	// vsAssert( current == (GLint)m_shader, "This shader isn't currently active??" );
+
+	vsShaderValues *matValues = material->GetShaderValues();
+	{
+		PROFILE("Setting shader values");
+
+		bool bb;
+		int b;
+		float f;
+		vsVector4D v;
+		vsMatrix4x4 m;
+
 	for ( int i = 0; i < m_uniformCount; i++ )
 	{
-		switch( m_uniform[i].type )
+		const vsShader::Uniform& u = m_uniform[i];
+
+		switch( u.type )
 		{
 			case GL_BOOL:
 				{
-					bool b = false;
-					if ( !values || !values->UniformB( m_uniform[i].uid, b ) )
-						 material->GetShaderValues()->UniformB( m_uniform[i].uid, b );
-					SetUniformValueB( i, b );
+					bb = 0;
+					if ( !values || !values->UniformB( u.uid, bb ) )
+						 matValues->UniformB( u.uid, bb );
+					SetUniformValueB( i, bb );
 					break;
 				}
 			case GL_FLOAT:
 				{
-					float f = 0.f;
-					if ( !values || !values->UniformF( m_uniform[i].uid, f ) )
-						material->GetShaderValues()->UniformF( m_uniform[i].uid, f );
+					f = 0.f;
+					if ( !values || !values->UniformF( u.uid, f ) )
+						matValues->UniformF( u.uid, f );
 					SetUniformValueF( i, f );
 					break;
 				}
 			case GL_FLOAT_VEC2:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec2( i, vsVector2D(v.x,v.y) );
 					break;
 				}
 			case GL_FLOAT_VEC3:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec3( i, v );
 					break;
 				}
 			case GL_FLOAT_VEC4:
 				{
-					vsVector4D v;
-					if ( !values || !values->UniformVec4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformVec4( m_uniform[i].uid, v );
+					v.Set(0,0,0,0);
+					if ( !values || !values->UniformVec4( u.uid, v ) )
+						matValues->UniformVec4( u.uid, v );
 					SetUniformValueVec4( i, v );
 					break;
 				}
 			case GL_FLOAT_MAT4:
 				{
-					vsMatrix4x4 v;
-					if ( !values || !values->UniformMat4( m_uniform[i].uid, v ) )
-						material->GetShaderValues()->UniformMat4( m_uniform[i].uid, v );
-					SetUniformValueMat4( i, v );
+					m = vsMatrix4x4::Identity;
+					if ( !values || !values->UniformMat4( u.uid, m ) )
+						matValues->UniformMat4( u.uid, m );
+					SetUniformValueMat4( i, m );
 					break;
 				}
 			case GL_INT:
@@ -775,18 +785,21 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			case GL_INT_SAMPLER_BUFFER:
 			case GL_SAMPLER_BUFFER:
 				{
-					int b = 0;
-					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
-						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					b = 0;
+					if ( !values || !values->UniformI( u.uid, b ) )
+						if ( !matValues->UniformI( u.uid, b) )
+						{
+							// for textures named "textures", we have a default automatic binding.
+							b = u.def;
+						}
 					SetUniformValueI( i, b );
 					break;
 				}
 			case GL_UNSIGNED_INT:
 				{
-					GL_CHECK_SCOPED("UnsignedInt");
-					int b = 0;
-					if ( !values || !values->UniformI( m_uniform[i].uid, b ) )
-						material->GetShaderValues()->UniformI( m_uniform[i].uid, b);
+					b = 0;
+					if ( !values || !values->UniformI( u.uid, b ) )
+						matValues->UniformI( u.uid, b);
 					uint32_t ui = (uint32_t)b; // [TODO] make less horrible
 					SetUniformValueUI( i, ui );
 					break;
@@ -798,11 +811,15 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 		}
 	}
 
-	if ( m_resolutionLoc >= 0 )
+	}
+	{
+		PROFILE("Setting explicit variables");
+
+	if ( m_resolutionUniformId >= 0 )
 	{
 		int xRes = vsScreen::Instance()->GetWidth();
 		int yRes = vsScreen::Instance()->GetHeight();
-		glUniform2f( m_resolutionLoc, (float)xRes, (float)yRes );
+		SetUniformValueVec2( m_resolutionUniformId, vsVector2D(xRes, yRes) );
 	}
 	if ( m_globalTimeUniformId >= 0 ||
 			m_globalSecondsUniformId >= 0 ||
@@ -828,15 +845,17 @@ vsShaderVariant::Prepare( vsMaterial *material, vsShaderValues *values, vsRender
 			SetUniformValueUI( m_globalMicrosecondsUniformId, (GLuint)fractional );
 		}
 	}
-	if ( m_mouseLoc >= 0 )
+	if ( m_mouseUniformId >= 0 )
 	{
 		vsVector2D mousePos = vsInput::Instance()->GetWindowMousePosition();
-		glUniform2f( m_mouseLoc, mousePos.x, mousePos.y );
+		SetUniformValueVec2( m_mouseUniformId, vsVector2D(mousePos.x, mousePos.y) );
 	}
-	if ( m_depthOnlyLoc >= 0 )
+	if ( m_depthOnlyUniformId >= 0 )
 	{
-		glUniform1i( m_depthOnlyLoc, target->IsDepthOnly() );
+		SetUniformValueB( m_depthOnlyUniformId, target->IsDepthOnly() );
 	}
+	}
+
 }
 
 void
@@ -852,72 +871,106 @@ vsShaderVariant::SetUniformValueF( int i, float value )
 void
 vsShaderVariant::SetUniformValueB( int i, bool value )
 {
-	if ( value != m_uniform[i].b )
+	if ( value != m_uniform[i].i32 )
 	{
 		glUniform1i( m_uniform[i].loc, value );
-		m_uniform[i].b = value;
+		m_uniform[i].i32 = value;
 	}
 }
 
 void
 vsShaderVariant::SetUniformValueUI( int i, unsigned int value )
 {
-	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-	// {
+	if ( value != m_uniform[i].u32 )
+	{
 		glUniform1ui( m_uniform[i].loc, value );
 		m_uniform[i].u32 = value;
-	// }
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueI( int i, int value )
 {
-	// for ( int j = 0; j < m_uniform[i].arraySize; j++ )
-	// {
+	if ( value != m_uniform[i].i32 )
+	{
 		glUniform1i( m_uniform[i].loc, value );
-	// }
+		m_uniform[i].i32 = value;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec2( int i, const vsVector2D& value )
 {
-	glUniform2f( m_uniform[i].loc, value.x, value.y );
-	m_uniform[i].vec4.x = value.x;
-	m_uniform[i].vec4.y = value.y;
+	if ( value.x != m_uniform[i].vec4[0] ||
+			value.y != m_uniform[i].vec4[1] )
+	{
+		glUniform2f( m_uniform[i].loc, value.x, value.y );
+		m_uniform[i].vec4[0] = value.x;
+		m_uniform[i].vec4[1] = value.y;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec3( int i, const vsVector3D& value )
 {
-	glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
-	m_uniform[i].vec4 = value;
+	if ( value.x != m_uniform[i].vec4[0] ||
+			value.y != m_uniform[i].vec4[1] ||
+			value.z != m_uniform[i].vec4[2] )
+	{
+		glUniform3f( m_uniform[i].loc, value.x, value.y, value.z );
+		m_uniform[i].vec4[0] = value.x;
+		m_uniform[i].vec4[1] = value.y;
+		m_uniform[i].vec4[2] = value.z;
+	}
 }
 
 
 void
 vsShaderVariant::SetUniformValueVec3( int i, const vsColor& value )
 {
-	glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
-	m_uniform[i].vec4.Set(value.r, value.g, value.b, 0.f);
+	if ( value.r != m_uniform[i].vec4.x ||
+			value.g != m_uniform[i].vec4.y ||
+			value.b != m_uniform[i].vec4.z )
+	{
+		glUniform3f( m_uniform[i].loc, value.r, value.g, value.b );
+		m_uniform[i].vec4.Set( value.r, value.g, value.b, 1.f );
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsVector4D& value )
 {
-	glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
-	m_uniform[i].vec4 = value;
+	if ( value != m_uniform[i].vec4 )
+	{
+		glUniform4f( m_uniform[i].loc, value.x, value.y, value.z, value.w );
+		m_uniform[i].vec4 = value;
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueVec4( int i, const vsColor& value )
 {
-	glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
-	m_uniform[i].vec4.Set(value.r, value.g, value.b, value.a);
+	if ( value.r != m_uniform[i].vec4.x ||
+			value.g != m_uniform[i].vec4.y ||
+			value.b != m_uniform[i].vec4.z ||
+			value.a != m_uniform[i].vec4.w )
+	{
+		glUniform4f( m_uniform[i].loc, value.r, value.g, value.b, value.a );
+		m_uniform[i].vec4.Set( value.r, value.g, value.b, value.a );
+	}
 }
 
 void
 vsShaderVariant::SetUniformValueMat4( int i, const vsMatrix4x4& value )
 {
-	glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, (const GLfloat*)&value );
+	if ( value != m_uniform[i].mat )
+	{
+		glUniformMatrix4fv( m_uniform[i].loc, 1, GL_FALSE, &value.x.x );
+		m_uniform[i].mat = value;
+	}
+	// else
+	// {
+	// 	vsLog("Woo, avoided re-setting a mat4 uniform value!");
+	// }
 }
 

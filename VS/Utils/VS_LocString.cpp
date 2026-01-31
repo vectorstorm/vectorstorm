@@ -64,6 +64,12 @@ vsLocString::SubVars( vsString& str ) const
 			vsAssertF(startVar == -1, "Nested '{' in locstring??  %s", str);
 			startVar = scan;
 		}
+		if ( str[scan] == '#' && startVar != -1 ) // # inside a {} block
+		{
+			vsAssertF(startVar+1 == (int)scan, "# appears in {} block?? %s", str);
+			// {#ANYTHING} is ignored, as that's a text formatting directive to the Slug library.
+			startVar = -1;
+		}
 		if ( str[scan] == ':' )
 		{
 			if ( startVar != -1 )
@@ -71,8 +77,9 @@ vsLocString::SubVars( vsString& str ) const
 		}
 		if ( str[scan] == '}' )
 		{
-			vsAssertF(startVar != -1, "'}' in locstring without matching '{': %s", str);
-			endVar = scan;
+			// vsAssertF(startVar != -1, "'}' in locstring without matching '{': %s", str);
+			if ( startVar != -1 )
+				endVar = scan;
 		}
 
 		if ( endVar != -1 )
@@ -207,14 +214,19 @@ static vsString DoFormatFloat( float value, int places )
 {
 	float factor = pow(10,places);
 	value = round( value * factor ) / factor;
+	bool negative = (value < 0.f);
 
 	int64_t intPart = (int64_t)(value);
 	value -= intPart;
 
-	int decimalPart = vsAbs( value * pow(10,places) );
+	int decimalPart = vsAbs( std::round(value * pow(10,places)) );
 
-	vsString result = DoFormatNumber(intPart);
-	result = vsFormatString("%s%s%d", result, s_decimalSeparator, decimalPart);
+	vsString intPartString = DoFormatNumber( vsAbs(intPart) );
+	vsString pattern = vsFormatString("%%s%%s%%s%%0.%dd", places);
+
+	vsString prefix = negative ? "-" : "";
+
+	vsString result = vsFormatString(pattern, prefix, intPartString, s_decimalSeparator, decimalPart);
 	return result;
 }
 
@@ -298,6 +310,27 @@ vsLocString::operator!=(const vsLocString& other) const
 {
 	return !(*this==other);
 }
+
+void
+vsLocString::operator+=(const char* s)
+{
+	m_string += vsString(s);
+}
+
+void
+vsLocString::operator+=(const vsString& s)
+{
+	m_string += s;
+}
+
+void
+vsLocString::operator+=(const vsLocString& s)
+{
+	vsString tag = vsFormatString("autoconcat_%d", m_args.size());
+	m_args.push_back( vsLocArg( tag, s ) );
+	m_string += vsFormatString("{%s}", tag);
+}
+
 
 bool
 vsLocArg::operator==(const vsLocArg& other) const

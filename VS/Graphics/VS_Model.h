@@ -24,6 +24,7 @@ class vsModel;
 struct vsModelInstance;
 class vsModelInstanceGroup;
 class vsSerialiserRead;
+class vsVertexArrayObject;
 
 struct vsLod
 {
@@ -105,6 +106,7 @@ public:
 	const vsTransform3D&	GetTransform() const { return m_transform; }
 
 	void			SetDisplayList( vsDisplayList *list );
+	vsDisplayList*	GetDisplayList() { return m_displayList; }
 	void			AddFragment( vsFragment *fragment ) { AddLodFragment(0, fragment); }
 	void			DestroyFragment( vsFragment *fragment );
 	void			ClearFragments();
@@ -125,9 +127,12 @@ public:
 	void	DrawInstanced( vsRenderQueue *list, const vsMatrix4x4* matrices, const vsColor* colors, int instanceCount, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 	void	DrawInstanced( vsRenderQueue *list, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
 
+	void	DrawInstanced( vsRenderQueue *list, vsVertexArrayObject* vao, vsRenderBuffer* matrixBuffer, vsRenderBuffer* colorBuffer, vsShaderValues *values, vsShaderOptions *options, int lodLevel );
+
 	bool		CollideRay(vsVector3D *result, vsVector3D *resultNormal, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 
 	void SaveOBJ( const vsString& filename );
+	void SaveBinary( const vsString &filename );
 };
 
 #endif // VS_MODEL_H

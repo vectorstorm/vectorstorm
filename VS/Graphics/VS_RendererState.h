@@ -13,96 +13,6 @@
 
 struct vsRendererStateBlock;
 
-template<typename T>
-class StateSetter
-{
-	T	m_nextValue;
-protected:
-	T	m_value;
-
-public:
-
-	StateSetter( const T& initialValue )
-	{
-		m_value = m_nextValue = initialValue;
-	}
-
-	virtual ~StateSetter(){}
-
-	void Set( const T &newValue )
-	{
-		m_nextValue = newValue;
-	}
-
-	T Get() const
-	{
-		return m_nextValue;
-	}
-
-	virtual void DoFlush() = 0;
-
-	void Flush()
-	{
-		if ( m_nextValue != m_value )
-		{
-			m_value = m_nextValue;
-			DoFlush();
-		}
-	}
-	void Force()
-	{
-		m_value = m_nextValue;
-		DoFlush();
-	}
-};
-
-template<typename T, typename U>
-class StateSetter2
-{
-	T	m_nextValueA;
-	U	m_nextValueB;
-protected:
-	T	m_valueA;
-	U	m_valueB;
-
-public:
-
-	StateSetter2( const T& initialValueA, const U& initialValueB )
-	{
-		m_valueA = m_nextValueA = initialValueA;
-		m_valueB = m_nextValueB = initialValueB;
-	}
-
-	virtual ~StateSetter2(){}
-
-	void Set( const T &newValueA, const U &newValueB )
-	{
-		m_nextValueA = newValueA;
-		m_nextValueB = newValueB;
-	}
-
-	const T& GetFirst() const { return m_nextValueA; }
-	const U& GetSecond() const { return m_nextValueB; }
-
-	virtual void DoFlush() = 0;
-
-	void Flush()
-	{
-		if ( m_nextValueA != m_valueA || m_nextValueB != m_valueB )
-		{
-			m_valueA = m_nextValueA;
-			m_valueB = m_nextValueB;
-			DoFlush();
-		}
-	}
-	void Force()
-	{
-		m_valueA = m_nextValueA;
-		m_valueB = m_nextValueB;
-		DoFlush();
-	}
-};
-
 class vsRendererState
 {
 public:
@@ -121,12 +31,14 @@ public:
 		Bool_ScissorTest,
 		//Bool_Smooth,
 		//Bool_Texture2D,
+		// Bool_PrimitiveRestartFixedIndex,
 		Bool_DepthMask,
-		ClientBool_VertexArray,
-		ClientBool_NormalArray,
-		ClientBool_ColorArray,
-		ClientBool_TextureCoordinateArray,
-		ClientBool_OtherArray,
+
+		// ClientBool_VertexArray,
+		// ClientBool_NormalArray,
+		// ClientBool_ColorArray,
+		// ClientBool_TextureCoordinateArray,
+		// ClientBool_OtherArray,
 		BOOL_COUNT
 	};
 	enum Float
@@ -145,10 +57,64 @@ public:
 	};
 
 private:
-    StateSetter<bool>	*m_boolState[BOOL_COUNT];
+
+	class SimpleBoolStateSetter
+	{
+	private:
+		Bool	m_type;
+		bool	m_nextValue;
+		bool	m_value;
+
+		void DoFlush();
+	public:
+
+		SimpleBoolStateSetter();
+		void SetType( Bool type );
+		void Set( bool newValue );
+		bool Get() const;
+		void Flush();
+		void Force();
+	};
+	class SimpleIntStateSetter
+	{
+	private:
+		Int m_type;
+		int m_nextValue;
+		int m_value;
+
+		void DoFlush();
+	public:
+
+		SimpleIntStateSetter();
+		void SetType( Int type );
+		void Set( int newValue );
+		int Get() const;
+		void Flush();
+		void Force();
+	};
+	class SimpleFloat2StateSetter
+	{
+	private:
+		Float2 m_type;
+		vsVector2D m_nextValue;
+		vsVector2D m_value;
+
+		void DoFlush();
+	public:
+
+		SimpleFloat2StateSetter();
+		void SetType( Float2 type );
+		void Set( const vsVector2D& newValue );
+		const vsVector2D& Get() const;
+		void Flush();
+		void Force();
+	};
+
+
+    SimpleBoolStateSetter	m_boolState[BOOL_COUNT];
     //StateSetter<float>	*m_floatState[FLOAT_COUNT];
-    StateSetter2<float,float>	*m_float2State[FLOAT2_COUNT];
-	StateSetter<int>	*m_intState[INT_COUNT];
+    SimpleFloat2StateSetter	m_float2State[FLOAT2_COUNT];
+	SimpleIntStateSetter	m_intState[INT_COUNT];
 
 public:
 
