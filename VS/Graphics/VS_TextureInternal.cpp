@@ -165,8 +165,6 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 	glGenTextures(1, &t);
 	m_texture = t;
 
-	SetUseMipmap(true);
-
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -180,8 +178,9 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsImage *image
 			image->RawData());
 
 	// probably an image?  Set to use mipmap!
-	if ( IsUseMipmap() )
-		glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo5");
+	SetUseMipmap(true);
 	// m_nearestSampling = false;
 	_UseMemory( w * h * sizeof(uint32_t));
 }
@@ -222,6 +221,7 @@ vsTextureInternal::vsTextureInternal( const vsString &name, const vsFloatImage *
 
 	if ( IsUseMipmap() )
 		glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo6");
 	// m_nearestSampling = false;
 	_UseMemory( w * h * sizeof(float) );
 }
@@ -433,6 +433,7 @@ vsTextureInternal::Blit( const vsImage *image, const vsVector2D &where)
 
 	if ( IsUseMipmap() )
 		glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo7");
 }
 
 void
@@ -449,6 +450,7 @@ vsTextureInternal::Blit( const vsFloatImage *image, const vsVector2D &where)
 
 	if ( IsUseMipmap() )
 		glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foob");
 }
 
 void
@@ -464,6 +466,7 @@ vsTextureInternal::Blit( const vsSingleFloatImage *image, const vsVector2D& wher
 			image->RawData());
 	if ( IsUseMipmap() )
 		glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo2");
 }
 
 vsTextureInternal::vsTextureInternal( const vsString &name, vsRenderTarget *renderTarget, int surfaceBuffer, bool depth ):
@@ -615,8 +618,6 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 	bool success = false;
 	if ( vsFile::Exists(filename_in) )
 	{
-		SetUseMipmap(true);
-
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -657,9 +658,11 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 				m_width = w;
 				m_height = w;
 
-				if ( IsUseMipmap() )
-					glGenerateMipmap(GL_TEXTURE_2D);
+				glGenerateMipmap(GL_TEXTURE_2D);
+				SetUseMipmap(true);
+	GL_CHECK("foo3");
 				success = true;
+
 
 				_UseMemory( w * h * sizeof(uint32_t) );
 			}
@@ -683,6 +686,7 @@ vsTextureInternal::_SimpleLoadFilename( const vsString &filename_in )
 		m_width = m_height = 1;
 		if ( IsUseMipmap() )
 			glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo4");
 	}
 }
 
@@ -693,6 +697,7 @@ vsTextureInternal::SetUseMipmap(bool mipmap)
 	{
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glGenerateMipmap(GL_TEXTURE_2D);
+	GL_CHECK("foo5");
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
