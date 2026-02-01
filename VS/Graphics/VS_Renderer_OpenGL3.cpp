@@ -251,24 +251,43 @@ static void printAttributes ()
 		{GL_MAX_VERTEX_OUTPUT_COMPONENTS, "Maximum output components in vertex shader"},
 		{GL_MAX_VERTEX_UNIFORM_BLOCKS, "Maximum uniform blocks per vertex shader"},
 		{GL_MAX_VIEWPORTS, "Maximum simultaneous viewports"},
-		{GL_MAX_SAMPLES, "Maximum MSAA samples"},
-		{GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, "NVidia-only:  Currently available video memory"},
-		{GL_TEXTURE_FREE_MEMORY_ATI, "ATI-only:  Currently available video memory"}
+		{GL_MAX_SAMPLES, "Maximum MSAA samples"}
 	};
-	int nAttr = sizeof(a) / sizeof(struct attr);
+	const int nAttr = sizeof(a) / sizeof(struct attr);
 	//
-	GLint value;
+	GLint value[4];
 	for (int i = 0; i < nAttr; i++)
 	{
-		glGetIntegerv( a[i].name, &value );
+		glGetIntegerv( a[i].name, value );
 
 		if ( a[i].name == GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX ||
 				a[i].name == GL_TEXTURE_FREE_MEMORY_ATI )
-			vsLog("%s: %s", a[i].label, FormatKB(value) );
+			vsLog("%s: %s", a[i].label, FormatKB(value[0]) );
 		else
-			vsLog("%s: %d", a[i].label, value );
+			vsLog("%s: %d", a[i].label, value[0] );
 	}
 
+	{
+		vsString vendor( (char*)glGetString(GL_VENDOR) );
+		if ( vendor.find("NVIDIA") != vsString::npos )
+		{
+			glGetIntegerv( GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, value );
+			vsLog("Currently available video memory: %s", FormatKB(value[0]));
+		}
+		else if ( vendor.find("ATI Technologies") != vsString::npos ||
+				vendor == "AMD" )
+		{
+			// "ATI Technologies" seems to be used for discrete GPUs like
+			// the Radeon family, while "AMD" appears to be used for integrated
+			// GPUs that come with their CPU offerings such as the Ryzen or
+			// Threadripper lines.
+			glGetIntegerv( GL_TEXTURE_FREE_MEMORY_ATI, value );
+			vsLog("Currently available video memory: %s", FormatKB(value[0]));
+			vsLog("Largest block: %s", FormatKB(value[1]));
+			vsLog("Total auxiliary memory free: %s", FormatKB(value[2]));
+			vsLog("Largest auxiliary free block: %s", FormatKB(value[3]));
+		}
+	}
 	// now clear the GL error state;  one of the texture memory stats will
 	// probably have generated an "invalid enum" error, since those texture
 	// memory queries are vendor-specific OpenGL extensions.
