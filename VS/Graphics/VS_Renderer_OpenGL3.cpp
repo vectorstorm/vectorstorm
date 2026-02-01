@@ -132,6 +132,7 @@ static const char * desc_debug_severity(GLenum severity)
 		case GL_DEBUG_SEVERITY_HIGH  : return "high";
 		case GL_DEBUG_SEVERITY_MEDIUM: return "medium";
 		case GL_DEBUG_SEVERITY_LOW   : return "low";
+		case GL_DEBUG_SEVERITY_NOTIFICATION   : return "notification";
 		default: return "?";
 	}
 }
@@ -144,6 +145,8 @@ void vsOpenGLDebugMessage( GLenum source,
 		const GLchar *message,
 		const GLvoid *userParam)
 {
+	if ( severity == GL_DEBUG_SEVERITY_NOTIFICATION ) // Zink sends SO many of these.
+		return;
 	// NVidia debug message spam.
 	if (id == 0x00020071) return; // memory usage
 								  // if (id == 0x00020084) return; // Texture state usage warning: Texture 0 is base level inconsistent. Check texture size.
