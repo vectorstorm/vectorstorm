@@ -35,6 +35,9 @@ vsFileCache::Purge()
 bool
 vsFileCache::IsFileInCache(const vsString& filename)
 {
+	if ( !s_cache )
+		return false;
+
 	vsStore *s = s_cache->FindItem(filename);
 
 	return nullptr != s;
@@ -50,6 +53,8 @@ vsFileCache::GetFileContents(const vsString& filename)
 void
 vsFileCache::SetFileContents(const vsString& filename, const vsStore &store)
 {
+	if ( !s_cache )
+		return;
 	s_cache->AddItemWithKey(store, filename);
 }
 
