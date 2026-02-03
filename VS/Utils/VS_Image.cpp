@@ -235,21 +235,26 @@ vsImage::Read( vsTexture *texture )
 void
 vsImage::PrepForAsyncRead( vsTexture *texture )
 {
+	bool first = false;
 	if ( m_pbo == 0 )
+	{
 		glGenBuffers(1, &m_pbo);
+		first = true;
+	}
 
-	glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
 	size_t width = texture->GetResource()->GetWidth();
 	size_t height = texture->GetResource()->GetHeight();
-	if ( width != m_width || height != m_height )
+	if ( first || width != m_width || height != m_height )
 	{
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, m_pbo);
+
 		m_width = width;
 		m_height = height;
 		int bytes = width * height * sizeof(uint32_t);
 		glBufferData( GL_PIXEL_PACK_BUFFER, bytes, nullptr, GL_DYNAMIC_READ );
-	}
 
-	glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+		glBindBuffer( GL_PIXEL_PACK_BUFFER, 0);
+	}
 }
 
 void
