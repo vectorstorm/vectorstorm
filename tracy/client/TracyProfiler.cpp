@@ -1,4 +1,5 @@
 #ifdef TRACY_ENABLE
+#pragma GCC diagnostic ignored "-Wunused-result"
 
 #ifdef _WIN32
 #  ifndef NOMINMAX

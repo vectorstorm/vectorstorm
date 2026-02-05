@@ -13,6 +13,11 @@
 
 #include "common/TracySystem.cpp"
 
+// VectorStorm edit:  Added these pragmas to suppress issues
+// under clang when compiling with -Werror.
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #ifdef TRACY_ENABLE
 
 #ifdef _MSC_VER
