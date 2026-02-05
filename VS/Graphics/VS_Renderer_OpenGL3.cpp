@@ -201,6 +201,16 @@ static void printAttributes ()
 	vsLog("  Renderer: %s", glGetString(GL_RENDERER));
 	vsLog("  Version: %s", glGetString(GL_VERSION));
 	vsLog("  GLEW: %s", glewGetString(GLEW_VERSION));
+
+	if ( glGetStringi )
+	{
+		GLint numExtensions = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+		for ( GLint i = 0; i < numExtensions; i++ )
+		{
+			vsLog("  Extension: %s", glGetStringi(GL_EXTENSIONS,i));
+		}
+	}
 	if ( glGetString(GL_SHADING_LANGUAGE_VERSION) )
 	{
 		vsLog("  Shading Language Version:  %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
@@ -268,19 +278,13 @@ static void printAttributes ()
 	}
 
 	{
-		vsString vendor( (char*)glGetString(GL_VENDOR) );
-		if ( vendor.find("NVIDIA") != vsString::npos )
+		if ( GLEW_NVX_gpu_memory_info )
 		{
 			glGetIntegerv( GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, value );
 			vsLog("Currently available video memory: %s", FormatKB(value[0]));
 		}
-		else if ( vendor.find("ATI Technologies") != vsString::npos ||
-				vendor == "AMD" )
+		if ( GLEW_ATI_meminfo )
 		{
-			// "ATI Technologies" seems to be used for discrete GPUs like
-			// the Radeon family, while "AMD" appears to be used for integrated
-			// GPUs that come with their CPU offerings such as the Ryzen or
-			// Threadripper lines.
 			glGetIntegerv( GL_TEXTURE_FREE_MEMORY_ATI, value );
 			vsLog("Currently available video memory: %s", FormatKB(value[0]));
 			vsLog("Largest block: %s", FormatKB(value[1]));
@@ -288,10 +292,7 @@ static void printAttributes ()
 			vsLog("Largest auxiliary free block: %s", FormatKB(value[3]));
 		}
 	}
-	// now clear the GL error state;  one of the texture memory stats will
-	// probably have generated an "invalid enum" error, since those texture
-	// memory queries are vendor-specific OpenGL extensions.
-	glGetError();
+	GL_CHECK("Startup");
 
 	vsLog("== End OpenGL limits ==");
 
@@ -516,8 +517,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		exit(1);
 	}
 
-	printAttributes();
-
 	vsLog("Post printAttributes");
 	m_widthPixels = width;
 	m_heightPixels = height;
@@ -564,9 +563,11 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 
 
-	glewExperimental = GL_TRUE;
+	// glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
+
+	printAttributes();
 
 	GLint major = 0;
 	GLint minor = 0;
