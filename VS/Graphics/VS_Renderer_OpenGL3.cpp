@@ -517,7 +517,6 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		exit(1);
 	}
 
-	vsLog("Post printAttributes");
 	m_widthPixels = width;
 	m_heightPixels = height;
 	m_currentViewportPixels.Set(
@@ -563,11 +562,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 
 
-	// glewExperimental = GL_TRUE;
+	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
-
-	printAttributes();
 
 	GLint major = 0;
 	GLint minor = 0;
@@ -579,6 +576,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		bool supportsOpenGL33 = false;
 		vsAssert( supportsOpenGL33, errorString );
 	}
+
+	printAttributes();
+	vsLog("Post printAttributes");
 
 	m_antialias = (flags & Flag_Antialias) != 0;
 	m_vsync = (flags & Flag_VSync) != 0;
