@@ -2099,6 +2099,21 @@ vsRenderer_OpenGL3::RenderDisplayList( vsDisplayList *list )
 						vsRenderDebug( op->data.string );
 					break;
 				}
+			case vsDisplayList::OpCode_SetChannelMask:
+				{
+					GLint r = ((op->data.i >> 0) & 0x1) ? GL_TRUE : GL_FALSE;
+					GLint g = ((op->data.i >> 1) & 0x1) ? GL_TRUE : GL_FALSE;
+					GLint b = ((op->data.i >> 2) & 0x1) ? GL_TRUE : GL_FALSE;
+					GLint a = ((op->data.i >> 3) & 0x1) ? GL_TRUE : GL_FALSE;
+					GLint d = ((op->data.i >> 4) & 0x1) ? GL_TRUE : GL_FALSE;
+					glColorMask(r,g,b,a);
+					glDepthMask(d);
+					break;
+				}
+			case vsDisplayList::OpCode_ClearChannelMask:
+				glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+				glDepthMask(GL_TRUE);
+				break;
 			default:
 				vsAssert(false, "Unknown opcode type in display list!");	// error;  unknown opcode type in the display list!
 		}
@@ -2142,7 +2157,7 @@ vsRenderer_OpenGL3::SetMaterialInternal(vsMaterialInternal *material)
 
 		// if ( m_currentSettings.writeColor )
 		{
-			glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+			// glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 		}
 		// else
 		// {
