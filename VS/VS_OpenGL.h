@@ -14,16 +14,11 @@
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
 #else
+
 #include <SDL2/SDL.h>
-#if defined(__APPLE_CC__)
-#include <GL/glew.h>
-#else
-#if !defined(MSVC)
+
 #define GLEW_STATIC
-#endif
-#include <GL/glew.h>
-#endif
-#endif
+#include "GL/glew.h"
 
 
 #ifdef VS_GL_DEBUG
@@ -50,5 +45,6 @@ void CheckGLError(const char* string);
 #define GL_CHECK(s) {}
 #define GL_CHECK_SCOPED(s) {}
 #endif
+#endif // TARGET_OS_IPHONE
 
 #endif //VS_OPENGL_H

@@ -50,12 +50,6 @@ endif()
 if(UNIX)
 	find_package(PNG REQUIRED)
 	find_package(PhysFS REQUIRED)
-	# find_library(GLEW_LIBRARY GLEW REQUIRED)
-	if(APPLE)
-		# find_library(GLEW_LIBRARIES glew REQUIRED)
-	else(APPLE)
-		find_package(GLEW REQUIRED)
-	endif(APPLE)
 
 	find_library(PTHREAD_LIBRARY pthread)
 
@@ -65,12 +59,8 @@ else()
 	if ( MSVC )
 		add_definitions("-D _CRT_SECURE_NO_WARNINGS")
 		add_definitions("-D MSVC")
-		# MSVC links glew32 in.  MinGW compiles it in.
-		find_library(GLEW_LIBRARIES glew32 REQUIRED
-			PATH ${ANNEX}/lib )
 	endif()
 endif()
-find_path(GLEW_INCLUDE_DIR GL/glew.h)
 
 if (USE_BOX2D_PHYSICS)
 	find_library(BOX2D_LIBRARY_RELEASE Box2D REQUIRED)
@@ -118,11 +108,9 @@ if(WIN32)
 			find_file(OGG_DLL libogg-0.dll REQUIRED )
 		endif()
 	else()
-		find_file(GLEW_DLL glew32.dll REQUIRED
-			PATH c:/src/buildzone/bin/Release/Win32 )
 	endif()
 
-	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL} ${GLEW_DLL}
+	set(VS_PLATFORM_DLLS ${PNG_DLL} ${JPEG_DLL}
 		${ZLIB_DLL} ${SDL2_DLL}
 		${SDL2_MIXER_DLL} ${VORBIS_DLL} ${VORBISFILE_DLL}
 		${PHYSFS_DLL}
@@ -157,7 +145,6 @@ include_directories(
 	${SDLMIXER_INCLUDE_DIR}
 	${SDLIMAGE_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIRS}
-	${GLEW_INCLUDE_DIR}
 	${BOX2D_INCLUDE_DIR}
 	${PHYSFS_INCLUDE_DIR}
 	#/usr/local/include
@@ -175,8 +162,8 @@ if(APPLE)
 	#SET(CMAKE_OSX_ARCHITECTURES i386 x86_64 )
 	set(GUI_TYPE MACOSX_BUNDLE)
 	add_definitions("-D__apple_cc__")
-	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY PNG_LIBRARY GLEW_LIBRARIES)
-	include_directories(${GLEW_INCLUDE_DIR} ${BOX2D_INCLUDE_DIR})
+	mark_as_advanced(BOX2D_RELEASE_LIBRARY SDL_LIBRARY SDL_MIXER_LIBRARY PNG_LIBRARY )
+	include_directories(${BOX2D_INCLUDE_DIR})
 	#set(XCODE_ATTRIBUTE_SDKROOT macosx10.7)
 	#execute_process(COMMAND xcodebuild -version -sdk "${XCODE_ATTRIBUTE_SDKROOT}" Path | head -n 1 OUTPUT_VARIABLE CMAKE_OSX_SYSROOT)
 	#string(REGEX REPLACE "(\r?\n)+$" "" CMAKE_OSX_SYSROOT "${CMAKE_OSX_SYSROOT}")
@@ -492,20 +479,11 @@ set(SOURCES
 	VS/VS_OpenGL.cpp
 	VS/VS_Prefix.h
 	VS/VS_Prefix_Debug.h
+	GL/glew.c
 	)
 if ( MINGW )
 	add_definitions("-D MINGW")
-	set( SOURCES
-		glew.c
-		${SOURCES}
-		)
 endif( MINGW )
-if ( APPLE )
-	set( SOURCES
-		glew.c
-		${SOURCES}
-		)
-endif (APPLE )
 
 if ( VS_TRACY )
 	message("TRACY ENABLED")

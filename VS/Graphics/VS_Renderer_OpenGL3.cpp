@@ -562,7 +562,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 	}
 
 
-	glewExperimental = GL_TRUE;
+	// glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	vsAssert(GLEW_OK == err, vsFormatString("GLEW error: %s", glewGetErrorString(err)).c_str());
 
