@@ -24,6 +24,7 @@ class vsDynamicBatchManager
 	void ResetBatches();
 public:
 	static vsDynamicBatchManager* Instance() { return s_instance; }
+	static bool Exists() { return s_instance != nullptr; }
 
 	vsDynamicBatchManager();
 	~vsDynamicBatchManager();

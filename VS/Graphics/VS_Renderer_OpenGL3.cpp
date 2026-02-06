@@ -441,54 +441,7 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		// with FullscreenWindow, we don't use the specified width/height values,
 		// but instead SET them based upon window we created
 
-		if ( flags & Flag_Borderless )
-		{
-			vsLog("Setting NOT bordered window");
-			SDL_SetWindowBordered( g_sdlWindow, SDL_FALSE );
-		}
-		else
-		{
-			vsLog("Setting YES bordered window");
-			SDL_SetWindowBordered( g_sdlWindow, SDL_TRUE );
-		}
-
-		uint32_t flags = SDL_GetWindowFlags( g_sdlWindow );
-		if ( flags & SDL_WINDOW_BORDERLESS )
-			vsLog("BORDERLESS");
-		else
-			vsLog("BORDERED");
-
 		SDL_GetWindowSize( g_sdlWindow, &width, &height );
-		// SDL_SetWindowSize( g_sdlWindow, width, height );
-
-		// int index = SDL_GetWindowDisplayIndex( g_sdlWindow );
-		// SDL_SetWindowPosition( g_sdlWindow,
-		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index),
-		// 		SDL_WINDOWPOS_CENTERED_DISPLAY(index)
-		// 		);
-
-		// lets check which display we're on.
-		// if ( displayCount > 1 )
-		// {
-		// 	// TODO:  Let's maybe make this data-driven, somehow.  Via a 'preferences'
-		// 	// object, maybe?  Or alternately, the host game could tell us where to
-		// 	// put the window, maybe?
-		//
-		// 	flags |= Flag_Fullscreen;
-		// 	x = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// 	y = SDL_WINDOWPOS_CENTERED_DISPLAY(1);
-		// 	SDL_DisplayMode mode;
-		// 	SDL_Rect bounds;
-		// 	SDL_GetDesktopDisplayMode(1, &mode);
-		// 	if ( SDL_GetDisplayBounds(1, &bounds) == 0 )
-		// 	{
-		// 		x = bounds.x;
-		// 		y = bounds.y;
-		// 		width = bounds.w;
-		// 		height = bounds.h;
-		// 	}
-		// }
-		// #endif
 	}
 
 
@@ -576,6 +529,9 @@ vsRenderer_OpenGL3::vsRenderer_OpenGL3(int width, int height, int depth, int fla
 		bool supportsOpenGL33 = false;
 		vsAssert( supportsOpenGL33, errorString );
 	}
+
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+	Present();
 
 	printAttributes();
 	vsLog("Post printAttributes");
@@ -913,7 +869,6 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 
 				SDL_SetWindowFullscreen(g_sdlWindow, 0);
 				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
-				SDL_SetWindowBordered(g_sdlWindow,borderless ? SDL_FALSE : SDL_TRUE);
 #ifdef HAS_SDL_SET_RESIZABLE
 				if ( m_flags & Flag_Resizable )
 				{
@@ -972,9 +927,9 @@ vsRenderer_OpenGL3::UpdateVideoMode(int width, int height, int depth, WindowType
 					break;
 				}
 			case WindowType_FullscreenWindow:
+				SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 				SDL_SetWindowFullscreen(g_sdlWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
 				SDL_SetWindowGrab(g_sdlWindow,SDL_FALSE);
-				SDL_SetWindowBordered(g_sdlWindow,SDL_FALSE);
 
 				int nowWidth, nowHeight;
 				SDL_GL_GetDrawableSize(g_sdlWindow, &nowWidth, &nowHeight);
@@ -1100,7 +1055,8 @@ vsRenderer_OpenGL3::Present()
 	// 	vsLog("Viewport:  %dx%d", m_viewportWidthPixels, m_viewportHeightPixels);
 	// }
 
-	vsDynamicBatchManager::Instance()->FrameRendered();
+	if ( vsDynamicBatchManager::Exists() )
+		vsDynamicBatchManager::Instance()->FrameRendered();
 
 }
 
