@@ -308,6 +308,9 @@ public:
 	void	BlitRenderTarget( vsRenderTarget *from, vsRenderTarget *to );
 	void	BlitRenderTargetRect( vsRenderTarget *from, vsRenderTarget *to, const vsBox2D& fromRect, const vsBox2D& toRect );
 
+	void	SetChannelMask( bool r, bool g, bool b, bool a, bool d );
+	void	ClearChannelMask();
+
 	void	Light( const vsLight &light );
 	void	ClearLights();
 
