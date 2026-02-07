@@ -484,36 +484,36 @@ vsToken::BackToString() const
 	return AsString();
 }
 
-vsString
+static vsString tmp;
+
+const vsString&
 vsToken::AsString() const
 {
-	vsString result = vsEmptyString;
-
 	switch( m_type )
 	{
 		case Type_Label:
 		case Type_String:
-			result = m_string;
+			return m_string;
 			break;
 		case Type_NewLine:
-			result = "\n";
+			tmp = "\n";
 			break;
 		case Type_Float:
-			result = vsFormatString("%f", m_float);
+			tmp = vsFormatString("%f", m_float);
 			break;
 		case Type_Integer:
-			result = vsFormatString("%d", m_int);
+			tmp = vsFormatString("%d", m_int);
 			break;
 		case Type_Equals:
-			result = "=";
+			tmp = "=";
 			break;
 		case Type_Semicolon:
-			result = ";";
+			tmp = ";";
 		default:
 			break;
 	}
 
-	return result;
+	return tmp;
 }
 
 void

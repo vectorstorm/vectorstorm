@@ -72,7 +72,7 @@ public:
 
 	void		SetType(Type t);
 	Type		GetType() const { return m_type; }
-	vsString	AsString() const;			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
+	const vsString&	AsString() const;			// give us our value as a string.  (If we're of string type, this will NOT have quotes around it)
 	int			AsInteger() const;
 	float		AsFloat() const;
 
