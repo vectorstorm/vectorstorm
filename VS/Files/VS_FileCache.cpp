@@ -8,15 +8,15 @@
  */
 
 #include "VS_FileCache.h"
-#include "VS_HashTable.h"
+#include "VS_HashTableStore.h"
 #include "VS_Store.h"
 
-static vsHashTable<vsStore> *s_cache = nullptr;
+static vsHashTableStore<vsStore> *s_cache = nullptr;
 
 void
 vsFileCache::Startup()
 {
-	s_cache = new vsHashTable<vsStore>(128);
+	s_cache = new vsHashTableStore<vsStore>(128);
 }
 
 void
@@ -55,6 +55,6 @@ vsFileCache::SetFileContents(const vsString& filename, const vsStore &store)
 {
 	if ( !s_cache )
 		return;
-	s_cache->AddItemWithKey(store, filename);
+	s_cache->AddItemWithKey(new vsStore(store), filename);
 }
 
