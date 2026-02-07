@@ -13,6 +13,7 @@
 #include "VS/Graphics/VS_Color.h"
 #include "VS/Math/VS_Vector.h"
 #include "VS/Memory/VS_Serialiser.h"
+#include "VS_Profile.h"
 
 vsRecord::vsRecord():
 	m_token(0),
@@ -63,6 +64,7 @@ vsRecord::~vsRecord()
 void
 vsRecord::Init()
 {
+	PROFILE("vsRecord::Init");
 	for ( int i = 0; i < m_childList.ItemCount(); i++ )
 	{
 		// if ( m_childList[i]->m_pool )
@@ -270,7 +272,13 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 {
 	if ( !s->IsOK() )
 		return false;
-	Init();
+	// Init();
+
+	m_inBlock = false;
+	m_hasLabel = false;
+	m_lineIsOpen = true;
+	m_lastChild = nullptr;
+
 	uint32_t childCount = 0;
 
 	if ( s->IsOK() )
