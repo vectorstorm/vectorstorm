@@ -21,20 +21,44 @@ class vsHashEntry
 public:
 	T					m_item;
 	vsString			m_key;
-	uint32_t				m_keyHash;
+	uint32_t			m_keyHash;
+	bool				m_used;
 
-	vsHashEntry<T> *	m_next;
-
-	vsHashEntry(): m_key() { m_keyHash = 0, m_next = nullptr; }
-	vsHashEntry( const T &t, const vsString &key, int keyHash ) : m_item(t) { m_key = key; m_keyHash = keyHash, m_next = nullptr; }
+	vsHashEntry(): m_key(), m_keyHash(0), m_used(false) {}
+	vsHashEntry( const T &t, const vsString &key, int keyHash ) :
+		m_item(t),
+		m_key(key),
+		m_keyHash(keyHash),
+		m_used(false)
+	{
+	}
 	vsHashEntry( const vsHashEntry& o ) :
 		m_item(o.m_item),
 		m_key(o.m_key),
 		m_keyHash(o.m_keyHash),
-		m_next(nullptr)
+		m_used(o.m_used)
 	{
-		if ( o.m_next )
-			m_next = new vsHashEntry<T>( *o.m_next );
+	}
+
+	void Set( const T& item, const vsString& key, const uint32_t hash )
+	{
+		m_item = item;
+		m_key = key;
+		m_keyHash = hash;
+		m_used = true;
+	}
+
+	bool IsEmpty() const { return m_keyHash == 0; }
+	bool IsTombstone() const { return m_keyHash == 0 && m_used; }
+	bool IsFull() const { return m_keyHash != 0; }
+	bool IsFullOrTombstone() const { return m_keyHash != 0 || m_used; }
+
+	void operator=(const vsHashEntry<T>& o)
+	{
+		m_item = o.m_item;
+		m_key = o.m_key;
+		m_keyHash = o.m_keyHash;
+		m_used = o.m_used;
 	}
 };
 
@@ -43,6 +67,9 @@ class vsHashTable
 {
 	vsHashEntry<T>		*m_bucket;
 	int					m_bucketCount;
+
+	int					m_filledBucketCount;
+	int					m_tombstoneCount;
 
 	// we're going to need to shift our results to the right to give ourselves
 	// the right number of bits to index into a bucket.  Our hashes are 32-bit,
@@ -63,16 +90,18 @@ class vsHashTable
 	const vsHashEntry<T>*		FindHashEntry( const vsString &key ) const
 	{
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = HashToBucket(hash);
+		int startBucket = HashToBucket(hash);
 
-		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
-		while( ent )
+		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			if ( ent->m_keyHash == hash && ent->m_key == key )
-			{
-				return ent;
-			}
-			ent = ent->m_next;
+			int index = (startBucket+i)%m_bucketCount;
+
+			const vsHashEntry<T> &ent = m_bucket[index];
+			if ( ent.m_keyHash == hash && ent.m_key == key )
+				return &ent;
+
+			if ( ent.IsEmpty() )
+				break;
 		}
 		return nullptr;
 	}
@@ -80,18 +109,29 @@ class vsHashTable
 	vsHashEntry<T>*		FindHashEntry( const vsString &key )
 	{
 		uint32_t  hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		int bucket = HashToBucket(hash);
+		int startBucket = HashToBucket(hash);
 
-		vsHashEntry<T> *ent = m_bucket[bucket].m_next;
-		while( ent )
+		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			if ( ent->m_keyHash == hash && ent->m_key == key )
-			{
-				return ent;
-			}
-			ent = ent->m_next;
+			int index = (startBucket+i)%m_bucketCount;
+
+			vsHashEntry<T> &ent = m_bucket[index];
+			if ( ent.m_keyHash == hash && ent.m_key == key )
+				return &ent;
+
+			if ( ent.IsEmpty() )
+				break;
 		}
 		return nullptr;
+	}
+
+	void _ConsiderResize()
+	{
+		if ( ((m_filledBucketCount+m_tombstoneCount) / (float)m_bucketCount) > 0.7f )
+		{
+			// resize ourself!
+			Resize( m_bucketCount+1 ); // this will bump us to the next power of two
+		}
 	}
 
 public:
@@ -100,6 +140,8 @@ public:
 	{
 		m_bucketCount = vsNextPowerOfTwo(bucketCount);
 		m_shift = 32 - vsHighBitPosition(m_bucketCount);
+		m_filledBucketCount = 0;
+		m_tombstoneCount = 0;
 
 		m_bucket = new vsHashEntry<T>[m_bucketCount];
 	}
@@ -111,40 +153,73 @@ public:
 		m_bucket = new vsHashEntry<T>[m_bucketCount];
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			if ( other.m_bucket[i].m_next )
-				m_bucket[i].m_next = new vsHashEntry<T>(*other.m_bucket[i].m_next);
+			m_bucket[i] = other.m_bucket[i];
 		}
+		m_filledBucketCount = other.m_filledBucketCount;
+		m_tombstoneCount = other.m_tombstoneCount;
 	}
 
 	~vsHashTable()
 	{
-		Clear();
 		vsDeleteArray( m_bucket );
 	}
+
+	void Resize( int newBucketCount )
+	{
+		// first, kill our old buckets
+		vsHashEntry<T>		*oldBucket = m_bucket;
+		int oldBucketCount = m_bucketCount;
+
+		m_bucketCount = vsNextPowerOfTwo(newBucketCount);
+		m_shift = 32 - vsHighBitPosition(m_bucketCount);
+
+		vsLog("Resizing vsHashTable from %d to %d buckets", oldBucketCount, m_bucketCount);
+
+		m_bucket = new vsHashEntry<T>[m_bucketCount];
+
+		m_filledBucketCount = 0;
+		m_tombstoneCount = 0;
+		for ( int i = 0; i < oldBucketCount; i++ )
+		{
+			if ( !oldBucket[i].IsEmpty() )
+				AddItemWithKey( oldBucket[i].m_item, oldBucket[i].m_key );
+		}
+
+		vsDeleteArray(oldBucket);
+	}
+
 
 	void Clear()
 	{
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			while ( m_bucket[i].m_next )
-			{
-				vsHashEntry<T> *toDelete = m_bucket[i].m_next;
-				m_bucket[i].m_next = toDelete->m_next;
-
-				vsDelete( toDelete );
-			}
+			m_bucket[i].m_keyHash = 0;
+			m_bucket[i].m_used = false;
 		}
+		m_filledBucketCount = 0;
+		m_tombstoneCount = 0;
 	}
 
 	void	AddItemWithKey( const T &item, const vsString &key )
 	{
+		_ConsiderResize();
+
 		uint32_t hash = vsCalculateHash(key.c_str(), (uint32_t)key.length());
-		vsHashEntry<T> *ent = new vsHashEntry<T>( item, key, hash );
+		// vsHashEntry<T> *ent = new vsHashEntry<T>( item, key, hash );
 
 		int bucket = HashToBucket(hash);
 
-		ent->m_next = m_bucket[bucket].m_next;
-		m_bucket[bucket].m_next = ent;
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			int index = (bucket+i)%m_bucketCount;
+			if ( m_bucket[index].IsEmpty() )
+			{
+				m_bucket[index].Set(item,key,hash);
+				m_filledBucketCount++;
+				break;
+			}
+		}
+
 	}
 
 	void	RemoveItemWithKey( const T &item, const vsString &key )
@@ -155,20 +230,22 @@ public:
 		int bucket = HashToBucket(hash);
 		bool found = false;
 
-		vsHashEntry<T> *ent = &m_bucket[bucket];
-		while( ent->m_next )
+		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			if ( ent->m_next->m_keyHash == hash && ent->m_next->m_key == key )
+			int index = (bucket+i)%m_bucketCount;
+			if ( !m_bucket[index].IsFullOrTombstone() )
 			{
-				vsHashEntry<T> *toDelete = ent->m_next;
-				ent->m_next = toDelete->m_next;
-				found = true;
-
-				vsDelete( toDelete );
-				break;
+				break; // we don't have it!
 			}
-			ent = ent->m_next;
+			if ( m_bucket[index].m_keyHash == hash && m_bucket[index].m_key == key )
+			{
+				m_bucket[index].m_keyHash = 0;
+				m_filledBucketCount--;
+				m_tombstoneCount++;
+				return;
+			}
 		}
+
 		vsAssert(found, "Error: couldn't find key??");
 	}
 
@@ -204,17 +281,7 @@ public:
 
 	int GetHashEntryCount() const
 	{
-		int count = 0;
-		for ( int i = 0; i < m_bucketCount; i++ )
-		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
-			while ( shuttle )
-			{
-				count++;
-				shuttle = shuttle->m_next;
-			}
-		}
-		return count;
+		return m_filledBucketCount;
 	}
 
 	// This 'i' value is NOT CONSTANT.  As things are added and removed
@@ -225,13 +292,12 @@ public:
 		int count = i;
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
-			while ( shuttle )
+			vsHashEntry<T>* elem = &m_bucket[i];
+			if ( elem->IsFull() )
 			{
 				if ( count == 0 )
-					return shuttle;
+					return elem;
 				count--;
-				shuttle = shuttle->m_next;
 			}
 		}
 		return nullptr;
@@ -243,22 +309,25 @@ public:
 			return false;
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
-			vsHashEntry<T>* shuttle = m_bucket[i].m_next;
-			vsHashEntry<T>* oshuttle = other.m_bucket[i].m_next;
-			while( shuttle && oshuttle )
-			{
-				if ( shuttle->m_item != oshuttle->m_item ||
-						shuttle->m_key != oshuttle->m_key )
-					return false;
-				shuttle = shuttle->m_next;
-				oshuttle = oshuttle->m_next;
-			}
-			// now if we didn't reach the end of the bucket at the same time on
-			// both, that's also a failure
-			if ( shuttle || oshuttle )
+			vsHashEntry<T>* shuttle = &m_bucket[i];
+			vsHashEntry<T>* oshuttle = &other.m_bucket[i];
+			if ( shuttle->IsFull() != oshuttle->IsFull() )
+				return false;
+			if ( shuttle->IsFull() && shuttle->m_item != oshuttle->m_item )
 				return false;
 		}
 		return true;
+	}
+
+	void operator=( const vsHashTable<T>& other )
+	{
+		Clear();
+		Resize( other.m_bucketCount );
+		for ( int i = 0; i < m_bucketCount; i++ )
+		{
+			if ( other.m_bucket[i].IsFull() )
+				m_bucket[i] = other.m_bucket[i];
+		}
 	}
 
 };
