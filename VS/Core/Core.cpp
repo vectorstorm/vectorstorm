@@ -30,11 +30,14 @@
 
 
 
-coreGame		*	core::s_game = nullptr;
-coreGame		*	core::s_nextGame = nullptr;
-vsHeap			*	core::s_gameHeap = nullptr;
-bool				core::s_exit = false;
-bool				core::s_allowExit = true;
+namespace
+{
+	coreGame		*	s_game = nullptr;
+	coreGame		*	s_nextGame = nullptr;
+	vsHeap			*	s_gameHeap = nullptr;
+	bool				s_exit = false;
+	bool				s_allowExit = true;
+};
 
 // hack variable, to make the game run fullscreen on my particular laptop.
 // TODO:  This should really be built into an 'options' screen somewhere,
@@ -230,6 +233,12 @@ void
 core::SetAllowExit(bool allow)
 {
 	s_allowExit = allow;
+}
+
+bool
+core::IsExitRequested()
+{
+	return s_exit;
 }
 
 const vsString &
