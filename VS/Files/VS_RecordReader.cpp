@@ -9,6 +9,7 @@
 
 #include "VS_RecordReader.h"
 #include "VS_Serialiser.h"
+#include "VS/Utils/VS_Profile.h"
 
 #include <stack>
 
@@ -61,6 +62,7 @@ vsRecordReader::HasNext() const
 void
 vsRecordReader::Next()
 {
+	PROFILE("vsRecordReader::Next");
 	if ( m_level != 0 )
 	{
 		vsAssert( m_remainingAtThisLevel > 0, "Overflow siblings" );
@@ -78,6 +80,7 @@ vsRecordReader::Next()
 int
 vsRecordReader::BeginChildren()
 {
+	PROFILE("vsRecordReader::BeginChildren");
 	vsAssert( m_hasValidRecord, "Trying to go down in an invalid record??" );
 	// vsAssert( m_record.GetChildCount() > 0, "Trying to go down in an empty record??" );
 
@@ -92,6 +95,7 @@ vsRecordReader::BeginChildren()
 void
 vsRecordReader::EndChildren()
 {
+	PROFILE("vsRecordReader::EndChildren");
 	vsAssert( m_level > 0, "Trying to go up from the top of a record??" );
 
 	// did we recurse into our current child?  If so, skip to the end of it!
@@ -112,6 +116,7 @@ vsRecordReader::EndChildren()
 void
 vsRecordReader::_Skip( int elements )
 {
+	PROFILE("vsRecordReader::_Skip");
 	int elementsToSkip = elements;
 	for ( int i = 0; i < elementsToSkip; i++ )
 	{

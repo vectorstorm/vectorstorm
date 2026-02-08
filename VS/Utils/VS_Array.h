@@ -274,15 +274,9 @@ public:
 
 	void SetArraySize( int size )
 	{
-		// add or remove elements to make us this size.
-		while( ItemCount() > size )
-		{
-			PopBack();
-		}
-		while ( ItemCount() < size )
-		{
-			AddItem( T() );
-		}
+		if ( size > ItemCount() )
+			Reserve( size );
+		m_arrayLength = size;
 	}
 
 	void operator=( const vsArray<T>& other )

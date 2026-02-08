@@ -142,7 +142,9 @@ vsRecord::SerialiseBinaryV2( vsSerialiser *s )
 
 	uint32_t tokenCount = m_token.ItemCount();
 	s->Uint32(tokenCount);
-	m_token.SetArraySize(tokenCount);
+	{
+		m_token.SetArraySize(tokenCount);
+	}
 	for ( int i = 0; i < m_token.ItemCount(); i++ )
 	{
 		m_token[i].SerialiseBinaryV2(s);
@@ -283,11 +285,15 @@ vsRecord::LoadBinary_Stream( vsSerialiserReadStream *s )
 
 	if ( s->IsOK() )
 	{
-		m_label.SerialiseBinaryV2(s);
+		{
+			m_label.SerialiseBinaryV2(s);
+		}
 
 		uint32_t tokenCount = m_token.ItemCount();
 		s->Uint32(tokenCount);
-		m_token.SetArraySize(tokenCount);
+		{
+			m_token.SetArraySize(tokenCount);
+		}
 		for ( int i = 0; i < m_token.ItemCount(); i++ )
 		{
 			m_token[i].SerialiseBinaryV2(s);
