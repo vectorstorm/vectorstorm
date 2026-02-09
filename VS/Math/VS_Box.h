@@ -14,6 +14,7 @@
 #include "VS/Math/VS_Transform.h"
 
 class vsDisplayList;
+class vsOrientedBox3D;
 
 class vsBox2D
 {
@@ -108,7 +109,9 @@ public:
 	bool		IntersectsSphere(const vsVector3D &center, float radius) const;
 
 	bool		Encompasses(const vsBox3D &box) const;
+	bool		Encompasses(const vsOrientedBox3D &box) const;
 	bool		EncompassesBox(const vsBox3D &box) const { return Encompasses(box); }
+	bool		EncompassesBox(const vsOrientedBox3D &box) const { return Encompasses(box); }
 
 	bool		CollideRay(vsVector3D *result, float *resultT, const vsVector3D &pos, const vsVector3D &dir) const;
 
@@ -170,6 +173,9 @@ class vsOrientedBox3D
 public:
 	vsOrientedBox3D();
 	vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& transform );
+
+	void Set( const vsBox3D& box, const vsTransform3D& transform );
+	const vsBox3D& GetBox() const { return m_box; }
 
 	const vsVector3D& Corner(int i) const { return m_corner[i]; }
 

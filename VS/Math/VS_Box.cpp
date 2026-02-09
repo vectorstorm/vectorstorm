@@ -330,6 +330,20 @@ vsBox3D::Encompasses(const vsBox3D &box) const
 }
 
 bool
+vsBox3D::Encompasses(const vsOrientedBox3D &box) const
+{
+	// [TODO] This could probably be optimised, since we're
+	// an axis-aligned bounding box, we really just need to test whether
+	// we encompass an axis-aligned bounding box around this oriented box.
+	//
+	for ( int i = 0; i < 8; i++ )
+		if ( !ContainsPoint( box.Corner(i) ) )
+			return false;
+
+	return true;
+}
+
+bool
 vsBox3D::ContainsRay( const vsVector3D &pos, const vsVector3D &dir ) const
 {
 	// handle the easy case;  starting point is inside this box.
@@ -688,6 +702,18 @@ vsOrientedBox3D::vsOrientedBox3D( const vsBox3D& box, const vsTransform3D& trans
 	m_box(box),
 	m_transform(transform)
 {
+	for ( int i = 0; i < 8; i++ )
+	{
+		m_corner[i] = m_transform.ApplyTo(m_box.Corner(i));
+	}
+}
+
+void
+vsOrientedBox3D::Set( const vsBox3D& box, const vsTransform3D& transform )
+{
+	m_box = box;
+	m_transform = transform;
+
 	for ( int i = 0; i < 8; i++ )
 	{
 		m_corner[i] = m_transform.ApplyTo(m_box.Corner(i));
