@@ -262,6 +262,8 @@ namespace
 	};
 	vsArray<QueuedDraw*> s_draws;
 	vsArray<QueuedDraw*> s_finishedDraws;
+
+	bool s_prepareForShutdown = false;
 }
 
 void
@@ -301,7 +303,7 @@ vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *
 		}
 		s_pipelineDrawMutex.Unlock();
 	}
-	while( !done );
+	while( !done && !s_prepareForShutdown );
 
 	return; // and now we're done!
 }
@@ -501,3 +503,8 @@ vsScreen::GetDebugScene()
 
 #endif // DEBUG_SCENE
 
+void
+vsScreen::PrepareForShutdown()
+{
+	s_prepareForShutdown = true;
+}

@@ -124,6 +124,9 @@ public:
 	// draw call, blocking the background thread until that has happened.
 	void			DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *customOptions = nullptr );
 
+	// PrepareForShutdown stops background threads from being paused for DrawPipeline_ThreadSafe.
+	void			PrepareForShutdown();
+
 	vsImage *       Screenshot();
 	vsImage *       Screenshot_Async();
 	vsImage *       ScreenshotBack();
