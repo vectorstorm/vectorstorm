@@ -275,13 +275,9 @@ vsStore::ReadBuffer( void *buffer, size_t bufferLength )
 vsString
 vsStore::ReadString()
 {
-	vsString result;
 	int s = ReadInt16();	// how long is the string?
-	result.reserve(s);
-	for ( int i = 0; i < s; i++ )
-	{
-		result.append(1, ReadInt8());
-	}
+	vsString result( m_readHead, s );
+	m_readHead += s;
 
 	return result;
 }
@@ -315,12 +311,10 @@ vsStore::ReadLine( vsString *string )
 void
 vsStore::ReadBufferAsString( vsString *string )
 {
-	*string = vsEmptyString;
+	int bytes = BytesLeftForReading();
 
-	while( BytesLeftForReading() )
-	{
-		string->append(1, ReadInt8());
-	}
+	*string = vsString(m_readHead, bytes);
+	m_readHead += bytes;
 }
 
 void
