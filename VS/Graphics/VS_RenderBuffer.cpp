@@ -310,8 +310,16 @@ vsRenderBuffer::SetArray( const vsVector3D *array, int size )
 }
 
 void
+vsRenderBuffer::SetArray( const vsVector4D *array, int size )
+{
+	m_contentType = ContentType_Custom;
+	SetArray_Internal((char *)array, size*sizeof(vsVector4D), BindType_Array);
+}
+
+void
 vsRenderBuffer::SetArray( const vsVector2D *array, int size )
 {
+	m_contentType = ContentType_Custom;
 	SetArray_Internal((char *)array, size*sizeof(vsVector2D), BindType_Array);
 }
 

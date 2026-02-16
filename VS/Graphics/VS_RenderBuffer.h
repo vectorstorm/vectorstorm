@@ -187,6 +187,7 @@ public:
 	void	SetArray( const Slug *array, int size );
 	void	SetArray( const vsMatrix4x4 *array, int size );
 	void	SetArray( const vsVector3D *array, int size );
+	void	SetArray( const vsVector4D *array, int size );
 	void	SetArray( const vsVector2D *array, int size );
 	void	SetArray( const vsColor *array, int size );
 	void	SetArray( const vsColorPacked *array, int size );
