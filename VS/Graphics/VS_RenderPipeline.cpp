@@ -145,7 +145,17 @@ vsRenderPipeline::Prepare()
 {
 	for ( int i = 0; i < m_stage.ItemCount(); i++ )
 	{
-		if ( m_stage[i] && m_stage[i]->IsEnabled() )
+		// [TODO]
+		//
+		// Right now have to prepare every stage even if they're disabled,
+		// because with the current API we can't call PreparePipeline on a
+		// stage when it gets enabled.  (since game clients call that directly
+		// on the stage, and the stage doesn't have a pointer back to us)
+		//
+		// Probably I should have the API be enabling/disabling stages via the
+		// pipeline object instead of directly to the stage itself!
+		//
+		if ( m_stage[i] ) //&& m_stage[i]->IsEnabled() )
 			m_stage[i]->PreparePipeline(this);
 	}
 
