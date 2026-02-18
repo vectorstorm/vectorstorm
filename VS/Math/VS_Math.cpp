@@ -434,6 +434,67 @@ bool vsCollideLineVsSphere( const vsVector3D &sphereCenter, float sphereRadius, 
 	return true;
 }
 
+bool vsCollideRayVsCylinder( const vsVector3D &cylA, const vsVector3D &cylB, float cylRadius, const vsVector3D &rayOrigin, const vsVector3D &rayDirection, float *hitTime )
+{
+	// This routine is partially based on maths presented here:
+	//
+	// https://davidjcobb.github.io/articles/ray-cylinder-intersection
+
+	const float EPSILON = 0.000001f;
+
+	vsVector3D Rl = rayOrigin - cylB; // ray origin relative to cylinder B.
+	vsVector3D Cs = cylA - cylB; // cylinder spine
+	float Ch = Cs.Length(); // cylinder height
+	vsVector3D Ca = Cs / Ch; // normalised spine direction
+
+	float CaDotRd = Ca.Dot(rayDirection);
+	float CaDotRl = Ca.Dot(Rl);
+	float RlDotRl = Rl.Dot(Rl);
+
+	float a = 1 - (CaDotRd * CaDotRd);
+	float b = 2 * (rayDirection.Dot(Rl) - CaDotRd * CaDotRl);
+	float c = RlDotRl - CaDotRl * CaDotRl - (cylRadius * cylRadius);
+
+	float ta = -1.f;
+	float tb = -1.f;
+
+	float discriminant = (b*b) - (4.0f * a * c);
+	if ( discriminant > EPSILON ) {
+		float discriminantRoot = vsSqrt(discriminant);
+		ta = (-b + discriminantRoot) / (2.0 * a);
+		tb = (-b - discriminantRoot) / (2.0 * a);
+	}
+	else if ( discriminant > -EPSILON && discriminant <= EPSILON )
+	{
+		ta = -(b / (2.0 * a));
+	}
+
+	bool hit = false;
+	if ( ta > 0 )
+	{
+		vsVector3D hitPos = rayOrigin + ta * rayDirection;
+		float hitDistance = Ca.Dot( hitPos - cylB );
+		if ( hitDistance >= 0.f && hitDistance < Ch )
+		{ // we hit!
+			*hitTime = ta;
+			hit = true;
+		}
+	}
+	if ( !hit && tb > 0 )
+	{
+		vsVector3D hitPos = rayOrigin + tb * rayDirection;
+		float hitDistance = Ca.Dot( hitPos - cylB );
+		if ( hitDistance >= 0.f && hitDistance < Ch )
+		{ // we hit!
+			*hitTime = tb;
+			hit = true;
+		}
+	}
+
+	return hit;
+}
+
+
 float vsProgressFraction( float value, float a, float b )
 {
 	if ( a == b )
