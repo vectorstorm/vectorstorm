@@ -918,6 +918,14 @@ vsLines3D::AddLine( const vsVector3D &a, const vsVector3D &b )
 }
 
 void
+vsLines3D::AddLine( const vsVector3D &a, const vsVector3D &b, const vsColor &c )
+{
+	vsVector3D vert[2] = { a, b };
+	vsColor col[2] = { c, c };
+	AddStrip(vert, col, 2);
+}
+
+void
 vsLines3D::AddStrip( vsVector3D *array, vsColor *carray, int arraySize )
 {
 	vsAssert( m_stripCount < m_maxStripCount, "Too many strips in vsLines3D" );

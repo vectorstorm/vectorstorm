@@ -123,6 +123,7 @@ public:
 
 	void Clear();
 	void AddLine( const vsVector3D &a, const vsVector3D &b );
+	void AddLine( const vsVector3D &a, const vsVector3D &b, const vsColor &c );
 	void AddStrip( vsVector3D *array, int arraySize ) { AddStrip(array, nullptr, arraySize); }
 	void AddStrip( vsVector3D *array, vsColor *carray, int arraySize );
 	void AddLoop( vsVector3D *array, int arraySize ) { AddLoop(array, nullptr, arraySize); }
