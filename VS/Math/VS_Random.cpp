@@ -205,7 +205,10 @@ vsRandomSource::GetVector3D(float minLength, float maxLength)
 vsVector3D
 vsRandomSource::GetVector3D(float maxLength)
 {
-	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
+	vsVector3D result;
+	result.z = GetFloat(-1.f,1.f);
+	result.y = GetFloat(-1.f,1.f);
+	result.x = GetFloat(-1.f,1.f);
 
 	if ( result.SqLength() > 1.0f )
 		result.Normalise();
