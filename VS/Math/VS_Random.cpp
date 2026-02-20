@@ -21,6 +21,20 @@
 #include <stdint.h>
 #include <limits>
 
+/* [WARNING]
+ *
+ * MSVC and GCC both evaluate function arguments in a right-to-left order,
+ * whereas Clang evaluates from left-to-right.
+ *
+ * Usually this doesn't matter, but when we're generating multiple random values
+ * that are being fed into the same function, the random values can be swapped
+ * around based on compiler!
+ *
+ * As a result, we need to be *super* careful in here (and everywhere where
+ * random values are generated!) to generate the values ONE AT A TIME, or
+ * else they might produce different 'values' for the same random seed!
+ */
+
 vsRandomSource vsRandomSource::Default;
 
 vsRandomSource::vsRandomSource()
@@ -166,7 +180,9 @@ vsRandomSource::GetVector2D(float minLength, float maxLength)
 vsVector2D
 vsRandomSource::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomRight)
 {
-	vsVector2D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y) );
+	vsVector2D result;
+	result.y = GetFloat(topLeft.y,bottomRight.y);
+	result.x = GetFloat(topLeft.x,bottomRight.x);
 
 	return result;
 }
@@ -174,11 +190,14 @@ vsRandomSource::GetVector2D(const vsVector2D &topLeft, const vsVector2D &bottomR
 vsVector3D
 vsRandomSource::GetVector3D(float minLength, float maxLength)
 {
-	vsVector3D result( GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f), GetFloat(-1.0f,1.0f) );
+	vsVector3D result;
+	result.z = GetFloat(-1.f,1.f);
+	result.y = GetFloat(-1.f,1.f);
+	result.x = GetFloat(-1.f,1.f);
 
 	result.Normalise();
 
-	result *= vsRandom::GetFloat(minLength,maxLength);
+	result *= GetFloat(minLength,maxLength);
 
 	return result;
 }
@@ -199,7 +218,11 @@ vsRandomSource::GetVector3D(float maxLength)
 vsVector3D
 vsRandomSource::GetVector3D(const vsVector3D &topLeft, const vsVector3D &bottomRight)
 {
-	vsVector3D result( GetFloat(topLeft.x,bottomRight.x), GetFloat(topLeft.y,bottomRight.y), GetFloat(topLeft.z,bottomRight.z) );
+	vsVector3D result;
+	// force these into GCC/MSVC order so we get random values in the same order.
+	result.z = GetFloat(topLeft.z,bottomRight.z);
+	result.y = GetFloat(topLeft.y,bottomRight.y);
+	result.x = GetFloat(topLeft.x,bottomRight.x);
 
 	return result;
 }
@@ -220,7 +243,10 @@ vsRandomSource::GetVector3D(const vsBox3D &box)
 vsColor
 vsRandomSource::GetColor(float min, float max)
 {
-	vsVector3D result( GetFloat(0.f,100.f), GetFloat(0.f,100.f), GetFloat(0.f,100.f) );
+	vsVector3D result;
+	result.z = GetFloat(0.f,100.f);
+	result.y = GetFloat(0.f,100.f);
+	result.x = GetFloat(0.f,100.f);
 
 	if ( result.SqLength() > 1.0f )
 		result.Normalise();
