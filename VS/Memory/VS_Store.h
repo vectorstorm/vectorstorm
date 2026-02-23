@@ -52,6 +52,8 @@ public:
 	virtual ~vsStore();
 
 	vsStore& operator=(const vsStore& o);
+	bool operator==(const vsStore& o) const;
+	bool operator!=(const vsStore& o) const;
 
 	void	SetResizable();
 

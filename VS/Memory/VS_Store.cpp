@@ -90,6 +90,24 @@ vsStore::operator=(const vsStore& other)
 	return *this;
 }
 
+bool
+vsStore::operator==(const vsStore& o) const
+{
+	if ( m_bufferLength != o.m_bufferLength )
+		return false;
+
+	return 0 == memcmp( m_buffer, o.m_buffer, m_bufferLength );
+}
+
+bool
+vsStore::operator!=(const vsStore& o) const
+{
+	if ( m_bufferLength != o.m_bufferLength )
+		return true;
+
+	return 0 != memcmp( m_buffer, o.m_buffer, m_bufferLength );
+}
+
 vsStore::~vsStore()
 {
 	if( !m_bufferIsExternal )

@@ -305,7 +305,7 @@ public:
 
 	bool operator!=(const vsArray<T>& other) const
 	{
-		return !operator==(other);
+		return !(operator==(other));
 	}
 
 	void Sort( SortFunction lessThanFn )
