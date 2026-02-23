@@ -67,9 +67,27 @@ vsStore::vsStore( const vsStore& other ):
 	m_readHead( m_buffer ),
 	m_writeHead( m_bufferEnd ),
 	m_bufferIsExternal( false ),
-	m_resizable(false)
+	m_resizable( false )
 {
 	memcpy( m_buffer, other.m_buffer, m_bufferLength );
+}
+
+vsStore&
+vsStore::operator=(const vsStore& other)
+{
+	if( !m_bufferIsExternal )
+		vsDeleteArray(m_buffer);
+
+	m_buffer = new char[ other.m_bufferLength ];
+	m_bufferLength = other.m_bufferLength;
+	m_bufferEnd = &m_buffer[m_bufferLength];
+	m_readHead = m_buffer;
+	m_writeHead = m_bufferEnd;
+	m_bufferIsExternal = false;
+	m_resizable = false;
+	memcpy( m_buffer, other.m_buffer, m_bufferLength );
+
+	return *this;
 }
 
 vsStore::~vsStore()

@@ -51,6 +51,8 @@ public:
 			vsStore( const vsStore& store ); // make a copy of the other store
 	virtual ~vsStore();
 
+	vsStore& operator=(const vsStore& o);
+
 	void	SetResizable();
 
 	char *	GetReadHead() const	{ return m_readHead; }
