@@ -3117,6 +3117,7 @@ vsInput::Rebind( int cid, const DeviceControl& dc )
 		m_axis[cid].positive[0] = dc;
 	}
 
+	Save();
 }
 
 bool
