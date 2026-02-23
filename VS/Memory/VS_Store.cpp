@@ -116,6 +116,12 @@ vsStore::~vsStore()
 }
 
 void
+vsStore::Resize(size_t l)
+{
+	_ResizeBuffer(l, false);
+}
+
+void
 vsStore::SetLength(size_t l)
 {
 	vsAssert(l <= m_bufferLength, "Tried to set length of vsStore to larger than its buffer!");
@@ -872,14 +878,16 @@ vsStore::_ReplaceBuffer( size_t newLength )
 }
 
 void
-vsStore::_ResizeBuffer( size_t newLength )
+vsStore::_ResizeBuffer( size_t newLength, bool autoResized )
 {
-	vsLog("!! Auto-resizing vsStore to %d bytes", newLength);
+	if ( autoResized )
+		vsLog("!! Auto-resizing vsStore to %d bytes", newLength);
 
 	char* newBuffer = new char[newLength];
 	size_t bytesRead = GetReadHead() - m_buffer;
 	size_t bytesWritten = GetWriteHead() - m_buffer;
-	memcpy( newBuffer, m_buffer, bytesWritten );
+	if ( bytesWritten > 0 )
+		memcpy( newBuffer, m_buffer, bytesWritten );
 
 	vsDeleteArray(m_buffer);
 	m_bufferLength = newLength;
@@ -910,7 +918,7 @@ vsStore::_EnsureBytesLeftForWriting( size_t bytes )
 			// these bytes.
 			size_t minBytesNeeded = Length() + bytes;
 			size_t newLength = vsMax( minBytesNeeded, m_bufferLength * 2 );
-			_ResizeBuffer( newLength );
+			_ResizeBuffer( newLength, true );
 		}
 	}
 }
