@@ -277,8 +277,9 @@ vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *
 	}
 	if ( vsRenderer_OpenGL3::Instance()->IsLoadingContext() )
 	{
+		PROFILE("FENCING");
 		// ensure everything above has reached the main thread before we
-		// try to draw our map!
+		// try to draw any of it!
 		vsRenderer_OpenGL3::Instance()->FenceLoadingContext();
 	}
 
@@ -291,20 +292,23 @@ vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *
 	s_draws.AddItem( &qd );
 	s_pipelineDrawMutex.Unlock();
 
-	bool done = false;
-	do
 	{
-		vsSleep(0);
-
-		s_pipelineDrawMutex.Lock();
-		if ( s_finishedDraws.Contains(&qd) )
+		PROFILE("WAITING");
+		bool done = false;
+		do
 		{
-			s_finishedDraws.RemoveItem(&qd);
-			done = true;
+			vsSleep(0);
+
+			s_pipelineDrawMutex.Lock();
+			if ( s_finishedDraws.Contains(&qd) )
+			{
+				s_finishedDraws.RemoveItem(&qd);
+				done = true;
+			}
+			s_pipelineDrawMutex.Unlock();
 		}
-		s_pipelineDrawMutex.Unlock();
+		while( !done && !s_prepareForShutdown );
 	}
-	while( !done && !s_prepareForShutdown );
 
 	return; // and now we're done!
 }
