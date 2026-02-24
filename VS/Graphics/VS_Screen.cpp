@@ -269,6 +269,7 @@ namespace
 void
 vsScreen::DrawPipeline_ThreadSafe( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
+	PROFILE("DrawPipeline_ThreadSafe");
 	if ( vsThread::IsMainThread() )
 	{
 		// easy case, we're already on the main thread so just call DrawPipeline!
@@ -312,6 +313,7 @@ void
 vsScreen::DrawPipeline( vsRenderPipeline *pipeline, vsShaderOptions *customOptions )
 {
 	{
+		PROFILE("DrawPipelinesFromOtherThread");
 		s_pipelineDrawMutex.Lock();
 
 		while ( !s_draws.IsEmpty() )
