@@ -462,7 +462,6 @@ vsImage::Bake( const vsString& name_in ) const
 		// texture for this screenshot already exists;  let's just blit over it!
 		vsTextureInternal *texture = vsCache<vsTextureInternal>::Instance()->Get( name );
 		texture->Blit(this, vsVector2D::Zero);
-		vsLog("Blitting new screenshot over existing texture!");
 	}
 	else
 	{
