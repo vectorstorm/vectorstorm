@@ -499,6 +499,24 @@ vsScreen::ScreenshotAlpha()
 	return m_renderer->ScreenshotAlpha();
 }
 
+void
+vsScreen::FlashBriefly()
+{
+	m_renderer->FlashBriefly();
+}
+
+void
+vsScreen::FlashContinuously()
+{
+	m_renderer->FlashContinuously();
+}
+
+void
+vsScreen::CancelFlash()
+{
+	m_renderer->CancelFlash();
+}
+
 #if defined(DEBUG_SCENE)
 
 vsScene *

@@ -127,6 +127,10 @@ public:
 	virtual vsImage*	ScreenshotBack() = 0;
 	virtual vsImage*	ScreenshotDepth() = 0;
 	virtual vsImage*	ScreenshotAlpha() = 0;
+
+	virtual void			FlashBriefly() {}
+	virtual void			FlashContinuously() {}
+	virtual void			CancelFlash() {}
 };
 
 #endif // VS_RENDERER_H

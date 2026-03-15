@@ -2872,5 +2872,26 @@ vsRenderer_OpenGL3::ClearState()
 
 
 	m_optionsStack.Clear();
-
 }
+
+void
+vsRenderer_OpenGL3::FlashBriefly()
+{
+	int result = SDL_FlashWindow( g_sdlWindow, SDL_FLASH_BRIEFLY );
+	vsLog("Flash result: %d", result);
+}
+
+void
+vsRenderer_OpenGL3::FlashContinuously()
+{
+	int result = SDL_FlashWindow( g_sdlWindow, SDL_FLASH_UNTIL_FOCUSED );
+	vsLog("Flash result: %d", result);
+}
+
+void
+vsRenderer_OpenGL3::CancelFlash()
+{
+	int result = SDL_FlashWindow( g_sdlWindow, SDL_FLASH_CANCEL );
+	vsLog("Flash result: %d", result);
+}
+

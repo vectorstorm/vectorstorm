@@ -110,6 +110,11 @@ public:
 	// Returns the number of bytes we used in the fifo buffer last frame.
 	size_t			GetFifoUsage() { return m_fifoUsageLastFrame; }
 
+	// flash functions which let the game tell us to flash a notification
+	void			FlashBriefly();
+	void			FlashContinuously();
+	void			CancelFlash();
+
 	void			CreateScenes(int count);
 	void			DestroyScenes();
 
