@@ -279,7 +279,8 @@ vsTimerSystem::Update( float timeStep )
 		actualTimeStep = MIN_TIME_PER_FRAME;
 		m_firstFrame = false;
 	}
-	if ( actualTimeStep > MAX_TIME_PER_FRAME )
+	float presentTime = m_presentMicroseconds / 1000000.f;;
+	if ( actualTimeStep - presentTime > MAX_TIME_PER_FRAME )
 	{
 		actualTimeStep = MAX_TIME_PER_FRAME;
 		m_missedFrames++;
