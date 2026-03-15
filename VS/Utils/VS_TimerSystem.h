@@ -37,6 +37,7 @@ public:
 class vsTimerSystem : public coreGameSystem
 {
 	static vsTimerSystem *s_instance;
+	static const int c_historySize = 120;
 
 	uint64_t m_launchTimeRaw;
 	uint64_t m_initTimeRaw;
@@ -57,6 +58,10 @@ class vsTimerSystem : public coreGameSystem
 
 	uint64_t m_drawAccumulator;
 	uint64_t m_presentAccumulator;
+
+	uint64_t m_history[vsTimerSystem::c_historySize];
+	int m_historyCursor;
+	float m_approxFps;
 
 	unsigned int m_missedFrames;
 
