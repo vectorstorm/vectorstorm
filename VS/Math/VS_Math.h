@@ -36,6 +36,11 @@ inline int vsFloor( float value )
 	return (int)floor(value);
 }
 
+inline int vsRound( float value )
+{
+	return (int)floor(value + 0.5f);
+}
+
 inline int vsCeil( float value )
 {
 	return (int)ceil(value);
