@@ -135,24 +135,28 @@ public:
 		}
 	}
 
+	void	Erase( int index )
+	{
+		vsAssertF(index < m_arrayLength, "vsVolatileArray::Erase() called with out of bound index?? %d, %d max",
+				index, m_arrayLength);
+
+		// move the last element into this position
+		m_array[index] = m_array[m_arrayLength-1];
+		m_arrayLength--;
+	}
+
 	bool	RemoveItem( const T &item )
 	{
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			return RemoveIndex( index );
+			Erase( index );
+			return true;
 		}
 		return false;
 	}
 
-	bool	RemoveIndex( int index )
-	{
-		vsAssert(index >= 0 && index < m_arrayLength, "Out of bounds vsVolatileArray access");
-		// move the last element into this position
-		m_array[index] = m_array[m_arrayLength-1];
-		m_arrayLength--;
-		return index != npos;
-	}
+	bool	RemoveIndex( int index ) { Erase(index); return true; }
 
 	vsVolatileArrayIterator<T>	RemoveItem( vsVolatileArrayIterator<T> &item )
 	{

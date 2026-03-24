@@ -156,16 +156,24 @@ public:
 		m_arrayStorage = newSize;
 	}
 
+	void	Erase( int index )
+	{
+		vsAssertF(index < m_arrayLength, "vsArray::Erase() called with out of bound index?? %d, %d max",
+				index, m_arrayLength);
+
+		for ( int i = index; i < m_arrayLength-1; i++ )
+		{
+			m_array[i] = m_array[i+1];
+		}
+		m_arrayLength--;
+	}
+
 	bool	RemoveItem( const T &item )
 	{
 		int index = FindEntry(item);
 		if ( index != npos )
 		{
-			for ( int i = index; i < m_arrayLength-1; i++ )
-			{
-				m_array[i] = m_array[i+1];
-			}
-			m_arrayLength--;
+			Erase(index);
 		}
 		return index != npos;
 	}
@@ -175,11 +183,7 @@ public:
 		int index = item.m_current;
 		if ( index != npos )
 		{
-			for ( int i = index; i < m_arrayLength-1; i++ )
-			{
-				m_array[i] = m_array[i+1];
-			}
-			m_arrayLength--;
+			Erase(index);
 		}
 		if ( index < m_arrayLength )
 			return item;
@@ -244,6 +248,11 @@ public:
 	vsArrayIterator<T>	Back() const
 	{
 		return 		vsArrayIterator<T>(this,m_arrayLength-1);
+	}
+
+	vsArrayIterator<T>	At(int id) const
+	{
+		return 		vsArrayIterator<T>(this,id);
 	}
 
 	T	&GetItem(int id)
