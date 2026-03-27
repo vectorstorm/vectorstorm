@@ -144,6 +144,13 @@ void
 vsDynamicMaterial::SetStencil( StencilOp stencil )
 {
 	GetResource()->m_stencilOp = stencil;
+	GetResource()->m_stencilWrite = (stencil != StencilOp_None);
+}
+
+void
+vsDynamicMaterial::SetStencilRead( bool stencil )
+{
+	GetResource()->m_stencilRead = stencil;
 }
 
 void
