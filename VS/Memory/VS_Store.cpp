@@ -67,9 +67,45 @@ vsStore::vsStore( const vsStore& other ):
 	m_readHead( m_buffer ),
 	m_writeHead( m_bufferEnd ),
 	m_bufferIsExternal( false ),
-	m_resizable(false)
+	m_resizable( false )
 {
 	memcpy( m_buffer, other.m_buffer, m_bufferLength );
+}
+
+vsStore&
+vsStore::operator=(const vsStore& other)
+{
+	if( !m_bufferIsExternal )
+		vsDeleteArray(m_buffer);
+
+	m_buffer = new char[ other.m_bufferLength ];
+	m_bufferLength = other.m_bufferLength;
+	m_bufferEnd = &m_buffer[m_bufferLength];
+	m_readHead = m_buffer;
+	m_writeHead = m_bufferEnd;
+	m_bufferIsExternal = false;
+	m_resizable = false;
+	memcpy( m_buffer, other.m_buffer, m_bufferLength );
+
+	return *this;
+}
+
+bool
+vsStore::operator==(const vsStore& o) const
+{
+	if ( m_bufferLength != o.m_bufferLength )
+		return false;
+
+	return 0 == memcmp( m_buffer, o.m_buffer, m_bufferLength );
+}
+
+bool
+vsStore::operator!=(const vsStore& o) const
+{
+	if ( m_bufferLength != o.m_bufferLength )
+		return true;
+
+	return 0 != memcmp( m_buffer, o.m_buffer, m_bufferLength );
 }
 
 vsStore::~vsStore()
@@ -77,6 +113,12 @@ vsStore::~vsStore()
 	if( !m_bufferIsExternal )
 		delete [] m_buffer;
 	m_buffer = nullptr;
+}
+
+void
+vsStore::Resize(size_t l)
+{
+	_ResizeBuffer(l, false);
 }
 
 void
@@ -836,14 +878,16 @@ vsStore::_ReplaceBuffer( size_t newLength )
 }
 
 void
-vsStore::_ResizeBuffer( size_t newLength )
+vsStore::_ResizeBuffer( size_t newLength, bool autoResized )
 {
-	vsLog("!! Auto-resizing vsStore to %d bytes", newLength);
+	if ( autoResized )
+		vsLog("!! Auto-resizing vsStore to %d bytes", newLength);
 
 	char* newBuffer = new char[newLength];
 	size_t bytesRead = GetReadHead() - m_buffer;
 	size_t bytesWritten = GetWriteHead() - m_buffer;
-	memcpy( newBuffer, m_buffer, bytesWritten );
+	if ( bytesWritten > 0 )
+		memcpy( newBuffer, m_buffer, bytesWritten );
 
 	vsDeleteArray(m_buffer);
 	m_bufferLength = newLength;
@@ -874,7 +918,7 @@ vsStore::_EnsureBytesLeftForWriting( size_t bytes )
 			// these bytes.
 			size_t minBytesNeeded = Length() + bytes;
 			size_t newLength = vsMax( minBytesNeeded, m_bufferLength * 2 );
-			_ResizeBuffer( newLength );
+			_ResizeBuffer( newLength, true );
 		}
 	}
 }

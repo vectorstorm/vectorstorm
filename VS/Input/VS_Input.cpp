@@ -1227,9 +1227,6 @@ vsInput::Update(float timeStep)
 						case SDL_WINDOWEVENT_CLOSE:
 							core::SetExit();
 							break;
-						case SDL_WINDOWEVENT_EXPOSED:
-							// vsLog("Exposed");
-							break;
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 							{
 								// in ppractice, we seem to be receiving this event
@@ -1258,24 +1255,30 @@ vsInput::Update(float timeStep)
 								}
 								break;
 							}
+						case SDL_WINDOWEVENT_EXPOSED:
+							vsLog("Exposed");
+							break;
 						case SDL_WINDOWEVENT_SHOWN:
-							// vsLog("Shown");
+							vsLog("Shown");
 							vsSystem::Instance()->SetAppIsVisible( true );
 							break;
 						case SDL_WINDOWEVENT_HIDDEN:
-							// vsLog("Hidden");
+							vsLog("Hidden");
 							vsSystem::Instance()->SetAppIsVisible( false );
 							break;
 						case SDL_WINDOWEVENT_MOVED:
 							// check video mode, in case we've been moved to a
 							// display with a different DPI.
+							vsLog("Moved");
 							vsSystem::Instance()->CheckVideoMode();
 							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
+							vsLog("Lost Focus");
 							vsSystem::Instance()->SetAppHasFocus( false );
 							m_hasFocus = false;
 							break;
 						case SDL_WINDOWEVENT_FOCUS_GAINED:
+							vsLog("Gained Focus");
 							vsSystem::Instance()->SetAppHasFocus( true );
 							m_hasFocus = true;
 							break;
@@ -3117,6 +3120,7 @@ vsInput::Rebind( int cid, const DeviceControl& dc )
 		m_axis[cid].positive[0] = dc;
 	}
 
+	Save();
 }
 
 bool

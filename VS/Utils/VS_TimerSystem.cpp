@@ -129,6 +129,8 @@ vsTimerSystem::vsTimerSystem():
 	m_presentMicroseconds(0),
 	m_drawAccumulator(0),
 	m_presentAccumulator(0),
+	m_historyCursor(0),
+	m_approxFps(0),
 	m_missedFrames(0)
 {
 	m_launchTimeRaw = m_initTimeRaw = GetRawTime();
@@ -154,6 +156,7 @@ vsTimerSystem::Init()
 	m_startDraw = GetMicroseconds();
 	m_startPresent = GetMicroseconds();
 	m_missedFrames = 0;
+	m_historyCursor = 0;
 	m_firstFrame = true;
 
 #if defined(DEBUG_TIMING_BAR)
@@ -220,8 +223,8 @@ vsTimerSystem::GetSecondsSinceLaunch()
 	return t;
 }
 
-#define MAX_TIME_PER_FRAME (2.0f/60.0f)		// 60fps.
-#define MIN_TIME_PER_FRAME (1.0f/60.0f)
+#define MAX_TIME_PER_FRAME (1.f/10.f)	// if our time per frame is higher than this, collapse to this.
+#define MIN_TIME_PER_FRAME (1.0f/60.0f) // 60fps;  set this on our first frame.
 
 void
 vsTimerSystem::Update( float timeStep )
@@ -248,7 +251,7 @@ vsTimerSystem::Update( float timeStep )
 		// 	desiredTicksPerRound = 160000;
 		// }
 
-		if ( roundTime > 100000 )	// probably hit a breakpoint or something
+		if ( roundTime > 1000000 )	// probably hit a breakpoint or something
 			roundTime = m_startFrame = now - desiredTicksPerRound;
 
 		if ( roundTime < minTicksPerRound )
@@ -276,7 +279,8 @@ vsTimerSystem::Update( float timeStep )
 		actualTimeStep = MIN_TIME_PER_FRAME;
 		m_firstFrame = false;
 	}
-	if ( actualTimeStep > MAX_TIME_PER_FRAME )
+	float presentTime = m_presentMicroseconds / 1000000.f;;
+	if ( actualTimeStep - presentTime > MAX_TIME_PER_FRAME )
 	{
 		actualTimeStep = MAX_TIME_PER_FRAME;
 		m_missedFrames++;
@@ -289,6 +293,41 @@ vsTimerSystem::Update( float timeStep )
 	m_presentAccumulator = 0;
 
 	m_cpuMicroseconds = (now - m_startFrame) - (m_drawMicroseconds + m_presentMicroseconds + m_sleepMicroseconds);
+
+	m_history[m_historyCursor] = (now-m_startFrame);
+	m_historyCursor++;
+	if ( m_historyCursor == c_historySize )
+	{
+		m_historyCursor = 0;
+
+		// calculate fps:
+
+		uint64_t ms = 0L;
+		for ( int i = 0; i < c_historySize; i++ )
+		{
+			ms += m_history[i];
+		}
+		// uint64_t meanMS = ms / c_historySize;
+
+		float totalSeconds = ms / 1000000.f;
+		// float meanSeconds = meanMS / 1000000.f;
+
+		// uint64_t varianceMS = 0;
+		// for ( int i = 0; i < c_historySize; i++ )
+		// 	varianceMS += m_history[i] - meanMS;
+
+		float fps = c_historySize / totalSeconds;
+		// float variance = (varianceMS / 1000000.f);
+
+		if ( m_approxFps == 0 ||
+				(vsFabs( fps - m_approxFps ) > 10.f) )
+		{
+			m_approxFps = fps;
+			vsLog(">> Approx FPS: %f", m_approxFps);
+			// vsLog(">> StdDev: %f", vsSqrt( variance ));
+		}
+
+	}
 
 	m_startFrame = now;
 

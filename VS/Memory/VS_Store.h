@@ -42,7 +42,7 @@ class vsStore
 	// ordinarily we shouldn't need to do this, but.. for decompressing
 	// it becomes important.
 	void	_ReplaceBuffer( size_t newLength );
-	void	_ResizeBuffer( size_t newLength );
+	void	_ResizeBuffer( size_t newLength, bool autoResized );
 
 public:
 			vsStore();
@@ -51,7 +51,12 @@ public:
 			vsStore( const vsStore& store ); // make a copy of the other store
 	virtual ~vsStore();
 
+	vsStore& operator=(const vsStore& o);
+	bool operator==(const vsStore& o) const;
+	bool operator!=(const vsStore& o) const;
+
 	void	SetResizable();
+	void	Resize(size_t l);
 
 	char *	GetReadHead() const	{ return m_readHead; }
 	char *	GetWriteHead() const{ return m_writeHead; }
@@ -90,6 +95,7 @@ public:
 
 	void	WriteString( const vsString &value );
 	void	WriteBuffer( const void *buffer, size_t bufferLength );
+	void	EnsureBytesLeftForWriting( size_t bytes );
 
 	const char*   GetBuffer() const { return m_buffer; }
 

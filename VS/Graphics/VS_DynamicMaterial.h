@@ -35,6 +35,7 @@ public:
 	void SetDepthBiasFactor( float depthBiasFactor );
 	void SetLayer( int layer );
 	void SetStencil( StencilOp stencil );
+	void SetStencilRead( bool stencil );
 	void SetAlphaTest( bool alphaTest );
 	void SetFog( bool fog );
 	void SetZRead( bool zRead );

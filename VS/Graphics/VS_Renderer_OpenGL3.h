@@ -171,6 +171,10 @@ public:
 	vsImage*	ScreenshotDepth();
 	vsImage*	ScreenshotAlpha();
 
+	virtual void			FlashBriefly() override;
+	virtual void			FlashContinuously() override;
+	virtual void			CancelFlash() override;
+
 	static GLuint		Compile(const vsString& vert, const vsString& frag );
 	static void			Compile(GLuint program, const vsString& vert, const vsString&frag, bool requireSuccess = true );
 	static void			DestroyShader(GLuint shader);
