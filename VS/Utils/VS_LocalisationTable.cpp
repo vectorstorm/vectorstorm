@@ -63,14 +63,14 @@ vsLocalisationTable::Init()
 void
 vsLocalisationTable::Init(const vsString &language)
 {
-	s_localisationTable = new vsHashTable<vsString>( 512 );
+	s_localisationTable = new vsHashTable<vsString>( 8196 );
 	LoadTranslationsIntoHash( s_localisationTable, language );
 
 	if ( !s_fallbackLocalisationTable )
 	{
 		if ( vsFile::Exists("i18n/english.vrt") )
 		{
-			s_fallbackLocalisationTable = new vsHashTable<vsString>( 512 );
+			s_fallbackLocalisationTable = new vsHashTable<vsString>( 8196 );
 			LoadTranslationsIntoHash( s_fallbackLocalisationTable, "english" );
 		}
 	}
