@@ -317,6 +317,60 @@ public:
 		return !(operator==(other));
 	}
 
+	int _Partition( SortFunction lessThanFn, int start, int end )
+	{
+		// use a median-positioned element for our pivot and swap it into the
+		// end position.  This works around the worst-case-scenario of trying
+		// to re-sort an already-sorted array, while still letting us use the
+		// simpler sort logic of using the end value as the pivot.
+		//
+		int median = (start+end)>>1;
+		std::swap(m_array[median], m_array[end]);
+
+		int pivotInitialPosition = end;
+		T pivotValue = GetItem( pivotInitialPosition );
+		// take the MIDDLE of three elements
+
+		int pivotPosition = start;
+		for ( int i = start; i <= end; i++ )
+		{
+			if ( lessThanFn(GetItem(i), pivotValue) )
+			{
+				if ( i != pivotPosition )
+				{
+					std::swap(m_array[i], m_array[pivotPosition]);
+				}
+				pivotPosition++;
+			}
+		}
+
+		if ( pivotInitialPosition != pivotPosition )
+		{
+			std::swap(m_array[pivotInitialPosition], m_array[pivotPosition]);
+		}
+		return pivotPosition;
+	}
+
+	void _QSort( SortFunction lessThanFn, int start, int end )
+	{
+		if ( end-start < 2 )
+			return;
+
+		int pivot = _Partition( lessThanFn, start, end );
+		_QSort( lessThanFn, start, pivot-1 );
+		_QSort( lessThanFn, pivot+1, end );
+	}
+
+	// simple QuickSort implementation
+	void QSort( SortFunction lessThanFn )
+	{
+		// if there aren't at least two elements, we're already sorted!
+		if ( ItemCount() < 2 )
+			return;
+
+		_QSort( lessThanFn, 0, ItemCount()-1 );
+	}
+
 	void Sort( SortFunction lessThanFn )
 	{
 		// simple bubble sort as a first experiment with this approach.
