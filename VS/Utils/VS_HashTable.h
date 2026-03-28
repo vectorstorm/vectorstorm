@@ -322,7 +322,9 @@ public:
 	void operator=( const vsHashTable<T>& other )
 	{
 		Clear();
-		Resize( other.m_bucketCount );
+		if ( other.m_bucketCount > m_bucketCount )
+			Resize( other.m_bucketCount );
+
 		for ( int i = 0; i < m_bucketCount; i++ )
 		{
 			if ( other.m_bucket[i].IsFull() )
