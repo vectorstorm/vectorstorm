@@ -363,7 +363,7 @@ vsRenderTarget::ClearColor( const vsColor&c )
 }
 
 void
-vsRenderTarget::BlitTo( vsRenderTarget *other )
+vsRenderTarget::BlitTo( vsRenderTarget *other, BufferMask bm )
 {
 	vsBox2D from, to;
 	from.ExpandToInclude( vsVector2D::Zero );
@@ -371,11 +371,11 @@ vsRenderTarget::BlitTo( vsRenderTarget *other )
 	to.ExpandToInclude( vsVector2D::Zero );
 	to.ExpandToInclude( vsVector2D(other->m_viewportWidth, other->m_viewportHeight) );
 
-	BlitRect( other, from, to );
+	BlitRect( other, from, to, bm );
 }
 
 void
-vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst )
+vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst, BufferMask bm )
 {
 	CreateDeferred();
 	other->CreateDeferred();
@@ -418,12 +418,28 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0+i);
 
+		GLbitfield mask = 0L;
+		if ( bm & BufferMask_Color )
+			mask |= GL_COLOR_BUFFER_BIT;
+		if ( bm & BufferMask_Depth )
+			mask |= GL_DEPTH_BUFFER_BIT;
+		if ( bm & BufferMask_Stencil )
+			mask |= GL_STENCIL_BUFFER_BIT;
+
+		GLenum filter = GL_LINEAR;
+		if ( mask != GL_COLOR_BUFFER_BIT ||
+				(src.Width() == dst.Width() && src.Height() == dst.Height())
+				)
+		{
+			filter = GL_NEAREST;
+		}
+
 		glBlitFramebuffer(src.GetMin().x, src.GetMin().y,
 				src.GetMax().x, src.GetMax().y,
 				dst.GetMin().x, dst.GetMin().y,
 				dst.GetMax().x, dst.GetMax().y,
-				GL_COLOR_BUFFER_BIT,
-				GL_LINEAR);
+				mask,
+				filter);
 	}
 	vsRendererState::Instance()->Apply( backup );
 	vsRendererState::Instance()->Flush();
@@ -432,7 +448,6 @@ vsRenderTarget::BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, s_currentReadFBO);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_currentDrawFBO);
 }
-
 
 namespace
 {

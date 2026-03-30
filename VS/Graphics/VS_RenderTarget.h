@@ -135,6 +135,13 @@ public:
 		Type_DepthCompare		// depth-only, access via compare mode.
 	};
 
+	enum BufferMask
+	{
+		BufferMask_Color = BIT(0),
+		BufferMask_Depth = BIT(1),
+		BufferMask_Stencil = BIT(2)
+	};
+
 private:
 
 	vsSurface::Settings m_settings;
@@ -201,9 +208,9 @@ public:
 
 	void		Clear();
 	void		ClearColor( const vsColor& c );
-	void		BlitTo( vsRenderTarget *other );
+	void		BlitTo( vsRenderTarget *other, BufferMask bm = BufferMask_Color );
 
-	void		BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst );
+	void		BlitRect( vsRenderTarget *other, const vsBox2D& src, const vsBox2D& dst, BufferMask bm = BufferMask_Color );
 
 	GLsizei GetWidth() { return m_settings.width; }
 	GLsizei GetHeight() { return m_settings.height; }
