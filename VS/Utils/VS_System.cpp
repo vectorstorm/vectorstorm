@@ -1277,8 +1277,9 @@ vsSystem::CPUDescription()
 	// On Mac M1 platforms, we can get the data we want from sysctl.
 
 	const char* label = "machdep.cpu.brand_string";
-	size_t bufferSize = 128;
-	char buffer[bufferSize];
+	const size_t c_bufferSize = 128;
+	char buffer[c_bufferSize];
+	size_t bufferSize = c_bufferSize;
 	int32_t ncpu;
 	const char* ncpulabel = "hw.ncpu";
 	size_t ncpuSize = sizeof(ncpu);
