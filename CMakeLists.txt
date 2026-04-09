@@ -537,7 +537,7 @@ endif()
 
 	add_definitions("-DVECTORSTORM_INTERNAL")
 	add_library(
-		vectorstorm
+		vectorstorm STATIC
 		${SOURCES}
 		${CORE_SOURCES}
 		${FILES_SOURCES}
